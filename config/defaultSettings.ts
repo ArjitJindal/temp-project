@@ -12,10 +12,11 @@ const Settings: LayoutSettings & {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'Flagright Console',
+  title: '',
   pwa: false,
-  logo: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+  logo: '/flagright-console-logo.svg',
   iconfontUrl: '',
+  headerTheme: 'light',
 };
 
 export default Settings;
