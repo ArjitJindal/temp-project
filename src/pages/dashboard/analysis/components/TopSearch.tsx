@@ -55,7 +55,7 @@ const TopSearch = ({
   <Card
     loading={loading}
     bordered={false}
-    title="线上热门搜索"
+    title="Dynamic Risk Scoring"
     extra={dropdownGroup}
     style={{
       height: '100%',
@@ -66,8 +66,8 @@ const TopSearch = ({
         <NumberInfo
           subTitle={
             <span>
-              搜索用户数
-              <Tooltip title="指标说明">
+              Average Dynamic Risk Score
+              <Tooltip title="Dynamic risk of all your profiles averaged">
                 <InfoCircleOutlined style={{ marginLeft: 8 }} />
               </Tooltip>
             </span>
@@ -83,8 +83,8 @@ const TopSearch = ({
         <NumberInfo
           subTitle={
             <span>
-              人均搜索次数
-              <Tooltip title="指标说明">
+              MoM Change in Average Dynamic Risk Score
+              <Tooltip title="Change in average dynamic risk score as compared with previous month">
                 <InfoCircleOutlined style={{ marginLeft: 8 }} />
               </Tooltip>
             </span>
