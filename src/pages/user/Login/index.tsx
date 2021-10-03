@@ -1,10 +1,4 @@
-import {
-  AlipayCircleOutlined,
-  LockOutlined,
-  TaobaoCircleOutlined,
-  UserOutlined,
-  WeiboCircleOutlined,
-} from '@ant-design/icons';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, message, Tabs } from 'antd';
 import React, { useState } from 'react';
 import { ProFormCheckbox, ProFormText, LoginForm } from '@ant-design/pro-form';
@@ -95,16 +89,23 @@ const Login: React.FC = () => {
           initialValues={{
             autoLogin: true,
           }}
-          actions={[
-            <FormattedMessage
-              key="loginWith"
-              id="pages.login.loginWith"
-              defaultMessage="其他登录方式"
-            />,
-            <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.icon} />,
-            <TaobaoCircleOutlined key="TaobaoCircleOutlined" className={styles.icon} />,
-            <WeiboCircleOutlined key="WeiboCircleOutlined" className={styles.icon} />,
-          ]}
+          submitter={{
+            searchConfig: {
+              submitText: 'Login',
+            },
+            resetButtonProps: {
+              style: {
+                // Hide the reset button
+                display: 'none',
+              },
+            },
+            submitButtonProps: {
+              style: {
+                display: 'block',
+                width: '310px',
+              },
+            },
+          }}
           onFinish={async (values) => {
             await handleSubmit(values as API.LoginParams);
           }}
