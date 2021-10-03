@@ -1,5 +1,5 @@
 import { request } from 'umi';
-import type { BasicGood, BasicProgress } from './data.d';
+import type { BasicGood, BasicProgress } from './data';
 
 export async function queryBasicProfile(): Promise<{
   data: {
@@ -7,5 +7,5 @@ export async function queryBasicProfile(): Promise<{
     basicGoods: BasicGood[];
   };
 }> {
-  return request('/api/profile/basic');
+  return request('/api/rules/basic');
 }

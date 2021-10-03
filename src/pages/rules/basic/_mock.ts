@@ -88,5 +88,5 @@ function getProfileBasic(_: Request, res: Response) {
 }
 
 export default {
-  'GET  /api/profile/basic': getProfileBasic,
+  'GET  /api/rules/basic': getProfileBasic,
 };

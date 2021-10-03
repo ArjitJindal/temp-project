@@ -182,25 +182,25 @@ export default defineConfig({
       ],
     },
     {
-      path: '/profile',
-      name: 'profile',
+      path: '/rules',
+      name: 'rules',
       icon: 'profile',
       routes: [
         {
-          path: '/profile',
-          redirect: '/profile/basic',
+          path: '/rules',
+          redirect: '/rules/basic',
         },
         {
           name: 'basic',
           icon: 'smile',
-          path: '/profile/basic',
-          component: './profile/basic',
+          path: '/rules/basic',
+          component: './rules/basic',
         },
         {
           name: 'advanced',
           icon: 'smile',
-          path: '/profile/advanced',
-          component: './profile/advanced',
+          path: '/rules/advanced',
+          component: './rules/advanced',
         },
       ],
     },

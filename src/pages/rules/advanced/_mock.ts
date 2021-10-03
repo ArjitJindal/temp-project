@@ -77,5 +77,5 @@ function getProfileAdvancedData(req: Request, res: Response) {
 }
 
 export default {
-  'GET  /api/profile/advanced': getProfileAdvancedData,
+  'GET  /api/rules/advanced': getProfileAdvancedData,
 };
