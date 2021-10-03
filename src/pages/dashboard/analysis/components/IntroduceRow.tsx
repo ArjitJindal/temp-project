@@ -23,40 +23,14 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
     <Col {...topColResponsiveProps}>
       <ChartCard
         bordered={false}
-        title="总销售额"
-        action={
-          <Tooltip title="指标说明">
-            <InfoCircleOutlined />
-          </Tooltip>
-        }
         loading={loading}
-        total={() => <Yuan>126560</Yuan>}
-        footer={<Field label="日销售额" value={`￥${numeral(12423).format('0,0')}`} />}
-        contentHeight={46}
-      >
-        <Trend flag="up" style={{ marginRight: 16 }}>
-          周同比
-          <span className={styles.trendText}>12%</span>
-        </Trend>
-        <Trend flag="down">
-          日同比
-          <span className={styles.trendText}>11%</span>
-        </Trend>
-      </ChartCard>
-    </Col>
-
-    <Col {...topColResponsiveProps}>
-      <ChartCard
-        bordered={false}
-        loading={loading}
-        title="访问量"
+        title="Transaction Volume"
         action={
-          <Tooltip title="指标说明">
+          <Tooltip title="Transactions count">
             <InfoCircleOutlined />
           </Tooltip>
         }
         total={numeral(8846).format('0,0')}
-        footer={<Field label="日访问量" value={numeral(1234).format('0,0')} />}
         contentHeight={46}
       >
         <TinyArea
@@ -74,14 +48,29 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
       <ChartCard
         bordered={false}
         loading={loading}
-        title="支付笔数"
+        title="Flagged Transactions"
         action={
-          <Tooltip title="指标说明">
+          <Tooltip title="Flagged Transactions count">
             <InfoCircleOutlined />
           </Tooltip>
         }
-        total={numeral(6560).format('0,0')}
-        footer={<Field label="转化率" value="60%" />}
+        total={numeral(560).format('0,0')}
+        contentHeight={46}
+      >
+        <TinyColumn xField="x" height={46} forceFit yField="y" data={visitData} />
+      </ChartCard>
+    </Col>
+    <Col {...topColResponsiveProps}>
+      <ChartCard
+        bordered={false}
+        loading={loading}
+        title="Stopped Transactions"
+        action={
+          <Tooltip title="Stopped Transactions count">
+            <InfoCircleOutlined />
+          </Tooltip>
+        }
+        total={numeral(613).format('0,0')}
         contentHeight={46}
       >
         <TinyColumn xField="x" height={46} forceFit yField="y" data={visitData} />
@@ -91,25 +80,13 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
       <ChartCard
         loading={loading}
         bordered={false}
-        title="运营活动效果"
+        title="Percentage of transactions passed"
         action={
-          <Tooltip title="指标说明">
+          <Tooltip title="Passed transaction percentage">
             <InfoCircleOutlined />
           </Tooltip>
         }
         total="78%"
-        footer={
-          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            <Trend flag="up" style={{ marginRight: 16 }}>
-              周同比
-              <span className={styles.trendText}>12%</span>
-            </Trend>
-            <Trend flag="down">
-              日同比
-              <span className={styles.trendText}>11%</span>
-            </Trend>
-          </div>
-        }
         contentHeight={46}
       >
         <Progress
