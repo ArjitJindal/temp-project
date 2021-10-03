@@ -45,7 +45,7 @@
   {
     name: 'list.table-list',
     icon: 'table',
-    path: '/list',
+    path: '/threshold',
     component: './TableList',
   },
   {

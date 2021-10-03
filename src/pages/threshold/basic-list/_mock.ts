@@ -1,5 +1,6 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type { ListItemDataType } from './data.d';
+import type { BasicListItemDataType } from './data';
 
 const titles = [
   'Alipay',
@@ -35,6 +36,7 @@ const desc = [
   '城镇中有那么多的酒馆，她却偏偏走进了我的酒馆',
   '那时候我只会想自己想要什么，从不想自己拥有什么',
 ];
+
 const user = [
   '付小小',
   '曲丽丽',
@@ -48,7 +50,7 @@ const user = [
   '仲尼',
 ];
 
-function fakeList(count: number): ListItemDataType[] {
+function fakeList(count: number): BasicListItemDataType[] {
   const list = [];
   for (let i = 0; i < count; i += 1) {
     list.push({
@@ -100,12 +102,51 @@ function fakeList(count: number): ListItemDataType[] {
   return list;
 }
 
-function getFakeList(req: Request, res: Response) {
-  const params: any = req.query;
+let sourceData: BasicListItemDataType[] = [];
 
-  const count = params.count * 1 || 20;
+function getFakeList(req: Request, res: Response) {
+  const params = req.query as any;
+
+  const count = Number(params.count) * 1 || 20;
 
   const result = fakeList(count);
+  sourceData = result;
+  return res.json({
+    data: {
+      list: result,
+    },
+  });
+}
+
+function postFakeList(req: Request, res: Response) {
+  const { /* url = '', */ body } = req;
+  // const params = getUrlParams(url);
+  const { method, id } = body;
+  // const count = (params.count * 1) || 20;
+  let result = sourceData || [];
+
+  switch (method) {
+    case 'delete':
+      result = result.filter((item) => item.id !== id);
+      break;
+    case 'update':
+      result.forEach((item, i) => {
+        if (item.id === id) {
+          result[i] = { ...item, ...body };
+        }
+      });
+      break;
+    case 'post':
+      result.unshift({
+        ...body,
+        id: `fake-list-${result.length}`,
+        createdAt: new Date().getTime(),
+      });
+      break;
+    default:
+      break;
+  }
+
   return res.json({
     data: {
       list: result,
@@ -114,5 +155,6 @@ function getFakeList(req: Request, res: Response) {
 }
 
 export default {
-  'GET  /api/fake_list': getFakeList,
+  'GET  /api/get_list': getFakeList,
+  'POST  /api/post_fake_list': postFakeList,
 };

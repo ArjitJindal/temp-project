@@ -1,6 +1,5 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type { ListItemDataType } from './data.d';
+import type { ListItemDataType } from './data';
 
 const titles = [
   'Alipay',
@@ -53,7 +52,7 @@ function fakeList(count: number): ListItemDataType[] {
   const list = [];
   for (let i = 0; i < count; i += 1) {
     list.push({
-      id: `fake-list-${Math.random().toString(36).slice(2, 6)}${i}`,
+      id: `fake-list-${i}`,
       owner: user[i % 10],
       title: titles[i % 8],
       avatar: avatars[i % 8],
