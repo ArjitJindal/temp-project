@@ -16,9 +16,9 @@ export default () => {
       copyright={`${currentYear} ${defaultMessage}`}
       links={[
         {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
-          href: 'https://pro.ant.design',
+          key: 'Flagright Data Technologies',
+          title: 'Flagright Data Technologies',
+          href: 'https://flagright.com',
           blankTarget: true,
         },
         {
