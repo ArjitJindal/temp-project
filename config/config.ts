@@ -86,12 +86,6 @@ export default defineConfig({
           path: '/dashboard/monitor',
           component: './dashboard/monitor',
         },
-        {
-          name: 'workplace',
-          icon: 'smile',
-          path: '/dashboard/workplace',
-          component: './dashboard/workplace',
-        },
       ],
     },
     {
