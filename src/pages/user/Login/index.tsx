@@ -83,12 +83,14 @@ const Login: React.FC = () => {
       <div className={styles.content}>
         <LoginForm
           title={
-            <img
-              alt="logo"
-              height="75"
-              src="/flagright-console-logo.svg"
-              style={{ marginBottom: '33px' }}
-            />
+            <>
+              <img
+                alt="logo"
+                height="75"
+                src="/flagright-console-logo.svg"
+                style={{ marginBottom: '33px' }}
+              />
+            </>
           }
           initialValues={{
             autoLogin: true,
