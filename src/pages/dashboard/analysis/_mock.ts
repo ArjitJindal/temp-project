@@ -117,13 +117,6 @@ const salesTypeDataOffline = [
   },
 ];
 
-const offlineData = [];
-for (let i = 0; i < 10; i += 1) {
-  offlineData.push({
-    name: `Stores ${i}`,
-    cvr: Math.ceil(Math.random() * 9) / 10,
-  });
-}
 const offlineChartData = [];
 for (let i = 0; i < 20; i += 1) {
   const date = moment(new Date().getTime() + 1000 * 60 * 30 * i).format('HH:mm');
@@ -191,7 +184,6 @@ const getFakeChartData: AnalysisData = {
   visitData2,
   salesData,
   searchData,
-  offlineData,
   offlineChartData,
   salesTypeData,
   salesTypeDataOnline,

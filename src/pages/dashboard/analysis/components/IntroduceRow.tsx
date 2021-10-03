@@ -3,11 +3,8 @@ import { TinyArea, TinyColumn, Progress } from '@ant-design/charts';
 import { Col, Row, Tooltip } from 'antd';
 
 import numeral from 'numeral';
-import { ChartCard, Field } from './Charts';
+import { ChartCard } from './Charts';
 import type { DataItem } from '../data.d';
-import Trend from './Trend';
-import Yuan from '../utils/Yuan';
-import styles from '../style.less';
 
 const topColResponsiveProps = {
   xs: 24,
@@ -33,15 +30,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
         total={numeral(8846).format('0,0')}
         contentHeight={46}
       >
-        <TinyArea
-          color="#975FE4"
-          xField="x"
-          height={46}
-          forceFit
-          yField="y"
-          smooth
-          data={visitData}
-        />
+        <TinyArea xField="x" height={46} forceFit yField="y" smooth data={visitData} />
       </ChartCard>
     </Col>
     <Col {...topColResponsiveProps}>
@@ -57,7 +46,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
         total={numeral(560).format('0,0')}
         contentHeight={46}
       >
-        <TinyColumn xField="x" height={46} forceFit yField="y" data={visitData} />
+        <TinyColumn color="#f6bd16" xField="x" height={46} forceFit yField="y" data={visitData} />
       </ChartCard>
     </Col>
     <Col {...topColResponsiveProps}>
@@ -73,7 +62,7 @@ const IntroduceRow = ({ loading, visitData }: { loading: boolean; visitData: Dat
         total={numeral(613).format('0,0')}
         contentHeight={46}
       >
-        <TinyColumn xField="x" height={46} forceFit yField="y" data={visitData} />
+        <TinyColumn color="#ec6454" xField="x" height={46} forceFit yField="y" data={visitData} />
       </ChartCard>
     </Col>
     <Col {...topColResponsiveProps}>
