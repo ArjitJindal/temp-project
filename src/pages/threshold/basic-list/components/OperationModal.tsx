@@ -6,7 +6,7 @@ import {
   ProFormText,
   ProFormTextArea,
 } from '@ant-design/pro-form';
-import type { BasicListItemDataType } from '../data';
+import type { BasicListItemDataType } from '../data.d';
 import styles from '../style.less';
 import { Button, Result } from 'antd';
 

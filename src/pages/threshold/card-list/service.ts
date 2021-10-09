@@ -1,5 +1,5 @@
 import { request } from 'umi';
-import type { CardListItemDataType } from './data';
+import type { CardListItemDataType } from './data.d';
 
 export async function queryFakeList(params: {
   count: number;

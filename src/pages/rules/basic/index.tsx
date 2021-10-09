@@ -5,7 +5,7 @@ import { Badge, Card, Descriptions, Divider } from 'antd';
 import type { FC } from 'react';
 import React from 'react';
 import { useRequest } from 'umi';
-import type { BasicGood, BasicProgress } from './data';
+import type { BasicGood, BasicProgress } from './data.d';
 import { queryBasicProfile } from './service';
 import styles from './style.less';
 
