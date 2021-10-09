@@ -39,7 +39,5 @@ export interface AnalysisData {
   searchData: DataItem[];
   offlineChartData: DataItem[];
   salesTypeData: DataItem[];
-  salesTypeDataOnline: DataItem[];
-  salesTypeDataOffline: DataItem[];
   radarData: RadarData[];
 }
