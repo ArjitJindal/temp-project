@@ -2,7 +2,7 @@ import * as React from 'react';
 import { HeatmapLayer, MapboxScene, PointLayer } from '@antv/l7-react';
 import { PageLoading } from '@ant-design/pro-layout';
 
-const colors = ['#eff3ff', '#c6dbef', '#9ecae1', '#6baed6', '#4292c6', '#2171b5', '#084594'];
+const colors = ['#FF7F66', '#FFAAB5', '#FF8A44', '#FFA022', '#FFC000', '#639F00', '#318000'];
 export default class Map extends React.Component {
   state = {
     data: null,
@@ -105,7 +105,7 @@ export default class Map extends React.Component {
             }}
             size={{
               field: 'cum_conf',
-              values: [0, 30],
+              values: [0, 25],
             }}
             style={{
               opacity: 0.8,
@@ -120,7 +120,7 @@ export default class Map extends React.Component {
               values: '#fff',
             }}
             shape={{
-              field: 'Short_Name_ZH',
+              field: 'ADM0_VIZ_NAME',
               values: 'text',
             }}
             filter={{
