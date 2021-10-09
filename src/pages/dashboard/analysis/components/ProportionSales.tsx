@@ -6,8 +6,6 @@ import React from 'react';
 import type { DataItem } from '../data.d';
 import styles from '../style.less';
 
-const { Text } = Typography;
-
 const ProportionSales = ({
   dropdownGroup,
   loading,
@@ -21,7 +19,7 @@ const ProportionSales = ({
     loading={loading}
     className={styles.salesCard}
     bordered={false}
-    title="Transaction Breakdown"
+    title="Rules Breakdown"
     style={{
       height: '100%',
     }}
@@ -33,7 +31,6 @@ const ProportionSales = ({
     }
   >
     <div>
-      <Text>Status</Text>
       <Donut
         forceFit
         height={340}
@@ -54,7 +51,7 @@ const ProportionSales = ({
         }}
         statistic={
           {
-            totalLabel: 'Status',
+            totalLabel: 'Total Hits',
           } as DonutConfig['statistic']
         }
       />

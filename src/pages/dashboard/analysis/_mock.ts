@@ -42,16 +42,28 @@ for (let i = 0; i < 50; i += 1) {
 }
 const salesTypeData = [
   {
-    x: 'Blocked',
-    y: 4144,
+    x: 'Proof of Funds',
+    y: 323,
   },
   {
-    x: 'Passed',
-    y: 3321,
+    x: 'High Risk Country',
+    y: 216,
   },
   {
-    x: 'Flagged',
-    y: 3113,
+    x: 'Others',
+    y: 201,
+  },
+  {
+    x: 'TC40 Hit',
+    y: 33,
+  },
+  {
+    x: 'UN Sanctions Hit',
+    y: 31,
+  },
+  {
+    x: 'PEP Hit',
+    y: 31,
   },
 ];
 
