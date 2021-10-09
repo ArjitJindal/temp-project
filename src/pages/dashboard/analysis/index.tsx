@@ -3,7 +3,6 @@ import { Suspense, useState } from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { Col, Dropdown, Menu, Row } from 'antd';
 import { GridContent } from '@ant-design/pro-layout';
-import type { RadioChangeEvent } from 'antd/es/radio';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
 import IntroduceRow from './components/IntroduceRow';
@@ -26,10 +25,7 @@ type AnalysisProps = {
   loading: boolean;
 };
 
-type SalesType = 'all' | 'online' | 'stores';
-
 const Analysis: FC<AnalysisProps> = () => {
-  const [salesType, setSalesType] = useState<SalesType>('all');
   const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
     getTimeDistance('year'),
   );
@@ -64,12 +60,7 @@ const Analysis: FC<AnalysisProps> = () => {
     return '';
   };
 
-  let salesPieData;
-  if (salesType === 'all') {
-    salesPieData = data?.salesTypeData;
-  } else {
-    salesPieData = salesType === 'online' ? data?.salesTypeDataOnline : data?.salesTypeDataOffline;
-  }
+  let salesPieData = data?.salesTypeData;
 
   const menu = (
     <Menu>
@@ -85,10 +76,6 @@ const Analysis: FC<AnalysisProps> = () => {
       </Dropdown>
     </span>
   );
-
-  const handleChangeSalesType = (e: RadioChangeEvent) => {
-    setSalesType(e.target.value);
-  };
 
   return (
     <GridContent>
@@ -128,10 +115,8 @@ const Analysis: FC<AnalysisProps> = () => {
             <Suspense fallback={null}>
               <ProportionSales
                 dropdownGroup={dropdownGroup}
-                salesType={salesType}
                 loading={loading}
                 salesPieData={salesPieData || []}
-                handleChangeSalesType={handleChangeSalesType}
               />
             </Suspense>
           </Col>
