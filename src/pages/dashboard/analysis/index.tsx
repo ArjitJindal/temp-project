@@ -1,14 +1,14 @@
 import type { FC } from 'react';
 import { Suspense, useState } from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
-import { Col, Dropdown, Menu, Row } from 'antd';
+import { Card, Col, Dropdown, Menu, Row } from 'antd';
 import { GridContent } from '@ant-design/pro-layout';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
 import IntroduceRow from './components/IntroduceRow';
 import SalesCard from './components/SalesCard';
-import TopSearch from './components/TopSearch';
 import ProportionSales from './components/ProportionSales';
+import Map from './components/Map';
 import { useRequest } from 'umi';
 
 import { fakeChartData } from './service';
@@ -103,12 +103,11 @@ const Analysis: FC<AnalysisProps> = () => {
         >
           <Col xl={12} lg={24} md={24} sm={24} xs={24}>
             <Suspense fallback={null}>
-              <TopSearch
-                loading={loading}
-                visitData2={data?.visitData2 || []}
-                searchData={data?.searchData || []}
-                dropdownGroup={dropdownGroup}
-              />
+              <Card title="Location overview" bordered={false}>
+                <div className={styles.mapChart}>
+                  <Map />
+                </div>
+              </Card>
             </Suspense>
           </Col>
           <Col xl={12} lg={24} md={24} sm={24} xs={24}>

@@ -1,4 +1,4 @@
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
 import numeral from 'numeral';
 import { Donut } from '@ant-design/charts';
 import type { DonutConfig } from '@ant-design/charts/es/donut';
