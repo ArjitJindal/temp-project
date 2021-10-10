@@ -4,6 +4,7 @@ import { Card, Result, Button, Descriptions, Divider, Alert, Statistic } from 'a
 import { PageContainer } from '@ant-design/pro-layout';
 import ProForm, { ProFormDigit, ProFormSelect, ProFormText, StepsForm } from '@ant-design/pro-form';
 import type { StepDataType } from './data';
+import { RulesTableSearch } from './components/RulesTableSearch';
 import styles from './style.less';
 
 const StepDescriptions: React.FC<{
@@ -73,6 +74,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
     <PageContainer content="Create a transaction monitoring rule with a staright forward 3 step process">
       <Card bordered={false}>
         <StepsForm
+          containerStyle={{ width: '100%' }}
           current={current}
           onCurrentChange={setCurrent}
           submitter={{
@@ -144,6 +146,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 prefix: '￥',
               }}
             />
+            <RulesTableSearch />
           </StepsForm.StepForm>
 
           <StepsForm.StepForm title="Set the transactionss">
