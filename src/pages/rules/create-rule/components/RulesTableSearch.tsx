@@ -1,16 +1,13 @@
-import { PlusOutlined } from '@ant-design/icons';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import { useRef, useState } from 'react';
 import type { TableListItem, TableListPagination } from '../data.d';
-import { rule } from '../service';
+import { rules } from '../service';
 
 export const RulesTableSearch: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<TableListItem>();
   const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false);
   const [selectedRowsState, setSelectedRows] = useState<TableListItem[]>([]);
 
   const actionRef = useRef<ActionType>();
@@ -96,23 +93,14 @@ export const RulesTableSearch: React.FC = () => {
       search={{
         labelWidth: 120,
       }}
-      toolBarRender={() => [
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalVisible(true);
-          }}
-        >
-          <PlusOutlined /> 新建
-        </Button>,
-      ]}
-      request={rule}
+      toolBarRender={() => []}
+      request={rules}
       columns={columns}
       rowSelection={{
         onChange: (_, selectedRows) => {
           setSelectedRows(selectedRows);
         },
+        type: 'radio',
       }}
     />
   );
