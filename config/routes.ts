@@ -45,8 +45,8 @@
   {
     name: 'list.table-list',
     icon: 'table',
-    path: '/threshold',
-    component: './threshold',
+    path: '/transactions',
+    component: './transactions',
   },
   {
     path: '/',

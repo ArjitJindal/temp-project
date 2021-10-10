@@ -146,7 +146,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
             />
           </StepsForm.StepForm>
 
-          <StepsForm.StepForm title="Set the thresholds">
+          <StepsForm.StepForm title="Set the transactionss">
             <div className={styles.result}>
               <Alert
                 closable
