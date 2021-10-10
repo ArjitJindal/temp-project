@@ -150,6 +150,12 @@ export default defineConfig({
           redirect: '/rules/basic',
         },
         {
+          name: 'create-rule',
+          icon: 'smile',
+          path: '/rules/create-rule',
+          component: './rules/create-rule',
+        },
+        {
           name: 'basic',
           icon: 'smile',
           path: '/rules/basic',
