@@ -16,6 +16,9 @@ export type TableListItem = {
   name: string;
   owner: string;
   desc: string;
+  ruleDescription: string;
+  ruleId: string;
+  type: string[];
   callNo: number;
   status: string;
   updatedAt: Date;

@@ -7,6 +7,8 @@ import { parse } from 'url';
 const genList = (current: number, pageSize: number) => {
   const tableListDataSource: TableListItem[] = [];
 
+  const ruleTypes = ['sanctions', 'risk monitoring'];
+
   for (let i = 0; i < pageSize; i += 1) {
     const index = (current - 1) * 10 + i;
     tableListDataSource.push({
@@ -17,14 +19,17 @@ const genList = (current: number, pageSize: number) => {
         'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
         'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
       ][i % 2],
-      name: `TradeCode ${index}`,
+      name: `Rule ${index}`,
       owner: '曲丽丽',
       desc: '这是一段描述',
       callNo: Math.floor(Math.random() * 1000),
-      status: (Math.floor(Math.random() * 10) % 4).toString(),
+      status: (Math.floor(Math.random() * 10) % 3).toString(),
       updatedAt: new Date(),
       createdAt: new Date(),
       progress: Math.ceil(Math.random() * 100),
+      ruleDescription: 'Proof of funds',
+      ruleId: 'R-${index}',
+      type: [ruleTypes[Math.floor(Math.random() * 10) % 2]],
     });
   }
   tableListDataSource.reverse();
@@ -121,7 +126,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
     case 'POST':
       (() => {
         const i = Math.ceil(Math.random() * 10000);
-        const newRule = {
+        const newRule: TableListItem = {
           key: tableListDataSource.length,
           href: 'https://ant.design',
           avatar: [
@@ -136,6 +141,9 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
           updatedAt: new Date(),
           createdAt: new Date(),
           progress: Math.ceil(Math.random() * 100),
+          ruleDescription: 'Proof of funds',
+          ruleId: 'R-1',
+          type: ['Sanctions'],
         };
         tableListDataSource.unshift(newRule);
         return res.json(newRule);

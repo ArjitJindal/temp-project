@@ -1,6 +1,6 @@
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Input } from 'antd';
+import { Input, Tag } from 'antd';
 import { useRef, useState } from 'react';
 import type { TableListItem, TableListPagination } from '../data.d';
 import { rules } from '../service';
@@ -32,44 +32,55 @@ export const RulesTableSearch: React.FC = () => {
     },
     {
       title: 'Type',
-      dataIndex: 'desc',
-      valueType: 'textarea',
+      dataIndex: 'type',
+      key: 'type',
+      render: (types) => (
+        <span>
+          {types!.map((type: string) => {
+            let color = type.length > 5 ? 'geekblue' : 'green';
+            if (type === 'risk monitoring') {
+              color = 'volcano';
+            }
+            return (
+              <Tag color={color} key={type}>
+                {type.toUpperCase()}
+              </Tag>
+            );
+          })}
+        </span>
+      ),
     },
     {
       title: 'Rule ID',
-      dataIndex: 'callNo',
+      dataIndex: 'ruleId',
       sorter: true,
       hideInForm: true,
-      renderText: (val: string) => `${val}万`,
+      renderText: (val: string) => `${val}`,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       hideInForm: true,
+      sorter: true,
       valueEnum: {
         0: {
-          text: '关闭',
+          text: 'Not Setup',
           status: 'Default',
         },
         1: {
-          text: '运行中',
+          text: 'Inactive',
           status: 'Processing',
         },
         2: {
-          text: '已上线',
+          text: 'Active',
           status: 'Success',
-        },
-        3: {
-          text: '异常',
-          status: 'Error',
         },
       },
     },
     {
       title: 'Rule description',
       sorter: true,
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
+      dataIndex: 'ruleDescription',
       renderFormItem: (item, { defaultRender, ...rest }, form) => {
         const status = form.getFieldValue('status');
 
