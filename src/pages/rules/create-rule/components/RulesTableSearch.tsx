@@ -37,9 +37,13 @@ export const RulesTableSearch: React.FC = () => {
       render: (types) => (
         <span>
           {types!.map((type: string) => {
-            let color = type.length > 5 ? 'geekblue' : 'green';
-            if (type === 'risk monitoring') {
+            let color;
+            if (type === 'sanctions') {
               color = 'volcano';
+            } else if (type === 'transaction monitoring') {
+              color = 'geekblue';
+            } else {
+              color = 'green';
             }
             return (
               <Tag color={color} key={type}>

@@ -149,12 +149,12 @@ const StepForm: React.FC<Record<string, any>> = () => {
             <RulesTableSearch />
           </StepsForm.StepForm>
 
-          <StepsForm.StepForm title="Set the transactionss">
+          <StepsForm.StepForm title="Set the threshold">
             <div className={styles.result}>
               <Alert
                 closable
                 showIcon
-                message="确认转账后，资金将直接打入对方账户，无法退回。"
+                message="Thresholds are set to default values, update them to match your risk appetite"
                 style={{ marginBottom: 24 }}
               />
               <StepDescriptions stepData={stepData} bordered />

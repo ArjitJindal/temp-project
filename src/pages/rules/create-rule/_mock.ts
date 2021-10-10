@@ -7,7 +7,45 @@ import { parse } from 'url';
 const genList = (current: number, pageSize: number) => {
   const tableListDataSource: TableListItem[] = [];
 
-  const ruleTypes = ['sanctions', 'risk monitoring'];
+  const rulesAndDescriptions = [
+    {
+      ruleName: 'Proof of Funds Needed for Remittance',
+      ruleDescription:
+        'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
+      ruleId: 'R-1',
+      type: ['transaction monitoring'],
+    },
+    {
+      ruleName: 'High risk country (suspend all)',
+      ruleDescription:
+        'If a user is transferring funds to a High Risk country, flag user & transactions',
+      ruleId: 'R-2',
+      type: ['transaction monitoring'],
+    },
+
+    {
+      ruleName: 'High risk country (suspend all)',
+      ruleDescription:
+        'If a user is transferring funds to a High Risk country, flag user & transactions',
+      ruleId: 'R-3',
+      type: ['aml compliance'],
+    },
+    {
+      ruleName: 'Blacklisted receiver name and country',
+      ruleDescription:
+        'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
+      ruleId: 'R-4',
+      type: ['sanctions'],
+    },
+
+    {
+      ruleName: 'Whitelisted receiver name and country',
+      ruleDescription:
+        'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
+      ruleId: 'R-5',
+      type: ['transaction monitoring'],
+    },
+  ];
 
   for (let i = 0; i < pageSize; i += 1) {
     const index = (current - 1) * 10 + i;
@@ -19,7 +57,7 @@ const genList = (current: number, pageSize: number) => {
         'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
         'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
       ][i % 2],
-      name: `Rule ${index}`,
+      name: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleName,
       owner: '曲丽丽',
       desc: '这是一段描述',
       callNo: Math.floor(Math.random() * 1000),
@@ -27,9 +65,9 @@ const genList = (current: number, pageSize: number) => {
       updatedAt: new Date(),
       createdAt: new Date(),
       progress: Math.ceil(Math.random() * 100),
-      ruleDescription: 'Proof of funds',
-      ruleId: 'R-${index}',
-      type: [ruleTypes[Math.floor(Math.random() * 10) % 2]],
+      ruleDescription: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleDescription,
+      ruleId: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleId,
+      type: rulesAndDescriptions[index % rulesAndDescriptions.length].type,
     });
   }
   tableListDataSource.reverse();
