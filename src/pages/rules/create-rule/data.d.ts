@@ -1,8 +1,4 @@
 export interface StepDataType {
-  payAccount: string;
-  receiverAccount: string;
-  receiverName: string;
-  receiverMode: string;
   ruleDescription: string;
   ruleId: string;
   name: string;

@@ -116,10 +116,6 @@ export const RulesTableSearch: React.FC<{
         onChange: (_, selectedRows) => {
           console.log(selectedRows[0].name);
           setStepData({
-            payAccount: 'ant-design@alipay.com',
-            receiverAccount: 'test@example.com',
-            receiverName: 'Alex',
-            receiverMode: 'alipay',
             name: selectedRows[0].name,
             ruleDescription: selectedRows[0].ruleDescription,
             ruleId: selectedRows[0].ruleId,

@@ -2,9 +2,9 @@ import React, { useRef, useState } from 'react';
 import type { FormInstance } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import ProForm, { ProFormSelect, ProFormText, StepsForm } from '@ant-design/pro-form';
+import { StepsForm } from '@ant-design/pro-form';
 import type { StepDataType } from './data';
-import { RulesTableSearch } from './components/RulesTableSearch';
+import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
 const StepDescriptions: React.FC<{
@@ -48,10 +48,6 @@ const StepResult: React.FC<{
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const [stepData, setStepData] = useState<StepDataType>({
-    payAccount: 'ant-design@alipay.com',
-    receiverAccount: 'test@example.com',
-    receiverName: 'Alex2',
-    receiverMode: 'alipay',
     name: 'Proof of funds',
     ruleId: 'R-1',
     ruleDescription:
@@ -93,6 +89,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 style={{ marginBottom: 24 }}
               />
               <StepDescriptions stepData={stepData} bordered />
+              <ThresholdUpdateTable />
               <Divider style={{ margin: '24px 0' }} />
             </div>
           </StepsForm.StepForm>
