@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import type { FormInstance } from 'antd';
-import { Card, Result, Button, Descriptions, Divider, Alert, Statistic } from 'antd';
+import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import ProForm, { ProFormDigit, ProFormSelect, ProFormText, StepsForm } from '@ant-design/pro-form';
+import ProForm, { ProFormSelect, ProFormText, StepsForm } from '@ant-design/pro-form';
 import type { StepDataType } from './data';
 import { RulesTableSearch } from './components/RulesTableSearch';
 import styles from './style.less';
@@ -11,27 +11,14 @@ const StepDescriptions: React.FC<{
   stepData: StepDataType;
   bordered?: boolean;
 }> = ({ stepData, bordered }) => {
-  const { payAccount, receiverAccount, receiverName, amount } = stepData;
+  const { name, ruleId, ruleDescription } = stepData;
+  console.log(stepData);
+
   return (
     <Descriptions column={1} bordered={bordered}>
-      <Descriptions.Item label="付款账户"> {payAccount}</Descriptions.Item>
-      <Descriptions.Item label="收款账户"> {receiverAccount}</Descriptions.Item>
-      <Descriptions.Item label="收款人姓名"> {receiverName}</Descriptions.Item>
-      <Descriptions.Item label="转账金额">
-        <Statistic
-          value={amount}
-          suffix={
-            <span
-              style={{
-                fontSize: 14,
-              }}
-            >
-              元
-            </span>
-          }
-          precision={2}
-        />
-      </Descriptions.Item>
+      <Descriptions.Item label="Rule Name"> {name}</Descriptions.Item>
+      <Descriptions.Item label="Rule ID"> {ruleId}</Descriptions.Item>
+      <Descriptions.Item label="Rule Description"> {ruleDescription}</Descriptions.Item>
     </Descriptions>
   );
 };
@@ -63,9 +50,12 @@ const StepForm: React.FC<Record<string, any>> = () => {
   const [stepData, setStepData] = useState<StepDataType>({
     payAccount: 'ant-design@alipay.com',
     receiverAccount: 'test@example.com',
-    receiverName: 'Alex',
-    amount: '500',
+    receiverName: 'Alex2',
     receiverMode: 'alipay',
+    name: 'Proof of funds',
+    ruleId: 'R-1',
+    ruleDescription:
+      'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
   });
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
@@ -90,63 +80,8 @@ const StepForm: React.FC<Record<string, any>> = () => {
             formRef={formRef}
             title="Choose Rule"
             initialValues={stepData}
-            onFinish={async (values) => {
-              setStepData(values);
-              return true;
-            }}
           >
-            <ProFormSelect
-              label="付款账户"
-              width="md"
-              name="payAccount"
-              rules={[{ required: true, message: '请选择付款账户' }]}
-              valueEnum={{
-                'ant-design@alipay.com': 'ant-design@alipay.com',
-              }}
-            />
-
-            <ProForm.Group title="收款账户" size={8}>
-              <ProFormSelect
-                name="receiverMode"
-                rules={[{ required: true, message: '请选择付款账户' }]}
-                valueEnum={{
-                  alipay: '支付宝',
-                  bank: '银行账户',
-                }}
-              />
-              <ProFormText
-                name="receiverAccount"
-                rules={[
-                  { required: true, message: '请输入收款人账户' },
-                  { type: 'email', message: '账户名应为邮箱格式' },
-                ]}
-                placeholder="test@example.com"
-              />
-            </ProForm.Group>
-            <ProFormText
-              label="收款人姓名"
-              width="md"
-              name="receiverName"
-              rules={[{ required: true, message: '请输入收款人姓名' }]}
-              placeholder="请输入收款人姓名"
-            />
-            <ProFormDigit
-              label="转账金额"
-              name="amount"
-              width="md"
-              rules={[
-                { required: true, message: '请输入转账金额' },
-                {
-                  pattern: /^(\d+)((?:\.\d+)?)$/,
-                  message: '请输入合法金额数字',
-                },
-              ]}
-              placeholder="请输入金额"
-              fieldProps={{
-                prefix: '￥',
-              }}
-            />
-            <RulesTableSearch />
+            <RulesTableSearch setStepData={setStepData} />
           </StepsForm.StepForm>
 
           <StepsForm.StepForm title="Set the threshold">
@@ -159,13 +94,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
               />
               <StepDescriptions stepData={stepData} bordered />
               <Divider style={{ margin: '24px 0' }} />
-              <ProFormText.Password
-                label="支付密码"
-                width="md"
-                name="password"
-                required={false}
-                rules={[{ required: true, message: '需要支付密码才能进行支付' }]}
-              />
             </div>
           </StepsForm.StepForm>
           <StepsForm.StepForm title="Activate">
@@ -181,7 +109,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
         </StepsForm>
         <Divider style={{ margin: '40px 0 24px' }} />
         <div className={styles.desc}>
-          <h3>说明</h3>
+          <h3>Flagright Rules library</h3>
           <h4>转账到支付宝账户</h4>
           <p>
             如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。

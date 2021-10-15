@@ -1,14 +1,15 @@
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Input, Tag } from 'antd';
-import { useRef, useState } from 'react';
-import type { TableListItem, TableListPagination } from '../data.d';
+import { Dispatch, SetStateAction, useRef, useState } from 'react';
+import type { StepDataType, TableListItem, TableListPagination } from '../data.d';
 import { rules } from '../service';
 
-export const RulesTableSearch: React.FC = () => {
+export const RulesTableSearch: React.FC<{
+  setStepData: Dispatch<SetStateAction<StepDataType>>;
+}> = ({ setStepData }) => {
   const [currentRow, setCurrentRow] = useState<TableListItem>();
   const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [selectedRowsState, setSelectedRows] = useState<TableListItem[]>([]);
 
   const actionRef = useRef<ActionType>();
 
@@ -113,7 +114,16 @@ export const RulesTableSearch: React.FC = () => {
       columns={columns}
       rowSelection={{
         onChange: (_, selectedRows) => {
-          setSelectedRows(selectedRows);
+          console.log(selectedRows[0].name);
+          setStepData({
+            payAccount: 'ant-design@alipay.com',
+            receiverAccount: 'test@example.com',
+            receiverName: 'Alex',
+            receiverMode: 'alipay',
+            name: selectedRows[0].name,
+            ruleDescription: selectedRows[0].ruleDescription,
+            ruleId: selectedRows[0].ruleId,
+          });
         },
         type: 'radio',
       }}

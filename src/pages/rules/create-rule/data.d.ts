@@ -2,8 +2,10 @@ export interface StepDataType {
   payAccount: string;
   receiverAccount: string;
   receiverName: string;
-  amount: string;
   receiverMode: string;
+  ruleDescription: string;
+  ruleId: string;
+  name: string;
 }
 
 export type CurrentTypes = 'base' | 'confirm' | 'result';
@@ -12,18 +14,11 @@ export type TableListItem = {
   key: number;
   disabled?: boolean;
   href: string;
-  avatar: string;
   name: string;
-  owner: string;
-  desc: string;
   ruleDescription: string;
   ruleId: string;
   type: string[];
-  callNo: number;
   status: string;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
 };
 
 export type TableListPagination = {
