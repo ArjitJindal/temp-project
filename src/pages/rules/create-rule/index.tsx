@@ -1,11 +1,17 @@
 import React, { useRef, useState } from 'react';
-import type { FormInstance } from 'antd';
+import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type { StepDataType } from './data';
+import type { StepDataType, RuleAction } from './data';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
+
+const ruleActionOptions = [
+  { label: 'Flag', value: 'flag' },
+  { label: 'Block', value: 'block' },
+  { label: 'Allow', value: 'allow' },
+];
 
 const StepDescriptions: React.FC<{
   stepData: StepDataType;
@@ -47,6 +53,8 @@ const StepResult: React.FC<{
 };
 
 const StepForm: React.FC<Record<string, any>> = () => {
+  const [ruleAction, setRuleAction] = useState<RuleAction>('flag');
+
   const [stepData, setStepData] = useState<StepDataType>({
     name: 'Proof of funds',
     ruleId: 'R-1',
@@ -81,17 +89,33 @@ const StepForm: React.FC<Record<string, any>> = () => {
           </StepsForm.StepForm>
 
           <StepsForm.StepForm title="Set the threshold">
-            <div className={styles.result}>
-              <Alert
-                closable
-                showIcon
-                message="Thresholds are set to default values, update them to match your risk appetite"
-                style={{ marginBottom: 24 }}
-              />
-              <StepDescriptions stepData={stepData} bordered />
-              <ThresholdUpdateTable />
-              <Divider style={{ margin: '24px 0' }} />
-            </div>
+            <>
+              <div className={styles.result}>
+                <Alert
+                  closable
+                  showIcon
+                  message="Thresholds are set to default values, update them to match your risk appetite"
+                  style={{ marginBottom: 24 }}
+                />
+                <StepDescriptions stepData={stepData} bordered />
+              </div>
+              <div className={styles.thresholdUpdateWrapper}>
+                <Divider style={{ margin: '24px 0' }} />
+                <ThresholdUpdateTable />
+                <Divider style={{ margin: '24px 0' }} />
+                <h3>Rule Action: </h3>
+                <Radio.Group
+                  options={ruleActionOptions}
+                  onChange={(e) => {
+                    setRuleAction(e.target.value);
+                  }}
+                  value={ruleAction}
+                  optionType="button"
+                  buttonStyle="solid"
+                />
+                <Divider style={{ margin: '24px 0' }} />
+              </div>
+            </>
           </StepsForm.StepForm>
           <StepsForm.StepForm title="Activate">
             <StepResult
@@ -107,13 +131,11 @@ const StepForm: React.FC<Record<string, any>> = () => {
         <Divider style={{ margin: '40px 0 24px' }} />
         <div className={styles.desc}>
           <h3>Flagright Rules library</h3>
-          <h4>转账到支付宝账户</h4>
+          <p>Choose exiting rules, update thresholds if needed</p>
+          <h4>Can't find a rule you are looking for?</h4>
           <p>
-            如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。
-          </p>
-          <h4>转账到银行卡</h4>
-          <p>
-            如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。如果需要，这里可以放一些关于产品的常见问题说明。
+            Use our 'Request a rule' form and we'll build a new rule template and add it to the
+            library for you.
           </p>
         </div>
       </Card>

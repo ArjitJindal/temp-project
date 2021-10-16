@@ -4,6 +4,8 @@ export interface StepDataType {
   name: string;
 }
 
+export type RuleAction = 'flag' | 'block' | 'allow';
+
 export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
 
 export type CurrentTypes = 'base' | 'confirm' | 'result';

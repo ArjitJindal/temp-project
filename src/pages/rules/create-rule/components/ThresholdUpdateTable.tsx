@@ -33,6 +33,7 @@ export const ThresholdUpdateTable: React.FC = () => {
       title: 'Parameter',
       dataIndex: 'title',
       width: '30%',
+      editable: false,
       formItemProps: {
         rules: [
           {
