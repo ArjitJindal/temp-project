@@ -17,7 +17,7 @@ const StepDescriptions: React.FC<{
   return (
     <Descriptions column={1} bordered={bordered}>
       <Descriptions.Item label="Rule Name"> {name}</Descriptions.Item>
-      <Descriptions.Item label="Rule ID"> {ruleId}</Descriptions.Item>
+      <Descriptions.Item label="Rule Template ID"> {ruleId}</Descriptions.Item>
       <Descriptions.Item label="Rule Description"> {ruleDescription}</Descriptions.Item>
     </Descriptions>
   );

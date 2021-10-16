@@ -15,7 +15,7 @@ type DataSourceType = {
 const defaultData: DataSourceType[] = new Array(5).fill(1).map((_, index) => {
   return {
     id: (Date.now() + index).toString(),
-    title: `活动名称${index}`,
+    title: `Parameter ${index}`,
     decs: '这个活动真好玩',
     state: 'open',
     created_at: '2020-05-26T09:42:56Z',
@@ -30,7 +30,7 @@ export const ThresholdUpdateTable: React.FC = () => {
 
   const columns: ProColumns<DataSourceType>[] = [
     {
-      title: '活动名称',
+      title: 'Parameter',
       dataIndex: 'title',
       width: '30%',
       formItemProps: {
@@ -54,32 +54,20 @@ export const ThresholdUpdateTable: React.FC = () => {
       },
     },
     {
-      title: '状态',
+      title: 'Value',
       key: 'state',
       dataIndex: 'state',
       valueType: 'select',
       valueEnum: {
-        all: { text: '全部', status: 'Default' },
+        all: { text: 'All', status: 'Default' },
         open: {
-          text: '未解决',
+          text: 'Error',
           status: 'Error',
         },
         closed: {
-          text: '已解决',
+          text: 'Success',
           status: 'Success',
         },
-      },
-    },
-    {
-      title: '描述',
-      dataIndex: 'decs',
-    },
-    {
-      title: '操作',
-      valueType: 'option',
-      width: 250,
-      render: () => {
-        return null;
       },
     },
   ];
@@ -87,33 +75,27 @@ export const ThresholdUpdateTable: React.FC = () => {
   return (
     <>
       <EditableProTable<DataSourceType>
-        headerTitle="可编辑表格"
+        headerTitle="Threshold update table"
         columns={columns}
         rowKey="id"
         value={dataSource}
         onChange={setDataSource}
-        recordCreatorProps={{
-          newRecordType: 'dataSource',
-          record: () => ({
-            id: Date.now(),
-          }),
-        }}
         toolBarRender={() => {
           return [
             <Button
               type="primary"
               key="save"
               onClick={() => {
-                // dataSource 就是当前数据，可以调用 api 将其保存
+                // dataSource - you can call API to save it
                 console.log(dataSource);
               }}
             >
-              保存数据
+              Save Data
             </Button>,
           ];
         }}
         editable={{
-          type: 'multiple',
+          type: 'single',
           editableKeys,
           actionRender: (row, config, defaultDoms) => {
             return [defaultDoms.delete];
@@ -123,6 +105,7 @@ export const ThresholdUpdateTable: React.FC = () => {
           },
           onChange: setEditableRowKeys,
         }}
+        recordCreatorProps={false}
       />
     </>
   );

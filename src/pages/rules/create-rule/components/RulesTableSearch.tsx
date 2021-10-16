@@ -56,7 +56,7 @@ export const RulesTableSearch: React.FC<{
       ),
     },
     {
-      title: 'Rule ID',
+      title: 'Rule Template ID',
       dataIndex: 'ruleId',
       sorter: true,
       hideInForm: true,

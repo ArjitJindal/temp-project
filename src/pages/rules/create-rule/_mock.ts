@@ -22,7 +22,6 @@ const genList = (current: number, pageSize: number) => {
       ruleId: 'R-2',
       type: ['transaction monitoring'],
     },
-
     {
       ruleName: 'High risk country (suspend all)',
       ruleDescription:
@@ -37,7 +36,6 @@ const genList = (current: number, pageSize: number) => {
       ruleId: 'R-4',
       type: ['sanctions'],
     },
-
     {
       ruleName: 'Whitelisted receiver name and country',
       ruleDescription:
@@ -53,18 +51,8 @@ const genList = (current: number, pageSize: number) => {
       key: index,
       disabled: i % 6 === 0,
       href: 'https://ant.design',
-      avatar: [
-        'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-        'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
-      ][i % 2],
       name: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleName,
-      owner: '曲丽丽',
-      desc: '这是一段描述',
-      callNo: Math.floor(Math.random() * 1000),
       status: (Math.floor(Math.random() * 10) % 3).toString(),
-      updatedAt: new Date(),
-      createdAt: new Date(),
-      progress: Math.ceil(Math.random() * 100),
       ruleDescription: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleDescription,
       ruleId: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleId,
       type: rulesAndDescriptions[index % rulesAndDescriptions.length].type,
@@ -163,22 +151,11 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
       break;
     case 'POST':
       (() => {
-        const i = Math.ceil(Math.random() * 10000);
         const newRule: TableListItem = {
           key: tableListDataSource.length,
           href: 'https://ant.design',
-          avatar: [
-            'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-            'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
-          ][i % 2],
           name,
-          owner: '曲丽丽',
-          desc,
-          callNo: Math.floor(Math.random() * 1000),
           status: (Math.floor(Math.random() * 10) % 2).toString(),
-          updatedAt: new Date(),
-          createdAt: new Date(),
-          progress: Math.ceil(Math.random() * 100),
           ruleDescription: 'Proof of funds',
           ruleId: 'R-1',
           type: ['Sanctions'],

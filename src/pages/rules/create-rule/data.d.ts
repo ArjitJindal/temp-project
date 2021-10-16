@@ -4,6 +4,8 @@ export interface StepDataType {
   name: string;
 }
 
+export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
+
 export type CurrentTypes = 'base' | 'confirm' | 'result';
 
 export type TableListItem = {
@@ -15,6 +17,8 @@ export type TableListItem = {
   ruleId: string;
   type: string[];
   status: string;
+  thresholdDataType: Record<string, ThresholdAllowedDataTypes>;
+  thresholdDefaultVal: Record<string, any>;
 };
 
 export type TableListPagination = {
