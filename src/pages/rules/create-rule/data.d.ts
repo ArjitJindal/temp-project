@@ -2,6 +2,7 @@ export interface StepDataType {
   ruleDescription: string;
   ruleId: string;
   name: string;
+  ruleAction: RuleAction;
 }
 
 export type RuleAction = 'flag' | 'block' | 'allow';
@@ -25,7 +26,7 @@ export type TableListItem = {
   ruleId: string;
   status: string;
   thresholdData: ThresholdDataType[];
-  defaultAction: RuleAction;
+  defaultRuleAction: RuleAction;
   isActionEditable: boolean;
 };
 

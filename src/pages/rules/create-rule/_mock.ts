@@ -18,7 +18,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
       ruleId: 'R-1',
-      defaultAction: 'flag',
+      defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
         {
@@ -33,7 +33,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-2',
-      defaultAction: 'flag',
+      defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
         {
@@ -48,7 +48,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-3',
-      defaultAction: 'flag',
+      defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
         {
@@ -63,7 +63,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-4',
-      defaultAction: 'flag',
+      defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
         {
@@ -78,7 +78,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
       ruleId: 'R-5',
-      defaultAction: 'allow',
+      defaultRuleAction: 'allow',
       isActionEditable: false,
       thresholdData: [
         {
@@ -102,7 +102,7 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription: rulesAndDescriptions[index].ruleDescription,
       ruleId: rulesAndDescriptions[index].ruleId,
       thresholdData: rulesAndDescriptions[index].thresholdData,
-      defaultAction: rulesAndDescriptions[index].defaultAction as RuleAction,
+      defaultRuleAction: rulesAndDescriptions[index].defaultRuleAction as RuleAction,
       isActionEditable: false,
     });
   }
@@ -206,7 +206,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
           status: (Math.floor(Math.random() * 10) % 2).toString(),
           ruleDescription: 'Proof of funds',
           ruleId: 'R-1',
-          defaultAction: 'flag',
+          defaultRuleAction: 'flag',
           isActionEditable: true,
           thresholdData: [
             {

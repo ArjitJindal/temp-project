@@ -60,6 +60,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
     ruleId: 'R-1',
     ruleDescription:
       'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
+    ruleAction: 'allow',
   });
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
@@ -111,7 +112,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
                     onChange={(e) => {
                       setRuleAction(e.target.value);
                     }}
-                    value={ruleAction}
+                    value={stepData.ruleAction}
                     optionType="button"
                     buttonStyle="solid"
                     style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}

@@ -40,13 +40,13 @@ export const RulesTableSearch: React.FC<{
     },
     {
       title: 'Action',
-      dataIndex: 'defaultAction',
-      key: 'defaultAction',
-      render: (defaultAction) => {
+      dataIndex: 'defaultRuleAction',
+      key: 'defaultRuleAction',
+      render: (defaultRuleAction) => {
         return (
           <span>
-            <Tag color={actionToColor[defaultAction as string]}>
-              {(defaultAction as string).toUpperCase()}
+            <Tag color={actionToColor[defaultRuleAction as string]}>
+              {(defaultRuleAction as string).toUpperCase()}
             </Tag>
           </span>
         );
@@ -116,6 +116,7 @@ export const RulesTableSearch: React.FC<{
             name: selectedRows[0].name,
             ruleDescription: selectedRows[0].ruleDescription,
             ruleId: selectedRows[0].ruleId,
+            ruleAction: selectedRows[0].defaultRuleAction,
           });
         },
         type: 'radio',
