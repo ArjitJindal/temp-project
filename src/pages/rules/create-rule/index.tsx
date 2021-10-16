@@ -100,20 +100,25 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 <StepDescriptions stepData={stepData} bordered />
               </div>
               <div className={styles.thresholdUpdateWrapper}>
-                <Divider style={{ margin: '24px 0' }} />
+                <Divider style={{ margin: '18px 0' }} />
                 <ThresholdUpdateTable />
-                <Divider style={{ margin: '24px 0' }} />
-                <h3>Rule Action: </h3>
-                <Radio.Group
-                  options={ruleActionOptions}
-                  onChange={(e) => {
-                    setRuleAction(e.target.value);
-                  }}
-                  value={ruleAction}
-                  optionType="button"
-                  buttonStyle="solid"
-                />
-                <Divider style={{ margin: '24px 0' }} />
+                <Divider style={{ margin: '15px 0' }} />
+                <div className={styles.ruleActionSelector}>
+                  <h3>Rule Action: </h3>
+
+                  <Radio.Group
+                    options={ruleActionOptions}
+                    onChange={(e) => {
+                      setRuleAction(e.target.value);
+                    }}
+                    value={ruleAction}
+                    optionType="button"
+                    buttonStyle="solid"
+                    style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
+                    size="large"
+                  />
+                </div>
+                <Divider style={{ margin: '18px 0' }} />
               </div>
             </>
           </StepsForm.StepForm>
