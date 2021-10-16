@@ -1,6 +1,11 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type { TableListItem, TableListParams } from './data.d';
+import type {
+  RuleAction,
+  TableListItem,
+  TableListParams,
+  ThresholdAllowedDataTypes,
+} from './data.d';
 import { parse } from 'url';
 
 // mock tableListDataSource
@@ -13,49 +18,92 @@ const genList = (current: number, pageSize: number) => {
       ruleDescription:
         'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
       ruleId: 'R-1',
-      type: ['transaction monitoring'],
+      defaultAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'countryCode',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'AF',
+        },
+      ],
     },
     {
       ruleName: 'High risk country (suspend all)',
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-2',
-      type: ['transaction monitoring'],
+      defaultAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'countryCode',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'AF',
+        },
+      ],
     },
     {
       ruleName: 'High risk country (suspend all)',
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-3',
-      type: ['aml compliance'],
+      defaultAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'countryCode',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'AF',
+        },
+      ],
     },
     {
       ruleName: 'Blacklisted receiver name and country',
       ruleDescription:
         'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-4',
-      type: ['sanctions'],
+      defaultAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'countryCode',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'AF',
+        },
+      ],
     },
     {
       ruleName: 'Whitelisted receiver name and country',
       ruleDescription:
         'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
       ruleId: 'R-5',
-      type: ['transaction monitoring'],
+      defaultAction: 'allow',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'countryCode',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'AF',
+        },
+      ],
     },
   ];
 
   for (let i = 0; i < pageSize; i += 1) {
-    const index = (current - 1) * 10 + i;
+    const idx = (current - 1) * 10 + i;
+    const index = ((current - 1) * 10 + i) % rulesAndDescriptions.length;
     tableListDataSource.push({
-      key: index,
+      key: idx,
       disabled: i % 6 === 0,
       href: 'https://ant.design',
-      name: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleName,
+      name: rulesAndDescriptions[index].ruleName,
       status: (Math.floor(Math.random() * 10) % 3).toString(),
-      ruleDescription: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleDescription,
-      ruleId: rulesAndDescriptions[index % rulesAndDescriptions.length].ruleId,
-      type: rulesAndDescriptions[index % rulesAndDescriptions.length].type,
+      ruleDescription: rulesAndDescriptions[index].ruleDescription,
+      ruleId: rulesAndDescriptions[index].ruleId,
+      thresholdData: rulesAndDescriptions[index].thresholdData,
+      defaultAction: rulesAndDescriptions[index].defaultAction as RuleAction,
+      isActionEditable: false,
     });
   }
   tableListDataSource.reverse();
@@ -158,7 +206,15 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
           status: (Math.floor(Math.random() * 10) % 2).toString(),
           ruleDescription: 'Proof of funds',
           ruleId: 'R-1',
-          type: ['Sanctions'],
+          defaultAction: 'flag',
+          isActionEditable: true,
+          thresholdData: [
+            {
+              parameter: 'countryCode',
+              type: 'string' as ThresholdAllowedDataTypes,
+              defaultValue: 'AF',
+            },
+          ],
         };
         tableListDataSource.unshift(newRule);
         return res.json(newRule);

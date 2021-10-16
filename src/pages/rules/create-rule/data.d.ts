@@ -8,6 +8,12 @@ export type RuleAction = 'flag' | 'block' | 'allow';
 
 export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
 
+export type ThresholdDataType = {
+  parameter: string;
+  type: ThresholdAllowedDataTypes;
+  defaultValue: string;
+};
+
 export type CurrentTypes = 'base' | 'confirm' | 'result';
 
 export type TableListItem = {
@@ -17,10 +23,10 @@ export type TableListItem = {
   name: string;
   ruleDescription: string;
   ruleId: string;
-  type: string[];
   status: string;
-  thresholdDataType: Record<string, ThresholdAllowedDataTypes>;
-  thresholdDefaultVal: Record<string, any>;
+  thresholdData: ThresholdDataType[];
+  defaultAction: RuleAction;
+  isActionEditable: boolean;
 };
 
 export type TableListPagination = {

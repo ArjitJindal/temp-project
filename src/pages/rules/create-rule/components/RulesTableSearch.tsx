@@ -2,7 +2,7 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Input, Tag } from 'antd';
 import { Dispatch, SetStateAction, useRef, useState } from 'react';
-import type { StepDataType, TableListItem, TableListPagination } from '../data.d';
+import { StepDataType, TableListItem, TableListPagination } from '../data.d';
 import { rules } from '../service';
 
 export const RulesTableSearch: React.FC<{
@@ -10,6 +10,13 @@ export const RulesTableSearch: React.FC<{
 }> = ({ setStepData }) => {
   const [currentRow, setCurrentRow] = useState<TableListItem>();
   const [showDetail, setShowDetail] = useState<boolean>(false);
+
+  //type this better lol
+  const actionToColor = {
+    flag: 'orange',
+    block: 'volcano',
+    allow: 'green',
+  };
 
   const actionRef = useRef<ActionType>();
 
@@ -32,28 +39,18 @@ export const RulesTableSearch: React.FC<{
       },
     },
     {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (types) => (
-        <span>
-          {types!.map((type: string) => {
-            let color;
-            if (type === 'sanctions') {
-              color = 'volcano';
-            } else if (type === 'transaction monitoring') {
-              color = 'geekblue';
-            } else {
-              color = 'green';
-            }
-            return (
-              <Tag color={color} key={type}>
-                {type.toUpperCase()}
-              </Tag>
-            );
-          })}
-        </span>
-      ),
+      title: 'Action',
+      dataIndex: 'defaultAction',
+      key: 'defaultAction',
+      render: (defaultAction) => {
+        return (
+          <span>
+            <Tag color={actionToColor[defaultAction as string]}>
+              {(defaultAction as string).toUpperCase()}
+            </Tag>
+          </span>
+        );
+      },
     },
     {
       title: 'Rule Template ID',
