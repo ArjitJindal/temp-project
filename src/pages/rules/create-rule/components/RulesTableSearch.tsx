@@ -2,12 +2,13 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Input, Tag } from 'antd';
 import { Dispatch, SetStateAction, useRef, useState } from 'react';
-import { StepDataType, TableListItem, TableListPagination } from '../data.d';
+import { RuleAction, StepDataType, TableListItem, TableListPagination } from '../data.d';
 import { rules } from '../service';
 
 export const RulesTableSearch: React.FC<{
   setStepData: Dispatch<SetStateAction<StepDataType>>;
-}> = ({ setStepData }) => {
+  setRuleAction: Dispatch<SetStateAction<RuleAction>>;
+}> = ({ setStepData, setRuleAction }) => {
   const [currentRow, setCurrentRow] = useState<TableListItem>();
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
@@ -111,13 +112,13 @@ export const RulesTableSearch: React.FC<{
       columns={columns}
       rowSelection={{
         onChange: (_, selectedRows) => {
-          console.log(selectedRows[0].name);
           setStepData({
             name: selectedRows[0].name,
             ruleDescription: selectedRows[0].ruleDescription,
             ruleId: selectedRows[0].ruleId,
             ruleAction: selectedRows[0].defaultRuleAction,
           });
+          setRuleAction(selectedRows[0].defaultRuleAction);
         },
         type: 'radio',
       }}

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
 import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
@@ -18,7 +18,6 @@ const StepDescriptions: React.FC<{
   bordered?: boolean;
 }> = ({ stepData, bordered }) => {
   const { name, ruleId, ruleDescription } = stepData;
-  console.log(stepData);
 
   return (
     <Descriptions column={1} bordered={bordered}>
@@ -26,6 +25,34 @@ const StepDescriptions: React.FC<{
       <Descriptions.Item label="Rule Template ID"> {ruleId}</Descriptions.Item>
       <Descriptions.Item label="Rule Description"> {ruleDescription}</Descriptions.Item>
     </Descriptions>
+  );
+};
+
+const StepRuleAction: React.FC<{
+  stepData: StepDataType;
+  ruleAction: RuleAction;
+  setRuleAction: Dispatch<SetStateAction<RuleAction>>;
+  bordered?: boolean;
+}> = ({ stepData, ruleAction, setRuleAction, bordered }) => {
+  console.log(ruleAction);
+  console.log('STEP RULE ACTION');
+  return (
+    <>
+      <h3>Rule Action: </h3>
+
+      <Radio.Group
+        options={ruleActionOptions}
+        onChange={(e) => {
+          setRuleAction(e.target.value);
+        }}
+        value={ruleAction}
+        defaultValue={stepData.ruleAction}
+        optionType="button"
+        buttonStyle="solid"
+        style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
+        size="large"
+      />
+    </>
   );
 };
 
@@ -53,15 +80,15 @@ const StepResult: React.FC<{
 };
 
 const StepForm: React.FC<Record<string, any>> = () => {
-  const [ruleAction, setRuleAction] = useState<RuleAction>('flag');
-
   const [stepData, setStepData] = useState<StepDataType>({
     name: 'Proof of funds',
     ruleId: 'R-1',
     ruleDescription:
       'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
-    ruleAction: 'allow',
+    ruleAction: 'flag',
   });
+  const [ruleAction, setRuleAction] = useState<RuleAction>(stepData.ruleAction);
+
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
 
@@ -86,7 +113,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
             title="Choose Rule"
             initialValues={stepData}
           >
-            <RulesTableSearch setStepData={setStepData} />
+            <RulesTableSearch setStepData={setStepData} setRuleAction={setRuleAction} />
           </StepsForm.StepForm>
 
           <StepsForm.StepForm title="Set the threshold">
@@ -105,18 +132,10 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 <ThresholdUpdateTable />
                 <Divider style={{ margin: '15px 0' }} />
                 <div className={styles.ruleActionSelector}>
-                  <h3>Rule Action: </h3>
-
-                  <Radio.Group
-                    options={ruleActionOptions}
-                    onChange={(e) => {
-                      setRuleAction(e.target.value);
-                    }}
-                    value={stepData.ruleAction}
-                    optionType="button"
-                    buttonStyle="solid"
-                    style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
-                    size="large"
+                  <StepRuleAction
+                    stepData={stepData}
+                    ruleAction={ruleAction}
+                    setRuleAction={setRuleAction}
                   />
                 </div>
                 <Divider style={{ margin: '18px 0' }} />
