@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button, DatePicker, Space, Table } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
@@ -37,27 +36,30 @@ const creators = ['付小小', '曲丽丽', '林东东', '陈帅帅', '兼某某
 for (let i = 0; i < 5; i += 1) {
   tableListDataSource.push({
     key: i,
-    name: 'AppName',
+    name: `Rule ${i + 1}`,
     containers: Math.floor(Math.random() * 20),
     callNumber: Math.floor(Math.random() * 2000),
     progress: Math.ceil(Math.random() * 100) + 1,
     creator: creators[Math.floor(Math.random() * creators.length)],
     status: valueEnum[Math.floor(Math.random() * 10) % 4],
     createdAt: Date.now() - Math.floor(Math.random() * 100000),
-    memo: i % 2 === 1 ? '很长很长很长很长很长很长很长的文字要展示但是要留下尾巴' : '简短备注文案',
+    memo:
+      i % 2 === 1
+        ? 'If this rule is hit, flag the user and create SAR report.'
+        : 'Black list the user if this rule is hit',
   });
 }
 
 const columns: ProColumns<TableListItem>[] = [
   {
-    title: '应用名称',
+    title: 'Rule Name',
     width: 120,
     dataIndex: 'name',
     fixed: 'left',
     render: (_) => <a>{_}</a>,
   },
   {
-    title: '容器数量',
+    title: 'Rule ID',
     width: 120,
     dataIndex: 'containers',
     align: 'right',
@@ -65,13 +67,14 @@ const columns: ProColumns<TableListItem>[] = [
     sorter: (a, b) => a.containers - b.containers,
   },
   {
-    title: '调用次数',
+    title: 'Hits this Month',
     width: 120,
     align: 'right',
     dataIndex: 'callNumber',
   },
   {
-    title: '执行进度',
+    title: 'Block/Flag Rate',
+    width: 240,
     dataIndex: 'progress',
     valueType: (item) => ({
       type: 'progress',
@@ -79,21 +82,21 @@ const columns: ProColumns<TableListItem>[] = [
     }),
   },
   {
-    title: '创建者',
+    title: 'Action',
     width: 120,
     dataIndex: 'creator',
     valueType: 'select',
     valueEnum: {
-      all: { text: '全部' },
-      付小小: { text: '付小小' },
-      曲丽丽: { text: '曲丽丽' },
-      林东东: { text: '林东东' },
-      陈帅帅: { text: '陈帅帅' },
-      兼某某: { text: '兼某某' },
+      all: { text: 'ALL' },
+      付小小: { text: 'Allow' },
+      曲丽丽: { text: 'Block' },
+      林东东: { text: 'Flag' },
+      陈帅帅: { text: 'Flag' },
+      兼某某: { text: 'Block' },
     },
   },
   {
-    title: '创建时间',
+    title: 'Activated At',
     width: 140,
     key: 'since',
     dataIndex: 'createdAt',
@@ -104,19 +107,19 @@ const columns: ProColumns<TableListItem>[] = [
     },
   },
   {
-    title: '备注',
+    title: 'Custom details',
     dataIndex: 'memo',
     ellipsis: true,
     copyable: true,
     search: false,
   },
   {
-    title: '操作',
+    title: 'Threshold',
     width: 80,
     key: 'option',
     valueType: 'option',
     fixed: 'right',
-    render: () => [<a key="link">链路</a>],
+    render: () => [<a key="link">u wot m8</a>],
   },
 ];
 
@@ -160,7 +163,7 @@ export default () => {
       options={false}
       search={false}
       rowKey="key"
-      headerTitle="批量操作"
+      headerTitle="Active Rules"
       toolBarRender={() => [<Button key="show">查看日志</Button>]}
     />
   );
