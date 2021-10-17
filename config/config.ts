@@ -156,16 +156,16 @@ export default defineConfig({
           component: './rules/create-rule',
         },
         {
+          name: 'active-rules',
+          icon: 'smile',
+          path: '/rules/active-rules',
+          component: './rules/active-rules',
+        },
+        {
           name: 'basic',
           icon: 'smile',
           path: '/rules/basic',
           component: './rules/basic',
-        },
-        {
-          name: 'advanced',
-          icon: 'smile',
-          path: '/rules/advanced',
-          component: './rules/advanced',
         },
       ],
     },
