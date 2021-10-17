@@ -2,36 +2,37 @@ import React, { useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
 import { Button } from 'antd';
+import { ThresholdUpdateDataSourceType, ThresholdDataType } from '../data';
 
-type DataSourceType = {
-  id: React.Key;
-  title?: string;
-  decs?: string;
-  state?: string;
-  created_at?: string;
-  children?: DataSourceType[];
+const getProcessedThresholdData = (
+  thresholdData: ThresholdDataType[],
+): ThresholdUpdateDataSourceType[] => {
+  console.log('Threshold DATA');
+  console.log(thresholdData);
+  return thresholdData.map((threshold, index) => {
+    return {
+      id: (Date.now() + index).toString(),
+      parameter: threshold.parameter,
+      defaultValue: threshold.defaultValue,
+    };
+  });
 };
 
-const defaultData: DataSourceType[] = new Array(5).fill(1).map((_, index) => {
-  return {
-    id: (Date.now() + index).toString(),
-    title: `Parameter ${index}`,
-    decs: '这个活动真好玩',
-    state: 'open',
-    created_at: '2020-05-26T09:42:56Z',
-  };
-});
-
-export const ThresholdUpdateTable: React.FC = () => {
+export const ThresholdUpdateTable: React.FC<{ thresholdData: ThresholdDataType[] }> = ({
+  thresholdData,
+}) => {
+  const processedData = getProcessedThresholdData(thresholdData);
   const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
-    defaultData.map((item) => item.id),
+    processedData.map((item) => item.id),
   );
-  const [dataSource, setDataSource] = useState<DataSourceType[]>(() => defaultData);
+  const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
+    () => processedData,
+  );
 
-  const columns: ProColumns<DataSourceType>[] = [
+  const columns: ProColumns<ThresholdUpdateDataSourceType>[] = [
     {
       title: 'Parameter',
-      dataIndex: 'title',
+      dataIndex: 'parameter',
       width: '30%',
       editable: false,
       formItemProps: {
@@ -56,26 +57,14 @@ export const ThresholdUpdateTable: React.FC = () => {
     },
     {
       title: 'Value',
-      key: 'state',
-      dataIndex: 'state',
-      valueType: 'select',
-      valueEnum: {
-        all: { text: 'All', status: 'Default' },
-        open: {
-          text: 'Error',
-          status: 'Error',
-        },
-        closed: {
-          text: 'Success',
-          status: 'Success',
-        },
-      },
+      key: 'defaultValue',
+      dataIndex: 'defaultValue',
     },
   ];
 
   return (
     <>
-      <EditableProTable<DataSourceType>
+      <EditableProTable<ThresholdUpdateDataSourceType>
         headerTitle="Threshold update table"
         columns={columns}
         rowKey="id"

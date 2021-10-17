@@ -3,7 +3,12 @@ import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type { StepDataType, RuleAction } from './data';
+import type {
+  StepDataType,
+  RuleAction,
+  ThresholdAllowedDataTypes,
+  ThresholdDataType,
+} from './data';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
@@ -34,8 +39,6 @@ const StepRuleAction: React.FC<{
   setRuleAction: Dispatch<SetStateAction<RuleAction>>;
   bordered?: boolean;
 }> = ({ stepData, ruleAction, setRuleAction, bordered }) => {
-  console.log(ruleAction);
-  console.log('STEP RULE ACTION');
   return (
     <>
       <h3>Rule Action: </h3>
@@ -80,14 +83,25 @@ const StepResult: React.FC<{
 };
 
 const StepForm: React.FC<Record<string, any>> = () => {
+  // lol is this even the right way of doing this. I bet not. Fix it later
   const [stepData, setStepData] = useState<StepDataType>({
     name: 'Proof of funds',
     ruleId: 'R-1',
     ruleDescription:
       'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
     ruleAction: 'flag',
+    thresholdData: [
+      {
+        parameter: 'test',
+        type: 'string' as ThresholdAllowedDataTypes,
+        defaultValue: 'test',
+      },
+    ],
   });
+
   const [ruleAction, setRuleAction] = useState<RuleAction>(stepData.ruleAction);
+
+  const [thresholdData, setThresholdData] = useState<ThresholdDataType[]>(stepData.thresholdData);
 
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
@@ -113,7 +127,11 @@ const StepForm: React.FC<Record<string, any>> = () => {
             title="Choose Rule"
             initialValues={stepData}
           >
-            <RulesTableSearch setStepData={setStepData} setRuleAction={setRuleAction} />
+            <RulesTableSearch
+              setStepData={setStepData}
+              setRuleAction={setRuleAction}
+              setThresholdData={setThresholdData}
+            />
           </StepsForm.StepForm>
 
           <StepsForm.StepForm title="Set the threshold">
@@ -129,7 +147,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
               </div>
               <div className={styles.thresholdUpdateWrapper}>
                 <Divider style={{ margin: '18px 0' }} />
-                <ThresholdUpdateTable />
+                <ThresholdUpdateTable thresholdData={thresholdData} />
                 <Divider style={{ margin: '15px 0' }} />
                 <div className={styles.ruleActionSelector}>
                   <StepRuleAction

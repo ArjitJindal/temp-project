@@ -3,6 +3,7 @@ export interface StepDataType {
   ruleId: string;
   name: string;
   ruleAction: RuleAction;
+  thresholdData: ThresholdDataType[];
 }
 
 export type RuleAction = 'flag' | 'block' | 'allow';
@@ -13,6 +14,13 @@ export type ThresholdDataType = {
   parameter: string;
   type: ThresholdAllowedDataTypes;
   defaultValue: string;
+};
+
+export type ThresholdUpdateDataSourceType = {
+  id: React.Key;
+  parameter: string;
+  defaultValue: any;
+  children?: DataSourceType[];
 };
 
 export type CurrentTypes = 'base' | 'confirm' | 'result';
