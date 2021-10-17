@@ -1,34 +1,15 @@
-import React, { useState } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
 import { Button } from 'antd';
-import { ThresholdUpdateDataSourceType, ThresholdDataType } from '../data';
+import { ThresholdUpdateDataSourceType } from '../data';
 
-const getProcessedThresholdData = (
-  thresholdData: ThresholdDataType[],
-): ThresholdUpdateDataSourceType[] => {
-  console.log('Threshold DATA');
-  console.log(thresholdData);
-  return thresholdData.map((threshold, index) => {
-    return {
-      id: (Date.now() + index).toString(),
-      parameter: threshold.parameter,
-      defaultValue: threshold.defaultValue,
-    };
-  });
-};
-
-export const ThresholdUpdateTable: React.FC<{ thresholdData: ThresholdDataType[] }> = ({
-  thresholdData,
-}) => {
-  const processedData = getProcessedThresholdData(thresholdData);
-  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
-    processedData.map((item) => item.id),
-  );
-  const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
-    () => processedData,
-  );
-
+export const ThresholdUpdateTable: React.FC<{
+  editableKeys: React.Key[];
+  setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
+  dataSource: ThresholdUpdateDataSourceType[];
+  setDataSource: Dispatch<SetStateAction<ThresholdUpdateDataSourceType[]>>;
+}> = ({ editableKeys, setEditableRowKeys, dataSource, setDataSource }) => {
   const columns: ProColumns<ThresholdUpdateDataSourceType>[] = [
     {
       title: 'Parameter',

@@ -8,6 +8,7 @@ import type {
   RuleAction,
   ThresholdAllowedDataTypes,
   ThresholdDataType,
+  ThresholdUpdateDataSourceType,
 } from './data';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
@@ -82,6 +83,20 @@ const StepResult: React.FC<{
   );
 };
 
+const getProcessedThresholdData = (
+  thresholdData: ThresholdDataType[],
+): ThresholdUpdateDataSourceType[] => {
+  console.log('Threshold DATA');
+  console.log(thresholdData);
+  return thresholdData.map((threshold, index) => {
+    return {
+      id: (Date.now() + index).toString(),
+      parameter: threshold.parameter,
+      defaultValue: threshold.defaultValue,
+    };
+  });
+};
+
 const StepForm: React.FC<Record<string, any>> = () => {
   // lol is this even the right way of doing this. I bet not. Fix it later
   const [stepData, setStepData] = useState<StepDataType>({
@@ -105,6 +120,14 @@ const StepForm: React.FC<Record<string, any>> = () => {
 
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
+
+  const processedData = getProcessedThresholdData(thresholdData);
+  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
+    processedData.map((item) => item.id),
+  );
+  const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
+    () => processedData,
+  );
 
   return (
     <PageContainer content="Create a transaction monitoring rule with a staright forward 3 step process">
@@ -147,7 +170,12 @@ const StepForm: React.FC<Record<string, any>> = () => {
               </div>
               <div className={styles.thresholdUpdateWrapper}>
                 <Divider style={{ margin: '18px 0' }} />
-                <ThresholdUpdateTable thresholdData={thresholdData} />
+                <ThresholdUpdateTable
+                  editableKeys={editableKeys}
+                  setEditableRowKeys={setEditableRowKeys}
+                  dataSource={dataSource}
+                  setDataSource={setDataSource}
+                />
                 <Divider style={{ margin: '15px 0' }} />
                 <div className={styles.ruleActionSelector}>
                   <StepRuleAction
