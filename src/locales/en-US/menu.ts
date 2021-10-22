@@ -32,7 +32,7 @@ export default {
   'menu.rules': 'Rules',
   'menu.rules.create-rule': 'Rules Library',
   'menu.rules.active-rules': 'Active Rules',
-  'menu.rules.basic': 'Request New Rule',
+  'menu.rules.request-new': 'Request New Rule',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',
   'menu.account.settings': 'Account Settings',

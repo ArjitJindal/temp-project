@@ -147,7 +147,7 @@ export default defineConfig({
       routes: [
         {
           path: '/rules',
-          redirect: '/rules/basic',
+          redirect: '/rules/request-new',
         },
         {
           name: 'create-rule',
@@ -162,10 +162,10 @@ export default defineConfig({
           component: './rules/active-rules',
         },
         {
-          name: 'basic',
+          name: 'request-new',
           icon: 'smile',
-          path: '/rules/basic',
-          component: './rules/basic',
+          path: '/rules/request-new',
+          component: './rules/request-new',
         },
       ],
     },

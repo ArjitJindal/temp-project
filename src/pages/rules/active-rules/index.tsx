@@ -1,11 +1,9 @@
-import { Button, Card, DatePicker, Space, Table, Tag } from 'antd';
+import { Button, Space, Table, Tag } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { createTableList, ProcessMap } from './data.d';
 import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
 import { PageContainer } from '@ant-design/pro-layout';
-
-const { RangePicker } = DatePicker;
 
 const columns: ProColumns<RuleTableListItem>[] = [
   {

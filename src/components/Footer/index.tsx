@@ -16,7 +16,7 @@ export default () => {
       links={[
         {
           key: 'github',
-          title: <img src="/flagright-logo-gray.svg" style={{ width: '150px' }} />,
+          title: <img src="/flagright-logo-gray.png" style={{ width: '120px' }} />,
           href: 'https://flagright.com',
           blankTarget: true,
         },
