@@ -28,6 +28,18 @@ const ruleDescription = [
   'If a user is transferring funds to a High Risk country, flag user & transactions',
 ];
 
+const thresholdDataList = [
+  [{ parameter: 'originCountry', defaultValue: 'AF' }],
+  [
+    { parameter: 'destinationCountry', defaultValue: 'PK' },
+    { parameter: 'residenceCountry', defaultValue: 'AF' },
+  ],
+  [
+    { parameter: 'amount', defaultValue: 1000 },
+    { parameter: 'currency', defaultValue: 'EUR' },
+  ],
+];
+
 const possibleActions = ['allow', 'flag', 'block'];
 
 export const createTableList = () => {
@@ -42,7 +54,7 @@ export const createTableList = () => {
       ruleDescription: ruleDescription[i % ruleDescription.length],
       ruleId: `R-${(i % ruleNames.length) + 1}-${Math.floor(i / ruleNames.length) + 1}`,
       status: Math.floor(Math.random() * 2) % 2,
-      thresholdData: valueEnum[Math.floor(Math.random() * 10) % 4],
+      thresholdData: thresholdDataList[i % thresholdDataList.length],
       ruleAction: possibleActions[Math.floor(Math.floor(Math.random() * 3)) % 3],
       activatedAt: Date.now() - Math.floor(Math.random() * 100000),
       hitRate: Math.floor(Math.random() * 100),

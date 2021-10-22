@@ -1,5 +1,4 @@
 import { useIntl } from 'umi';
-import { GithubOutlined } from '@ant-design/icons';
 import { DefaultFooter } from '@ant-design/pro-layout';
 
 export default () => {
@@ -16,21 +15,9 @@ export default () => {
       copyright={`${currentYear} ${defaultMessage}`}
       links={[
         {
-          key: 'Flagright Data Technologies',
-          title: 'Flagright Data Technologies',
-          href: 'https://flagright.com',
-          blankTarget: true,
-        },
-        {
           key: 'github',
-          title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
-          blankTarget: true,
-        },
-        {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
+          title: <img src="/flagright-logo-gray.svg" style={{ width: '150px' }} />,
+          href: 'https://flagright.com',
           blankTarget: true,
         },
       ]}

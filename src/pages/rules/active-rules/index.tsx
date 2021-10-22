@@ -1,8 +1,9 @@
-import { Button, DatePicker, Space, Table, Tag } from 'antd';
+import { Button, Card, DatePicker, Space, Table, Tag } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { createTableList, ProcessMap } from './data.d';
-import { RuleTableListItem, actionToColor } from '../data.d';
+import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
+import { PageContainer } from '@ant-design/pro-layout';
 
 const { RangePicker } = DatePicker;
 
@@ -57,14 +58,10 @@ const columns: ProColumns<RuleTableListItem>[] = [
     dataIndex: 'activatedAt',
     valueType: 'date',
     sorter: (a, b) => a.activatedAt - b.activatedAt,
-    renderFormItem: () => {
-      return <RangePicker />;
-    },
   },
   {
     title: 'Status',
     dataIndex: 'status',
-    ellipsis: true,
     width: 80,
     search: false,
     valueEnum: {
@@ -81,8 +78,43 @@ const columns: ProColumns<RuleTableListItem>[] = [
   {
     title: 'Threshold',
     dataIndex: 'thresholdData',
-    ellipsis: true,
     search: false,
+    width: 300,
+    key: 'thresholdData',
+    render: (thresholdData) => {
+      console.log(thresholdData);
+      if (!thresholdData) {
+        return <span>Not Applicable</span>;
+      }
+      const columns = [
+        {
+          title: 'Parameter',
+          dataIndex: 'parameter',
+        },
+        {
+          title: 'Value',
+          dataIndex: 'value',
+        },
+      ];
+      const dataSource = (thresholdData as ThresholdDataType[]).map(
+        (threshold: any, index: number) => {
+          return {
+            key: index,
+            parameter: threshold?.parameter,
+            value: threshold?.defaultValue,
+          };
+        },
+      );
+      return (
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          pagination={false}
+          bordered
+          size={'small'}
+        />
+      );
+    },
   },
   {
     title: 'Action',
@@ -91,7 +123,6 @@ const columns: ProColumns<RuleTableListItem>[] = [
     key: 'status',
     fixed: 'right',
     render: (status) => {
-      console.log(status);
       return (
         <span>
           {status == 0 ? (
@@ -111,39 +142,39 @@ const columns: ProColumns<RuleTableListItem>[] = [
 
 export default () => {
   return (
-    <ProTable<RuleTableListItem>
-      columns={columns}
-      rowSelection={
-        {
-          // 自定义选择项参考: https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
-          // 注释该行则默认不显示下拉选项
-          //selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
+    <PageContainer content="List of all created rules. Activate/deactivate them in one click">
+      <ProTable<RuleTableListItem>
+        columns={columns}
+        rowSelection={
+          {
+            // 自定义选择项参考: https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
+            // 注释该行则默认不显示下拉选项
+            //selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
+          }
         }
-      }
-      tableAlertRender={({ selectedRowKeys, selectedRows, onCleanSelected }) => (
-        <Space size={24}>
-          <span>
-            Selected {selectedRowKeys.length} Rules
-            <a style={{ marginLeft: 8 }} onClick={onCleanSelected}>
-              Reset
-            </a>
-          </span>
-        </Space>
-      )}
-      tableAlertOptionRender={() => {
-        return (
-          <Space size={16}>
-            <a>Export Data</a>
+        tableAlertRender={({ selectedRowKeys, selectedRows, onCleanSelected }) => (
+          <Space size={24}>
+            <span>
+              Selected {selectedRowKeys.length} Rules
+              <a style={{ marginLeft: 8 }} onClick={onCleanSelected}>
+                Reset
+              </a>
+            </span>
           </Space>
-        );
-      }}
-      dataSource={createTableList()}
-      scroll={{ x: 1300 }}
-      options={false}
-      search={false}
-      rowKey="key"
-      headerTitle="Active Rules"
-      toolBarRender={() => [<Button key="show">查看日志</Button>]}
-    />
+        )}
+        tableAlertOptionRender={() => {
+          return (
+            <Space size={16}>
+              <a>Export Data</a>
+            </Space>
+          );
+        }}
+        dataSource={createTableList()}
+        scroll={{ x: 1300 }}
+        options={false}
+        search={false}
+        rowKey="key"
+      />
+    </PageContainer>
   );
 };
