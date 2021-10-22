@@ -1,4 +1,4 @@
-import { RuleItem } from '../data.d';
+import { RuleTemplateTableListItem } from '../data.d';
 
 export interface StepDataType {
   ruleDescription: string;
@@ -7,8 +7,6 @@ export interface StepDataType {
   ruleAction: RuleAction;
   thresholdData: ThresholdDataType[];
 }
-
-export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
 
 export type ThresholdUpdateDataSourceType = {
   id: React.Key;
@@ -24,7 +22,7 @@ export type TableListPagination = {
 };
 
 export type TableListData = {
-  list: RuleItem[];
+  list: RuleTemplateTableListItem[];
   pagination: Partial<TableListPagination>;
 };
 

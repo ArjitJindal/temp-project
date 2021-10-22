@@ -1,10 +1,11 @@
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Input, Tag } from 'antd';
-import { Dispatch, SetStateAction, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useRef } from 'react';
 import { StepDataType, TableListPagination } from '../data.d';
 
-import type { RuleAction, RuleItem, ThresholdDataType } from '../../data.d';
+import type { RuleAction, RuleTemplateTableListItem, ThresholdDataType } from '../../data.d';
+import { actionToColor } from '../../data.d';
 
 import { rules } from '../service';
 
@@ -13,35 +14,14 @@ export const RulesTableSearch: React.FC<{
   setRuleAction: Dispatch<SetStateAction<RuleAction>>;
   setThresholdData: Dispatch<SetStateAction<ThresholdDataType[]>>;
 }> = ({ setStepData, setRuleAction, setThresholdData }) => {
-  const [currentRow, setCurrentRow] = useState<RuleItem>();
-  const [showDetail, setShowDetail] = useState<boolean>(false);
-
-  //type this better lol
-  const actionToColor = {
-    flag: 'orange',
-    block: 'volcano',
-    allow: 'green',
-  };
-
   const actionRef = useRef<ActionType>();
 
-  const columns: ProColumns<RuleItem>[] = [
+  const columns: ProColumns<RuleTemplateTableListItem>[] = [
     {
       title: 'Rule name',
       dataIndex: 'name',
       tip: 'RuleName key',
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      renderText: (dom: string) => `${dom}`,
     },
     {
       title: 'Action',
@@ -104,7 +84,7 @@ export const RulesTableSearch: React.FC<{
     },
   ];
   return (
-    <ProTable<RuleItem, TableListPagination>
+    <ProTable<RuleTemplateTableListItem, TableListPagination>
       headerTitle="Select Rule"
       actionRef={actionRef}
       rowKey="key"

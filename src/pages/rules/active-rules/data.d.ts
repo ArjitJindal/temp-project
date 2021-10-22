@@ -1,3 +1,5 @@
+import { RuleAction, ThresholdDataType, RuleTableListItem } from '../data';
+
 export const valueEnum = {
   0: 'close',
   1: 'running',
@@ -12,37 +14,38 @@ export const ProcessMap = {
   error: 'exception',
 };
 
-export type TableListItem = {
-  key: number;
-  name: string;
-  progress: number;
-  containers: number;
-  callNumber: number;
-  creator: string;
-  status: string;
-  createdAt: number;
-  memo: string;
-};
+const ruleNames = [
+  'Whitelisted receiver name and country',
+  'Blacklisted receiver name and country',
+  'High risk country (suspend all)',
+  'Proof of Funds Needed for Remittance	',
+];
+
+const ruleDescription = [
+  'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
+  'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
+  'If a user is transferring funds to a High Risk country, flag user & transactions',
+  'If a user is transferring funds to a High Risk country, flag user & transactions',
+];
+
+const possibleActions = ['allow', 'flag', 'block'];
 
 export const createTableList = () => {
-  const tableListDataSource: TableListItem[] = [];
+  const tableListDataSource: RuleTableListItem[] = [];
 
   const creators = ['付小小', '曲丽丽', '林东东', '陈帅帅', '兼某某'];
 
   for (let i = 0; i < 5; i += 1) {
     tableListDataSource.push({
       key: i,
-      name: `Rule ${i + 1}`,
-      containers: Math.floor(Math.random() * 20),
-      callNumber: Math.floor(Math.random() * 2000),
-      progress: Math.ceil(Math.random() * 100) + 1,
-      creator: creators[Math.floor(Math.random() * creators.length)],
-      status: valueEnum[Math.floor(Math.random() * 10) % 4],
-      createdAt: Date.now() - Math.floor(Math.random() * 100000),
-      memo:
-        i % 2 === 1
-          ? 'If this rule is hit, flag the user and create SAR report.'
-          : 'Black list the user if this rule is hit',
+      name: ruleNames[i % ruleNames.length],
+      ruleDescription: ruleDescription[i % ruleDescription.length],
+      ruleId: `R-${(i % ruleNames.length) + 1}-${Math.floor(i / ruleNames.length) + 1}`,
+      status: Math.floor(Math.random() * 2) % 2,
+      thresholdData: valueEnum[Math.floor(Math.random() * 10) % 4],
+      ruleAction: possibleActions[Math.floor(Math.floor(Math.random() * 3)) % 3],
+      activatedAt: Date.now() - Math.floor(Math.random() * 100000),
+      hitRate: Math.floor(Math.random() * 100),
     });
   }
   return tableListDataSource;

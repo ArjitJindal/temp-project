@@ -1,13 +1,13 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type { TableListParams, ThresholdAllowedDataTypes } from './data.d';
-import type { RuleAction, RuleItem } from '../data.d';
+import type { TableListParams } from './data.d';
+import type { RuleAction, ThresholdAllowedDataTypes, RuleTemplateTableListItem } from '../data.d';
 
 import { parse } from 'url';
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
-  const tableListDataSource: RuleItem[] = [];
+  const tableListDataSource: RuleTemplateTableListItem[] = [];
 
   const rulesAndDescriptions = [
     {
@@ -92,8 +92,6 @@ const genList = (current: number, pageSize: number) => {
     const index = ((current - 1) * 10 + i) % rulesAndDescriptions.length;
     tableListDataSource.push({
       key: idx,
-      disabled: i % 6 === 0,
-      href: 'https://ant.design',
       name: rulesAndDescriptions[index].ruleName,
       status: (Math.floor(Math.random() * 10) % 3).toString(),
       ruleDescription: rulesAndDescriptions[index].ruleDescription,
@@ -196,9 +194,8 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
       break;
     case 'POST':
       (() => {
-        const newRule: RuleItem = {
+        const newRule: RuleTemplateTableListItem = {
           key: tableListDataSource.length,
-          href: 'https://ant.design',
           name,
           status: (Math.floor(Math.random() * 10) % 2).toString(),
           ruleDescription: 'Proof of funds',
