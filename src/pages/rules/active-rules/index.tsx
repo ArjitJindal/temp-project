@@ -80,7 +80,6 @@ const columns: ProColumns<RuleTableListItem>[] = [
     width: 300,
     key: 'thresholdData',
     render: (thresholdData) => {
-      console.log(thresholdData);
       if (!thresholdData) {
         return <span>Not Applicable</span>;
       }

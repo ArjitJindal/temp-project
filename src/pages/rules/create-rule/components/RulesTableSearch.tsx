@@ -1,6 +1,6 @@
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Input, Tag } from 'antd';
+import { Button, Table, Tag } from 'antd';
 import { Dispatch, SetStateAction, useRef } from 'react';
 import { StepDataType, TableListPagination } from '../data.d';
 
@@ -68,18 +68,63 @@ export const RulesTableSearch: React.FC<{
       title: 'Rule description',
       sorter: true,
       dataIndex: 'ruleDescription',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
+      renderText: (val: string) => `${val}`,
+    },
+    {
+      title: 'Action',
+      width: 140,
+      dataIndex: 'status',
+      search: false,
+      key: 'status',
+      fixed: 'right',
+      render: (status) => {
+        return (
+          <span>
+            <Button shape="round" size="small" style={{ borderColor: '#1890ff', color: '#1890ff' }}>
+              Activate
+            </Button>
+          </span>
+        );
+      },
+    },
+    {
+      title: 'Threshold',
+      dataIndex: 'thresholdData',
+      search: false,
+      width: 300,
+      key: 'thresholdData',
+      render: (thresholdData) => {
+        if (!thresholdData) {
+          return <span>Not Applicable</span>;
         }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
+        const columns = [
+          {
+            title: 'Parameter',
+            dataIndex: 'parameter',
+          },
+          {
+            title: 'Value',
+            dataIndex: 'value',
+          },
+        ];
+        const dataSource = (thresholdData as ThresholdDataType[]).map(
+          (threshold: any, index: number) => {
+            return {
+              key: index,
+              parameter: threshold?.parameter,
+              value: threshold?.defaultValue,
+            };
+          },
+        );
+        return (
+          <Table
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
+            bordered
+            size={'small'}
+          />
+        );
       },
     },
   ];
@@ -89,7 +134,7 @@ export const RulesTableSearch: React.FC<{
       actionRef={actionRef}
       rowKey="key"
       search={{
-        labelWidth: 120,
+        labelWidth: 30,
       }}
       toolBarRender={() => []}
       request={rules}
