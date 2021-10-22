@@ -2,13 +2,10 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Input, Tag } from 'antd';
 import { Dispatch, SetStateAction, useRef, useState } from 'react';
-import {
-  RuleAction,
-  StepDataType,
-  TableListItem,
-  TableListPagination,
-  ThresholdDataType,
-} from '../data.d';
+import { StepDataType, TableListPagination } from '../data.d';
+
+import type { RuleAction, RuleItem, ThresholdDataType } from '../../data.d';
+
 import { rules } from '../service';
 
 export const RulesTableSearch: React.FC<{
@@ -16,7 +13,7 @@ export const RulesTableSearch: React.FC<{
   setRuleAction: Dispatch<SetStateAction<RuleAction>>;
   setThresholdData: Dispatch<SetStateAction<ThresholdDataType[]>>;
 }> = ({ setStepData, setRuleAction, setThresholdData }) => {
-  const [currentRow, setCurrentRow] = useState<TableListItem>();
+  const [currentRow, setCurrentRow] = useState<RuleItem>();
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
   //type this better lol
@@ -28,7 +25,7 @@ export const RulesTableSearch: React.FC<{
 
   const actionRef = useRef<ActionType>();
 
-  const columns: ProColumns<TableListItem>[] = [
+  const columns: ProColumns<RuleItem>[] = [
     {
       title: 'Rule name',
       dataIndex: 'name',
@@ -107,7 +104,7 @@ export const RulesTableSearch: React.FC<{
     },
   ];
   return (
-    <ProTable<TableListItem, TableListPagination>
+    <ProTable<RuleItem, TableListPagination>
       headerTitle="Select Rule"
       actionRef={actionRef}
       rowKey="key"

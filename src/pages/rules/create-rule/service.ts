@@ -1,5 +1,5 @@
 import { request } from 'umi';
-import { TableListItem } from './data.d';
+import { RuleItem } from '../data.d';
 
 export async function fakeSubmitForm(params: any) {
   return request('/api/stepForm', {
@@ -20,7 +20,7 @@ export async function rules(
   options?: { [key: string]: any },
 ) {
   return request<{
-    data: TableListItem[];
+    data: RuleItem[];
     /** 列表的内容总数 */
     total?: number;
     success?: boolean;

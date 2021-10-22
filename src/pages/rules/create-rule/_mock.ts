@@ -1,16 +1,13 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type {
-  RuleAction,
-  TableListItem,
-  TableListParams,
-  ThresholdAllowedDataTypes,
-} from './data.d';
+import type { TableListParams, ThresholdAllowedDataTypes } from './data.d';
+import type { RuleAction, RuleItem } from '../data.d';
+
 import { parse } from 'url';
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
-  const tableListDataSource: TableListItem[] = [];
+  const tableListDataSource: RuleItem[] = [];
 
   const rulesAndDescriptions = [
     {
@@ -199,7 +196,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
       break;
     case 'POST':
       (() => {
-        const newRule: TableListItem = {
+        const newRule: RuleItem = {
           key: tableListDataSource.length,
           href: 'https://ant.design',
           name,

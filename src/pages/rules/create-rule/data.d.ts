@@ -1,3 +1,5 @@
+import { RuleItem } from '../data.d';
+
 export interface StepDataType {
   ruleDescription: string;
   ruleId: string;
@@ -6,36 +8,13 @@ export interface StepDataType {
   thresholdData: ThresholdDataType[];
 }
 
-export type RuleAction = 'flag' | 'block' | 'allow';
-
 export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
-
-export type ThresholdDataType = {
-  parameter: string;
-  type: ThresholdAllowedDataTypes;
-  defaultValue: string;
-};
 
 export type ThresholdUpdateDataSourceType = {
   id: React.Key;
   parameter: string;
   defaultValue: any;
   children?: DataSourceType[];
-};
-
-export type CurrentTypes = 'base' | 'confirm' | 'result';
-
-export type TableListItem = {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  name: string;
-  ruleDescription: string;
-  ruleId: string;
-  status: string;
-  thresholdData: ThresholdDataType[];
-  defaultRuleAction: RuleAction;
-  isActionEditable: boolean;
 };
 
 export type TableListPagination = {
@@ -45,7 +24,7 @@ export type TableListPagination = {
 };
 
 export type TableListData = {
-  list: TableListItem[];
+  list: RuleItem[];
   pagination: Partial<TableListPagination>;
 };
 

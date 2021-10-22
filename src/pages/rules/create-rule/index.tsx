@@ -5,11 +5,10 @@ import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
 import type {
   StepDataType,
-  RuleAction,
   ThresholdAllowedDataTypes,
-  ThresholdDataType,
   ThresholdUpdateDataSourceType,
 } from './data';
+import type { RuleAction, ThresholdDataType } from '../data.d';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
