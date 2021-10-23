@@ -41,7 +41,7 @@ const genList = (current: number, pageSize: number) => {
         {
           parameter: 'countryCode',
           type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'AF',
+          defaultValue: 'NK',
         },
       ],
     },
@@ -56,7 +56,7 @@ const genList = (current: number, pageSize: number) => {
         {
           parameter: 'countryCode',
           type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'AF',
+          defaultValue: 'NK',
         },
       ],
     },
@@ -71,7 +71,7 @@ const genList = (current: number, pageSize: number) => {
         {
           parameter: 'countryCode',
           type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'AF',
+          defaultValue: 'PK',
         },
       ],
     },
@@ -86,7 +86,7 @@ const genList = (current: number, pageSize: number) => {
         {
           parameter: 'countryCode',
           type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'AF',
+          defaultValue: 'PK',
         },
       ],
     },

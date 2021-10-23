@@ -41,8 +41,8 @@ const StepResult: React.FC<{
   return (
     <Result
       status="success"
-      title="操作成功"
-      subTitle="预计两小时内到账"
+      title="Rule Successfully created"
+      subTitle="All new transactions will go through this rule"
       extra={
         <>
           <Button type="primary" onClick={props.onFinish}>

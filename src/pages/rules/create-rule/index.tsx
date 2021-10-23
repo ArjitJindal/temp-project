@@ -61,14 +61,14 @@ const StepResult: React.FC<{
   return (
     <Result
       status="success"
-      title="操作成功"
-      subTitle="预计两小时内到账"
+      title="Rule Successfully created"
+      subTitle="All new transactions will go through this rule"
       extra={
         <>
           <Button type="primary" onClick={props.onFinish}>
-            再转一笔
+            Create another rule
           </Button>
-          <Button>查看账单</Button>
+          <Button href="/rules/active-rules">Go to Active rules</Button>
         </>
       }
       className={styles.result}
@@ -101,7 +101,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
 
   const processedData: ThresholdUpdateDataSourceType[] = [
     {
-      id: 1,
+      id: 'default',
       parameter: 'country',
       defaultValue: 'AF',
     },

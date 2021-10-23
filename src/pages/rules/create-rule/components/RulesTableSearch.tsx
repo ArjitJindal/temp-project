@@ -12,11 +12,9 @@ import { rules } from '../service';
 const getProcessedThresholdData = (
   thresholdData: ThresholdDataType[],
 ): ThresholdUpdateDataSourceType[] => {
-  console.log('Threshold DATA');
-  console.log(thresholdData);
   return thresholdData.map((threshold, index) => {
     return {
-      id: (Date.now() + index).toString(),
+      id: threshold.defaultValue.toString() + index.toString(), //lol
       parameter: threshold.parameter,
       defaultValue: threshold.defaultValue,
     };
@@ -30,7 +28,7 @@ export const RulesTableSearch: React.FC<{
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
 }> = ({ setStepData, setRuleAction, setDataSource, setEditableRowKeys }) => {
   const actionRef = useRef<ActionType>();
-
+  console.log('PROCESSED THRESHOLD DATa');
   const columns: ProColumns<RuleTemplateTableListItem>[] = [
     {
       title: 'Rule name',
@@ -156,6 +154,8 @@ export const RulesTableSearch: React.FC<{
       columns={columns}
       rowSelection={{
         onChange: (_, selectedRows) => {
+          console.log(getProcessedThresholdData(selectedRows[0].thresholdData));
+
           setStepData({
             name: selectedRows[0].name,
             ruleDescription: selectedRows[0].ruleDescription,
