@@ -5,19 +5,26 @@ import { ProcessMap } from './data.d';
 import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
 import { PageContainer } from '@ant-design/pro-layout';
 import { getActiveRules } from './service';
-/*
-const activate = (key: string | number, currentItem: BasicListItemDataType) => {
-    else if (key === 'delete') {
-      Modal.confirm({
-        title: '删除任务',
-        content: '确定删除该任务吗？',
-        okText: '确认',
-        cancelText: '取消',
-        onOk: () => deleteItem(currentItem.id),
-      });
-    }
-  };
-*/
+
+const handleAction = (key: string | number) => {
+  if (key === 'activate') {
+    Modal.confirm({
+      title: 'Confirm Deactivation',
+      content: 'Confirm rule',
+      okText: 'Activate',
+      cancelText: 'Cancel',
+      onOk: () => console.log('WHAAAA'), // deleteItem(currentItem.id),
+    });
+  } else if (key === 'deactivate') {
+    Modal.confirm({
+      title: 'Confirm Deactivation',
+      content: 'Confirm rule',
+      okText: 'Deactivate',
+      cancelText: 'Cancel',
+      onOk: () => console.log('WHAAAA'), // deleteItem(currentItem.id),
+    });
+  }
+};
 
 const columns: ProColumns<RuleTableListItem>[] = [
   {
@@ -137,11 +144,16 @@ const columns: ProColumns<RuleTableListItem>[] = [
       return (
         <span>
           {status == 0 ? (
-            <Button shape="round" size="small" style={{ borderColor: '#1890ff', color: '#1890ff' }}>
+            <Button
+              shape="round"
+              size="small"
+              style={{ borderColor: '#1890ff', color: '#1890ff' }}
+              onClick={() => handleAction('activate')}
+            >
               Activate
             </Button>
           ) : (
-            <Button shape="round" size="small" danger>
+            <Button shape="round" size="small" danger onClick={() => handleAction('deactivate')}>
               Deactivate
             </Button>
           )}
