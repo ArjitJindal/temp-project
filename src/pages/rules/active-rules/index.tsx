@@ -1,9 +1,23 @@
-import { Button, Space, Table, Tag } from 'antd';
+import { Button, Space, Table, Tag, Modal } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { createTableList, ProcessMap } from './data.d';
+import { ProcessMap } from './data.d';
 import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
 import { PageContainer } from '@ant-design/pro-layout';
+import { getActiveRules } from './service';
+/*
+const activate = (key: string | number, currentItem: BasicListItemDataType) => {
+    else if (key === 'delete') {
+      Modal.confirm({
+        title: '删除任务',
+        content: '确定删除该任务吗？',
+        okText: '确认',
+        cancelText: '取消',
+        onOk: () => deleteItem(currentItem.id),
+      });
+    }
+  };
+*/
 
 const columns: ProColumns<RuleTableListItem>[] = [
   {
@@ -166,7 +180,7 @@ export default () => {
             </Space>
           );
         }}
-        dataSource={createTableList()}
+        request={getActiveRules}
         scroll={{ x: 1300 }}
         options={false}
         search={false}

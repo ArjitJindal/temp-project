@@ -1,5 +1,5 @@
 import { request } from 'umi';
 
-export async function queryAdvancedProfile() {
-  return request('/api/rules/advanced');
+export async function getActiveRules() {
+  return request('/api/rules/active-rules');
 }

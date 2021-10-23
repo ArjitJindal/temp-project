@@ -28,7 +28,6 @@ export const RulesTableSearch: React.FC<{
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
 }> = ({ setStepData, setRuleAction, setDataSource, setEditableRowKeys }) => {
   const actionRef = useRef<ActionType>();
-  console.log('PROCESSED THRESHOLD DATa');
   const columns: ProColumns<RuleTemplateTableListItem>[] = [
     {
       title: 'Rule name',

@@ -1,81 +1,68 @@
 import type { Request, Response } from 'express';
+import { RuleAction, RuleTableListItem, ThresholdAllowedDataTypes } from '../data.d';
 
-const advancedOperation1 = [
-  {
-    key: 'op1',
-    type: '订购关系生效',
-    name: '曲丽丽',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '-',
-  },
-  {
-    key: 'op2',
-    type: '财务复审',
-    name: '付小小',
-    status: 'reject',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '不通过原因',
-  },
-  {
-    key: 'op3',
-    type: '部门初审',
-    name: '周毛毛',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '-',
-  },
-  {
-    key: 'op4',
-    type: '提交订单',
-    name: '林东东',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '很棒',
-  },
-  {
-    key: 'op5',
-    type: '创建订单',
-    name: '汗牙牙',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '-',
-  },
+const ruleNames = [
+  'Whitelisted receiver name and country',
+  'Blacklisted receiver name and country',
+  'High risk country (suspend all)',
+  'Proof of Funds Needed for Remittance	',
 ];
 
-const advancedOperation2 = [
-  {
-    key: 'op1',
-    type: '订购关系生效',
-    name: '曲丽丽',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '-',
-  },
+const ruleDescription = [
+  'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
+  'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
+  'If a user is transferring funds to a High Risk country, flag user & transactions',
+  'If a user is transferring funds to a High Risk country, flag user & transactions',
 ];
 
-const advancedOperation3 = [
-  {
-    key: 'op1',
-    type: '创建订单',
-    name: '汗牙牙',
-    status: 'agree',
-    updatedAt: '2017-10-03  19:23:12',
-    memo: '-',
-  },
-];
-
-function getProfileAdvancedData(req: Request, res: Response) {
-  const result = {
-    data: {
-      advancedOperation1,
-      advancedOperation2,
-      advancedOperation3,
+const thresholdDataList = [
+  [{ parameter: 'originCountry', defaultValue: 'AF', type: 'string' as ThresholdAllowedDataTypes }],
+  [
+    {
+      parameter: 'destinationCountry',
+      defaultValue: 'PK',
+      type: 'string' as ThresholdAllowedDataTypes,
     },
+    {
+      parameter: 'residenceCountry',
+      defaultValue: 'AF',
+      type: 'string' as ThresholdAllowedDataTypes,
+    },
+  ],
+  [
+    { parameter: 'amount', defaultValue: '1000', type: 'number' as ThresholdAllowedDataTypes },
+    { parameter: 'currency', defaultValue: 'EUR', type: 'string' as ThresholdAllowedDataTypes },
+  ],
+];
+
+const possibleActions = ['allow' as RuleAction, 'flag' as RuleAction, 'block' as RuleAction];
+
+export const createTableList = () => {
+  const tableListDataSource: RuleTableListItem[] = [];
+
+  for (let i = 0; i < 5; i += 1) {
+    tableListDataSource.push({
+      key: i,
+      name: ruleNames[i % ruleNames.length],
+      ruleDescription: ruleDescription[i % ruleDescription.length],
+      ruleId: `R-${(i % ruleNames.length) + 1}-${Math.floor(i / ruleNames.length) + 1}`,
+      status: (Math.floor(Math.random() * 2) % 2).toString(),
+      thresholdData: thresholdDataList[i % thresholdDataList.length],
+      ruleAction: possibleActions[Math.floor(Math.floor(Math.random() * 3)) % 3],
+      activatedAt: Date.now() - Math.floor(Math.random() * 100000),
+      hitRate: Math.floor(Math.random() * 100),
+    });
+  }
+  return tableListDataSource;
+};
+
+function getActiveRules(req: Request, res: Response) {
+  const result = {
+    data: createTableList(),
   };
   return res.json(result);
 }
 
 export default {
-  'GET  /api/rules/advanced': getProfileAdvancedData,
+  'GET  /api/rules/active-rules': getActiveRules,
 };
