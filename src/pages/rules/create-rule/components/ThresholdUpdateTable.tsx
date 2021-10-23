@@ -30,15 +30,6 @@ export const ThresholdUpdateTable: React.FC<{
       title: 'Value',
       key: 'defaultValue',
       dataIndex: 'defaultValue',
-      formItemProps: {
-        rules: [
-          {
-            required: true,
-            whitespace: true,
-            message: 'Please enter value',
-          },
-        ],
-      },
     },
   ];
 

@@ -27,7 +27,8 @@ export const RulesTableSearch: React.FC<{
   setStepData: Dispatch<SetStateAction<StepDataType>>;
   setRuleAction: Dispatch<SetStateAction<RuleAction>>;
   setDataSource: Dispatch<SetStateAction<ThresholdUpdateDataSourceType[]>>;
-}> = ({ setStepData, setRuleAction, setDataSource }) => {
+  setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
+}> = ({ setStepData, setRuleAction, setDataSource, setEditableRowKeys }) => {
   const actionRef = useRef<ActionType>();
 
   const columns: ProColumns<RuleTemplateTableListItem>[] = [
@@ -164,6 +165,9 @@ export const RulesTableSearch: React.FC<{
           });
           setRuleAction(selectedRows[0].defaultRuleAction);
           setDataSource(getProcessedThresholdData(selectedRows[0].thresholdData));
+          setEditableRowKeys(() =>
+            getProcessedThresholdData(selectedRows[0].thresholdData).map((item: any) => item.id),
+          );
         },
         type: 'radio',
       }}

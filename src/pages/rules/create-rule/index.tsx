@@ -106,11 +106,13 @@ const StepForm: React.FC<Record<string, any>> = () => {
       defaultValue: 'AF',
     },
   ];
-  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
-    processedData.map((item) => item.id),
-  );
+
   const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
     () => processedData,
+  );
+
+  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
+    dataSource.map((item) => item.id),
   );
 
   return (
@@ -138,6 +140,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
               setStepData={setStepData}
               setRuleAction={setRuleAction}
               setDataSource={setDataSource}
+              setEditableRowKeys={setEditableRowKeys}
             />
           </StepsForm.StepForm>
 
