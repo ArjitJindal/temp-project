@@ -4,7 +4,7 @@ import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
 import type { StepDataType, ThresholdUpdateDataSourceType } from './data';
-import type { RuleAction, ThresholdDataType, ThresholdAllowedDataTypes } from '../data.d';
+import type { RuleAction, ThresholdAllowedDataTypes } from '../data.d';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
@@ -78,20 +78,6 @@ const StepResult: React.FC<{
   );
 };
 
-const getProcessedThresholdData = (
-  thresholdData: ThresholdDataType[],
-): ThresholdUpdateDataSourceType[] => {
-  console.log('Threshold DATA');
-  console.log(thresholdData);
-  return thresholdData.map((threshold, index) => {
-    return {
-      id: (Date.now() + index).toString(),
-      parameter: threshold.parameter,
-      defaultValue: threshold.defaultValue,
-    };
-  });
-};
-
 const StepForm: React.FC<Record<string, any>> = () => {
   // lol is this even the right way of doing this. I bet not. Fix it later
   const [stepData, setStepData] = useState<StepDataType>({
@@ -110,13 +96,16 @@ const StepForm: React.FC<Record<string, any>> = () => {
   });
 
   const [ruleAction, setRuleAction] = useState<RuleAction>(stepData.ruleAction);
-
-  const [thresholdData, setThresholdData] = useState<ThresholdDataType[]>(stepData.thresholdData);
-
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
 
-  const processedData = getProcessedThresholdData(thresholdData);
+  const processedData: ThresholdUpdateDataSourceType[] = [
+    {
+      id: 1,
+      parameter: 'country',
+      defaultValue: 'AF',
+    },
+  ];
   const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
     processedData.map((item) => item.id),
   );
@@ -148,7 +137,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
             <RulesTableSearch
               setStepData={setStepData}
               setRuleAction={setRuleAction}
-              setThresholdData={setThresholdData}
+              setDataSource={setDataSource}
             />
           </StepsForm.StepForm>
 

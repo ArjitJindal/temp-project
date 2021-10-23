@@ -2,18 +2,32 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Button, Table, Tag } from 'antd';
 import { Dispatch, SetStateAction, useRef } from 'react';
-import { StepDataType, TableListPagination } from '../data.d';
+import { StepDataType, TableListPagination, ThresholdUpdateDataSourceType } from '../data.d';
 
 import type { RuleAction, RuleTemplateTableListItem, ThresholdDataType } from '../../data.d';
 import { actionToColor } from '../../data.d';
 
 import { rules } from '../service';
 
+const getProcessedThresholdData = (
+  thresholdData: ThresholdDataType[],
+): ThresholdUpdateDataSourceType[] => {
+  console.log('Threshold DATA');
+  console.log(thresholdData);
+  return thresholdData.map((threshold, index) => {
+    return {
+      id: (Date.now() + index).toString(),
+      parameter: threshold.parameter,
+      defaultValue: threshold.defaultValue,
+    };
+  });
+};
+
 export const RulesTableSearch: React.FC<{
   setStepData: Dispatch<SetStateAction<StepDataType>>;
   setRuleAction: Dispatch<SetStateAction<RuleAction>>;
-  setThresholdData: Dispatch<SetStateAction<ThresholdDataType[]>>;
-}> = ({ setStepData, setRuleAction, setThresholdData }) => {
+  setDataSource: Dispatch<SetStateAction<ThresholdUpdateDataSourceType[]>>;
+}> = ({ setStepData, setRuleAction, setDataSource }) => {
   const actionRef = useRef<ActionType>();
 
   const columns: ProColumns<RuleTemplateTableListItem>[] = [
@@ -149,7 +163,7 @@ export const RulesTableSearch: React.FC<{
             thresholdData: selectedRows[0].thresholdData,
           });
           setRuleAction(selectedRows[0].defaultRuleAction);
-          setThresholdData(selectedRows[0].thresholdData);
+          setDataSource(getProcessedThresholdData(selectedRows[0].thresholdData));
         },
         type: 'radio',
       }}

@@ -21,17 +21,7 @@ export const ThresholdUpdateTable: React.FC<{
           {
             required: true,
             whitespace: true,
-            message: '此项是必填项',
-          },
-          {
-            max: 16,
-            whitespace: true,
-            message: '最长为 16 位',
-          },
-          {
-            min: 6,
-            whitespace: true,
-            message: '最小为 6 位',
+            message: 'Please enter value',
           },
         ],
       },
@@ -40,6 +30,15 @@ export const ThresholdUpdateTable: React.FC<{
       title: 'Value',
       key: 'defaultValue',
       dataIndex: 'defaultValue',
+      formItemProps: {
+        rules: [
+          {
+            required: true,
+            whitespace: true,
+            message: 'Please enter value',
+          },
+        ],
+      },
     },
   ];
 

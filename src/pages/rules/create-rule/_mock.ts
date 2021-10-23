@@ -19,9 +19,14 @@ const genList = (current: number, pageSize: number) => {
       isActionEditable: true,
       thresholdData: [
         {
-          parameter: 'countryCode',
+          parameter: 'amount',
+          type: 'number' as ThresholdAllowedDataTypes,
+          defaultValue: '1000',
+        },
+        {
+          parameter: 'currency',
           type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'AF',
+          defaultValue: 'EUR',
         },
       ],
     },
@@ -105,7 +110,7 @@ const genList = (current: number, pageSize: number) => {
   return tableListDataSource;
 };
 
-let tableListDataSource = genList(1, 20);
+let tableListDataSource = genList(1, 10);
 
 function getRule(req: Request, res: Response, u: string) {
   let realUrl = u;

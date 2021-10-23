@@ -9,7 +9,7 @@ const RequestNew: FC<Record<string, any>> = () => {
   const { run } = useRequest(fakeSubmitForm, {
     manual: true,
     onSuccess: () => {
-      message.success('提交成功');
+      message.success('Request successfully sent');
     },
   });
 
