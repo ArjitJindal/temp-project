@@ -43,7 +43,7 @@
     ],
   },
   {
-    name: 'list.table-list',
+    name: 'list.transactions-list',
     icon: 'table',
     path: '/transactions',
     component: './transactions',

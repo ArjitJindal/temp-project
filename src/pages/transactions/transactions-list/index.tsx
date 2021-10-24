@@ -10,7 +10,7 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
 import { rule, addRule, updateRule, removeRule } from './service';
-import type { TableListItem, TableListPagination } from './data.d';
+import type { TableListItem, TableListPagination } from './data';
 /**
  * 添加节点
  *
@@ -92,9 +92,9 @@ const TableList: React.FC = () => {
 
   const columns: ProColumns<TableListItem>[] = [
     {
-      title: '规则名称',
+      title: 'Profile Identifier',
       dataIndex: 'name',
-      tip: '规则名称是唯一的 key',
+      tip: 'Identifier of the profile',
       render: (dom, entity) => {
         return (
           <a
@@ -109,19 +109,54 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: '描述',
+      title: 'Payment method',
       dataIndex: 'desc',
       valueType: 'textarea',
     },
     {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val: string) => `${val}万`,
+      title: 'Payout method',
+      dataIndex: 'desc',
+      valueType: 'textarea',
     },
     {
-      title: '状态',
+      title: 'Rules hit',
+      dataIndex: 'callNo',
+      sorter: true,
+      width: 80,
+      hideInForm: true,
+      renderText: (val: string) => `${val} Rule(s)`,
+    },
+    {
+      title: 'Origin Country',
+      dataIndex: 'desc',
+      valueType: 'textarea',
+    },
+
+    {
+      title: 'Destination Country',
+      dataIndex: 'desc',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'callNo',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Sending Currency',
+      dataIndex: 'desc',
+      valueType: 'textarea',
+      width: 80,
+    },
+
+    {
+      title: 'Receiving Currency',
+      dataIndex: 'desc',
+      valueType: 'textarea',
+      width: 80,
+    },
+    {
+      title: 'Tags',
       dataIndex: 'status',
       hideInForm: true,
       valueEnum: {
@@ -144,7 +179,7 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: '上次调度时间',
+      title: 'Transaction time',
       sorter: true,
       dataIndex: 'updatedAt',
       valueType: 'dateTime',
@@ -162,31 +197,12 @@ const TableList: React.FC = () => {
         return defaultRender(item);
       },
     },
-    {
-      title: '操作',
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => [
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalVisible(true);
-            setCurrentRow(record);
-          }}
-        >
-          配置
-        </a>,
-        <a key="subscribeAlert" href="https://procomponents.ant.design/">
-          订阅警报
-        </a>,
-      ],
-    },
   ];
 
   return (
     <PageContainer>
       <ProTable<TableListItem, TableListPagination>
-        headerTitle="查询表格"
+        headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="key"
         search={{

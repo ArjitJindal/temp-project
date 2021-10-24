@@ -89,13 +89,13 @@ export default defineConfig({
       routes: [
         {
           path: '/transactions',
-          redirect: '/transactions/table-list',
+          redirect: '/transactions/transactions-list',
         },
         {
-          name: 'table-list',
+          name: 'transactions-list',
           icon: 'smile',
-          path: '/transactions/table-list',
-          component: './transactions/table-list',
+          path: '/transactions/transactions-list',
+          component: './transactions/transactions-list',
         },
       ],
     },
