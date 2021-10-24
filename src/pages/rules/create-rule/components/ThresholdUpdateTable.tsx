@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
 import { Button } from 'antd';
-import { ThresholdUpdateDataSourceType } from '../data';
+import { ThresholdUpdateDataSourceType } from '../data.d';
 
 export const ThresholdUpdateTable: React.FC<{
   editableKeys: React.Key[];

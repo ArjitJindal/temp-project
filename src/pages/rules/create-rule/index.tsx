@@ -3,7 +3,7 @@ import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type { StepDataType, ThresholdUpdateDataSourceType } from './data';
+import type { StepDataType, ThresholdUpdateDataSourceType } from './data.d';
 import type { RuleAction, ThresholdAllowedDataTypes } from '../data.d';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
@@ -68,7 +68,7 @@ const StepResult: React.FC<{
           <Button type="primary" onClick={props.onFinish}>
             Create another rule
           </Button>
-          <Button href="/rules/active-rules">Go to Active rules</Button>
+          <Button href="/rules/created-rules">Go to Created rules</Button>
         </>
       }
       className={styles.result}

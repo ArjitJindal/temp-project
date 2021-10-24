@@ -30,7 +30,7 @@ export default {
   'menu.transactions.search-transactions.articles': 'Articles',
   'menu.rules': 'Rules',
   'menu.rules.create-rule': 'Rules Library',
-  'menu.rules.active-rules': 'Active Rules',
+  'menu.rules.created-rules': 'Created Rules',
   'menu.rules.request-new': 'Request New Rule',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',

@@ -115,10 +115,10 @@ export default defineConfig({
           component: './rules/create-rule',
         },
         {
-          name: 'active-rules',
+          name: 'created-rules',
           icon: 'smile',
-          path: '/rules/active-rules',
-          component: './rules/active-rules',
+          path: '/rules/created-rules',
+          component: './rules/created-rules',
         },
         {
           name: 'request-new',

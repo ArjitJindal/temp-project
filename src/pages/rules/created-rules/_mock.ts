@@ -64,5 +64,5 @@ function getActiveRules(req: Request, res: Response) {
 }
 
 export default {
-  'GET  /api/rules/active-rules': getActiveRules,
+  'GET  /api/rules/created-rules': getActiveRules,
 };
