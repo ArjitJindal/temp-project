@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, message, Input, Drawer } from 'antd';
+import { Button, message, Input, Drawer, Tag } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer, FooterToolbar } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
@@ -110,72 +110,72 @@ const TableList: React.FC = () => {
     },
     {
       title: 'Payment method',
-      dataIndex: 'desc',
+      dataIndex: 'paymentMethod',
       valueType: 'textarea',
     },
     {
       title: 'Payout method',
-      dataIndex: 'desc',
+      dataIndex: 'payoutMethod',
       valueType: 'textarea',
     },
     {
       title: 'Rules hit',
-      dataIndex: 'callNo',
+      dataIndex: 'rulesHit',
       sorter: true,
       width: 80,
       hideInForm: true,
-      renderText: (val: string) => `${val} Rule(s)`,
+      renderText: (val: number) => `${val} Rule(s)`,
     },
     {
       title: 'Origin Country',
-      dataIndex: 'desc',
+      dataIndex: 'originCountry',
       valueType: 'textarea',
+      width: 80,
     },
 
     {
       title: 'Destination Country',
-      dataIndex: 'desc',
+      dataIndex: 'destinationCountry',
       valueType: 'textarea',
+      width: 80,
     },
     {
       title: 'Amount',
-      dataIndex: 'callNo',
+      dataIndex: 'amount',
       valueType: 'textarea',
     },
     {
       title: 'Sending Currency',
-      dataIndex: 'desc',
+      dataIndex: 'sendingCurrency',
       valueType: 'textarea',
       width: 80,
     },
 
     {
       title: 'Receiving Currency',
-      dataIndex: 'desc',
+      dataIndex: 'receivingCurrency',
       valueType: 'textarea',
       width: 80,
     },
     {
       title: 'Tags',
-      dataIndex: 'status',
+      dataIndex: 'tags',
       hideInForm: true,
-      valueEnum: {
-        0: {
-          text: '关闭',
-          status: 'Default',
-        },
-        1: {
-          text: '运行中',
-          status: 'Processing',
-        },
-        2: {
-          text: '已上线',
-          status: 'Success',
-        },
-        3: {
-          text: '异常',
-          status: 'Error',
-        },
+      render: (tags: any) => {
+        return (
+          <span>
+            <Tag color={'cyan'}>
+              {tags?.map((tag: any) => {
+                const key = Object.keys(tag)[0];
+                return (
+                  <span>
+                    {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
+                  </span>
+                );
+              })}
+            </Tag>
+          </span>
+        );
       },
     },
     {
@@ -241,7 +241,7 @@ const TableList: React.FC = () => {
               </a>{' '}
               项 &nbsp;&nbsp;
               <span>
-                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)} 万
+                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.amount!, 0)} 万
               </span>
             </div>
           }

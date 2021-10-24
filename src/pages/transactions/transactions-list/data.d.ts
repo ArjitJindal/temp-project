@@ -1,16 +1,19 @@
 export type TableListItem = {
   key: number;
   disabled?: boolean;
-  href: string;
-  avatar: string;
   name: string;
-  owner: string;
-  desc: string;
-  callNo: number;
+  rulesHit: number;
+  amount: number;
+  sendingCurrency: string;
+  receivingCurrency: string;
+  originCountry: string;
+  destinationCountry: string;
+  paymentMethod: string;
+  payoutMethod: string;
+  tags: object[];
   status: string;
   updatedAt: Date;
   createdAt: Date;
-  progress: number;
 };
 
 export type TableListPagination = {

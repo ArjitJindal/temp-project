@@ -1,37 +1,55 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
 import { parse } from 'url';
-import type { TableListItem, TableListParams } from './data';
+import type { TableListItem, TableListParams } from './data.d';
+
+const sendingCountryList = ['DE', 'FR', 'GB', 'LT', 'PL', 'BL', 'NL', 'AT'];
+const currencyForCountry = {
+  DE: 'EUR',
+  FR: 'EUR',
+  NL: 'EUR',
+  BL: 'EUR',
+  AT: 'EUR',
+  LT: 'EUR',
+  PL: 'PLN',
+  GB: 'GBP',
+};
+
+const customers = ['TransferGo', 'Wise', 'Revolut', 'Azimo'];
+
+const paymentMethods = ['ApplePay', 'Credit Card', 'Bank Transfer', 'Cash'];
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
   const tableListDataSource: TableListItem[] = [];
 
   for (let i = 0; i < pageSize; i += 1) {
+    const originCountry = sendingCountryList[Math.floor(Math.random() * sendingCountryList.length)];
+    const originCurrency = currencyForCountry[originCountry];
     const index = (current - 1) * 10 + i;
     tableListDataSource.push({
       key: index,
       disabled: i % 6 === 0,
-      href: 'https://ant.design',
-      avatar: [
-        'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-        'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
-      ][i % 2],
-      name: `TradeCode ${index}`,
-      owner: '曲丽丽',
-      desc: '这是一段描述',
-      callNo: Math.floor(Math.random() * 1000),
+      name: `ProfileId-${index + 1}`,
+      rulesHit: Math.ceil(Math.random() * 4),
+      amount: Math.floor(Math.random() * 10000),
+      sendingCurrency: originCurrency,
+      receivingCurrency: 'TRY',
+      originCountry: originCountry,
+      destinationCountry: 'TR',
+      paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+      payoutMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
       status: (Math.floor(Math.random() * 10) % 4).toString(),
+      tags: [{ customer: customers[Math.floor(Math.random() * customers.length)] }],
       updatedAt: new Date(),
       createdAt: new Date(),
-      progress: Math.ceil(Math.random() * 100),
     });
   }
   tableListDataSource.reverse();
   return tableListDataSource;
 };
 
-let tableListDataSource = genList(1, 5);
+let tableListDataSource = genList(1, 20);
 
 function getRule(req: Request, res: Response, u: string) {
   let realUrl = u;
@@ -123,19 +141,19 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
         const i = Math.ceil(Math.random() * 10000);
         const newRule = {
           key: tableListDataSource.length,
-          href: 'https://ant.design',
-          avatar: [
-            'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-            'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
-          ][i % 2],
           name,
-          owner: '曲丽丽',
-          desc,
-          callNo: Math.floor(Math.random() * 1000),
+          rulesHit: Math.floor(Math.random() * 4),
+          amount: Math.floor(Math.random() * 1000),
+          sendingCurrency: 'EUR',
+          receivingCurrency: 'TRY',
+          originCountry: 'TR',
+          destinationCountry: 'DE',
+          paymentMethod: 'Bank Transfer',
+          payoutMethod: 'ApplePay',
           status: (Math.floor(Math.random() * 10) % 2).toString(),
+          tags: [{ customer: 'TransferGo' }],
           updatedAt: new Date(),
           createdAt: new Date(),
-          progress: Math.ceil(Math.random() * 100),
         };
         tableListDataSource.unshift(newRule);
         return res.json(newRule);
