@@ -171,7 +171,7 @@ export default defineConfig({
     },
     {
       path: '/lists',
-      icon: 'list',
+      icon: 'OrderedListOutlined',
       name: 'lists',
       routes: [
         {

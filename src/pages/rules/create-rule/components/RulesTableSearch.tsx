@@ -153,8 +153,6 @@ export const RulesTableSearch: React.FC<{
       columns={columns}
       rowSelection={{
         onChange: (_, selectedRows) => {
-          console.log(getProcessedThresholdData(selectedRows[0].thresholdData));
-
           setStepData({
             name: selectedRows[0].name,
             ruleDescription: selectedRows[0].ruleDescription,
