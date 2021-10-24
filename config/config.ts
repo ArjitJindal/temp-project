@@ -88,35 +88,6 @@ export default defineConfig({
       name: 'transactions',
       routes: [
         {
-          path: '/transactions/search',
-          name: 'search-transactions',
-          component: './transactions/search',
-          routes: [
-            {
-              path: '/transactions/search',
-              redirect: '/transactions/search/articles',
-            },
-            {
-              name: 'articles',
-              icon: 'smile',
-              path: '/transactions/search/articles',
-              component: './transactions/search/articles',
-            },
-            {
-              name: 'projects',
-              icon: 'smile',
-              path: '/transactions/search/projects',
-              component: './transactions/search/projects',
-            },
-            {
-              name: 'applications',
-              icon: 'smile',
-              path: '/transactions/search/applications',
-              component: './transactions/search/applications',
-            },
-          ],
-        },
-        {
           path: '/transactions',
           redirect: '/transactions/table-list',
         },
@@ -125,18 +96,6 @@ export default defineConfig({
           icon: 'smile',
           path: '/transactions/table-list',
           component: './transactions/table-list',
-        },
-        {
-          name: 'basic-list',
-          icon: 'smile',
-          path: '/transactions/basic-list',
-          component: './transactions/basic-list',
-        },
-        {
-          name: 'card-list',
-          icon: 'smile',
-          path: '/transactions/card-list',
-          component: './transactions/card-list',
         },
       ],
     },
