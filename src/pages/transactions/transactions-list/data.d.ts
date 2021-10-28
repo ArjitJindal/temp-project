@@ -1,6 +1,7 @@
 export type TableListItem = {
   key: number;
   disabled?: boolean;
+  transactionId: string;
   name: string;
   rulesHit: number;
   amount: number;

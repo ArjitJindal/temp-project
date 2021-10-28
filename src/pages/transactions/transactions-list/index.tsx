@@ -9,8 +9,10 @@ import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
+import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { rule, addRule, updateRule, removeRule } from './service';
-import type { TableListItem, TableListPagination } from './data';
+import type { TableListItem, TableListPagination } from './data.d';
+
 /**
  * 添加节点
  *
@@ -46,11 +48,11 @@ const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) =
       ...fields,
     });
     hide();
-    message.success('配置成功');
+    message.success('Success');
     return true;
   } catch (error) {
     hide();
-    message.error('配置失败请重试！');
+    message.error('Error');
     return false;
   }
 };
@@ -61,7 +63,7 @@ const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) =
  */
 
 const handleRemove = async (selectedRows: TableListItem[]) => {
-  const hide = message.loading('正在删除');
+  const hide = message.loading('Loading');
   if (!selectedRows) return true;
 
   try {
@@ -107,6 +109,11 @@ const TableList: React.FC = () => {
           </a>
         );
       },
+    },
+    {
+      title: 'Transaction ID',
+      dataIndex: 'transactionId',
+      valueType: 'textarea',
     },
     {
       title: 'Payment method',
@@ -208,6 +215,7 @@ const TableList: React.FC = () => {
         search={{
           labelWidth: 120,
         }}
+        expandable={{ expandedRowRender: expandedRulesRowRender }}
         toolBarRender={() => [
           <Button
             type="primary"
@@ -221,11 +229,6 @@ const TableList: React.FC = () => {
         ]}
         request={rule}
         columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
       />
       {selectedRowsState?.length > 0 && (
         <FooterToolbar
