@@ -31,7 +31,7 @@ const genList = (current: number, pageSize: number) => {
       ],
     },
     {
-      ruleName: 'High risk country (suspend all)',
+      ruleName: 'High risk country',
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-2',
@@ -46,7 +46,7 @@ const genList = (current: number, pageSize: number) => {
       ],
     },
     {
-      ruleName: 'High risk country (suspend all)',
+      ruleName: 'High risk country',
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
       ruleId: 'R-3',
@@ -87,6 +87,70 @@ const genList = (current: number, pageSize: number) => {
           parameter: 'countryCode',
           type: 'string' as ThresholdAllowedDataTypes,
           defaultValue: 'PK',
+        },
+      ],
+    },
+    {
+      ruleName: 'Velocity: Too many transactions X within time T Day(s) from one user.',
+      ruleDescription:
+        'If a user makes more than X transactions in a predefined timeframe T day(s) perform action.',
+      ruleId: 'R-5',
+      defaultRuleAction: 'flag',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'Number of Transacions',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Day(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName: 'Velocity: Too many transactions X within time T hour(s) from one user.',
+      ruleDescription:
+        'If a user makes more than X transactions in a predefined timeframe T hour(s) perform action.',
+      ruleId: 'R-5',
+      defaultRuleAction: 'flag',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'Number of Transacions',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Hour(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+
+    {
+      ruleName: 'Velocity: Too many transactions X within time T minute(s) from one user.',
+      ruleDescription:
+        'If a user makes more than X transactions in a predefined timeframe T minute(s) perform action.',
+      ruleId: 'R-5',
+      defaultRuleAction: 'flag',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'Number of Transacions',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Minute(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
         },
       ],
     },
