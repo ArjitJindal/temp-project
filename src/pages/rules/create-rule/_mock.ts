@@ -46,25 +46,10 @@ const genList = (current: number, pageSize: number) => {
       ],
     },
     {
-      ruleName: 'High risk country',
-      ruleDescription:
-        'If a user is transferring funds to a High Risk country, flag user & transactions',
-      ruleId: 'R-3',
-      defaultRuleAction: 'flag',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'countryCode',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'NK',
-        },
-      ],
-    },
-    {
       ruleName: 'Blacklisted receiver name and country',
       ruleDescription:
         'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
-      ruleId: 'R-4',
+      ruleId: 'R-3',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -79,7 +64,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Whitelisted receiver name and country',
       ruleDescription:
         'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
-      ruleId: 'R-5',
+      ruleId: 'R-4',
       defaultRuleAction: 'allow',
       isActionEditable: false,
       thresholdData: [
@@ -93,10 +78,10 @@ const genList = (current: number, pageSize: number) => {
     {
       ruleName: 'Velocity: Too many transactions X within time T Day(s) from one user.',
       ruleDescription:
-        'If a user makes more than X transactions in a predefined timeframe T day(s) perform action.',
+        'If a user makes more than X transactions in a predefined timeframe T day(s) - perform action.',
       ruleId: 'R-5',
       defaultRuleAction: 'flag',
-      isActionEditable: false,
+      isActionEditable: true,
       thresholdData: [
         {
           parameter: 'Number of Transacions',
@@ -114,10 +99,10 @@ const genList = (current: number, pageSize: number) => {
     {
       ruleName: 'Velocity: Too many transactions X within time T hour(s) from one user.',
       ruleDescription:
-        'If a user makes more than X transactions in a predefined timeframe T hour(s) perform action.',
-      ruleId: 'R-5',
+        'If a user makes more than X transactions in a predefined timeframe T hour(s) - perform action.',
+      ruleId: 'R-6',
       defaultRuleAction: 'flag',
-      isActionEditable: false,
+      isActionEditable: true,
       thresholdData: [
         {
           parameter: 'Number of Transacions',
@@ -132,14 +117,13 @@ const genList = (current: number, pageSize: number) => {
         },
       ],
     },
-
     {
       ruleName: 'Velocity: Too many transactions X within time T minute(s) from one user.',
       ruleDescription:
-        'If a user makes more than X transactions in a predefined timeframe T minute(s) perform action.',
-      ruleId: 'R-5',
+        'If a user makes more than X transactions in a predefined timeframe T minute(s) - perform action.',
+      ruleId: 'R-7',
       defaultRuleAction: 'flag',
-      isActionEditable: false,
+      isActionEditable: true,
       thresholdData: [
         {
           parameter: 'Number of Transacions',
@@ -154,9 +138,171 @@ const genList = (current: number, pageSize: number) => {
         },
       ],
     },
+    {
+      ruleName:
+        'Velocity - Unique Cards: Same user paying from >= X different cards in time T day(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T day(s) using X unique cards - perform action.',
+      ruleId: 'R-8',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique Cards',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Day(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName:
+        'Velocity - Unique Cards: Same user paying from >= X different cards in time T hour(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T hour(s) using X unique cards - perform action.',
+      ruleId: 'R-9',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique Cards',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Hour(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName:
+        'Velocity - Unique Cards: Same user paying from >= X different cards in time T minute(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique cards - perform action.',
+      ruleId: 'R-10',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique Cards',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Minute(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '30',
+        },
+      ],
+    },
+    {
+      ruleName:
+        'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T day(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T day(s) using X unique IBANs - perform action.',
+      ruleId: 'R-11',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique IBAN',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Day(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName:
+        'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T hour(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T hour(s) using X unique IBANs - perform action.',
+      ruleId: 'R-12',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique IBANs',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Hour(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName:
+        'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T minute(s).',
+      ruleDescription:
+        'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique IBANs - perform action.',
+      ruleId: 'R-13',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of Unique IBAN',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '5',
+        },
+
+        {
+          parameter: 'Time in Minute(s)',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '30',
+        },
+      ],
+    },
+    {
+      ruleName: 'Same phone number for X number of users.',
+      ruleDescription:
+        'If greater than X number of users register with the same phone number - perform action.',
+      ruleId: 'R-14',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Number of the users with the same same phone no.',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: '1',
+        },
+      ],
+    },
+    {
+      ruleName: 'IP Address from a Sanctioned Country.',
+      ruleDescription: "If a user's IP Address is in a Sanctioned Jurisdiction - perform action.",
+      ruleId: 'R-15',
+      defaultRuleAction: 'flag',
+      isActionEditable: true,
+      thresholdData: [
+        {
+          parameter: 'Country Code',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'NK',
+        },
+      ],
+    },
   ];
 
-  for (let i = 0; i < pageSize; i += 1) {
+  // lol wtf
+  for (let i = 0; i < rulesAndDescriptions.length; i += 1) {
     const idx = (current - 1) * 10 + i;
     const index = ((current - 1) * 10 + i) % rulesAndDescriptions.length;
     tableListDataSource.push({
