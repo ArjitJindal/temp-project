@@ -1,8 +1,5 @@
 import { request } from 'umi';
 
-export async function fakeSubmitForm(params: any) {
-  return request('/api/stepForm', {
-    method: 'POST',
-    data: params,
-  });
+export async function getActiveLists() {
+  return request('/api/lists/created-lists');
 }
