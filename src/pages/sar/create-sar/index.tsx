@@ -116,7 +116,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
   );
 
   return (
-    <PageContainer content="Create a SAR report with a staright-forward 3 step process">
+    <PageContainer content="Create a SAR with a staright-forward 3 step process">
       <Card bordered={false}>
         <StepsForm
           containerStyle={{ width: '100%' }}
@@ -175,7 +175,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
               </div>
             </>
           </StepsForm.StepForm>
-          <StepsForm.StepForm title="Preview and Download SAR Report">
+          <StepsForm.StepForm title="Preview and Download SAR">
             <StepResult
               onFinish={async () => {
                 setCurrent(0);
