@@ -1,62 +1,10 @@
 import React, { useRef, useState } from 'react';
 import type { FormInstance } from 'antd';
-import { Card, Result, Button, Descriptions, Divider, Alert, Statistic } from 'antd';
+import { Card, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import ProForm, { ProFormDigit, ProFormSelect, ProFormText, StepsForm } from '@ant-design/pro-form';
 import type { StepDataType } from './data';
 import styles from './style.less';
-
-const StepDescriptions: React.FC<{
-  stepData: StepDataType;
-  bordered?: boolean;
-}> = ({ stepData, bordered }) => {
-  const { payAccount, receiverAccount, receiverName, amount } = stepData;
-  return (
-    <Descriptions column={1} bordered={bordered}>
-      <Descriptions.Item label="付款账户"> {payAccount}</Descriptions.Item>
-      <Descriptions.Item label="收款账户"> {receiverAccount}</Descriptions.Item>
-      <Descriptions.Item label="收款人姓名"> {receiverName}</Descriptions.Item>
-      <Descriptions.Item label="转账金额">
-        <Statistic
-          value={amount}
-          suffix={
-            <span
-              style={{
-                fontSize: 14,
-              }}
-            >
-              元
-            </span>
-          }
-          precision={2}
-        />
-      </Descriptions.Item>
-    </Descriptions>
-  );
-};
-
-const StepResult: React.FC<{
-  onFinish: () => Promise<void>;
-}> = (props) => {
-  return (
-    <Result
-      status="success"
-      title="Rule Successfully created"
-      subTitle="All new transactions will go through this rule"
-      extra={
-        <>
-          <Button type="primary" onClick={props.onFinish}>
-            再转一笔
-          </Button>
-          <Button>查看账单</Button>
-        </>
-      }
-      className={styles.result}
-    >
-      {props.children}
-    </Result>
-  );
-};
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const [stepData, setStepData] = useState<StepDataType>({
@@ -70,7 +18,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
   const formRef = useRef<FormInstance>();
 
   return (
-    <PageContainer content="将一个冗长或用户不熟悉的表单任务分成多个步骤，指导用户完成。">
+    <PageContainer content="Custom lists you have created">
       <Card bordered={false}>
         <StepsForm
           current={current}
@@ -154,7 +102,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 message="确认转账后，资金将直接打入对方账户，无法退回。"
                 style={{ marginBottom: 24 }}
               />
-              <StepDescriptions stepData={stepData} bordered />
               <Divider style={{ margin: '24px 0' }} />
               <ProFormText.Password
                 label="支付密码"
@@ -164,16 +111,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
                 rules={[{ required: true, message: '需要支付密码才能进行支付' }]}
               />
             </div>
-          </StepsForm.StepForm>
-          <StepsForm.StepForm title="完成">
-            <StepResult
-              onFinish={async () => {
-                setCurrent(0);
-                formRef.current?.resetFields();
-              }}
-            >
-              <StepDescriptions stepData={stepData} />
-            </StepResult>
           </StepsForm.StepForm>
         </StepsForm>
         <Divider style={{ margin: '40px 0 24px' }} />
