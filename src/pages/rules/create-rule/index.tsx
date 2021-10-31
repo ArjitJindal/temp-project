@@ -116,7 +116,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
   );
 
   return (
-    <PageContainer content="Create a transaction monitoring rule with a staright forward 3 step process">
+    <PageContainer content="Create a transaction monitoring rule with a staright-forward 3 step process">
       <Card bordered={false}>
         <StepsForm
           containerStyle={{ width: '100%' }}

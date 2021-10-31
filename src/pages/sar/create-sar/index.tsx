@@ -116,7 +116,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
   );
 
   return (
-    <PageContainer content="Create a transaction monitoring rule with a staright forward 3 step process">
+    <PageContainer content="Create a SAR report with a staright-forward 3 step process">
       <Card bordered={false}>
         <StepsForm
           containerStyle={{ width: '100%' }}
@@ -133,7 +133,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
         >
           <StepsForm.StepForm<StepDataType>
             formRef={formRef}
-            title="Choose Rule"
+            title="Selections Transactions"
             initialValues={stepData}
           >
             <RulesTableSearch
@@ -144,7 +144,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
             />
           </StepsForm.StepForm>
 
-          <StepsForm.StepForm title="Set the threshold">
+          <StepsForm.StepForm title="Add fields for the report">
             <>
               <div className={styles.result}>
                 <Alert
@@ -175,7 +175,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
               </div>
             </>
           </StepsForm.StepForm>
-          <StepsForm.StepForm title="Activate">
+          <StepsForm.StepForm title="Preview and Download SAR Report">
             <StepResult
               onFinish={async () => {
                 setCurrent(0);
