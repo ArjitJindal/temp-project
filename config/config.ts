@@ -152,6 +152,23 @@ export default defineConfig({
       ],
     },
     {
+      path: '/sar',
+      icon: 'WarningOutlined',
+      name: 'sar',
+      routes: [
+        {
+          path: '/sar',
+          redirect: '/sar/create-sar',
+        },
+        {
+          name: 'create-sar',
+          icon: 'smile',
+          path: '/sar/create-sar',
+          component: './sar/create-sar',
+        },
+      ],
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

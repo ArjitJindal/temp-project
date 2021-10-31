@@ -15,7 +15,7 @@ const currencyForCountry = {
   GB: 'GBP',
 };
 
-const customers = ['TransferGo', 'Wise', 'Revolut', 'Azimo'];
+const customers = ['TransferGo', 'Wise', 'Remitly', 'Paysend', 'Azimo'];
 
 const paymentMethods = ['ApplePay', 'Credit Card', 'Bank Transfer', 'Cash'];
 

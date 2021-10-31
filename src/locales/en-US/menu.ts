@@ -22,6 +22,8 @@ export default {
   'menu.rules.create-rule': 'Rules Library',
   'menu.rules.created-rules': 'Created Rules',
   'menu.rules.request-new': 'Request New Rule',
+  'menu.sar.create-sar': 'Create SAR Report',
+  'menu.sar': 'SAR Reports',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',
   'menu.account.settings': 'Account Settings',

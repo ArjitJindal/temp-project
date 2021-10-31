@@ -8,7 +8,7 @@ import {
   ProFormRadio,
   ProFormDateTimePicker,
 } from '@ant-design/pro-form';
-import type { TableListItem } from '../data';
+import type { TableListItem } from '../data.d';
 
 export type FormValueType = {
   target?: string;
