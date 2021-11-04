@@ -169,6 +169,23 @@ export default defineConfig({
       ],
     },
     {
+      path: '/network',
+      icon: 'PartitionOutlined',
+      name: 'network',
+      routes: [
+        {
+          path: '/network',
+          redirect: '/network/create-list',
+        },
+        {
+          name: 'network-analysis',
+          icon: 'smile',
+          path: '/network/create-list',
+          component: './network/create-list',
+        },
+      ],
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

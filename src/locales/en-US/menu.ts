@@ -24,6 +24,8 @@ export default {
   'menu.rules.request-new': 'Request New Rule',
   'menu.sar.create-sar': 'Create SAR',
   'menu.sar': 'SAR',
+  'menu.network.network-analysis': 'Network Analysis',
+  'menu.network': 'Network',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',
   'menu.account.settings': 'Account Settings',
