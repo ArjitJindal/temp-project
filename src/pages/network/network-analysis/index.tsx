@@ -1,90 +1,50 @@
-import { Input, Drawer, Tag } from 'antd';
-import React, { useState, useRef } from 'react';
+import { Tag } from 'antd';
+import React from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
-import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
-import ProDescriptions from '@ant-design/pro-descriptions';
 import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
-import { rule } from './service';
+import { networkAnalysis } from './service';
 import type { NetworkAnalysisTableListItem, NetworkAnalysisTableListPagination } from './data.d';
 
 const NetworkAnalysisTableList: React.FC = () => {
-  const [showDetail, setShowDetail] = useState<boolean>(false);
-  const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<NetworkAnalysisTableListItem>();
-
   const columns: ProColumns<NetworkAnalysisTableListItem>[] = [
     {
-      title: 'Profile Identifier',
+      title: 'Profile Identifiers',
       dataIndex: 'name',
-      tip: 'Identifier of the profile',
-      render: (dom, entity) => {
+      tip: 'Identifiers of the profile',
+      render: (ids: any) => {
         return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
+          <span>
+            {ids?.map((tag: any) => {
+              console.log('TAG: \n');
+              console.log(tag);
+              return (
+                <Tag color={'geekblue'}>
+                  <span>{tag}</span>{' '}
+                </Tag>
+              );
+            })}
+          </span>
         );
       },
     },
     {
-      title: 'Transaction ID',
-      dataIndex: 'transactionId',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Payment method',
-      dataIndex: 'paymentMethod',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Payout method',
-      dataIndex: 'payoutMethod',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Rules hit',
-      dataIndex: 'rulesHit',
-      sorter: true,
-      width: 80,
-      hideInForm: true,
-      renderText: (val: number) => `${val} Rule(s)`,
-    },
-    {
-      title: 'Origin Country',
-      dataIndex: 'originCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
-
-    {
-      title: 'Destination Country',
-      dataIndex: 'destinationCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Sending Currency',
-      dataIndex: 'sendingCurrency',
-      valueType: 'textarea',
-      width: 80,
-    },
-
-    {
-      title: 'Receiving Currency',
-      dataIndex: 'receivingCurrency',
-      valueType: 'textarea',
-      width: 80,
+      title: 'Transaction IDs',
+      dataIndex: 'transactionIds',
+      render: (ids: any) => {
+        return (
+          <span>
+            {ids?.map((tag: any) => {
+              return (
+                <Tag color={'blue'}>
+                  <span>{tag}</span>
+                </Tag>
+              );
+            })}
+          </span>
+        );
+      },
     },
     {
       title: 'Tags',
@@ -107,63 +67,20 @@ const NetworkAnalysisTableList: React.FC = () => {
         );
       },
     },
-    {
-      title: 'Transaction time',
-      sorter: true,
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
-      },
-    },
   ];
 
   return (
     <PageContainer>
       <ProTable<NetworkAnalysisTableListItem, NetworkAnalysisTableListPagination>
         headerTitle="Transactions"
-        actionRef={actionRef}
         rowKey="key"
         search={{
           labelWidth: 120,
         }}
         expandable={{ expandedRowRender: expandedRulesRowRender }}
-        request={rule}
+        request={networkAnalysis}
         columns={columns}
       />
-      <Drawer
-        width={600}
-        visible={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<NetworkAnalysisTableListItem>
-            column={2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<NetworkAnalysisTableListItem>[]}
-          />
-        )}
-      </Drawer>
     </PageContainer>
   );
 };

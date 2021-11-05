@@ -1,20 +1,9 @@
 export type NetworkAnalysisTableListItem = {
   key: number;
   disabled?: boolean;
-  transactionId: string;
-  name: string;
-  rulesHit: number;
-  amount: number;
-  sendingCurrency: string;
-  receivingCurrency: string;
-  originCountry: string;
-  destinationCountry: string;
-  paymentMethod: string;
-  payoutMethod: string;
+  transactionIds: string[];
+  name: string[];
   tags: object[];
-  status: string;
-  updatedAt: Date;
-  createdAt: Date;
 };
 
 export type NetworkAnalysisTableListPagination = {

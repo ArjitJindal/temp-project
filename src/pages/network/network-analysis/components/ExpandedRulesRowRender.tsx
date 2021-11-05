@@ -1,10 +1,12 @@
 import { Badge, Table } from 'antd';
+import { Timeline } from 'antd';
 
 export const expandedRulesRowRender = () => {
   const columns = [
-    { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId' },
-    { title: 'Rule Name', dataIndex: 'ruleName', key: 'ruleName', width: 300 },
-    { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
+    { title: 'Transaction ID', dataIndex: 'transactionId', key: 'transactionId' },
+    { title: 'Profile Identifier', dataIndex: 'profileId', key: 'profileId', width: 300 },
+    { title: 'Payment Method', dataIndex: 'paymentMethod', key: 'paymentMethod' },
+    { title: 'Payout Method', dataIndex: 'payoutMethod', key: 'payoutMethod' },
     {
       title: 'Action',
       key: 'action',
@@ -18,19 +20,24 @@ export const expandedRulesRowRender = () => {
     },
   ];
 
-  const rulesData = [
+  const networkAnalysisData = [
     {
-      ruleName: 'IP Address from a Sanctioned Country.',
+      profileId: 'Profile-20',
+      paymentMethod: 'Cash',
+      payoutMethod: 'IBAN',
       ruleDescription: "If a user's IP Address is in a Sanctioned Jurisdiction - perform action.",
     },
     {
-      ruleName: 'Same phone number for X number of users.',
+      profileId: 'Profile-19',
+      paymentMethod: 'IBAN',
+      payoutMethod: 'Cash',
       ruleDescription:
         'If greater than X number of users register with the same phone number - perform action.',
     },
     {
-      ruleName:
-        'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T minute(s).',
+      profileId: 'Profile-18',
+      paymentMethod: 'IBAN',
+      payoutMethod: 'Credit Card',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique IBANs - perform action',
     },
@@ -40,11 +47,22 @@ export const expandedRulesRowRender = () => {
   for (let i = 0; i < 3; ++i) {
     data.push({
       key: i,
-      ruleId: `R-${i + 1}-2`,
-      ruleName: rulesData[i].ruleName,
-      ruleDescription: rulesData[i].ruleDescription,
+      transactionId: `T-${i + 1}`,
+      profileId: networkAnalysisData[i].profileId,
+      paymentMethod: networkAnalysisData[i].paymentMethod,
+      payoutMethod: networkAnalysisData[i].payoutMethod,
       upgradeNum: 'Upgraded: 56',
     });
   }
-  return <Table columns={columns} dataSource={data} pagination={false} />;
+  return (
+    <>
+      <Table columns={columns} dataSource={data} pagination={false} />{' '}
+      <Timeline>
+        <Timeline.Item>Create a services site 2015-09-01</Timeline.Item>
+        <Timeline.Item>Solve initial network problems 2015-09-01</Timeline.Item>
+        <Timeline.Item>Technical testing 2015-09-01</Timeline.Item>
+        <Timeline.Item>Network problems being solved 2015-09-01</Timeline.Item>
+      </Timeline>
+    </>
+  );
 };
