@@ -4,7 +4,7 @@ import { PageContainer } from '@ant-design/pro-layout';
 
 const BasicForm: FC<Record<string, any>> = () => {
   return (
-    <PageContainer content="Create a custom list to allow, block or flag events.">
+    <PageContainer content="Analyze the complex web of transactions to mitigate suspicious behaviour.">
       <Card bordered={false}>
         <>
           <Button>Upload CSV</Button>

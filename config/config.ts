@@ -175,13 +175,13 @@ export default defineConfig({
       routes: [
         {
           path: '/network',
-          redirect: '/network/create-list',
+          redirect: '/network/network-analysis',
         },
         {
           name: 'network-analysis',
           icon: 'smile',
-          path: '/network/create-list',
-          component: './network/create-list',
+          path: '/network/network-analysis',
+          component: './network/network-analysis',
         },
       ],
     },
