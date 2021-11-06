@@ -1,10 +1,16 @@
-import { Badge, Table } from 'antd';
+import { Badge, Table, Space } from 'antd';
 import { Timeline } from 'antd';
 
 export const expandedRulesRowRender = () => {
   const columns = [
     { title: 'Transaction ID', dataIndex: 'transactionId', key: 'transactionId' },
-    { title: 'Profile Identifier', dataIndex: 'profileId', key: 'profileId', width: 300 },
+    {
+      title: 'Profile Identifier From',
+      dataIndex: 'profileIdFrom',
+      key: 'profileIdFrom',
+      width: 300,
+    },
+    { title: 'Profile Identifier To', dataIndex: 'profileIdTo', key: 'profileIdTo', width: 300 },
     { title: 'Payment Method', dataIndex: 'paymentMethod', key: 'paymentMethod' },
     { title: 'Payout Method', dataIndex: 'payoutMethod', key: 'payoutMethod' },
     {
@@ -22,20 +28,23 @@ export const expandedRulesRowRender = () => {
 
   const networkAnalysisData = [
     {
-      profileId: 'Profile-20',
+      profileIdFrom: 'Profile-20',
+      profileIdTo: 'Profile-19',
       paymentMethod: 'Cash',
       payoutMethod: 'IBAN',
       ruleDescription: "If a user's IP Address is in a Sanctioned Jurisdiction - perform action.",
     },
     {
-      profileId: 'Profile-19',
+      profileIdFrom: 'Profile-19',
+      profileIdTo: 'Profile-18',
       paymentMethod: 'IBAN',
       payoutMethod: 'Cash',
       ruleDescription:
         'If greater than X number of users register with the same phone number - perform action.',
     },
     {
-      profileId: 'Profile-18',
+      profileIdFrom: 'Profile-18',
+      profileIdTo: 'Profile-20',
       paymentMethod: 'IBAN',
       payoutMethod: 'Credit Card',
       ruleDescription:
@@ -48,7 +57,8 @@ export const expandedRulesRowRender = () => {
     data.push({
       key: i,
       transactionId: `T-${i + 1}`,
-      profileId: networkAnalysisData[i].profileId,
+      profileIdFrom: networkAnalysisData[i].profileIdFrom,
+      profileIdTo: networkAnalysisData[i].profileIdTo,
       paymentMethod: networkAnalysisData[i].paymentMethod,
       payoutMethod: networkAnalysisData[i].payoutMethod,
       upgradeNum: 'Upgraded: 56',
@@ -57,12 +67,22 @@ export const expandedRulesRowRender = () => {
   return (
     <>
       <Table columns={columns} dataSource={data} pagination={false} />{' '}
-      <Timeline>
-        <Timeline.Item>Create a services site 2015-09-01</Timeline.Item>
-        <Timeline.Item>Solve initial network problems 2015-09-01</Timeline.Item>
-        <Timeline.Item>Technical testing 2015-09-01</Timeline.Item>
-        <Timeline.Item>Network problems being solved 2015-09-01</Timeline.Item>
-      </Timeline>
+      <Space size="large" style={{ marginTop: '40px' }}>
+        <Timeline>
+          <Timeline.Item>
+            Transfer made from <strong>Baran Ozkan</strong> to <strong>Orhan Mutlu </strong> on
+            2021-09-01
+          </Timeline.Item>
+          <Timeline.Item>
+            Transfer made from <strong>Orhan Mutlu</strong> to <strong>Madhu Nadig</strong> on
+            2021-09-01
+          </Timeline.Item>
+          <Timeline.Item>
+            Transfer made from <strong>Madhu Nadig</strong> to <strong>Baran Ozkan</strong> on
+            2021-09-01
+          </Timeline.Item>
+        </Timeline>
+      </Space>
     </>
   );
 };

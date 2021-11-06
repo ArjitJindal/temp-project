@@ -15,7 +15,7 @@ const genList = (current: number, pageSize: number) => {
       key: index,
       disabled: i % 6 === 0,
       name: [`ProfileId-${index + 1}`, `ProfileId-${index + 2}`, `ProfileId-${index + 3}`],
-      transactionIds: [`T-${index + 1}`],
+      transactionIds: [`T-${index + 1}`, `T-${index + 2}`, `T-${index + 3}`],
       tags: [{ customer: customers[Math.floor(Math.random() * customers.length)] }],
     });
   }
