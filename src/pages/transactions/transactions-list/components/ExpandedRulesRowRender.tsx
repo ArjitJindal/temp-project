@@ -12,7 +12,7 @@ export const expandedRulesRowRender = () => {
       render: () => (
         <span>
           <Badge status="error" />
-          Flaged
+          Flagged
         </span>
       ),
     },
