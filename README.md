@@ -28,32 +28,8 @@ Ant Design provides some useful script to help you quick start and build with we
 
 Scripts provided in `package.json`. It's safe to modify or add additional script:
 
-### Start project
+Assuming you have nvm and yarn installed:
 
-```bash
-npm start
-```
-
-### Build project
-
-```bash
-npm run build
-```
-
-### Check code style
-
-```bash
-npm run lint
-```
-
-You can also use script to auto fix some lint error:
-
-```bash
-npm run lint:fix
-```
-
-### Test code
-
-```bash
-npm test
-```
+1. yarn
+2. nvm use 12
+3. yarn start
