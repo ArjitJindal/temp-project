@@ -299,6 +299,44 @@ const genList = (current: number, pageSize: number) => {
         },
       ],
     },
+    {
+      ruleName: 'Whitelisted receiver IBANs',
+      ruleDescription: 'Whitelist all IBANs from selected list',
+      ruleId: 'R-16',
+      defaultRuleAction: 'allow',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'list',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'Whitelisted receiver IBANs',
+        },
+        {
+          parameter: 'parameter',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'IBAN',
+        },
+      ],
+    },
+    {
+      ruleName: 'Whitelisted receiver names - userlevel',
+      ruleDescription: 'Whitelist all names - userlevel from selected list',
+      ruleId: 'R-17',
+      defaultRuleAction: 'allow',
+      isActionEditable: false,
+      thresholdData: [
+        {
+          parameter: 'list',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'Whitelisted receiver names - userlevel',
+        },
+        {
+          parameter: 'parameter',
+          type: 'string' as ThresholdAllowedDataTypes,
+          defaultValue: 'profileID',
+        },
+      ],
+    },
   ];
 
   // lol wtf
