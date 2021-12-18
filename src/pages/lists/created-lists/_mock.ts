@@ -8,7 +8,7 @@ export const createTableList = () => {
   for (let i = 0; i < 5; i += 1) {
     tableListDataSource.push({
       listId: `L-${i}`,
-      listName: `List ${i}`,
+      ibanNumber: `LT${Math.floor(Math.random() * 1000000000)}`,
       createdAt: Date.now() - Math.floor(Math.random() * 100000),
     });
   }

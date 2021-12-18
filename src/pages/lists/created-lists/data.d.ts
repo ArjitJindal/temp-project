@@ -1,5 +1,6 @@
 export type CreateListsTableListItem = {
   listId: string;
-  listName: string;
+  // really fucking this up for the demo
+  ibanNumber: string;
   createdAt: number;
 };

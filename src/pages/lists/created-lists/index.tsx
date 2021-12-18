@@ -1,9 +1,8 @@
 import React from 'react';
 import { Card } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import type { ProColumns } from '@ant-design/pro-table';
+import { EditableProTable, ProColumns } from '@ant-design/pro-table';
 import type { CreateListsTableListItem } from './data.d';
-import ProTable from '@ant-design/pro-table';
 import { getActiveLists } from './service';
 
 const StepForm: React.FC<Record<string, any>> = () => {
@@ -17,14 +16,15 @@ const StepForm: React.FC<Record<string, any>> = () => {
       search: false,
     },
     {
-      title: 'List Name',
+      title: 'IBAN Number',
       width: 240,
-      dataIndex: 'listName',
+      dataIndex: 'ibanNumber',
     },
     {
       title: 'Created At',
       dataIndex: 'createdAt',
       align: 'left',
+      width: 240,
       search: false,
       valueType: 'date',
     },
@@ -34,13 +34,18 @@ const StepForm: React.FC<Record<string, any>> = () => {
     <PageContainer content="Custom lists you have created">
       <Card bordered={false}>
         <>
-          <ProTable<CreateListsTableListItem>
+          <h1>Whitelisted receiver IBANs - Global</h1>
+          <EditableProTable<CreateListsTableListItem>
             columns={columns}
             request={getActiveLists}
             scroll={{ x: 1300 }}
             options={false}
             search={false}
             rowKey="key"
+            recordCreatorProps={{
+              creatorButtonText: 'Add Row',
+              'aria-errormessage': 'Please add one row at a time',
+            }}
           />
         </>
       </Card>
