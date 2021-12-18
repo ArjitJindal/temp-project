@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import { EditableProTable, ProColumns } from '@ant-design/pro-table';
+import { ActionType, EditableProTable, ProColumns } from '@ant-design/pro-table';
 import type { CreateListsTableListItem } from './data.d';
 import { getActiveLists } from './service';
+import { ProFormInstance } from '@ant-design/pro-form';
 
 const StepForm: React.FC<Record<string, any>> = () => {
+  const actionRef = useRef<ActionType>();
+  const formRef = useRef<ProFormInstance<any>>();
+
   const columns: ProColumns<CreateListsTableListItem>[] = [
     {
       title: 'List ID',
@@ -28,6 +32,33 @@ const StepForm: React.FC<Record<string, any>> = () => {
       search: false,
       valueType: 'date',
     },
+    {
+      title: 'Edit',
+      valueType: 'option',
+      render: (_, row) => [
+        <a
+          key="delete"
+          onClick={() => {
+            const tableDataSource = formRef.current?.getFieldValue(
+              'table',
+            ) as CreateListsTableListItem[];
+            formRef.current?.setFieldsValue({
+              table: tableDataSource.filter((item) => item.listId !== row?.listId),
+            });
+          }}
+        >
+          Delete
+        </a>,
+        <a
+          key="edit"
+          onClick={() => {
+            actionRef.current?.startEditable(row.listId);
+          }}
+        >
+          Edit
+        </a>,
+      ],
+    },
   ];
 
   return (
@@ -38,6 +69,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
           <EditableProTable<CreateListsTableListItem>
             columns={columns}
             request={getActiveLists}
+            actionRef={actionRef}
             scroll={{ x: 1300 }}
             options={false}
             search={false}
