@@ -34,36 +34,6 @@ Resources:
           AttributeType: S
         - AttributeName: SortKeyID #transactionID
           AttributeType: S
-        - AttributeName: userID
-          AttributeType: S
-        - AttributeName: paymentMethod
-          AttributeType: S
-        - AttributeName: payoutMethod
-          AttributeType: S
-        - AttributeName: sendingAmountDetails
-          AttributeType: M
-        - AttributeName: receivingAmountDetails
-          AttributeType: M
-        - AttributeName: sendingAmount
-          AttributeType: M
-        - AttributeName: senderName
-          AttributeType: M
-        - AttributeName: receiverName
-          AttributeType: M
-        - AttributeName: senderCardDetails
-          AttributeType: M
-        - AttributeName: receivercardDetails
-          AttributeType: M
-        - AttributeName: deviceData
-          AttributeType: M
-        - AttributeName: promotionCodeUsed
-          AttributeType: B
-        - AttributeName: productType
-          AttributeType: S
-        - AttributeName: reference
-          AttributeType: S
-        - AttributeName: tags
-          AttributeType: M
       KeySchema:
         - AttributeName: PartitionKeyID
           KeyType: HASH
