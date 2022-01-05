@@ -67,6 +67,8 @@ Resources:
       KeySchema:
         - AttributeName: PartitionKeyID
           KeyType: HASH
+        - AttributeName: PartitionKeyID
+          KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
