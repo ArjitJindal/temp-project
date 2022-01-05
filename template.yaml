@@ -67,7 +67,7 @@ Resources:
       KeySchema:
         - AttributeName: PartitionKeyID
           KeyType: HASH
-        - AttributeName: PartitionKeyID
+        - AttributeName: SortKeyID
           KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 1
