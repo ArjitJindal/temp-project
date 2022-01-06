@@ -19,6 +19,9 @@ Resources:
       Runtime: nodejs14.x
       Architectures:
         - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: Transactions
       Events:
         HelloWorld:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -30,9 +33,9 @@ Resources:
     Properties:
       TableName: Transactions
       AttributeDefinitions:
-        - AttributeName: PartitionKeyID # internalID#tenantID
+        - AttributeName: PartitionKeyID # tenantID for primary item
           AttributeType: S
-        - AttributeName: SortKeyID #transactionID
+        - AttributeName: SortKeyID # transactionID for primary item
           AttributeType: S
       KeySchema:
         - AttributeName: PartitionKeyID

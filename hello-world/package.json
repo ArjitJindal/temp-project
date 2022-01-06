@@ -1,12 +1,12 @@
 {
-  "name": "hello_world",
+  "name": "tarpon",
   "version": "1.0.0",
-  "description": "hello world sample for NodeJS",
+  "description": "Assets, templates and code for project Jumping Spider",
   "main": "app.js",
   "repository": "https://github.com/awslabs/aws-sam-cli/tree/develop/samcli/local/init/templates/cookiecutter-aws-sam-hello-nodejs",
-  "author": "SAM CLI",
-  "license": "MIT",
+  "author": "Flagright Data Technologies Inc.",
   "dependencies": {
+    "aws-sdk": "^2.1051.0",
     "axios": "^0.21.1"
   },
   "scripts": {
