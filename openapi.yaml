@@ -7,6 +7,11 @@ servers:
 paths:
   /transaction:
     post:
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
       summary: Transaction
       operationId: post-consumer-transaction
       responses:
@@ -95,6 +100,11 @@ paths:
         description: ""
   "/transaction/{transactionId}":
     get:
+      x-amazon-apigateway-integration:
+        httpMethod: GET
+        type: aws_proxy
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
       summary: Transaction
       tags: []
       responses:
