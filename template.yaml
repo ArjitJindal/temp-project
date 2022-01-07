@@ -15,20 +15,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: prod
-      DefinitionBody:
-        swagger: 2.0
-        info:
-          title:
-            Ref: AWS::StackName
-        paths:
-          /transaction:
-            post:
-              responses: {}
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
+      DefinitionUri: s3://openapidef/openapi.yaml
   HelloWorldFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
