@@ -713,7 +713,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   HelloWorldApi:
     Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${TransactionPostAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/transaction"
+    Value: !Sub "https://${TransactionPostAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/transaction"
   HelloWorldFunction:
     Description: "Hello World Lambda Function ARN"
     Value: !GetAtt HelloWorldFunction.Arn
