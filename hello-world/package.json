@@ -7,7 +7,8 @@
   "author": "Flagright Data Technologies Inc.",
   "dependencies": {
     "aws-sdk": "^2.1051.0",
-    "axios": "^0.21.1"
+    "axios": "^0.21.1",
+    "uuid": "^8.3.2"
   },
   "scripts": {
     "test": "mocha tests/unit/"

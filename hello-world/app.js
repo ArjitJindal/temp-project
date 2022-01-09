@@ -1,6 +1,7 @@
 // const axios = require('axios')
 // const url = 'http://checkip.amazonaws.com/';
 let response;
+const { v4: uuidv4 } = require("uuid");
 const AWS = require("aws-sdk"),
   dynamoDb = new AWS.DynamoDB.DocumentClient();
 
@@ -18,13 +19,34 @@ const AWS = require("aws-sdk"),
  */
 exports.lambdaHandler = async (event, context) => {
   try {
-    let key = { PartitionKeyID: "stuffs" };
+    console.log(`Context: ${JSON.stringify(context)}`);
+    console.log(`Event: ${JSON.stringify(event)}`);
+    let body = JSON.parse(event.body);
+    let fakeTenantID = "Tenant-" + Math.floor(Math.random() * (10 - 1 + 1) + 1);
+    let transactionID = uuidv4();
+
     let params = {
       TableName: "Transactions",
       Item: {
-        PartitionKeyID: "somewhatfamous3",
+        PartitionKeyID: fakeTenantID + "#" + transactionID,
         SortKeyID: "thingsyouwontbelieve",
-        userID: "innocentuserman",
+        userID: body.userID,
+        sendingAmountDetails: body.sendingAmountDetails,
+        receivingAmountDetails: body.receivingAmountDetails,
+        paymentMethod: body.paymentMethod,
+        payoutMethod: body.payoutMethod,
+        timestamp: body.timestamp,
+        senderName: body.senderName,
+        receiverName: body.receiverName,
+        promotionCodeUsed: body.promotionCodeUsed,
+        productType: body.productType,
+        senderCardDetails: body.senderName,
+        receiverCardDetails: body.receiverCardDetails,
+        senderBankDetails: body.senderBankDetails,
+        receiverBankDetails: body.receiverBankDetails,
+        reference: body.reference,
+        deviceData: body.deviceData,
+        tags: body.tags,
       },
       ReturnConsumedCapacity: "TOTAL",
     };
@@ -35,6 +57,7 @@ exports.lambdaHandler = async (event, context) => {
         statusCode: 200,
         body: JSON.stringify({
           message: "success",
+          transactionID: transactionID,
         }),
       };
     } catch (dbError) {
