@@ -6,9 +6,9 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
 This project contains source code and supporting files for a serverless application for Porject Jumping that can be deployed with the SAM CLI. It includes the following files and folders.
 
-- hello-world - Code for the application's Lambda function.
+- rules-engine-lambda - Code for the Rules Engine Lambda function.
 - events - Invocation events that you can use to invoke the function.
-- hello-world/tests - Unit tests for the application code.
+- rules-engine-lambda/tests - Unit tests for the rules engineapplication code.
 - template.yaml - A template that defines the application's AWS resources.
 
 The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
@@ -48,7 +48,7 @@ Build your application with the `sam build` command.
 tarpon$ sam build
 ```
 
-The SAM CLI installs dependencies defined in `hello-world/package.json`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
+The SAM CLI installs dependencies defined in `rules-engine-lambda/package.json`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
 
 Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
 
@@ -94,12 +94,12 @@ You can find more information and examples about filtering Lambda function logs 
 
 ## Unit tests
 
-Tests are defined in the `hello-world/tests` folder in this project. Use NPM to install the [Mocha test framework](https://mochajs.org/) and run unit tests.
+Tests are defined in the `rules-engine-lambda/tests` folder in this project. Use NPM to install the [Mocha test framework](https://mochajs.org/) and run unit tests.
 
 ```bash
-tarpon$ cd hello-world
-hello-world$ npm install
-hello-world$ npm run test
+tarpon$ cd rules-engine-lambda
+rules-engine-lambda$ npm install
+rules-engine-lambda$ npm run test
 ```
 
 ## Cleanup
