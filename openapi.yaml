@@ -11,7 +11,7 @@ paths:
         httpMethod: POST
         type: aws_proxy
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RulesEngineFunction.Arn}/invocations
       summary: Transaction
       operationId: post-consumer-transaction
       responses:
@@ -104,7 +104,7 @@ paths:
         httpMethod: GET
         type: aws_proxy
         uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RulesEngineFunction.Arn}/invocations
       summary: Transaction
       tags: []
       responses:
