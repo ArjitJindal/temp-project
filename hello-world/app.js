@@ -2,6 +2,7 @@
 // const url = 'http://checkip.amazonaws.com/';
 let response;
 const { v4: uuidv4 } = require("uuid");
+const highRiskCountry = require("./rulesEngine/highRiskCountry");
 const AWS = require("aws-sdk"),
   dynamoDb = new AWS.DynamoDB.DocumentClient();
 
@@ -51,15 +52,32 @@ exports.lambdaHandler = async (event, context) => {
       ReturnConsumedCapacity: "TOTAL",
     };
     try {
-      let putItemOutput = await dynamoDb.put(params).promise();
-      console.log(`putItemOutput: ${JSON.stringify(putItemOutput)}`);
-      response = {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: "success",
-          transactionID: transactionID,
-        }),
-      };
+      await dynamoDb.put(params).promise();
+      try {
+        const ruleResult = highRiskCountry(
+          body,
+          "receivingAmountDetails",
+          "AF",
+          "ALLOW"
+        );
+        response = {
+          statusCode: 200,
+          body: JSON.stringify({
+            message: "success",
+            transactionID: transactionID,
+            rules: [ruleResult],
+          }),
+        };
+      } catch (e) {
+        console.log("ERROR IN CALLING RULE");
+        console.log(err);
+        response = {
+          statusCode: 500,
+          body: JSON.stringify({
+            error: e.message,
+          }),
+        };
+      }
     } catch (dbError) {
       let errorResponse = `Error: Execution update, caused a Dynamodb error, please look at your logs.`;
       if (dbError.code === "ValidationException") {
@@ -67,16 +85,15 @@ exports.lambdaHandler = async (event, context) => {
           errorResponse = `Error: You're using AWS reserved keywords as attributes`;
       }
       console.log(dbError);
-      // const ret = await axios(url);
       response = {
         statusCode: 500,
         body: JSON.stringify({
           error: dbError.message,
-          // location: ret.data.trim()
         }),
       };
     }
   } catch (err) {
+    console.log("ERROR IN RETURNING  RESPONSES");
     console.log(err);
     return err;
   }
