@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "API tarpon:RulesEngineFunction",
+      "invokeTarget": {
+        "target": "api",
+        "templatePath": "${workspaceFolder}/template.yaml",
+        "logicalId": "RulesEngineFunction"
+      },
+      "api": {
+        "path": "/transaction",
+        "httpMethod": "post",
+        "payload": {
+          "json": {}
+        }
+      }
+    }
+  ]
+}

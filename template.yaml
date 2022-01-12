@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   tarpon
@@ -8,7 +8,7 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 10
 
 Resources:
   TransactionPostAPI:
@@ -20,9 +20,9 @@ Resources:
         openapi: 3.0.0
         info:
           title: Flagright API
-          version: "1.0"
+          version: '1.0'
         servers:
-          - url: "http://localhost:3000"
+          - url: 'http://localhost:3000'
         paths:
           /transaction:
             post:
@@ -34,12 +34,12 @@ Resources:
               summary: Transaction
               operationId: post-consumer-transaction
               responses:
-                "201":
+                '201':
                   description: Created
                   content:
                     application/json:
                       schema:
-                        $ref: "#/components/schemas/TransactionMonitoringResult"
+                        $ref: '#/components/schemas/TransactionMonitoringResult'
                       examples:
                         example-1:
                           value:
@@ -50,15 +50,15 @@ Resources:
                                 ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
                                 ruleAction: block
                                 ruleHit: true
-                "401":
+                '401':
                   description: Unauthorized
-                "429":
+                '429':
                   description: Too Many Requests
               requestBody:
                 content:
                   application/json:
                     schema:
-                      $ref: "#/components/schemas/Transaction"
+                      $ref: '#/components/schemas/Transaction'
                     examples:
                       example-1:
                         value:
@@ -103,21 +103,21 @@ Resources:
                             operatingSystem: Android 11.2
                             deviceMaker: ASUS
                             deviceModel: Zenphone M2 Pro Max
-                            deviceYear: "2018"
+                            deviceYear: '2018'
                             appVersion: 1.1.0
                           tags:
                             - key: customKey
                               value: customValue
                   application/xml:
                     schema:
-                      $ref: "#/components/schemas/Transaction"
+                      $ref: '#/components/schemas/Transaction'
                     examples: {}
                   multipart/form-data:
                     schema:
                       type: object
                       properties: {}
-                description: ""
-          "/transaction/{transactionId}":
+                description: ''
+          '/transaction/{transactionId}':
             get:
               x-amazon-apigateway-integration:
                 httpMethod: GET
@@ -127,12 +127,12 @@ Resources:
               summary: Transaction
               tags: []
               responses:
-                "200":
+                '200':
                   description: OK
                   content:
                     application/json:
                       schema:
-                        $ref: "#/components/schemas/Transaction"
+                        $ref: '#/components/schemas/Transaction'
                       examples:
                         example-1:
                           value:
@@ -177,17 +177,17 @@ Resources:
                               operatingSystem: Android 11.2
                               deviceMaker: ASUS
                               deviceModel: Zenphone M2 Pro Max
-                              deviceYear: "2018"
+                              deviceYear: '2018'
                               appVersion: 1.1.0
                             tags:
                               - key: customKey
                                 value: customValue
-                "401":
+                '401':
                   description: Unauthorized
-                "429":
+                '429':
                   description: Too Many Requests
               operationId: get-consumer-transaction
-              description: ""
+              description: ''
             parameters:
               - schema:
                   type: string
@@ -198,7 +198,7 @@ Resources:
         components:
           schemas:
             Tag:
-              description: "Generic key-value pair model to append a custom variable being sent to Flagright API "
+              description: 'Generic key-value pair model to append a custom variable being sent to Flagright API '
               type: object
               x-examples:
                 example-1:
@@ -289,7 +289,7 @@ Resources:
                     operatingSystem: Android 11.2
                     deviceMaker: ASUS
                     deviceModel: Zenphone M2 Pro Max
-                    deviceYear: "2018"
+                    deviceYear: '2018'
                     appVersion: 1.1.0
                   tags:
                     - key: customKey
@@ -304,46 +304,46 @@ Resources:
                   minLength: 1
                   description: Unique user ID
                 sendingAmountDetails:
-                  $ref: "#/components/schemas/TransactionAmountDetails"
+                  $ref: '#/components/schemas/TransactionAmountDetails'
                 receivingAmountDetails:
-                  $ref: "#/components/schemas/TransactionAmountDetails"
+                  $ref: '#/components/schemas/TransactionAmountDetails'
                 paymentMethod:
                   type: string
                   minLength: 1
-                  description: "Origin payment method for the transaction such as IBAN, cash, debit card etc."
+                  description: 'Origin payment method for the transaction such as IBAN, cash, debit card etc.'
                 payoutMethod:
                   type: string
                   minLength: 1
-                  description: "Destination payment method for the transaction such as IBAN, cash, debit card etc."
+                  description: 'Destination payment method for the transaction such as IBAN, cash, debit card etc.'
                 senderName:
-                  $ref: "#/components/schemas/ConsumerName"
+                  $ref: '#/components/schemas/ConsumerName'
                 receiverName:
-                  $ref: "#/components/schemas/ConsumerName"
+                  $ref: '#/components/schemas/ConsumerName'
                 promotionCodeUsed:
                   type: boolean
                   description: Whether a promotion code was used or not the transaction
                 productType:
                   type: string
-                  description: "Type of produce being used by the consumer (ex wallets, payments etc)"
+                  description: 'Type of produce being used by the consumer (ex wallets, payments etc)'
                 senderCardDetails:
-                  $ref: "#/components/schemas/CardDetails"
+                  $ref: '#/components/schemas/CardDetails'
                 receiverCardDetails:
-                  $ref: "#/components/schemas/CardDetails"
+                  $ref: '#/components/schemas/CardDetails'
                 senderBankDetails:
-                  $ref: "#/components/schemas/BankDetails"
+                  $ref: '#/components/schemas/BankDetails'
                 receiverBankDetails:
-                  $ref: "#/components/schemas/BankDetails"
+                  $ref: '#/components/schemas/BankDetails'
                 reference:
                   type: string
                   minLength: 1
                   description: Reference field for the transaction indicating the purpose of the transaction etc.
                 deviceData:
-                  $ref: "#/components/schemas/DeviceData"
+                  $ref: '#/components/schemas/DeviceData'
                 tags:
                   type: array
                   description: Additional information that can be added via tags
                   items:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: '#/components/schemas/Tag'
               required:
                 - transactionID
                 - userID
@@ -381,11 +381,11 @@ Resources:
                   type: boolean
                   description: Whether 3ds was successfully enforced for the transaction
                 nameOnCard:
-                  $ref: "#/components/schemas/ConsumerName"
+                  $ref: '#/components/schemas/ConsumerName'
               required:
                 - cardFingerprint
                 - cardIssuedCountry
-              title: ""
+              title: ''
             DeviceData:
               description: Model for device data
               type: object
@@ -400,7 +400,7 @@ Resources:
                   operatingSystem: Android 11.2
                   deviceMaker: ASUS
                   deviceModel: Zenphone M2 Pro Max
-                  deviceYear: "2018"
+                  deviceYear: '2018'
                   appVersion: 1.1.0
               properties:
                 batteryLevel:
@@ -444,12 +444,12 @@ Resources:
                   minLength: 1
                   description: The version of the app your user is using on their device at a given timestamp for an event or transaction
             TransactionMonitoringResult:
-              description: ""
+              description: ''
               type: object
               x-examples:
                 example-1:
                   transactionID: 7b80a539eea6e78acbd6d458e5971482
-                  rules: ""
+                  rules: ''
               example:
                 - transactionID: 7b80a539eea6e78acbd6d458e5971482
                   rules:
@@ -465,14 +465,14 @@ Resources:
                   description: Unique transaction identifier
                 rules:
                   type: array
-                  description: "List of rules that are active with ID, name, description, and pre-configured action"
+                  description: 'List of rules that are active with ID, name, description, and pre-configured action'
                   items:
-                    $ref: "#/components/schemas/RulesResult"
+                    $ref: '#/components/schemas/RulesResult'
               required:
                 - transactionID
                 - rules
             RulesResult:
-              description: ""
+              description: ''
               type: object
               x-examples:
                 example-1:
@@ -500,7 +500,7 @@ Resources:
                   description: "The specific action a rule is configured to take if it's hit such as flag (passive monitoring), block transaction, terminate user, whitelist etc."
                 ruleHit:
                   type: boolean
-                  description: "Whether a rule was hit or not. When a rule is hit, it takes the pre-configured action on a transaction and/or user."
+                  description: 'Whether a rule was hit or not. When a rule is hit, it takes the pre-configured action on a transaction and/or user.'
               required:
                 - ruleID
                 - ruleName
@@ -508,7 +508,7 @@ Resources:
                 - ruleAction
                 - ruleHit
             BankDetails:
-              description: "Standardized model for Bank Details"
+              description: 'Standardized model for Bank Details'
               type: object
               x-examples:
                 example-1:
@@ -520,11 +520,11 @@ Resources:
                 - bankIdentifierType: IBAN
                   bankIdentifier: DE761234561
                   bankName: Merryl Lynch
-                  accountNumber: "1234321"
+                  accountNumber: '1234321'
                   bankAddress:
                     addressLines:
                       - Klara-Franke Str 20
-                    postcode: "10557"
+                    postcode: '10557'
                     city: Berlin
                     state: Berlin
                     country: Germany
@@ -535,24 +535,24 @@ Resources:
                 bankIdentifierType:
                   type: string
                   minLength: 1
-                  description: "Type of identifier for the bank. Categorical such as BIK, BIC, SWIFT, Routing etc."
+                  description: 'Type of identifier for the bank. Categorical such as BIK, BIC, SWIFT, Routing etc.'
                 bankIdentifier:
                   type: string
                   minLength: 1
-                  description: "Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc."
+                  description: 'Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc.'
                 bankName:
                   type: string
                   minLength: 1
                   description: Name of the bank
                 bankAddress:
-                  $ref: "#/components/schemas/Address"
+                  $ref: '#/components/schemas/Address'
                 name:
-                  $ref: "#/components/schemas/ConsumerName"
+                  $ref: '#/components/schemas/ConsumerName'
                 accountNumber:
                   type: string
-                  description: "Account number of the user. Can be account number, IBAN number etc."
+                  description: 'Account number of the user. Can be account number, IBAN number etc.'
                 tags:
-                  $ref: "#/components/schemas/Tag"
+                  $ref: '#/components/schemas/Tag'
               required:
                 - bankIdentifierType
                 - bankIdentifier
@@ -569,7 +569,7 @@ Resources:
               example:
                 - addressLines:
                     - Klara-Franke Str 20
-                  postcode: "10557"
+                  postcode: '10557'
                   city: Berlin
                   state: Berlin
                   country: Germany
@@ -601,7 +601,7 @@ Resources:
                   type: array
                   description: Additional information that can be added via tags
                   items:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: '#/components/schemas/Tag'
               required:
                 - addressLines
                 - postcode
@@ -635,12 +635,12 @@ Resources:
               required:
                 - firstName
             TransactionAmountDetails:
-              description: ""
+              description: ''
               type: object
               x-examples:
                 example-1:
                   country: DE
-                  transactionAmount: "800"
+                  transactionAmount: '800'
                   transactionCurrency: EUR
               example:
                 - country: DE
@@ -674,7 +674,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: rules-engine-lambda/
-      Handler: app.lambdaHandler
+      Handler: dist/app.lambdaHandler
       Runtime: nodejs14.x
       Architectures:
         - x86_64
@@ -712,11 +712,11 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   TransactionApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${TransactionPostAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/transaction"
+    Description: 'API Gateway endpoint URL for Prod stage for Hello World function'
+    Value: !Sub 'https://${TransactionPostAPI}.execute-api.${AWS::Region}.amazonaws.com/prod/transaction'
   RulesEngineFunction:
-    Description: "Hello World Lambda Function ARN"
+    Description: 'Hello World Lambda Function ARN'
     Value: !GetAtt RulesEngineFunction.Arn
   RulesEngineFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
+    Description: 'Implicit IAM Role created for Hello World function'
     Value: !GetAtt RulesEngineFunctionRole.Arn
