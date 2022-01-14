@@ -111,3 +111,6 @@ dist
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
+
+# CDK
+cdk.out

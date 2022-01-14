@@ -1,0 +1,28 @@
+{
+  "name": "tarpon",
+  "version": "1.0.0",
+  "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flagright/tarpon.git"
+  },
+  "author": "Flagright Data Technologies Inc.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/flagright/tarpon/issues"
+  },
+  "homepage": "https://github.com/flagright/tarpon#readme",
+  "devDependencies": {
+    "@aws-cdk/aws-apigateway": "^1.139.0",
+    "@aws-cdk/aws-dynamodb": "^1.139.0",
+    "@aws-cdk/aws-lambda": "^1.139.0",
+    "@aws-cdk/aws-lambda-event-sources": "^1.139.0",
+    "@aws-cdk/aws-lambda-nodejs": "^1.139.0",
+    "@aws-cdk/core": "^1.139.0",
+    "source-map-support": "^0.5.21"
+  }
+}
