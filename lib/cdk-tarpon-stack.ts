@@ -1,7 +1,7 @@
-import { AttributeType, Table } from '@aws-cdk/aws-dynamodb'
-import { Code, Function, Runtime, Tracing } from '@aws-cdk/aws-lambda'
 import * as cdk from '@aws-cdk/core'
+import { AttributeType, Table } from '@aws-cdk/aws-dynamodb'
 import { CfnOutput, Duration } from '@aws-cdk/core'
+import { Code, Function, Runtime, Tracing } from '@aws-cdk/aws-lambda'
 import { LambdaIntegration, LambdaRestApi } from '@aws-cdk/aws-apigateway'
 
 export class CdkTarponStack extends cdk.Stack {
@@ -31,7 +31,7 @@ export class CdkTarponStack extends cdk.Stack {
         functionName: 'PostRulesEngineFunction',
         runtime: Runtime.NODEJS_14_X,
         handler: 'dist/app.lambdaHandler',
-        code: Code.fromAsset('rules-engine-lambda'),
+        code: Code.fromAsset('src/rules-engine'),
         tracing: Tracing.DISABLED,
         timeout: Duration.seconds(10),
       }
