@@ -4,11 +4,13 @@
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
-    "build": "tsc --project src/rules-engine",
+    "build": "tsc --project src/rules-engine; tsc --project src/authorizer; tsc --project src/api-key-generator; cdk synth",
+    "deploy": "cdk deploy",
+    "test": "ts-mocha **/tests/**/*.ts",
     "lint": "eslint src/**/*.ts **/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts **/*.ts",
     "watch": "tsc -w --preserveWatchOutput",
-    "test": "ts-mocha **/tests/**/*.ts"
+    "start-local-api": "sam local start-api -t cdk.out/tarpon.template.json"
   },
   "repository": {
     "type": "git",
