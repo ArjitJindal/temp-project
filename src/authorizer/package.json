@@ -1,0 +1,13 @@
+{
+  "name": "tarpon",
+  "version": "1.0.0",
+  "main": "app.ts",
+  "author": "Flagright Data Technologies Inc.",
+  "dependencies": {
+    "@aws-sdk/util-arn-parser": "^3.46.0",
+    "base-x": "^3.0.9"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.1058.0"
+  }
+}
