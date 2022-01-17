@@ -1,12 +1,12 @@
+import * as AWS from 'aws-sdk'
 import {
-  APIGatewayProxyHandlerV2WithLambdaAuthorizer,
-  APIGatewayProxyResultV2,
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyResult,
+  APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
-import AWS from 'aws-sdk'
+
 import highRiskCountry from './rulesEngine/highRiskCountry'
 import { v4 as uuidv4 } from 'uuid'
-
-const dynamoDb = new AWS.DynamoDB.DocumentClient()
 
 /**
  *
@@ -20,22 +20,34 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient()
  * @returns {Object} object - API Gateway Lambda Proxy Output Format
  *
  */
-export const lambdaHandler: APIGatewayProxyHandlerV2WithLambdaAuthorizer<
-  any
+export const lambdaHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
+  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
 > = async (event, context) => {
-  let response: APIGatewayProxyResultV2 = { statusCode: 500, body: 'ERROR' }
+  const {
+    AccessKeyId,
+    SecretAccessKey,
+    SessionToken,
+    principalId: tenantId,
+  } = event.requestContext.authorizer
+  const dynamoDb = new AWS.DynamoDB.DocumentClient({
+    credentials: {
+      accessKeyId: AccessKeyId,
+      secretAccessKey: SecretAccessKey,
+      sessionToken: SessionToken,
+    },
+  })
+
+  let response: APIGatewayProxyResult = { statusCode: 500, body: 'ERROR' }
   try {
     console.log(`Context: ${JSON.stringify(context)}`)
     console.log(`Event: ${JSON.stringify(event)}`)
     const body = event.body && JSON.parse(event.body)
-    const fakeTenantID =
-      'Tenant-' + Math.floor(Math.random() * (10 - 1 + 1) + 1)
     const transactionID = uuidv4()
 
     const params = {
       TableName: 'Transactions',
       Item: {
-        PartitionKeyID: fakeTenantID + '#' + transactionID,
+        PartitionKeyID: tenantId + '#' + transactionID,
         SortKeyID: 'thingsyouwontbelieve',
         userID: body.userID,
         sendingAmountDetails: body.sendingAmountDetails,
@@ -57,6 +69,7 @@ export const lambdaHandler: APIGatewayProxyHandlerV2WithLambdaAuthorizer<
       },
       ReturnConsumedCapacity: 'TOTAL',
     }
+
     try {
       await dynamoDb.put(params).promise()
       try {
