@@ -49,7 +49,7 @@ export class CdkTarponStack extends cdk.Stack {
         runtime: Runtime.NODEJS_14_X,
         handler: 'dist/app.apiKeyGeneratorHandler',
         code: Code.fromAsset('src/api-key-generator'),
-        tracing: Tracing.DISABLED,
+        tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
     )
@@ -76,7 +76,7 @@ export class CdkTarponStack extends cdk.Stack {
         runtime: Runtime.NODEJS_14_X,
         handler: 'dist/app.apiKeyHandler',
         code: Code.fromAsset('src/authorizer'),
-        tracing: Tracing.DISABLED,
+        tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
     )
@@ -89,7 +89,7 @@ export class CdkTarponStack extends cdk.Stack {
         runtime: Runtime.NODEJS_14_X,
         handler: 'dist/app.lambdaHandler',
         code: Code.fromAsset('src/rules-engine'),
-        tracing: Tracing.DISABLED,
+        tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
     )
