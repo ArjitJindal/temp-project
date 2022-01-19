@@ -81,6 +81,23 @@ export default defineConfig({
       ],
     },
     {
+      path: '/users',
+      icon: 'UsergroupAddOutlined',
+      name: 'users',
+      routes: [
+        {
+          path: '/users',
+          redirect: '/users/users-list',
+        },
+        {
+          name: 'users-list',
+          icon: 'smile',
+          path: '/users/users-list',
+          component: './users/users-list',
+        },
+      ],
+    },
+    {
       path: '/transactions',
       icon: 'table',
       name: 'transactions',
@@ -203,23 +220,6 @@ export default defineConfig({
           icon: 'smile',
           path: '/risk-levels/created-risk-levels',
           component: './risk-levels/created-risk-levels',
-        },
-      ],
-    },
-    {
-      path: '/users',
-      icon: 'UsergroupAddOutlined',
-      name: 'users',
-      routes: [
-        {
-          path: '/users',
-          redirect: '/users/users-list',
-        },
-        {
-          name: 'users-list',
-          icon: 'smile',
-          path: '/users/users-list',
-          component: './users/users-list',
         },
       ],
     },
