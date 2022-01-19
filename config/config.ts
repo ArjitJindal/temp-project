@@ -18,10 +18,8 @@ export default defineConfig({
     siderWidth: 208,
     ...defaultSettings,
   },
-  // https://umijs.org/zh-CN/plugins/plugin-locale
   locale: {
-    // default zh-CN
-    default: 'zh-CN',
+    default: 'en-US',
     antd: true,
     // default true, when it is true, will use `navigator.language` overwrite default
     baseNavigator: true,
@@ -182,6 +180,29 @@ export default defineConfig({
           icon: 'smile',
           path: '/network/network-analysis',
           component: './network/network-analysis',
+        },
+      ],
+    },
+    {
+      path: '/risk-levels',
+      icon: 'BarChartOutlined',
+      name: 'risk-levels',
+      routes: [
+        {
+          path: '/risk-levels',
+          redirect: '/risk-levels/created-risk-levels',
+        },
+        {
+          name: 'create-risk-levels',
+          icon: 'smile',
+          path: '/risk-levels/create-risk-levels',
+          component: './risk-levels/create-risk-levels',
+        },
+        {
+          name: 'created-risk-levels',
+          icon: 'smile',
+          path: '/risk-levels/created-risk-levels',
+          component: './risk-levels/created-risk-levels',
         },
       ],
     },
