@@ -207,6 +207,23 @@ export default defineConfig({
       ],
     },
     {
+      path: '/users',
+      icon: 'UsergroupAddOutlined',
+      name: 'users',
+      routes: [
+        {
+          path: '/users',
+          redirect: '/users/users-list',
+        },
+        {
+          name: 'users-list',
+          icon: 'smile',
+          path: '/users/users-list',
+          component: './users/users-list',
+        },
+      ],
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

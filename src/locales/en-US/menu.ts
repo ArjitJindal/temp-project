@@ -15,6 +15,8 @@ export default {
   'menu.lists.created-lists': 'Created Lists',
   'menu.transactions': 'Transactions',
   'menu.transactions.transactions-list': 'Transactions List',
+  'menu.users': 'Users',
+  'menu.users.users-list': 'Users List',
   'menu.rules': 'Rules',
   'menu.rules.create-rule': 'Rules Library',
   'menu.rules.created-rules': 'Created Rules',
