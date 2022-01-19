@@ -1,7 +1,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
 import { parse } from 'url';
-import type { TableListItem, TableListParams } from './data';
+import type { TableListItem, TableListParams } from './data.d';
 
 const sendingCountryList = ['DE', 'FR', 'GB', 'LT', 'PL', 'BL', 'NL', 'AT'];
 const currencyForCountry = {

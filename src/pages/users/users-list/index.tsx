@@ -7,7 +7,7 @@ import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { rule } from './service';
-import type { TableListItem, TableListPagination } from './data';
+import type { TableListItem, TableListPagination } from './data.d';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
