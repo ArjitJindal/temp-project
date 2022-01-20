@@ -3,12 +3,7 @@ import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type {
-  ParameterType,
-  StepDataType,
-  ThresholdAllowedDataTypes,
-  ThresholdUpdateDataSourceType,
-} from './data.d';
+import type { ParameterType, StepDataType, ThresholdUpdateDataSourceType } from './data.d';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
@@ -21,13 +16,12 @@ const StepDescriptions: React.FC<{
   stepData: StepDataType;
   bordered?: boolean;
 }> = ({ stepData, bordered }) => {
-  const { name, parameterId, parameterDescription } = stepData;
+  const { name, parameterDescription } = stepData;
 
   return (
     <Descriptions column={1} bordered={bordered}>
-      <Descriptions.Item label="Rule Name"> {name}</Descriptions.Item>
-      <Descriptions.Item label="Rule Template ID"> {parameterId}</Descriptions.Item>
-      <Descriptions.Item label="Rule Description"> {parameterDescription}</Descriptions.Item>
+      <Descriptions.Item label="Parameter Name"> {name}</Descriptions.Item>
+      <Descriptions.Item label="Parameter Description"> {parameterDescription}</Descriptions.Item>
     </Descriptions>
   );
 };
@@ -89,13 +83,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
     parameterDescription:
       'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
     parameterType: 'range',
-    thresholdData: [
-      {
-        parameter: 'test',
-        type: 'string' as ThresholdAllowedDataTypes,
-        defaultValue: 'test',
-      },
-    ],
   });
 
   const [parameterType, setParameterType] = useState<ParameterType>(stepData.parameterType);
@@ -147,13 +134,13 @@ const StepForm: React.FC<Record<string, any>> = () => {
             />
           </StepsForm.StepForm>
 
-          <StepsForm.StepForm title="Set the threshold">
+          <StepsForm.StepForm title="Set the risk scores">
             <>
               <div className={styles.result}>
                 <Alert
                   closable
                   showIcon
-                  message="Thresholds are set to default values, update them to match your risk appetite"
+                  message="Risk scores are set to default values, update them to match your risk appetite"
                   style={{ marginBottom: 24 }}
                 />
                 <StepDescriptions stepData={stepData} bordered />

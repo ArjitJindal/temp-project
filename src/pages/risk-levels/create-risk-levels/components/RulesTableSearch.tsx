@@ -1,6 +1,6 @@
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Button, Table, Tag, Modal } from 'antd';
+import { Button, Tag, Modal } from 'antd';
 import { Dispatch, SetStateAction, useRef } from 'react';
 import {
   StepDataType,
@@ -127,46 +127,6 @@ export const RulesTableSearch: React.FC<{
         );
       },
     },
-    {
-      title: 'Default Values',
-      dataIndex: 'thresholdData',
-      search: false,
-      width: 300,
-      key: 'thresholdData',
-      render: (thresholdData) => {
-        if (!thresholdData) {
-          return <span>Not Applicable</span>;
-        }
-        const columns = [
-          {
-            title: 'Parameter',
-            dataIndex: 'parameter',
-          },
-          {
-            title: 'Value',
-            dataIndex: 'value',
-          },
-        ];
-        const dataSource = (thresholdData as ThresholdDataType[]).map(
-          (threshold: any, index: number) => {
-            return {
-              key: index,
-              parameter: threshold?.parameter,
-              value: threshold?.defaultValue,
-            };
-          },
-        );
-        return (
-          <Table
-            columns={columns}
-            dataSource={dataSource}
-            pagination={false}
-            bordered
-            size={'small'}
-          />
-        );
-      },
-    },
   ];
   return (
     <ProTable<ParameterTableListItem, TableListPagination>
@@ -186,12 +146,25 @@ export const RulesTableSearch: React.FC<{
             parameterDescription: selectedRows[0].parameterDescription,
             parameterId: selectedRows[0].parameterId,
             parameterType: selectedRows[0].parameterType,
-            thresholdData: selectedRows[0].thresholdData,
           });
           setParameterType(selectedRows[0].parameterType);
-          setDataSource(getProcessedThresholdData(selectedRows[0].thresholdData));
+          setDataSource(
+            getProcessedThresholdData([
+              {
+                parameter: 'test',
+                type: 'string',
+                defaultValue: 'test',
+              },
+            ]),
+          );
           setEditableRowKeys(() =>
-            getProcessedThresholdData(selectedRows[0].thresholdData).map((item: any) => item.id),
+            getProcessedThresholdData([
+              {
+                parameter: 'test',
+                type: 'string',
+                defaultValue: 'test',
+              },
+            ]).map((item: any) => item.id),
           );
         },
         type: 'radio',

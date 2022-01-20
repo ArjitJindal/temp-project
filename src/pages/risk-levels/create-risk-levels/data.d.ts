@@ -3,7 +3,6 @@ export interface StepDataType {
   parameterId: string;
   name: string;
   parameterType: ParameterType;
-  thresholdData: ThresholdDataType[];
 }
 //type this better lol
 export const actionToColor = {
@@ -50,10 +49,8 @@ export type ParameterTableListItemBase = {
   parameterDescription: string;
   parameterId: string;
   status: string;
-  thresholdData: ThresholdDataType[];
 };
 
 export type ParameterTableListItem = ParameterTableListItemBase & {
   parameterType: ParameterType;
-  isActionEditable: boolean;
 };

@@ -1,11 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
-import type {
-  ParameterType,
-  ThresholdAllowedDataTypes,
-  ParameterTableListItem,
-  TableListParams,
-} from './data.d';
+import type { ParameterType, ParameterTableListItem, TableListParams } from './data.d';
 
 import { parse } from 'url';
 
@@ -19,133 +14,42 @@ const genList = (current: number, pageSize: number) => {
       parameterDescription: 'Risk customer based on their country of residency.',
       parameterId: 'P-1',
       parameterType: 'enumeration',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'amount',
-          type: 'number' as ThresholdAllowedDataTypes,
-          defaultValue: '1000',
-        },
-        {
-          parameter: 'currency',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'EUR',
-        },
-      ],
     },
     {
       parameterName: 'Country of Nationality',
       parameterDescription: 'Risk customer based on their country of residency Nationality',
       parameterId: 'P-2',
       parameterType: 'enumeration',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Number of Transacions',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '5',
-        },
-
-        {
-          parameter: 'Time in Day(s)',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '1',
-        },
-      ],
     },
     {
       parameterName: 'Business Age',
       parameterDescription: 'Risk customer based on the Age group of their business',
       parameterId: 'P-3',
       parameterType: 'range',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Number of Unique Cards',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '5',
-        },
-
-        {
-          parameter: 'Time in Minute(s)',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '30',
-        },
-      ],
     },
     {
       parameterName: 'Individual Age',
       parameterDescription: 'Risk customer based on their Age group',
       parameterId: 'P-4',
       parameterType: 'range',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Number of Unique Cards',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '5',
-        },
-
-        {
-          parameter: 'Time in Minute(s)',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '30',
-        },
-      ],
     },
     {
       parameterName: 'Payment Method',
       parameterDescription: 'Risk customer based on the payment method used.',
       parameterId: 'P-4',
       parameterType: 'enumeration',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Number of Unique IBAN',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '5',
-        },
-
-        {
-          parameter: 'Time in Day(s)',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '1',
-        },
-      ],
     },
     {
       parameterName: 'Payout Method',
       parameterDescription: 'Risk customer based on their payout method.',
       parameterId: 'P-5',
       parameterType: 'enumeration',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Number of Unique IBAN',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '5',
-        },
-
-        {
-          parameter: 'Time in Minute(s)',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: '30',
-        },
-      ],
     },
     {
       parameterName: 'Business Industry Risk Level',
       parameterDescription: 'Risk customer based on their business industry.',
       parameterId: 'P-6',
       parameterType: 'enumeration',
-      isActionEditable: true,
-      thresholdData: [
-        {
-          parameter: 'Country Code',
-          type: 'string' as ThresholdAllowedDataTypes,
-          defaultValue: 'NK',
-        },
-      ],
     },
   ];
 
@@ -159,9 +63,7 @@ const genList = (current: number, pageSize: number) => {
       status: (Math.floor(Math.random() * 10) % 3).toString(),
       parameterDescription: parametersAndDescriptions[index].parameterDescription,
       parameterId: parametersAndDescriptions[index].parameterId,
-      thresholdData: parametersAndDescriptions[index].thresholdData,
       parameterType: parametersAndDescriptions[index].parameterType as ParameterType,
-      isActionEditable: false,
     });
   }
   tableListDataSource.reverse();
