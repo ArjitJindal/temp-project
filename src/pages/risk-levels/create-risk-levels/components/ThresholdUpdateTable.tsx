@@ -2,15 +2,15 @@ import React, { Dispatch, SetStateAction } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
 import { Button } from 'antd';
-import { ThresholdUpdateDataSourceType } from '../data.d';
+import { RiskScoreDataSourceType } from '../data.d';
 
 export const ThresholdUpdateTable: React.FC<{
   editableKeys: React.Key[];
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
-  dataSource: ThresholdUpdateDataSourceType[];
-  setDataSource: Dispatch<SetStateAction<ThresholdUpdateDataSourceType[]>>;
+  dataSource: RiskScoreDataSourceType[];
+  setDataSource: Dispatch<SetStateAction<RiskScoreDataSourceType[]>>;
 }> = ({ editableKeys, setEditableRowKeys, dataSource, setDataSource }) => {
-  const columns: ProColumns<ThresholdUpdateDataSourceType>[] = [
+  const columns: ProColumns<RiskScoreDataSourceType>[] = [
     {
       title: 'Parameter',
       dataIndex: 'parameter',
@@ -35,8 +35,8 @@ export const ThresholdUpdateTable: React.FC<{
 
   return (
     <>
-      <EditableProTable<ThresholdUpdateDataSourceType>
-        headerTitle="Threshold update table"
+      <EditableProTable<RiskScoreDataSourceType>
+        headerTitle="Risk scoring table"
         columns={columns}
         rowKey="id"
         value={dataSource}

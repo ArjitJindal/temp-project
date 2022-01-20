@@ -3,7 +3,7 @@ import { FormInstance, Radio } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type { ParameterType, StepDataType, ThresholdUpdateDataSourceType } from './data.d';
+import type { ParameterType, StepDataType, RiskScoreDataSourceType } from './data.d';
 import { RulesTableSearch, ThresholdUpdateTable } from './components';
 import styles from './style.less';
 
@@ -23,32 +23,6 @@ const StepDescriptions: React.FC<{
       <Descriptions.Item label="Parameter Name"> {name}</Descriptions.Item>
       <Descriptions.Item label="Parameter Description"> {parameterDescription}</Descriptions.Item>
     </Descriptions>
-  );
-};
-
-const StepParameterType: React.FC<{
-  stepData: StepDataType;
-  parameterType: ParameterType;
-  setParameterType: Dispatch<SetStateAction<ParameterType>>;
-  bordered?: boolean;
-}> = ({ stepData, parameterType, setParameterType, bordered }) => {
-  return (
-    <>
-      <h3>Rule Action: </h3>
-
-      <Radio.Group
-        options={parameterTypeOptions}
-        onChange={(e) => {
-          setParameterType(e.target.value);
-        }}
-        value={parameterType}
-        defaultValue={stepData.parameterType}
-        optionType="button"
-        buttonStyle="solid"
-        style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
-        size="large"
-      />
-    </>
   );
 };
 
@@ -85,11 +59,10 @@ const StepForm: React.FC<Record<string, any>> = () => {
     parameterType: 'range',
   });
 
-  const [parameterType, setParameterType] = useState<ParameterType>(stepData.parameterType);
   const [current, setCurrent] = useState(0);
   const formRef = useRef<FormInstance>();
 
-  const processedData: ThresholdUpdateDataSourceType[] = [
+  const processedData: RiskScoreDataSourceType[] = [
     {
       id: 'default',
       parameter: 'country',
@@ -97,9 +70,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
     },
   ];
 
-  const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
-    () => processedData,
-  );
+  const [dataSource, setDataSource] = useState<RiskScoreDataSourceType[]>(() => processedData);
 
   const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
     dataSource.map((item) => item.id),
@@ -128,7 +99,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
           >
             <RulesTableSearch
               setStepData={setStepData}
-              setParameterType={setParameterType}
               setDataSource={setDataSource}
               setEditableRowKeys={setEditableRowKeys}
             />
@@ -153,15 +123,6 @@ const StepForm: React.FC<Record<string, any>> = () => {
                   dataSource={dataSource}
                   setDataSource={setDataSource}
                 />
-                <Divider style={{ margin: '15px 0' }} />
-                <div className={styles.parameterTypeSelector}>
-                  <StepParameterType
-                    stepData={stepData}
-                    parameterType={parameterType}
-                    setParameterType={setParameterType}
-                  />
-                </div>
-                <Divider style={{ margin: '18px 0' }} />
               </div>
             </>
           </StepsForm.StepForm>

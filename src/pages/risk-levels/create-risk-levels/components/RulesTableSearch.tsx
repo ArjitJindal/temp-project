@@ -5,18 +5,33 @@ import { Dispatch, SetStateAction, useRef } from 'react';
 import {
   StepDataType,
   TableListPagination,
-  ThresholdUpdateDataSourceType,
-  ParameterType,
+  RiskScoreDataSourceType,
   ParameterTableListItem,
   ThresholdDataType,
   actionToColor,
+  RiskScoringDataType,
 } from '../data.d';
+
+import { countryRiskList } from '../data/CountriesRiskList';
 
 import { riskRarameters } from '../service';
 
+const getProcessedRiskScoringData = (
+  riskScoringData: RiskScoringDataType,
+): RiskScoreDataSourceType[] => {
+  const { rows, columns } = riskScoringData;
+  return rows.map((riskScoreRows, index) => {
+    return {
+      id: riskScoreRows[columns[0]] + index.toString(), //lol
+      parameter: riskScoreRows[columns[0]],
+      defaultValue: riskScoreRows[columns[1]],
+    };
+  });
+};
+
 const getProcessedThresholdData = (
   thresholdData: ThresholdDataType[],
-): ThresholdUpdateDataSourceType[] => {
+): RiskScoreDataSourceType[] => {
   return thresholdData.map((threshold, index) => {
     return {
       id: threshold.defaultValue.toString() + index.toString(), //lol
@@ -48,10 +63,9 @@ const handleAction = (key: string | number) => {
 
 export const RulesTableSearch: React.FC<{
   setStepData: Dispatch<SetStateAction<StepDataType>>;
-  setParameterType: Dispatch<SetStateAction<ParameterType>>;
-  setDataSource: Dispatch<SetStateAction<ThresholdUpdateDataSourceType[]>>;
+  setDataSource: Dispatch<SetStateAction<RiskScoreDataSourceType[]>>;
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
-}> = ({ setStepData, setParameterType, setDataSource, setEditableRowKeys }) => {
+}> = ({ setStepData, setDataSource, setEditableRowKeys }) => {
   const actionRef = useRef<ActionType>();
   const columns: ProColumns<ParameterTableListItem>[] = [
     {
@@ -147,24 +161,17 @@ export const RulesTableSearch: React.FC<{
             parameterId: selectedRows[0].parameterId,
             parameterType: selectedRows[0].parameterType,
           });
-          setParameterType(selectedRows[0].parameterType);
           setDataSource(
-            getProcessedThresholdData([
-              {
-                parameter: 'test',
-                type: 'string',
-                defaultValue: 'test',
-              },
-            ]),
+            getProcessedRiskScoringData({
+              columns: ['countryCode', 'riskScore'],
+              rows: countryRiskList,
+            }),
           );
           setEditableRowKeys(() =>
-            getProcessedThresholdData([
-              {
-                parameter: 'test',
-                type: 'string',
-                defaultValue: 'test',
-              },
-            ]).map((item: any) => item.id),
+            getProcessedRiskScoringData({
+              columns: ['countryCode', 'riskScore'],
+              rows: countryRiskList,
+            }).map((item: any) => item.id),
           );
         },
         type: 'radio',

@@ -24,7 +24,7 @@ export type TableListParams = {
 export type ParameterType = 'range' | 'enumeration';
 export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
 
-export type ThresholdUpdateDataSourceType = {
+export type RiskScoreDataSourceType = {
   id: React.Key;
   parameter: string;
   defaultValue: any;
@@ -41,6 +41,11 @@ export type ThresholdDataType = {
   parameter: string;
   type: ThresholdAllowedDataTypes;
   defaultValue: string;
+};
+
+export type RiskScoringDataType = {
+  columns: string[];
+  rows: Array<Object>;
 };
 
 export type ParameterTableListItemBase = {
