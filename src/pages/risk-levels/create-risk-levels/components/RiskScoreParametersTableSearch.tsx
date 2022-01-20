@@ -7,12 +7,11 @@ import {
   TableListPagination,
   RiskScoreDataSourceType,
   ParameterTableListItem,
-  ThresholdDataType,
   actionToColor,
   RiskScoringDataType,
 } from '../data.d';
 
-import { countryRiskList } from '../data/RawRiskData';
+import { businessAgeRiskScoreData } from '../data/RawRiskData';
 
 import { riskRarameters } from '../service';
 
@@ -149,17 +148,11 @@ export const RiskScoreParametersTableSearch: React.FC<{
             parameterId: selectedRows[0].parameterId,
             parameterType: selectedRows[0].parameterType,
           });
-          setDataSource(
-            getProcessedRiskScoringData({
-              columns: ['countryCode', 'riskScore'],
-              rows: countryRiskList,
-            }),
-          );
+          setDataSource(getProcessedRiskScoringData(selectedRows[0].parameterRiskScoreValues));
           setEditableRowKeys(() =>
-            getProcessedRiskScoringData({
-              columns: ['countryCode', 'riskScore'],
-              rows: countryRiskList,
-            }).map((item: any) => item.id),
+            getProcessedRiskScoringData(selectedRows[0].parameterRiskScoreValues).map(
+              (item: any) => item.id,
+            ),
           );
         },
         type: 'radio',

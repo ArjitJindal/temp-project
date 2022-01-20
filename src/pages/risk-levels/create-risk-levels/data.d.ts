@@ -58,4 +58,5 @@ export type ParameterTableListItemBase = {
 
 export type ParameterTableListItem = ParameterTableListItemBase & {
   parameterType: ParameterType;
+  parameterRiskScoreValues: RiskScoringDataType;
 };

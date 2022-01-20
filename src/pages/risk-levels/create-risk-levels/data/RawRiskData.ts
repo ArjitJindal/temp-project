@@ -1,38 +1,47 @@
-export const countryRiskScoreData = {};
-
-export const payoutModeRiskList = [
-  { ageRange: 'Crypto', riskScore: '100' },
-  { ageRange: 'Credit Card', riskScore: '75' },
-  { ageRange: 'Cash', riskScore: '75' },
-  { ageRange: 'Debit Card', riskScore: '25' },
-  { ageRange: 'Mobile Wallet (ApplePay, GooglePay etc)', riskScore: '50' },
-  { ageRange: 'IBAN Transfer', riskScore: '0' },
+const businessIndustryRiskList = [
+  { businessIndustry: 'Crypto', riskScore: '100' },
+  { businessIndustry: 'Gambling', riskScore: '100' },
+  { businessIndustry: 'Restaurant', riskScore: '50' },
+  { businessIndustry: 'Remittance', riskScore: '75' },
+  { businessIndustry: 'Retail', riskScore: '25' },
+  { businessIndustry: 'Apparel', riskScore: '0' },
+  { businessIndustry: 'Legal Services', riskScore: '25' },
+  { businessIndustry: 'Cleaning Services', riskScore: '25' },
 ];
 
-export const paymentModeRiskList = [
-  { ageRange: 'Crypto', riskScore: '100' },
-  { ageRange: 'Credit Card', riskScore: '75' },
-  { ageRange: 'Cash', riskScore: '75' },
-  { ageRange: 'Debit Card', riskScore: '25' },
-  { ageRange: 'Mobile Wallet (ApplePay, GooglePay etc)', riskScore: '50' },
-  { ageRange: 'IBAN Transfer', riskScore: '0' },
+const payoutModeRiskList = [
+  { payoutMode: 'Crypto', riskScore: '100' },
+  { payoutMode: 'Credit Card', riskScore: '75' },
+  { payoutMode: 'Cash', riskScore: '75' },
+  { payoutMode: 'Debit Card', riskScore: '25' },
+  { payoutMode: 'Mobile Wallet (ApplePay, GooglePay etc)', riskScore: '50' },
+  { payoutMode: 'IBAN Transfer', riskScore: '0' },
 ];
 
-export const businessAgeRiskList = [
+const paymentModeRiskList = [
+  { paymentMode: 'Crypto', riskScore: '100' },
+  { paymentMode: 'Credit Card', riskScore: '75' },
+  { paymentMode: 'Cash', riskScore: '75' },
+  { paymentMode: 'Debit Card', riskScore: '25' },
+  { paymentMode: 'Mobile Wallet (ApplePay, GooglePay etc)', riskScore: '50' },
+  { paymentMode: 'IBAN Transfer', riskScore: '0' },
+];
+
+const businessAgeRiskList = [
   { ageRange: '0-2', riskScore: '100' },
   { ageRange: '2-5', riskScore: '75' },
   { ageRange: '5-15', riskScore: '25' },
   { ageRange: '15-500', riskScore: '0' },
 ];
 
-export const individualAgeRiskList = [
+const individualAgeRiskList = [
   { ageRange: '16-21', riskScore: '50' },
   { ageRange: '21-45', riskScore: '0' },
   { ageRange: '45-65', riskScore: '25' },
   { ageRange: '65-120', riskScore: '75' },
 ];
 
-export const countryRiskList = [
+const countryRiskList = [
   { countryCode: 'AF', riskScore: 0.0 },
   { countryCode: 'AX', riskScore: 25.0 },
   { countryCode: 'AL', riskScore: 50.0 },
@@ -280,3 +289,33 @@ export const countryRiskList = [
   { countryCode: 'ZM', riskScore: 50.0 },
   { countryCode: 'ZW', riskScore: 25.0 },
 ];
+
+export const countryRiskScoreData = {
+  columns: ['countryCode', 'riskScore'],
+  rows: countryRiskList,
+};
+
+export const payoutModeRiskScoreData = {
+  columns: ['payoutMode', 'riskScore'],
+  rows: payoutModeRiskList,
+};
+
+export const paymentModeRiskScoreData = {
+  columns: ['paymentMode', 'riskScore'],
+  rows: paymentModeRiskList,
+};
+
+export const businessAgeRiskScoreData = {
+  columns: ['ageRange', 'riskScore'],
+  rows: businessAgeRiskList,
+};
+
+export const individualAgeRiskScoreData = {
+  columns: ['ageRange', 'riskScore'],
+  rows: individualAgeRiskList,
+};
+
+export const businessIndustryRiskScoreData = {
+  columns: ['businessIndustry', 'riskScore'],
+  rows: businessIndustryRiskList,
+};

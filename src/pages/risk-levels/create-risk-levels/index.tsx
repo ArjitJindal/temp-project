@@ -27,14 +27,14 @@ const StepResult: React.FC<{
   return (
     <Result
       status="success"
-      title="Rule Successfully created"
-      subTitle="All new transactions will go through this rule"
+      title="Risk Scoring updated"
+      subTitle="Risk level calculation will now use the newly created parameter risk score"
       extra={
         <>
           <Button type="primary" onClick={props.onFinish}>
-            Create another rule
+            Activate New Risk Parameter
           </Button>
-          <Button href="/rules/created-rules">Go to Created rules</Button>
+          <Button href="/risk-levels/created-risk-levels">Go to Created Risk Parameters</Button>
         </>
       }
       className={styles.result}

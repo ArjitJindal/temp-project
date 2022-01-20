@@ -1,6 +1,14 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type { Request, Response } from 'express';
 import type { ParameterType, ParameterTableListItem, TableListParams } from './data.d';
+import {
+  businessAgeRiskScoreData,
+  countryRiskScoreData,
+  individualAgeRiskScoreData,
+  payoutModeRiskScoreData,
+  paymentModeRiskScoreData,
+  businessIndustryRiskScoreData,
+} from './data/RawRiskData';
 
 import { parse } from 'url';
 
@@ -14,42 +22,49 @@ const genList = (current: number, pageSize: number) => {
       parameterDescription: 'Risk customer based on their country of residency.',
       parameterId: 'P-1',
       parameterType: 'enumeration',
+      riskScoreValues: countryRiskScoreData,
     },
     {
       parameterName: 'Country of Nationality',
       parameterDescription: 'Risk customer based on their country of residency Nationality',
       parameterId: 'P-2',
       parameterType: 'enumeration',
+      riskScoreValues: countryRiskScoreData,
     },
     {
       parameterName: 'Business Age',
       parameterDescription: 'Risk customer based on the Age group of their business',
       parameterId: 'P-3',
       parameterType: 'range',
+      riskScoreValues: businessAgeRiskScoreData,
     },
     {
       parameterName: 'Individual Age',
       parameterDescription: 'Risk customer based on their Age group',
       parameterId: 'P-4',
       parameterType: 'range',
+      riskScoreValues: individualAgeRiskScoreData,
     },
     {
       parameterName: 'Payment Method',
       parameterDescription: 'Risk customer based on the payment method used.',
       parameterId: 'P-4',
       parameterType: 'enumeration',
+      riskScoreValues: paymentModeRiskScoreData,
     },
     {
       parameterName: 'Payout Method',
       parameterDescription: 'Risk customer based on their payout method.',
       parameterId: 'P-5',
       parameterType: 'enumeration',
+      riskScoreValues: payoutModeRiskScoreData,
     },
     {
       parameterName: 'Business Industry Risk Level',
       parameterDescription: 'Risk customer based on their business industry.',
       parameterId: 'P-6',
       parameterType: 'enumeration',
+      riskScoreValues: businessIndustryRiskScoreData,
     },
   ];
 
@@ -64,6 +79,7 @@ const genList = (current: number, pageSize: number) => {
       parameterDescription: parametersAndDescriptions[index].parameterDescription,
       parameterId: parametersAndDescriptions[index].parameterId,
       parameterType: parametersAndDescriptions[index].parameterType as ParameterType,
+      parameterRiskScoreValues: parametersAndDescriptions[index].riskScoreValues,
     });
   }
   tableListDataSource.reverse();
