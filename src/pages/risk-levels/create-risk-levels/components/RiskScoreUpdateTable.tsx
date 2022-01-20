@@ -2,9 +2,9 @@ import React, { Dispatch, SetStateAction } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import { EditableProTable } from '@ant-design/pro-table';
 import { Button } from 'antd';
-import { RiskScoreDataSourceType } from '../data.d';
+import { RiskScoreDataSourceType } from '../data';
 
-export const ThresholdUpdateTable: React.FC<{
+export const RiskScoreUpdateTable: React.FC<{
   editableKeys: React.Key[];
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
   dataSource: RiskScoreDataSourceType[];

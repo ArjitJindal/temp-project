@@ -1,4 +1,4 @@
-import { ThresholdUpdateTable } from './ThresholdUpdateTable';
-import { RulesTableSearch } from './RulesTableSearch';
+import { RiskScoreUpdateTable } from './RiskScoreUpdateTable';
+import { RiskScoreParametersTableSearch } from './RiskScoreParametersTableSearch';
 
-export { ThresholdUpdateTable, RulesTableSearch };
+export { RiskScoreUpdateTable, RiskScoreParametersTableSearch };

@@ -1,16 +1,11 @@
-import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
-import { FormInstance, Radio } from 'antd';
+import React, { useRef, useState } from 'react';
+import { FormInstance } from 'antd';
 import { Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { StepsForm } from '@ant-design/pro-form';
-import type { ParameterType, StepDataType, RiskScoreDataSourceType } from './data.d';
-import { RulesTableSearch, ThresholdUpdateTable } from './components';
+import type { StepDataType, RiskScoreDataSourceType } from './data.d';
+import { RiskScoreParametersTableSearch, RiskScoreUpdateTable } from './components';
 import styles from './style.less';
-
-const parameterTypeOptions = [
-  { label: 'Range', value: 'range' },
-  { label: 'Enumeration', value: 'enumeration' },
-];
 
 const StepDescriptions: React.FC<{
   stepData: StepDataType;
@@ -97,7 +92,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
             title="Choose Parameter"
             initialValues={stepData}
           >
-            <RulesTableSearch
+            <RiskScoreParametersTableSearch
               setStepData={setStepData}
               setDataSource={setDataSource}
               setEditableRowKeys={setEditableRowKeys}
@@ -117,7 +112,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
               </div>
               <div className={styles.thresholdUpdateWrapper}>
                 <Divider style={{ margin: '18px 0' }} />
-                <ThresholdUpdateTable
+                <RiskScoreUpdateTable
                   editableKeys={editableKeys}
                   setEditableRowKeys={setEditableRowKeys}
                   dataSource={dataSource}

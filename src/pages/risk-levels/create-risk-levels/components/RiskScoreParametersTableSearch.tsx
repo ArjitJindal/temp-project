@@ -12,7 +12,7 @@ import {
   RiskScoringDataType,
 } from '../data.d';
 
-import { countryRiskList } from '../data/CountriesRiskList';
+import { countryRiskList } from '../data/RawRiskData';
 
 import { riskRarameters } from '../service';
 
@@ -25,18 +25,6 @@ const getProcessedRiskScoringData = (
       id: riskScoreRows[columns[0]] + index.toString(), //lol
       parameter: riskScoreRows[columns[0]],
       defaultValue: riskScoreRows[columns[1]],
-    };
-  });
-};
-
-const getProcessedThresholdData = (
-  thresholdData: ThresholdDataType[],
-): RiskScoreDataSourceType[] => {
-  return thresholdData.map((threshold, index) => {
-    return {
-      id: threshold.defaultValue.toString() + index.toString(), //lol
-      parameter: threshold.parameter,
-      defaultValue: threshold.defaultValue,
     };
   });
 };
@@ -61,7 +49,7 @@ const handleAction = (key: string | number) => {
   }
 };
 
-export const RulesTableSearch: React.FC<{
+export const RiskScoreParametersTableSearch: React.FC<{
   setStepData: Dispatch<SetStateAction<StepDataType>>;
   setDataSource: Dispatch<SetStateAction<RiskScoreDataSourceType[]>>;
   setEditableRowKeys: Dispatch<SetStateAction<React.Key[]>>;
