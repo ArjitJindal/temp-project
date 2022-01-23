@@ -20,6 +20,7 @@ import {
 import { CfnOutput, Duration } from '@aws-cdk/core'
 
 import { Code, Function, Runtime, Tracing } from '@aws-cdk/aws-lambda'
+import { TarponStackConstants } from './constants'
 
 export class CdkTarponStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -28,11 +29,9 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * DynamoDB
      */
-    const transactionTable = new Table(this, 'Transactions', {
-      tableName: 'Transactions',
-      // tenantID for primary item
+    const dynamoDbTable = new Table(this, 'Tarpon', {
+      tableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-      // transactionID for primary item
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
       readCapacity: 1,
       writeCapacity: 1,
@@ -93,7 +92,7 @@ export class CdkTarponStack extends cdk.Stack {
         timeout: Duration.seconds(10),
       }
     )
-    transactionTable.grantReadWriteData(postRulesEngineFunction)
+    dynamoDbTable.grantReadWriteData(postRulesEngineFunction)
 
     /**
      * API Gateway
@@ -171,7 +170,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     new CfnOutput(this, 'Transaction Table', {
-      value: transactionTable.tableName,
+      value: dynamoDbTable.tableName,
     })
   }
 }

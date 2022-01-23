@@ -5,6 +5,7 @@ import {
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
 import PolicyBuilder from './policy-generator'
+import { TarponStackConstants } from '../../lib/constants'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -22,7 +23,9 @@ async function getTenantScopeCredentials(
       RoleArn: `arn:aws:iam::${accountId}:role/ApiKeyAuthorizerBaseRole`,
       RoleSessionName: requestId,
       Policy: JSON.stringify(
-        new PolicyBuilder(tenantId).dynamoDb('Transactions').build()
+        new PolicyBuilder(tenantId)
+          .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
+          .build()
       ),
     })
     .promise()
