@@ -47,8 +47,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         functionName: 'ApiKeyGeneratorFunction',
         runtime: Runtime.NODEJS_14_X,
-        handler: 'dist/app.apiKeyGeneratorHandler',
-        code: Code.fromAsset('src/api-key-generator'),
+        handler: 'app.apiKeyGeneratorHandler',
+        code: Code.fromAsset('dist/api-key-generator'),
         tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
@@ -74,8 +74,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         functionName: 'ApiKeyAuthorizerFunction',
         runtime: Runtime.NODEJS_14_X,
-        handler: 'dist/app.apiKeyHandler',
-        code: Code.fromAsset('src/authorizer'),
+        handler: 'app.apiKeyHandler',
+        code: Code.fromAsset('dist/authorizer'),
         tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
@@ -87,8 +87,8 @@ export class CdkTarponStack extends cdk.Stack {
       {
         functionName: 'PostRulesEngineFunction',
         runtime: Runtime.NODEJS_14_X,
-        handler: 'dist/app.lambdaHandler',
-        code: Code.fromAsset('src/rules-engine'),
+        handler: 'app.lambdaHandler',
+        code: Code.fromAsset('dist/rules-engine'),
         tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }

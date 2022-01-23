@@ -1,11 +1,10 @@
 {
   "extends": "@tsconfig/node14/tsconfig.json",
   "include": ["**/*.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "cdk.out"],
   "compilerOptions": {
+    "alwaysStrict": true,
     "sourceMap": true,
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "."
+    "moduleResolution": "node"
   }
 }
