@@ -4,7 +4,7 @@
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
-    "build": "webpack; cdk synth",
+    "build": "webpack && cdk synth",
     "deploy": "cdk deploy",
     "test": "ts-mocha **/tests/**/*.ts",
     "lint": "eslint src/**/*.ts **/*.ts",

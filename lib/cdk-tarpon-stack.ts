@@ -94,6 +94,16 @@ export class CdkTarponStack extends cdk.Stack {
     )
     dynamoDbTable.grantReadWriteData(postRulesEngineFunction)
 
+    const ruleInstanceFunction = new Function(this, 'RuleInstanceFunction', {
+      functionName: 'RuleInstanceFunction',
+      runtime: Runtime.NODEJS_14_X,
+      handler: 'app.ruleInstanceHandler',
+      code: Code.fromAsset('dist/rules-engine'),
+      tracing: Tracing.ACTIVE,
+      timeout: Duration.seconds(10),
+    })
+    dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
+
     /**
      * API Gateway
      */
@@ -125,6 +135,26 @@ export class CdkTarponStack extends cdk.Stack {
     apiKey.addMethod('POST', new LambdaIntegration(apiKeyGeneratorFunction), {
       authorizationType: AuthorizationType.IAM,
     })
+
+    const ruleInstances = api.root.addResource('rule-instance')
+    ruleInstances.addMethod(
+      'POST',
+      new LambdaIntegration(ruleInstanceFunction),
+      {
+        authorizationType: AuthorizationType.IAM,
+      }
+    )
+    const ruleInstance = ruleInstances.addResource('{id}')
+    ruleInstance.addMethod('PUT', new LambdaIntegration(ruleInstanceFunction), {
+      authorizationType: AuthorizationType.IAM,
+    })
+    ruleInstance.addMethod(
+      'DELETE',
+      new LambdaIntegration(ruleInstanceFunction),
+      {
+        authorizationType: AuthorizationType.IAM,
+      }
+    )
 
     /**
      * IAM roles
