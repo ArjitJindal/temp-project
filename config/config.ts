@@ -207,19 +207,13 @@ export default defineConfig({
       routes: [
         {
           path: '/risk-levels',
-          redirect: '/risk-levels/created-risk-levels',
+          redirect: '/risk-levels/create-risk-levels',
         },
         {
           name: 'create-risk-levels',
           icon: 'smile',
           path: '/risk-levels/create-risk-levels',
           component: './risk-levels/create-risk-levels',
-        },
-        {
-          name: 'created-risk-levels',
-          icon: 'smile',
-          path: '/risk-levels/created-risk-levels',
-          component: './risk-levels/created-risk-levels',
         },
       ],
     },

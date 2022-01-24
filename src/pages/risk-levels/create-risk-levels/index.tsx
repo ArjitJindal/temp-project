@@ -34,7 +34,6 @@ const StepResult: React.FC<{
           <Button type="primary" onClick={props.onFinish}>
             Activate New Risk Parameter
           </Button>
-          <Button href="/risk-levels/created-risk-levels">Go to Created Risk Parameters</Button>
         </>
       }
       className={styles.result}

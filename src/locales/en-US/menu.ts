@@ -25,7 +25,6 @@ export default {
   'menu.sar': 'SAR',
   'menu.risk-levels': 'Risk Levels',
   'menu.risk-levels.create-risk-levels': 'Risk Level',
-  'menu.risk-levels.created-risk-levels': 'Created Risk Levels',
   'menu.network.network-analysis': 'Network Analysis',
   'menu.network': 'Network',
   'menu.account': 'Account',
