@@ -51,7 +51,7 @@ export const RiskScoreUpdateTable: React.FC<{
                 console.log(dataSource);
               }}
             >
-              Save Data
+              Upload CSV Data
             </Button>,
           ];
         }}
