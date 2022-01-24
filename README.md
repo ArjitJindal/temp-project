@@ -34,7 +34,7 @@ cdk synth
 
 ```bash
 sam local start-api -t cdk.out/tarpon.template.json
-sam local invoke "PostRulesEngineFunction" --event events/event.json -t cdk.out/tarpon.template.json
+sam local invoke "VerifyTransactionFunction" --event events/event.json -t cdk.out/tarpon.template.json
 ```
 
 ## Deploy

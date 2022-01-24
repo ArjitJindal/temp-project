@@ -80,19 +80,19 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    const postRulesEngineFunction = new Function(
+    const verifyTransactionFunction = new Function(
       this,
-      'PostRulesEngineFunction',
+      'VerifyTransactionFunction',
       {
-        functionName: 'PostRulesEngineFunction',
+        functionName: 'VerifyTransactionFunction',
         runtime: Runtime.NODEJS_14_X,
-        handler: 'app.lambdaHandler',
+        handler: 'app.verifyTransactionHandler',
         code: Code.fromAsset('dist/rules-engine'),
         tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }
     )
-    dynamoDbTable.grantReadWriteData(postRulesEngineFunction)
+    dynamoDbTable.grantReadWriteData(verifyTransactionFunction)
 
     const ruleInstanceFunction = new Function(this, 'RuleInstanceFunction', {
       functionName: 'RuleInstanceFunction',
@@ -110,7 +110,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     // TODO: CDK+OpenAPI integration (issue: https://github.com/aws/aws-cdk/issues/1461)
     const api = new LambdaRestApi(this, 'TarponAPI', {
-      handler: postRulesEngineFunction, // TODO: create default handler,
+      handler: verifyTransactionFunction, // TODO: create default handler,
       proxy: false,
     })
     const apiKeyAuthorizer = new RequestAuthorizer(this, 'TarponAuthorizer', {
@@ -121,7 +121,7 @@ export class CdkTarponStack extends cdk.Stack {
     const transactions = api.root.addResource('transaction')
     transactions.addMethod(
       'POST',
-      new LambdaIntegration(postRulesEngineFunction, { proxy: true }),
+      new LambdaIntegration(verifyTransactionFunction, { proxy: true }),
       {
         authorizationType: AuthorizationType.CUSTOM,
         authorizer: apiKeyAuthorizer,
@@ -196,7 +196,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     new CfnOutput(this, 'Post Rules Engine Function Name', {
-      value: postRulesEngineFunction.functionName,
+      value: verifyTransactionFunction.functionName,
     })
 
     new CfnOutput(this, 'Transaction Table', {

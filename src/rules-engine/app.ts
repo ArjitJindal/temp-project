@@ -4,127 +4,71 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
-
-import highRiskCountry from './rulesEngine/highRiskCountry'
-import { v4 as uuidv4 } from 'uuid'
+import { Rule, RuleActionEnum } from './rules/rule'
+import { RuleComputeResult } from '../@types/rule/ruleComputeResult'
 import { RuleRepository } from './repositories/ruleRepository'
+import { Transaction } from '../@types/transaction/transaction'
+import { TransactionRepository } from './repositories/transactionRepository'
 import { getDynamoDbClient } from '../utils/dynamodb'
+import { rules } from './rules'
 
-/**
- *
- * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
- * @param {Object} event - API Gateway Lambda Proxy Input Format
- *
- * Context doc: https://docs.aws.amazon.com/lambda/latest/dg/nodejs-prog-model-context.html
- * @param {Object} context
- *
- * Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
- * @returns {Object} object - API Gateway Lambda Proxy Output Format
- *
- */
-export const lambdaHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
+async function verifyTransaction(
+  transaction: Transaction,
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+): Promise<RuleComputeResult> {
+  const ruleRepository = new RuleRepository(tenantId, dynamoDb)
+  const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
+  const ruleInstances = await ruleRepository.getActiveRuleInstances()
+  const ruleResults = await Promise.all(
+    ruleInstances.map(async (ruleInstance) => {
+      const rule = new rules[ruleInstance.ruleId](
+        tenantId,
+        transaction,
+        ruleInstance.parameters,
+        dynamoDb
+      ) as Rule
+      const ruleResult = await rule.computeRule()
+      const { name, description } = rule.getInfo()
+      return {
+        ruleId: ruleInstance.ruleId,
+        ruleName: name,
+        ruleDescription: description,
+        ruleAction: ruleResult?.action || RuleActionEnum.ALLOW,
+        ruleHit: ruleResult !== undefined,
+      }
+    })
+  )
+  const transactionId = await transactionRepository.saveTransaction(transaction)
+  return {
+    transactionId,
+    rules: ruleResults,
+  }
+}
+
+export const verifyTransactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-> = async (event, context) => {
-  const {
-    AccessKeyId,
-    SecretAccessKey,
-    SessionToken,
-    principalId: tenantId,
-  } = event.requestContext.authorizer
-  const dynamoDb = new AWS.DynamoDB.DocumentClient({
-    credentials: {
-      accessKeyId: AccessKeyId,
-      secretAccessKey: SecretAccessKey,
-      sessionToken: SessionToken,
-    },
-  })
+> = async (event) => {
+  const { principalId: tenantId } = event.requestContext.authorizer
+  const dynamoDb = getDynamoDbClient(event)
 
-  let response: APIGatewayProxyResult = { statusCode: 500, body: 'ERROR' }
   try {
-    console.log(`Context: ${JSON.stringify(context)}`)
-    console.log(`Event: ${JSON.stringify(event)}`)
-    const body = event.body && JSON.parse(event.body)
-    const transactionID = uuidv4()
-
-    const params = {
-      TableName: 'Transactions',
-      Item: {
-        PartitionKeyID: tenantId + '#' + transactionID,
-        SortKeyID: 'thingsyouwontbelieve',
-        userID: body.userID,
-        sendingAmountDetails: body.sendingAmountDetails,
-        receivingAmountDetails: body.receivingAmountDetails,
-        paymentMethod: body.paymentMethod,
-        payoutMethod: body.payoutMethod,
-        timestamp: body.timestamp,
-        senderName: body.senderName,
-        receiverName: body.receiverName,
-        promotionCodeUsed: body.promotionCodeUsed,
-        productType: body.productType,
-        senderCardDetails: body.senderName,
-        receiverCardDetails: body.receiverCardDetails,
-        senderBankDetails: body.senderBankDetails,
-        receiverBankDetails: body.receiverBankDetails,
-        reference: body.reference,
-        deviceData: body.deviceData,
-        tags: body.tags,
-      },
-      ReturnConsumedCapacity: 'TOTAL',
-    }
-
-    try {
-      await dynamoDb.put(params).promise()
-      try {
-        const ruleResult = highRiskCountry(
-          body,
-          'receivingAmountDetails',
-          'AF',
-          'ALLOW'
-        )
-        response = {
-          statusCode: 200,
-          body: JSON.stringify({
-            message: 'success',
-            transactionID: transactionID,
-            rules: [ruleResult],
-          }),
-        }
-      } catch (e: any) {
-        console.log('ERROR IN CALLING RULE')
-        console.log(e)
-        response = {
-          statusCode: 500,
-          body: JSON.stringify({
-            error: e.message,
-          }),
-        }
-      }
-    } catch (dbError: any) {
-      let errorResponse = `Error: Execution update, caused a Dynamodb error, please look at your logs.`
-      if (dbError.code === 'ValidationException') {
-        if (dbError.message.includes('reserved keyword'))
-          errorResponse = `Error: You're using AWS reserved keywords as attributes`
-      }
-      console.log(dbError)
-      response = {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: errorResponse,
-        }),
-      }
+    const transaction = event.body && JSON.parse(event.body)
+    // TODO: Validate payload
+    const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result),
     }
   } catch (err: any) {
-    console.log('ERROR IN RETURNING  RESPONSES')
     console.log(err)
-    response = {
+    return {
       statusCode: 500,
       body: JSON.stringify({
         error: err.message,
       }),
     }
   }
-
-  return response
 }
 
 export type RuleInstanceQueryStringParameters = {
