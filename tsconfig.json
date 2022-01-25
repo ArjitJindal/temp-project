@@ -5,6 +5,8 @@
   "compilerOptions": {
     "alwaysStrict": true,
     "sourceMap": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "lib": ["es2020"]
   }
 }

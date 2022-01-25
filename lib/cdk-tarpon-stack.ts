@@ -125,6 +125,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         authorizationType: AuthorizationType.CUSTOM,
         authorizer: apiKeyAuthorizer,
+        apiKeyRequired: true,
       }
     )
 
