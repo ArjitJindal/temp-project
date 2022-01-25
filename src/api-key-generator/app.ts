@@ -31,6 +31,7 @@ async function createNewApiKeyForTenant(
   const apiGateway = new APIGateway()
   const apiKeyResult = await apiGateway
     .createApiKey({
+      enabled: true,
       name: tenantId, // TODO: concat with user ID
       value: newApiKey,
     })
