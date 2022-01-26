@@ -21,7 +21,7 @@ import {
 import { CfnOutput, Duration } from '@aws-cdk/core'
 
 import { Code, Function, Runtime, Tracing } from '@aws-cdk/aws-lambda'
-import { TarponStackConstants } from './constants'
+import { TarponStackConstants, getResourceName } from './constants'
 
 export class CdkTarponStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -30,22 +30,26 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * DynamoDB
      */
-    const dynamoDbTable = new Table(this, 'Tarpon', {
-      tableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-      sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-      readCapacity: 1,
-      writeCapacity: 1,
-    })
+    const dynamoDbTable = new Table(
+      this,
+      TarponStackConstants.DYNAMODB_TABLE_NAME,
+      {
+        tableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
+        sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
+        readCapacity: 1,
+        writeCapacity: 1,
+      }
+    )
 
     /**
      * Lambda Functions
      */
     const apiKeyGeneratorFunction = new Function(
       this,
-      'ApiKeyGeneratorFunction',
+      getResourceName('ApiKeyGeneratorFunction'),
       {
-        functionName: 'ApiKeyGeneratorFunction',
+        functionName: getResourceName('ApiKeyGeneratorFunction'),
         runtime: Runtime.NODEJS_14_X,
         handler: 'app.apiKeyGeneratorHandler',
         code: Code.fromAsset('dist/api-key-generator'),
@@ -54,7 +58,8 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
-      new Policy(this, 'ApiKeyGeneratorPolicy', {
+      new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
+        policyName: getResourceName('ApiKeyGeneratorPolicy'),
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -70,9 +75,9 @@ export class CdkTarponStack extends cdk.Stack {
 
     const apiKeyAuthorizerFunction = new Function(
       this,
-      'ApiKeyAuthorizerFunction',
+      getResourceName('ApiKeyAuthorizerFunction'),
       {
-        functionName: 'ApiKeyAuthorizerFunction',
+        functionName: getResourceName('ApiKeyAuthorizerFunction'),
         runtime: Runtime.NODEJS_14_X,
         handler: 'app.apiKeyHandler',
         code: Code.fromAsset('dist/authorizer'),
@@ -81,28 +86,36 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    const transactionFunction = new Function(this, 'TransactionFunction', {
-      functionName: 'TransactionFunction',
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.transactionHandler',
-      code: Code.fromAsset('dist/rules-engine'),
-      tracing: Tracing.ACTIVE,
-      timeout: Duration.seconds(10),
-    })
+    const transactionFunction = new Function(
+      this,
+      getResourceName('TransactionFunction'),
+      {
+        functionName: getResourceName('TransactionFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.transactionHandler',
+        code: Code.fromAsset('dist/rules-engine'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
-    const ruleInstanceFunction = new Function(this, 'RuleInstanceFunction', {
-      functionName: 'RuleInstanceFunction',
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.ruleInstanceHandler',
-      code: Code.fromAsset('dist/rules-engine'),
-      tracing: Tracing.ACTIVE,
-      timeout: Duration.seconds(10),
-    })
+    const ruleInstanceFunction = new Function(
+      this,
+      getResourceName('RuleInstanceFunction'),
+      {
+        functionName: getResourceName('RuleInstanceFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.ruleInstanceHandler',
+        code: Code.fromAsset('dist/rules-engine'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
 
-    const userFunction = new Function(this, 'UserFunction', {
-      functionName: 'UserFunction',
+    const userFunction = new Function(this, getResourceName('UserFunction'), {
+      functionName: getResourceName('UserFunction'),
       runtime: Runtime.NODEJS_14_X,
       handler: 'app.userHandler',
       code: Code.fromAsset('dist/user-management'),
@@ -122,11 +135,16 @@ export class CdkTarponStack extends cdk.Stack {
       handler: transactionFunction, // TODO: create default handler,
       proxy: false,
     })
-    const apiKeyAuthorizer = new RequestAuthorizer(this, 'TarponAuthorizer', {
-      handler: apiKeyAuthorizerFunction,
-      identitySources: [IdentitySource.header('x-api-key')],
-      resultsCacheTtl: Duration.seconds(0),
-    })
+    const apiKeyAuthorizer = new RequestAuthorizer(
+      this,
+      getResourceName('ApiKeyAuthorizer'),
+      {
+        authorizerName: getResourceName('ApiKeyAuthorizer'),
+        handler: apiKeyAuthorizerFunction,
+        identitySources: [IdentitySource.header('x-api-key')],
+        resultsCacheTtl: Duration.seconds(0),
+      }
+    )
     const publicApiSecurityOptions: MethodOptions = {
       authorizationType: AuthorizationType.CUSTOM,
       authorizer: apiKeyAuthorizer,
@@ -214,10 +232,9 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const apiKeyAuthorizerBaseRole = new Role(
       this,
-      'ApiKeyAuthorizerBaseRole',
+      TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME,
       {
-        // TODO: Make the role name shared with lambda
-        roleName: 'ApiKeyAuthorizerBaseRole',
+        roleName: TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME,
         assumedBy: new ArnPrincipal(
           apiKeyAuthorizerFunction.role?.roleArn as string
         ),
@@ -227,7 +244,8 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     apiKeyAuthorizerFunction.role?.attachInlinePolicy(
-      new Policy(this, 'ApiKeyAuthorizerPolicy', {
+      new Policy(this, getResourceName('ApiKeyAuthorizerPolicy'), {
+        policyName: getResourceName('ApiKeyAuthorizerPolicy'),
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -241,17 +259,15 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * Outputs
      */
-    new CfnOutput(
-      this,
-      'API Gateway endpoint URL for Prod stage for Rules Engine function',
-      {
-        value: api.urlForPath('/'),
-      }
-    )
-    new CfnOutput(this, 'Post Rules Engine Function Name', {
+    new CfnOutput(this, 'API Gateway endpoint URL for Prod stage', {
+      value: api.urlForPath('/'),
+    })
+    new CfnOutput(this, 'Transaction Function Name', {
       value: transactionFunction.functionName,
     })
-
+    new CfnOutput(this, 'User Function Name', {
+      value: userFunction.functionName,
+    })
     new CfnOutput(this, 'Transaction Table', {
       value: dynamoDbTable.tableName,
     })

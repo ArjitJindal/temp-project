@@ -20,7 +20,7 @@ async function getTenantScopeCredentials(
   const sts = new AWS.STS()
   const assumeRoleResult = await sts
     .assumeRole({
-      RoleArn: `arn:aws:iam::${accountId}:role/ApiKeyAuthorizerBaseRole`,
+      RoleArn: `arn:aws:iam::${accountId}:role/${TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME}`,
       RoleSessionName: requestId,
       Policy: JSON.stringify(
         new PolicyBuilder(tenantId)
