@@ -1,4 +1,4 @@
-import { TransactionRepository } from '../repositories/transactionRepository'
+import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule, RuleInfo, RuleParameters } from './rule'
 
 type FirstPaymentOfACustomerRuleParameters = RuleParameters & {}
@@ -18,7 +18,7 @@ export default class FirstPaymentOfACustomerRule extends Rule<FirstPaymentOfACus
       this.dynamoDb
     )
     const isFirstPayment = !(await transactionRepository.hasAnyTransaction(
-      this.transaction.userId
+      this.transaction.senderUserId
     ))
     if (isFirstPayment) {
       return {

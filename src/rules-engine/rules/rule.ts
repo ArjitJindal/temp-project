@@ -1,4 +1,4 @@
-import { Transaction } from '../../@types/transaction/transaction'
+import { Transaction } from '../../@types/openapi/transaction'
 
 export enum RuleActionEnum {
   ALLOW = 'ALLOW',

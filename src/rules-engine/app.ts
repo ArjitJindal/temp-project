@@ -4,10 +4,10 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Rule, RuleActionEnum } from './rules/rule'
-import { RuleRepository } from './repositories/ruleRepository'
+import { RuleRepository } from './repositories/rule-repository'
 import { Transaction } from '../@types/openapi/transaction'
 import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
-import { TransactionRepository } from './repositories/transactionRepository'
+import { TransactionRepository } from './repositories/transaction-repository'
 import { getDynamoDbClient } from '../utils/dynamodb'
 import { rules } from './rules'
 

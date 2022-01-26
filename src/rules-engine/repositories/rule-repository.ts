@@ -2,7 +2,7 @@ import { TarponStackConstants } from '../../../lib/constants'
 import {
   RuleInstance,
   RuleInstanceStatus,
-} from '../../@types/rule/ruleInstance'
+} from '../../@types/rule/rule-instance'
 import { v4 as uuidv4 } from 'uuid'
 
 export class RuleRepository {

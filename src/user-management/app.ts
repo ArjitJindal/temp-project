@@ -3,7 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
-import { UserRepository } from './repositories/userRepository'
+import { UserRepository } from './repositories/user-repository'
 import { getDynamoDbClient } from '../utils/dynamodb'
 
 export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
