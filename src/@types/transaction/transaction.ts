@@ -3,7 +3,7 @@ import { PaymentAmountDetails } from './paymentAmountDetails'
 import { PaymentDetails } from './paymentDetails'
 
 export type Transaction = {
-  id?: string
+  transactionId?: string
   userId: string
   sendingAmountDetails: PaymentAmountDetails
   receivingAmountDetails: PaymentAmountDetails

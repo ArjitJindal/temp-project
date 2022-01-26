@@ -1,7 +1,6 @@
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Rule, RuleActionEnum } from './rules/rule'
@@ -46,19 +45,36 @@ async function verifyTransaction(
   }
 }
 
-export const verifyTransactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
+export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
 > = async (event) => {
   const { principalId: tenantId } = event.requestContext.authorizer
   const dynamoDb = getDynamoDbClient(event)
+  const transactionId = event.pathParameters?.transactionId
 
   try {
-    const transaction = event.body && JSON.parse(event.body)
-    // TODO: Validate payload
-    const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+    if (event.httpMethod === 'POST' && event.body) {
+      const transaction = JSON.parse(event.body)
+      // TODO: Validate payload
+      const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+      return {
+        statusCode: 200,
+        body: JSON.stringify(result),
+      }
+    } else if (event.httpMethod === 'GET' && transactionId) {
+      const transactionRepository = new TransactionRepository(
+        tenantId,
+        dynamoDb
+      )
+      const result = await transactionRepository.getTransaction(transactionId)
+      return {
+        statusCode: 200,
+        body: JSON.stringify(result),
+      }
+    }
     return {
-      statusCode: 200,
-      body: JSON.stringify(result),
+      statusCode: 500,
+      body: 'Unhandled request',
     }
   } catch (err: any) {
     console.log(err)

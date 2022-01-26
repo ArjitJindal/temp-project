@@ -1,13 +1,13 @@
 'use strict'
 
 import chai from 'chai'
-import { verifyTransactionHandler } from '../../app'
+import { transactionHandler } from '../../app'
 
 const expect = chai.expect
 
 describe('Tests index', function () {
   it('verifies successful response', async () => {
-    const result: any = await verifyTransactionHandler(
+    const result: any = await transactionHandler(
       {} as any,
       {} as any,
       () => undefined
