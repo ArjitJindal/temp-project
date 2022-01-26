@@ -4,9 +4,9 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Rule, RuleActionEnum } from './rules/rule'
-import { RuleComputeResult } from '../@types/rule/ruleComputeResult'
 import { RuleRepository } from './repositories/ruleRepository'
-import { Transaction } from '../@types/transaction/transaction'
+import { Transaction } from '../@types/openapi/transaction'
+import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
 import { TransactionRepository } from './repositories/transactionRepository'
 import { getDynamoDbClient } from '../utils/dynamodb'
 import { rules } from './rules'
@@ -15,7 +15,7 @@ async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
-): Promise<RuleComputeResult> {
+): Promise<TransactionMonitoringResult> {
   const ruleRepository = new RuleRepository(tenantId, dynamoDb)
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
   const ruleInstances = await ruleRepository.getActiveRuleInstances()
@@ -41,7 +41,9 @@ async function verifyTransaction(
   const transactionId = await transactionRepository.saveTransaction(transaction)
   return {
     transactionId,
-    rules: ruleResults,
+    executedRules: ruleResults,
+    // TODO: Handle failed rules
+    failedRules: [],
   }
 }
 

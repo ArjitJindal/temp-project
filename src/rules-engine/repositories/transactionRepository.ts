@@ -1,6 +1,6 @@
-import { Transaction } from '../../@types/transaction/transaction'
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
+import { Transaction } from '../../@types/openapi/transaction'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -31,7 +31,7 @@ export class TransactionRepository {
               PutRequest: {
                 Item: {
                   PartitionKeyID: `${this.tenantId}#transaction`,
-                  SortKeyID: `${transaction.userId}#${transaction.timestamp}#${transactionId}}`,
+                  SortKeyID: `${transaction.senderUserId}#${transaction.timestamp}#${transactionId}}`,
                   transactionId,
                 },
               },

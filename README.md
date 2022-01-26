@@ -67,3 +67,11 @@ aws cloudformation delete-stack --stack-name tarpon
 See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
 
 Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
+
+## Generate Typescript types from OpenAPI
+
+0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
+1. Use https://www.apimatic.io/dashboard to convert https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml to version 3.0
+2. Run `openapi-generator generate -i Flagright-API.yaml -g typescript-node -o typescript_types`
+3. Copy `typescript_types/model/*` to `src/@types/openapi/`
+4. Run `npm run sanitize-openapi-types`

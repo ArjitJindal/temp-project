@@ -7,10 +7,12 @@
     "build": "webpack && cdk synth",
     "deploy": "cdk deploy",
     "test": "ts-mocha **/tests/**/*.ts",
+    "format": "prettier --write src/* lib/* bin/*",
     "lint": "eslint src/**/*.ts **/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts **/*.ts",
     "watch": "tsc -w --preserveWatchOutput",
-    "start-local-api": "sam local start-api -t cdk.out/tarpon.template.json"
+    "start-local-api": "sam local start-api -t cdk.out/tarpon.template.json",
+    "sanitize-openapi-types": "sed -i '' \"s/import { RequestFile } from '.\\/models'//g\" src/@types/openapi/*; rm -f src/@types/openapi/models.ts; prettier --write src/@types/openapi/;"
   },
   "repository": {
     "type": "git",
