@@ -15,19 +15,14 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
 - SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 - CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
-- Node.js - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
+- Node.js (v14) - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
 - Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
 
 ## Build
 
 ```bash
-(
-    cd src/rules-engine;
-    npm install;
-)
 npm install
 npm run build
-cdk synth
 ```
 
 ## Test locally
