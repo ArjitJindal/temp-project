@@ -58,6 +58,52 @@ export class AggregationRepository {
   }
 
   /**
+   *  User transaction currencies
+   */
+
+  public async addUserTransactionCurrency(
+    userId: string,
+    currency: string,
+    direction: PaymentDirection
+  ) {
+    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: {
+        PartitionKeyID: `${this.tenantId}#aggregation`,
+        SortKeyID: `user#${userId}`,
+      },
+      UpdateExpression: `ADD ${direction}Currencies :currencies`,
+      ExpressionAttributeValues: {
+        ':currencies': this.dynamoDb.createSet([currency]),
+      },
+      ReturnValues: 'UPDATED_NEW',
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    await this.dynamoDb.update(updateItemInput).promise()
+  }
+
+  public async getUserTransactionCurrencies(
+    userId: string
+  ): Promise<UserTransactionCurrencies> {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: {
+        PartitionKeyID: `${this.tenantId}#aggregation`,
+        SortKeyID: `user#${userId}`,
+      },
+      AttributesToGet: ['receivingCurrencies', 'sendingCurrencies'],
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    const result = await this.dynamoDb.get(getItemInput).promise()
+    return {
+      receivingCurrencies: new Set(
+        result.Item?.receivingCurrencies?.values || []
+      ),
+      sendingCurrencies: new Set(result.Item?.sendingCurrencies?.values || []),
+    }
+  }
+
+  /**
    *  User transactions count
    */
 
@@ -106,6 +152,11 @@ export class AggregationRepository {
 export type UserTransactionCountries = {
   receivingCountries: Set<string>
   sendingCountries: Set<string>
+}
+
+export type UserTransactionCurrencies = {
+  receivingCurrencies: Set<string>
+  sendingCurrencies: Set<string>
 }
 
 export type UserTransactionsCount = {
