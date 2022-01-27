@@ -3,13 +3,13 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { Transaction } from '../@types/openapi/transaction'
+import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
+import { getDynamoDbClient } from '../utils/dynamodb'
 import { Rule, RuleActionEnum } from './rules/rule'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
-import { Transaction } from '../@types/openapi/transaction'
-import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
 import { TransactionRepository } from './repositories/transaction-repository'
-import { getDynamoDbClient } from '../utils/dynamodb'
 import { rules } from './rules'
 
 async function verifyTransaction(

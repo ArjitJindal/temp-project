@@ -1,11 +1,12 @@
-import * as ARN from '@aws-sdk/util-arn-parser'
 import * as AWS from 'aws-sdk'
+import * as ARN from '@aws-sdk/util-arn-parser'
+
 import {
   APIGatewayAuthorizerResult,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
-import PolicyBuilder from './policy-generator'
 import { TarponStackConstants } from '../../lib/constants'
+import PolicyBuilder from './policy-generator'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(

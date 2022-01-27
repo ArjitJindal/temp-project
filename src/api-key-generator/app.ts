@@ -1,5 +1,5 @@
-import { APIGateway } from 'aws-sdk'
 import { APIGatewayProxyHandler } from 'aws-lambda'
+import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
