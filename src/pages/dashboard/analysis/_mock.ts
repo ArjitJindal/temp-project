@@ -23,10 +23,12 @@ for (let i = 0; i < fakeY2.length; i += 1) {
   });
 }
 
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dev'];
+
 const salesData = [];
 for (let i = 0; i < 12; i += 1) {
   salesData.push({
-    x: `${i + 1}月`,
+    x: months[i],
     y: Math.floor(Math.random() * 1000) + 200,
   });
 }
