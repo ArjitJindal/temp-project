@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { Rule, RuleActionEnum } from './rules/rule'
+import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { Transaction } from '../@types/openapi/transaction'
 import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
@@ -38,7 +39,15 @@ async function verifyTransaction(
       }
     })
   )
+
+  // TODO: Refactor the following logic to be event-driven
   const transactionId = await transactionRepository.saveTransaction(transaction)
+  await Promise.all(
+    Aggregators.map((Aggregator) =>
+      new Aggregator(tenantId, transaction, dynamoDb).aggregate()
+    )
+  )
+
   return {
     transactionId,
     executedRules: ruleResults,
@@ -106,7 +115,10 @@ export const ruleInstanceHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
     if (!event.body) {
       throw new Error('missing payload!')
     }
-    await ruleRepository.createOrUpdateRuleInstance(JSON.parse(event.body))
+    await ruleRepository.createOrUpdateRuleInstance({
+      id: ruleInstanceId,
+      ...JSON.parse(event.body),
+    })
     return {
       statusCode: 200,
       body: 'OK',
