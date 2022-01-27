@@ -1,21 +1,47 @@
 {
+  "version": "0.2.0",
   "configurations": [
     {
-      "type": "aws-sam",
-      "request": "direct-invoke",
-      "name": "API tarpon:RulesEngineFunction",
-      "invokeTarget": {
-        "target": "api",
-        "templatePath": "${workspaceFolder}/template.yaml",
-        "logicalId": "RulesEngineFunction"
-      },
-      "api": {
-        "path": "/transaction",
-        "httpMethod": "post",
-        "payload": {
-          "json": {}
-        }
-      }
+      "type": "node-terminal",
+      "name": "Run Script: create-user",
+      "request": "launch",
+      "command": "npm run create-user",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Script: get-user",
+      "request": "launch",
+      "command": "npm run get-user",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Script: create-rule-instance",
+      "request": "launch",
+      "command": "npm run create-rule-instance",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Script: update-rule-instance",
+      "request": "launch",
+      "command": "npm run update-rule-instance",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Script: verify-transaction",
+      "request": "launch",
+      "command": "npm run verify-transaction",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Script: get-transaction",
+      "request": "launch",
+      "command": "npm run get-transaction",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

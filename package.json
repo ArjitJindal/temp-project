@@ -12,7 +12,13 @@
     "lint:fix": "eslint --fix src/**/*.ts **/*.ts",
     "watch": "tsc -w --preserveWatchOutput",
     "start-local-api": "sam local start-api -t cdk.out/tarpon.template.json",
-    "sanitize-openapi-types": "sed -i '' \"s/import { RequestFile } from '.\\/models'//g\" src/@types/openapi/*; rm -f src/@types/openapi/models.ts; prettier --write src/@types/openapi/;"
+    "sanitize-openapi-types": "sed -i '' \"s/import { RequestFile } from '.\\/models'//g\" src/@types/openapi/*; rm -f src/@types/openapi/models.ts; prettier --write src/@types/openapi/;",
+    "create-user": "ts-node run.ts --action create-user",
+    "get-user": "ts-node run.ts --action get-user",
+    "create-rule-instance": "ts-node run.ts --action create-rule-instance",
+    "update-rule-instance": "ts-node run.ts --action update-rule-instance",
+    "verify-transaction": "ts-node run.ts --action verify-transaction",
+    "get-transaction": "ts-node run.ts --action get-transaction"
   },
   "repository": {
     "type": "git",
@@ -34,6 +40,7 @@
     "@tsconfig/node14": "^1.0.1",
     "@types/aws-lambda": "^8.10.89",
     "@types/chai": "^4.3.0",
+    "@types/command-line-args": "^5.2.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^17.0.8",
     "@types/uuid": "^8.3.4",
@@ -42,6 +49,7 @@
     "@typescript-eslint/parser": "^5.9.1",
     "aws-sdk": "^2.1062.0",
     "chai": "^4.3.4",
+    "command-line-args": "^5.2.0",
     "eslint": "^8.6.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
