@@ -1,9 +1,9 @@
+import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
 import {
   RuleInstance,
   RuleInstanceStatus,
 } from '../../@types/rule/rule-instance'
-import { v4 as uuidv4 } from 'uuid'
 
 export class RuleRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient

@@ -3,6 +3,7 @@ import * as ARN from '@aws-sdk/util-arn-parser'
 
 import {
   APIGatewayAuthorizerResult,
+  APIGatewayAuthorizerResultContext,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
 import { TarponStackConstants } from '../../lib/constants'
@@ -73,7 +74,8 @@ export const apiKeyHandler = async (
         },
       ],
     },
-    context: tenantScopeCredentials as any,
+    context:
+      tenantScopeCredentials as unknown as APIGatewayAuthorizerResultContext,
     usageIdentifierKey: apiKey,
   }
 }

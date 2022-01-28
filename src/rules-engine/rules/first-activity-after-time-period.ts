@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
+import { RuleParameters } from '../../@types/rule/rule-instance'
 import { AggregationRepository } from '../repositories/aggregation-repository'
-import { Rule, RuleInfo, RuleParameters } from './rule'
+import { Rule, RuleInfo } from './rule'
 
 type FirstActivityAfterLongTimeRuleParameters = RuleParameters & {
   dormancyPeriodDays: number

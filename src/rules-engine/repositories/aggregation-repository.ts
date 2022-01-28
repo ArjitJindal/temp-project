@@ -1,3 +1,4 @@
+import { AWSError } from 'aws-sdk'
 import { TarponStackConstants } from '../../../lib/constants'
 
 type PaymentDirection = 'receiving' | 'sending'
@@ -167,8 +168,8 @@ export class AggregationRepository {
     }
     try {
       await this.dynamoDb.update(updateItemInput).promise()
-    } catch (e: any) {
-      if (e?.code === 'ConditionalCheckFailedException') {
+    } catch (e) {
+      if ((e as AWSError)?.code === 'ConditionalCheckFailedException') {
         // Ignore
       }
     }

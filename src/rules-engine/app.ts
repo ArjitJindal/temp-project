@@ -6,7 +6,7 @@ import {
 import { Transaction } from '../@types/openapi/transaction'
 import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
 import { getDynamoDbClient } from '../utils/dynamodb'
-import { Rule, RuleActionEnum } from './rules/rule'
+import { RuleActionEnum } from '../@types/rule/rule-instance'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
@@ -27,7 +27,7 @@ async function verifyTransaction(
         transaction,
         ruleInstance.parameters,
         dynamoDb
-      ) as Rule
+      )
       const ruleResult = await rule.computeRule()
       const { name, description } = rule.getInfo()
       return {
@@ -87,12 +87,13 @@ export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
       statusCode: 500,
       body: 'Unhandled request',
     }
-  } catch (err: any) {
+  } catch (err) {
     console.log(err)
+    const errMessage = err instanceof Error ? err.message : err
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: err.message,
+        error: errMessage,
       }),
     }
   }

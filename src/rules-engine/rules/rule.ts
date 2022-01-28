@@ -1,13 +1,5 @@
 import { Transaction } from '../../@types/openapi/transaction'
-
-export enum RuleActionEnum {
-  ALLOW = 'ALLOW',
-  FLAG = 'FLAG',
-  BLOCK = 'BLOCK',
-}
-export type RuleParameters = {
-  action: RuleActionEnum
-}
+import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
 
 export type RuleInfo = {
   name: string
@@ -20,7 +12,7 @@ export type RuleResult = {
   action: RuleActionEnum
 }
 
-export abstract class Rule<P extends RuleParameters = RuleParameters> {
+export class Rule<P extends RuleParameters = RuleParameters> {
   tenantId: string
   transaction: Transaction
   parameters: P
@@ -38,7 +30,11 @@ export abstract class Rule<P extends RuleParameters = RuleParameters> {
     this.dynamoDb = dynamoDb
   }
 
-  abstract getInfo(): RuleInfo
+  public getInfo(): RuleInfo {
+    throw new Error()
+  }
 
-  abstract computeRule(): Promise<RuleResult | undefined>
+  public async computeRule(): Promise<RuleResult | undefined> {
+    throw new Error()
+  }
 }

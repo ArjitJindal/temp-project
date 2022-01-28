@@ -1,17 +1,19 @@
 #!/usr/bin/env ts-node
+/* eslint-disable @typescript-eslint/no-var-requires */
 
 /**
  * This dev-only util allows to directly execute lambda handler without using SAM.
  * Modify the lambda events in ./events/ for testing.
  */
 
+import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 
 const optionDefinitions = [{ name: 'action', type: String }]
 const options = commandLineArgs(optionDefinitions)
-const actions: { [action: string]: Function } = {
+const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
     require('./src/user-management/app').userHandler(
       require('./events/create-user').event
@@ -43,7 +45,9 @@ const actions: { [action: string]: Function } = {
   let body = output.body
   try {
     body = JSON.parse(output.body)
-  } catch (err) {}
+  } catch (err) {
+    // ignore
+  }
   console.log('%o', {
     ...output,
     body,

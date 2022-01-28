@@ -1,5 +1,5 @@
-import { TarponStackConstants } from '../../../lib/constants'
 import { v4 as uuidv4 } from 'uuid'
+import { TarponStackConstants } from '../../../lib/constants'
 import { User } from '../../@types/openapi/user'
 import { Business } from '../../@types/openapi/business'
 
@@ -42,17 +42,17 @@ export class UserRepository {
   }
 
   public async createBusinessUser(user: Business): Promise<Business> {
-    return await this.createUser(<Business>user, 'BUSINESS')
+    return (await this.createUser(user, 'BUSINESS')) as Business
   }
 
   public async createConsumerUser(user: User): Promise<User> {
-    return await this.createUser<User>(user, 'CONSUMER')
+    return (await this.createUser(user, 'CONSUMER')) as User
   }
 
-  public async createUser<T>(
+  public async createUser(
     user: User | Business,
     type: UserType
-  ): Promise<T> {
+  ): Promise<User | Business> {
     const userId = user.userId || uuidv4()
     const newUser = {
       ...user,
@@ -69,6 +69,6 @@ export class UserRepository {
       ReturnConsumedCapacity: 'TOTAL',
     }
     await this.dynamoDb.put(putItemInput).promise()
-    return newUser as any as T
+    return newUser
   }
 }

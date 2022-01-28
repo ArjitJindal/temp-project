@@ -1,7 +1,8 @@
+import { RuleParameters } from '../../@types/rule/rule-instance'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { Rule, RuleInfo, RuleParameters } from './rule'
+import { Rule, RuleInfo } from './rule'
 
-type FirstPaymentRuleParameters = RuleParameters & {}
+type FirstPaymentRuleParameters = RuleParameters
 
 export default class FirstPaymentRule extends Rule<FirstPaymentRuleParameters> {
   public getInfo(): RuleInfo {
