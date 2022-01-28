@@ -4,6 +4,7 @@ import {
   RuleInstance,
   RuleInstanceStatus,
 } from '../../@types/rule/rule-instance'
+import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 export class RuleRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -30,8 +31,7 @@ export class RuleRepository {
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
-        PartitionKeyID: `${this.tenantId}#rule-instance`,
-        SortKeyID: ruleInstanceId,
+        ...DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
         ...newRuleInstance,
       },
       ReturnConsumedCapacity: 'TOTAL',
@@ -43,10 +43,7 @@ export class RuleRepository {
   async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#rule-instance`,
-        SortKeyID: ruleInstanceId,
-      },
+      Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     await this.dynamoDb.delete(deleteItemInput).promise()
@@ -59,7 +56,7 @@ export class RuleRepository {
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: '#status = :status',
       ExpressionAttributeValues: {
-        ':pk': `${this.tenantId}#rule-instance`,
+        ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
         ':status': status,
       },
       ExpressionAttributeNames: {

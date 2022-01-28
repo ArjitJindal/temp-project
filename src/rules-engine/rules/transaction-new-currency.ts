@@ -1,8 +1,5 @@
 import { RuleParameters } from '../../@types/rule/rule-instance'
-import {
-  AggregationRepository,
-  UserTransactionCurrencies,
-} from '../repositories/aggregation-repository'
+import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Rule, RuleInfo } from './rule'
 
 type TransactionNewCurrencyRuleParameters = RuleParameters & {
@@ -51,9 +48,8 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
         receiverTransactionsCount &&
         receiverTransactionsCount.receivingTransactionsCount >=
           this.parameters.initialTransactions &&
-        !(
-          receiverTransactionCurrencies as UserTransactionCurrencies
-        ).receivingCurrencies.has(senderCurrency))
+        receiverTransactionCurrencies &&
+        !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency))
     ) {
       return {
         action: this.parameters.action,

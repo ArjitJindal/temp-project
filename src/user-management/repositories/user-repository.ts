@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
 import { User } from '../../@types/openapi/user'
 import { Business } from '../../@types/openapi/business'
+import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 type UserType = 'BUSINESS' | 'CONSUMER'
 
@@ -25,10 +26,7 @@ export class UserRepository {
   private async getUser<T>(userId: string): Promise<T> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#user`,
-        SortKeyID: userId,
-      },
+      Key: DynamoDbKeys.USER(this.tenantId, userId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -61,8 +59,7 @@ export class UserRepository {
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
-        PartitionKeyID: `${this.tenantId}#user`,
-        SortKeyID: userId,
+        ...DynamoDbKeys.USER(this.tenantId, userId),
         type,
         ...newUser,
       },

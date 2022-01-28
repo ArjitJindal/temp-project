@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
 import { Transaction } from '../../@types/openapi/transaction'
+import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -20,8 +21,7 @@ export class TransactionRepository {
             {
               PutRequest: {
                 Item: {
-                  PartitionKeyID: `${this.tenantId}#transaction`,
-                  SortKeyID: transactionId,
+                  ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
                   transactionId,
                   ...transaction,
                 },
@@ -30,8 +30,11 @@ export class TransactionRepository {
             {
               PutRequest: {
                 Item: {
-                  PartitionKeyID: `${this.tenantId}#transaction`,
-                  SortKeyID: `${transaction.senderUserId}#${transaction.timestamp}#${transactionId}}`,
+                  ...DynamoDbKeys.USER_TRANSACTION(
+                    this.tenantId,
+                    transaction.senderUserId,
+                    transaction.timestamp
+                  ),
                   transactionId,
                 },
               },
@@ -47,10 +50,7 @@ export class TransactionRepository {
   public async getTransaction(transactionId: string): Promise<Transaction> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#transaction`,
-        SortKeyID: transactionId,
-      },
+      Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -65,11 +65,10 @@ export class TransactionRepository {
   public async hasAnyTransaction(userId: string): Promise<boolean> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      KeyConditionExpression:
-        'PartitionKeyID = :pk AND begins_with(SortKeyID, :userId)',
+      KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': `${this.tenantId}#transaction`,
-        ':userId': userId,
+        ':pk': DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId)
+          .PartitionKeyID,
       },
       Limit: 1,
       ReturnConsumedCapacity: 'TOTAL',

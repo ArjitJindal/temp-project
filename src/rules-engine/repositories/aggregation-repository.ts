@@ -1,7 +1,17 @@
 import { AWSError } from 'aws-sdk'
 import { TarponStackConstants } from '../../../lib/constants'
+import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 type PaymentDirection = 'receiving' | 'sending'
+type UserAggregationAttributes = {
+  sendingCountries: Set<string>
+  receivingCountries: Set<string>
+  sendingCurrencies: Set<string>
+  receivingCurrencies: Set<string>
+  sendingTransactionsCount: number
+  receivingTransactionsCount: number
+  lastTransactionTime: number
+}
 
 export class AggregationRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -21,13 +31,11 @@ export class AggregationRepository {
     country: string,
     direction: PaymentDirection
   ) {
+    const attribute: keyof UserAggregationAttributes = `${direction}Countries`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      UpdateExpression: `ADD ${direction}Countries :countries`,
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      UpdateExpression: `ADD ${attribute} :countries`,
       ExpressionAttributeValues: {
         ':countries': this.dynamoDb.createSet([country]),
       },
@@ -39,14 +47,17 @@ export class AggregationRepository {
 
   public async getUserTransactionCountries(
     userId: string
-  ): Promise<UserTransactionCountries> {
+  ): Promise<
+    Pick<UserAggregationAttributes, 'receivingCountries' | 'sendingCountries'>
+  > {
+    const attributes: Array<keyof UserAggregationAttributes> = [
+      'receivingCountries',
+      'sendingCountries',
+    ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      ProjectionExpression: 'receivingCountries, sendingCountries',
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -67,13 +78,11 @@ export class AggregationRepository {
     currency: string,
     direction: PaymentDirection
   ) {
+    const attribute: keyof UserAggregationAttributes = `${direction}Currencies`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      UpdateExpression: `ADD ${direction}Currencies :currencies`,
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      UpdateExpression: `ADD ${attribute} :currencies`,
       ExpressionAttributeValues: {
         ':currencies': this.dynamoDb.createSet([currency]),
       },
@@ -85,14 +94,17 @@ export class AggregationRepository {
 
   public async getUserTransactionCurrencies(
     userId: string
-  ): Promise<UserTransactionCurrencies> {
+  ): Promise<
+    Pick<UserAggregationAttributes, 'receivingCurrencies' | 'sendingCurrencies'>
+  > {
+    const attributes: Array<keyof UserAggregationAttributes> = [
+      'receivingCurrencies',
+      'sendingCurrencies',
+    ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      ProjectionExpression: 'receivingCurrencies, sendingCurrencies',
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -112,13 +124,11 @@ export class AggregationRepository {
     userId: string,
     direction: PaymentDirection
   ) {
+    const attribute: keyof UserAggregationAttributes = `${direction}TransactionsCount`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      UpdateExpression: `SET ${direction}TransactionsCount = if_not_exists(${direction}TransactionsCount, :start) + :inc`,
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      UpdateExpression: `SET ${attribute} = if_not_exists(${attribute}, :start) + :inc`,
       ExpressionAttributeValues: {
         ':start': 0,
         ':inc': 1,
@@ -129,15 +139,22 @@ export class AggregationRepository {
     await this.dynamoDb.update(updateItemInput).promise()
   }
 
-  public async getUserTransactionsCount(userId: string) {
+  public async getUserTransactionsCount(
+    userId: string
+  ): Promise<
+    Pick<
+      UserAggregationAttributes,
+      'receivingTransactionsCount' | 'sendingTransactionsCount'
+    >
+  > {
+    const attributes: Array<keyof UserAggregationAttributes> = [
+      'receivingTransactionsCount',
+      'sendingTransactionsCount',
+    ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      ProjectionExpression:
-        'receivingTransactionsCount, sendingTransactionsCount',
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -152,15 +169,13 @@ export class AggregationRepository {
    */
 
   public async setUserLastTransactionTime(userId: string, time: number) {
+    const attribute: keyof UserAggregationAttributes = 'lastTransactionTime'
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      UpdateExpression: `SET lastTransactionTime = :lastTransactionTime`,
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      UpdateExpression: `SET ${attribute} = :lastTransactionTime`,
       ConditionExpression:
-        'attribute_not_exists(lastTransactionTime) OR (lastTransactionTime < :lastTransactionTime)',
+        'attribute_not_exists(${attribute}) OR (${attribute} < :lastTransactionTime)',
       ExpressionAttributeValues: {
         ':lastTransactionTime': time,
       },
@@ -178,31 +193,14 @@ export class AggregationRepository {
   public async getUserLastTransactionTime(
     userId: string
   ): Promise<Date | undefined> {
+    const attribute: keyof UserAggregationAttributes = 'lastTransactionTime'
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: {
-        PartitionKeyID: `${this.tenantId}#aggregation`,
-        SortKeyID: `user#${userId}`,
-      },
-      AttributesToGet: ['lastTransactionTime'],
+      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
+      AttributesToGet: [attribute],
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
     return result.Item?.lastTransactionTime
   }
-}
-
-export type UserTransactionCountries = {
-  receivingCountries: Set<string>
-  sendingCountries: Set<string>
-}
-
-export type UserTransactionCurrencies = {
-  receivingCurrencies: Set<string>
-  sendingCurrencies: Set<string>
-}
-
-export type UserTransactionsCount = {
-  receivingCount: number
-  sendingCount: number
 }
