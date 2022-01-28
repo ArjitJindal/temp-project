@@ -45,7 +45,7 @@ export class AggregationRepository {
         PartitionKeyID: `${this.tenantId}#aggregation`,
         SortKeyID: `user#${userId}`,
       },
-      AttributesToGet: ['receivingCountries', 'sendingCountries'],
+      ProjectionExpression: 'receivingCountries, sendingCountries',
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -91,7 +91,7 @@ export class AggregationRepository {
         PartitionKeyID: `${this.tenantId}#aggregation`,
         SortKeyID: `user#${userId}`,
       },
-      AttributesToGet: ['receivingCurrencies', 'sendingCurrencies'],
+      ProjectionExpression: 'receivingCurrencies, sendingCurrencies',
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -135,10 +135,8 @@ export class AggregationRepository {
         PartitionKeyID: `${this.tenantId}#aggregation`,
         SortKeyID: `user#${userId}`,
       },
-      AttributesToGet: [
-        'receivingTransactionsCount',
-        'sendingTransactionsCount',
-      ],
+      ProjectionExpression:
+        'receivingTransactionsCount, sendingTransactionsCount',
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
@@ -146,6 +144,50 @@ export class AggregationRepository {
       receivingTransactionsCount: result.Item?.receivingTransactionsCount || 0,
       sendingTransactionsCount: result.Item?.sendingTransactionsCount || 0,
     }
+  }
+
+  /**
+   *  User last transaction time
+   */
+
+  public async setUserLastTransactionTime(userId: string, time: number) {
+    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: {
+        PartitionKeyID: `${this.tenantId}#aggregation`,
+        SortKeyID: `user#${userId}`,
+      },
+      UpdateExpression: `SET lastTransactionTime = :lastTransactionTime`,
+      ConditionExpression:
+        'attribute_not_exists(lastTransactionTime) OR (lastTransactionTime < :lastTransactionTime)',
+      ExpressionAttributeValues: {
+        ':lastTransactionTime': time,
+      },
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    try {
+      await this.dynamoDb.update(updateItemInput).promise()
+    } catch (e: any) {
+      if (e?.code === 'ConditionalCheckFailedException') {
+        // Ignore
+      }
+    }
+  }
+
+  public async getUserLastTransactionTime(
+    userId: string
+  ): Promise<Date | undefined> {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: {
+        PartitionKeyID: `${this.tenantId}#aggregation`,
+        SortKeyID: `user#${userId}`,
+      },
+      AttributesToGet: ['lastTransactionTime'],
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    const result = await this.dynamoDb.get(getItemInput).promise()
+    return result.Item?.lastTransactionTime
   }
 }
 

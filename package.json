@@ -67,6 +67,7 @@
   "dependencies": {
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "base-x": "^3.0.9",
+    "dayjs": "^1.10.7",
     "uuid": "^8.3.2"
   }
 }
