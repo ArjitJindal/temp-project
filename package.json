@@ -19,7 +19,8 @@
     "create-rule-instance": "ts-node run.ts --action create-rule-instance",
     "update-rule-instance": "ts-node run.ts --action update-rule-instance",
     "verify-transaction": "ts-node run.ts --action verify-transaction",
-    "get-transaction": "ts-node run.ts --action get-transaction"
+    "get-transaction": "ts-node run.ts --action get-transaction",
+    "import-list": "ts-node run.ts --action import-list"
   },
   "repository": {
     "type": "git",
@@ -67,6 +68,7 @@
   },
   "dependencies": {
     "@aws-sdk/util-arn-parser": "^3.47.1",
+    "@fast-csv/parse": "^4.3.6",
     "base-x": "^3.0.9",
     "dayjs": "^1.10.7",
     "uuid": "^8.3.2"

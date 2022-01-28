@@ -7,6 +7,7 @@ const config: Configuration = {
     authorizer: './src/authorizer/app.ts',
     'rules-engine': './src/rules-engine/app.ts',
     'user-management': './src/user-management/app.ts',
+    'list-importer': './src/list-importer/app.ts',
   },
   output: {
     filename: '[name]/app.js',

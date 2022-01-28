@@ -38,6 +38,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/rules-engine/app').transactionHandler(
       require('./events/get-transaction').event
     ),
+  'import-list': () =>
+    require('./src/list-importer/app').listImporterHandler(
+      require('./events/import-list').event
+    ),
 }
 
 ;(async () => {

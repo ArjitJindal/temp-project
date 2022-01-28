@@ -31,4 +31,8 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#user#${userId}`,
     SortKeyID: userId,
   }),
+  LIST: (tenantId: string, listName: string, indexName: string) => ({
+    PartitionKeyID: `${tenantId}#list:${listName}`,
+    SortKeyID: indexName,
+  }),
 }

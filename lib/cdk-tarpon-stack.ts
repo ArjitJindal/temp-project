@@ -124,6 +124,20 @@ export class CdkTarponStack extends cdk.Stack {
     })
     dynamoDbTable.grantReadWriteData(userFunction)
 
+    const listImporterFunction = new Function(
+      this,
+      getResourceName('ListImporterFunction'),
+      {
+        functionName: getResourceName('ListImporterFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.listImporterHandler',
+        code: Code.fromAsset('dist/list-importer'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    dynamoDbTable.grantReadWriteData(listImporterFunction)
+
     /**
      * API Gateway
      */
@@ -224,6 +238,13 @@ export class CdkTarponStack extends cdk.Stack {
     ruleInstanceResource.addMethod(
       'DELETE',
       new LambdaIntegration(ruleInstanceFunction),
+      internalApiSecurityOptions
+    )
+
+    const listsResource = api.root.addResource('lists')
+    listsResource.addMethod(
+      'POST',
+      new LambdaIntegration(listImporterFunction),
       internalApiSecurityOptions
     )
 
