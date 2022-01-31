@@ -14,7 +14,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Proof of Funds Needed for Remittance',
       ruleDescription:
         'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
-      ruleId: 'R-1',
+      ruleTemplateId: 'R-1',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -34,7 +34,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'High risk country',
       ruleDescription:
         'If a user is transferring funds to a High Risk country, flag user & transactions',
-      ruleId: 'R-2',
+      ruleTemplateId: 'R-2',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -49,7 +49,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Blacklisted receiver name and country',
       ruleDescription:
         'If a blacklisted user is transferring funds to a High Risk country, flag user & transactions',
-      ruleId: 'R-3',
+      ruleTemplateId: 'R-3',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -64,7 +64,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Whitelisted receiver name and country',
       ruleDescription:
         'If a whitelisted user is transferring funds to a High Risk country, allow user & transactions',
-      ruleId: 'R-4',
+      ruleTemplateId: 'R-4',
       defaultRuleAction: 'allow',
       isActionEditable: false,
       thresholdData: [
@@ -79,7 +79,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Velocity: Too many transactions X within time T Day(s) from one user.',
       ruleDescription:
         'If a user makes more than X transactions in a predefined timeframe T day(s) - perform action.',
-      ruleId: 'R-5',
+      ruleTemplateId: 'R-5',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -100,7 +100,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Velocity: Too many transactions X within time T hour(s) from one user.',
       ruleDescription:
         'If a user makes more than X transactions in a predefined timeframe T hour(s) - perform action.',
-      ruleId: 'R-6',
+      ruleTemplateId: 'R-6',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -121,7 +121,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Velocity: Too many transactions X within time T minute(s) from one user.',
       ruleDescription:
         'If a user makes more than X transactions in a predefined timeframe T minute(s) - perform action.',
-      ruleId: 'R-7',
+      ruleTemplateId: 'R-7',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -143,7 +143,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique Cards: Same user paying from >= X different cards in time T day(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T day(s) using X unique cards - perform action.',
-      ruleId: 'R-8',
+      ruleTemplateId: 'R-8',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -165,7 +165,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique Cards: Same user paying from >= X different cards in time T hour(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T hour(s) using X unique cards - perform action.',
-      ruleId: 'R-9',
+      ruleTemplateId: 'R-9',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -187,7 +187,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique Cards: Same user paying from >= X different cards in time T minute(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique cards - perform action.',
-      ruleId: 'R-10',
+      ruleTemplateId: 'R-10',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -209,7 +209,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T day(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T day(s) using X unique IBANs - perform action.',
-      ruleId: 'R-11',
+      ruleTemplateId: 'R-11',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -231,7 +231,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T hour(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T hour(s) using X unique IBANs - perform action.',
-      ruleId: 'R-12',
+      ruleTemplateId: 'R-12',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -253,7 +253,7 @@ const genList = (current: number, pageSize: number) => {
         'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T minute(s).',
       ruleDescription:
         'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique IBANs - perform action.',
-      ruleId: 'R-13',
+      ruleTemplateId: 'R-13',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -274,7 +274,7 @@ const genList = (current: number, pageSize: number) => {
       ruleName: 'Same phone number for X number of users.',
       ruleDescription:
         'If greater than X number of users register with the same phone number - perform action.',
-      ruleId: 'R-14',
+      ruleTemplateId: 'R-14',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -288,7 +288,7 @@ const genList = (current: number, pageSize: number) => {
     {
       ruleName: 'IP Address from a Sanctioned Country.',
       ruleDescription: "If a user's IP Address is in a Sanctioned Jurisdiction - perform action.",
-      ruleId: 'R-15',
+      ruleTemplateId: 'R-15',
       defaultRuleAction: 'flag',
       isActionEditable: true,
       thresholdData: [
@@ -310,7 +310,7 @@ const genList = (current: number, pageSize: number) => {
       name: rulesAndDescriptions[index].ruleName,
       status: (Math.floor(Math.random() * 10) % 3).toString(),
       ruleDescription: rulesAndDescriptions[index].ruleDescription,
-      ruleId: rulesAndDescriptions[index].ruleId,
+      ruleTemplateId: rulesAndDescriptions[index].ruleTemplateId,
       thresholdData: rulesAndDescriptions[index].thresholdData,
       defaultRuleAction: rulesAndDescriptions[index].defaultRuleAction as RuleAction,
       isActionEditable: false,
@@ -414,7 +414,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
           name,
           status: (Math.floor(Math.random() * 10) % 2).toString(),
           ruleDescription: 'Proof of funds',
-          ruleId: 'R-1',
+          ruleTemplateId: 'R-1',
           defaultRuleAction: 'flag',
           isActionEditable: true,
           thresholdData: [

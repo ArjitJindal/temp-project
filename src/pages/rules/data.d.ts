@@ -19,7 +19,7 @@ export type RuleTableListItemBase = {
   key: number;
   name: string;
   ruleDescription: string;
-  ruleId: string;
+  ruleTemplateId: string;
   status: string;
   thresholdData: ThresholdDataType[];
 };
