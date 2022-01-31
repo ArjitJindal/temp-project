@@ -1,5 +1,6 @@
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentrRule from './first-payment'
+import HighRiskCurrencyRule from './high-risk-currency'
 import { Rule } from './rule'
 
 import TransactionNewCountryRule from './transaction-new-country'
@@ -10,4 +11,5 @@ export const rules = {
   'R-2': TransactionNewCountryRule,
   'R-3': TransactionNewCurrencyRule,
   'R-4': FirstActivityAfterLongTimeRule,
+  'R-5': HighRiskCurrencyRule,
 } as unknown as { [key: string]: typeof Rule }
