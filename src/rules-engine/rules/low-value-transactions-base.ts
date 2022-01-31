@@ -1,0 +1,91 @@
+import { Transaction } from '../../@types/openapi/transaction'
+import { TransactionAmountDetails } from '../../@types/openapi/transactionAmountDetails'
+import { RuleParameters } from '../../@types/rule/rule-instance'
+import { TransactionRepository } from '../repositories/transaction-repository'
+import { MissingRuleParameter } from './errors'
+import { Rule } from './rule'
+
+type LowValueTransactionsRuleParameters = RuleParameters & {
+  lowTransactionValues: {
+    [currency: string]: number
+  }
+  lowTransactionCount: number
+}
+
+type Direction = 'sending' | 'receiving'
+
+export default class LowValueTransactionsRule extends Rule<LowValueTransactionsRuleParameters> {
+  private getTransactionUserId(): string | undefined {
+    const direction = this.getDirection()
+    switch (direction) {
+      case 'sending':
+        return this.transaction.senderUserId
+      case 'receiving':
+        return this.transaction.receiverUserId
+    }
+  }
+
+  private getTransactionAmountDetails(
+    transaction: Transaction
+  ): TransactionAmountDetails {
+    const direction = this.getDirection()
+    switch (direction) {
+      case 'sending':
+        return transaction.sendingAmountDetails
+      case 'receiving':
+        return transaction.receivingAmountDetails
+    }
+  }
+  protected getDirection(): Direction {
+    throw new Error('Not implemented')
+  }
+
+  public async computeRule() {
+    const transactionRepository = new TransactionRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
+    const userId = this.getTransactionUserId()
+    if (userId) {
+      const lastNTransactionsToCheck = this.parameters.lowTransactionCount - 1
+      const thinTransactionIds = (
+        await (this.getDirection() === 'receiving'
+          ? transactionRepository.getLastNReceivingThinTransactions(
+              userId,
+              lastNTransactionsToCheck
+            )
+          : transactionRepository.getLastNSendingThinTransactions(
+              userId,
+              lastNTransactionsToCheck
+            ))
+      ).map((transaction) => transaction.transactionId)
+      if (thinTransactionIds.length < lastNTransactionsToCheck) {
+        return undefined
+      }
+
+      const transactions = [
+        ...(await transactionRepository.getTransactions(thinTransactionIds)),
+        this.transaction,
+      ]
+      const areAllTransactionsLowValue = transactions.every((transaction) => {
+        const { transactionAmount, transactionCurrency } =
+          this.getTransactionAmountDetails(transaction)
+        if (
+          this.parameters.lowTransactionValues[transactionCurrency] ===
+          undefined
+        ) {
+          throw new MissingRuleParameter(
+            `rule parameter lowTransactionValues doesn't include currency ${transactionCurrency}`
+          )
+        }
+        return (
+          transactionAmount <=
+          this.parameters.lowTransactionValues[transactionCurrency]
+        )
+      })
+      if (areAllTransactionsLowValue) {
+        return { action: this.parameters.action }
+      }
+    }
+  }
+}

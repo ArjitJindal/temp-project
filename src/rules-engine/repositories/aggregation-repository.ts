@@ -1,4 +1,3 @@
-import { AWSError } from 'aws-sdk'
 import { TarponStackConstants } from '../../../lib/constants'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
@@ -10,7 +9,6 @@ type UserAggregationAttributes = {
   receivingCurrencies: Set<string>
   sendingTransactionsCount: number
   receivingTransactionsCount: number
-  lastTransactionTime: number
 }
 
 export class AggregationRepository {
@@ -162,45 +160,5 @@ export class AggregationRepository {
       receivingTransactionsCount: result.Item?.receivingTransactionsCount || 0,
       sendingTransactionsCount: result.Item?.sendingTransactionsCount || 0,
     }
-  }
-
-  /**
-   *  User last transaction time
-   */
-
-  public async setUserLastTransactionTime(userId: string, time: number) {
-    const attribute: keyof UserAggregationAttributes = 'lastTransactionTime'
-    const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
-      UpdateExpression: `SET ${attribute} = :lastTransactionTime`,
-      ConditionExpression:
-        'attribute_not_exists(${attribute}) OR (${attribute} < :lastTransactionTime)',
-      ExpressionAttributeValues: {
-        ':lastTransactionTime': time,
-      },
-      ReturnConsumedCapacity: 'TOTAL',
-    }
-    try {
-      await this.dynamoDb.update(updateItemInput).promise()
-    } catch (e) {
-      if ((e as AWSError)?.code === 'ConditionalCheckFailedException') {
-        // Ignore
-      }
-    }
-  }
-
-  public async getUserLastTransactionTime(
-    userId: string
-  ): Promise<Date | undefined> {
-    const attribute: keyof UserAggregationAttributes = 'lastTransactionTime'
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
-      AttributesToGet: [attribute],
-      ReturnConsumedCapacity: 'TOTAL',
-    }
-    const result = await this.dynamoDb.get(getItemInput).promise()
-    return result.Item?.lastTransactionTime
   }
 }

@@ -5,15 +5,36 @@
  * the query performance and our AWS cost.
  */
 
-export const DynamoDbKeys = {
+type DynamoDbKey = {
+  PartitionKeyID: string
+  SortKeyID: string | undefined
+}
+
+export const DynamoDbKeys: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: (...args: any) => DynamoDbKey
+} = {
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#${transactionId}`,
     SortKeyID: transactionId,
   }),
   // Attributes: [transactionId]
-  USER_TRANSACTION: (tenantId: string, userId: string, timestamp?: number) => ({
-    PartitionKeyID: `${tenantId}#transaction#user:${userId}`,
+  USER_SENDING_TRANSACTION: (
+    tenantId: string,
+    userId: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#transaction#user:${userId}#sending`,
+    SortKeyID: `${timestamp}`,
+  }),
+  // Attributes: [transactionId]
+  USER_RECEIVING_TRANSACTION: (
+    tenantId: string,
+    userId: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#transaction#user:${userId}#receiving`,
     SortKeyID: `${timestamp}`,
   }),
   // Attributes: refer to RuleInstance

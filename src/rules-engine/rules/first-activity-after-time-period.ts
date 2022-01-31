@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { RuleParameters } from '../../@types/rule/rule-instance'
-import { AggregationRepository } from '../repositories/aggregation-repository'
+import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule, RuleInfo } from './rule'
 
 type FirstActivityAfterLongTimeRuleParameters = RuleParameters & {
@@ -19,19 +19,25 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
   }
 
   public async computeRule() {
-    const aggregationRepository = new AggregationRepository(
+    const transactionRepository = new TransactionRepository(
       this.tenantId,
       this.dynamoDb
     )
 
-    const userLastTransactionTime =
-      await aggregationRepository.getUserLastTransactionTime(
-        this.transaction.senderUserId
-      )
-    if (userLastTransactionTime) {
+    const lastSendingThinTransaction =
+      this.transaction.senderUserId &&
+      (
+        await transactionRepository.getLastNSendingThinTransactions(
+          this.transaction.senderUserId,
+          1
+        )
+      )[0]
+    if (lastSendingThinTransaction) {
       if (
-        dayjs(this.transaction.timestamp).diff(userLastTransactionTime, 'day') >
-        this.parameters.dormancyPeriodDays
+        dayjs(this.transaction.timestamp).diff(
+          lastSendingThinTransaction.timestamp,
+          'day'
+        ) > this.parameters.dormancyPeriodDays
       ) {
         return { action: this.parameters.action }
       }

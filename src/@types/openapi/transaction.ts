@@ -25,7 +25,7 @@ export class Transaction {
    */
   'transactionId'?: string
   'timestamp': number
-  'senderUserId': string
+  'senderUserId'?: string
   'receiverUserId'?: string
   'sendingAmountDetails': TransactionAmountDetails
   'receivingAmountDetails': TransactionAmountDetails

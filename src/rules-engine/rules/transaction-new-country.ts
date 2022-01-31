@@ -30,8 +30,10 @@ export default class TransactionNewCountryRule extends Rule<TransactionNewCountr
       receiverTransactionCountries,
       receiverTransactionsCount,
     ] = await Promise.all([
-      aggregationRepository.getUserTransactionCountries(senderUserId),
-      aggregationRepository.getUserTransactionsCount(senderUserId),
+      senderUserId &&
+        aggregationRepository.getUserTransactionCountries(senderUserId),
+      senderUserId &&
+        aggregationRepository.getUserTransactionsCount(senderUserId),
       receiverUserId &&
         aggregationRepository.getUserTransactionCountries(receiverUserId),
       receiverUserId &&
@@ -40,11 +42,13 @@ export default class TransactionNewCountryRule extends Rule<TransactionNewCountr
 
     if (
       (receiverCountry &&
+        senderTransactionsCount &&
+        senderTransactionsCount?.sendingTransactionsCount &&
         senderTransactionsCount.sendingTransactionsCount >=
           this.parameters.initialTransactions &&
+        senderTransactionCountries &&
         !senderTransactionCountries.sendingCountries.has(receiverCountry)) ||
       (senderCountry &&
-        receiverUserId &&
         receiverTransactionsCount &&
         receiverTransactionsCount.receivingTransactionsCount >=
           this.parameters.initialTransactions &&

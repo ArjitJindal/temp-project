@@ -32,8 +32,10 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
       receiverTransactionCurrencies,
       receiverTransactionsCount,
     ] = await Promise.all([
-      aggregationRepository.getUserTransactionCurrencies(senderUserId),
-      aggregationRepository.getUserTransactionsCount(senderUserId),
+      senderUserId &&
+        aggregationRepository.getUserTransactionCurrencies(senderUserId),
+      senderUserId &&
+        aggregationRepository.getUserTransactionsCount(senderUserId),
       receiverUserId &&
         aggregationRepository.getUserTransactionCurrencies(receiverUserId),
       receiverUserId &&
@@ -41,8 +43,10 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
     ])
 
     if (
-      (senderTransactionsCount.sendingTransactionsCount >=
-        this.parameters.initialTransactions &&
+      (senderTransactionsCount &&
+        senderTransactionsCount.sendingTransactionsCount >=
+          this.parameters.initialTransactions &&
+        senderTransactionCurrencies &&
         !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)) ||
       (receiverUserId &&
         receiverTransactionsCount &&
