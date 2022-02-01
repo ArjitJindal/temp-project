@@ -5,36 +5,67 @@
  * the query performance and our AWS cost.
  */
 
-type DynamoDbKey = {
-  PartitionKeyID: string
-  SortKeyID: string | undefined
-}
+import { BankDetails } from '../../@types/openapi/bankDetails'
+import { CardDetails } from '../../@types/openapi/cardDetails'
 
-export const DynamoDbKeys: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: (...args: any) => DynamoDbKey
-} = {
+const USER_ID_PREFIX = 'user:'
+
+export const DynamoDbKeys = {
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#${transactionId}`,
     SortKeyID: transactionId,
   }),
+  ALL_TRANSACTION: (
+    tenantId: string,
+    userId: string | undefined,
+    paymentDetails: CardDetails | BankDetails,
+    direction: 'sending' | 'receiving',
+    timestamp?: number
+  ) => {
+    return userId === undefined
+      ? DynamoDbKeys.NON_USER_TRANSACTION(
+          tenantId,
+          paymentDetails,
+          direction,
+          timestamp
+        )
+      : DynamoDbKeys.USER_TRANSACTION(tenantId, userId, direction, timestamp)
+  },
   // Attributes: [transactionId]
-  USER_SENDING_TRANSACTION: (
+  NON_USER_TRANSACTION: (
+    tenantId: string,
+    paymentDetails: CardDetails | BankDetails,
+    direction: 'sending' | 'receiving',
+    timestamp?: number
+  ) => {
+    switch (paymentDetails.method) {
+      case 'BANK': {
+        const { bankIdentifier, accountNumber } = paymentDetails as BankDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#bankIdentifier:${bankIdentifier}#accountNumber:${accountNumber}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'CARD': {
+        const { cardFingerprint } = paymentDetails as CardDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#cardFingerprint:${cardFingerprint}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      default:
+        throw new Error('Unsupported payment method!')
+    }
+  },
+  // Attributes: [transactionId]
+  USER_TRANSACTION: (
     tenantId: string,
     userId: string,
+    direction: 'sending' | 'receiving',
     timestamp?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#transaction#user:${userId}#sending`,
-    SortKeyID: `${timestamp}`,
-  }),
-  // Attributes: [transactionId]
-  USER_RECEIVING_TRANSACTION: (
-    tenantId: string,
-    userId: string,
-    timestamp?: number
-  ) => ({
-    PartitionKeyID: `${tenantId}#transaction#user:${userId}#receiving`,
+    PartitionKeyID: `${tenantId}#transaction#${USER_ID_PREFIX}${userId}#${direction}`,
     SortKeyID: `${timestamp}`,
   }),
   // Attributes: refer to RuleInstance
@@ -44,7 +75,7 @@ export const DynamoDbKeys: {
   }),
   // Attributes: refer to UserAggregationAttributes
   USER_AGGREGATION: (tenantId: string, userId: string) => ({
-    PartitionKeyID: `${tenantId}#aggregation#user:${userId}`,
+    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}`,
     SortKeyID: userId,
   }),
   // Attributes: refer to User / Business
@@ -56,4 +87,8 @@ export const DynamoDbKeys: {
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,
   }),
+}
+
+export function keyHasUserId(key: string) {
+  return key.includes(USER_ID_PREFIX)
 }

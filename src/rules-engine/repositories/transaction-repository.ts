@@ -1,6 +1,7 @@
-import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
+import { BankDetails } from '../../@types/openapi/bankDetails'
+import { CardDetails } from '../../@types/openapi/cardDetails'
 import { Transaction } from '../../@types/openapi/transaction'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
@@ -15,48 +16,51 @@ export class TransactionRepository {
 
   public async saveTransaction(transaction: Transaction): Promise<string> {
     const transactionId = transaction.transactionId || uuidv4()
-    const writeRequests: WriteRequest[] = [
-      {
-        PutRequest: {
-          Item: {
-            ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
-            ...transaction,
-          } as any,
-        },
-      },
-    ]
-    if (transaction.senderUserId) {
-      writeRequests.push({
-        PutRequest: {
-          Item: {
-            ...DynamoDbKeys.USER_SENDING_TRANSACTION(
-              this.tenantId,
-              transaction.senderUserId,
-              transaction.timestamp
-            ),
-            transactionId,
-          } as any,
-        },
-      })
-    }
-    if (transaction.receiverUserId) {
-      writeRequests.push({
-        PutRequest: {
-          Item: {
-            ...DynamoDbKeys.USER_RECEIVING_TRANSACTION(
-              this.tenantId,
-              transaction.receiverUserId,
-              transaction.timestamp
-            ),
-            transactionId,
-          } as any,
-        },
-      })
-    }
+    const senderKeys = DynamoDbKeys.ALL_TRANSACTION(
+      this.tenantId,
+      transaction.senderUserId,
+      transaction.senderPaymentDetails,
+      'sending',
+      transaction.timestamp
+    )
+    const receiverKeys = DynamoDbKeys.ALL_TRANSACTION(
+      this.tenantId,
+      transaction.receiverUserId,
+      transaction.receiverPaymentDetails,
+      'receiving',
+      transaction.timestamp
+    )
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
-          [TarponStackConstants.DYNAMODB_TABLE_NAME]: writeRequests,
+          [TarponStackConstants.DYNAMODB_TABLE_NAME]: [
+            {
+              PutRequest: {
+                Item: {
+                  ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+                  ...transaction,
+                },
+              },
+            },
+            {
+              PutRequest: {
+                Item: {
+                  ...senderKeys,
+                  transactionId,
+                  receiverKeyId: receiverKeys.PartitionKeyID,
+                },
+              },
+            },
+            {
+              PutRequest: {
+                Item: {
+                  ...receiverKeys,
+                  transactionId,
+                  senderKeyId: senderKeys.PartitionKeyID,
+                },
+              },
+            },
+          ],
         },
         ReturnConsumedCapacity: 'TOTAL',
       }
@@ -86,6 +90,10 @@ export class TransactionRepository {
       // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
       throw new Error('Can only get at most 100 transactions at a time!')
     }
+    if (transactionIds.length === 0) {
+      return []
+    }
+
     const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
       RequestItems: {
         [TarponStackConstants.DYNAMODB_TABLE_NAME]: {
@@ -109,7 +117,7 @@ export class TransactionRepository {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.USER_SENDING_TRANSACTION(this.tenantId, userId)
+        ':pk': DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
           .PartitionKeyID,
       },
       Limit: 1,
@@ -119,16 +127,37 @@ export class TransactionRepository {
     return !!result.Count
   }
 
-  public async getLastNSendingThinTransactions(
+  public async getLastNUserSendingThinTransactions(
     userId: string,
+    n: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getLastNThinTransactions(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
+        .PartitionKeyID,
+      n
+    )
+  }
+
+  public getLastNUserReceivingThinTransactions(
+    userId: string,
+    n: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getLastNThinTransactions(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
+        .PartitionKeyID,
+      n
+    )
+  }
+
+  private async getLastNThinTransactions(
+    partitionKeyId: string,
     n: number
   ): Promise<Array<ThinTransaction>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.USER_SENDING_TRANSACTION(this.tenantId, userId)
-          .PartitionKeyID,
+        ':pk': partitionKeyId,
       },
       Limit: n,
       ScanIndexForward: false,
@@ -139,22 +168,73 @@ export class TransactionRepository {
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
         timestamp: item.SortKeyID,
+        senderUserId: item.senderUserId,
+        receiverUserId: item.receiverUserId,
       })) || []
     )
   }
 
-  public async getLastNReceivingThinTransactions(
+  public async getAfterTimeUserSendingThinTransactions(
     userId: string,
-    n: number
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getAfterTimeUserThinTransactions(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
+        .PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  public async getAfterTimeUserReceivingThinTransactions(
+    userId: string,
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getAfterTimeUserThinTransactions(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
+        .PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  public async getAfterTimeNonUserSendingThinTransactions(
+    paymentDetails: CardDetails | BankDetails,
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getAfterTimeUserThinTransactions(
+      DynamoDbKeys.NON_USER_TRANSACTION(
+        this.tenantId,
+        paymentDetails,
+        'sending'
+      ).PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  public async getAfterTimeNonUserReceivingThinTransactions(
+    paymentDetails: CardDetails | BankDetails,
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getAfterTimeUserThinTransactions(
+      DynamoDbKeys.NON_USER_TRANSACTION(
+        this.tenantId,
+        paymentDetails,
+        'receiving'
+      ).PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  private async getAfterTimeUserThinTransactions(
+    partitionKeyId: string,
+    afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      KeyConditionExpression: 'PartitionKeyID = :pk',
+      KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID > :sk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.USER_RECEIVING_TRANSACTION(this.tenantId, userId)
-          .PartitionKeyID,
+        ':pk': partitionKeyId,
+        ':sk': `${afterTimestamp}`,
       },
-      Limit: n,
       ScanIndexForward: false,
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -163,12 +243,16 @@ export class TransactionRepository {
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
         timestamp: item.SortKeyID,
+        senderKeyId: item.senderKeyId,
+        receiverKeyId: item.receiverKeyId,
       })) || []
     )
   }
 }
 
-type ThinTransaction = {
+export type ThinTransaction = {
   transactionId: string
   timestamp: number
+  senderKeyId?: string
+  receiverKeyId?: string
 }

@@ -1,7 +1,7 @@
 import { TarponStackConstants } from '../../../lib/constants'
+import { PaymentDirection } from '../../@types/tranasction/payment-direction'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
-type PaymentDirection = 'receiving' | 'sending'
 type UserAggregationAttributes = {
   sendingCountries: Set<string>
   receivingCountries: Set<string>

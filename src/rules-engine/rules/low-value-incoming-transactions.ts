@@ -1,3 +1,4 @@
+import { PaymentDirection } from '../../@types/tranasction/payment-direction'
 import LowValueTransactionsRule from './low-value-transactions-base'
 import { RuleInfo } from './rule'
 
@@ -11,7 +12,7 @@ export default class LowValueIncomingTransactionsRule extends LowValueTransactio
     }
   }
 
-  protected getDirection(): 'sending' | 'receiving' {
+  protected getDirection(): PaymentDirection {
     return 'receiving'
   }
 }

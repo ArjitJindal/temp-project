@@ -1,6 +1,7 @@
 import { Transaction } from '../../@types/openapi/transaction'
 import { TransactionAmountDetails } from '../../@types/openapi/transactionAmountDetails'
 import { RuleParameters } from '../../@types/rule/rule-instance'
+import { PaymentDirection } from '../../@types/tranasction/payment-direction'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { MissingRuleParameter } from './errors'
 import { Rule } from './rule'
@@ -11,8 +12,6 @@ type LowValueTransactionsRuleParameters = RuleParameters & {
   }
   lowTransactionCount: number
 }
-
-type Direction = 'sending' | 'receiving'
 
 export default class LowValueTransactionsRule extends Rule<LowValueTransactionsRuleParameters> {
   private getTransactionUserId(): string | undefined {
@@ -36,7 +35,7 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
         return transaction.receivingAmountDetails
     }
   }
-  protected getDirection(): Direction {
+  protected getDirection(): PaymentDirection {
     throw new Error('Not implemented')
   }
 
@@ -50,11 +49,11 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
       const lastNTransactionsToCheck = this.parameters.lowTransactionCount - 1
       const thinTransactionIds = (
         await (this.getDirection() === 'receiving'
-          ? transactionRepository.getLastNReceivingThinTransactions(
+          ? transactionRepository.getLastNUserReceivingThinTransactions(
               userId,
               lastNTransactionsToCheck
             )
-          : transactionRepository.getLastNSendingThinTransactions(
+          : transactionRepository.getLastNUserSendingThinTransactions(
               userId,
               lastNTransactionsToCheck
             ))

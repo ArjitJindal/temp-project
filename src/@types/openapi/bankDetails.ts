@@ -18,7 +18,7 @@ import { Tag } from './tag'
  * Standardized model for Bank Details
  */
 export class BankDetails {
-  'method'?: string
+  'method': string
   /**
    * Type of identifier for the bank. Categorical such as BIK, BIC, SWIFT, Routing etc.
    */
@@ -36,7 +36,7 @@ export class BankDetails {
   /**
    * Account number of the user. Can be account number, IBAN number etc.
    */
-  'accountNumber'?: string
+  'accountNumber': string
   'tags'?: Tag
 
   static discriminator: string | undefined = undefined

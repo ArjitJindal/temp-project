@@ -29,8 +29,8 @@ export class Transaction {
   'receiverUserId'?: string
   'sendingAmountDetails': TransactionAmountDetails
   'receivingAmountDetails': TransactionAmountDetails
-  'senderPaymentDetails'?: CardDetails | BankDetails | null
-  'receiverPaymentDetails'?: CardDetails | BankDetails | null
+  'senderPaymentDetails': CardDetails | BankDetails
+  'receiverPaymentDetails': CardDetails | BankDetails
   /**
    * Type of produce being used by the consumer (ex wallets, payments etc)
    */
