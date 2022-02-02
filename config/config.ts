@@ -167,57 +167,6 @@ export default defineConfig({
       ],
     },
     {
-      path: '/sar',
-      icon: 'WarningOutlined',
-      name: 'sar',
-      routes: [
-        {
-          path: '/sar',
-          redirect: '/sar/create-sar',
-        },
-        {
-          name: 'create-sar',
-          icon: 'smile',
-          path: '/sar/create-sar',
-          component: './sar/create-sar',
-        },
-      ],
-    },
-    {
-      path: '/network',
-      icon: 'PartitionOutlined',
-      name: 'network',
-      routes: [
-        {
-          path: '/network',
-          redirect: '/network/network-analysis',
-        },
-        {
-          name: 'network-analysis',
-          icon: 'smile',
-          path: '/network/network-analysis',
-          component: './network/network-analysis',
-        },
-      ],
-    },
-    {
-      path: '/risk-levels',
-      icon: 'BarChartOutlined',
-      name: 'risk-levels',
-      routes: [
-        {
-          path: '/risk-levels',
-          redirect: '/risk-levels/create-risk-levels',
-        },
-        {
-          name: 'create-risk-levels',
-          icon: 'smile',
-          path: '/risk-levels/create-risk-levels',
-          component: './risk-levels/create-risk-levels',
-        },
-      ],
-    },
-    {
       path: '/',
       redirect: '/dashboard/analysis',
     },
