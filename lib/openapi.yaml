@@ -7,11 +7,23 @@ info:
 servers:
   - url: 'http://localhost:3000'
     variables: {}
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true
 paths:
   /consumer/transactions:
     post:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Verify a Transaction
       description: Verify a Transaction
       operationId: post-consumer-transaction
@@ -108,8 +120,16 @@ paths:
       tags: []
   '/consumer/transactions/{transactionId}':
     get:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Retrieve a Transaction
       description: Retrieve a Transaction
       operationId: get-consumer-transaction
@@ -194,8 +214,16 @@ paths:
       tags: []
   /consumer/users:
     post:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Create a Consumer User
       description: Create a Consumer User
       operationId: post-consumer-user
@@ -237,8 +265,16 @@ paths:
       tags: []
   '/consumer/users/{userId}':
     get:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Retrieve a Consumer User
       description: Retrieve a Consumer User
       operationId: get-consumer-user
@@ -312,8 +348,16 @@ paths:
       tags: []
   /business/users:
     post:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Create a Business User
       description: Create a Business User
       operationId: post-business-user
@@ -355,8 +399,16 @@ paths:
       tags: []
   '/business/users/{userId}':
     get:
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: 'never'
       security:
         - x-api-key: []
+        - lambda-authorizer: []
       summary: Retrieve a Business User
       description: Retrieve a Business User
       operationId: get-business-user-userId
@@ -1537,5 +1589,18 @@ components:
       name: x-api-key
       type: apiKey
       in: header
+      x-amazon-apigateway-api-key-source: HEADER
       description: API keys are used to authenticate the requests.
+    lambda-authorizer:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authorizer:
+        type: request
+        identitySource: method.request.header.x-api-key
+        authorizerUri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponApiKeyAuthorizerFunction.Arn}/invocations
+        authorizerResultTtlInSeconds: 0
+        enableSimpleResponses: false
+      x-amazon-apigateway-authtype: Custom scheme with tenant claims
 tags: []
