@@ -1,5 +1,5 @@
 export function getResourceName(resourceName: string) {
-  return `tarpon-${resourceName}`
+  return `tarpon${resourceName}`
 }
 
 export const TarponStackConstants = {

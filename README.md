@@ -71,7 +71,4 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 ## Generate Typescript types from OpenAPI
 
 0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
-1. Use https://www.apimatic.io/dashboard to convert https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml to version 3.0
-2. Run `openapi-generator generate -i Flagright-API.yaml -g typescript-node -o typescript_types`
-3. Copy `typescript_types/model/*` to `src/@types/openapi/`
-4. Run `npm run sanitize-openapi-types`
+1. Run `npm run import-openapi-types`
