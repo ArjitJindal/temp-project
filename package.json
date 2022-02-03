@@ -4,8 +4,9 @@
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
   "scripts": {
+    "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
     "build": "webpack && cdk synth",
-    "deploy": "cdk deploy",
+    "deploy": "cdk deploy --profile $npm_config_profile",
     "test": "ts-mocha **/tests/**/*.ts",
     "format": "prettier --write .",
     "lint": "eslint .",
