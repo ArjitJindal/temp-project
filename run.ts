@@ -23,11 +23,11 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       require('./events/get-user').event
     ),
   'create-rule-instance': () =>
-    require('./src/rules-engine/app').ruleInstanceHandler(
+    require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/create-rule-instance').event
     ),
   'update-rule-instance': () =>
-    require('./src/rules-engine/app').ruleInstanceHandler(
+    require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
   'verify-transaction': () =>

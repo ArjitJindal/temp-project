@@ -15,6 +15,8 @@
     "start-local-api": "sam local start-api -t cdk.out/tarpon.template.json",
     "import-openapi-types": "openapi-generator generate -i https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml -g typescript-node -o openapi_types && mv openapi_types/model/* src/@types/openapi/ && rm -rf openapi_types && sed -i '' \"s/import { RequestFile } from '.\\/models'//g\" src/@types/openapi/*; rm -f src/@types/openapi/models.ts && prettier --write src/@types/openapi/;",
     "recreate-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table && aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
+    "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
+    "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
     "create-user": "ts-node run.ts --action create-user",
     "get-user": "ts-node run.ts --action get-user",
     "create-rule-instance": "ts-node run.ts --action create-rule-instance",

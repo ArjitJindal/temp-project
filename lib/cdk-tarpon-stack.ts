@@ -135,7 +135,7 @@ export class CdkTarponStack extends cdk.Stack {
         functionName: getResourceName('RuleInstanceFunction'),
         runtime: Runtime.NODEJS_14_X,
         handler: 'app.ruleInstanceHandler',
-        code: Code.fromAsset('dist/rules-engine'),
+        code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
         tracing: Tracing.ACTIVE,
         timeout: Duration.seconds(10),
       }

@@ -72,3 +72,49 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 
 0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
 1. Run `npm run import-openapi-types`
+
+## Testing Functions Locally
+
+You can test functions locally, ensure you've your SSO configured (including default region - `region` field in `~/.aws/config`) before running.
+
+You will also need to add a `default` profile in `~/.aws/credentials`:
+
+```
+[default]
+region=us-east-2
+aws_access_key_id=false
+aws_secret_access_key=false
+
+```
+
+### For first rum
+
+Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
+
+```
+npm run start-local-ddb
+```
+
+For the first run create the database using:
+
+```
+npm run create-local-ddb
+```
+
+Run the below command to recreate the table:
+
+```
+npm run recreate-local-ddb
+```
+
+You can now run the following:
+
+```
+npm run create-user
+npm run get-user
+npm run create-rule-instance
+npm run update-rule-instance
+npm run verify-transaction
+npm run get-transaction
+npm run import-list
+```
