@@ -89,10 +89,10 @@ aws_secret_access_key=false
 
 ### For first rum
 
-Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command:
+Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
 
 ```
-docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb
+npm run start-local-ddb
 ```
 
 For the first run create the database using:
