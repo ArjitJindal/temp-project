@@ -11,6 +11,9 @@ import { CardDetails } from '../../@types/openapi/cardDetails'
 const USER_ID_PREFIX = 'user:'
 
 export const DynamoDbKeys = {
+  TENANT: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#transaction#`,
+  }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#${transactionId}`,
