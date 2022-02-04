@@ -30,6 +30,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
+  'view-transactions': () =>
+    require('./src/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+      require('./events/update-rule-instance').event
+    ),
   'verify-transaction': () =>
     require('./src/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
@@ -42,6 +46,8 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/list-importer/app').listImporterHandler(
       require('./events/import-list').event
     ),
+  'create-test-data': () =>
+    require('./src/scripts/index').createTransactionData(),
 }
 
 ;(async () => {

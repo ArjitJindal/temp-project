@@ -142,6 +142,21 @@ export class CdkTarponStack extends cdk.Stack {
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
 
+    /* Transactions view */
+    const transactionsViewFunction = new Function(
+      this,
+      getResourceName('RuleInstanceFunction'),
+      {
+        functionName: getResourceName('RuleInstanceFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.transactionsViewHandler',
+        code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+
     /* User */
     const userFunctionName = getResourceName('UserFunction')
     const userFunction = new Function(this, userFunctionName, {
