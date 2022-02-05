@@ -122,7 +122,8 @@ export const createTransactionData = () => {
     transactionObject = {
       senderUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
       receiverUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
-      timestamp: Date.now() - getRandomIntInclusive(1, 10000),
+      timestamp:
+        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
       sendingAmountDetails: {
         transactionAmount: getRandomIntInclusive(1, 10000),
         transactionCurrency: currencyOne,
