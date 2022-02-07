@@ -10,11 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { BankDetails } from './bankDetails'
+import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './cardDetails'
 import { DeviceData } from './deviceData'
+import { IBANDetails } from './IBANDetails'
 import { Tag } from './tag'
 import { TransactionAmountDetails } from './transactionAmountDetails'
+import { UPIDetails } from './UPIDetails'
 
 /**
  * Model for transaction payload
@@ -29,8 +31,8 @@ export class Transaction {
   'receiverUserId'?: string
   'sendingAmountDetails': TransactionAmountDetails
   'receivingAmountDetails': TransactionAmountDetails
-  'senderPaymentDetails': CardDetails | BankDetails
-  'receiverPaymentDetails': CardDetails | BankDetails
+  'senderPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
+  'receiverPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
   /**
    * Type of produce being used by the consumer (ex wallets, payments etc)
    */
@@ -89,12 +91,12 @@ export class Transaction {
     {
       name: 'senderPaymentDetails',
       baseName: 'senderPaymentDetails',
-      type: 'CardDetails | BankDetails',
+      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails',
     },
     {
       name: 'receiverPaymentDetails',
       baseName: 'receiverPaymentDetails',
-      type: 'CardDetails | BankDetails',
+      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails',
     },
     {
       name: 'productType',

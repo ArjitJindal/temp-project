@@ -1,8 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
-import { BankDetails } from '../../@types/openapi/bankDetails'
-import { CardDetails } from '../../@types/openapi/cardDetails'
 import { Transaction } from '../../@types/openapi/transaction'
+import { PaymentDetails } from '../../@types/tranasction/payment-type'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 export class TransactionRepository {
@@ -197,7 +196,7 @@ export class TransactionRepository {
   }
 
   public async getAfterTimeNonUserSendingThinTransactions(
-    paymentDetails: CardDetails | BankDetails,
+    paymentDetails: PaymentDetails,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimeUserThinTransactions(
@@ -211,7 +210,7 @@ export class TransactionRepository {
   }
 
   public async getAfterTimeNonUserReceivingThinTransactions(
-    paymentDetails: CardDetails | BankDetails,
+    paymentDetails: PaymentDetails,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimeUserThinTransactions(

@@ -794,69 +794,7 @@ components:
         value: customValue
     Transaction:
       title: Transaction
-      required:
-        - timestamp
-        - sendingAmountDetails
-        - receivingAmountDetails
-        - senderPaymentDetails
-        - receiverPaymentDetails
       type: object
-      properties:
-        transactionId:
-          minLength: 1
-          type: string
-          description: Unique transaction identifier
-        timestamp:
-          type: number
-        senderUserId:
-          type: string
-        receiverUserId:
-          type: string
-        sendingAmountDetails:
-          $ref: '#/components/schemas/TransactionAmountDetails'
-        receivingAmountDetails:
-          $ref: '#/components/schemas/TransactionAmountDetails'
-        senderPaymentDetails:
-          oneOf:
-            - $ref: '#/components/schemas/CardDetails'
-            - $ref: '#/components/schemas/BankDetails'
-          example:
-            method: CARD
-            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-            cardIssuedCountry: TR
-            transactionReferenceField: Deposit
-            3dsDone: true
-        receiverPaymentDetails:
-          oneOf:
-            - $ref: '#/components/schemas/CardDetails'
-            - $ref: '#/components/schemas/BankDetails'
-          example:
-            method: CARD
-            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-            cardIssuedCountry: TR
-            transactionReferenceField: Deposit
-            3dsDone: true
-        productType:
-          type: string
-          description: >-
-            Type of produce being used by the consumer (ex wallets, payments
-            etc)
-        promotionCodeUsed:
-          type: boolean
-          description: Whether a promotion code was used or not the transaction
-        reference:
-          minLength: 1
-          type: string
-          description: >-
-            Reference field for the transaction indicating the purpose of the
-            transaction etc.
-        deviceData:
-          $ref: '#/components/schemas/DeviceData'
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
-          description: Additional information that can be added via tags
       description: Model for transaction payload
       example:
         transactionId: 7b80a539eea6e78acbd6d458e5971482
@@ -900,13 +838,82 @@ components:
         tags:
           - key: customKey
             value: customValue
+      properties:
+        transactionId:
+          minLength: 1
+          type: string
+          description: Unique transaction identifier
+        timestamp:
+          type: number
+        senderUserId:
+          type: string
+        receiverUserId:
+          type: string
+        sendingAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        receivingAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        senderPaymentDetails:
+          oneOf:
+            - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/IBANDetails'
+            - $ref: '#/components/schemas/ACHDetails'
+            - $ref: '#/components/schemas/UPIDetails'
+          example:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: TR
+            transactionReferenceField: Deposit
+            3dsDone: true
+        receiverPaymentDetails:
+          oneOf:
+            - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/IBANDetails'
+            - $ref: '#/components/schemas/ACHDetails'
+            - $ref: '#/components/schemas/UPIDetails'
+          example:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: TR
+            transactionReferenceField: Deposit
+            3dsDone: true
+        productType:
+          type: string
+          description: >-
+            Type of produce being used by the consumer (ex wallets, payments
+            etc)
+        promotionCodeUsed:
+          type: boolean
+          description: Whether a promotion code was used or not the transaction
+        reference:
+          minLength: 1
+          type: string
+          description: >-
+            Reference field for the transaction indicating the purpose of the
+            transaction etc.
+        deviceData:
+          $ref: '#/components/schemas/DeviceData'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+      required:
+        - timestamp
+        - sendingAmountDetails
+        - receivingAmountDetails
+        - senderPaymentDetails
+        - receiverPaymentDetails
     CardDetails:
       title: CardDetails
-      required:
-        - method
-        - cardFingerprint
-        - cardIssuedCountry
       type: object
+      description: Model for credit or debit card details
+      example:
+        method: CARD
+        cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+        cardIssuedCountry: TR
+        transactionReferenceField: Deposit
+        3dsDone: true
       properties:
         method:
           type: string
@@ -930,49 +937,12 @@ components:
           description: Whether 3ds was successfully enforced for the transaction
         nameOnCard:
           $ref: '#/components/schemas/ConsumerName'
-      description: Model for credit or debit card details
-      example:
-        method: CARD
-        cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-        cardIssuedCountry: TR
-        transactionReferenceField: Deposit
-        3dsDone: true
-    BankDetails:
-      title: BankDetails
       required:
-        - method
-        - bankIdentifierType
-        - bankIdentifier
-        - accountNumber
+        - cardFingerprint
+        - cardIssuedCountry
+    IBANDetails:
+      title: IBANDetails
       type: object
-      properties:
-        method:
-          type: string
-        bankIdentifierType:
-          minLength: 1
-          type: string
-          description: >-
-            Type of identifier for the bank. Categorical such as BIK, BIC,
-            SWIFT, Routing etc.
-        bankIdentifier:
-          minLength: 1
-          type: string
-          description: >-
-            Identifier for the bank. Can be routing number, BIK number, SWIFT
-            code, BIC number etc.
-        bankName:
-          minLength: 1
-          type: string
-          description: Name of the bank
-        bankAddress:
-          $ref: '#/components/schemas/Address'
-        accountNumber:
-          type: string
-          description: 'Account number of the user. Can be account number, IBAN number etc.'
-        name:
-          $ref: '#/components/schemas/ConsumerName'
-        tags:
-          $ref: '#/components/schemas/Tag'
       description: Standardized model for Bank Details
       example:
         method: BANK
@@ -990,6 +960,51 @@ components:
           tags:
             - key: customKey
               value: customValue
+      properties:
+        method:
+          type: string
+        BIC:
+          minLength: 1
+          type: string
+          description: >-
+            Identifier for the bank. Can be routing number, BIK number, SWIFT
+            code, BIC number etc.
+        bankName:
+          minLength: 1
+          type: string
+          description: Name of the bank
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+        IBAN:
+          type: string
+          description: 'Account number of the user. Can be account number, IBAN number etc.'
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        tags:
+          $ref: '#/components/schemas/Tag'
+        bankBranchCode:
+          type: string
+      required:
+        - method
+        - BIC
+        - IBAN
+      x-examples:
+        example-1:
+          method: IBAN
+          bankIdentifierType: IBAN
+          bankIdentifier: DE761234561
+          bankName: Merryl Lynch
+          accountNumber: '1234321'
+          bankAddress:
+            addressLines:
+              - Klara-Franke Str 20
+            postcode: '10557'
+            city: Berlin
+            state: Berlin
+            country: Germany
+            tags:
+              - key: customKey
+                value: customValue
     DeviceData:
       title: DeviceData
       type: object
@@ -1584,6 +1599,77 @@ components:
           type: string
         userRiskScoreDetails:
           $ref: '#/components/schemas/RiskScoringResult'
+    ACHDetails:
+      description: ''
+      type: object
+      x-examples:
+        example-2:
+          method: ACH
+          routingNumber: '1231241'
+          accountNumber: '543456675'
+          bankName: Wells Fargo
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          bankAddress:
+            addressLines:
+              - 1201 N Monroe St
+            postcode: '32303'
+            city: Tallahassee
+            state: FL
+            country: United States of America
+            tags:
+              - key: userType
+                value: customValue
+      title: ACHDetails
+      properties:
+        method:
+          type: string
+        routingNumber:
+          type: string
+          minLength: 1
+        accountNumber:
+          type: string
+          minLength: 1
+        bankName:
+          type: string
+          minLength: 1
+        name:
+          oneOf:
+            - $ref: '#/components/schemas/ConsumerName'
+            - type: string
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+      required:
+        - method
+        - routingNumber
+        - accountNumber
+    UPIDetails:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          method: UPI
+          upiID: user@okhdfcbank
+          bankProvider: HDFC Bank
+          interfaceProvider: PhonePe
+      title: UPIDetails
+      properties:
+        method:
+          type: string
+        upiID:
+          type: string
+          minLength: 1
+        bankProvider:
+          type: string
+          minLength: 1
+        interfaceProvider:
+          type: string
+          minLength: 1
+      required:
+        - method
+        - upiID
   securitySchemes:
     x-api-key:
       name: x-api-key

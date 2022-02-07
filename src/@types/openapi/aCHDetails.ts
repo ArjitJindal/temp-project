@@ -12,32 +12,14 @@
 
 import { Address } from './address'
 import { ConsumerName } from './consumerName'
-import { Tag } from './tag'
 
-/**
- * Standardized model for Bank Details
- */
-export class BankDetails {
+export class ACHDetails {
   'method': string
-  /**
-   * Type of identifier for the bank. Categorical such as BIK, BIC, SWIFT, Routing etc.
-   */
-  'bankIdentifierType': string
-  /**
-   * Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc.
-   */
-  'bankIdentifier': string
-  /**
-   * Name of the bank
-   */
-  'bankName'?: string
-  'bankAddress'?: Address
-  'name'?: ConsumerName
-  /**
-   * Account number of the user. Can be account number, IBAN number etc.
-   */
+  'routingNumber': string
   'accountNumber': string
-  'tags'?: Tag
+  'bankName'?: string
+  'name'?: ConsumerName | string | null
+  'bankAddress'?: Address
 
   static discriminator: string | undefined = undefined
 
@@ -52,13 +34,13 @@ export class BankDetails {
       type: 'string',
     },
     {
-      name: 'bankIdentifierType',
-      baseName: 'bankIdentifierType',
+      name: 'routingNumber',
+      baseName: 'routingNumber',
       type: 'string',
     },
     {
-      name: 'bankIdentifier',
-      baseName: 'bankIdentifier',
+      name: 'accountNumber',
+      baseName: 'accountNumber',
       type: 'string',
     },
     {
@@ -67,28 +49,18 @@ export class BankDetails {
       type: 'string',
     },
     {
+      name: 'name',
+      baseName: 'name',
+      type: 'ConsumerName | string',
+    },
+    {
       name: 'bankAddress',
       baseName: 'bankAddress',
       type: 'Address',
     },
-    {
-      name: 'name',
-      baseName: 'name',
-      type: 'ConsumerName',
-    },
-    {
-      name: 'accountNumber',
-      baseName: 'accountNumber',
-      type: 'string',
-    },
-    {
-      name: 'tags',
-      baseName: 'tags',
-      type: 'Tag',
-    },
   ]
 
   static getAttributeTypeMap() {
-    return BankDetails.attributeTypeMap
+    return ACHDetails.attributeTypeMap
   }
 }
