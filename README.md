@@ -72,6 +72,7 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 
 0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
 1. Run `npm run import-openapi-types`
+2. Manually resolve the conflicts in lib/openapi.yaml (keep existing aws extensions; add aws extensions for the new resources)
 
 ## Testing Functions Locally
 
