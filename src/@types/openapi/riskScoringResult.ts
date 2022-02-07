@@ -15,17 +15,17 @@
  */
 export class RiskScoringResult {
   /**
-   * KYC risk score quantified as \"safety score\"
+   * Quantified KYC risk score
    */
-  'baseSafetyScore': number
+  'kycRiskScore': number
   /**
-   * Action risk score quantified as \"safety score\"
+   * Quantified action risk score
    */
-  'actionSafetyScore': number
+  'actionRiskScore': number
   /**
-   * Dynamic risk score quantified as \"safety score\"
+   * Quantified dynamic risk score
    */
-  'dynamicSafetyScore'?: number
+  'dynamicRiskScore'?: number
 
   static discriminator: string | undefined = undefined
 
@@ -35,18 +35,18 @@ export class RiskScoringResult {
     type: string
   }> = [
     {
-      name: 'baseSafetyScore',
-      baseName: 'baseSafetyScore',
+      name: 'kycRiskScore',
+      baseName: 'kycRiskScore',
       type: 'number',
     },
     {
-      name: 'actionSafetyScore',
-      baseName: 'actionSafetyScore',
+      name: 'actionRiskScore',
+      baseName: 'actionRiskScore',
       type: 'number',
     },
     {
-      name: 'dynamicSafetyScore',
-      baseName: 'dynamicSafetyScore',
+      name: 'dynamicRiskScore',
+      baseName: 'dynamicRiskScore',
       type: 'number',
     },
   ]

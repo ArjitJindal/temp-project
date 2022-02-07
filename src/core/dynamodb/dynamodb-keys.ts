@@ -5,8 +5,11 @@
  * the query performance and our AWS cost.
  */
 
-import { BankDetails } from '../../@types/openapi/bankDetails'
+import { ACHDetails } from '../../@types/openapi/ACHDetails'
 import { CardDetails } from '../../@types/openapi/cardDetails'
+import { IBANDetails } from '../../@types/openapi/IBANDetails'
+import { UPIDetails } from '../../@types/openapi/UPIDetails'
+import { PaymentDetails } from '../../@types/tranasction/payment-type'
 
 const USER_ID_PREFIX = 'user:'
 
@@ -22,7 +25,7 @@ export const DynamoDbKeys = {
   ALL_TRANSACTION: (
     tenantId: string,
     userId: string | undefined,
-    paymentDetails: CardDetails | BankDetails,
+    paymentDetails: PaymentDetails,
     direction: 'sending' | 'receiving',
     timestamp?: number
   ) => {
@@ -38,15 +41,15 @@ export const DynamoDbKeys = {
   // Attributes: [transactionId]
   NON_USER_TRANSACTION: (
     tenantId: string,
-    paymentDetails: CardDetails | BankDetails,
+    paymentDetails: PaymentDetails,
     direction: 'sending' | 'receiving',
     timestamp?: number
   ) => {
     switch (paymentDetails.method) {
       case 'BANK': {
-        const { bankIdentifier, accountNumber } = paymentDetails as BankDetails
+        const { BIC, IBAN } = paymentDetails as IBANDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#bankIdentifier:${bankIdentifier}#accountNumber:${accountNumber}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
@@ -54,6 +57,20 @@ export const DynamoDbKeys = {
         const { cardFingerprint } = paymentDetails as CardDetails
         return {
           PartitionKeyID: `${tenantId}#transaction#cardFingerprint:${cardFingerprint}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'ACH': {
+        const { routingNumber, accountNumber } = paymentDetails as ACHDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'UPI': {
+        const { upiID } = paymentDetails as UPIDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#upiID:${upiID}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
