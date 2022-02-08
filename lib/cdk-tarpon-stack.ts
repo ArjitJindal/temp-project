@@ -145,9 +145,9 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transactions view */
     const transactionsViewFunction = new Function(
       this,
-      getResourceName('RuleInstanceFunction'),
+      getResourceName('TransactionsViewFunction'),
       {
-        functionName: getResourceName('RuleInstanceFunction'),
+        functionName: getResourceName('TransactionsViewFunction'),
         runtime: Runtime.NODEJS_14_X,
         handler: 'app.transactionsViewHandler',
         code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
@@ -249,6 +249,14 @@ export class CdkTarponStack extends cdk.Stack {
     ruleInstanceResource.addMethod(
       'DELETE',
       new LambdaIntegration(ruleInstanceFunction),
+      internalApiSecurityOptions
+    )
+
+    const transactionsViewResource =
+      internalApi.root.addResource('view_transactions')
+    transactionsViewResource.addMethod(
+      'GET',
+      new LambdaIntegration(transactionsViewFunction),
       internalApiSecurityOptions
     )
 
