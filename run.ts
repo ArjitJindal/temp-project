@@ -46,7 +46,7 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/list-importer/app').listImporterHandler(
       require('./events/import-list').event
     ),
-  'create-test-data': () =>
+  'create-and-upload-test-data': () =>
     require('./src/scripts/index').createTransactionData('demo-tenant-id-1'),
 }
 

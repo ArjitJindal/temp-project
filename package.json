@@ -24,7 +24,7 @@
     "verify-transaction": "ts-node run.ts --action verify-transaction",
     "get-transaction": "ts-node run.ts --action get-transaction",
     "import-list": "ts-node run.ts --action import-list",
-    "create-test-data": "ts-node run.ts --action create-test-data"
+    "create-and-upload-test-data": "ts-node run.ts --action create-and-upload-test-data"
   },
   "repository": {
     "type": "git",

@@ -106,7 +106,7 @@ export const createTransactionData = async (tenantId: string) => {
   /* DB init */
   const dynamoDb = new AWS.DynamoDB.DocumentClient({
     credentials: new AWS.SharedIniFileCredentials({
-      profile: 'AWSAdministratorAccess-911899431626',
+      profile: 'AWSAdministratorAccess-911899431626', // TODO: Make it env var
     }),
   })
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)

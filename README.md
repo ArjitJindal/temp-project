@@ -122,6 +122,24 @@ npm run import-list
 
 ### Creating and uploading test data
 
+**Uploading to local DynamoDB**
+
+In the dynamodb document client initialization, add endpoint: `localhost:8000` like so:
+
+```
+  /* DB init */
+  const dynamoDb = new AWS.DynamoDB.DocumentClient({
+    credentials: new AWS.SharedIniFileCredentials({
+      profile: 'AWSAdministratorAccess-911899431626',
+      endpoint: 'localhost:8000'
+    }),
+  })
+```
+
+ALWAYS TEST LOCALLY BEFORE INSERTING INTO DDB TABLE IN AWS
+
+**Uploading to DynamoDB dev account table**
+
 Ensure the latest credentials (`access_key_id`, `secret_access_key` and `session_token`) are present in `~/.aws/credentials`
 
 - If you don't have the credentials, you can get them using [get-role-credentials](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/sso/get-role-credentials.html) CLI command:
@@ -136,5 +154,5 @@ Ensure the latest credentials (`access_key_id`, `secret_access_key` and `session
 Once credentials are legit, you can run:
 
 ```
-npm run create-test-data
+npm run create-and-upload-test-data
 ```
