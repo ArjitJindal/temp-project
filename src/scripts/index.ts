@@ -6,7 +6,9 @@ import {
   names,
 } from 'unique-names-generator'
 
-import { IBAN, BIC } from 'ibankit'
+import { IBAN } from 'ibankit'
+
+import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
@@ -53,7 +55,7 @@ const uniqueNamesConfig: namesConfig = {
 
 const paymentMethods = ['CARD', 'BANK']
 
-const createCardPaymentDetails = (sendingCountry: string, name: Object) => {
+const createCardPaymentDetails = (sendingCountry: string, name: any) => {
   return {
     cardFingerprint: createUuid().substring(0, 10),
     cardIssuedCountry: sendingCountry,
@@ -72,19 +74,23 @@ const createUserIds = (n: number) => {
 const productTypes = ['WALLET', 'REMITTANCE', 'BNPL']
 
 /* FIXME: Update bank details once API changes (only EU countries have IBAN) */
-const createBankPaymentDetails = (name: Object) => {
+const createBankPaymentDetails = (name: any) => {
   const ibanInfo = IBAN.random()
   return {
     method: 'BANK',
     BIC: 'DEUTDEFF',
     bankName: `${uniqueNamesGenerator(uniqueNamesConfig)} Bank`,
-    IBAN: ibanInfo.getAccountNumber(),
+    IBAN: (ibanInfo.getAccountNumber() !== null
+      ? ibanInfo.getAccountNumber()
+      : 'DE9712243431123') as string,
     name: name,
-    bankBranchCode: ibanInfo.getBankCode(),
+    bankBranchCode: (ibanInfo.getBankCode() !== null
+      ? ibanInfo.getBankCode()
+      : '407') as string,
   }
 }
 
-const createPaymentDetails = (sendingCountry: string, name: Object) => {
+const createPaymentDetails = (sendingCountry: string, name: any) => {
   const paymentMethod = paymentMethods[getRandomIntInclusive(0, 1)]
   const paymentDeets =
     paymentMethod == 'CARD'
@@ -96,7 +102,13 @@ const createPaymentDetails = (sendingCountry: string, name: Object) => {
   }
 }
 
-export const createTransactionData = () => {
+export const createTransactionData = async (tenantId: string) => {
+  /* DB init */
+  const dynamoDb = new AWS.DynamoDB.DocumentClient({
+    credentials: new AWS.SharedIniFileCredentials(),
+  })
+  const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
+
   const globalNumberOfUsers = 20
   let transactionObject
   const nameOne = {
@@ -117,6 +129,8 @@ export const createTransactionData = () => {
   const currencyTwo = currencies[countryCurrencyIndexTwo]
 
   const userIds: string[] = createUserIds(globalNumberOfUsers)
+
+  const dynamoDbResults = []
 
   for (let i = 0; i < 1; i++) {
     transactionObject = {
@@ -139,6 +153,10 @@ export const createTransactionData = () => {
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
     }
-    console.log(transactionObject)
+    let ddbSaveTransactionResult = await transactionRepository.saveTransaction(
+      transactionObject
+    )
+    dynamoDbResults.push(ddbSaveTransactionResult)
   }
+  return { body: dynamoDbResults }
 }
