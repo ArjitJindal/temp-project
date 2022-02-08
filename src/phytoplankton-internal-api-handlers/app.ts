@@ -5,6 +5,7 @@ import {
 import { RuleInstanceQueryStringParameters } from '../rules-engine/app'
 import { getDynamoDbClient } from '../utils/dynamodb'
 import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
+import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 
 export const transactionsViewHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
