@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { RuleInstanceQueryStringParameters } from '../rules-engine/app'
 import { getDynamoDbClient } from '../utils/dynamodb'
-import { RuleRepository } from '../rules-engine/repositories/rule-repository'
+import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 
 export const transactionsViewHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
@@ -12,37 +12,16 @@ export const transactionsViewHandler: APIGatewayProxyWithLambdaAuthorizerHandler
   const { tenantId } =
     event.queryStringParameters as RuleInstanceQueryStringParameters
   const dynamoDb = getDynamoDbClient(event)
-  const ruleRepository = new RuleRepository(tenantId, dynamoDb)
-  const ruleInstanceId = event.pathParameters?.id
+  const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
 
-  if (event.httpMethod === 'PUT' && ruleInstanceId) {
+  if (event.httpMethod === 'GET') {
     if (!event.body) {
       throw new Error('missing payload!')
     }
-    await ruleRepository.createOrUpdateRuleInstance({
-      id: ruleInstanceId,
-      ...JSON.parse(event.body),
-    })
+    /*Implementation Pending*/
     return {
       statusCode: 200,
       body: 'OK',
-    }
-  } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
-    await ruleRepository.deleteRuleInstance(ruleInstanceId)
-    return {
-      statusCode: 200,
-      body: 'OK',
-    }
-  } else if (event.httpMethod === 'POST' && !ruleInstanceId) {
-    if (!event.body) {
-      throw new Error('missing payload!')
-    }
-    const newRuleInstance = await ruleRepository.createOrUpdateRuleInstance(
-      JSON.parse(event.body)
-    )
-    return {
-      statusCode: 200,
-      body: JSON.stringify(newRuleInstance),
     }
   }
 
