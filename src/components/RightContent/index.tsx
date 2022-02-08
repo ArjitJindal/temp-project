@@ -3,7 +3,6 @@ import React from 'react';
 import { useModel, SelectLang } from 'umi';
 import Avatar from './AvatarDropdown';
 import styles from './index.less';
-import NoticeIconView from '../NoticeIcon';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -23,7 +22,6 @@ const GlobalHeaderRight: React.FC = () => {
 
   return (
     <Space className={className}>
-      <NoticeIconView />
       <Avatar menu />
       <SelectLang className={styles.action} />
     </Space>
