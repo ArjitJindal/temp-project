@@ -5,14 +5,14 @@ info:
   contact: {}
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: 'https://sandbox.api.flagright.com'
     variables: {}
 x-amazon-apigateway-request-validators:
   all:
     validateRequestBody: true
     validateRequestParameters: true
 paths:
-  /consumer/transactions:
+  /transactions:
     post:
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
@@ -118,7 +118,8 @@ paths:
           content: {}
       deprecated: false
       tags: []
-  '/consumer/transactions/{transactionId}':
+    parameters: []
+  '/transactions/{transactionId}':
     get:
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
@@ -212,6 +213,12 @@ paths:
           content: {}
       deprecated: false
       tags: []
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
   /consumer/users:
     post:
       x-amazon-apigateway-request-validator: all
