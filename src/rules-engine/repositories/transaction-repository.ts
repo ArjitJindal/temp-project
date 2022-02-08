@@ -67,23 +67,6 @@ export class TransactionRepository {
     return transactionId
   }
 
-  public async getLatestTransactionByTenant(
-    token: number
-  ): Promise<Transaction> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      Key: DynamoDbKeys.TENANT(this.tenantId),
-      ReturnConsumedCapacity: 'TOTAL',
-    }
-    const result = await this.dynamoDb.get(getItemInput).promise()
-    const transaction = {
-      ...result.Item,
-    }
-    delete transaction.PartitionKeyID
-    delete transaction.SortKeyID
-    return transaction as Transaction
-  }
-
   public async getTransactionById(transactionId: string): Promise<Transaction> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,

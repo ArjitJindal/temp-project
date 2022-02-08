@@ -105,11 +105,13 @@ const createPaymentDetails = (sendingCountry: string, name: any) => {
 export const createTransactionData = async (tenantId: string) => {
   /* DB init */
   const dynamoDb = new AWS.DynamoDB.DocumentClient({
-    credentials: new AWS.SharedIniFileCredentials(),
+    credentials: new AWS.SharedIniFileCredentials({
+      profile: 'AWSAdministratorAccess-911899431626',
+    }),
   })
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
 
-  const globalNumberOfUsers = 20
+  const globalNumberOfUsers = 2
   let transactionObject
   const nameOne = {
     firstName: uniqueNamesGenerator(uniqueNamesConfig),
@@ -132,7 +134,7 @@ export const createTransactionData = async (tenantId: string) => {
 
   const dynamoDbResults = []
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 16; i++) {
     transactionObject = {
       senderUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
       receiverUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
