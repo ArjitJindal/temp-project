@@ -50,7 +50,9 @@ async function verifyTransaction(
 
   return {
     transactionId,
-    executedRules: ruleResults,
+    executedRules: ruleResults.sort((rule1, rule2) =>
+      rule1.ruleId > rule2.ruleId ? 1 : -1
+    ),
     // TODO: Handle failed rules
     failedRules: [],
   }
