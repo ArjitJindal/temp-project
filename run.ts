@@ -47,7 +47,11 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       require('./events/import-list').event
     ),
   'create-and-upload-test-data': () =>
-    require('./src/scripts/index').createTransactionData('demo-tenant-id-1'),
+    require('./src/scripts/index').createTransactionData(
+      `fake-${options.tenant}` || 'demo-tenant-id',
+      options.users || 2,
+      options.transactions || 16
+    ),
 }
 
 ;(async () => {

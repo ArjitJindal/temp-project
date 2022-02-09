@@ -24,7 +24,7 @@
     "verify-transaction": "ts-node run.ts --action verify-transaction",
     "get-transaction": "ts-node run.ts --action get-transaction",
     "import-list": "ts-node run.ts --action import-list",
-    "create-and-upload-test-data": "ts-node run.ts --action create-and-upload-test-data"
+    "create-and-upload-test-data": "ts-node run.ts --action create-and-upload-test-data --users $npm_config_users --transactions $npm_config_transactions --tenant $npm_config_tenant"
   },
   "repository": {
     "type": "git",

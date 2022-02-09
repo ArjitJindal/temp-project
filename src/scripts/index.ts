@@ -102,7 +102,11 @@ const createPaymentDetails = (sendingCountry: string, name: any) => {
   }
 }
 
-export const createTransactionData = async (tenantId: string) => {
+export const createTransactionData = async (
+  tenantId: string,
+  numberOfUsers: number,
+  numberOfTransactions: number
+) => {
   /* DB init */
   const dynamoDb = new AWS.DynamoDB.DocumentClient({
     credentials: new AWS.SharedIniFileCredentials({
@@ -111,7 +115,6 @@ export const createTransactionData = async (tenantId: string) => {
   })
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
 
-  const globalNumberOfUsers = 2
   let transactionObject
   const nameOne = {
     firstName: uniqueNamesGenerator(uniqueNamesConfig),
@@ -130,14 +133,14 @@ export const createTransactionData = async (tenantId: string) => {
   const countryTwo = countries[countryCurrencyIndexTwo]
   const currencyTwo = currencies[countryCurrencyIndexTwo]
 
-  const userIds: string[] = createUserIds(globalNumberOfUsers)
+  const userIds: string[] = createUserIds(numberOfUsers)
 
   const dynamoDbResults = []
 
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < numberOfTransactions; i++) {
     transactionObject = {
-      senderUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
-      receiverUserId: userIds[getRandomIntInclusive(0, globalNumberOfUsers)],
+      senderUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
+      receiverUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       timestamp:
         Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
       sendingAmountDetails: {
