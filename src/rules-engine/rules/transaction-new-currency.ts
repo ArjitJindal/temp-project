@@ -10,9 +10,10 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
   public getInfo(): RuleInfo {
     return {
       name: 'transaction_new_currency',
-      displayName: 'Transaction from/to a new currency ',
-      description:
+      displayName:
         'Transaction to or from a currency that has not been used before by this customer. Trigger the rule after x transactions have been completed',
+      description:
+        'Transaction to or from a currency that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between different currencies.',
     }
   }
 

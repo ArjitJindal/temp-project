@@ -6,9 +6,10 @@ export default class LowValueOutgoingTransactionsRule extends LowValueTransactio
   public getInfo(): RuleInfo {
     return {
       name: 'low_value_outgoing_transactions',
-      displayName: 'Low value outgoing transactions',
+      displayName:
+        '>= x number of low value outgoing transactions just below a specific threshold y from a customer',
       description:
-        '<= x number of low value outgoing transactions just below a specific threshold y from a customer',
+        '>= x number of low value outgoing transactions just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
     }
   }
   protected getDirection(): PaymentDirection {

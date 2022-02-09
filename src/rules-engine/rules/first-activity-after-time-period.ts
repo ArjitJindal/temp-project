@@ -12,9 +12,9 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
     return {
       name: 'first_activity_after_long_time',
       displayName:
-        'First activity of client after a long period of dormancy period',
+        'First activity of client after a long period of dormancy period t',
       description:
-        'A customer is inactive for a long time (not making transactions), then does a transaction',
+        "First activity of client after a long period of dormancy period t. Users get suspended if they haven't done any transactions for a long period of time t.",
     }
   }
 

@@ -9,8 +9,9 @@ export default class HighRiskCurrencyRule extends Rule<HighRiskCurrencyRuleParam
   public getInfo(): RuleInfo {
     return {
       name: 'high_risk_currency',
-      displayName: 'High risk currency',
-      description: 'Transaction in a currency that is designated as high risk',
+      displayName: 'Transaction in a currency that is designated as high risk',
+      description:
+        'Transaction includes a currency that is designated as high risk. Mostly relevant for when you are moving funds between different currencies. This rule uses a customizable list.',
     }
   }
 

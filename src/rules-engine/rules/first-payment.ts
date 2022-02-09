@@ -8,8 +8,9 @@ export default class FirstPaymentRule extends Rule<FirstPaymentRuleParameters> {
   public getInfo(): RuleInfo {
     return {
       name: 'first_payment',
-      displayName: 'First payment of a customer',
-      description: 'A customer is making a transaction for the first time',
+      displayName: 'First payment of a Customer',
+      description:
+        'First transaction of a user. If you activate this rule, users will be suspended when they make their first transaction.',
     }
   }
 
