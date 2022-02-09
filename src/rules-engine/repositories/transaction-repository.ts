@@ -13,8 +13,19 @@ export class TransactionRepository {
     this.tenantId = tenantId
   }
 
+  getTimstampBasedIDPrefix = (): string => {
+    const currentTime = new Date().getTime().toString()
+    let idPrefix = ''
+    for (let letterStr of currentTime) {
+      idPrefix += String.fromCharCode(97 + parseInt(letterStr))
+    }
+    return idPrefix
+  }
+
   public async saveTransaction(transaction: Transaction): Promise<string> {
-    const transactionId = transaction.transactionId || uuidv4()
+    const transactionId =
+      transaction.transactionId ||
+      `${this.getTimstampBasedIDPrefix()}-${uuidv4().slice(0, 48)}`
     const senderKeys = DynamoDbKeys.ALL_TRANSACTION(
       this.tenantId,
       transaction.senderUserId,

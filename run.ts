@@ -18,6 +18,7 @@ const optionDefinitions = [
   { name: 'transactions', type: Number },
   { name: 'profileName', type: String },
 ]
+
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
