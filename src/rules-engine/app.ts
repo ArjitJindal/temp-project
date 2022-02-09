@@ -29,10 +29,10 @@ async function verifyTransaction(
         dynamoDb
       )
       const ruleResult = await rule.computeRule()
-      const { name, description } = rule.getInfo()
+      const { displayName, description } = rule.getInfo()
       return {
         ruleId: ruleInstance.ruleId,
-        ruleName: name,
+        ruleName: displayName,
         ruleDescription: description,
         ruleAction: ruleResult?.action || RuleActionEnum.ALLOW,
         ruleHit: ruleResult !== undefined,
