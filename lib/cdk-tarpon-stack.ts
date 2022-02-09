@@ -142,6 +142,21 @@ export class CdkTarponStack extends cdk.Stack {
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
 
+    /* Transactions view */
+    const transactionsViewFunction = new Function(
+      this,
+      getResourceName('TransactionsViewFunction'),
+      {
+        functionName: getResourceName('TransactionsViewFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.transactionsViewHandler',
+        code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+
     /* User */
     const userFunctionName = getResourceName('UserFunction')
     const userFunction = new Function(this, userFunctionName, {
@@ -234,6 +249,14 @@ export class CdkTarponStack extends cdk.Stack {
     ruleInstanceResource.addMethod(
       'DELETE',
       new LambdaIntegration(ruleInstanceFunction),
+      internalApiSecurityOptions
+    )
+
+    const transactionsViewResource =
+      internalApi.root.addResource('view_transactions')
+    transactionsViewResource.addMethod(
+      'GET',
+      new LambdaIntegration(transactionsViewFunction),
       internalApiSecurityOptions
     )
 

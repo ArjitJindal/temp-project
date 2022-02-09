@@ -119,3 +119,40 @@ npm run verify-transaction
 npm run get-transaction
 npm run import-list
 ```
+
+### Creating and uploading test data
+
+**Uploading to local DynamoDB**
+
+In the dynamodb document client initialization, add endpoint: `localhost:8000` like so:
+
+```
+  /* DB init */
+  const dynamoDb = new AWS.DynamoDB.DocumentClient({
+    credentials: new AWS.SharedIniFileCredentials({
+      profile: 'AWSAdministratorAccess-911899431626',
+      endpoint: 'localhost:8000'
+    }),
+  })
+```
+
+ALWAYS TEST LOCALLY BEFORE INSERTING INTO DDB TABLE IN AWS
+
+**Uploading to DynamoDB dev account table**
+
+Ensure the latest credentials (`access_key_id`, `secret_access_key` and `session_token`) are present in `~/.aws/credentials`
+
+- If you don't have the credentials, you can get them using [get-role-credentials](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/sso/get-role-credentials.html) CLI command:
+  ```
+    get-role-credentials
+  --role-name <value (ex: PowerUserAccess)>
+  --account-id <value>
+  --access-token <value>
+  ```
+  The access token can be found in `~/.aws/cache` in a JSON that store the temp creds - more details [here](https://aws.amazon.com/premiumsupport/knowledge-center/sso-temporary-credentials/)
+
+Once credentials are legit, you can run:
+
+```
+npm run create-and-upload-test-data
+```

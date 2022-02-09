@@ -63,7 +63,9 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
       }
 
       const transactions = [
-        ...(await transactionRepository.getTransactions(thinTransactionIds)),
+        ...(await transactionRepository.getTransactionsByIds(
+          thinTransactionIds
+        )),
         this.transaction,
       ]
       const areAllTransactionsLowValue = transactions.every((transaction) => {

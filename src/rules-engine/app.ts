@@ -77,7 +77,9 @@ export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
         tenantId,
         dynamoDb
       )
-      const result = await transactionRepository.getTransaction(transactionId)
+      const result = await transactionRepository.getTransactionById(
+        transactionId
+      )
       return {
         statusCode: 200,
         body: JSON.stringify(result),

@@ -14,6 +14,9 @@ import { PaymentDetails } from '../../@types/tranasction/payment-type'
 const USER_ID_PREFIX = 'user:'
 
 export const DynamoDbKeys = {
+  TENANT: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#transaction#`,
+  }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#${transactionId}`,

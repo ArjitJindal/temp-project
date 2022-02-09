@@ -67,7 +67,7 @@ export class TransactionRepository {
     return transactionId
   }
 
-  public async getTransaction(transactionId: string): Promise<Transaction> {
+  public async getTransactionById(transactionId: string): Promise<Transaction> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
@@ -82,7 +82,7 @@ export class TransactionRepository {
     return transaction as Transaction
   }
 
-  public async getTransactions(
+  public async getTransactionsByIds(
     transactionIds: string[]
   ): Promise<Transaction[]> {
     if (transactionIds.length > 100) {

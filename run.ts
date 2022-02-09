@@ -11,7 +11,13 @@ import commandLineArgs from 'command-line-args'
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 
-const optionDefinitions = [{ name: 'action', type: String }]
+const optionDefinitions = [
+  { name: 'action', type: String },
+  { name: 'tenant', type: String },
+  { name: 'users', type: Number },
+  { name: 'transactions', type: Number },
+  { name: 'profileName', type: String },
+]
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
@@ -30,6 +36,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
+  'view-transactions': () =>
+    require('./src/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+      require('./events/update-rule-instance').event
+    ),
   'verify-transaction': () =>
     require('./src/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
@@ -41,6 +51,13 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'import-list': () =>
     require('./src/list-importer/app').listImporterHandler(
       require('./events/import-list').event
+    ),
+  'create-and-upload-test-data': () =>
+    require('./src/scripts/index').createTransactionData(
+      `fake-${options.tenant}` || 'demo-tenant-id',
+      options.users || 1,
+      options.transactions || 1,
+      options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
 }
 

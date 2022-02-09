@@ -103,9 +103,7 @@ paths:
                     rules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: >-
-                          If a user makes a remittance transaction >= 1800 in
-                          EUR - ask for proof of funds
+                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
                         ruleAction: block
                         ruleHit: true
         '401':
@@ -692,9 +690,7 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           description: Additional information that can be added via tags
-      description: >-
-        Model for a generic individual - different from User model by not having
-        userId field
+      description: Model for a generic individual - different from User model by not having userId field
       example:
         generalDetails:
           name:
@@ -766,9 +762,7 @@ components:
           description: Additional information that can be added via tags
         nameOnDocument:
           $ref: '#/components/schemas/ConsumerName'
-      description: >-
-        LegalDocument model generalizes User's identity document type (ex:
-        Passport)
+      description: "LegalDocument model generalizes User's identity document type (ex: Passport)"
       example:
         documentType: passport
         documentNumber: Z9431P
@@ -793,9 +787,7 @@ components:
           minLength: 1
           type: string
           description: Value for a given key when you are creating a custom variable
-      description: >-
-        Generic key-value pair model to append a custom variable being sent to
-        Flagright API
+      description: Generic key-value pair model to append a custom variable being sent to Flagright API
       example:
         key: customKey
         value: customValue
@@ -886,18 +878,14 @@ components:
             3dsDone: true
         productType:
           type: string
-          description: >-
-            Type of produce being used by the consumer (ex wallets, payments
-            etc)
+          description: 'Type of produce being used by the consumer (ex wallets, payments etc)'
         promotionCodeUsed:
           type: boolean
           description: Whether a promotion code was used or not the transaction
         reference:
           minLength: 1
           type: string
-          description: >-
-            Reference field for the transaction indicating the purpose of the
-            transaction etc.
+          description: Reference field for the transaction indicating the purpose of the transaction etc.
         deviceData:
           $ref: '#/components/schemas/DeviceData'
         tags:
@@ -927,10 +915,7 @@ components:
         cardFingerprint:
           minLength: 1
           type: string
-          description: >-
-            Unique card fingerprint that helps identify a specific card without
-            having to use explicit card number. This is likely available at your
-            card payment scheme provider
+          description: Unique card fingerprint that helps identify a specific card without having to use explicit card number. This is likely available at your card payment scheme provider
         cardIssuedCountry:
           minLength: 1
           type: string
@@ -1018,9 +1003,7 @@ components:
       properties:
         batteryLevel:
           type: number
-          description: >-
-            Battery level of the device used for a transaction or event at a
-            given timestamp
+          description: Battery level of the device used for a transaction or event at a given timestamp
         deviceLatitude:
           type: number
           description: Device latitude at a give timestamp for an event or transaction
@@ -1030,48 +1013,34 @@ components:
         ipAddress:
           minLength: 1
           type: string
-          description: >-
-            IP address of the device at a given timestamp for an event or
-            transaction
+          description: IP address of the device at a given timestamp for an event or transaction
         deviceIdentifier:
           minLength: 1
           type: string
           description: Device identifier number
         vpnUsed:
           type: boolean
-          description: >-
-            Whether VPN was used at a given timestamp for an event or
-            transaction
+          description: Whether VPN was used at a given timestamp for an event or transaction
         operatingSystem:
           minLength: 1
           type: string
-          description: >-
-            Operating system of the device at a given timestamp for an event or
-            transaction
+          description: Operating system of the device at a given timestamp for an event or transaction
         deviceMaker:
           minLength: 1
           type: string
-          description: >-
-            The maker of the device at a given timestamp for an event or
-            transaction
+          description: The maker of the device at a given timestamp for an event or transaction
         deviceModel:
           minLength: 1
           type: string
-          description: >-
-            The model of the device at a given timestamp for an event or
-            transaction
+          description: The model of the device at a given timestamp for an event or transaction
         deviceYear:
           minLength: 1
           type: string
-          description: >-
-            The year the device was manufactured at a given timestamp for an
-            event or transaction
+          description: The year the device was manufactured at a given timestamp for an event or transaction
         appVersion:
           minLength: 1
           type: string
-          description: >-
-            The version of the app your user is using on their device at a given
-            timestamp for an event or transaction
+          description: The version of the app your user is using on their device at a given timestamp for an event or transaction
       description: Model for device data
     TransactionMonitoringResult:
       title: TransactionMonitoringResult
@@ -1098,17 +1067,13 @@ components:
         executedRules:
           - ruleId: R-1a
             ruleName: Proof of funds for high value transactions
-            ruleDescription: >-
-              If a user makes a remittance transaction >= 1800 in EUR - ask for
-              proof of funds
+            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
             ruleAction: block
             ruleHit: true
         failedRules:
           - ruleId: R-1b
             ruleName: Proof of funds for high value transactions
-            ruleDescription: >-
-              If a user makes a remittance transaction >= 1800 in EUR - ask for
-              proof of funds
+            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
             failureException:
               exceptionName: MISSING_DATA
               exceptionDescription: Some data is missing
@@ -1137,21 +1102,14 @@ components:
         ruleAction:
           minLength: 1
           type: string
-          description: >-
-            The specific action a rule is configured to take if it's hit such as
-            flag (passive monitoring), block transaction, terminate user,
-            whitelist etc.
+          description: "The specific action a rule is configured to take if it's hit such as flag (passive monitoring), block transaction, terminate user, whitelist etc."
         ruleHit:
           type: boolean
-          description: >-
-            Whether a rule was hit or not. When a rule is hit, it takes the
-            pre-configured action on a transaction and/or user.
+          description: 'Whether a rule was hit or not. When a rule is hit, it takes the pre-configured action on a transaction and/or user.'
       example:
         ruleId: R-1a
         ruleName: Proof of funds for high value transactions
-        ruleDescription: >-
-          If a user makes a remittance transaction >= 1800 in EUR - ask for
-          proof of funds
+        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
         ruleAction: block
         ruleHit: true
     FailedRulesResult:
@@ -1180,9 +1138,7 @@ components:
       example:
         ruleId: R-1a
         ruleName: Proof of funds for high value transactions
-        ruleDescription: >-
-          If a user makes a remittance transaction >= 1800 in EUR - ask for
-          proof of funds
+        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
         failureException:
           exceptionName: MISSING_DATA
           exceptionDescription: Some data is missing
@@ -1426,9 +1382,7 @@ components:
         registrationIdentifier:
           minLength: 1
           type: string
-          description: >-
-            Commercial registry registration number for the company in its
-            registration country
+          description: Commercial registry registration number for the company in its registration country
         registrationCountry:
           minLength: 1
           type: string
@@ -1458,9 +1412,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Person'
-          description: >-
-            Shareholders (beneficiaries) of the company that hold at least 25%
-            ownership. Can be another company or an individual
+          description: Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
         directors:
           type: array
           items:
