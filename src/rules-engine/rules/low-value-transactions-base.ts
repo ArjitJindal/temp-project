@@ -3,12 +3,14 @@ import { TransactionAmountDetails } from '../../@types/openapi/transactionAmount
 import { RuleParameters } from '../../@types/rule/rule-instance'
 import { PaymentDirection } from '../../@types/tranasction/payment-direction'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { MissingRuleParameter } from './errors'
 import { Rule } from './rule'
 
 type LowValueTransactionsRuleParameters = RuleParameters & {
   lowTransactionValues: {
-    [currency: string]: number
+    [currency: string]: {
+      max: number
+      min: number
+    }
   }
   lowTransactionCount: number
 }
@@ -71,17 +73,17 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
       const areAllTransactionsLowValue = transactions.every((transaction) => {
         const { transactionAmount, transactionCurrency } =
           this.getTransactionAmountDetails(transaction)
-        if (
-          this.parameters.lowTransactionValues[transactionCurrency] ===
-          undefined
-        ) {
-          throw new MissingRuleParameter(
+        const thresholdValue =
+          this.parameters.lowTransactionValues[transactionCurrency]
+        if (thresholdValue === undefined) {
+          console.warn(
             `rule parameter lowTransactionValues doesn't include currency ${transactionCurrency}`
           )
+          return
         }
         return (
-          transactionAmount <=
-          this.parameters.lowTransactionValues[transactionCurrency]
+          transactionAmount > thresholdValue.min &&
+          transactionAmount < thresholdValue.max
         )
       })
       if (areAllTransactionsLowValue) {
