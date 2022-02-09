@@ -11,7 +11,13 @@ import commandLineArgs from 'command-line-args'
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 
-const optionDefinitions = [{ name: 'action', type: String }]
+const optionDefinitions = [
+  { name: 'action', type: String },
+  { name: 'tenant', type: String },
+  { name: 'users', type: Number },
+  { name: 'transactions', type: Number },
+  { name: 'profileName', type: String },
+]
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
@@ -49,8 +55,9 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-and-upload-test-data': () =>
     require('./src/scripts/index').createTransactionData(
       `fake-${options.tenant}` || 'demo-tenant-id',
-      options.users || 2,
-      options.transactions || 16
+      options.users || 1,
+      options.transactions || 1,
+      options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
 }
 

@@ -105,12 +105,13 @@ const createPaymentDetails = (sendingCountry: string, name: any) => {
 export const createTransactionData = async (
   tenantId: string,
   numberOfUsers: number,
-  numberOfTransactions: number
+  numberOfTransactions: number,
+  profileName: string
 ) => {
   /* DB init */
   const dynamoDb = new AWS.DynamoDB.DocumentClient({
     credentials: new AWS.SharedIniFileCredentials({
-      profile: 'AWSAdministratorAccess-911899431626', // TODO: Make it env var
+      profile: profileName,
     }),
   })
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
