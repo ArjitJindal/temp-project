@@ -3,7 +3,8 @@ import FirstPaymentRule from './first-payment'
 import HighRiskCurrencyRule from './high-risk-currency'
 import LowValueIncomingTransactionsRule from './low-value-incoming-transactions'
 import LowValueOutgoingTransactionsRule from './low-value-outgoing-transactions'
-import MultipleSendersWithinTimePeriodRule from './multiple-senders-within-time-period'
+import MultipleUserSendersWithinTimePeriodRule from './multiple-user-senders-within-time-period'
+import MultipleCounterpartySendersWithinTimePeriodRule from './multiple-counterparty-senders-within-time-period'
 import { Rule } from './rule'
 
 import TransactionNewCountryRule from './transaction-new-country'
@@ -17,5 +18,6 @@ export const rules = {
   'R-5': HighRiskCurrencyRule,
   'R-6': LowValueIncomingTransactionsRule,
   'R-7': LowValueOutgoingTransactionsRule,
-  'R-8': MultipleSendersWithinTimePeriodRule,
+  'R-8': MultipleUserSendersWithinTimePeriodRule,
+  'R-9': MultipleCounterpartySendersWithinTimePeriodRule,
 } as unknown as { [key: string]: typeof Rule }

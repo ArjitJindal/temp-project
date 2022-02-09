@@ -5,28 +5,26 @@ import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { Rule, RuleInfo } from './rule'
+import { Rule } from './rule'
 
 type MultipleSendersWithinTimePeriodRuleParameters = RuleParameters & {
-  senderTypes: Array<'USER' | 'NON_USER'>
-  receiverTypes: Array<'USER' | 'NON_USER'>
   sendersCount: number
   timePeriodDays: number
 }
 
-export default class MultipleSendersWithinTimePeriodRule extends Rule<MultipleSendersWithinTimePeriodRuleParameters> {
-  public getInfo(): RuleInfo {
-    return {
-      name: 'multiple_senders_within_time_period',
-      displayName: 'Multiple senders within time period',
-      description:
-        'More than x senders transacting with a single receiver within a set period of time t',
-    }
+export type SenderReceiverTypes = {
+  senderTypes: Array<'USER' | 'NON_USER'>
+  receiverTypes: Array<'USER' | 'NON_USER'>
+}
+
+export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<MultipleSendersWithinTimePeriodRuleParameters> {
+  protected getSenderReceiverTypes(): SenderReceiverTypes {
+    throw new Error('Not implemented')
   }
 
   public async computeRule() {
-    const { action, senderTypes, receiverTypes, timePeriodDays, sendersCount } =
-      this.parameters
+    const { action, timePeriodDays, sendersCount } = this.parameters
+    const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
     const transactionRepository = new TransactionRepository(
       this.tenantId,
       this.dynamoDb
