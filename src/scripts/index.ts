@@ -1,4 +1,4 @@
-import AWS from '../api-key-generator/node_modules/aws-sdk'
+import * as AWS from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import {
   uniqueNamesGenerator,
