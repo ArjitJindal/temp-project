@@ -18,8 +18,10 @@ export class TransactionRepository {
     // very distributed, timestamps are less reliable.
     const currentTime = new Date().getTime().toString()
     let idPrefix = ''
+    let iter = 0
     for (let letterStr of currentTime) {
-      idPrefix += String.fromCharCode(97 + parseInt(letterStr))
+      idPrefix += String.fromCharCode(97 + iter + parseInt(letterStr))
+      iter++
     }
     return idPrefix
   }
