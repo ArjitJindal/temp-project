@@ -19,7 +19,7 @@ export const DynamoDbKeys = {
   }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
-    PartitionKeyID: `${tenantId}#transaction#${transactionId}`,
+    PartitionKeyID: `${tenantId}#transaction#primary`,
     SortKeyID: transactionId,
   }),
   ALL_TRANSACTION: (

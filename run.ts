@@ -18,6 +18,7 @@ const optionDefinitions = [
   { name: 'transactions', type: Number },
   { name: 'profileName', type: String },
 ]
+
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
@@ -54,7 +55,7 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     ),
   'create-and-upload-test-data': () =>
     require('./src/scripts/index').createTransactionData(
-      `fake-${options.tenant}` || 'demo-tenant-id',
+      options.tenant || 'demo-tenant-id',
       options.users || 1,
       options.transactions || 1,
       options.profileName || 'AWSAdministratorAccess-911899431626'

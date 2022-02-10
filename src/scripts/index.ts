@@ -114,7 +114,10 @@ export const createTransactionData = async (
       profile: profileName,
     }),
   })
-  const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
+  const transactionRepository = new TransactionRepository(
+    `fake-${tenantId}`,
+    dynamoDb
+  )
 
   let transactionObject
   const nameOne = {
