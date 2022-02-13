@@ -15,7 +15,7 @@ const USER_ID_PREFIX = 'user:'
 
 export const DynamoDbKeys = {
   TENANT: (tenantId: string) => ({
-    PartitionKeyID: `${tenantId}#transaction#`,
+    PartitionKeyID: `${tenantId}#transaction#primary`,
   }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId: string) => ({
@@ -49,28 +49,28 @@ export const DynamoDbKeys = {
       case 'BANK': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#cardFingerprint:${cardFingerprint}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#upiID:${upiID}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#paymentDetails#upiID:${upiID}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
@@ -100,7 +100,7 @@ export const DynamoDbKeys = {
   }),
   // Attributes: refer to User / Business
   USER: (tenantId: string, userId: string) => ({
-    PartitionKeyID: `${tenantId}#user#${userId}`,
+    PartitionKeyID: `${tenantId}#user#primary`,
     SortKeyID: userId,
   }),
   LIST: (tenantId: string, listName: string, indexName: string) => ({
