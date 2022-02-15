@@ -29,8 +29,8 @@ export class Transaction {
   'timestamp': number
   'senderUserId'?: string
   'receiverUserId'?: string
-  'sendingAmountDetails': TransactionAmountDetails
-  'receivingAmountDetails': TransactionAmountDetails
+  'sendingAmountDetails'?: TransactionAmountDetails
+  'receivingAmountDetails'?: TransactionAmountDetails
   'senderPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
   'receiverPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
   /**

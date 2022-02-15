@@ -13,7 +13,8 @@ import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 
-async function verifyTransaction(
+// TODO: Move it to an abstraction layer
+export async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient

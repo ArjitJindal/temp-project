@@ -28,7 +28,7 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
 
   private getTransactionAmountDetails(
     transaction: Transaction
-  ): TransactionAmountDetails {
+  ): TransactionAmountDetails | undefined {
     const direction = this.getDirection()
     switch (direction) {
       case 'sending':
@@ -71,8 +71,14 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
         this.transaction,
       ]
       const areAllTransactionsLowValue = transactions.every((transaction) => {
-        const { transactionAmount, transactionCurrency } =
+        const transactionAmountDetails =
           this.getTransactionAmountDetails(transaction)
+        if (!transactionAmountDetails) {
+          return false
+        }
+        const { transactionCurrency, transactionAmount } =
+          transactionAmountDetails
+
         const thresholdValue =
           this.parameters.lowTransactionValues[transactionCurrency]
         if (thresholdValue === undefined) {

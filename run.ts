@@ -8,6 +8,8 @@
 
 import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
+import mkdirp from 'mkdirp'
+import { TarponStackConstants } from './lib/constants'
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 
@@ -60,6 +62,16 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.transactions || 1,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
+  'import-transaction': async () => {
+    await mkdirp(
+      `/tmp/flagright/s3/${TarponStackConstants.S3_IMPORT_TMP_BUCKET}`
+    )
+    await mkdirp(`/tmp/.flagright/s3/${TarponStackConstants.S3_IMPORT_BUCKET}`)
+
+    return require('./src/file-import/app').fileImportHandler(
+      require('./events/import-transaction').event
+    )
+  },
 }
 
 ;(async () => {

@@ -1058,8 +1058,6 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - timestamp
-        - sendingAmountDetails
-        - receivingAmountDetails
         - senderPaymentDetails
         - receiverPaymentDetails
     CardDetails:

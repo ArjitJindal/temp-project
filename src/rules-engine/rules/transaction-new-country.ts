@@ -23,8 +23,8 @@ export default class TransactionNewCountryRule extends Rule<TransactionNewCountr
       this.dynamoDb
     )
     const { senderUserId, receiverUserId } = this.transaction
-    const { country: senderCountry } = this.transaction.sendingAmountDetails
-    const { country: receiverCountry } = this.transaction.receivingAmountDetails
+    const senderCountry = this.transaction.sendingAmountDetails?.country
+    const receiverCountry = this.transaction.receivingAmountDetails?.country
     const [
       senderTransactionCountries,
       senderTransactionsCount,

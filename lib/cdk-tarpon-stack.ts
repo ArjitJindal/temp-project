@@ -1,4 +1,5 @@
 import * as cdk from '@aws-cdk/core'
+import * as s3 from '@aws-cdk/aws-s3'
 import {
   ArnPrincipal,
   Effect,
@@ -50,6 +51,28 @@ export class CdkTarponStack extends cdk.Stack {
         writeCapacity: 1,
       }
     )
+
+    /**
+     * S3 Buckets
+     */
+    new s3.Bucket(this, TarponStackConstants.S3_IMPORT_BUCKET, {
+      bucketName: TarponStackConstants.S3_IMPORT_BUCKET,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+    })
+    new s3.Bucket(this, TarponStackConstants.S3_IMPORT_TMP_BUCKET, {
+      bucketName: TarponStackConstants.S3_IMPORT_TMP_BUCKET,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      lifecycleRules: [
+        {
+          abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
+          expiration: cdk.Duration.days(1),
+        },
+      ],
+    })
 
     /**
      * Lambda Functions
@@ -126,6 +149,21 @@ export class CdkTarponStack extends cdk.Stack {
     ;(transactionFunction.node.defaultChild as CfnFunction).overrideLogicalId(
       transactionFunctionName
     )
+
+    /* File Import */
+    const fileImportFunction = new Function(
+      this,
+      getResourceName('FileImportFunction'),
+      {
+        functionName: getResourceName('FileImportFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.fileImportHandler',
+        code: Code.fromAsset('dist/file-import/'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    dynamoDbTable.grantReadWriteData(fileImportFunction)
 
     /* Rule Instance */
     const ruleInstanceFunction = new Function(
@@ -252,11 +290,17 @@ export class CdkTarponStack extends cdk.Stack {
       internalApiSecurityOptions
     )
 
-    const transactionsViewResource =
-      internalApi.root.addResource('view_transactions')
-    transactionsViewResource.addMethod(
+    const transactionsResource = internalApi.root.addResource('transactions')
+    transactionsResource.addMethod(
       'GET',
       new LambdaIntegration(transactionsViewFunction),
+      internalApiSecurityOptions
+    )
+    const transactionsImportResource =
+      transactionsResource.addResource('import')
+    transactionsImportResource.addMethod(
+      'POST',
+      new LambdaIntegration(fileImportFunction),
       internalApiSecurityOptions
     )
 

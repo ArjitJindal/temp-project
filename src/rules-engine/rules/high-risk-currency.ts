@@ -16,14 +16,16 @@ export default class HighRiskCurrencyRule extends Rule<HighRiskCurrencyRuleParam
   }
 
   public async computeRule() {
-    const { transactionCurrency: sendingCurrency } =
-      this.transaction.sendingAmountDetails
-    const { transactionCurrency: receivingCurrency } =
-      this.transaction.receivingAmountDetails
+    const sendingCurrency =
+      this.transaction.sendingAmountDetails?.transactionCurrency
+    const receivingCurrency =
+      this.transaction.receivingAmountDetails?.transactionCurrency
 
     if (
-      this.parameters.highRiskCurrencies.includes(sendingCurrency) ||
-      this.parameters.highRiskCurrencies.includes(receivingCurrency)
+      (sendingCurrency &&
+        this.parameters.highRiskCurrencies.includes(sendingCurrency)) ||
+      (receivingCurrency &&
+        this.parameters.highRiskCurrencies.includes(receivingCurrency))
     ) {
       return {
         action: this.parameters.action,
