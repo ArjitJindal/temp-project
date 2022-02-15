@@ -1,15 +1,20 @@
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyWithLambdaAuthorizerHandler,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import * as createError from 'http-errors'
 import { getDynamoDbClient } from '../utils/dynamodb'
 import { getS3Client } from '../utils/s3'
+import { httpErrorHandler } from '../core/middlewares/http-error-handler'
+import { jsonSerializer } from '../core/middlewares/json-serializer'
 import { TransactionImporter } from './transaction/importer'
 
-export const fileImportHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-> = async (event) => {
+const internalFileImportHandler = async (
+  event: APIGatewayProxyWithLambdaAuthorizerEvent<
+    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  >
+) => {
   const { tenantId } = event.queryStringParameters as any
   const dynamoDb = getDynamoDbClient(event)
   const s3 = getS3Client(event)
@@ -25,15 +30,13 @@ export const fileImportHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
       const importedTransactions = await transactionImporter.importTransactions(
         importRequest
       )
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ importedTransactions }),
-      }
+      return { importedTransactions }
     }
   }
 
-  return {
-    statusCode: 500,
-    body: 'Unhandled request',
-  }
+  throw new createError.NotImplemented()
 }
+
+export const fileImportHandler = httpErrorHandler()(
+  jsonSerializer()(internalFileImportHandler)
+)

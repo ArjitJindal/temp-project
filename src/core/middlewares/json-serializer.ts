@@ -1,0 +1,34 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyResult,
+  APIGatewayProxyWithLambdaAuthorizerHandler,
+} from 'aws-lambda'
+
+type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
+  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+>
+
+export const jsonSerializer =
+  () =>
+  (handler: CallableFunction): Handler =>
+  async (
+    event: any,
+    context: any,
+    callback: any
+  ): Promise<APIGatewayProxyResult> => {
+    const response = await handler(event, context, callback)
+    if (!response) {
+      return {
+        statusCode: 204,
+        body: '',
+      }
+    }
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(response),
+    }
+  }
