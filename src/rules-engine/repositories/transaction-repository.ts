@@ -1,8 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
 import { Transaction } from '../../@types/openapi/transaction'
+import { transactionListResult } from '../../@types/tranasction/transaction-list'
 import { PaymentDetails } from '../../@types/tranasction/payment-type'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
+import { getTimstampBasedIDPrefix } from '../../utils/timestampUtils'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -13,23 +15,11 @@ export class TransactionRepository {
     this.tenantId = tenantId
   }
 
-  getTimstampBasedIDPrefix = (): string => {
-    // This is more than adequate for now, at some point which the systems are
-    // very distributed, timestamps are less reliable.
-    const currentTime = new Date().getTime().toString()
-    let idPrefix = ''
-    let iter = 0
-    for (let letterStr of currentTime) {
-      idPrefix += String.fromCharCode(97 + iter + parseInt(letterStr))
-      iter++
-    }
-    return idPrefix
-  }
-
   public async saveTransaction(transaction: Transaction): Promise<string> {
     const transactionId =
       transaction.transactionId ||
-      `${this.getTimstampBasedIDPrefix()}-${uuidv4()}`
+      `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
+
     const senderKeys = DynamoDbKeys.ALL_TRANSACTION(
       this.tenantId,
       transaction.senderUserId,

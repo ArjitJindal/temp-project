@@ -10,19 +10,25 @@ import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 export const transactionsViewHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
 > = async (event) => {
+  if (!event.queryStringParameters || !event.queryStringParameters.tenantId) {
+    return {
+      statusCode: 400,
+      body: 'Bad request: No tenant ID provided',
+    }
+  }
   const { tenantId } =
     event.queryStringParameters as RuleInstanceQueryStringParameters
+  const pageSize = event.queryStringParameters.pageSize
+    ? parseInt(event.queryStringParameters.pageSize)
+    : 50
   const dynamoDb = getDynamoDbClient(event)
   const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
 
   if (event.httpMethod === 'GET') {
-    if (!event.body) {
-      throw new Error('missing payload!')
-    }
     /*Implementation Pending*/
     return {
       statusCode: 200,
-      body: 'OK',
+      body: 'sucess',
     }
   }
 
