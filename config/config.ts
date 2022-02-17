@@ -112,6 +112,12 @@ export default defineConfig({
           path: '/transactions/transactions-list',
           component: './transactions/transactions-list',
         },
+        {
+          name: 'import-transactions',
+          icon: 'smile',
+          path: '/transactions/import-transactions',
+          component: './transactions/import-transactions',
+        },
       ],
     },
     {
