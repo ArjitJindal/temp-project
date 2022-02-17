@@ -19,6 +19,7 @@ export function getS3Client(
 
   const isDevEnv = !process.env.NODE_ENV || process.env.NODE_ENV === 'dev'
   return new AWS.S3({
+    signatureVersion: 'v4',
     credentials: isDevEnv
       ? new AWS.SharedIniFileCredentials()
       : getCredentialsFromEvent(event),

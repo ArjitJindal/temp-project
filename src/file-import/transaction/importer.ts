@@ -1,6 +1,6 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
-import { TarponStackConstants } from '../../../lib/constants'
+import { getS3BucketName, TarponStackConstants } from '../../../lib/constants'
 import { Transaction } from '../../@types/openapi/transaction'
 import { TransactionMonitoringResult } from '../../@types/openapi/transactionMonitoringResult'
 import { verifyTransaction } from '../../rules-engine/app'
@@ -16,15 +16,18 @@ export class TransactionImporter {
   tenantId: string
   dynamoDb: AWS.DynamoDB.DocumentClient
   s3: AWS.S3
+  accountId: string
 
   constructor(
     tenantId: string,
     dynamoDb: AWS.DynamoDB.DocumentClient,
-    s3: AWS.S3
+    s3: AWS.S3,
+    accountId: string
   ) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.s3 = s3
+    this.accountId = accountId
   }
 
   public async importTransactions(
@@ -37,8 +40,12 @@ export class TransactionImporter {
     }
 
     let importedTransactions = 0
+    const importTmpBucket = getS3BucketName(
+      TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
+      this.accountId
+    )
     const params = {
-      Bucket: TarponStackConstants.S3_IMPORT_TMP_BUCKET,
+      Bucket: importTmpBucket,
       Key: key,
     }
     const stream = this.s3
@@ -55,15 +62,19 @@ export class TransactionImporter {
       if (transaction) {
         const transactionResult = await this.importTransaction(transaction)
         importedTransactions += 1
-        console.log(
+        console.debug(
           `Imported transaction (id=${transactionResult.transactionId})`
         )
       }
     }
+    const importBucket = getS3BucketName(
+      TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
+      this.accountId
+    )
     await this.s3
       .copyObject({
-        CopySource: `${TarponStackConstants.S3_IMPORT_TMP_BUCKET}/${key}`,
-        Bucket: TarponStackConstants.S3_IMPORT_BUCKET,
+        CopySource: `${importTmpBucket}/${key}`,
+        Bucket: importBucket,
         Key: key,
       })
       .promise()

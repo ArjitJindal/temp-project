@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
-    "build": "webpack && cdk synth",
+    "build": "webpack && cdk synth --profile $npm_config_profile",
     "deploy": "cdk deploy --profile $npm_config_profile",
     "test": "ts-mocha **/tests/**/*.ts",
     "format": "prettier --write .",
@@ -25,7 +25,8 @@
     "get-transaction": "ts-node run.ts --action get-transaction",
     "import-list": "ts-node run.ts --action import-list",
     "create-and-upload-test-data": "ts-node run.ts --action create-and-upload-test-data --users $npm_config_users --transactions $npm_config_transactions --tenant $npm_config_tenant",
-    "import-transaction": "MOCK_S3=true ts-node run.ts --action import-transaction"
+    "import-transaction": "MOCK_S3=true ts-node run.ts --action import-transaction",
+    "get-presigned-url": "ts-node run.ts --action get-presigned-url"
   },
   "repository": {
     "type": "git",
