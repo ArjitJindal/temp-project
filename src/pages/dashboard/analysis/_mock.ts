@@ -23,12 +23,40 @@ for (let i = 0; i < fakeY2.length; i += 1) {
   });
 }
 
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const monthLabels = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+const monthValues = [
+  '2022-01',
+  '2022-02',
+  '2022-03',
+  '2022-04',
+  '2022-05',
+  '2022-06',
+  '2022-07',
+  '2022-08',
+  '2022-09',
+  '2022-10',
+  '2022-11',
+  '2022-12',
+];
 
 const salesData = [];
 for (let i = 0; i < 12; i += 1) {
   salesData.push({
-    x: months[i],
+    x: monthLabels[i],
+    xValue: monthValues[i],
     y: Math.floor(Math.random() * 1000) + 200,
   });
 }
