@@ -42,9 +42,8 @@ const createBusinessUsers = (
       userId: userId,
       legalEntity: createLegalEntity(currency, country),
       shareHolders: createShareHolders(country),
-      createdTimestamp: (
-        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000)
-      ).toString(),
+      createdTimestamp:
+        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
     }
 
     userRepository.createBusinessUser(userObject)

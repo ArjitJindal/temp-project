@@ -19,7 +19,7 @@ export class Business {
    * Unique user ID for the user
    */
   'userId': string
-  'createdTimestamp': string
+  'createdTimestamp': number
   'legalEntity': LegalEntity
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual

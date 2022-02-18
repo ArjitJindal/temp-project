@@ -24,7 +24,7 @@ export class User {
    */
   'userId'?: string
   'userDetails': UserDetails
-  'createdTimestamp': string
+  'createdTimestamp': number
   /**
    * User\'s legal identity documents - See Document Model for details
    */
