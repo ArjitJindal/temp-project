@@ -1,57 +1,20 @@
 import * as AWS from 'aws-sdk'
-import { v4 as uuidv4 } from 'uuid'
-import {
-  uniqueNamesGenerator,
-  Config as namesConfig,
-  names,
-} from 'unique-names-generator'
-
 import { IBAN } from 'ibankit'
 
+import {
+  createUuid,
+  getRandomIntInclusive,
+  createNameEntity,
+  getNameString,
+} from './utils'
+import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
+import { UserRepository } from '../user-management/repositories/user-repository'
+import { countries, currencies } from './constants'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
 */
-
-const getRandomIntInclusive = (min: number, max: number) => {
-  min = Math.ceil(min)
-  max = Math.floor(max)
-  return Math.floor(Math.random() * (max - min + 1)) + min //The maximum is inclusive and the minimum is inclusive
-}
-
-const currencies: string[] = [
-  'USD',
-  'EUR',
-  'JPY',
-  'GBP',
-  'INR',
-  'NTD',
-  'RUB',
-  'SGD',
-  'TRY',
-]
-
-const countries: string[] = [
-  'US',
-  'DE',
-  'JP',
-  'GB',
-  'IN',
-  'TW',
-  'RU',
-  'SG',
-  'TR',
-]
-
-function createUuid() {
-  return uuidv4().replace(/-/g, '')
-}
-
-const uniqueNamesConfig: namesConfig = {
-  dictionaries: [names],
-  length: 1,
-}
 
 const paymentMethods = ['CARD', 'BANK']
 
@@ -63,10 +26,28 @@ const createCardPaymentDetails = (sendingCountry: string, name: any) => {
   }
 }
 
-const createUserIds = (n: number) => {
+const createBusinessUsers = (
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  tenantId: string,
+  numberOfUsers: number,
+  currency: string,
+  country: string
+) => {
   let userIDs: string[] = []
-  for (let i = 0; i < n; i++) {
-    userIDs.push(createUuid())
+  const userRepository = new UserRepository(`fake-${tenantId}`, dynamoDb)
+  for (let i = 0; i < numberOfUsers; i++) {
+    let userId = createUuid()
+    userIDs.push(userId)
+    let userObject = {
+      userId: userId,
+      legalEntity: createLegalEntity(currency, country),
+      shareHolders: createShareHolders(country),
+      createdTimestamp:
+        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
+    }
+
+    userRepository.createBusinessUser(userObject)
+    console.log(JSON.stringify(userObject))
   }
   return userIDs
 }
@@ -79,7 +60,7 @@ const createBankPaymentDetails = (name: any) => {
   return {
     method: 'BANK',
     BIC: 'DEUTDEFF',
-    bankName: `${uniqueNamesGenerator(uniqueNamesConfig)} Bank`,
+    bankName: `${getNameString()} Bank`,
     IBAN: (ibanInfo.getAccountNumber() !== null
       ? ibanInfo.getAccountNumber()
       : 'DE9712243431123') as string,
@@ -102,7 +83,7 @@ const createPaymentDetails = (sendingCountry: string, name: any) => {
   }
 }
 
-export const createTransactionData = async (
+export const createAndUploadTestData = async (
   tenantId: string,
   numberOfUsers: number,
   numberOfTransactions: number,
@@ -120,16 +101,8 @@ export const createTransactionData = async (
   )
 
   let transactionObject
-  const nameOne = {
-    firstName: uniqueNamesGenerator(uniqueNamesConfig),
-    middleName: uniqueNamesGenerator(uniqueNamesConfig),
-    lastName: uniqueNamesGenerator(uniqueNamesConfig),
-  }
-  const nameTwo = {
-    firstName: uniqueNamesGenerator(uniqueNamesConfig),
-    middleName: uniqueNamesGenerator(uniqueNamesConfig),
-    lastName: uniqueNamesGenerator(uniqueNamesConfig),
-  }
+  const nameOne = createNameEntity()
+  const nameTwo = createNameEntity()
   const countryCurrencyIndexOne = getRandomIntInclusive(0, 8)
   const countryOne = countries[countryCurrencyIndexOne]
   const currencyOne = currencies[countryCurrencyIndexOne]
@@ -137,7 +110,13 @@ export const createTransactionData = async (
   const countryTwo = countries[countryCurrencyIndexTwo]
   const currencyTwo = currencies[countryCurrencyIndexTwo]
 
-  const userIds: string[] = createUserIds(numberOfUsers)
+  const userIds: string[] = createBusinessUsers(
+    dynamoDb,
+    tenantId,
+    numberOfUsers,
+    currencyOne,
+    countryOne
+  )
 
   const dynamoDbResults = []
 
