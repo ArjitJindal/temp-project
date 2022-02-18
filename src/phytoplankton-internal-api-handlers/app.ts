@@ -28,7 +28,7 @@ export const transactionsViewHandler: APIGatewayProxyWithLambdaAuthorizerHandler
     /*Implementation Pending*/
     return {
       statusCode: 200,
-      body: 'sucess',
+      body: 'success',
     }
   }
 
