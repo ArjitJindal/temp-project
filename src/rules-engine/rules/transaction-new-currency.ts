@@ -23,10 +23,10 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
       this.dynamoDb
     )
     const { senderUserId, receiverUserId } = this.transaction
-    const { transactionCurrency: senderCurrency } =
-      this.transaction.sendingAmountDetails
-    const { transactionCurrency: receiverCurrency } =
-      this.transaction.receivingAmountDetails
+    const senderCurrency =
+      this.transaction.sendingAmountDetails?.transactionCurrency
+    const receiverCurrency =
+      this.transaction.sendingAmountDetails?.transactionCurrency
     const [
       senderTransactionCurrencies,
       senderTransactionsCount,
@@ -48,12 +48,14 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
         senderTransactionsCount.sendingTransactionsCount >=
           this.parameters.initialTransactions &&
         senderTransactionCurrencies &&
+        receiverCurrency &&
         !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)) ||
       (receiverUserId &&
         receiverTransactionsCount &&
         receiverTransactionsCount.receivingTransactionsCount >=
           this.parameters.initialTransactions &&
         receiverTransactionCurrencies &&
+        senderCurrency &&
         !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency))
     ) {
       return {

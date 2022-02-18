@@ -8,6 +8,7 @@ const config: Configuration = {
     'rules-engine': './src/rules-engine/app.ts',
     'user-management': './src/user-management/app.ts',
     'list-importer': './src/list-importer/app.ts',
+    'file-import': './src/file-import/app.ts',
     'phytoplankton-internal-api-handlers':
       './src/phytoplankton-internal-api-handlers/app.ts',
   },

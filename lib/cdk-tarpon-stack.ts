@@ -1,4 +1,5 @@
 import * as cdk from '@aws-cdk/core'
+import * as s3 from '@aws-cdk/aws-s3'
 import {
   ArnPrincipal,
   Effect,
@@ -30,7 +31,11 @@ import {
   Tracing,
 } from '@aws-cdk/aws-lambda'
 import { Asset } from '@aws-cdk/aws-s3-assets'
-import { TarponStackConstants, getResourceName } from './constants'
+import {
+  TarponStackConstants,
+  getResourceName,
+  getS3BucketName,
+} from './constants'
 
 export class CdkTarponStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -50,6 +55,38 @@ export class CdkTarponStack extends cdk.Stack {
         writeCapacity: 1,
       }
     )
+
+    /**
+     * S3 Buckets
+     * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
+     * logical bucket name.
+     */
+    const importBucketName = getS3BucketName(
+      TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
+      process.env.CDK_DEFAULT_ACCOUNT
+    )
+    const s3ImportBucket = new s3.Bucket(this, importBucketName, {
+      bucketName: importBucketName,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+    })
+    const importTmpBucketName = getS3BucketName(
+      TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
+      process.env.CDK_DEFAULT_ACCOUNT
+    )
+    const s3ImportTmpBucket = new s3.Bucket(this, importTmpBucketName, {
+      bucketName: importTmpBucketName,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      lifecycleRules: [
+        {
+          abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
+          expiration: cdk.Duration.days(1),
+        },
+      ],
+    })
 
     /**
      * Lambda Functions
@@ -126,6 +163,37 @@ export class CdkTarponStack extends cdk.Stack {
     ;(transactionFunction.node.defaultChild as CfnFunction).overrideLogicalId(
       transactionFunctionName
     )
+
+    /* File Import */
+    const fileImportFunction = new Function(
+      this,
+      getResourceName('FileImportFunction'),
+      {
+        functionName: getResourceName('FileImportFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.fileImportHandler',
+        code: Code.fromAsset('dist/file-import/'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    dynamoDbTable.grantReadWriteData(fileImportFunction)
+    s3ImportTmpBucket.grantRead(fileImportFunction)
+    s3ImportBucket.grantWrite(fileImportFunction)
+
+    const getPresignedUrlFunction = new Function(
+      this,
+      getResourceName('GetPresignedUrlFunction'),
+      {
+        functionName: getResourceName('GetPresignedUrlFunction'),
+        runtime: Runtime.NODEJS_14_X,
+        handler: 'app.getPresignedUrlHandler',
+        code: Code.fromAsset('dist/file-import/'),
+        tracing: Tracing.ACTIVE,
+        timeout: Duration.seconds(10),
+      }
+    )
+    s3ImportTmpBucket.grantPut(getPresignedUrlFunction)
 
     /* Rule Instance */
     const ruleInstanceFunction = new Function(
@@ -252,12 +320,25 @@ export class CdkTarponStack extends cdk.Stack {
       internalApiSecurityOptions
     )
 
-    const transactionsViewResource =
-      internalApi.root.addResource('view_transactions')
-    transactionsViewResource.addMethod(
+    const transactionsResource = internalApi.root.addResource('transactions')
+    transactionsResource.addMethod(
       'GET',
       new LambdaIntegration(transactionsViewFunction),
       internalApiSecurityOptions
+    )
+
+    // TODO: Add security options once we have console authorizer
+    const transactionsImportResource =
+      transactionsResource.addResource('import')
+    transactionsImportResource.addMethod(
+      'POST',
+      new LambdaIntegration(fileImportFunction)
+    )
+    const transactionsGetPresignedUrlResource =
+      transactionsImportResource.addResource('getPresignedUrl')
+    transactionsGetPresignedUrlResource.addMethod(
+      'POST',
+      new LambdaIntegration(getPresignedUrlFunction)
     )
 
     const listsResource = internalApi.root.addResource('lists')

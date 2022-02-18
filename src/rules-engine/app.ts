@@ -7,12 +7,14 @@ import { Transaction } from '../@types/openapi/transaction'
 import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
 import { getDynamoDbClient } from '../utils/dynamodb'
 import { RuleActionEnum } from '../@types/rule/rule-instance'
+import { cors } from '../core/utils/cors'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 
-async function verifyTransaction(
+// TODO: Move it to an abstraction layer
+export async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -70,10 +72,10 @@ export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
       const transaction = JSON.parse(event.body)
       // TODO: Validate payload
       const result = await verifyTransaction(transaction, tenantId, dynamoDb)
-      return {
+      return cors({
         statusCode: 200,
         body: JSON.stringify(result),
-      }
+      })
     } else if (event.httpMethod === 'GET' && transactionId) {
       const transactionRepository = new TransactionRepository(
         tenantId,
@@ -82,24 +84,24 @@ export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
       const result = await transactionRepository.getTransactionById(
         transactionId
       )
-      return {
+      return cors({
         statusCode: 200,
         body: JSON.stringify(result),
-      }
+      })
     }
-    return {
+    return cors({
       statusCode: 500,
       body: 'Unhandled request',
-    }
+    })
   } catch (err) {
     console.log(err)
     const errMessage = err instanceof Error ? err.message : err
-    return {
+    return cors({
       statusCode: 500,
       body: JSON.stringify({
         error: errMessage,
       }),
-    }
+    })
   }
 }
 

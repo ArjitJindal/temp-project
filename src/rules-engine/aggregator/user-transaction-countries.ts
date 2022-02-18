@@ -4,7 +4,7 @@ export class UserTransactionCountries extends Aggregator {
   public async aggregate(): Promise<void> {
     if (
       this.transaction.senderUserId &&
-      this.transaction.receivingAmountDetails.country
+      this.transaction.receivingAmountDetails?.country
     ) {
       await this.aggregationRepository.addUserTransactionCountry(
         this.transaction.senderUserId,
@@ -14,7 +14,7 @@ export class UserTransactionCountries extends Aggregator {
     }
     if (
       this.transaction.receiverUserId &&
-      this.transaction.sendingAmountDetails.country
+      this.transaction.sendingAmountDetails?.country
     ) {
       await this.aggregationRepository.addUserTransactionCountry(
         this.transaction.receiverUserId,

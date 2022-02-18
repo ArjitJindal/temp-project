@@ -4,6 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import { getDynamoDbClient } from '../utils/dynamodb'
+import { cors } from '../core/utils/cors'
 import { UserRepository } from './repositories/user-repository'
 
 export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
@@ -18,10 +19,10 @@ export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
     if (event.httpMethod === 'GET' && userId) {
       const user = await userRepository.getBusinessUser(userId)
       console.log(user)
-      return {
+      return cors({
         statusCode: 200,
         body: JSON.stringify(user),
-      }
+      })
     } else if (event.httpMethod === 'POST' && event.body) {
       const user = await userRepository.createBusinessUser(
         JSON.parse(event.body)
@@ -31,18 +32,18 @@ export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
         // TODO: Implement risk score
         userRiskScoreDetails: undefined,
       }
-      return {
+      return cors({
         statusCode: 201,
         body: JSON.stringify(result),
-      }
+      })
     }
   } else if (event.path.includes('consumer')) {
     if (event.httpMethod === 'GET' && userId) {
       const user = await userRepository.getConsumerUser(userId)
-      return {
+      return cors({
         statusCode: 200,
         body: JSON.stringify(user),
-      }
+      })
     } else if (event.httpMethod === 'POST' && event.body) {
       const user = await userRepository.createConsumerUser(
         JSON.parse(event.body)
@@ -52,14 +53,14 @@ export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
         // TODO: Implement risk score
         userRiskScoreDetails: undefined,
       }
-      return {
+      return cors({
         statusCode: 201,
         body: JSON.stringify(result),
-      }
+      })
     }
   }
-  return {
+  return cors({
     statusCode: 500,
     body: 'Unhandled request',
-  }
+  })
 }

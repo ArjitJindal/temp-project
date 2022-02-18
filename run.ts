@@ -8,6 +8,17 @@
 
 import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
+import mkdirp from 'mkdirp'
+import { TarponStackConstants } from './lib/constants'
+
+async function setUpMockS3() {
+  await mkdirp(
+    `/tmp/flagright/s3/${TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX}`
+  )
+  await mkdirp(
+    `/tmp/.flagright/s3/${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}`
+  )
+}
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 
@@ -60,6 +71,17 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.transactions || 1,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
+  'import-transaction': async () => {
+    await setUpMockS3()
+    return require('./src/file-import/app').fileImportHandler(
+      require('./events/import-transaction').event
+    )
+  },
+  'get-presigned-url': async () => {
+    return require('./src/file-import/app').getPresignedUrlHandler(
+      require('./events/get-presigned-url').event
+    )
+  },
 }
 
 ;(async () => {
