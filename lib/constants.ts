@@ -26,4 +26,7 @@ export const TarponStackConstants = {
   FILE_IMPORT_FUNCTION_NAME: getResourceName('FileImportFunction'),
   GET_PRESIGNED_URL_FUNCTION_NAME: getResourceName('GetPresignedUrlFunction'),
   LIST_IMPORTER_FUNCTION_NAME: getResourceName('ListImporterFunction'),
+  TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME: getResourceName(
+    'TarponChangeCaptureKinesisConsumer'
+  ),
 }

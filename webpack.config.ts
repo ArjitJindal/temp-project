@@ -10,6 +10,8 @@ const config: Configuration = {
     'user-management': './src/lambdas/user-management/app.ts',
     'list-importer': './src/lambdas/list-importer/app.ts',
     'file-import': './src/lambdas/file-import/app.ts',
+    'tarpon-change-capture-kinesis-consumer':
+      './src/lambdas/tarpon-change-capture-kinesis-consumer/app.ts',
     'phytoplankton-internal-api-handlers':
       './src/lambdas/phytoplankton-internal-api-handlers/app.ts',
   },
