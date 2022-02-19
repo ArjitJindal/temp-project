@@ -81,6 +81,7 @@
     "webpack-cli": "^4.9.1"
   },
   "dependencies": {
+    "@aws-cdk/aws-docdb": "^1.139.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/parse": "^4.3.6",
     "base-x": "^3.0.9",
