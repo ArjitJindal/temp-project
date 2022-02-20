@@ -10,13 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { ACHDetails } from './aCHDetails'
+import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './cardDetails'
 import { DeviceData } from './deviceData'
-import { IBANDetails } from './iBANDetails'
+import { IBANDetails } from './IBANDetails'
 import { Tag } from './tag'
 import { TransactionAmountDetails } from './transactionAmountDetails'
-import { UPIDetails } from './uPIDetails'
+import { UPIDetails } from './UPIDetails'
 
 /**
  * Model for transaction payload

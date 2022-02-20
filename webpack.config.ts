@@ -3,15 +3,15 @@ import { Configuration } from 'webpack'
 
 const config: Configuration = {
   entry: {
-    'api-key-generator': './src/api-key-generator/app.ts',
-    'api-key-authorizer': './src/authorizer/api-key-authorizer.ts',
-    'jwt-authorizer': './src/authorizer/jwt-authorizer.ts',
-    'rules-engine': './src/rules-engine/app.ts',
-    'user-management': './src/user-management/app.ts',
-    'list-importer': './src/list-importer/app.ts',
-    'file-import': './src/file-import/app.ts',
+    'api-key-generator': './src/lambdas/api-key-generator/app.ts',
+    'api-key-authorizer': './src/lambdas/authorizer/api-key-authorizer.ts',
+    'jwt-authorizer': './src/lambdas/authorizer/jwt-authorizer.ts',
+    'rules-engine': './src/lambdas/rules-engine/app.ts',
+    'user-management': './src/lambdas/user-management/app.ts',
+    'list-importer': './src/lambdas/list-importer/app.ts',
+    'file-import': './src/lambdas/file-import/app.ts',
     'phytoplankton-internal-api-handlers':
-      './src/phytoplankton-internal-api-handlers/app.ts',
+      './src/lambdas/phytoplankton-internal-api-handlers/app.ts',
   },
   output: {
     filename: '[name]/app.js',

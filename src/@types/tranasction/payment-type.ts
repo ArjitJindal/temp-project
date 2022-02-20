@@ -1,6 +1,6 @@
-import { ACHDetails } from '../openapi-public/aCHDetails'
+import { ACHDetails } from '../openapi-public/ACHDetails'
 import { CardDetails } from '../openapi-public/cardDetails'
-import { IBANDetails } from '../openapi-public/iBANDetails'
-import { UPIDetails } from '../openapi-public/uPIDetails'
+import { IBANDetails } from '../openapi-public/IBANDetails'
+import { UPIDetails } from '../openapi-public/UPIDetails'
 
 export type PaymentDetails = CardDetails | IBANDetails | ACHDetails | UPIDetails
