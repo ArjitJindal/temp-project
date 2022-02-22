@@ -3,11 +3,9 @@ export const event = {
   path: '/import/getPresignedUrl',
   httpMethod: 'POST',
   headers: {},
-  queryStringParameters: {
-    tenantId: 'sh-payment',
-  },
   requestContext: {
     accountId: 'test',
+    authorizer: { principalId: 'test-tenant-id' },
   },
   stageVariables: null,
 }

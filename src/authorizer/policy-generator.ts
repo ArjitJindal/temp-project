@@ -1,4 +1,5 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
+import { TarponStackConstants } from '../../lib/constants'
 
 export default class PolicyBuilder {
   tenantId: string
@@ -14,6 +15,7 @@ export default class PolicyBuilder {
 
   dynamoDb(table: string) {
     this.statements.push({
+      Sid: 'AllowAllActionsOfTenantData',
       Effect: 'Allow',
       Action: ['dynamodb:*'],
       Resource: [`arn:aws:dynamodb:*:*:table/${table}`],
@@ -22,6 +24,19 @@ export default class PolicyBuilder {
           'dynamodb:LeadingKeys': [`${this.tenantId}*`],
         },
       },
+    })
+    return this
+  }
+
+  s3() {
+    this.statements.push({
+      Sid: 'AllowAllActionsInTenantFolders',
+      Action: ['s3:*'],
+      Effect: 'Allow',
+      Resource: [
+        `arn:aws:s3:::${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
+      ],
     })
     return this
   }

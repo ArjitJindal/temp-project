@@ -20,7 +20,7 @@ const internalFileImportHandler = async (
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ) => {
-  const { tenantId } = event.queryStringParameters as any
+  const { principalId: tenantId } = event.requestContext.authorizer
   const dynamoDb = getDynamoDbClient(event)
   const s3 = getS3Client(event)
 
@@ -48,8 +48,8 @@ const internalGetPresignedUrlHandler = async (
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ) => {
+  const { principalId: tenantId } = event.requestContext.authorizer
   const { accountId } = event.requestContext
-  const { tenantId } = event.queryStringParameters as any
   const s3 = getS3Client(event)
 
   const s3Key = `${tenantId}/${uuidv4()}`

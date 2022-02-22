@@ -4,7 +4,8 @@ import { Configuration } from 'webpack'
 const config: Configuration = {
   entry: {
     'api-key-generator': './src/api-key-generator/app.ts',
-    authorizer: './src/authorizer/app.ts',
+    'api-key-authorizer': './src/authorizer/api-key-authorizer.ts',
+    'jwt-authorizer': './src/authorizer/jwt-authorizer.ts',
     'rules-engine': './src/rules-engine/app.ts',
     'user-management': './src/user-management/app.ts',
     'list-importer': './src/list-importer/app.ts',

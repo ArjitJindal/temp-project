@@ -42,7 +42,7 @@ function getTenantIdFromApiKey(apiKey: string) {
   return base62.decode(apiKey).toString().split('.')[0]
 }
 
-export const apiKeyHandler = async (
+export const apiKeyAuthorizer = async (
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> => {
   const arn = ARN.parse(event.methodArn)

@@ -5,9 +5,7 @@ export const event = {
   path: '/import',
   httpMethod: 'POST',
   headers: {},
-  queryStringParameters: {
-    tenantId: 'sh-payment',
-  },
+  requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   stageVariables: null,
   body: JSON.stringify({
     type: 'TRANSACTION',

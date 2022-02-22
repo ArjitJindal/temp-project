@@ -51,6 +51,7 @@
     "@types/command-line-args": "^5.2.0",
     "@types/http-errors": "^1.8.2",
     "@types/js-yaml": "^4.0.5",
+    "@types/jsonwebtoken": "^8.5.8",
     "@types/mkdirp": "^1.0.2",
     "@types/mocha": "^9.0.0",
     "@types/node": "^17.0.8",
@@ -87,6 +88,8 @@
     "ibankit": "^1.5.0",
     "io-ts": "^2.2.16",
     "io-ts-reporters": "^2.0.1",
+    "jsonwebtoken": "^8.5.1",
+    "jwks-rsa": "^2.0.5",
     "nanoid": "^3.2.0",
     "unique-names-generator": "^4.6.0",
     "uuid": "^8.3.2"

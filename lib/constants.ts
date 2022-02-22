@@ -11,6 +11,7 @@ export const TarponStackConstants = {
   API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceName(
     'ApiKeyAuthorizerBaseRole'
   ),
+  JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceName('JwtAuthorizerBaseRole'),
   S3_IMPORT_BUCKET_PREFIX: getResourceName('import', true),
   S3_IMPORT_TMP_BUCKET_PREFIX: getResourceName('import-tmp', true),
 }
