@@ -7,6 +7,7 @@ import type { TableListItem, TableListPagination } from './data.d';
 import { Button, Tag, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { useAuth0 } from '@auth0/auth0-react';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -21,6 +22,7 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
+  const { getAccessTokenWithPopup } = useAuth0();
   const actionRef = useRef<ActionType>();
 
   const columns: ProColumns<TableListItem>[] = [
@@ -82,13 +84,20 @@ const TableList: React.FC = () => {
               key="import"
               showUploadList={false}
               customRequest={async ({ file, filename }) => {
+                // TODO: Make getAccessTokenSilently work for local env
+                const token = await getAccessTokenWithPopup({
+                  audience: 'https://dev.api.flagright.com/',
+                });
+
                 // TODO: Use SDK to access console APIs instead
 
                 // 1. Get S3 presigned URL
                 const hideUploadMessage = message.loading('Uploading...', 0);
                 const { presignedUrl, key } = (
                   await axios.post(
-                    'https://dev.api.flagright.com/console/transactions/import/getPresignedUrl?tenantId=test',
+                    'https://dev.api.flagright.com/console/transactions/import/getPresignedUrl',
+                    null,
+                    { headers: { Authorization: `Bearer ${token}` } },
                   )
                 ).data;
 
@@ -105,12 +114,13 @@ const TableList: React.FC = () => {
                 try {
                   const { importedTransactions } = (
                     await axios.post(
-                      'https://dev.api.flagright.com/console/transactions/import?tenantId=test',
+                      'https://dev.api.flagright.com/console/transactions/import',
                       {
                         type: 'TRANSACTION',
                         format: 'sh-payment',
                         key,
                       },
+                      { headers: { Authorization: `Bearer ${token}` } },
                     )
                   ).data;
                   message.success(`Imported ${importedTransactions} transactions`);
