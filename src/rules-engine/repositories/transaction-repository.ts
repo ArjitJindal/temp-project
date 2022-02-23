@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
-import { Transaction } from '../../@types/openapi/transaction'
+import { Transaction } from '../../@types/openapi-public/transaction'
 import { transactionListResult } from '../../@types/tranasction/transaction-list'
 import { PaymentDetails } from '../../@types/tranasction/payment-type'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'

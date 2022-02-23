@@ -12,13 +12,7 @@ import {
 import { AttributeType, Table } from '@aws-cdk/aws-dynamodb'
 import {
   AssetApiDefinition,
-  AuthorizationType,
-  IdentitySource,
-  LambdaIntegration,
-  LambdaRestApi,
   MethodLoggingLevel,
-  MethodOptions,
-  RequestAuthorizer,
   SpecRestApi,
 } from '@aws-cdk/aws-apigateway'
 
@@ -27,7 +21,8 @@ import { CfnOutput, Duration, Fn } from '@aws-cdk/core'
 import {
   CfnFunction,
   Code,
-  Function,
+  Function as LambdaFunction,
+  FunctionProps,
   Runtime,
   Tracing,
 } from '@aws-cdk/aws-lambda'
@@ -94,17 +89,10 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     /* API Key Generator */
-    const apiKeyGeneratorFunction = new Function(
-      this,
-      getResourceName('ApiKeyGeneratorFunction'),
-      {
-        functionName: getResourceName('ApiKeyGeneratorFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.apiKeyGeneratorHandler',
-        code: Code.fromAsset('dist/api-key-generator'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const apiKeyGeneratorFunction = this.createFunction(
+      TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+      'app.apiKeyGeneratorHandler',
+      'dist/api-key-generator'
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
@@ -123,42 +111,18 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* API Key Authorizer */
-    const apiKeyAuthorizerFunctionName = getResourceName(
-      'ApiKeyAuthorizerFunction'
+    const apiKeyAuthorizerFunction = this.createFunction(
+      TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
+      'app.apiKeyAuthorizer',
+      'dist/api-key-authorizer'
     )
-    const apiKeyAuthorizerFunction = new Function(
-      this,
-      apiKeyAuthorizerFunctionName,
-      {
-        functionName: apiKeyAuthorizerFunctionName,
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.apiKeyAuthorizer',
-        code: Code.fromAsset('dist/api-key-authorizer'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
-    )
-    // This is needed because of the usage of SpecRestApi
-    apiKeyAuthorizerFunction.grantInvoke(
-      new ServicePrincipal('apigateway.amazonaws.com')
-    )
-    // This is needed to allow using ${Function.Arn} in openapi.yaml
-    ;(
-      apiKeyAuthorizerFunction.node.defaultChild as CfnFunction
-    ).overrideLogicalId(apiKeyAuthorizerFunctionName)
 
     /* JWT Authorizer */
-    const jwtAuthorizerFunctionName = getResourceName('JWTAuthorizerFunction')
-    const jwtAuthorizerFunction = new Function(
-      this,
-      jwtAuthorizerFunctionName,
+    const jwtAuthorizerFunction = this.createFunction(
+      TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
+      'app.jwtAuthorizer',
+      'dist/jwt-authorizer',
       {
-        functionName: jwtAuthorizerFunctionName,
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.jwtAuthorizer',
-        code: Code.fromAsset('dist/jwt-authorizer'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
         environment: {
           // TODO: Use env-specific values
           AUDIENCE: 'https://dev.api.flagright.com/',
@@ -167,230 +131,99 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    jwtAuthorizerFunction.grantInvoke(
-      new ServicePrincipal('apigateway.amazonaws.com')
-    )
-    ;(jwtAuthorizerFunction.node.defaultChild as CfnFunction).overrideLogicalId(
-      jwtAuthorizerFunctionName
-    )
 
     /* Transaction */
-    const transactionFunctionName = getResourceName('TransactionFunction')
-    const transactionFunction = new Function(this, transactionFunctionName, {
-      functionName: transactionFunctionName,
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.transactionHandler',
-      code: Code.fromAsset('dist/rules-engine'),
-      tracing: Tracing.ACTIVE,
-      timeout: Duration.seconds(10),
-    })
+    const transactionFunction = this.createFunction(
+      TarponStackConstants.TRANSACTION_FUNCTION_NAME,
+      'app.transactionHandler',
+      'dist/rules-engine'
+    )
     dynamoDbTable.grantReadWriteData(transactionFunction)
-    transactionFunction.grantInvoke(
-      new ServicePrincipal('apigateway.amazonaws.com')
-    )
-    ;(transactionFunction.node.defaultChild as CfnFunction).overrideLogicalId(
-      transactionFunctionName
-    )
 
     /* File Import */
-    const fileImportFunction = new Function(
-      this,
-      getResourceName('FileImportFunction'),
-      {
-        functionName: getResourceName('FileImportFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.fileImportHandler',
-        code: Code.fromAsset('dist/file-import/'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const fileImportFunction = this.createFunction(
+      TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+      'app.fileImportHandler',
+      'dist/file-import/'
     )
     dynamoDbTable.grantReadWriteData(fileImportFunction)
     s3ImportTmpBucket.grantRead(fileImportFunction)
     s3ImportBucket.grantWrite(fileImportFunction)
 
-    const getPresignedUrlFunction = new Function(
-      this,
-      getResourceName('GetPresignedUrlFunction'),
-      {
-        functionName: getResourceName('GetPresignedUrlFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.getPresignedUrlHandler',
-        code: Code.fromAsset('dist/file-import/'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const getPresignedUrlFunction = this.createFunction(
+      TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
+      'app.getPresignedUrlHandler',
+      'dist/file-import/'
     )
     s3ImportTmpBucket.grantPut(getPresignedUrlFunction)
 
     /* Rule Instance */
-    const ruleInstanceFunction = new Function(
-      this,
-      getResourceName('RuleInstanceFunction'),
-      {
-        functionName: getResourceName('RuleInstanceFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.ruleInstanceHandler',
-        code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const ruleInstanceFunction = this.createFunction(
+      TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
+      'app.ruleInstanceHandler',
+      'dist/phytoplankton-internal-api-handlers/'
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
 
     /* Transactions view */
-    const transactionsViewFunction = new Function(
-      this,
-      getResourceName('TransactionsViewFunction'),
-      {
-        functionName: getResourceName('TransactionsViewFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.transactionsViewHandler',
-        code: Code.fromAsset('dist/phytoplankton-internal-api-handlers/'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const transactionsViewFunction = this.createFunction(
+      TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+      'app.transactionsViewHandler',
+      'dist/phytoplankton-internal-api-handlers/'
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
 
     /* User */
-    const userFunctionName = getResourceName('UserFunction')
-    const userFunction = new Function(this, userFunctionName, {
-      functionName: userFunctionName,
-      runtime: Runtime.NODEJS_14_X,
-      handler: 'app.userHandler',
-      code: Code.fromAsset('dist/user-management'),
-      tracing: Tracing.ACTIVE,
-      timeout: Duration.seconds(10),
-    })
-    dynamoDbTable.grantReadWriteData(userFunction)
-    userFunction.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
-    ;(userFunction.node.defaultChild as CfnFunction).overrideLogicalId(
-      userFunctionName
+    const userFunction = this.createFunction(
+      TarponStackConstants.USER_FUNCTION_NAME,
+      'app.userHandler',
+      'dist/user-management'
     )
+    dynamoDbTable.grantReadWriteData(userFunction)
 
     /* List Importer */
-    const listImporterFunction = new Function(
-      this,
-      getResourceName('ListImporterFunction'),
-      {
-        functionName: getResourceName('ListImporterFunction'),
-        runtime: Runtime.NODEJS_14_X,
-        handler: 'app.listImporterHandler',
-        code: Code.fromAsset('dist/list-importer'),
-        tracing: Tracing.ACTIVE,
-        timeout: Duration.seconds(10),
-      }
+    const listImporterFunction = this.createFunction(
+      TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
+      'app.listImporterHandler',
+      'dist/list-importer'
     )
     dynamoDbTable.grantReadWriteData(listImporterFunction)
 
     /**
      * API Gateway
+     * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
      */
 
-    // Public APIs
-
-    // TODO: CDK+OpenAPI integration (issue: https://github.com/aws/aws-cdk/issues/1461)
     const apiDeployOptions = {
       loggingLevel: MethodLoggingLevel.INFO,
       tracingEnabled: true,
     }
 
-    const openApiAsset = new Asset(this, 'OpenApiAsset', {
-      path: './lib/openapi.yaml',
+    // Public APIs
+    const publicOpenApiAsset = new Asset(this, 'PublicOpenApiAsset', {
+      path: './lib/openapi/openapi-public-autogenerated.yaml',
     })
-    const openApiData = Fn.transform('AWS::Include', {
-      Location: openApiAsset.s3ObjectUrl,
+    const publicOpenApiData = Fn.transform('AWS::Include', {
+      Location: publicOpenApiAsset.s3ObjectUrl,
     })
     const publicApi = new SpecRestApi(this, 'TarponAPI', {
       restApiName: 'TarponAPI',
-      apiDefinition: AssetApiDefinition.fromInline(openApiData),
-      deployOptions: apiDeployOptions,
-    })
-    const internalApi = new LambdaRestApi(this, 'TarponAPI-internal', {
-      handler: transactionFunction, // TODO: create default handler,
-      proxy: false,
+      apiDefinition: AssetApiDefinition.fromInline(publicOpenApiData),
       deployOptions: apiDeployOptions,
     })
 
     // Console APIs
-
-    const internalApiSecurityOptions: MethodOptions = {
-      authorizationType: AuthorizationType.IAM,
-    }
-
-    const consoleApiSecurityOptions: MethodOptions = {
-      authorizationType: AuthorizationType.CUSTOM,
-      authorizer: new RequestAuthorizer(
-        this,
-        getResourceName('JwtAuthorizer'),
-        {
-          authorizerName: getResourceName('JwtAuthorizer'),
-          handler: jwtAuthorizerFunction,
-          identitySources: [IdentitySource.header('Authorization')],
-          resultsCacheTtl: Duration.seconds(0),
-        }
-      ),
-    }
-
-    // NOTE: API Key is currently generated by us and delivered to customers manually.
-    // This endpoint will be used by Flagright console UI and customers can generate
-    // the API keys by themselves.
-
-    const apiKeyResource = internalApi.root.addResource('apikey')
-    apiKeyResource.addMethod(
-      'POST',
-      new LambdaIntegration(apiKeyGeneratorFunction),
-      internalApiSecurityOptions
-    )
-
-    const ruleInstancesResource = internalApi.root.addResource('rule_instances')
-    ruleInstancesResource.addMethod(
-      'POST',
-      new LambdaIntegration(ruleInstanceFunction),
-      internalApiSecurityOptions
-    )
-    const ruleInstanceResource = ruleInstancesResource.addResource('{id}')
-    ruleInstanceResource.addMethod(
-      'PUT',
-      new LambdaIntegration(ruleInstanceFunction),
-      internalApiSecurityOptions
-    )
-    ruleInstanceResource.addMethod(
-      'DELETE',
-      new LambdaIntegration(ruleInstanceFunction),
-      internalApiSecurityOptions
-    )
-
-    const transactionsResource = internalApi.root.addResource('transactions')
-    transactionsResource.addMethod(
-      'GET',
-      new LambdaIntegration(transactionsViewFunction),
-      internalApiSecurityOptions
-    )
-
-    // TODO: Add security options once we have console authorizer
-    const transactionsImportResource =
-      transactionsResource.addResource('import')
-    transactionsImportResource.addMethod(
-      'POST',
-      new LambdaIntegration(fileImportFunction),
-      consoleApiSecurityOptions
-    )
-    const transactionsGetPresignedUrlResource =
-      transactionsImportResource.addResource('getPresignedUrl')
-    transactionsGetPresignedUrlResource.addMethod(
-      'POST',
-      new LambdaIntegration(getPresignedUrlFunction),
-      consoleApiSecurityOptions
-    )
-
-    const listsResource = internalApi.root.addResource('lists')
-    listsResource.addMethod(
-      'POST',
-      new LambdaIntegration(listImporterFunction),
-      internalApiSecurityOptions
-    )
+    const internalOpenApiAsset = new Asset(this, 'InternalOpenApiAsset', {
+      path: './lib/openapi/openapi-internal-autogenerated.yaml',
+    })
+    const internalOpenApiData = Fn.transform('AWS::Include', {
+      Location: internalOpenApiAsset.s3ObjectUrl,
+    })
+    const consoleApi = new SpecRestApi(this, 'TarponAPI-console', {
+      restApiName: 'TarponAPI-console',
+      apiDefinition: AssetApiDefinition.fromInline(internalOpenApiData),
+      deployOptions: apiDeployOptions,
+    })
 
     /**
      * IAM roles
@@ -458,9 +291,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
     new CfnOutput(
       this,
-      'API Gateway endpoint URL for Prod stage - Internal API',
+      'API Gateway endpoint URL for Prod stage - Console API',
       {
-        value: internalApi.urlForPath('/'),
+        value: consoleApi.urlForPath('/'),
       }
     )
     new CfnOutput(this, 'Transaction Function Name', {
@@ -472,5 +305,27 @@ export class CdkTarponStack extends cdk.Stack {
     new CfnOutput(this, 'Transaction Table', {
       value: dynamoDbTable.tableName,
     })
+  }
+
+  createFunction(
+    name: string,
+    handler: string,
+    codePath: string,
+    props?: Partial<FunctionProps>
+  ): LambdaFunction {
+    const func = new LambdaFunction(this, name, {
+      functionName: name,
+      runtime: Runtime.NODEJS_14_X,
+      handler,
+      code: Code.fromAsset(codePath),
+      tracing: Tracing.ACTIVE,
+      timeout: Duration.seconds(10),
+      ...props,
+    })
+    // This is needed because of the usage of SpecRestApi
+    func.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
+    // This is needed to allow using ${Function.Arn} in openapi.yaml
+    ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
+    return func
   }
 }

@@ -1,4 +1,4 @@
-import { Transaction } from '../../@types/openapi/transaction'
+import { Transaction } from '../../@types/openapi-public/transaction'
 import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
 
 export type RuleInfo = {

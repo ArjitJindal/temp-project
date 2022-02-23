@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../lib/constants'
-import { User } from '../../@types/openapi/user'
-import { Business } from '../../@types/openapi/business'
+import { User } from '../../@types/openapi-public/user'
+import { Business } from '../../@types/openapi-public/business'
 import { DynamoDbKeys } from '../../core/dynamodb/dynamodb-keys'
 
 type UserType = 'BUSINESS' | 'CONSUMER'

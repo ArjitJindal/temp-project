@@ -3,10 +3,10 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
-import { Transaction } from '../@types/openapi/transaction'
-import { TransactionMonitoringResult } from '../@types/openapi/transactionMonitoringResult'
+import { Transaction } from '../@types/openapi-public/transaction'
+import { TransactionMonitoringResult } from '../@types/openapi-public/transactionMonitoringResult'
 import { getDynamoDbClient } from '../utils/dynamodb'
-import { RuleActionEnum } from '../@types/rule/rule-instance'
+import { RuleActionEnum, RuleParameters } from '../@types/rule/rule-instance'
 import { cors } from '../core/utils/cors'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
@@ -27,7 +27,7 @@ export async function verifyTransaction(
       const rule = new rules[ruleInstance.ruleId](
         tenantId,
         transaction,
-        ruleInstance.parameters,
+        ruleInstance.parameters as RuleParameters,
         dynamoDb
       )
       const ruleResult = await rule.computeRule()

@@ -13,14 +13,15 @@
 import { LegalEntity } from './legalEntity'
 import { Person } from './person'
 import { Tag } from './tag'
+import { TransactionLimits } from './transactionLimits'
 
 export class Business {
   /**
    * Unique user ID for the user
    */
   'userId': string
-  'createdTimestamp': number
   'legalEntity': LegalEntity
+  'createdTimestamp': number
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
    */
@@ -33,6 +34,7 @@ export class Business {
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>
+  'transactionLimits'?: TransactionLimits
 
   static discriminator: string | undefined = undefined
 
@@ -52,6 +54,11 @@ export class Business {
       type: 'LegalEntity',
     },
     {
+      name: 'createdTimestamp',
+      baseName: 'createdTimestamp',
+      type: 'number',
+    },
+    {
       name: 'shareHolders',
       baseName: 'shareHolders',
       type: 'Array<Person>',
@@ -65,6 +72,11 @@ export class Business {
       name: 'tags',
       baseName: 'tags',
       type: 'Array<Tag>',
+    },
+    {
+      name: 'transactionLimits',
+      baseName: 'transactionLimits',
+      type: 'TransactionLimits',
     },
   ]
 

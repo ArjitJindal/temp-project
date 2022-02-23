@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
-import { Transaction } from '../../../@types/openapi/transaction'
+import { Transaction } from '../../../@types/openapi-public/transaction'
 import { TransactionConverterInterface } from './converter-interface'
 
 const ShPaymentTransaction = t.type({

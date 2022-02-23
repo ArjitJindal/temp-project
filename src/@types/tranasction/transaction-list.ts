@@ -1,4 +1,4 @@
-import { Transaction } from '../openapi/transaction'
+import { Transaction } from '../openapi-public/transaction'
 
 export type transactionListResult = {
   transactions: Transaction[]

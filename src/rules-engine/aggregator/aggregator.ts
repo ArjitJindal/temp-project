@@ -1,4 +1,4 @@
-import { Transaction } from '../../@types/openapi/transaction'
+import { Transaction } from '../../@types/openapi-public/transaction'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 
 export abstract class Aggregator {

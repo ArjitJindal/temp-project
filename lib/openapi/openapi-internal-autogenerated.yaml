@@ -1,0 +1,486 @@
+openapi: 3.0.0
+info:
+  title: Tarpon Console API
+  version: '1.0'
+servers:
+  - url: http://localhost:3000
+paths:
+  /apikey:
+    parameters: []
+    post:
+      summary: Tarpon API Key - Create
+      operationId: post-apikey
+      responses:
+        '200':
+          description: New API Key
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+        - schema:
+            type: string
+          in: query
+          name: usagePlanId
+          description: AWS Gateway usage plan ID
+      description: Generate a new Tarpon API key for a tenant
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponApiKeyGeneratorFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+  /rule_instances:
+    post:
+      summary: Rule Instance - Create
+      operationId: post-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    ruleId: string
+                    parameters: {}
+                    status: ACTIVE
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+  /rule_instances/{ruleInstanceId}:
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    delete:
+      summary: Rule Instance - Delete
+      operationId: delete-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    put:
+      summary: Rule Instance - Update
+      operationId: put-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+  /transactions/import:
+    parameters: []
+    post:
+      summary: Transactions Import - Start to Import
+      operationId: post-transactions-import
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionImportResponse'
+              examples:
+                example-1:
+                  value:
+                    importedTransactions: 100
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionImportRequest'
+            examples:
+              example-1:
+                value:
+                  type: TRANSACTION
+                  format: flagright
+                  s3Key: s3-key-in-a-bucket
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+  /transactions/import/getPresignedUrl:
+    parameters: []
+    post:
+      summary: Transactions Import - Get Presigned URL
+      operationId: post-transactions-getPresignedUrl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+              examples: {}
+      description: Get a presigned URL for uploading a transactions file
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponGetPresignedUrlFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+  /lists:
+    post:
+      summary: List Import
+      operationId: post-lists
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListImportRequest'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponListImporterFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        responseTemplates:
+          application/json: |2-
+
+                      {"statusCode":200}
+                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
+                      #set($origin = $input.params("origin"))
+                      #if($domains.contains($origin))
+                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
+                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
+                      #end
+
+components:
+  schemas:
+    RuleInstance:
+      title: RuleInstance
+      type: object
+      properties:
+        id:
+          type: string
+        ruleId:
+          type: string
+        parameters:
+          type: object
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        runCount:
+          type: number
+        hitCount:
+          type: number
+      required:
+        - ruleId
+        - parameters
+    TransactionImportRequest:
+      title: TransactionImportRequest
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+        format:
+          type: string
+          enum:
+            - flagright
+            - sh-payment
+        s3Key:
+          type: string
+      required:
+        - type
+        - format
+        - s3Key
+    PresignedUrlResponse:
+      title: PresignedUrlResponse
+      type: object
+      properties:
+        presignedUrl:
+          type: string
+        s3Key:
+          type: string
+      required:
+        - presignedUrl
+        - s3Key
+    ListImportRequest:
+      title: ListImportRequest
+      type: object
+      properties:
+        listName:
+          type: string
+        indexName:
+          type: string
+        data:
+          type: string
+      required:
+        - listName
+        - indexName
+        - data
+    TransactionImportResponse:
+      title: TransactionImportResponse
+      type: object
+      properties:
+        importedTransactions:
+          type: number
+      required:
+        - importedTransactions
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer
+    lambda-authorizer:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authorizer:
+        type: request
+        identitySource: method.request.header.authorization
+        authorizerUri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponJWTAuthorizerFunction.Arn}/invocations
+        authorizerResultTtlInSeconds: 600
+        enableSimpleResponses: false
+      x-amazon-apigateway-authtype: Custom scheme with tenant claims
+x-amazon-apigateway-request-validators:
+  all:
+    validateRequestBody: true
+    validateRequestParameters: true

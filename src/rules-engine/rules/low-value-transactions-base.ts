@@ -1,5 +1,5 @@
-import { Transaction } from '../../@types/openapi/transaction'
-import { TransactionAmountDetails } from '../../@types/openapi/transactionAmountDetails'
+import { Transaction } from '../../@types/openapi-public/transaction'
+import { TransactionAmountDetails } from '../../@types/openapi-public/transactionAmountDetails'
 import { RuleParameters } from '../../@types/rule/rule-instance'
 import { PaymentDirection } from '../../@types/tranasction/payment-direction'
 import { TransactionRepository } from '../repositories/transaction-repository'

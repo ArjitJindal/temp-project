@@ -1,4 +1,4 @@
-import { Transaction } from '../../../@types/openapi/transaction'
+import { Transaction } from '../../../@types/openapi-public/transaction'
 import { TransactionConverterInterface } from './converter-interface'
 
 export const FlagrightTransactionConverter: TransactionConverterInterface = {

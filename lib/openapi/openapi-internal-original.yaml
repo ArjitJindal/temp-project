@@ -1,0 +1,225 @@
+openapi: 3.0.0
+info:
+  title: Tarpon Console API
+  version: '1.0'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /apikey:
+    parameters: []
+    post:
+      summary: Tarpon API Key - Create
+      operationId: post-apikey
+      responses:
+        '200':
+          description: New API Key
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+        - schema:
+            type: string
+          in: query
+          name: usagePlanId
+          description: AWS Gateway usage plan ID
+      description: Generate a new Tarpon API key for a tenant
+  /rule_instances:
+    post:
+      summary: Rule Instance - Create
+      operationId: post-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    ruleId: string
+                    parameters: {}
+                    status: ACTIVE
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+  '/rule_instances/{ruleInstanceId}':
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    delete:
+      summary: Rule Instance - Delete
+      operationId: delete-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Rule Instance - Update
+      operationId: put-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+  /transactions/import:
+    parameters: []
+    post:
+      summary: Transactions Import - Start to Import
+      operationId: post-transactions-import
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionImportResponse'
+              examples:
+                example-1:
+                  value:
+                    importedTransactions: 100
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionImportRequest'
+            examples:
+              example-1:
+                value:
+                  type: TRANSACTION
+                  format: flagright
+                  s3Key: s3-key-in-a-bucket
+  /transactions/import/getPresignedUrl:
+    parameters: []
+    post:
+      summary: Transactions Import - Get Presigned URL
+      operationId: post-transactions-getPresignedUrl
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+              examples: {}
+      description: Get a presigned URL for uploading a transactions file
+  /lists:
+    post:
+      summary: List Import
+      operationId: post-lists
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListImportRequest'
+components:
+  schemas:
+    RuleInstance:
+      title: RuleInstance
+      type: object
+      properties:
+        id:
+          type: string
+        ruleId:
+          type: string
+        parameters:
+          type: object
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        runCount:
+          type: number
+        hitCount:
+          type: number
+      required:
+        - ruleId
+        - parameters
+    TransactionImportRequest:
+      title: TransactionImportRequest
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+        format:
+          type: string
+          enum:
+            - flagright
+            - sh-payment
+        s3Key:
+          type: string
+      required:
+        - type
+        - format
+        - s3Key
+    PresignedUrlResponse:
+      title: PresignedUrlResponse
+      type: object
+      properties:
+        presignedUrl:
+          type: string
+        s3Key:
+          type: string
+      required:
+        - presignedUrl
+        - s3Key
+    ListImportRequest:
+      title: ListImportRequest
+      type: object
+      properties:
+        listName:
+          type: string
+        indexName:
+          type: string
+        data:
+          type: string
+      required:
+        - listName
+        - indexName
+        - data
+    TransactionImportResponse:
+      title: TransactionImportResponse
+      type: object
+      properties:
+        importedTransactions:
+          type: number
+      required:
+        - importedTransactions
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer

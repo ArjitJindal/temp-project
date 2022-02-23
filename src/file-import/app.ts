@@ -10,23 +10,23 @@ import { getS3Client } from '../utils/s3'
 import { httpErrorHandler } from '../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../core/middlewares/json-serializer'
 import { getS3BucketName, TarponStackConstants } from '../../lib/constants'
-import {
-  TransactionImporter,
-  TransactionImportRequest,
-} from './transaction/importer'
+import { TransactionImportRequest } from '../@types/openapi-internal/transactionImportRequest'
+import { PresignedUrlResponse } from '../@types/openapi-internal/presignedUrlResponse'
+import { TransactionImportResponse } from '../@types/openapi-internal/transactionImportResponse'
+import { TransactionImporter } from './transaction/importer'
 
 const internalFileImportHandler = async (
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
-) => {
+): Promise<TransactionImportResponse> => {
   const { principalId: tenantId } = event.requestContext.authorizer
   const dynamoDb = getDynamoDbClient(event)
   const s3 = getS3Client(event)
 
   if (event.httpMethod === 'POST' && event.body) {
     const importRequest: TransactionImportRequest = JSON.parse(event.body)
-    if (importRequest.type === 'TRANSACTION') {
+    if (importRequest.type === TransactionImportRequest.TypeEnum.Transaction) {
       const transactionImporter = new TransactionImporter(
         tenantId,
         dynamoDb,
@@ -47,7 +47,7 @@ const internalGetPresignedUrlHandler = async (
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
-) => {
+): Promise<PresignedUrlResponse> => {
   const { principalId: tenantId } = event.requestContext.authorizer
   const { accountId } = event.requestContext
   const s3 = getS3Client(event)
@@ -63,7 +63,7 @@ const internalGetPresignedUrlHandler = async (
   }
   const presignedUrl = s3.getSignedUrl('putObject', bucketParams)
 
-  return { presignedUrl, key: s3Key }
+  return { presignedUrl, s3Key }
 }
 
 export const fileImportHandler = httpErrorHandler()(

@@ -1,16 +1,11 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
 import { getS3BucketName, TarponStackConstants } from '../../../lib/constants'
-import { Transaction } from '../../@types/openapi/transaction'
-import { TransactionMonitoringResult } from '../../@types/openapi/transactionMonitoringResult'
+import { TransactionImportRequest } from '../../@types/openapi-internal/transactionImportRequest'
+import { Transaction } from '../../@types/openapi-public/transaction'
+import { TransactionMonitoringResult } from '../../@types/openapi-public/transactionMonitoringResult'
 import { verifyTransaction } from '../../rules-engine/app'
 import { converters, ImportFormat } from './converters'
-
-export type TransactionImportRequest = {
-  type: 'TRANSACTION'
-  format: ImportFormat
-  key: string
-}
 
 export class TransactionImporter {
   tenantId: string
@@ -33,7 +28,7 @@ export class TransactionImporter {
   public async importTransactions(
     importRequest: TransactionImportRequest
   ): Promise<number> {
-    const { key, format } = importRequest
+    const { s3Key, format } = importRequest
     const converter = converters[format]
     if (!converter) {
       throw new Error(`Unknown import format: ${format}`)
@@ -46,7 +41,7 @@ export class TransactionImporter {
     )
     const params = {
       Bucket: importTmpBucket,
-      Key: key,
+      Key: s3Key,
     }
     const stream = this.s3
       .getObject(params)
@@ -73,9 +68,9 @@ export class TransactionImporter {
     )
     await this.s3
       .copyObject({
-        CopySource: `${importTmpBucket}/${key}`,
+        CopySource: `${importTmpBucket}/${s3Key}`,
         Bucket: importBucket,
-        Key: key,
+        Key: s3Key,
       })
       .promise()
     return importedTransactions

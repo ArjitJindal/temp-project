@@ -22,7 +22,7 @@ export class User {
   /**
    * Unique user ID
    */
-  'userId'?: string
+  'userId': string
   'userDetails': UserDetails
   'createdTimestamp': number
   /**
@@ -51,6 +51,11 @@ export class User {
       name: 'userDetails',
       baseName: 'userDetails',
       type: 'UserDetails',
+    },
+    {
+      name: 'createdTimestamp',
+      baseName: 'createdTimestamp',
+      type: 'number',
     },
     {
       name: 'legalDocuments',

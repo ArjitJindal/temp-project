@@ -1,5 +1,5 @@
 import { ParserOptionsArgs } from '@fast-csv/parse'
-import { Transaction } from '../../../@types/openapi/transaction'
+import { Transaction } from '../../../@types/openapi-public/transaction'
 
 export interface TransactionConverterInterface {
   getCsvParserOptions(): ParserOptionsArgs

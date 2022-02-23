@@ -5,14 +5,13 @@ info:
   contact: {}
   version: '1.0'
 servers:
-  - url: https://sandbox.api.flagright.com
+  - url: 'https://sandbox.api.flagright.com'
     variables: {}
 paths:
   /transactions:
     post:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Verify a Transaction
       description: Verify a Transaction
       operationId: post-consumer-transaction
@@ -107,45 +106,10 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-  /transactions/{transactionId}:
+  '/transactions/{transactionId}':
     get:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Retrieve a Transaction
       description: Retrieve a Transaction
       operationId: get-consumer-transaction
@@ -228,45 +192,10 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
   /consumer/users:
     post:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Create a Consumer User
       description: Create a Consumer User
       operationId: post-consumer-user
@@ -306,45 +235,10 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-  /consumer/users/{userId}:
+  '/consumer/users/{userId}':
     get:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Retrieve a Consumer User
       description: Retrieve a Consumer User
       operationId: get-consumer-user
@@ -416,45 +310,10 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
   /business/users:
     post:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Create a Business User
       description: Create a Business User
       operationId: post-business-user
@@ -494,45 +353,10 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-  /business/users/{userId}:
+  '/business/users/{userId}':
     get:
       security:
         - x-api-key: []
-        - lambda-authorizer: []
       summary: Retrieve a Business User
       description: Retrieve a Business User
       operationId: get-business-user-userId
@@ -553,7 +377,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Business'
               examples:
-                example-1:
+                example-2:
                   value:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     legalEntity:
@@ -677,40 +501,6 @@ paths:
           content: {}
       deprecated: false
       tags: []
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
     Address:
@@ -810,7 +600,7 @@ components:
         userDetails:
           $ref: '#/components/schemas/UserDetails'
         createdTimestamp:
-          type: string
+          type: number
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -827,6 +617,47 @@ components:
         - userId
         - userDetails
         - createdTimestamp
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          userDetails:
+            name:
+              firstName: Baran
+              middleName: Realblood
+              lastName: Ozkan
+            dateOfBirth: 0
+            age: 0
+            countryOfResidence: US
+            countryOfNationality: DE
+          legalDocuments:
+            - documentType: passport
+              documentNumber: Z9431P
+              documentIssuedDate: 1639939034
+              documentExpirationDate: 1839939034
+              documentIssuedCountry: DE
+              tags:
+                - key: customerType
+                  value: wallet
+          contactDetails:
+            emailIds:
+              - baran@flagright.com
+            contactNumbers:
+              - '+37112345432'
+            websites:
+              - flagright.com
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+          tags:
+            - key: customKey
+              value: customValue
     Person:
       title: Person
       required:
@@ -900,7 +731,7 @@ components:
         documentType:
           minLength: 1
           type: string
-          description: User's identity document type such as passport, national ID etc.
+          description: "User's identity document type such as passport, national ID etc."
         documentNumber:
           minLength: 1
           type: string
@@ -1137,7 +968,7 @@ components:
           $ref: '#/components/schemas/Address'
         IBAN:
           type: string
-          description: Account number of the user. Can be account number, IBAN number etc.
+          description: 'Account number of the user. Can be account number, IBAN number etc.'
         name:
           $ref: '#/components/schemas/ConsumerName'
         tags:
@@ -1710,6 +1541,120 @@ components:
         tags:
           - key: customKey
             value: customValue
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          legalEntity:
+            companyGeneralDetails:
+              legalName: Ozkan Hazelnut Export JSC
+              businessIndustry:
+                - Farming
+              mainProductsServicesSold:
+                - Hazelnut
+            companyFinancialDetails:
+              expectedTransactionAmountPerMonth:
+                amountValue: 800
+                amountCurrency: GBP
+              expectedTurnoverPerMonth:
+                amountValue: 8000
+                amountCurrency: USD
+            companyRegistrationDetails:
+              registrationIdentifier: PSJ554342
+              registrationCountry: DE
+            reasonForAccountOpening:
+              - string
+            contactDetails:
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+          shareHolders:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth: 661883439
+                age: 31
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034
+                  documentExpirationDate: 1839939034
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          directors:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth: 661883439
+                age: 31
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034
+                  documentExpirationDate: 1839939034
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          tags:
+            - key: customKey
+              value: customValue
       properties:
         userId:
           minLength: 1
@@ -1718,7 +1663,7 @@ components:
         legalEntity:
           $ref: '#/components/schemas/LegalEntity'
         createdTimestamp:
-          type: string
+          type: number
         shareHolders:
           type: array
           description: >-
@@ -1736,6 +1681,8 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        transactionLimits:
+          $ref: '#/components/schemas/TransactionLimits'
       required:
         - userId
         - legalEntity
@@ -1833,28 +1780,41 @@ components:
       required:
         - method
         - upiID
+    TransactionLimits:
+      title: TransactionLimits
+      type: object
+      x-examples:
+        example-1:
+          maximumDailyTransactionLimit:
+            amountValue: 800
+            amountCurrency: EUR
+          maximumWeeklyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+          maximumMonthlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: EUR
+          maximumQuarterlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+          maximumYearlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+      properties:
+        maximumDailyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumWeeklyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumMonthlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumQuarterlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumYearlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
   securitySchemes:
     x-api-key:
       name: x-api-key
       type: apiKey
       in: header
       description: API keys are used to authenticate the requests.
-      x-amazon-apigateway-api-key-source: HEADER
-    lambda-authorizer:
-      type: apiKey
-      name: Authorization
-      in: header
-      x-amazon-apigateway-authorizer:
-        type: request
-        identitySource: method.request.header.x-api-key
-        authorizerUri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponApiKeyAuthorizerFunction.Arn}/invocations
-        authorizerResultTtlInSeconds: 3600
-        enableSimpleResponses: false
-      x-amazon-apigateway-authtype: Custom scheme with tenant claims
 tags: []
-x-amazon-apigateway-request-validators:
-  all:
-    validateRequestBody: true
-    validateRequestParameters: true

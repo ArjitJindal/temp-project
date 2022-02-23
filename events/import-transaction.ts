@@ -1,4 +1,4 @@
-import { TransactionImportRequest } from '../src/file-import/transaction/importer'
+import { TransactionImportRequest } from '../src/@types/openapi-internal/transactionImportRequest'
 
 export const event = {
   resource: '/import',
@@ -8,9 +8,9 @@ export const event = {
   requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   stageVariables: null,
   body: JSON.stringify({
-    type: 'TRANSACTION',
-    format: 'sh-payment',
+    type: TransactionImportRequest.TypeEnum.Transaction,
+    format: TransactionImportRequest.FormatEnum.Flagright,
     // Copy the testing file to /tmp/.flagright/s3/tarpon-import-tmp first
-    key: 'test.csv',
+    s3Key: 'test.csv',
   } as TransactionImportRequest),
 }

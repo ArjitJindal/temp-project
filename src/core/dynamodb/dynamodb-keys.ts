@@ -5,10 +5,10 @@
  * the query performance and our AWS cost.
  */
 
-import { ACHDetails } from '../../@types/openapi/ACHDetails'
-import { CardDetails } from '../../@types/openapi/cardDetails'
-import { IBANDetails } from '../../@types/openapi/IBANDetails'
-import { UPIDetails } from '../../@types/openapi/UPIDetails'
+import { ACHDetails } from '../../@types/openapi-public/aCHDetails'
+import { CardDetails } from '../../@types/openapi-public/cardDetails'
+import { IBANDetails } from '../../@types/openapi-public/iBANDetails'
+import { UPIDetails } from '../../@types/openapi-public/uPIDetails'
 import { PaymentDetails } from '../../@types/tranasction/payment-type'
 
 const USER_ID_PREFIX = 'user:'
