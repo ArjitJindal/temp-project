@@ -6,8 +6,10 @@ import { files } from './service';
 import type { TableListItem, TableListPagination } from './data.d';
 import { Button, Tag, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
 import { useAuth0 } from '@auth0/auth0-react';
+import axios from 'axios';
+import { api } from '@/api';
+import { TransactionImportRequestFormatEnum, TransactionImportRequestTypeEnum } from '@/apis';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -89,17 +91,11 @@ const TableList: React.FC = () => {
                   audience: 'https://dev.api.flagright.com/',
                 });
 
-                // TODO: Use SDK to access console APIs instead
-
                 // 1. Get S3 presigned URL
                 const hideUploadMessage = message.loading('Uploading...', 0);
-                const { presignedUrl, key } = (
-                  await axios.post(
-                    'https://dev.api.flagright.com/console/transactions/import/getPresignedUrl',
-                    null,
-                    { headers: { Authorization: `Bearer ${token}` } },
-                  )
-                ).data;
+                const { presignedUrl, s3Key } = await api.postTransactionsGetPresignedUrl({
+                  headers: { Authorization: `Bearer ${token}` },
+                });
 
                 // 2. Upload file to S3 directly
                 await axios.put(presignedUrl, file, {
@@ -112,24 +108,19 @@ const TableList: React.FC = () => {
                 // 3. Start importing
                 const hideImportMessage = message.loading('Importing...', 0);
                 try {
-                  const { importedTransactions } = (
-                    await axios.post(
-                      'https://dev.api.flagright.com/console/transactions/import',
-                      {
-                        type: 'TRANSACTION',
-                        format: 'sh-payment',
-                        key,
+                  const { importedTransactions } = await api.postTransactionsImport(
+                    {
+                      transactionImportRequest: {
+                        type: TransactionImportRequestTypeEnum.Transaction,
+                        format: TransactionImportRequestFormatEnum.ShPayment,
+                        s3Key,
                       },
-                      { headers: { Authorization: `Bearer ${token}` } },
-                    )
-                  ).data;
+                    },
+                    { headers: { Authorization: `Bearer ${token}` } },
+                  );
                   message.success(`Imported ${importedTransactions} transactions`);
                 } catch (error) {
-                  if (axios.isAxiosError(error)) {
-                    message.error(error.response?.data?.message);
-                  } else {
-                    message.error(error as any);
-                  }
+                  message.error(error as any);
                 } finally {
                   hideImportMessage();
                 }
