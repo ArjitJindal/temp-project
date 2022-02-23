@@ -8,8 +8,8 @@ import {
   getNameString,
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
-import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
-import { UserRepository } from '../user-management/repositories/user-repository'
+import { TransactionRepository } from '../lambdas/rules-engine/repositories/transaction-repository'
+import { UserRepository } from '../lambdas/user-management/repositories/user-repository'
 import { countries, currencies } from './constants'
 
 /*
