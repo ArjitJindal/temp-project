@@ -1,20 +1,16 @@
 import { resolve } from 'path'
+import * as fs from 'fs'
 import { Configuration } from 'webpack'
 
 const config: Configuration = {
-  entry: {
-    'api-key-generator': './src/lambdas/api-key-generator/app.ts',
-    'api-key-authorizer': './src/lambdas/authorizer/api-key-authorizer.ts',
-    'jwt-authorizer': './src/lambdas/authorizer/jwt-authorizer.ts',
-    'rules-engine': './src/lambdas/rules-engine/app.ts',
-    'user-management': './src/lambdas/user-management/app.ts',
-    'list-importer': './src/lambdas/list-importer/app.ts',
-    'file-import': './src/lambdas/file-import/app.ts',
-    'tarpon-change-capture-kinesis-consumer':
-      './src/lambdas/tarpon-change-capture-kinesis-consumer/app.ts',
-    'phytoplankton-internal-api-handlers':
-      './src/lambdas/phytoplankton-internal-api-handlers/app.ts',
-  },
+  entry: Object.fromEntries(
+    fs
+      .readdirSync('./src/lambdas')
+      .map((lambdaDirName) => [
+        lambdaDirName,
+        `./src/lambdas/${lambdaDirName}/app.ts`,
+      ])
+  ),
   output: {
     filename: '[name]/app.js',
     libraryTarget: 'commonjs2',
