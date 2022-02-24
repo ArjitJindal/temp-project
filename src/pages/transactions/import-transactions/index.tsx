@@ -6,10 +6,9 @@ import { files } from './service';
 import type { TableListItem, TableListPagination } from './data.d';
 import { Button, Tag, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import { api } from '@/api';
 import { TransactionImportRequestFormatEnum, TransactionImportRequestTypeEnum } from '@/apis';
+import { useApi } from '@/api';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -24,7 +23,7 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
-  const { getAccessTokenWithPopup } = useAuth0();
+  const api = useApi();
   const actionRef = useRef<ActionType>();
 
   const columns: ProColumns<TableListItem>[] = [
@@ -75,7 +74,7 @@ const TableList: React.FC = () => {
       <ProTable<TableListItem, TableListPagination>
         headerTitle="Files"
         actionRef={actionRef}
-        rowKey="key"
+        rowKey="id"
         search={false}
         request={files}
         columns={columns}
@@ -86,16 +85,9 @@ const TableList: React.FC = () => {
               key="import"
               showUploadList={false}
               customRequest={async ({ file, filename }) => {
-                // TODO: Make getAccessTokenSilently work for local env
-                const token = await getAccessTokenWithPopup({
-                  audience: 'https://dev.api.flagright.com/',
-                });
-
                 // 1. Get S3 presigned URL
                 const hideUploadMessage = message.loading('Uploading...', 0);
-                const { presignedUrl, s3Key } = await api.postTransactionsGetPresignedUrl({
-                  headers: { Authorization: `Bearer ${token}` },
-                });
+                const { presignedUrl, s3Key } = await api.postTransactionsGetPresignedUrl();
 
                 // 2. Upload file to S3 directly
                 await axios.put(presignedUrl, file, {
@@ -108,16 +100,13 @@ const TableList: React.FC = () => {
                 // 3. Start importing
                 const hideImportMessage = message.loading('Importing...', 0);
                 try {
-                  const { importedTransactions } = await api.postTransactionsImport(
-                    {
-                      transactionImportRequest: {
-                        type: TransactionImportRequestTypeEnum.Transaction,
-                        format: TransactionImportRequestFormatEnum.ShPayment,
-                        s3Key,
-                      },
+                  const { importedTransactions } = await api.postTransactionsImport({
+                    transactionImportRequest: {
+                      type: TransactionImportRequestTypeEnum.Transaction,
+                      format: TransactionImportRequestFormatEnum.ShPayment,
+                      s3Key,
                     },
-                    { headers: { Authorization: `Bearer ${token}` } },
-                  );
+                  });
                   message.success(`Imported ${importedTransactions} transactions`);
                 } catch (error) {
                   message.error(error as any);
