@@ -25,6 +25,7 @@ import {
   FunctionProps,
   Runtime,
   Tracing,
+  StartingPosition,
 } from '@aws-cdk/aws-lambda'
 import { Asset } from '@aws-cdk/aws-s3-assets'
 import {
@@ -33,9 +34,21 @@ import {
   getS3BucketName,
 } from './constants'
 
+import { Stream } from '@aws-cdk/aws-kinesis'
+import { KinesisEventSource } from '@aws-cdk/aws-lambda-event-sources'
+
 export class CdkTarponStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props)
+
+    /*
+     * Kinesis Data Streams
+     *
+     */
+    const tarponStream = new Stream(this, 'tarponStream', {
+      streamName: 'tarponDynamoChangeCaptureStream',
+      shardCount: 1,
+    })
 
     /**
      * DynamoDB
@@ -49,6 +62,7 @@ export class CdkTarponStack extends cdk.Stack {
         sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
         readCapacity: 1,
         writeCapacity: 1,
+        kinesisStream: tarponStream,
       }
     )
 
@@ -188,6 +202,24 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/list-importer'
     )
     dynamoDbTable.grantReadWriteData(listImporterFunction)
+
+    /* Kinesis Change capture consumer */
+
+    const tarponChangeCaptureKinesisConsumerName = getResourceName(
+      'TarponChangeCaptureKinesisConsumer'
+    )
+    const tarponChangeCaptureKinesisConsumer = this.createFunction(
+      TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+      'app.tarponChangeCaptureHandler',
+      'dist/tarpon-change-capture-kinesis-consumer'
+    )
+
+    tarponChangeCaptureKinesisConsumer.addEventSource(
+      new KinesisEventSource(tarponStream, {
+        batchSize: 10,
+        startingPosition: StartingPosition.TRIM_HORIZON,
+      })
+    )
 
     /**
      * API Gateway
