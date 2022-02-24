@@ -7,7 +7,7 @@ import {
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
 import { TarponStackConstants } from '../../../lib/constants'
-import PolicyBuilder from './policy-generator'
+import PolicyBuilder from '../../core/policies/policy-generator'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(

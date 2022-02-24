@@ -9,7 +9,7 @@ import {
 import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { TarponStackConstants } from '../../../lib/constants'
-import PolicyBuilder from './policy-generator'
+import PolicyBuilder from '../../core/policies/policy-generator'
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
