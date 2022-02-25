@@ -72,11 +72,11 @@ export class CdkTarponStack extends cdk.Stack {
      * Document DB
      */
 
-    const vpcCidr = '10.0.0.0/21'
+    const docdbVpcCidr = '10.0.0.0/21'
     const port = 27017
 
-    const vpc = new ec2.Vpc(this, 'vpc', {
-      cidr: vpcCidr,
+    const docDbVpc = new ec2.Vpc(this, 'vpc', {
+      cidr: docdbVpcCidr,
       subnetConfiguration: [
         {
           subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
@@ -96,12 +96,12 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    const sg = new ec2.SecurityGroup(this, 'docdb-lambda-sg', {
-      vpc,
+    const docDbSg = new ec2.SecurityGroup(this, 'docdb-lambda-sg', {
+      vpc: docDbVpc,
       securityGroupName: 'docdb-lambda-sg',
     })
 
-    sg.addIngressRule(ec2.Peer.ipv4(vpcCidr), ec2.Port.tcp(port))
+    docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
 
     const docDbCluster = new docdb.DatabaseCluster(this, 'tarpon', {
       masterUser: {
@@ -114,8 +114,8 @@ export class CdkTarponStack extends cdk.Stack {
       vpcSubnets: {
         subnetType: ec2.SubnetType.PUBLIC,
       },
-      securityGroup: sg,
-      vpc,
+      securityGroup: docDbSg,
+      vpc: docDbVpc,
       deletionProtection: true,
     })
 
@@ -262,7 +262,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
-      { securityGroup: sg, vpc: vpc }
+      { securityGroup: docDbSg, vpc: docDbVpc }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
