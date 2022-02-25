@@ -36,6 +36,8 @@ import {
 
 import { Stream } from '@aws-cdk/aws-kinesis'
 import { KinesisEventSource } from '@aws-cdk/aws-lambda-event-sources'
+import * as ec2 from '@aws-cdk/aws-ec2'
+import * as docdb from '@aws-cdk/aws-docdb'
 
 export class CdkTarponStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -65,6 +67,57 @@ export class CdkTarponStack extends cdk.Stack {
         kinesisStream: tarponStream,
       }
     )
+
+    /*
+     * Document DB
+     */
+
+    const docdbVpcCidr = '10.0.0.0/21'
+    const port = 27017
+
+    const docDbVpc = new ec2.Vpc(this, 'vpc', {
+      cidr: docdbVpcCidr,
+      subnetConfiguration: [
+        {
+          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          cidrMask: 24,
+          name: 'PrivateSubnet1',
+        },
+        {
+          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          cidrMask: 24,
+          name: 'PrivateSubnet2',
+        },
+        {
+          subnetType: ec2.SubnetType.PUBLIC,
+          cidrMask: 28,
+          name: 'PublicSubnet1',
+        },
+      ],
+    })
+
+    const docDbSg = new ec2.SecurityGroup(this, 'docdb-lambda-sg', {
+      vpc: docDbVpc,
+      securityGroupName: 'docdb-lambda-sg',
+    })
+
+    docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
+
+    const docDbCluster = new docdb.DatabaseCluster(this, 'tarpon', {
+      masterUser: {
+        username: 'tarponUser',
+      },
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T3,
+        ec2.InstanceSize.MEDIUM
+      ),
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC,
+      },
+      securityGroup: docDbSg,
+      vpc: docDbVpc,
+      deletionProtection: true,
+    })
 
     /**
      * S3 Buckets
@@ -205,13 +258,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Kinesis Change capture consumer */
 
-    const tarponChangeCaptureKinesisConsumerName = getResourceName(
-      'TarponChangeCaptureKinesisConsumer'
-    )
     const tarponChangeCaptureKinesisConsumer = this.createFunction(
       TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
       'app.tarponChangeCaptureHandler',
-      'dist/tarpon-change-capture-kinesis-consumer'
+      'dist/tarpon-change-capture-kinesis-consumer',
+      { securityGroup: docDbSg, vpc: docDbVpc }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
