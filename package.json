@@ -93,6 +93,7 @@
     "io-ts-reporters": "^2.0.1",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^2.0.5",
+    "mongodb": "^4.4.0",
     "nanoid": "^3.2.0",
     "unique-names-generator": "^4.6.0",
     "uuid": "^8.3.2"

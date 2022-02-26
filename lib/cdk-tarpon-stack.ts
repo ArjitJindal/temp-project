@@ -262,7 +262,15 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
-      { securityGroup: docDbSg, vpc: docDbVpc }
+      {
+        securityGroup: docDbSg,
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: 'DB_HOST',
+          DB_PORT: '27017',
+          SM_SECRET_ARN: 'secretarn',
+        },
+      }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
