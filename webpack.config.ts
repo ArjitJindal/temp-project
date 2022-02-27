@@ -17,7 +17,13 @@ const config: Configuration = {
     path: resolve(__dirname, 'dist'),
   },
   module: {
-    rules: [{ test: /\.ts$/, loader: 'ts-loader' }],
+    rules: [
+      { test: /\.ts$/, loader: 'ts-loader' },
+      {
+        test: /\.node$/i,
+        use: 'raw-loader',
+      },
+    ],
   },
   resolve: {
     extensions: ['.js', '.ts'],
