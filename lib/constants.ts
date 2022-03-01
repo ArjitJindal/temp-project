@@ -2,8 +2,8 @@ export function getResourceName(resourceName: string, dash = false) {
   return `tarpon${dash ? '-' : ''}${resourceName}`
 }
 
-export function getS3BucketName(name: string, account?: string) {
-  return name + (account ? `-${account}` : '')
+export function getS3BucketName(name: string, stage?: string) {
+  return name + (stage ? `-${stage}` : '')
 }
 
 export const TarponStackConstants = {

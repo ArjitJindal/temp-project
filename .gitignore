@@ -114,6 +114,7 @@ dist
 
 # CDK
 cdk.out
+.cdk*
 
 # OSX
 .DS_Store

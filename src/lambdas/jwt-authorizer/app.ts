@@ -14,15 +14,15 @@ import PolicyBuilder from '../../core/policies/policy-generator'
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
 const jwtOptions = {
-  audience: process.env.AUDIENCE,
-  issuer: process.env.TOKEN_ISSUER,
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: process.env.AUTH0_TOKEN_ISSUER,
 }
 
 const jwks = jwksClient({
   cache: true,
   rateLimit: true,
   jwksRequestsPerMinute: 10, // Default value
-  jwksUri: process.env.JWKS_URI!,
+  jwksUri: process.env.AUTH0_JWKS_URI!,
 })
 
 async function getTenantScopeCredentials(
