@@ -127,6 +127,8 @@ export class CdkTarponStack extends cdk.Stack {
       securityGroup: docDbSg,
       vpc: docDbVpc,
       deletionProtection: config.stage !== 'dev',
+      removalPolicy:
+        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     })
 
     /**
@@ -140,7 +142,8 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const s3ImportBucket = new s3.Bucket(this, importBucketName, {
       bucketName: importBucketName,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
@@ -150,7 +153,8 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const s3ImportTmpBucket = new s3.Bucket(this, importTmpBucketName, {
       bucketName: importTmpBucketName,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy:
+        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       lifecycleRules: [
