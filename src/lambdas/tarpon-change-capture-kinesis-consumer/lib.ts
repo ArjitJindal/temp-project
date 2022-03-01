@@ -11,7 +11,7 @@ const secretsmanager = new AWS.SecretsManager()
 const DB_HOST = process.env.DB_HOST as string
 const DB_PORT = process.env.DB_PORT as string
 const SM_SECRET_ARN = process.env.SM_SECRET_ARN as string
-const ca = readFileSync(`${__dirname}/tls_creds/rds-combined-ca-bundle.pem`)
+const ca = readFileSync(`${__dirname}/rds-combined-ca-bundle.pem`)
 
 let cacheClient: MongoClient
 

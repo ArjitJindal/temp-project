@@ -7,7 +7,8 @@ let client: MongoClient
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   // Implementation pending
   console.log('Kinesis Event')
-  console.log(event)
+  console.log(event.Records[0].kinesis)
+  console.log(__dirname)
   try {
     client = await connectToDB()
     const db = client.db('tarpon')

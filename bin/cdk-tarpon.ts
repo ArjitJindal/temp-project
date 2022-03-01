@@ -2,6 +2,7 @@
 import 'source-map-support/register'
 import * as cdk from '@aws-cdk/core'
 import { CdkTarponStack } from '../lib/cdk-tarpon-stack'
+import * as account from 'aws-sdk/clients/account'
 
 const app = new cdk.App()
 new CdkTarponStack(app, 'tarpon', {
@@ -15,4 +16,8 @@ new CdkTarponStack(app, 'tarpon', {
    * want to deploy the stack to. */
   // env: { account: '123456789012', region: 'us-east-1' },
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+  env: {
+    region: process.env.CDK_DEFAULT_REGION,
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+  },
 })

@@ -85,6 +85,7 @@
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/parse": "^4.3.6",
     "base-x": "^3.0.9",
+    "copy-webpack-plugin": "^10.2.4",
     "dayjs": "^1.10.7",
     "fp-ts": "^2.11.8",
     "http-errors": "^2.0.0",
