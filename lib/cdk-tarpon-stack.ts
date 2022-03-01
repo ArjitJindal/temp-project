@@ -1,5 +1,4 @@
-import * as cdk from '@aws-cdk/core'
-import * as s3 from '@aws-cdk/aws-s3'
+import * as cdk from 'aws-cdk-lib'
 import {
   ArnPrincipal,
   Effect,
@@ -8,15 +7,15 @@ import {
   PolicyStatement,
   Role,
   ServicePrincipal,
-} from '@aws-cdk/aws-iam'
-import { AttributeType, Table } from '@aws-cdk/aws-dynamodb'
+} from 'aws-cdk-lib/aws-iam'
+import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import {
   AssetApiDefinition,
   MethodLoggingLevel,
   SpecRestApi,
-} from '@aws-cdk/aws-apigateway'
+} from 'aws-cdk-lib/aws-apigateway'
 
-import { CfnOutput, Duration, Fn } from '@aws-cdk/core'
+import { CfnOutput, Duration, Fn, RemovalPolicy } from 'aws-cdk-lib'
 
 import {
   CfnFunction,
@@ -26,22 +25,28 @@ import {
   Runtime,
   Tracing,
   StartingPosition,
-} from '@aws-cdk/aws-lambda'
-import { Asset } from '@aws-cdk/aws-s3-assets'
+  Alias,
+} from 'aws-cdk-lib/aws-lambda'
+import { Asset } from 'aws-cdk-lib/aws-s3-assets'
+
+import { Construct } from 'constructs'
+import * as s3 from 'aws-cdk-lib/aws-s3'
+
+import { Stream } from 'aws-cdk-lib/aws-kinesis'
+import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as docdb from 'aws-cdk-lib/aws-docdb'
 import {
   TarponStackConstants,
   getResourceName,
   getS3BucketName,
 } from './constants'
 
-import { Stream } from '@aws-cdk/aws-kinesis'
-import { KinesisEventSource } from '@aws-cdk/aws-lambda-event-sources'
-import * as ec2 from '@aws-cdk/aws-ec2'
-import * as docdb from '@aws-cdk/aws-docdb'
+import { Config } from './configs/config'
 
 export class CdkTarponStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props)
+  constructor(scope: Construct, id: string, config: Config) {
+    super(scope, id, { env: config.env })
 
     /*
      * Kinesis Data Streams
@@ -51,6 +56,9 @@ export class CdkTarponStack extends cdk.Stack {
       streamName: 'tarponDynamoChangeCaptureStream',
       shardCount: 1,
     })
+    if (config.stage === 'dev') {
+      tarponStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+    }
 
     /**
      * DynamoDB
@@ -62,9 +70,11 @@ export class CdkTarponStack extends cdk.Stack {
         tableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
         partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
         sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-        readCapacity: 1,
-        writeCapacity: 1,
+        readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
+        writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
         kinesisStream: tarponStream,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
 
@@ -116,7 +126,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       securityGroup: docDbSg,
       vpc: docDbVpc,
-      deletionProtection: true,
+      deletionProtection: config.stage !== 'dev',
     })
 
     /**
@@ -126,7 +136,7 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const importBucketName = getS3BucketName(
       TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
-      process.env.CDK_DEFAULT_ACCOUNT
+      config.stage
     )
     const s3ImportBucket = new s3.Bucket(this, importBucketName, {
       bucketName: importBucketName,
@@ -136,7 +146,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
     const importTmpBucketName = getS3BucketName(
       TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
-      process.env.CDK_DEFAULT_ACCOUNT
+      config.stage
     )
     const s3ImportTmpBucket = new s3.Bucket(this, importTmpBucketName, {
       bucketName: importTmpBucketName,
@@ -181,7 +191,8 @@ export class CdkTarponStack extends cdk.Stack {
     const apiKeyAuthorizerFunction = this.createFunction(
       TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
       'app.apiKeyAuthorizer',
-      'dist/api-key-authorizer'
+      'dist/api-key-authorizer',
+      config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY
     )
 
     /* JWT Authorizer */
@@ -189,12 +200,12 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
       'app.jwtAuthorizer',
       'dist/jwt-authorizer',
+      undefined,
       {
         environment: {
-          // TODO: Use env-specific values
-          AUDIENCE: 'https://dev.api.flagright.com/',
-          TOKEN_ISSUER: 'https://dev-flagright.eu.auth0.com/',
-          JWKS_URI: 'https://dev-flagright.eu.auth0.com/.well-known/jwks.json',
+          AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
+          AUTH0_TOKEN_ISSUER: config.application.AUTH0_TOKEN_ISSUER,
+          AUTH0_JWKS_URI: config.application.AUTH0_JWKS_URI,
         },
       }
     )
@@ -203,7 +214,8 @@ export class CdkTarponStack extends cdk.Stack {
     const transactionFunction = this.createFunction(
       TarponStackConstants.TRANSACTION_FUNCTION_NAME,
       'app.transactionHandler',
-      'dist/rules-engine'
+      'dist/rules-engine',
+      config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY
     )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
@@ -244,7 +256,8 @@ export class CdkTarponStack extends cdk.Stack {
     const userFunction = this.createFunction(
       TarponStackConstants.USER_FUNCTION_NAME,
       'app.userHandler',
-      'dist/user-management'
+      'dist/user-management',
+      config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY
     )
     dynamoDbTable.grantReadWriteData(userFunction)
 
@@ -262,7 +275,8 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
-      { securityGroup: docDbSg, vpc: docDbVpc }
+      undefined,
+      { securityGroups: [docDbSg], vpc: docDbVpc }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
@@ -394,6 +408,7 @@ export class CdkTarponStack extends cdk.Stack {
     name: string,
     handler: string,
     codePath: string,
+    provisionedConcurrency?: number,
     props?: Partial<FunctionProps>
   ): LambdaFunction {
     const func = new LambdaFunction(this, name, {
@@ -409,6 +424,15 @@ export class CdkTarponStack extends cdk.Stack {
     func.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
     // This is needed to allow using ${Function.Arn} in openapi.yaml
     ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
+
+    // Provisioned concurrency settings
+    if (provisionedConcurrency) {
+      new Alias(this, `${name}-alias`, {
+        aliasName: `${name}-alias`,
+        version: func.currentVersion,
+        provisionedConcurrentExecutions: provisionedConcurrency,
+      })
+    }
     return func
   }
 }
