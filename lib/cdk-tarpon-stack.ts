@@ -169,7 +169,19 @@ export class CdkTarponStack extends cdk.Stack {
     const apiKeyGeneratorFunction = this.createFunction(
       TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
       'app.apiKeyGeneratorHandler',
-      'dist/api-key-generator'
+      'dist/api-key-generator',
+      undefined,
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST:
+            'tarpona66d2ce0-qiaki6etkmao.cluster-cvcwzutz4c1u.us-east-2.docdb.amazonaws.com',
+          DB_PORT: '27017',
+          SM_SECRET_ARN:
+            'arn:aws:secretsmanager:us-east-2:911899431626:secret:tarponSecretB9326F2F-T61PqYACX1Yg-KUgRP5',
+        },
+      }
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
