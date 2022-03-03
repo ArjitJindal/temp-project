@@ -52,18 +52,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -118,18 +115,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
   /rule_instances/{ruleInstanceId}:
     parameters:
       - schema:
@@ -201,18 +195,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
   /transactions/import:
     parameters: []
     post:
@@ -267,18 +258,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
   /transactions/import/getPresignedUrl:
     parameters: []
     post:
@@ -320,18 +308,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
   /lists:
     post:
       summary: List Import
@@ -371,18 +356,15 @@ paths:
                 type: string
       x-amazon-apigateway-integration:
         type: mock
-        responseTemplates:
-          application/json: |2-
-
-                      {"statusCode":200}
-                      #set($domains = ["http://localhost:8001","https://localhost:8001","https://dev.console.flagright.com","https://sandbox.console.flagright.com","https://demo.console.flagright.com","https://console.flagright.com"])
-                      #set($origin = $input.params("origin"))
-                      #if($domains.contains($origin))
-                      #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-                      #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-                      #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-                      #end
-
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
 components:
   schemas:
     RuleInstance:

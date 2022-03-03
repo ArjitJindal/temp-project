@@ -121,17 +121,22 @@ for (const path in openapi.paths) {
     },
     'x-amazon-apigateway-integration': {
       type: 'mock',
-      responseTemplates: {
-        'application/json': `
-          {"statusCode":200}
-          #set($domains = ${CORS_ALLOW_ORIGINS_STRING})
-          #set($origin = $input.params("origin"))
-          #if($domains.contains($origin))
-          #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-          #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-          #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-          #end
-        `,
+      requestTemplates: {
+        'application/json': '{"statusCode":200}',
+      },
+      responses: {
+        default: {
+          statusCode: 200,
+          responseParameters: {
+            'method.response.header.Access-Control-Allow-Headers': "'*'",
+            'method.response.header.Access-Control-Allow-Methods':
+              "'OPTIONS,POST,GET'",
+            'method.response.header.Access-Control-Allow-Origin':
+              process.env.ENV === 'prod'
+                ? "'https://console.flagright.com'"
+                : `'https://${process.env.ENV}.console.flagright.com'`,
+          },
+        },
       },
     },
   }
