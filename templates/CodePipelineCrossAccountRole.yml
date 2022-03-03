@@ -79,7 +79,7 @@ Resources:
               - cloudformation:DeleteStack
               - cloudformation:UpdateStack
               - cloudformation:DescribeStack*
-            Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${Stage}ApplicationDeploymentStack/*
+            Resource: !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${Stage}*DeploymentStack/*
             Effect: Allow
           - Action:
               - iam:PassRole
