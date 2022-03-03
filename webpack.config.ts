@@ -24,6 +24,10 @@ const config: Configuration = {
           from: 'src/ca/rds-combined-ca-bundle.pem',
           to: 'tarpon-change-capture-kinesis-consumer/rds-combined-ca-bundle.pem',
         },
+        {
+          from: 'src/ca/rds-combined-ca-bundle.pem',
+          to: 'api-key-generator/rds-combined-ca-bundle.pem',
+        },
       ],
     }),
   ],
