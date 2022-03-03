@@ -8,17 +8,6 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { TarponStackConstants } from '../constants'
 
-const CORS_ALLOW_ORIGINS = [
-  'http://localhost:8001',
-  'https://localhost:8001',
-  'https://dev.console.flagright.com',
-  'https://sandbox.console.flagright.com',
-  'https://demo.console.flagright.com',
-  'https://console.flagright.com',
-]
-const CORS_ALLOW_ORIGINS_STRING =
-  '[' + CORS_ALLOW_ORIGINS.map((v) => `"${v}"`).join(',') + ']'
-
 const PathToLambda: any = {
   '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,

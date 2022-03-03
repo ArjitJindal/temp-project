@@ -1,6 +1,12 @@
-import { APIGatewayProxyHandler } from 'aws-lambda'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
+import { compose } from '../../core/middlewares/compose'
+import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
+import { jsonSerializer } from '../../core/middlewares/json-serializer'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -46,13 +52,17 @@ async function createNewApiKeyForTenant(
   return newApiKey
 }
 
-export const apiKeyGeneratorHandler: APIGatewayProxyHandler = async (event) => {
-  const { tenantId, usagePlanId } =
-    event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-  const newApiKey = await createNewApiKeyForTenant(tenantId, usagePlanId)
-
-  return {
-    statusCode: 200,
-    body: newApiKey,
+export const apiKeyGeneratorHandler = compose(
+  httpErrorHandler(),
+  jsonSerializer()
+)(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { tenantId, usagePlanId } =
+      event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
+    return createNewApiKeyForTenant(tenantId, usagePlanId)
   }
-}
+)

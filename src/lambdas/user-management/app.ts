@@ -1,66 +1,60 @@
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyWithLambdaAuthorizerHandler,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { cors } from '../../core/utils/cors'
+import { compose } from '../../core/middlewares/compose'
+import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
+import { jsonSerializer } from '../../core/middlewares/json-serializer'
 import { UserRepository } from './repositories/user-repository'
 
-export const userHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-> = async (event) => {
-  const { principalId: tenantId } = event.requestContext.authorizer
-  const dynamoDb = getDynamoDbClient(event)
-  const userRepository = new UserRepository(tenantId, dynamoDb)
-  const userId = event.pathParameters?.userId
+export const userHandler = compose(
+  httpErrorHandler(),
+  jsonSerializer()
+)(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClient(event)
+    const userRepository = new UserRepository(tenantId, dynamoDb)
+    const userId = event.pathParameters?.userId
 
-  if (event.path.includes('business')) {
-    if (event.httpMethod === 'GET' && userId) {
-      const user = await userRepository.getBusinessUser(userId)
-      console.log(user)
-      return cors({
-        statusCode: 200,
-        body: JSON.stringify(user),
-      })
-    } else if (event.httpMethod === 'POST' && event.body) {
-      const user = await userRepository.createBusinessUser(
-        JSON.parse(event.body)
-      )
-      const result = {
-        userId: user.userId,
-        // TODO: Implement risk score
-        userRiskScoreDetails: undefined,
+    if (event.path.includes('business')) {
+      if (event.httpMethod === 'GET' && userId) {
+        const user = await userRepository.getBusinessUser(userId)
+        console.log(user)
+        return user
+      } else if (event.httpMethod === 'POST' && event.body) {
+        const user = await userRepository.createBusinessUser(
+          JSON.parse(event.body)
+        )
+        const result = {
+          userId: user.userId,
+          // TODO: Implement risk score
+          userRiskScoreDetails: undefined,
+        }
+        return result
       }
-      return cors({
-        statusCode: 201,
-        body: JSON.stringify(result),
-      })
-    }
-  } else if (event.path.includes('consumer')) {
-    if (event.httpMethod === 'GET' && userId) {
-      const user = await userRepository.getConsumerUser(userId)
-      return cors({
-        statusCode: 200,
-        body: JSON.stringify(user),
-      })
-    } else if (event.httpMethod === 'POST' && event.body) {
-      const user = await userRepository.createConsumerUser(
-        JSON.parse(event.body)
-      )
-      const result = {
-        userId: user.userId,
-        // TODO: Implement risk score
-        userRiskScoreDetails: undefined,
+    } else if (event.path.includes('consumer')) {
+      if (event.httpMethod === 'GET' && userId) {
+        const user = await userRepository.getConsumerUser(userId)
+        return user
+      } else if (event.httpMethod === 'POST' && event.body) {
+        const user = await userRepository.createConsumerUser(
+          JSON.parse(event.body)
+        )
+        const result = {
+          userId: user.userId,
+          // TODO: Implement risk score
+          userRiskScoreDetails: undefined,
+        }
+        return result
       }
-      return cors({
-        statusCode: 201,
-        body: JSON.stringify(result),
-      })
     }
+    return 'Unhandled request'
   }
-  return cors({
-    statusCode: 500,
-    body: 'Unhandled request',
-  })
-}
+)
