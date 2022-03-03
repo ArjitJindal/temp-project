@@ -136,12 +136,20 @@ export class CdkTarponStack extends cdk.Stack {
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
      * logical bucket name.
      */
+    const s3BucketCors = [
+      {
+        allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT],
+        allowedOrigins: ['*'],
+        allowedHeaders: ['*'],
+      },
+    ]
     const importBucketName = getS3BucketName(
       TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
       config.stage
     )
     const s3ImportBucket = new s3.Bucket(this, importBucketName, {
       bucketName: importBucketName,
+      cors: s3BucketCors,
       removalPolicy:
         config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: config.stage === 'dev',
@@ -153,6 +161,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const s3ImportTmpBucket = new s3.Bucket(this, importTmpBucketName, {
       bucketName: importTmpBucketName,
+      cors: s3BucketCors,
       removalPolicy:
         config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       autoDeleteObjects: config.stage === 'dev',
