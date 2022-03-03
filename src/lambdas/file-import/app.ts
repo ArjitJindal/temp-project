@@ -9,12 +9,16 @@ import { getDynamoDbClient } from '../../utils/dynamodb'
 import { getS3Client } from '../../utils/s3'
 import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../../core/middlewares/json-serializer'
-import { getS3BucketName, TarponStackConstants } from '../../../lib/constants'
 import { TransactionImportRequest } from '../../@types/openapi-internal/transactionImportRequest'
 import { PresignedUrlResponse } from '../../@types/openapi-internal/presignedUrlResponse'
 import { TransactionImportResponse } from '../../@types/openapi-internal/transactionImportResponse'
 import { compose } from '../../core/middlewares/compose'
 import { TransactionImporter } from './transaction/importer'
+
+export type FileImportConfig = {
+  IMPORT_BUCKET: string
+  IMPORT_TMP_BUCKET: string
+}
 
 export const fileImportHandler = compose(
   httpErrorHandler(),
@@ -25,6 +29,7 @@ export const fileImportHandler = compose(
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ): Promise<TransactionImportResponse> => {
+    const { IMPORT_TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
     const s3 = getS3Client(event)
@@ -38,7 +43,8 @@ export const fileImportHandler = compose(
           tenantId,
           dynamoDb,
           s3,
-          event.requestContext?.accountId
+          IMPORT_TMP_BUCKET,
+          IMPORT_BUCKET
         )
         const importedTransactions =
           await transactionImporter.importTransactions(importRequest)
@@ -50,6 +56,10 @@ export const fileImportHandler = compose(
   }
 )
 
+export type GetPresignedUrlConfig = {
+  IMPORT_TMP_BUCKET: string
+}
+
 export const getPresignedUrlHandler = compose(
   httpErrorHandler(),
   jsonSerializer()
@@ -59,16 +69,13 @@ export const getPresignedUrlHandler = compose(
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ): Promise<PresignedUrlResponse> => {
+    const { IMPORT_TMP_BUCKET } = process.env as GetPresignedUrlConfig
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { accountId } = event.requestContext
     const s3 = getS3Client(event)
 
     const s3Key = `${tenantId}/${uuidv4()}`
     const bucketParams = {
-      Bucket: getS3BucketName(
-        TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
-        accountId
-      ),
+      Bucket: IMPORT_TMP_BUCKET,
       Key: s3Key,
       Expires: 3600,
     }

@@ -1,31 +1,30 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
-import {
-  getS3BucketName,
-  TarponStackConstants,
-} from '../../../../lib/constants'
 import { TransactionImportRequest } from '../../../@types/openapi-internal/transactionImportRequest'
 import { Transaction } from '../../../@types/openapi-public/transaction'
 import { TransactionMonitoringResult } from '../../../@types/openapi-public/transactionMonitoringResult'
 import { verifyTransaction } from '../../rules-engine/app'
-import { converters, ImportFormat } from './converters'
+import { converters } from './converters'
 
 export class TransactionImporter {
   tenantId: string
   dynamoDb: AWS.DynamoDB.DocumentClient
   s3: AWS.S3
-  accountId: string
+  importTmpBucket: string
+  importBucket: string
 
   constructor(
     tenantId: string,
     dynamoDb: AWS.DynamoDB.DocumentClient,
     s3: AWS.S3,
-    accountId: string
+    importTmpBucket: string,
+    importBucket: string
   ) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb
     this.s3 = s3
-    this.accountId = accountId
+    this.importTmpBucket = importTmpBucket
+    this.importBucket = importBucket
   }
 
   public async importTransactions(
@@ -38,12 +37,8 @@ export class TransactionImporter {
     }
 
     let importedTransactions = 0
-    const importTmpBucket = getS3BucketName(
-      TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
-      this.accountId
-    )
     const params = {
-      Bucket: importTmpBucket,
+      Bucket: this.importTmpBucket,
       Key: s3Key,
     }
     const stream = this.s3
@@ -65,14 +60,10 @@ export class TransactionImporter {
         )
       }
     }
-    const importBucket = getS3BucketName(
-      TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
-      this.accountId
-    )
     await this.s3
       .copyObject({
-        CopySource: `${importTmpBucket}/${s3Key}`,
-        Bucket: importBucket,
+        CopySource: `${this.importTmpBucket}/${s3Key}`,
+        Bucket: this.importBucket,
         Key: s3Key,
       })
       .promise()

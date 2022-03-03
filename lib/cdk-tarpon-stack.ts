@@ -37,6 +37,10 @@ import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as docdb from 'aws-cdk-lib/aws-docdb'
 import {
+  FileImportConfig,
+  GetPresignedUrlConfig,
+} from '../src/lambdas/file-import/app'
+import {
   TarponStackConstants,
   getResourceName,
   getS3BucketName,
@@ -236,7 +240,15 @@ export class CdkTarponStack extends cdk.Stack {
     const fileImportFunction = this.createFunction(
       TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
       'app.fileImportHandler',
-      'dist/file-import/'
+      'dist/file-import/',
+      undefined,
+      {
+        environment: {
+          IMPORT_BUCKET: importBucketName,
+          IMPORT_TMP_BUCKET: importTmpBucketName,
+        } as FileImportConfig,
+        timeout: Duration.minutes(15),
+      }
     )
     dynamoDbTable.grantReadWriteData(fileImportFunction)
     s3ImportTmpBucket.grantRead(fileImportFunction)
@@ -245,7 +257,13 @@ export class CdkTarponStack extends cdk.Stack {
     const getPresignedUrlFunction = this.createFunction(
       TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
       'app.getPresignedUrlHandler',
-      'dist/file-import/'
+      'dist/file-import/',
+      undefined,
+      {
+        environment: {
+          IMPORT_TMP_BUCKET: importTmpBucketName,
+        } as GetPresignedUrlConfig,
+      }
     )
     s3ImportTmpBucket.grantPut(getPresignedUrlFunction)
 
