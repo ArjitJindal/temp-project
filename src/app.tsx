@@ -58,9 +58,8 @@ const AuthWrapperProvider: React.FC = ({ children }) => {
     history.push(appState && appState.returnTo ? appState.returnTo : window.location.pathname);
   };
   const providerConfig = {
-    // TODO: Use env-specific values
-    domain: 'dev-flagright.eu.auth0.com',
-    clientId: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
+    domain: AUTH0_DOMAIN,
+    clientId: AUTH0_CLIENT_ID,
     redirectUri: window.location.origin,
     onRedirectCallback,
   };

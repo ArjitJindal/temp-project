@@ -11,6 +11,7 @@ import { Construct } from 'constructs';
 import { config as deployConfig } from './configs/config-deployment';
 import { config as devConfig } from './configs/config-dev';
 import { config as sandboxConfig } from './configs/config-sandbox';
+import { config as prodConfig } from './configs/config-prod';
 import { CdkPhytoplanktonStack } from './cdk-phytoplankton-stack';
 
 const PIPELINE_NAME = 'phytoplankton-pipeline';
@@ -25,7 +26,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
     super(scope, id, props);
 
     // Resolve ARNs of cross-account roles for the Dev account
-    const devCloudFormationRole = iam.Role.fromRoleArn(
+    const devDeploymentRole = iam.Role.fromRoleArn(
       this,
       'DevDeploymentRole',
       `arn:aws:iam::${devConfig.env.account}:role/CloudFormationDeploymentRole`,
@@ -33,7 +34,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
         mutable: false,
       },
     );
-    const devCodeDeployRole = iam.Role.fromRoleArn(
+    const devPipelineRole = iam.Role.fromRoleArn(
       this,
       'DevCrossAccountRole',
       `arn:aws:iam::${devConfig.env.account}:role/CodePipelineCrossAccountRole`,
@@ -43,18 +44,36 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
     );
 
     // Resolve ARNS of cross-account roles for the Sandbox account
-    const sandboxCloudFormationRole = iam.Role.fromRoleArn(
+    const sandboxDeploymentRole = iam.Role.fromRoleArn(
       this,
-      'ProdDeploymentRole',
+      'SandboxDeploymentRole',
       `arn:aws:iam::${sandboxConfig.env.account}:role/CloudFormationDeploymentRole`,
       {
         mutable: false,
       },
     );
-    const sandboxCodeDeployRole = iam.Role.fromRoleArn(
+    const sandboxPipelineRole = iam.Role.fromRoleArn(
+      this,
+      'SandboxCrossAccountRole',
+      `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineCrossAccountRole`,
+      {
+        mutable: false,
+      },
+    );
+
+    // Resolve ARNS of cross-account roles for the Prod account
+    const prodDeploymentRole = iam.Role.fromRoleArn(
+      this,
+      'ProdDeploymentRole',
+      `arn:aws:iam::${prodConfig.env.account}:role/CloudFormationDeploymentRole`,
+      {
+        mutable: false,
+      },
+    );
+    const prodPipelineRole = iam.Role.fromRoleArn(
       this,
       'ProdCrossAccountRole',
-      `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineCrossAccountRole`,
+      `arn:aws:iam::${prodConfig.env.account}:role/CodePipelineCrossAccountRole`,
       {
         mutable: false,
       },
@@ -72,35 +91,41 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
     });
 
     // CDK build definition
-    const cdkBuild = new codebuild.PipelineProject(this, 'PhytoplanktonCdkBuild', {
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          install: {
-            'runtime-versions': {
-              nodejs: 14,
+    const cdkBuild = (env: string) =>
+      new codebuild.PipelineProject(this, `PhytoplanktonCdkBuild-${env}`, {
+        buildSpec: codebuild.BuildSpec.fromObject({
+          version: '0.2',
+          phases: {
+            install: {
+              'runtime-versions': {
+                nodejs: 14,
+              },
+              commands: ['npm install', 'npm install -g aws-cdk'],
             },
-            commands: ['npm install', 'npm install -g aws-cdk'],
+            build: {
+              commands: ['npm run build:$ENV', 'npm run synth:$ENV'],
+            },
           },
-          build: {
-            commands: ['npm run build', 'npm run synth'],
+          artifacts: {
+            'base-directory': 'cdk.out',
+            files: ['*phytoplankton.template.json'],
           },
+        }),
+        environment: {
+          environmentVariables: {
+            ENV: { value: env },
+          },
+          buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
         },
-        artifacts: {
-          'base-directory': 'cdk.out',
-          files: ['*phytoplankton.template.json'],
-        },
-      }),
-      environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
-      },
-      // use the encryption key for build artifacts
-      encryptionKey: key,
-    });
+        // use the encryption key for build artifacts
+        encryptionKey: key,
+      });
 
     // Define pipeline stage output artifacts
     const sourceOutput = new codepipeline.Artifact();
-    const cdkBuildOutput = new codepipeline.Artifact('CdkBuildOutput');
+    const cdkDevBuildOutput = new codepipeline.Artifact('CdkDevBuildOutput');
+    const cdkSandboxBuildOutput = new codepipeline.Artifact('CdkSandboxBuildOutput');
+    const cdkProdBuildOutput = new codepipeline.Artifact('CdkProdBuildOutput');
 
     // Pipeline definition
     const pipeline = new codepipeline.Pipeline(this, PIPELINE_NAME, {
@@ -121,13 +146,13 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           ],
         },
         {
-          stageName: 'Build',
+          stageName: 'Build_Dev',
           actions: [
             new codepipeline_actions.CodeBuildAction({
               actionName: 'CDK_Synth',
-              project: cdkBuild,
+              project: cdkBuild('dev'),
               input: sourceOutput,
-              outputs: [cdkBuildOutput],
+              outputs: [cdkDevBuildOutput],
             }),
           ],
         },
@@ -136,12 +161,23 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           actions: [
             new codepipeline_actions.CloudFormationCreateUpdateStackAction({
               actionName: 'Deploy',
-              templatePath: cdkBuildOutput.atPath('dev-phytoplankton.template.json'),
+              templatePath: cdkDevBuildOutput.atPath('dev-phytoplankton.template.json'),
               stackName: 'DevPhytoplanktonDeploymentStack',
               adminPermissions: true,
               cfnCapabilities: [CfnCapabilities.ANONYMOUS_IAM],
-              role: devCodeDeployRole,
-              deploymentRole: devCloudFormationRole,
+              role: devPipelineRole,
+              deploymentRole: devDeploymentRole,
+            }),
+          ],
+        },
+        {
+          stageName: 'Build_Sandbox',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'CDK_Synth',
+              project: cdkBuild('sandbox'),
+              input: sourceOutput,
+              outputs: [cdkSandboxBuildOutput],
             }),
           ],
         },
@@ -153,12 +189,40 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
             }),
             new codepipeline_actions.CloudFormationCreateUpdateStackAction({
               actionName: 'Deploy',
-              templatePath: cdkBuildOutput.atPath('sandbox-phytoplankton.template.json'),
+              templatePath: cdkSandboxBuildOutput.atPath('sandbox-phytoplankton.template.json'),
               stackName: 'SandboxPhytoplanktonDeploymentStack',
               adminPermissions: true,
               cfnCapabilities: [CfnCapabilities.ANONYMOUS_IAM],
-              role: sandboxCodeDeployRole,
-              deploymentRole: sandboxCloudFormationRole,
+              role: sandboxPipelineRole,
+              deploymentRole: sandboxDeploymentRole,
+            }),
+          ],
+        },
+        {
+          stageName: 'Build_Prod',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'CDK_Synth',
+              project: cdkBuild('prod'),
+              input: sourceOutput,
+              outputs: [cdkProdBuildOutput],
+            }),
+          ],
+        },
+        {
+          stageName: 'Deploy_Prod',
+          actions: [
+            new codepipeline_actions.ManualApprovalAction({
+              actionName: 'Approve',
+            }),
+            new codepipeline_actions.CloudFormationCreateUpdateStackAction({
+              actionName: 'Deploy',
+              templatePath: cdkProdBuildOutput.atPath('prod-phytoplankton.template.json'),
+              stackName: 'ProdPhytoplanktonDeploymentStack',
+              adminPermissions: true,
+              cfnCapabilities: [CfnCapabilities.ANONYMOUS_IAM],
+              role: prodPipelineRole,
+              deploymentRole: prodDeploymentRole,
             }),
           ],
         },

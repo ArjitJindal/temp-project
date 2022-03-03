@@ -3,9 +3,6 @@ import { useMemo } from 'react';
 import type { ConfigurationParameters, FetchParams, Middleware, ResponseContext } from './apis';
 import { Configuration, DefaultApi as FlagrightApi } from './apis';
 
-const API_BASE_PATH = 'https://dev.api.flagright.com/console';
-const AUTH0_AUDIENCE = 'https://dev.api.flagright.com/';
-
 class AuthorizationMiddleware implements Middleware {
   getAccessToken: () => Promise<string>;
 

@@ -6,6 +6,6 @@ export const config = {
     OWNER: 'flagright',
     REPO: 'phytoplankton-console',
     // TDOO: Switch to main branch after stable
-    BRANCH: 'FDT-97-phytoplankton-aws-deployment-with-dns',
+    BRANCH: 'ci-cd-test',
   },
 };

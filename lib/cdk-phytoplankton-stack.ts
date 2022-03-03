@@ -12,12 +12,12 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     super(scope, id, { env: config.env });
 
     const cloudfrontOAI = new cloudfront.OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${config.resource.SITE_DOMAIN}`,
+      comment: `OAI for ${config.SITE_DOMAIN}`,
     });
 
     // Content bucket
     const siteBucket = new s3.Bucket(this, 'SiteBucket', {
-      bucketName: config.resource.SITE_DOMAIN,
+      bucketName: config.SITE_DOMAIN,
       websiteIndexDocument: 'index.html',
       websiteErrorDocument: 'index.html',
       publicReadAccess: false,
@@ -87,9 +87,9 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     console.log(
       `❗❗For initial deployment, please follow https://flagright.atlassian.net/wiki/spaces/EN/pages/9633819/DNS+configuration#AWS-CloudFront-(for-FDT-console) to configure DNS.
 It involves the following steps
-1. Create a new certificate for ${config.resource.SITE_DOMAIN} in us-east-1 region
+1. Create a new certificate for ${config.SITE_DOMAIN} in us-east-1 region
 2. Set up CNAME in Route53 for the certificate
-3. Set ${config.resource.SITE_DOMAIN} as the alternate domain name of the CloudFront distribution
+3. Set ${config.SITE_DOMAIN} as the alternate domain name of the CloudFront distribution
 4. Set up CNAME in Route53 for the subdomain (with DistributionDomainName as the value)
 `,
     );
