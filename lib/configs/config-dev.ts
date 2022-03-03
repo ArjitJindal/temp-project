@@ -4,4 +4,6 @@ export const config: Config = {
   stage: 'dev',
   env: { account: '911899431626', region: 'us-east-2' },
   SITE_DOMAIN: 'dev.console.flagright.com',
+  SITE_CERTIFICATE_ARN:
+    'arn:aws:acm:us-east-1:911899431626:certificate/320e4afd-38f8-488f-8c03-c582b4369a8f',
 };

@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import type { Construct } from 'constructs';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
@@ -39,8 +40,14 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       }),
     );
 
+    const viewerCertificate = cloudfront.ViewerCertificate.fromAcmCertificate(
+      acm.Certificate.fromCertificateArn(this, 'SiteCertificate', config.SITE_CERTIFICATE_ARN),
+      { aliases: [config.SITE_DOMAIN] },
+    );
+
     // CloudFront distribution
     const distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
+      viewerCertificate,
       errorConfigurations: [
         {
           errorCode: 403,
