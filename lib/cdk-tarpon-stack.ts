@@ -195,6 +195,11 @@ export class CdkTarponStack extends cdk.Stack {
               'arn:aws:apigateway:*::/usageplans/*/keys',
             ],
           }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [docDbCluster.secret!.secretFullArn!],
+          }),
         ],
       })
     )
@@ -292,11 +297,9 @@ export class CdkTarponStack extends cdk.Stack {
         securityGroups: [docDbSg],
         vpc: docDbVpc,
         environment: {
-          DB_HOST:
-            'tarpona66d2ce0-qiaki6etkmao.cluster-cvcwzutz4c1u.us-east-2.docdb.amazonaws.com',
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
           DB_PORT: '27017',
-          SM_SECRET_ARN:
-            'arn:aws:secretsmanager:us-east-2:911899431626:secret:tarponSecretB9326F2F-T61PqYACX1Yg-KUgRP5',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
         },
       }
     )
@@ -306,6 +309,25 @@ export class CdkTarponStack extends cdk.Stack {
         batchSize: 10,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
+    )
+
+    tarponChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        getResourceName('tarponTarponChangeCaptureKinesisConsumerPolicy'),
+        {
+          policyName: getResourceName(
+            'tarponTarponChangeCaptureKinesisConsumerPolicy'
+          ),
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
     )
 
     /**
