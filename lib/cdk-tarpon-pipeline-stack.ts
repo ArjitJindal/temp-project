@@ -72,6 +72,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       sandboxConfig.env.account
     )
 
+    // TODO: Move the key creation to the shared infra stack and reference using Cfn output
     // Create KMS key and update policy with cross-account access
     const key = new kms.Key(this, 'ArtifactKey', {
       alias: 'key/pipeline-artifact-key',
@@ -81,6 +82,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     key.grantDecrypt(sandboxAccountRootPrincipal)
     key.grantDecrypt(sandboxCodeDeployRole)
 
+    // TODO: Move the bucket creation to the shared infra stack and reference using Cfn output
     // Create S3 bucket with target account cross-account access
     const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
       bucketName: `artifact-bucket-${this.account}`,
@@ -94,7 +96,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     artifactBucket.grantRead(sandboxAccountRootPrincipal)
 
     // CDK build definition
-    const cdkBuild = new codebuild.PipelineProject(this, 'CdkBuild', {
+    const cdkBuild = new codebuild.PipelineProject(this, 'TarponCdkBuild', {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
@@ -200,10 +202,16 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       })
     )
 
+    // TODO: Move to the shared infra stack
     // Publish the KMS Key ARN as an output
     new CfnOutput(this, 'ArtifactBucketEncryptionKeyArn', {
       value: key.keyArn,
       exportName: 'ArtifactBucketEncryptionKey',
+    })
+
+    new CfnOutput(this, 'ArtifactBuckeArn', {
+      value: artifactBucket.bucketArn,
+      exportName: 'ArtifactBucket',
     })
   }
 }

@@ -144,7 +144,7 @@ export class CdkTarponStack extends cdk.Stack {
       bucketName: importBucketName,
       removalPolicy:
         config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: true,
+      autoDeleteObjects: config.stage === 'dev',
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
     const importTmpBucketName = getS3BucketName(
@@ -155,7 +155,7 @@ export class CdkTarponStack extends cdk.Stack {
       bucketName: importTmpBucketName,
       removalPolicy:
         config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: true,
+      autoDeleteObjects: config.stage === 'dev',
       encryption: s3.BucketEncryption.S3_MANAGED,
       lifecycleRules: [
         {
