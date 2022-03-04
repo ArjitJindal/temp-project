@@ -11,6 +11,11 @@ import jwksClient from 'jwks-rsa'
 import { TarponStackConstants } from '../../../lib/constants'
 import PolicyBuilder from '../../core/policies/policy-generator'
 
+export interface JWTAuthorizerResult extends AWS.STS.Credentials {
+  userId: string
+  tenantName: string
+}
+
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
 const jwtOptions = {
@@ -87,6 +92,8 @@ export const jwtAuthorizer = async (
   // const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]
 
   const tenantId = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantId`]
+  const tenantName =
+    verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
   const tenantScopeCredentials = await getTenantScopeCredentials(
     tenantId,
     accountId,
@@ -111,6 +118,7 @@ export const jwtAuthorizer = async (
     context: {
       ...tenantScopeCredentials,
       userId: verifiedDecoded.sub,
-    } as unknown as APIGatewayAuthorizerResultContext,
+      tenantName,
+    } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
   }
 }

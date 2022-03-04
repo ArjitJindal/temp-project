@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
-import { Transaction } from '../../../../@types/openapi-public/transaction'
-import { TransactionConverterInterface } from './converter-interface'
+import { Transaction } from '../../../@types/openapi-public/transaction'
+import { ConverterInterface } from '../converter-interface'
 
 const ShPaymentTransaction = t.type({
   No: t.string,
@@ -28,7 +28,7 @@ const ShPaymentTransaction = t.type({
 })
 type ShPaymentTransaction = t.TypeOf<typeof ShPaymentTransaction>
 
-export const ShPaymentTransactionConverter: TransactionConverterInterface = {
+export const ShPaymentTransactionConverter: ConverterInterface<Transaction> = {
   getCsvParserOptions() {
     return { headers: true, skipLines: 13 }
   },

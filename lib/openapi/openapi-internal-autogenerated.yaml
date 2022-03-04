@@ -60,7 +60,7 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -123,7 +123,7 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances/{ruleInstanceId}:
     parameters:
       - schema:
@@ -203,19 +203,19 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
-  /transactions/import:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /import:
     parameters: []
     post:
-      summary: Transactions Import - Start to Import
-      operationId: post-transactions-import
+      summary: Import - Start to Import
+      operationId: post-import
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionImportResponse'
+                $ref: '#/components/schemas/ImportResponse'
               examples:
                 example-1:
                   value:
@@ -224,7 +224,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionImportRequest'
+              $ref: '#/components/schemas/ImportRequest'
             examples:
               example-1:
                 value:
@@ -266,12 +266,12 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
-  /transactions/import/getPresignedUrl:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /import/getPresignedUrl:
     parameters: []
     post:
-      summary: Transactions Import - Get Presigned URL
-      operationId: post-transactions-getPresignedUrl
+      summary: Import - Get Presigned URL
+      operationId: post-getPresignedUrl
       responses:
         '200':
           description: OK
@@ -280,7 +280,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PresignedUrlResponse'
               examples: {}
-      description: Get a presigned URL for uploading a transactions file
+      description: Get a presigned URL for uploading a file
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -316,7 +316,7 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /lists:
     post:
       summary: List Import
@@ -364,7 +364,7 @@ paths:
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
-              method.response.header.Access-Control-Allow-Origin: "'https://dev.console.flagright.com'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
     RuleInstance:
@@ -393,19 +393,21 @@ components:
       required:
         - ruleId
         - parameters
-    TransactionImportRequest:
-      title: TransactionImportRequest
+    ImportRequest:
+      title: ImportRequest
       type: object
       properties:
         type:
           type: string
           enum:
             - TRANSACTION
+            - USER
+            - BUSINESS
         format:
           type: string
           enum:
             - flagright
-            - sh-payment
+            - custom
         s3Key:
           type: string
       required:
@@ -437,14 +439,14 @@ components:
         - listName
         - indexName
         - data
-    TransactionImportResponse:
-      title: TransactionImportResponse
+    ImportResponse:
+      title: ImportResponse
       type: object
       properties:
-        importedTransactions:
+        importedCount:
           type: number
       required:
-        - importedTransactions
+        - importedCount
   securitySchemes:
     Authorization:
       type: http

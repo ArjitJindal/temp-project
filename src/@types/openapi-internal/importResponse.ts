@@ -10,8 +10,8 @@
  * Do not edit the class manually.
  */
 
-export class TransactionImportResponse {
-  'importedTransactions': number
+export class ImportResponse {
+  'importedCount': number
 
   static discriminator: string | undefined = undefined
 
@@ -21,13 +21,13 @@ export class TransactionImportResponse {
     type: string
   }> = [
     {
-      name: 'importedTransactions',
-      baseName: 'importedTransactions',
+      name: 'importedCount',
+      baseName: 'importedCount',
       type: 'number',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionImportResponse.attributeTypeMap
+    return ImportResponse.attributeTypeMap
   }
 }

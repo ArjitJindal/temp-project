@@ -1,4 +1,5 @@
-import { TransactionConverterInterface } from './converter-interface'
+import { Transaction } from '../../../@types/openapi-public/transaction'
+import { ConverterInterface } from '../converter-interface'
 import { FlagrightTransactionConverter } from './flagright-converter'
 import { ShPaymentTransactionConverter } from './sh-payment-converter'
 
@@ -9,5 +10,5 @@ const internalConverters = {
 
 export type ImportFormat = keyof typeof internalConverters
 export const converters = internalConverters as unknown as {
-  [key: string]: TransactionConverterInterface
+  [key: string]: ConverterInterface<Transaction>
 }

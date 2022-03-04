@@ -9,11 +9,12 @@ import { getDynamoDbClient } from '../../utils/dynamodb'
 import { getS3Client } from '../../utils/s3'
 import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../../core/middlewares/json-serializer'
-import { TransactionImportRequest } from '../../@types/openapi-internal/transactionImportRequest'
 import { PresignedUrlResponse } from '../../@types/openapi-internal/presignedUrlResponse'
-import { TransactionImportResponse } from '../../@types/openapi-internal/transactionImportResponse'
 import { compose } from '../../core/middlewares/compose'
-import { TransactionImporter } from './transaction/importer'
+import { ImportResponse } from '../../@types/openapi-internal/importResponse'
+import { ImportRequest } from '../../@types/openapi-internal/importRequest'
+import { JWTAuthorizerResult } from '../jwt-authorizer/app'
+import { Importer } from './importer'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
@@ -26,29 +27,37 @@ export const fileImportHandler = compose(
 )(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
-  ): Promise<TransactionImportResponse> => {
+  ): Promise<ImportResponse> => {
     const { IMPORT_TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
-    const { principalId: tenantId } = event.requestContext.authorizer
+    const { principalId: tenantId, tenantName } =
+      event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
     const s3 = getS3Client(event)
 
     if (event.httpMethod === 'POST' && event.body) {
-      const importRequest: TransactionImportRequest = JSON.parse(event.body)
-      if (
-        importRequest.type === TransactionImportRequest.TypeEnum.Transaction
-      ) {
-        const transactionImporter = new TransactionImporter(
-          tenantId,
-          dynamoDb,
-          s3,
-          IMPORT_TMP_BUCKET,
-          IMPORT_BUCKET
-        )
-        const importedTransactions =
-          await transactionImporter.importTransactions(importRequest)
-        return { importedTransactions }
+      const importRequest: ImportRequest = JSON.parse(event.body)
+      const importer = new Importer(
+        tenantId,
+        tenantName,
+        dynamoDb,
+        s3,
+        IMPORT_TMP_BUCKET,
+        IMPORT_BUCKET
+      )
+      if (importRequest.type === ImportRequest.TypeEnum.Transaction) {
+        return {
+          importedCount: await importer.importTransactions(importRequest),
+        }
+      } else if (importRequest.type === ImportRequest.TypeEnum.User) {
+        return {
+          importedCount: await importer.importConsumerUsers(importRequest),
+        }
+      } else if (importRequest.type === ImportRequest.TypeEnum.Business) {
+        return {
+          importedCount: await importer.importBusinessUsers(importRequest),
+        }
       }
     }
 

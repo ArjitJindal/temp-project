@@ -13,8 +13,8 @@ const PathToLambda: any = {
   '/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
-  '/transactions/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
-  '/transactions/import/getPresignedUrl':
+  '/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+  '/import/getPresignedUrl':
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
 }
@@ -123,6 +123,8 @@ for (const path in openapi.paths) {
             'method.response.header.Access-Control-Allow-Origin':
               process.env.ENV === 'prod'
                 ? "'https://console.flagright.com'"
+                : process.env.ENV === 'dev'
+                ? "'*'"
                 : `'https://${process.env.ENV}.console.flagright.com'`,
           },
         },
