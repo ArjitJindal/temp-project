@@ -1,21 +1,20 @@
-import { KinesisStreamEvent } from 'aws-lambda'
+import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
-import { connectToDB, success, notFound } from './lib'
+import { connectToDB, success, notFound } from '../../utils/documentUtils'
 
 let client: MongoClient
 
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   // Implementation pending
-  console.log('Kinesis Event')
-  console.log(event.Records[0].kinesis)
-  console.log(__dirname)
   try {
     client = await connectToDB()
     const db = client.db('tarpon')
-    const id = 'identifier'
-    const dbItem = await db.collection('urls').findOne({ shortId: id })
-    if (!dbItem) {
-      return notFound({})
+    for (const record of event.Records) {
+      const payload: KinesisStreamRecordPayload = record.kinesis
+      const message: string = Buffer.from(payload.data, 'base64').toString()
+      const dynamoMessage = JSON.parse(message)
+      console.log(`DynamoDB update ${dynamoMessage}`)
+      // Do something
     }
   } catch (err) {
     console.error(err)

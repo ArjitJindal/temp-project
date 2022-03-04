@@ -1,6 +1,10 @@
 import { APIGatewayProxyHandler } from 'aws-lambda'
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
+import { MongoClient } from 'mongodb'
+import { connectToDB, success, notFound } from '../../utils/documentUtils'
+
+let client: MongoClient
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -50,9 +54,22 @@ export const apiKeyGeneratorHandler: APIGatewayProxyHandler = async (event) => {
   const { tenantId, usagePlanId } =
     event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
   const newApiKey = await createNewApiKeyForTenant(tenantId, usagePlanId)
+  await createDocumentDBCollections(tenantId)
 
   return {
     statusCode: 200,
     body: newApiKey,
+  }
+}
+
+export const createDocumentDBCollections = async (tenantId: string) => {
+  client = await connectToDB()
+  const db = client.db('tarpon')
+  try {
+    await db.createCollection(`${tenantId}-transactions`)
+    await db.createCollection(`${tenantId}-users`)
+    await db.createCollection(`${tenantId}-dashboard`)
+  } catch (e) {
+    console.log(`Error in creating DocumentDB collections: ${e}`)
   }
 }
