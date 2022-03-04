@@ -19,6 +19,7 @@ const PIPELINE_NAME = 'phytoplankton-pipeline';
 export interface CdkPhytoplanktonPipelineStackProps extends cdk.StackProps {
   readonly devStack: CdkPhytoplanktonStack;
   readonly sandboxStack: CdkPhytoplanktonStack;
+  readonly prodStack: CdkPhytoplanktonStack;
 }
 
 export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
