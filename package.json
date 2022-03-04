@@ -20,7 +20,7 @@
     "lint:prettier": "prettier -c --write \"src/**/*\" --end-of-line auto",
     "lint:style": "stylelint --fix \"src/**/*.less\" --syntax less",
     "openapi:fetch": "bash fetch-openapi.sh",
-    "openapi:build": "openapi-generator generate -i config/openapi.yaml -g typescript-fetch -o src/apis",
+    "openapi:build": "rm -rf src/apis && openapi-generator generate -i config/openapi.yaml -g typescript-fetch -o src/apis && prettier --write src/apis",
     "precommit": "lint-staged",
     "prettier": "prettier -c --write \"src/**/*\"",
     "serve": "umi-serve",

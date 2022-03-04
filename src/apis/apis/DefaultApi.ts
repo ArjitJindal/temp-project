@@ -14,6 +14,12 @@
 
 import * as runtime from '../runtime';
 import {
+  ImportRequest,
+  ImportRequestFromJSON,
+  ImportRequestToJSON,
+  ImportResponse,
+  ImportResponseFromJSON,
+  ImportResponseToJSON,
   ListImportRequest,
   ListImportRequestFromJSON,
   ListImportRequestToJSON,
@@ -23,12 +29,6 @@ import {
   RuleInstance,
   RuleInstanceFromJSON,
   RuleInstanceToJSON,
-  TransactionImportRequest,
-  TransactionImportRequestFromJSON,
-  TransactionImportRequestToJSON,
-  TransactionImportResponse,
-  TransactionImportResponseFromJSON,
-  TransactionImportResponseToJSON,
 } from '../models';
 
 export interface DeleteRuleInstancesRuleInstanceIdRequest {
@@ -40,16 +40,16 @@ export interface PostApikeyRequest {
   usagePlanId?: string;
 }
 
+export interface PostImportRequest {
+  importRequest?: ImportRequest;
+}
+
 export interface PostListsRequest {
   listImportRequest?: ListImportRequest;
 }
 
 export interface PostRuleInstancesRequest {
   ruleInstance?: RuleInstance;
-}
-
-export interface PostTransactionsImportRequest {
-  transactionImportRequest?: TransactionImportRequest;
 }
 
 export interface PutRuleInstancesRuleInstanceIdRequest {
@@ -153,6 +153,79 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Get a presigned URL for uploading a file
+   * Import - Get Presigned URL
+   */
+  async postGetPresignedUrlRaw(
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<PresignedUrlResponse>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/import/getPresignedUrl`,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      PresignedUrlResponseFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * Get a presigned URL for uploading a file
+   * Import - Get Presigned URL
+   */
+  async postGetPresignedUrl(initOverrides?: RequestInit): Promise<PresignedUrlResponse> {
+    const response = await this.postGetPresignedUrlRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Import - Start to Import
+   */
+  async postImportRaw(
+    requestParameters: PostImportRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<ImportResponse>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/import`,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: ImportRequestToJSON(requestParameters.importRequest),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ImportResponseFromJSON(jsonValue));
+  }
+
+  /**
+   * Import - Start to Import
+   */
+  async postImport(
+    requestParameters: PostImportRequest,
+    initOverrides?: RequestInit,
+  ): Promise<ImportResponse> {
+    const response = await this.postImportRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * List Import
    */
   async postListsRaw(
@@ -221,83 +294,6 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<RuleInstance> {
     const response = await this.postRuleInstancesRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Get a presigned URL for uploading a transactions file
-   * Transactions Import - Get Presigned URL
-   */
-  async postTransactionsGetPresignedUrlRaw(
-    initOverrides?: RequestInit,
-  ): Promise<runtime.ApiResponse<PresignedUrlResponse>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    const response = await this.request(
-      {
-        path: `/transactions/import/getPresignedUrl`,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      PresignedUrlResponseFromJSON(jsonValue),
-    );
-  }
-
-  /**
-   * Get a presigned URL for uploading a transactions file
-   * Transactions Import - Get Presigned URL
-   */
-  async postTransactionsGetPresignedUrl(
-    initOverrides?: RequestInit,
-  ): Promise<PresignedUrlResponse> {
-    const response = await this.postTransactionsGetPresignedUrlRaw(initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Transactions Import - Start to Import
-   */
-  async postTransactionsImportRaw(
-    requestParameters: PostTransactionsImportRequest,
-    initOverrides?: RequestInit,
-  ): Promise<runtime.ApiResponse<TransactionImportResponse>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    const response = await this.request(
-      {
-        path: `/transactions/import`,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: TransactionImportRequestToJSON(requestParameters.transactionImportRequest),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      TransactionImportResponseFromJSON(jsonValue),
-    );
-  }
-
-  /**
-   * Transactions Import - Start to Import
-   */
-  async postTransactionsImport(
-    requestParameters: PostTransactionsImportRequest,
-    initOverrides?: RequestInit,
-  ): Promise<TransactionImportResponse> {
-    const response = await this.postTransactionsImportRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

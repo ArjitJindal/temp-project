@@ -16,34 +16,34 @@ import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
- * @interface TransactionImportResponse
+ * @interface ImportResponse
  */
-export interface TransactionImportResponse {
+export interface ImportResponse {
   /**
    *
    * @type {number}
-   * @memberof TransactionImportResponse
+   * @memberof ImportResponse
    */
-  importedTransactions: number;
+  importedCount: number;
 }
 
-export function TransactionImportResponseFromJSON(json: any): TransactionImportResponse {
-  return TransactionImportResponseFromJSONTyped(json, false);
+export function ImportResponseFromJSON(json: any): ImportResponse {
+  return ImportResponseFromJSONTyped(json, false);
 }
 
-export function TransactionImportResponseFromJSONTyped(
+export function ImportResponseFromJSONTyped(
   json: any,
   ignoreDiscriminator: boolean,
-): TransactionImportResponse {
+): ImportResponse {
   if (json === undefined || json === null) {
     return json;
   }
   return {
-    importedTransactions: json['importedTransactions'],
+    importedCount: json['importedCount'],
   };
 }
 
-export function TransactionImportResponseToJSON(value?: TransactionImportResponse | null): any {
+export function ImportResponseToJSON(value?: ImportResponse | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -51,6 +51,6 @@ export function TransactionImportResponseToJSON(value?: TransactionImportRespons
     return null;
   }
   return {
-    importedTransactions: value.importedTransactions,
+    importedCount: value.importedCount,
   };
 }

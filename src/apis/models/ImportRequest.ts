@@ -16,25 +16,25 @@ import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
- * @interface TransactionImportRequest
+ * @interface ImportRequest
  */
-export interface TransactionImportRequest {
+export interface ImportRequest {
   /**
    *
    * @type {string}
-   * @memberof TransactionImportRequest
+   * @memberof ImportRequest
    */
-  type: TransactionImportRequestTypeEnum;
+  type: ImportRequestTypeEnum;
   /**
    *
    * @type {string}
-   * @memberof TransactionImportRequest
+   * @memberof ImportRequest
    */
-  format: TransactionImportRequestFormatEnum;
+  format: ImportRequestFormatEnum;
   /**
    *
    * @type {string}
-   * @memberof TransactionImportRequest
+   * @memberof ImportRequest
    */
   s3Key: string;
 }
@@ -43,26 +43,25 @@ export interface TransactionImportRequest {
  * @export
  * @enum {string}
  */
-export enum TransactionImportRequestTypeEnum {
+export enum ImportRequestTypeEnum {
   Transaction = 'TRANSACTION',
+  User = 'USER',
+  Business = 'BUSINESS',
 }
 /**
  * @export
  * @enum {string}
  */
-export enum TransactionImportRequestFormatEnum {
+export enum ImportRequestFormatEnum {
   Flagright = 'flagright',
-  ShPayment = 'sh-payment',
+  Custom = 'custom',
 }
 
-export function TransactionImportRequestFromJSON(json: any): TransactionImportRequest {
-  return TransactionImportRequestFromJSONTyped(json, false);
+export function ImportRequestFromJSON(json: any): ImportRequest {
+  return ImportRequestFromJSONTyped(json, false);
 }
 
-export function TransactionImportRequestFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): TransactionImportRequest {
+export function ImportRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): ImportRequest {
   if (json === undefined || json === null) {
     return json;
   }
@@ -73,7 +72,7 @@ export function TransactionImportRequestFromJSONTyped(
   };
 }
 
-export function TransactionImportRequestToJSON(value?: TransactionImportRequest | null): any {
+export function ImportRequestToJSON(value?: ImportRequest | null): any {
   if (value === undefined) {
     return undefined;
   }

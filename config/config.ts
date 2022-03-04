@@ -63,6 +63,12 @@ export default defineConfig({
           path: '/users/users-list',
           component: './users/users-list',
         },
+        {
+          name: 'users-files',
+          icon: 'smile',
+          path: '/users/users-files',
+          component: './users/users-files',
+        },
       ],
     },
     {
@@ -81,10 +87,10 @@ export default defineConfig({
           component: './transactions/transactions-list',
         },
         {
-          name: 'import-transactions',
+          name: 'transactions-files',
           icon: 'smile',
-          path: '/transactions/import-transactions',
-          component: './transactions/import-transactions',
+          path: '/transactions/transactions-files',
+          component: './transactions/transactions-files',
         },
       ],
     },

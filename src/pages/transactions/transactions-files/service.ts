@@ -1,7 +1,6 @@
-// @ts-ignore
 /* eslint-disable */
 import { request } from 'umi';
-import { TableListItem } from './data.d';
+import { TableListItem } from './data';
 
 export async function files(
   params: {

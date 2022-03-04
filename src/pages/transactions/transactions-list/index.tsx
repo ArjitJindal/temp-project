@@ -8,6 +8,8 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { rule } from './service';
 import type { TableListItem, TableListPagination } from './data.d';
+import { ImportRequestTypeEnum } from '@/apis';
+import { FileImportButton } from '@/components/file-import/FileImportButton';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -140,6 +142,7 @@ const TableList: React.FC = () => {
         expandable={{ expandedRowRender: expandedRulesRowRender }}
         request={rule}
         columns={columns}
+        toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.Transaction} />]}
       />
       <Drawer
         width={600}
