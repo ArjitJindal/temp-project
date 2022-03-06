@@ -106,28 +106,36 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    const docDbSg = new ec2.SecurityGroup(this, 'docdb-lambda-sg', {
-      vpc: docDbVpc,
-      securityGroupName: 'docdb-lambda-sg',
-    })
+    const docDbSg = new ec2.SecurityGroup(
+      this,
+      TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+      {
+        vpc: docDbVpc,
+        securityGroupName: TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+      }
+    )
 
     docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
 
-    const docDbCluster = new docdb.DatabaseCluster(this, 'tarpon', {
-      masterUser: {
-        username: 'tarponUser',
-      },
-      instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T3,
-        ec2.InstanceSize.MEDIUM
-      ),
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC,
-      },
-      securityGroup: docDbSg,
-      vpc: docDbVpc,
-      deletionProtection: config.stage !== 'dev',
-    })
+    const docDbCluster = new docdb.DatabaseCluster(
+      this,
+      TarponStackConstants.DOCUMENT_DB_DATABASE_NAME,
+      {
+        masterUser: {
+          username: TarponStackConstants.DOCUMENT_DB_USERNAME_NAME,
+        },
+        instanceType: ec2.InstanceType.of(
+          ec2.InstanceClass.T3,
+          ec2.InstanceSize.MEDIUM
+        ),
+        vpcSubnets: {
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+        securityGroup: docDbSg,
+        vpc: docDbVpc,
+        deletionProtection: config.stage !== 'dev',
+      }
+    )
 
     /**
      * S3 Buckets
@@ -175,11 +183,9 @@ export class CdkTarponStack extends cdk.Stack {
         securityGroups: [docDbSg],
         vpc: docDbVpc,
         environment: {
-          DB_HOST:
-            'tarpona66d2ce0-qiaki6etkmao.cluster-cvcwzutz4c1u.us-east-2.docdb.amazonaws.com',
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
           DB_PORT: '27017',
-          SM_SECRET_ARN:
-            'arn:aws:secretsmanager:us-east-2:911899431626:secret:tarponSecretB9326F2F-T61PqYACX1Yg-KUgRP5',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
         },
       }
     )

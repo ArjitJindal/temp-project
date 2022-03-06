@@ -8,6 +8,9 @@ export function getS3BucketName(name: string, stage?: string) {
 
 export const TarponStackConstants = {
   DYNAMODB_TABLE_NAME: 'Tarpon',
+  DOCUMENT_DB_DATABASE_NAME: 'tarpon',
+  DOCUMENT_DB_USERNAME_NAME: 'tarponUser',
+  DOCUMENT_DB_SECURITY_GROUP_NAME: 'docdb-lambda-sg',
   API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceName(
     'ApiKeyAuthorizerBaseRole'
   ),
