@@ -2,7 +2,13 @@ import { APIGatewayProxyHandler } from 'aws-lambda'
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import { connectToDB, success, notFound } from '../../utils/documentUtils'
+import {
+  connectToDB,
+  DASHBOARD_COLLECTION,
+  TRANSACIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '../../utils/docDBUtils'
+import { TarponStackConstants } from '../../../lib/constants'
 
 let client: MongoClient
 
@@ -64,11 +70,11 @@ export const apiKeyGeneratorHandler: APIGatewayProxyHandler = async (event) => {
 
 export const createDocumentDBCollections = async (tenantId: string) => {
   client = await connectToDB()
-  const db = client.db('tarpon')
+  const db = client.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
   try {
-    await db.createCollection(`${tenantId}-transactions`)
-    await db.createCollection(`${tenantId}-users`)
-    await db.createCollection(`${tenantId}-dashboard`)
+    await db.createCollection(TRANSACIONS_COLLECTION(tenantId))
+    await db.createCollection(USERS_COLLECTION(tenantId))
+    await db.createCollection(DASHBOARD_COLLECTION(tenantId))
   } catch (e) {
     console.log(`Error in creating DocumentDB collections: ${e}`)
   }
