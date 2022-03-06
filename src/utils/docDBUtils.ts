@@ -22,15 +22,12 @@ export async function connectToDB() {
   const credentials = await getCredentials()
   const DB_USERNAME = credentials['username']
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
-  console.log('CREDS')
-  console.log(DB_USERNAME)
-  console.log(DB_PORT)
-  console.log(DB_PASSWORD)
   const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}`
   cacheClient = await MongoClient.connect(DB_URL as string, {
     ssl: true,
     sslValidate: true,
     sslCA: `${__dirname}/rds-combined-ca-bundle.pem`,
+    retryWrites: false,
   })
   return cacheClient
 }
@@ -65,4 +62,16 @@ function buildResponse(statusCode: number, body: object): object {
     },
     body: JSON.stringify(body),
   }
+}
+
+export const TRANSACIONS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-transactions`
+}
+
+export const USERS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-users`
+}
+
+export const DASHBOARD_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-dashboard`
 }
