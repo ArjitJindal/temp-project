@@ -1,4 +1,7 @@
-import { APIGatewayProxyHandler } from 'aws-lambda'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
@@ -9,6 +12,10 @@ import {
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'
 import { TarponStackConstants } from '../../../lib/constants'
+
+import { compose } from '../../core/middlewares/compose'
+import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
+import { jsonSerializer } from '../../core/middlewares/json-serializer'
 
 let client: MongoClient
 
@@ -56,18 +63,6 @@ async function createNewApiKeyForTenant(
   return newApiKey
 }
 
-export const apiKeyGeneratorHandler: APIGatewayProxyHandler = async (event) => {
-  const { tenantId, usagePlanId } =
-    event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-  const newApiKey = await createNewApiKeyForTenant(tenantId, usagePlanId)
-  await createDocumentDBCollections(tenantId)
-
-  return {
-    statusCode: 200,
-    body: newApiKey,
-  }
-}
-
 export const createDocumentDBCollections = async (tenantId: string) => {
   client = await connectToDB()
   const db = client.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
@@ -79,3 +74,18 @@ export const createDocumentDBCollections = async (tenantId: string) => {
     console.log(`Error in creating DocumentDB collections: ${e}`)
   }
 }
+export const apiKeyGeneratorHandler = compose(
+  httpErrorHandler(),
+  jsonSerializer()
+)(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { tenantId, usagePlanId } =
+      event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
+    await createDocumentDBCollections(tenantId)
+    return createNewApiKeyForTenant(tenantId, usagePlanId)
+  }
+)

@@ -1,13 +1,15 @@
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
-  APIGatewayProxyWithLambdaAuthorizerHandler,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Transaction } from '../../@types/openapi-public/transaction'
 import { TransactionMonitoringResult } from '../../@types/openapi-public/transactionMonitoringResult'
 import { getDynamoDbClient } from '../../utils/dynamodb'
 import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
-import { cors } from '../../core/utils/cors'
+import { compose } from '../../core/middlewares/compose'
+import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
+import { jsonSerializer } from '../../core/middlewares/json-serializer'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
@@ -60,50 +62,45 @@ export async function verifyTransaction(
   }
 }
 
-export const transactionHandler: APIGatewayProxyWithLambdaAuthorizerHandler<
-  APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-> = async (event) => {
-  const { principalId: tenantId } = event.requestContext.authorizer
-  const dynamoDb = getDynamoDbClient(event)
-  const transactionId = event.pathParameters?.transactionId
+export const transactionHandler = compose(
+  httpErrorHandler(),
+  jsonSerializer()
+)(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClient(event)
+    const transactionId = event.pathParameters?.transactionId
 
-  try {
-    if (event.httpMethod === 'POST' && event.body) {
-      const transaction = JSON.parse(event.body)
-      // TODO: Validate payload
-      const result = await verifyTransaction(transaction, tenantId, dynamoDb)
-      return cors({
-        statusCode: 200,
-        body: JSON.stringify(result),
-      })
-    } else if (event.httpMethod === 'GET' && transactionId) {
-      const transactionRepository = new TransactionRepository(
-        tenantId,
-        dynamoDb
-      )
-      const result = await transactionRepository.getTransactionById(
-        transactionId
-      )
-      return cors({
-        statusCode: 200,
-        body: JSON.stringify(result),
-      })
-    }
-    return cors({
-      statusCode: 500,
-      body: 'Unhandled request',
-    })
-  } catch (err) {
-    console.log(err)
-    const errMessage = err instanceof Error ? err.message : err
-    return cors({
-      statusCode: 500,
-      body: JSON.stringify({
+    try {
+      if (event.httpMethod === 'POST' && event.body) {
+        const transaction = JSON.parse(event.body)
+        // TODO: Validate payload
+        const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+        return result
+      } else if (event.httpMethod === 'GET' && transactionId) {
+        const transactionRepository = new TransactionRepository(
+          tenantId,
+          dynamoDb
+        )
+        const result = await transactionRepository.getTransactionById(
+          transactionId
+        )
+        return result
+      }
+      return 'Unhandled request'
+    } catch (err) {
+      console.log(err)
+      const errMessage = err instanceof Error ? err.message : err
+      return {
         error: errMessage,
-      }),
-    })
+      }
+    }
   }
-}
+)
 
 export type RuleInstanceQueryStringParameters = {
   tenantId: string

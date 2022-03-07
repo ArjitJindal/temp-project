@@ -8,24 +8,13 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import { TarponStackConstants } from '../constants'
 
-const CORS_ALLOW_ORIGINS = [
-  'http://localhost:8001',
-  'https://localhost:8001',
-  'https://dev.console.flagright.com',
-  'https://sandbox.console.flagright.com',
-  'https://demo.console.flagright.com',
-  'https://console.flagright.com',
-]
-const CORS_ALLOW_ORIGINS_STRING =
-  '[' + CORS_ALLOW_ORIGINS.map((v) => `"${v}"`).join(',') + ']'
-
 const PathToLambda: any = {
   '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
-  '/transactions/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
-  '/transactions/import/getPresignedUrl':
+  '/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+  '/import/getPresignedUrl':
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
 }
@@ -121,17 +110,24 @@ for (const path in openapi.paths) {
     },
     'x-amazon-apigateway-integration': {
       type: 'mock',
-      responseTemplates: {
-        'application/json': `
-          {"statusCode":200}
-          #set($domains = ${CORS_ALLOW_ORIGINS_STRING})
-          #set($origin = $input.params("origin"))
-          #if($domains.contains($origin))
-          #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
-          #set($context.responseOverride.header.Access-Control-Allow-Methods="*")
-          #set($context.responseOverride.header.Access-Control-Allow-Headers="*")
-          #end
-        `,
+      requestTemplates: {
+        'application/json': '{"statusCode":200}',
+      },
+      responses: {
+        default: {
+          statusCode: 200,
+          responseParameters: {
+            'method.response.header.Access-Control-Allow-Headers': "'*'",
+            'method.response.header.Access-Control-Allow-Methods':
+              "'OPTIONS,POST,GET'",
+            'method.response.header.Access-Control-Allow-Origin':
+              process.env.ENV === 'prod'
+                ? "'https://console.flagright.com'"
+                : process.env.ENV === 'dev'
+                ? "'*'"
+                : `'https://${process.env.ENV}.console.flagright.com'`,
+          },
+        },
       },
     },
   }

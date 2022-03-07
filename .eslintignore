@@ -1,5 +1,5 @@
 node_modules
 cdk.out
 dist
-src/@types/openapi
+src/@types/openapi*
 **/*.js

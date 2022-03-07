@@ -10,9 +10,9 @@
  * Do not edit the class manually.
  */
 
-export class TransactionImportRequest {
-  'type': TransactionImportRequest.TypeEnum
-  'format': TransactionImportRequest.FormatEnum
+export class ImportRequest {
+  'type': ImportRequest.TypeEnum
+  'format': ImportRequest.FormatEnum
   's3Key': string
 
   static discriminator: string | undefined = undefined
@@ -25,12 +25,12 @@ export class TransactionImportRequest {
     {
       name: 'type',
       baseName: 'type',
-      type: 'TransactionImportRequest.TypeEnum',
+      type: 'ImportRequest.TypeEnum',
     },
     {
       name: 'format',
       baseName: 'format',
-      type: 'TransactionImportRequest.FormatEnum',
+      type: 'ImportRequest.FormatEnum',
     },
     {
       name: 's3Key',
@@ -40,16 +40,18 @@ export class TransactionImportRequest {
   ]
 
   static getAttributeTypeMap() {
-    return TransactionImportRequest.attributeTypeMap
+    return ImportRequest.attributeTypeMap
   }
 }
 
-export namespace TransactionImportRequest {
+export namespace ImportRequest {
   export enum TypeEnum {
     Transaction = <any>'TRANSACTION',
+    User = <any>'USER',
+    Business = <any>'BUSINESS',
   }
   export enum FormatEnum {
     Flagright = <any>'flagright',
-    ShPayment = <any>'sh-payment',
+    Custom = <any>'custom',
   }
 }

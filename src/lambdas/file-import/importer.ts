@@ -1,0 +1,137 @@
+import { parse } from '@fast-csv/parse'
+import * as createError from 'http-errors'
+import { ImportRequest } from '../../@types/openapi-internal/importRequest'
+import { Business } from '../../@types/openapi-public/business'
+import { Transaction } from '../../@types/openapi-public/transaction'
+import { User } from '../../@types/openapi-public/user'
+import { verifyTransaction } from '../rules-engine/app'
+import { UserRepository } from '../user-management/repositories/user-repository'
+import { ConverterInterface } from './converter-interface'
+import { converters as transactionConverters } from './transaction'
+import { converters as userConverters } from './user'
+import { converters as businessConverters } from './business'
+
+export class Importer {
+  tenantId: string
+  tenantName: string
+  dynamoDb: AWS.DynamoDB.DocumentClient
+  s3: AWS.S3
+  importTmpBucket: string
+  importBucket: string
+
+  constructor(
+    tenantId: string,
+    tenantName: string,
+    dynamoDb: AWS.DynamoDB.DocumentClient,
+    s3: AWS.S3,
+    importTmpBucket: string,
+    importBucket: string
+  ) {
+    this.tenantId = tenantId
+    this.tenantName = tenantName
+    this.dynamoDb = dynamoDb
+    this.s3 = s3
+    this.importTmpBucket = importTmpBucket
+    this.importBucket = importBucket
+  }
+
+  public async importTransactions(
+    importRequest: ImportRequest
+  ): Promise<number> {
+    const { format } = importRequest
+    const converter = transactionConverters[this.getFormat(format)]
+    if (!converter) {
+      throw new Error(`Unknown import format: ${format}`)
+    }
+    return this.importItems(importRequest, converter, this.importTransaction)
+  }
+
+  private async importTransaction(transaction: Transaction): Promise<void> {
+    const transactionResult = await verifyTransaction(
+      transaction,
+      this.tenantId,
+      this.dynamoDb
+    )
+    console.debug(
+      `Imported transaction (id=${transactionResult.transactionId})`
+    )
+  }
+
+  public async importConsumerUsers(
+    importRequest: ImportRequest
+  ): Promise<number> {
+    const { format } = importRequest
+    const converter = userConverters[this.getFormat(format)]
+    if (!converter) {
+      throw new Error(`Unknown import format: ${format}`)
+    }
+    return this.importItems(importRequest, converter, this.importConsumerUser)
+  }
+
+  private async importConsumerUser(user: User): Promise<void> {
+    const userRepository = new UserRepository(this.tenantId, this.dynamoDb)
+    const userResult = await userRepository.createConsumerUser(user)
+    console.debug(`Imported consumer user (id=${userResult.userId})`)
+  }
+
+  public async importBusinessUsers(
+    importRequest: ImportRequest
+  ): Promise<number> {
+    const { format } = importRequest
+    const converter = businessConverters[this.getFormat(format)]
+    if (!converter) {
+      throw new Error(`Unknown import format: ${format}`)
+    }
+    return this.importItems(importRequest, converter, this.importBusinessUser)
+  }
+
+  private async importBusinessUser(user: Business): Promise<void> {
+    const userRepository = new UserRepository(this.tenantId, this.dynamoDb)
+    const userResult = await userRepository.createBusinessUser(user)
+    console.debug(`Imported business user (id=${userResult.userId})`)
+  }
+
+  private async importItems(
+    importRequest: ImportRequest,
+    converter: ConverterInterface<unknown>,
+    importFunc: (item: any) => Promise<void>
+  ): Promise<number> {
+    const { s3Key } = importRequest
+
+    let importedCount = 0
+    const params = {
+      Bucket: this.importTmpBucket,
+      Key: s3Key,
+    }
+    const stream = this.s3
+      .getObject(params)
+      .createReadStream()
+      .pipe(parse(converter.getCsvParserOptions()))
+
+    for await (const rawItem of stream) {
+      const validationResult = converter.validate(rawItem)
+      if (validationResult.length > 0) {
+        throw new createError.BadRequest(validationResult.join(', '))
+      }
+      const item = converter.convert(rawItem)
+      if (item) {
+        await importFunc(item)
+        importedCount += 1
+      }
+    }
+    await this.s3
+      .copyObject({
+        CopySource: `${this.importTmpBucket}/${s3Key}`,
+        Bucket: this.importBucket,
+        Key: s3Key,
+      })
+      .promise()
+    return importedCount
+  }
+
+  private getFormat(format: ImportRequest.FormatEnum): string {
+    return format === ImportRequest.FormatEnum.Custom
+      ? this.tenantName
+      : 'flagright'
+  }
+}

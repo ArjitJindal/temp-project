@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 import { CdkTarponPipelineStack } from '../lib/cdk-tarpon-pipeline-stack'
 import { CdkTarponStack } from '../lib/cdk-tarpon-stack'
