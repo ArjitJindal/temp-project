@@ -48,6 +48,14 @@ openapi['x-amazon-apigateway-request-validators'] = {
   },
 }
 
+// IAM authorization setting
+openapi['components']['securitySchemes']['sigv4'] = {
+  type: 'apiKey',
+  name: 'Authorization',
+  in: 'header',
+  'x-amazon-apigateway-authtype': 'awsSigv4',
+}
+
 // Labmda authorizer setting
 openapi['components']['securitySchemes']['lambda-authorizer'] = {
   type: 'apiKey',
@@ -80,7 +88,14 @@ for (const path in openapi.paths) {
       type: 'aws_proxy',
       passthroughBehavior: 'never',
     }
-    methodSetting['security'] = [{ 'lambda-authorizer': [] }]
+
+    // TODO: Remove IAM auth after we can configure these in the FDT console
+    if (['/rule_instances', '/apikey'].includes(path)) {
+      methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }
+      methodSetting['security'] = [{ sigv4: [] }]
+    } else {
+      methodSetting['security'] = [{ 'lambda-authorizer': [] }]
+    }
   }
 
   // CORS handling (because we use SpecRestApi, so we need to create OPTIONS method for all child resources by ourselves)

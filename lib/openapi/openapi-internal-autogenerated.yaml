@@ -33,8 +33,10 @@ paths:
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
+      x-amazon-apigateway-auth:
+        type: AWS_IAM
       security:
-        - lambda-authorizer: []
+        - sigv4: []
     options:
       parameters: []
       responses:
@@ -96,8 +98,10 @@ paths:
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
+      x-amazon-apigateway-auth:
+        type: AWS_IAM
       security:
-        - lambda-authorizer: []
+        - sigv4: []
     options:
       parameters: []
       responses:
@@ -451,6 +455,11 @@ components:
     Authorization:
       type: http
       scheme: bearer
+    sigv4:
+      type: apiKey
+      name: Authorization
+      in: header
+      x-amazon-apigateway-authtype: awsSigv4
     lambda-authorizer:
       type: apiKey
       name: Authorization

@@ -206,6 +206,49 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
+            examples:
+              example-1:
+                value:
+                  createdTimestamp: 1641654664
+                  userId: 96647cfd9e8fe66ee0f3362e011e34e8
+                  userDetails:
+                    name:
+                      firstName: Baran
+                      middleName: Realblood
+                      lastName: Ozkan
+                    dateOfBirth: 636285831
+                    age: 32
+                    countryOfResidence: US
+                    countryOfNationality: DE
+                  legalDocuments:
+                    - documentType: passport
+                      documentNumber: Z9431P
+                      documentIssuedDate: 1639939034
+                      documentExpirationDate: 1839939034
+                      documentIssuedCountry: DE
+                      tags:
+                        - key: customerType
+                          value: wallet
+                  contactDetails:
+                    emailIds:
+                      - baran@flagright.com
+                    contactNumbers:
+                      - '+37112345432'
+                    websites:
+                      - flagright.com
+                    addresses:
+                      - addressLines:
+                          - Klara-Franke Str 20
+                        postcode: '10557'
+                        city: Berlin
+                        state: Berlin
+                        country: Germany
+                        tags:
+                          - key: customKey
+                            value: customValue
+                  tags:
+                    - key: customKey
+                      value: customValue
         required: false
       responses:
         '201':
@@ -261,6 +304,7 @@ paths:
               examples:
                 example-1:
                   value:
+                    createdTimestamp: 1641654664
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userDetails:
                       name:
@@ -379,6 +423,7 @@ paths:
               examples:
                 example-2:
                   value:
+                    createdTimestamp: 1641654664
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     legalEntity:
                       companyGeneralDetails:
@@ -553,6 +598,7 @@ components:
       type: object
       description: Model for User details
       example:
+        createdTimestamp: 1641654664
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
         userDetails:
           name:
@@ -625,8 +671,8 @@ components:
               firstName: Baran
               middleName: Realblood
               lastName: Ozkan
-            dateOfBirth: 0
-            age: 0
+            dateOfBirth: 636285831
+            age: 32
             countryOfResidence: US
             countryOfNationality: DE
           legalDocuments:
@@ -937,10 +983,9 @@ components:
       description: Standardized model for Bank Details
       example:
         method: BANK
-        bankIdentifierType: IBAN
-        bankIdentifier: DE761234561
+        BIC: DE761234561
         bankName: Merryl Lynch
-        accountNumber: '1234321'
+        IBAN: '1234321'
         bankAddress:
           addressLines:
             - Klara-Franke Str 20
@@ -1429,6 +1474,7 @@ components:
       title: Business
       type: object
       example:
+        createdTimestamp: 1641654664
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
         legalEntity:
           companyGeneralDetails:
