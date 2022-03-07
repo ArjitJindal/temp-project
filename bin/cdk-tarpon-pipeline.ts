@@ -5,6 +5,7 @@ import { CdkTarponStack } from '../lib/cdk-tarpon-stack'
 import { config as deployConfig } from '../lib/configs/config-deployment'
 import { config as devConfig } from '../lib/configs/config-dev'
 import { config as sandboxConfig } from '../lib/configs/config-sandbox'
+import { config as prodConfig } from '../lib/configs/config-prod'
 
 const app = new cdk.App()
 
@@ -18,9 +19,15 @@ const sandboxTarponStack = new CdkTarponStack(
   `${sandboxConfig.stage}-tarpon`,
   sandboxConfig
 )
+const prodTarponStack = new CdkTarponStack(
+  app,
+  `${prodConfig.stage}-tarpon`,
+  prodConfig
+)
 
 new CdkTarponPipelineStack(app, 'tarpon-pipeline', {
   env: deployConfig.env,
   devTarponStack,
   sandboxTarponStack,
+  prodTarponStack,
 })

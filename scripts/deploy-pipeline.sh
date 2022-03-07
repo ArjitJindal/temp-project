@@ -9,9 +9,12 @@ DEV_ACCOUNT_ID=911899431626
 SANDBOX_PROFILE="AWSAdministratorAccess-293986822825"
 SANDBOX_ACCOUNT_ID=293986822825
 
+PROD_PROFILE="AWSAdministratorAccess-870721492449"
+PROD_ACCOUNT_ID=870721492449
+
 
 # Deploy roles without policies so the ARNs exist when the CDK Stack is deployed in parallel
-printf "\nDeploying roles to Dev and Sandbox\n"
+printf "\nDeploying roles to Dev, Sandbox, Prod\n"
 aws cloudformation deploy --template-file templates/CodePipelineCrossAccountRole.yml \
     --stack-name CodePipelineCrossAccountRole \
     --capabilities CAPABILITY_NAMED_IAM \
@@ -36,6 +39,18 @@ aws cloudformation deploy --template-file templates/CloudFormationDeploymentRole
     --profile ${SANDBOX_PROFILE} \
     --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Sandbox 
 
+aws cloudformation deploy --template-file templates/CodePipelineCrossAccountRole.yml \
+    --stack-name CodePipelineCrossAccountRole \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --profile ${PROD_PROFILE} \
+    --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Prod &
+    
+aws cloudformation deploy --template-file templates/CloudFormationDeploymentRole.yml \
+    --stack-name CloudFormationDeploymentRole \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --profile ${PROD_PROFILE} \
+    --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Prod 
+
 
 # Deploy Pipeline CDK stack, write output to a file to gather key arn
 printf "\nDeploying Tarpon Pipeline Stack\n"
@@ -56,7 +71,7 @@ if [[ -z "${KEY_ARN}" ]]; then
 fi
 
 # Update the CloudFormation roles with the Key ARNy in parallel
-printf "\nUpdating roles with policies in Dev and Sandbox\n"
+printf "\nUpdating roles with policies in Dev, Sandbox, Prod\n"
 aws cloudformation deploy --template-file templates/CodePipelineCrossAccountRole.yml \
     --stack-name CodePipelineCrossAccountRole \
     --capabilities CAPABILITY_NAMED_IAM \
@@ -80,6 +95,18 @@ aws cloudformation deploy --template-file templates/CodePipelineCrossAccountRole
     --capabilities CAPABILITY_NAMED_IAM \
     --profile ${SANDBOX_PROFILE} \
     --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Sandbox KeyArn=${KEY_ARN} 
+
+aws cloudformation deploy --template-file templates/CloudFormationDeploymentRole.yml \
+    --stack-name CloudFormationDeploymentRole \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --profile ${PROD_PROFILE} \
+    --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Prod KeyArn=${KEY_ARN} &
+
+aws cloudformation deploy --template-file templates/CodePipelineCrossAccountRole.yml \
+    --stack-name CodePipelineCrossAccountRole \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --profile ${PROD_PROFILE} \
+    --parameter-overrides DeploymentAccountID=${DEPLOYMENT_ACCOUNT_ID} Stage=Prod KeyArn=${KEY_ARN} 
 
 # Clean up temporary files
 rm ${CDK_OUTPUT_FILE} .cfn_outputs
