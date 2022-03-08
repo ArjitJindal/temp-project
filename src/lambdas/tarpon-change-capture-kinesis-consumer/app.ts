@@ -37,11 +37,14 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         const dashboardCollection = db.collection(
           DASHBOARD_COLLECTION(tenantId)
         )
+
+        const dateFromTS = new Date(transactionPrimaryItem.timestamp * 1000)
+
         await dashboardCollection.updateOne(
           { date: transactionPrimaryItem.timestamp },
           {
             $set: {
-              date: transactionPrimaryItem.timestamp,
+              date: `${dateFromTS.getDate()}${dateFromTS.getMonth()}${dateFromTS.getFullYear()}`,
               type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
               // TODO: Add rule hit stats once ready
             },
