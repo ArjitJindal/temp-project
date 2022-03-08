@@ -34,15 +34,21 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         const tenantId =
           dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
         const transactionPrimaryItem = handlePrimaryItem(message)
-        /*const dashboardMetrics = handleDashboardMetrics(transactionPrimaryItem)
         const dashboardCollection = db.collection(
           DASHBOARD_COLLECTION(tenantId)
         )
         await dashboardCollection.updateOne(
           { date: transactionPrimaryItem.timestamp },
-          dashboardMetrics,
+          {
+            $set: {
+              date: transactionPrimaryItem.timestamp,
+              type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
+              // TODO: Add rule hit stats once ready
+            },
+            $inc: { transactionsCount: 1 },
+          },
           { upsert: true }
-        )*/
+        )
 
         const transactionsCollection = db.collection(
           TRANSACIONS_COLLECTION(tenantId)
@@ -56,8 +62,6 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         const tenantId =
           dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
         const userPrimaryItem = handlePrimaryItem(message)
-        console.log('userPrimaryItem: ')
-        console.log(userPrimaryItem)
         const userCollection = db.collection(USERS_COLLECTION(tenantId))
         await userCollection.insertOne(userPrimaryItem)
       }
@@ -71,15 +75,4 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
 const handlePrimaryItem = (message: string) => {
   const stremNewImage = JSON.parse(message).dynamodb.NewImage
   return unMarshallDynamoDBStream(JSON.stringify(stremNewImage))
-}
-
-const handleDashboardMetrics = (transactionPrimaryItem: {
-  [key: string]: any
-}) => {
-  return {
-    $set: {
-      type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
-      $inc: { transactionsCount: 1 },
-    },
-  }
 }
