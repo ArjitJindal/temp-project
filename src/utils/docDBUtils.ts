@@ -28,6 +28,7 @@ export async function connectToDB() {
     sslValidate: true,
     sslCA: `${__dirname}/rds-combined-ca-bundle.pem`,
     retryWrites: false,
+    socketTimeoutMS: 5000000,
   })
   return cacheClient
 }
