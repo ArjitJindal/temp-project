@@ -110,30 +110,38 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    const docDbSg = new ec2.SecurityGroup(this, 'docdb-lambda-sg', {
-      vpc: docDbVpc,
-      securityGroupName: 'docdb-lambda-sg',
-    })
+    const docDbSg = new ec2.SecurityGroup(
+      this,
+      TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+      {
+        vpc: docDbVpc,
+        securityGroupName: TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+      }
+    )
 
     docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
 
-    const docDbCluster = new docdb.DatabaseCluster(this, 'tarpon', {
-      masterUser: {
-        username: 'tarponUser',
-      },
-      instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T3,
-        ec2.InstanceSize.MEDIUM
-      ),
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC,
-      },
-      securityGroup: docDbSg,
-      vpc: docDbVpc,
-      deletionProtection: config.stage !== 'dev',
-      removalPolicy:
-        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-    })
+    const docDbCluster = new docdb.DatabaseCluster(
+      this,
+      TarponStackConstants.DOCUMENT_DB_DATABASE_NAME,
+      {
+        masterUser: {
+          username: TarponStackConstants.DOCUMENT_DB_USERNAME_NAME,
+        },
+        instanceType: ec2.InstanceType.of(
+          ec2.InstanceClass.T3,
+          ec2.InstanceSize.MEDIUM
+        ),
+        vpcSubnets: {
+          subnetType: ec2.SubnetType.PUBLIC,
+        },
+        securityGroup: docDbSg,
+        vpc: docDbVpc,
+        deletionProtection: config.stage !== 'dev',
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      }
+    )
 
     /**
      * S3 Buckets
@@ -186,7 +194,17 @@ export class CdkTarponStack extends cdk.Stack {
     const apiKeyGeneratorFunction = this.createFunction(
       TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
       'app.apiKeyGeneratorHandler',
-      'dist/api-key-generator'
+      'dist/api-key-generator',
+      undefined,
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
+          DB_PORT: '27017',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        },
+      }
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
@@ -199,6 +217,11 @@ export class CdkTarponStack extends cdk.Stack {
               'arn:aws:apigateway:*::/apikeys',
               'arn:aws:apigateway:*::/usageplans/*/keys',
             ],
+          }),
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [docDbCluster.secret!.secretFullArn!],
           }),
         ],
       })
@@ -307,7 +330,15 @@ export class CdkTarponStack extends cdk.Stack {
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
       undefined,
-      { securityGroups: [docDbSg], vpc: docDbVpc }
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
+          DB_PORT: '27017',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        },
+      }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
@@ -315,6 +346,25 @@ export class CdkTarponStack extends cdk.Stack {
         batchSize: 10,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
+    )
+
+    tarponChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        getResourceName('tarponTarponChangeCaptureKinesisConsumerPolicy'),
+        {
+          policyName: getResourceName(
+            'tarponTarponChangeCaptureKinesisConsumerPolicy'
+          ),
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
     )
 
     /**
