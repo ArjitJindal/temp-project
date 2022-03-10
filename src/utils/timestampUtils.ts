@@ -16,7 +16,7 @@ export const getTimstampBasedIDPrefix = (timestamp: any): string => {
   const transactionTimestamp = timestamp.toString()
   let idPrefix = ''
   let iter = 0
-  for (let letterStr of transactionTimestamp) {
+  for (const letterStr of transactionTimestamp) {
     idPrefix += String.fromCharCode(97 + iter + parseInt(letterStr))
     iter++
   }

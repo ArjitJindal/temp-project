@@ -48,9 +48,9 @@ export const createLegalEntity = (currency: string, country: string) => {
 
 export const createShareHolders = (country: string) => {
   const numberOfShareHolders = getRandomIntInclusive(0, 7)
-  let shareHolders = []
+  const shareHolders = []
   for (let i = 0; i < numberOfShareHolders; i++) {
-    let shareHolder = {
+    const shareHolder = {
       generalDetails: {
         name: createNameEntity(),
         age: getRandomIntInclusive(18, 80),

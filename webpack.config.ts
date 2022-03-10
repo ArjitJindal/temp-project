@@ -1,6 +1,8 @@
 import { resolve } from 'path'
 import * as fs from 'fs'
 import { Configuration } from 'webpack'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const CopyPlugin = require('copy-webpack-plugin')
 
 const config: Configuration = {

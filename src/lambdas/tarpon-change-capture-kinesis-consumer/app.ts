@@ -7,12 +7,12 @@ import {
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'
 import { unMarshallDynamoDBStream } from '../../utils/dynamodbStream'
+import { TarponStackConstants } from '../../../lib/constants'
 import {
   dashboardMetricsTypes,
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
-import { TarponStackConstants } from '../../../lib/constants'
 
 let client: MongoClient
 

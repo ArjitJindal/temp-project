@@ -1,6 +1,8 @@
 import * as AWS from 'aws-sdk'
 import { IBAN } from 'ibankit'
 
+import { TransactionRepository } from '../lambdas/rules-engine/repositories/transaction-repository'
+import { UserRepository } from '../lambdas/user-management/repositories/user-repository'
 import {
   createUuid,
   getRandomIntInclusive,
@@ -8,8 +10,6 @@ import {
   getNameString,
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
-import { TransactionRepository } from '../lambdas/rules-engine/repositories/transaction-repository'
-import { UserRepository } from '../lambdas/user-management/repositories/user-repository'
 import { countries, currencies } from './constants'
 
 /*
@@ -33,12 +33,12 @@ const createBusinessUsers = (
   currency: string,
   country: string
 ) => {
-  let userIDs: string[] = []
+  const userIDs: string[] = []
   const userRepository = new UserRepository(`fake-${tenantId}`, dynamoDb)
   for (let i = 0; i < numberOfUsers; i++) {
-    let userId = createUuid()
+    const userId = createUuid()
     userIDs.push(userId)
-    let userObject = {
+    const userObject = {
       userId: userId,
       legalEntity: createLegalEntity(currency, country),
       shareHolders: createShareHolders(country),
@@ -141,9 +141,8 @@ export const createAndUploadTestData = async (
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
     }
-    let ddbSaveTransactionResult = await transactionRepository.saveTransaction(
-      transactionObject
-    )
+    const ddbSaveTransactionResult =
+      await transactionRepository.saveTransaction(transactionObject)
     dynamoDbResults.push(ddbSaveTransactionResult)
   }
   return { body: dynamoDbResults }

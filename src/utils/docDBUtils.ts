@@ -1,5 +1,7 @@
-import { MongoClient, Db } from 'mongodb'
 import { readFileSync } from 'fs'
+import { MongoClient } from 'mongodb'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const AWS = require('aws-sdk')
 
 interface DBCredentials {
