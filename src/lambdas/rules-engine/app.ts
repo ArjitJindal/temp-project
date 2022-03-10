@@ -10,10 +10,18 @@ import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
 import { compose } from '../../core/middlewares/compose'
 import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../../core/middlewares/json-serializer'
+import { ExecutedRulesResult } from '../../@types/openapi-public/executedRulesResult'
+import { FailedRulesResult } from '../../@types/openapi-public/failedRulesResult'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
+import { RuleError } from './rules/errors'
+
+const ruleAscendingComparator = (
+  rule1: ExecutedRulesResult | FailedRulesResult,
+  rule2: ExecutedRulesResult | FailedRulesResult
+) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
 // TODO: Move it to an abstraction layer
 export async function verifyTransaction(
@@ -32,20 +40,44 @@ export async function verifyTransaction(
         ruleInstance.parameters as RuleParameters,
         dynamoDb
       )
-      const ruleResult = await rule.computeRule()
       const { displayName, description } = rule.getInfo()
-      return {
-        ruleId: ruleInstance.ruleId,
-        ruleName: displayName,
-        ruleDescription: description,
-        ruleAction: ruleResult?.action || RuleActionEnum.ALLOW,
-        ruleHit: ruleResult !== undefined,
+      try {
+        const ruleResult = await rule.computeRule()
+        return {
+          ruleId: ruleInstance.ruleId,
+          ruleName: displayName,
+          ruleDescription: description,
+          ruleAction: ruleResult?.action || RuleActionEnum.ALLOW,
+          ruleHit: ruleResult !== undefined,
+        }
+      } catch (e) {
+        return {
+          ruleId: ruleInstance.ruleId,
+          ruleName: displayName,
+          ruleDescription: description,
+          failureException:
+            e instanceof RuleError
+              ? { exceptionName: e.name, exceptionDescription: e.message }
+              : { exceptionName: 'Unknown', exceptionDescription: 'Unknown' },
+        }
       }
     })
   )
+  const executedRules = ruleResults
+    .filter((result) => result.ruleAction)
+    .sort(ruleAscendingComparator) as ExecutedRulesResult[]
+  const failedRules = ruleResults
+    .filter((result) => !result.ruleAction)
+    .sort(ruleAscendingComparator) as FailedRulesResult[]
 
   // TODO: Refactor the following logic to be event-driven
-  const transactionId = await transactionRepository.saveTransaction(transaction)
+  const transactionId = await transactionRepository.saveTransaction(
+    transaction,
+    {
+      executedRules,
+      failedRules,
+    }
+  )
   await Promise.all(
     Aggregators.map((Aggregator) =>
       new Aggregator(tenantId, transaction, dynamoDb).aggregate()
@@ -54,11 +86,8 @@ export async function verifyTransaction(
 
   return {
     transactionId,
-    executedRules: ruleResults.sort((rule1, rule2) =>
-      rule1.ruleId > rule2.ruleId ? 1 : -1
-    ),
-    // TODO: Handle failed rules
-    failedRules: [],
+    executedRules: executedRules,
+    failedRules: failedRules,
   }
 }
 
@@ -78,7 +107,6 @@ export const transactionHandler = compose(
     try {
       if (event.httpMethod === 'POST' && event.body) {
         const transaction = JSON.parse(event.body)
-        // TODO: Validate payload
         const result = await verifyTransaction(transaction, tenantId, dynamoDb)
         return result
       } else if (event.httpMethod === 'GET' && transactionId) {

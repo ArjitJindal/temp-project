@@ -19,7 +19,6 @@ export const listImporterHandler = compose(
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ) => {
-    // TODO: Validate payload
     if (!event.body) {
       return 'Request payload is missing'
     }

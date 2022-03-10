@@ -1,10 +1,11 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../../lib/constants'
 import { Transaction } from '../../../@types/openapi-public/transaction'
-import { transactionListResult } from '../../../@types/tranasction/transaction-list'
 import { PaymentDetails } from '../../../@types/tranasction/payment-type'
 import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
+import { ExecutedRulesResult } from '../../../@types/openapi-public/executedRulesResult'
+import { FailedRulesResult } from '../../../@types/openapi-public/failedRulesResult'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -15,7 +16,13 @@ export class TransactionRepository {
     this.tenantId = tenantId
   }
 
-  public async saveTransaction(transaction: Transaction): Promise<string> {
+  public async saveTransaction(
+    transaction: Transaction,
+    rulesResult: {
+      executedRules?: ExecutedRulesResult[]
+      failedRules?: FailedRulesResult[]
+    } = {}
+  ): Promise<string> {
     const transactionId =
       transaction.transactionId ||
       `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
@@ -43,6 +50,7 @@ export class TransactionRepository {
                 Item: {
                   ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
                   ...transaction,
+                  ...rulesResult,
                 },
               },
             },
