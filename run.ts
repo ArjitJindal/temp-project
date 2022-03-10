@@ -33,37 +33,48 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
-    require('./src/user-management/app').userHandler(
+    require('./src/lambdas/user-management/app').userHandler(
       require('./events/create-user').event
     ),
   'get-user': () =>
-    require('./src/user-management/app').userHandler(
+    require('./src/lambdas/user-management/app').userHandler(
       require('./events/get-user').event
     ),
   'create-rule-instance': () =>
-    require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/create-rule-instance').event
     ),
   'update-rule-instance': () =>
-    require('./src/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
   'view-transactions': () =>
-    require('./src/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
       require('./events/update-rule-instance').event
     ),
   'verify-transaction': () =>
-    require('./src/rules-engine/app').transactionHandler(
+    require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
     ),
   'get-transaction': () =>
-    require('./src/rules-engine/app').transactionHandler(
+    require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/get-transaction').event
     ),
   'import-list': () =>
-    require('./src/list-importer/app').listImporterHandler(
+    require('./src/lambdas/list-importer/app').listImporterHandler(
       require('./events/import-list').event
     ),
+  'import-transaction': async () => {
+    await setUpMockS3()
+    return require('./src/lambdas/file-import/app').fileImportHandler(
+      require('./events/import-transaction').event
+    )
+  },
+  'get-presigned-url': async () => {
+    return require('./src/lambdas/file-import/app').getPresignedUrlHandler(
+      require('./events/get-presigned-url').event
+    )
+  },
   'create-and-upload-test-data': () =>
     require('./src/scripts/index').createAndUploadTestData(
       options.tenant || 'demo-tenant-id',
@@ -71,17 +82,6 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.transactions || 1,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
-  'import-transaction': async () => {
-    await setUpMockS3()
-    return require('./src/file-import/app').fileImportHandler(
-      require('./events/import-transaction').event
-    )
-  },
-  'get-presigned-url': async () => {
-    return require('./src/file-import/app').getPresignedUrlHandler(
-      require('./events/get-presigned-url').event
-    )
-  },
 }
 
 ;(async () => {
