@@ -6,6 +6,7 @@ import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
 import { ExecutedRulesResult } from '../../../@types/openapi-public/executedRulesResult'
 import { FailedRulesResult } from '../../../@types/openapi-public/failedRulesResult'
+import { TransactionWithRulesResult } from '../../../@types/openapi-public/transactionWithRulesResult'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -80,7 +81,9 @@ export class TransactionRepository {
     return transactionId
   }
 
-  public async getTransactionById(transactionId: string): Promise<Transaction> {
+  public async getTransactionById(
+    transactionId: string
+  ): Promise<TransactionWithRulesResult> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
@@ -92,7 +95,7 @@ export class TransactionRepository {
     }
     delete transaction.PartitionKeyID
     delete transaction.SortKeyID
-    return transaction as Transaction
+    return transaction as TransactionWithRulesResult
   }
 
   public async getTransactionsByIds(
@@ -106,11 +109,20 @@ export class TransactionRepository {
       return []
     }
 
+    const transactionAttributeNames = Transaction.getAttributeTypeMap().map(
+      (attribute) => attribute.name
+    )
     const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
       RequestItems: {
         [TarponStackConstants.DYNAMODB_TABLE_NAME]: {
           Keys: transactionIds.map((transactionId) =>
             DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
+          ),
+          ProjectionExpression: transactionAttributeNames
+            .map((name) => `#${name}`)
+            .join(', '),
+          ExpressionAttributeNames: Object.fromEntries(
+            transactionAttributeNames.map((name) => [`#${name}`, name])
           ),
         },
       },

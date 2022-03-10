@@ -51,6 +51,7 @@ export async function verifyTransaction(
           ruleHit: ruleResult !== undefined,
         }
       } catch (e) {
+        console.error(e)
         return {
           ruleId: ruleInstance.ruleId,
           ruleName: displayName,

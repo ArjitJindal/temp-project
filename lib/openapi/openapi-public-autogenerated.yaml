@@ -85,18 +85,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionMonitoringResult'
-              examples:
-                example-1:
-                  value:
-                    transactionId: 7b80a539eea6e78acbd6d458e5971482
-                    rules:
-                      - ruleId: R-1a
-                        ruleName: Proof of funds for high value transactions
-                        ruleDescription: >-
-                          If a user makes a remittance transaction >= 1800 in
-                          EUR - ask for proof of funds
-                        ruleAction: block
-                        ruleHit: true
+              examples: {}
         '401':
           description: Unauthorized
           headers: {}
@@ -164,60 +153,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
-              examples:
-                example-1:
-                  value:
-                    transactionId: 7b80a539eea6e78acbd6d458e5971482
-                    timestamp: 1641654664
-                    senderUserId: 96647cfd9e8fe66ee0f3362e011e34e8
-                    receiverUserId: 8650a2611d0771cba03310f74bf6
-                    sendingAmountDetails:
-                      country: DE
-                      transactionAmount: 800
-                      transactionCurrency: EUR
-                    receivingAmountDetails:
-                      country: IN
-                      transactionAmount: 68351.34
-                      transactionCurrency: INR
-                    paymentMethod: CreditCard
-                    payoutMethod: CreditCard
-                    promotionCodeUsed: true
-                    senderName:
-                      firstName: Jules
-                      lastName: Winnfield
-                    receiverName:
-                      firstName: Baran
-                      middleName: Realblood
-                      lastName: Ozkan
-                    senderPaymentDetails:
-                      method: CARD
-                      cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-                      cardIssuedCountry: US
-                      transactionReferenceField: Deposit
-                      3dsDone: true
-                    receiverPaymentDetails:
-                      method: CARD
-                      cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-                      cardIssuedCountry: IN
-                      transactionReferenceField: Deposit
-                      3dsDone: true
-                    reference: loan repayment
-                    deviceData:
-                      batteryLevel: 95
-                      deviceLatitude: 13.0033
-                      deviceLongitude: 76.1004
-                      ipAddress: 10.23.191.2
-                      deviceIdentifier: 3c49f915d04485e34caba
-                      vpnUsed: false
-                      operatingSystem: Android 11.2
-                      deviceMaker: ASUS
-                      deviceModel: Zenphone M2 Pro Max
-                      deviceYear: '2018'
-                      appVersion: 1.1.0
-                    tags:
-                      - key: customKey
-                        value: customValue
+                $ref: '#/components/schemas/TransactionWithRulesResult'
+              examples: {}
         '401':
           description: Unauthorized
           headers: {}
@@ -1151,6 +1088,123 @@ components:
         - timestamp
         - senderPaymentDetails
         - receiverPaymentDetails
+    TransactionWithRulesResult:
+      title: TransactionWithRulesResult
+      description: Model for transaction payload with rules result
+      example:
+        transactionId: 7b80a539eea6e78acbd6d458e5971482
+        senderUserId: 8650a2611d0771cba03310f74bf6
+        receiverUserId: 9350a2611e0771cba03310f74bf6
+        sendingAmountDetails:
+          country: DE
+          transactionAmount: 800
+          transactionCurrency: EUR
+        receivingAmountDetails:
+          country: IN
+          transactionAmount: 68351.34
+          transactionCurrency: INR
+        promotionCodeUsed: true
+        timestamp: 1641654664
+        senderPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: US
+          transactionReferenceField: Deposit
+          3dsDone: true
+        receiverPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: IN
+          transactionReferenceField: Deposit
+          3dsDone: true
+        reference: loan repayment
+        deviceData:
+          batteryLevel: 95
+          deviceLatitude: 13.0033
+          deviceLongitude: 76.1004
+          ipAddress: 10.23.191.2
+          deviceIdentifier: 3c49f915d04485e34caba
+          vpnUsed: false
+          operatingSystem: Android 11.2
+          deviceMaker: ASUS
+          deviceModel: Zenphone M2 Pro Max
+          deviceYear: '2018'
+          appVersion: 1.1.0
+        tags:
+          - key: customKey
+            value: customValue
+      allOf:
+        - $ref: '#/components/schemas/Transaction'
+        - type: object
+          properties:
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            failedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/FailedRulesResult'
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          senderUserId: 8650a2611d0771cba03310f74bf6
+          receiverUserId: 9350a2611e0771cba03310f74bf6
+          sendingAmountDetails:
+            country: DE
+            transactionAmount: 800
+            transactionCurrency: EUR
+          receivingAmountDetails:
+            country: IN
+            transactionAmount: 68351.34
+            transactionCurrency: INR
+          promotionCodeUsed: true
+          timestamp: 1641654664
+          senderPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: US
+            transactionReferenceField: Deposit
+            3dsDone: true
+          receiverPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: IN
+            transactionReferenceField: Deposit
+            3dsDone: true
+          reference: loan repayment
+          deviceData:
+            batteryLevel: 95
+            deviceLatitude: 13.0033
+            deviceLongitude: 76.1004
+            ipAddress: 10.23.191.2
+            deviceIdentifier: 3c49f915d04485e34caba
+            vpnUsed: false
+            operatingSystem: Android 11.2
+            deviceMaker: ASUS
+            deviceModel: Zenphone M2 Pro Max
+            deviceYear: '2018'
+            appVersion: 1.1.0
+          tags:
+            - key: customKey
+              value: customValue
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: block
+              ruleHit: true
+          failedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              failureException:
+                exceptionName: MISSING_DATA
+                exceptionDescription: Some data is missing
     CardDetails:
       title: CardDetails
       type: object
@@ -1351,6 +1405,26 @@ components:
             failureException:
               exceptionName: MISSING_DATA
               exceptionDescription: Some data is missing
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: block
+              ruleHit: true
+          failedRules:
+            - ruleId: R-1b
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              failureException:
+                exceptionName: MISSING_DATA
+                exceptionDescription: Some data is missing
     ExecutedRulesResult:
       title: ExecutedRulesResult
       required:
