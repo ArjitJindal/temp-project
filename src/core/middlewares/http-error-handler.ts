@@ -16,10 +16,12 @@ export const httpErrorHandler =
           }),
           headers: {
             'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
           },
           statusCode: error.statusCode,
         }
       }
+      console.error(error)
       return {
         body: JSON.stringify({
           error: 'Internal server error',
@@ -31,6 +33,7 @@ export const httpErrorHandler =
         }),
         headers: {
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
         },
         statusCode: 500,
       }

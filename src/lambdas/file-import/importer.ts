@@ -43,7 +43,11 @@ export class Importer {
     if (!converter) {
       throw new Error(`Unknown import format: ${format}`)
     }
-    return this.importItems(importRequest, converter, this.importTransaction)
+    return this.importItems(
+      importRequest,
+      converter,
+      this.importTransaction.bind(this)
+    )
   }
 
   private async importTransaction(transaction: Transaction): Promise<void> {
@@ -65,7 +69,11 @@ export class Importer {
     if (!converter) {
       throw new Error(`Unknown import format: ${format}`)
     }
-    return this.importItems(importRequest, converter, this.importConsumerUser)
+    return this.importItems(
+      importRequest,
+      converter,
+      this.importConsumerUser.bind(this)
+    )
   }
 
   private async importConsumerUser(user: User): Promise<void> {
@@ -82,7 +90,11 @@ export class Importer {
     if (!converter) {
       throw new Error(`Unknown import format: ${format}`)
     }
-    return this.importItems(importRequest, converter, this.importBusinessUser)
+    return this.importItems(
+      importRequest,
+      converter,
+      this.importBusinessUser.bind(this)
+    )
   }
 
   private async importBusinessUser(user: Business): Promise<void> {
