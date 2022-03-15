@@ -13,8 +13,13 @@ then
 fi
 
 if [ "$env" == "sandbox" ]; then
+    apiPrefix=""$apiPrefix""
     apiId=5ndo2u1wra
+elif [ "$env" == "prod" ]; then
+    apiPrefix=""$apiPrefix""
+    apiId=igt4gjot0j
 else
+    apiPrefix=""
     apiId=7t1r57g9h3
 fi
 
@@ -37,7 +42,7 @@ apiKey=$(awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
-    "https://$env.api.flagright.com/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
+    "https://"$apiPrefix"api.flagright.com/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
 
 echo "Tarpon API Key: $apiKey"
 
@@ -46,62 +51,62 @@ awscurl --service execute-api \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-1","status": "ACTIVE", "parameters":{"action":"FLAG"}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-2","status": "ACTIVE", "parameters":{"action":"FLAG","initialTransactions":10}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-3","status": "ACTIVE", "parameters":{"action":"FLAG","initialTransactions":10}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-4","status": "ACTIVE", "parameters":{"action":"FLAG","dormancyPeriodDays":180}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-5","status": "ACTIVE", "parameters":{"action":"FLAG","highRiskCurrencies":["AFN"]}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-6","status": "ACTIVE", "parameters":{"action":"FLAG","lowTransactionValues":{"EUR":1000},"lowTransactionCount":3}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-7","status": "ACTIVE", "parameters":{"action":"FLAG","lowTransactionValues":{"EUR":1000},"lowTransactionCount":3}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-8","status": "ACTIVE", "parameters":{"action":"FLAG","sendersCount":4,"timePeriodDays":30}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 awscurl --service execute-api \
     -X POST \
     --region us-east-2 \
     --profile $profile \
     -d '{"ruleId": "R-9","status": "ACTIVE", "parameters":{"action":"FLAG","sendersCount":4,"timePeriodDays":30}}' \
-    https://$env.api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
+    https://"$apiPrefix"api.flagright.com/console/rule_instances?tenantId=$tenantId >/dev/null
 
 echo "Rule instances with default parameters are created."

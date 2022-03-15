@@ -88,7 +88,7 @@ aws_secret_access_key=false
 
 ```
 
-### For first rum
+### For first run
 
 Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
 
@@ -155,4 +155,26 @@ Once credentials are legit, you can run:
 
 ```
 npm run create-and-upload-test-data
+```
+
+### Create a New Tenant
+
+For now, we can use the script `onboard-tarpon-api.sh` to create a new tenant, its usage plan and API key, and it'll create a fixed set of rule instances for the tenant.
+
+Dev env:
+
+```bash
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-911899431626 --env dev
+```
+
+Sandbox env:
+
+```bash
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-293986822825 --env sandbox
+```
+
+Prod env:
+
+```bash
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-870721492449 --env prod
 ```
