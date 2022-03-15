@@ -1,5 +1,5 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { MongoClient } from 'mongodb'
+import { Db, MongoClient } from 'mongodb'
 import {
   connectToDB,
   DASHBOARD_COLLECTION,
@@ -13,6 +13,7 @@ import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
+import { RuleActionEnum } from '../../@types/rule/rule-instance'
 
 let client: MongoClient
 
@@ -34,29 +35,12 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         const tenantId =
           dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
         const transactionPrimaryItem = handlePrimaryItem(message)
-        const dashboardCollection = db.collection(
-          DASHBOARD_COLLECTION(tenantId)
-        )
-
-        const dateFromTS = new Date(transactionPrimaryItem.timestamp * 1000)
-
-        await dashboardCollection.updateOne(
-          { date: transactionPrimaryItem.timestamp },
-          {
-            $set: {
-              date: `${dateFromTS.getDate()}${dateFromTS.getMonth()}${dateFromTS.getFullYear()}`,
-              type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
-              // TODO: Add rule hit stats once ready
-            },
-            $inc: { transactionsCount: 1 },
-          },
-          { upsert: true }
-        )
 
         const transactionsCollection = db.collection(
           TRANSACIONS_COLLECTION(tenantId)
         )
         await transactionsCollection.insertOne(transactionPrimaryItem)
+        await updateTransactionCountStats(transactionPrimaryItem, tenantId, db)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_PRIMARY_KEY_IDENTIFIER
@@ -73,6 +57,56 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
     console.error(err)
     return 'Internal error'
   }
+}
+
+const updateTransactionCountStats = async (
+  transactionPrimaryItem: any,
+  tenantId: string,
+  db: Db
+) => {
+  const executedRules = transactionPrimaryItem.executedRules
+  const dateStringFromTimeStamp = new Date(
+    transactionPrimaryItem.timestamp * 1000
+  )
+    .toLocaleString()
+    .split(',')[0]
+  const dashboardCollection = db.collection(DASHBOARD_COLLECTION(tenantId))
+  console.log(`EXECUTED RULES ${JSON.stringify(executedRules)}`)
+  await dashboardCollection.updateOne(
+    {
+      _id: `${dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS}-${dateStringFromTimeStamp}`,
+    },
+    {
+      $set: {
+        _id: `${dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS}-${dateStringFromTimeStamp}`,
+        date: `${dateStringFromTimeStamp}`,
+        type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
+        // TODO: Add rule hit stats once ready
+      },
+      $inc: {
+        transactionsCount: 1,
+        flaggedTransactionsCount: checkForTransactionStatus(
+          executedRules,
+          RuleActionEnum.FLAG
+        ),
+        blockedTransactionsCount: checkForTransactionStatus(
+          executedRules,
+          RuleActionEnum.BLOCK
+        ),
+      },
+      checkForTransactionStatus,
+    },
+    { upsert: true }
+  )
+}
+
+const checkForTransactionStatus = (executedRules: any, action: string) => {
+  for (let i = 0; i < executedRules.length; i++) {
+    if (executedRules[i].action === action && executedRules[i].ruleHit) {
+      return 1
+    }
+  }
+  return 0
 }
 
 const handlePrimaryItem = (message: string) => {
