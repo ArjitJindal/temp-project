@@ -68,10 +68,10 @@ const updateTransactionCountStats = async (
   const dateStringFromTimeStamp = new Date(
     transactionPrimaryItem.timestamp * 1000
   )
-    .toLocaleString()
-    .split(',')[0]
+    .toISOString()
+    .substring(0, 10)
+
   const dashboardCollection = db.collection(DASHBOARD_COLLECTION(tenantId))
-  console.log(`EXECUTED RULES ${JSON.stringify(executedRules)}`)
   await dashboardCollection.updateOne(
     {
       _id: `${dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS}-${dateStringFromTimeStamp}`,
