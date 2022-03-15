@@ -21,6 +21,7 @@ async function setUpMockS3() {
 }
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
+process.env['NODE_ENV'] = 'dev'
 
 const optionDefinitions = [
   { name: 'action', type: String },
@@ -50,7 +51,7 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     ),
   'view-transactions': () =>
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
-      require('./events/update-rule-instance').event
+      require('./events/view-transactions').event
     ),
   'verify-transaction': () =>
     require('./src/lambdas/rules-engine/app').transactionHandler(
@@ -65,6 +66,7 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       require('./events/import-list').event
     ),
   'import-transaction': async () => {
+    process.env['MOCK_S3'] = 'true'
     await setUpMockS3()
     return require('./src/lambdas/file-import/app').fileImportHandler(
       require('./events/import-transaction').event

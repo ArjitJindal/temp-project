@@ -27,17 +27,7 @@
     "start-local-api": "sam local start-api -t cdk.out/dev-tarpon.template.json --debug",
     "recreate-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table && aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
-    "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
-    "create-user": "ts-node run.ts --action create-user",
-    "get-user": "ts-node run.ts --action get-user",
-    "create-rule-instance": "ts-node run.ts --action create-rule-instance",
-    "update-rule-instance": "ts-node run.ts --action update-rule-instance",
-    "verify-transaction": "ts-node run.ts --action verify-transaction",
-    "get-transaction": "ts-node run.ts --action get-transaction",
-    "import-list": "ts-node run.ts --action import-list",
-    "create-and-upload-test-data": "ts-node run.ts --action create-and-upload-test-data --users $npm_config_users --transactions $npm_config_transactions --tenant $npm_config_tenant",
-    "import-transaction": "IMPORT_TMP_BUCKET=tarpon-import-tmp IMPORT_BUCKET=tarpon-import MOCK_S3=true ts-node run.ts --action import-transaction",
-    "get-presigned-url": "ts-node run.ts --action get-presigned-url"
+    "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb"
   },
   "repository": {
     "type": "git",
