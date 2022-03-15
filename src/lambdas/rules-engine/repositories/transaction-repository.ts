@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../../lib/constants'
-import { Transaction } from '../../../@types/openapi-public/transaction'
+import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { PaymentDetails } from '../../../@types/tranasction/payment-type'
 import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
-import { ExecutedRulesResult } from '../../../@types/openapi-public/executedRulesResult'
-import { FailedRulesResult } from '../../../@types/openapi-public/failedRulesResult'
-import { TransactionWithRulesResult } from '../../../@types/openapi-public/transactionWithRulesResult'
+import { ExecutedRulesResult } from '../../../@types/openapi-public/ExecutedRulesResult'
+import { FailedRulesResult } from '../../../@types/openapi-public/FailedRulesResult'
+import { TransactionWithRulesResult } from '../../../@types/openapi-public/TransactionWithRulesResult'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient

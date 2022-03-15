@@ -1,6 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../../lib/constants'
-import { RuleInstance } from '../../../@types/openapi-internal/ruleInstance'
+import {
+  RuleInstance,
+  RuleInstanceStatusEnum,
+} from '../../../@types/openapi-internal/RuleInstance'
 import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 
 export class RuleRepository {
@@ -47,7 +50,7 @@ export class RuleRepository {
   }
 
   async getActiveRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
-    const status = RuleInstance.StatusEnum.Active
+    const status: RuleInstanceStatusEnum = 'ACTIVE'
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',

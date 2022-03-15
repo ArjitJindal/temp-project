@@ -1,4 +1,4 @@
-import { User } from '../../../@types/openapi-public/user'
+import { User } from '../../../@types/openapi-public/User'
 import { ConverterInterface } from '../converter-interface'
 import { FlagrightUserConverter } from './flagright-converter'
 import { ShPaymentUserConverter } from './sh-payment-converter'

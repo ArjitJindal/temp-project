@@ -10,20 +10,25 @@
  * Do not edit the class manually.
  */
 
+import { ContactDetails } from './ContactDetails'
+import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
-export class CompanyGeneralDetails {
+import { UserDetails } from './UserDetails'
+/**
+ * Model for User details
+ */
+export class User {
   /**
-   * Legal name of the company
+   * Unique user ID
    */
-  'legalName': string
+  'userId': string
+  'userDetails': UserDetails
+  'createdTimestamp': number
   /**
-   * The industry the business operates in for a business customer
+   * User's legal identity documents - See Document Model for details
    */
-  'businessIndustry'?: Array<string>
-  /**
-   * The key products and services provided by the company
-   */
-  'mainProductsServicesSold'?: Array<string>
+  'legalDocuments'?: Array<LegalDocument>
+  'contactDetails'?: ContactDetails
   /**
    * Additional information that can be added via tags
    */
@@ -38,21 +43,33 @@ export class CompanyGeneralDetails {
     format: string
   }> = [
     {
-      name: 'legalName',
-      baseName: 'legalName',
+      name: 'userId',
+      baseName: 'userId',
       type: 'string',
       format: '',
     },
     {
-      name: 'businessIndustry',
-      baseName: 'businessIndustry',
-      type: 'Array<string>',
+      name: 'userDetails',
+      baseName: 'userDetails',
+      type: 'UserDetails',
       format: '',
     },
     {
-      name: 'mainProductsServicesSold',
-      baseName: 'mainProductsServicesSold',
-      type: 'Array<string>',
+      name: 'createdTimestamp',
+      baseName: 'createdTimestamp',
+      type: 'number',
+      format: '',
+    },
+    {
+      name: 'legalDocuments',
+      baseName: 'legalDocuments',
+      type: 'Array<LegalDocument>',
+      format: '',
+    },
+    {
+      name: 'contactDetails',
+      baseName: 'contactDetails',
+      type: 'ContactDetails',
       format: '',
     },
     {
@@ -64,7 +81,7 @@ export class CompanyGeneralDetails {
   ]
 
   static getAttributeTypeMap() {
-    return CompanyGeneralDetails.attributeTypeMap
+    return User.attributeTypeMap
   }
 
   public constructor() {}

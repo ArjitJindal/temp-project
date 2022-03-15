@@ -1,9 +1,12 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
-import { ImportRequest } from '../../@types/openapi-internal/importRequest'
-import { Business } from '../../@types/openapi-public/business'
-import { Transaction } from '../../@types/openapi-public/transaction'
-import { User } from '../../@types/openapi-public/user'
+import {
+  ImportRequest,
+  ImportRequestFormatEnum,
+} from '../../@types/openapi-internal/ImportRequest'
+import { Business } from '../../@types/openapi-public/Business'
+import { Transaction } from '../../@types/openapi-public/Transaction'
+import { User } from '../../@types/openapi-public/User'
 import { verifyTransaction } from '../rules-engine/app'
 import { UserRepository } from '../user-management/repositories/user-repository'
 import { ConverterInterface } from './converter-interface'
@@ -141,9 +144,7 @@ export class Importer {
     return importedCount
   }
 
-  private getFormat(format: ImportRequest.FormatEnum): string {
-    return format === ImportRequest.FormatEnum.Custom
-      ? this.tenantName
-      : 'flagright'
+  private getFormat(format: ImportRequestFormatEnum): string {
+    return format === 'custom' ? this.tenantName : 'flagright'
   }
 }

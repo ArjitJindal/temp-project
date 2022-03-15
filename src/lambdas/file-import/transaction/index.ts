@@ -1,4 +1,4 @@
-import { Transaction } from '../../../@types/openapi-public/transaction'
+import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { ConverterInterface } from '../converter-interface'
 import { FlagrightTransactionConverter } from './flagright-converter'
 import { ShPaymentTransactionConverter } from './sh-payment-converter'

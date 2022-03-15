@@ -11,23 +11,19 @@
  */
 
 import { Tag } from './Tag'
-export class CompanyGeneralDetails {
+export class CompanyRegistrationDetails {
   /**
-   * Legal name of the company
+   * Commercial registry registration number for the company in its registration country
    */
-  'legalName': string
+  'registrationIdentifier': string
   /**
-   * The industry the business operates in for a business customer
+   * Country of registration for the company
    */
-  'businessIndustry'?: Array<string>
-  /**
-   * The key products and services provided by the company
-   */
-  'mainProductsServicesSold'?: Array<string>
+  'registrationCountry': string
   /**
    * Additional information that can be added via tags
    */
-  'tags'?: Array<Tag>
+  'tag'?: Array<Tag>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -38,33 +34,27 @@ export class CompanyGeneralDetails {
     format: string
   }> = [
     {
-      name: 'legalName',
-      baseName: 'legalName',
+      name: 'registrationIdentifier',
+      baseName: 'registrationIdentifier',
       type: 'string',
       format: '',
     },
     {
-      name: 'businessIndustry',
-      baseName: 'businessIndustry',
-      type: 'Array<string>',
+      name: 'registrationCountry',
+      baseName: 'registrationCountry',
+      type: 'string',
       format: '',
     },
     {
-      name: 'mainProductsServicesSold',
-      baseName: 'mainProductsServicesSold',
-      type: 'Array<string>',
-      format: '',
-    },
-    {
-      name: 'tags',
-      baseName: 'tags',
+      name: 'tag',
+      baseName: 'tag',
       type: 'Array<Tag>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return CompanyGeneralDetails.attributeTypeMap
+    return CompanyRegistrationDetails.attributeTypeMap
   }
 
   public constructor() {}

@@ -11,19 +11,30 @@
  */
 
 import { Tag } from './Tag'
-export class CompanyGeneralDetails {
+/**
+ * Model for standardized address
+ */
+export class Address {
   /**
-   * Legal name of the company
+   * Address lines of the user's residence address
    */
-  'legalName': string
+  'addressLines': Array<any>
   /**
-   * The industry the business operates in for a business customer
+   * Post code of the user's residence address
    */
-  'businessIndustry'?: Array<string>
+  'postcode': string
   /**
-   * The key products and services provided by the company
+   * City of the user's residence address
    */
-  'mainProductsServicesSold'?: Array<string>
+  'city': string
+  /**
+   * State of the user's residence address
+   */
+  'state'?: string
+  /**
+   * User's country of residence
+   */
+  'country': string
   /**
    * Additional information that can be added via tags
    */
@@ -38,21 +49,33 @@ export class CompanyGeneralDetails {
     format: string
   }> = [
     {
-      name: 'legalName',
-      baseName: 'legalName',
+      name: 'addressLines',
+      baseName: 'addressLines',
+      type: 'Array<any>',
+      format: '',
+    },
+    {
+      name: 'postcode',
+      baseName: 'postcode',
       type: 'string',
       format: '',
     },
     {
-      name: 'businessIndustry',
-      baseName: 'businessIndustry',
-      type: 'Array<string>',
+      name: 'city',
+      baseName: 'city',
+      type: 'string',
       format: '',
     },
     {
-      name: 'mainProductsServicesSold',
-      baseName: 'mainProductsServicesSold',
-      type: 'Array<string>',
+      name: 'state',
+      baseName: 'state',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'country',
+      baseName: 'country',
+      type: 'string',
       format: '',
     },
     {
@@ -64,7 +87,7 @@ export class CompanyGeneralDetails {
   ]
 
   static getAttributeTypeMap() {
-    return CompanyGeneralDetails.attributeTypeMap
+    return Address.attributeTypeMap
   }
 
   public constructor() {}

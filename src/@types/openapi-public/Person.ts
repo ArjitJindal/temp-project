@@ -10,20 +10,20 @@
  * Do not edit the class manually.
  */
 
+import { ContactDetails } from './ContactDetails'
+import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
-export class CompanyGeneralDetails {
+import { UserDetails } from './UserDetails'
+/**
+ * Model for a generic individual - different from User model by not having userId field
+ */
+export class Person {
+  'generalDetails': UserDetails
   /**
-   * Legal name of the company
+   * User's legal identity documents - See Document Model for details
    */
-  'legalName': string
-  /**
-   * The industry the business operates in for a business customer
-   */
-  'businessIndustry'?: Array<string>
-  /**
-   * The key products and services provided by the company
-   */
-  'mainProductsServicesSold'?: Array<string>
+  'legalDocuments'?: Array<LegalDocument>
+  'contactDetails'?: ContactDetails
   /**
    * Additional information that can be added via tags
    */
@@ -38,21 +38,21 @@ export class CompanyGeneralDetails {
     format: string
   }> = [
     {
-      name: 'legalName',
-      baseName: 'legalName',
-      type: 'string',
+      name: 'generalDetails',
+      baseName: 'generalDetails',
+      type: 'UserDetails',
       format: '',
     },
     {
-      name: 'businessIndustry',
-      baseName: 'businessIndustry',
-      type: 'Array<string>',
+      name: 'legalDocuments',
+      baseName: 'legalDocuments',
+      type: 'Array<LegalDocument>',
       format: '',
     },
     {
-      name: 'mainProductsServicesSold',
-      baseName: 'mainProductsServicesSold',
-      type: 'Array<string>',
+      name: 'contactDetails',
+      baseName: 'contactDetails',
+      type: 'ContactDetails',
       format: '',
     },
     {
@@ -64,7 +64,7 @@ export class CompanyGeneralDetails {
   ]
 
   static getAttributeTypeMap() {
-    return CompanyGeneralDetails.attributeTypeMap
+    return Person.attributeTypeMap
   }
 
   public constructor() {}

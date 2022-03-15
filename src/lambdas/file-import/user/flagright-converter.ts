@@ -1,4 +1,4 @@
-import { User } from '../../../@types/openapi-public/user'
+import { User } from '../../../@types/openapi-public/User'
 import { ConverterInterface } from '../converter-interface'
 
 export const FlagrightUserConverter: ConverterInterface<User> = {

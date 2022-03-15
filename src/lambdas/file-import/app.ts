@@ -9,10 +9,10 @@ import { getDynamoDbClient } from '../../utils/dynamodb'
 import { getS3Client } from '../../utils/s3'
 import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../../core/middlewares/json-serializer'
-import { PresignedUrlResponse } from '../../@types/openapi-internal/presignedUrlResponse'
+import { PresignedUrlResponse } from '../../@types/openapi-internal/PresignedUrlResponse'
 import { compose } from '../../core/middlewares/compose'
-import { ImportResponse } from '../../@types/openapi-internal/importResponse'
-import { ImportRequest } from '../../@types/openapi-internal/importRequest'
+import { ImportResponse } from '../../@types/openapi-internal/ImportResponse'
+import { ImportRequest } from '../../@types/openapi-internal/ImportRequest'
 import { JWTAuthorizerResult } from '../jwt-authorizer/app'
 import { Importer } from './importer'
 
@@ -46,15 +46,15 @@ export const fileImportHandler = compose(
         IMPORT_TMP_BUCKET,
         IMPORT_BUCKET
       )
-      if (importRequest.type === ImportRequest.TypeEnum.Transaction) {
+      if (importRequest.type === 'TRANSACTION') {
         return {
           importedCount: await importer.importTransactions(importRequest),
         }
-      } else if (importRequest.type === ImportRequest.TypeEnum.User) {
+      } else if (importRequest.type === 'USER') {
         return {
           importedCount: await importer.importConsumerUsers(importRequest),
         }
-      } else if (importRequest.type === ImportRequest.TypeEnum.Business) {
+      } else if (importRequest.type === 'BUSINESS') {
         return {
           importedCount: await importer.importBusinessUsers(importRequest),
         }

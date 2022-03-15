@@ -67,6 +67,8 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     ),
   'import-transaction': async () => {
     process.env['MOCK_S3'] = 'true'
+    process.env['IMPORT_TMP_BUCKET'] = 'tarpon-import-tmp'
+    process.env['IMPORT_BUCKET'] = 'tarpon-import'
     await setUpMockS3()
     return require('./src/lambdas/file-import/app').fileImportHandler(
       require('./events/import-transaction').event

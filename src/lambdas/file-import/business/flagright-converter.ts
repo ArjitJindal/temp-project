@@ -1,4 +1,4 @@
-import { Business } from '../../../@types/openapi-public/business'
+import { Business } from '../../../@types/openapi-public/Business'
 import { ConverterInterface } from '../converter-interface'
 
 export const FlagrightBusinessConverter: ConverterInterface<Business> = {

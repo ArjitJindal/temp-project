@@ -10,20 +10,11 @@
  * Do not edit the class manually.
  */
 
+import { Amount } from './Amount'
 import { Tag } from './Tag'
-export class CompanyGeneralDetails {
-  /**
-   * Legal name of the company
-   */
-  'legalName': string
-  /**
-   * The industry the business operates in for a business customer
-   */
-  'businessIndustry'?: Array<string>
-  /**
-   * The key products and services provided by the company
-   */
-  'mainProductsServicesSold'?: Array<string>
+export class CompanyFinancialDetails {
+  'expectedTransactionAmountPerMonth'?: Amount
+  'expectedTurnoverPerMonth'?: Amount
   /**
    * Additional information that can be added via tags
    */
@@ -38,21 +29,15 @@ export class CompanyGeneralDetails {
     format: string
   }> = [
     {
-      name: 'legalName',
-      baseName: 'legalName',
-      type: 'string',
+      name: 'expectedTransactionAmountPerMonth',
+      baseName: 'expectedTransactionAmountPerMonth',
+      type: 'Amount',
       format: '',
     },
     {
-      name: 'businessIndustry',
-      baseName: 'businessIndustry',
-      type: 'Array<string>',
-      format: '',
-    },
-    {
-      name: 'mainProductsServicesSold',
-      baseName: 'mainProductsServicesSold',
-      type: 'Array<string>',
+      name: 'expectedTurnoverPerMonth',
+      baseName: 'expectedTurnoverPerMonth',
+      type: 'Amount',
       format: '',
     },
     {
@@ -64,7 +49,7 @@ export class CompanyGeneralDetails {
   ]
 
   static getAttributeTypeMap() {
-    return CompanyGeneralDetails.attributeTypeMap
+    return CompanyFinancialDetails.attributeTypeMap
   }
 
   public constructor() {}

@@ -1,4 +1,4 @@
-import { ImportRequest } from '../src/@types/openapi-internal/importRequest'
+import { ImportRequest } from '../src/@types/openapi-internal/ImportRequest'
 
 export const event = {
   resource: '/import',
@@ -13,9 +13,9 @@ export const event = {
   },
   stageVariables: null,
   body: JSON.stringify({
-    type: ImportRequest.TypeEnum.Transaction,
-    format: ImportRequest.FormatEnum.Custom,
-    // Copy the testing file to /tmp/flagright/s3/tarpon-import-tmp first
+    type: 'TRANSACTION',
+    format: 'flagright',
+    // Copy the testing file to /tmp/.flagright/s3/tarpon-import-tmp first
     s3Key: 'test.csv',
   } as ImportRequest),
 }
