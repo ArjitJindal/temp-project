@@ -10,8 +10,8 @@ export function getCredentialsFromEvent(
   >
 ): CredentialsOptions | undefined {
   if (
-    !process.env.NODE_ENV ||
-    process.env.NODE_ENV === 'dev' ||
+    !process.env.ENV ||
+    process.env.ENV === 'dev' ||
     !event.requestContext.authorizer
   ) {
     return undefined

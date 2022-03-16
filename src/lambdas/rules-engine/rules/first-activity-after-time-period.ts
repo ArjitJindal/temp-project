@@ -19,10 +19,9 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
   }
 
   public async computeRule() {
-    const transactionRepository = new TransactionRepository(
-      this.tenantId,
-      this.dynamoDb
-    )
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
 
     const lastSendingThinTransaction =
       this.transaction.senderUserId &&

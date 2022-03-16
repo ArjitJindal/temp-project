@@ -30,7 +30,9 @@ export async function verifyTransaction(
   dynamoDb: AWS.DynamoDB.DocumentClient
 ): Promise<TransactionMonitoringResult> {
   const ruleRepository = new RuleRepository(tenantId, dynamoDb)
-  const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
+  const transactionRepository = new TransactionRepository(tenantId, {
+    dynamoDb,
+  })
   const ruleInstances = await ruleRepository.getActiveRuleInstances()
   const ruleResults = await Promise.all(
     ruleInstances.map(async (ruleInstance) => {
@@ -111,10 +113,9 @@ export const transactionHandler = compose(
         const result = await verifyTransaction(transaction, tenantId, dynamoDb)
         return result
       } else if (event.httpMethod === 'GET' && transactionId) {
-        const transactionRepository = new TransactionRepository(
-          tenantId,
-          dynamoDb
-        )
+        const transactionRepository = new TransactionRepository(tenantId, {
+          dynamoDb,
+        })
         const result = await transactionRepository.getTransactionById(
           transactionId
         )

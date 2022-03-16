@@ -25,10 +25,9 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<Multip
   public async computeRule() {
     const { action, timePeriodDays, sendersCount } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
-    const transactionRepository = new TransactionRepository(
-      this.tenantId,
-      this.dynamoDb
-    )
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
 
     const afterTimestamp = dayjs().subtract(timePeriodDays, 'day').unix()
     let senderTransactions: ThinTransaction[] = []

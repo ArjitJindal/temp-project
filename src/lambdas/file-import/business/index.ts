@@ -1,4 +1,4 @@
-import { Business } from '../../../@types/openapi-public/business'
+import { Business } from '../../../@types/openapi-public/Business'
 import { ConverterInterface } from '../converter-interface'
 import { FlagrightBusinessConverter } from './flagright-converter'
 import { ShPaymentBusinessConverter } from './sh-payment-converter'

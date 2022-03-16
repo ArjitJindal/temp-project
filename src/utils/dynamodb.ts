@@ -10,7 +10,7 @@ export function getDynamoDbClient(
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ): AWS.DynamoDB.DocumentClient {
-  const isDevEnv = !process.env.NODE_ENV || process.env.NODE_ENV === 'dev'
+  const isDevEnv = !process.env.ENV || process.env.ENV === 'dev'
   return new AWS.DynamoDB.DocumentClient({
     credentials: isDevEnv
       ? new AWS.SharedIniFileCredentials()

@@ -95,10 +95,9 @@ export const createAndUploadTestData = async (
       profile: profileName,
     }),
   })
-  const transactionRepository = new TransactionRepository(
-    `fake-${tenantId}`,
-    dynamoDb
-  )
+  const transactionRepository = new TransactionRepository(`fake-${tenantId}`, {
+    dynamoDb,
+  })
 
   let transactionObject
   const nameOne = createNameEntity()

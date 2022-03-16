@@ -17,7 +17,7 @@ export function getS3Client(
     return AWSMock.S3()
   }
 
-  const isDevEnv = !process.env.NODE_ENV || process.env.NODE_ENV === 'dev'
+  const isDevEnv = !process.env.ENV || process.env.ENV === 'dev'
   return new AWS.S3({
     signatureVersion: 'v4',
     credentials: isDevEnv

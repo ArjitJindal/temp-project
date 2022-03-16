@@ -1,8 +1,19 @@
+import { ACHDetails } from './ACHDetails'
+import { Address } from './Address'
+import { CardDetails } from './CardDetails'
+import { ConsumerName } from './ConsumerName'
+import { DeviceData } from './DeviceData'
+import { IBANDetails } from './IBANDetails'
 import { ImportRequest } from './ImportRequest'
 import { ImportResponse } from './ImportResponse'
 import { ListImportRequest } from './ListImportRequest'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { RuleInstance } from './RuleInstance'
+import { Tag } from './Tag'
+import { Transaction } from './Transaction'
+import { TransactionAmountDetails } from './TransactionAmountDetails'
+import { TransactionsListResponse } from './TransactionsListResponse'
+import { UPIDetails } from './UPIDetails'
 
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
@@ -11,6 +22,27 @@ export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApideleteRuleInstancesRuleInstanceId
    */
   ruleInstanceId: string
+}
+
+export interface DefaultApiGetTransactionsListRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  limit: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  skip: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  beforeTimestamp: number
 }
 
 export interface DefaultApiPostApikeyRequest {

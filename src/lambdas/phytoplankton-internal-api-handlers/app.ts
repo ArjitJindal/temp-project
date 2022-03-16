@@ -9,6 +9,9 @@ import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 import { compose } from '../../core/middlewares/compose'
 import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
 import { jsonSerializer } from '../../core/middlewares/json-serializer'
+import { connectToDB } from '../../utils/docDBUtils'
+import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
+import { TransactionsListResponse } from '../../@types/openapi-internal/TransactionsListResponse'
 
 export const transactionsViewHandler = compose(
   httpErrorHandler(),
@@ -18,24 +21,15 @@ export const transactionsViewHandler = compose(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
-  ) => {
-    if (!event.queryStringParameters || !event.queryStringParameters.tenantId) {
-      return 'Bad request: No tenant ID provided'
-    }
-    const { tenantId } =
-      event.queryStringParameters as RuleInstanceQueryStringParameters
-    const pageSize = event.queryStringParameters.pageSize
-      ? parseInt(event.queryStringParameters.pageSize)
-      : 50
-    const dynamoDb = getDynamoDbClient(event)
-    const transactionRepository = new TransactionRepository(tenantId, dynamoDb)
-
-    if (event.httpMethod === 'GET') {
-      /*Implementation Pending*/
-      return 'success'
-    }
-
-    throw new Error('Unhandled request')
+  ): Promise<TransactionsListResponse> => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const params =
+      event.queryStringParameters as unknown as DefaultApiGetTransactionsListRequest
+    const client = await connectToDB()
+    const transactionRepository = new TransactionRepository(tenantId, {
+      mongoDb: client,
+    })
+    return transactionRepository.getTransactions(params)
   }
 )
 

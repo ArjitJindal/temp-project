@@ -17,6 +17,7 @@ const PathToLambda: any = {
   '/import/getPresignedUrl':
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
+  '/transactions': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {

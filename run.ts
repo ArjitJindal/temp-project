@@ -21,7 +21,7 @@ async function setUpMockS3() {
 }
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
-process.env['NODE_ENV'] = 'dev'
+process.env['ENV'] = 'dev'
 
 const optionDefinitions = [
   { name: 'action', type: String },

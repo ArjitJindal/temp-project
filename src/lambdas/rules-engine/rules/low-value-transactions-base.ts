@@ -43,10 +43,9 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
   }
 
   public async computeRule() {
-    const transactionRepository = new TransactionRepository(
-      this.tenantId,
-      this.dynamoDb
-    )
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
     const userId = this.getTransactionUserId()
     if (userId) {
       const lastNTransactionsToCheck = this.parameters.lowTransactionCount - 1

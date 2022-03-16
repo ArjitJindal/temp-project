@@ -139,6 +139,36 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ListImportRequest'
+  /transactions:
+    get:
+      summary: Transaction - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsListResponse'
+              examples: {}
+      operationId: get-transactions-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
 components:
   schemas:
     RuleInstance:
@@ -221,6 +251,20 @@ components:
           type: number
       required:
         - importedCount
+    TransactionsListResponse:
+      title: TransactionsListResponse
+      type: object
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Transaction
+      required:
+        - total
+        - data
   securitySchemes:
     Authorization:
       type: http

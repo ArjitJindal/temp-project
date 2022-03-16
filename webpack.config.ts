@@ -46,7 +46,7 @@ const config: Configuration = {
     extensions: ['.js', '.ts'],
   },
   target: 'node',
-  mode: process.env.NODE_ENV === 'dev' ? 'development' : 'production',
+  mode: process.env.ENV === 'prod' ? 'production' : 'development',
 }
 
 export default config

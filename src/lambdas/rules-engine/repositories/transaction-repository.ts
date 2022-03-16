@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import { MongoClient } from 'mongodb'
 import { TarponStackConstants } from '../../../../lib/constants'
 import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { PaymentDetails } from '../../../@types/tranasction/payment-type'
@@ -7,14 +8,44 @@ import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
 import { ExecutedRulesResult } from '../../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../../@types/openapi-public/FailedRulesResult'
 import { TransactionWithRulesResult } from '../../../@types/openapi-public/TransactionWithRulesResult'
+import { TRANSACIONS_COLLECTION } from '../../../utils/docDBUtils'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
+  mongoDb: MongoClient
   tenantId: string
 
-  constructor(tenantId: string, dynamoDb: AWS.DynamoDB.DocumentClient) {
-    this.dynamoDb = dynamoDb
+  constructor(
+    tenantId: string,
+    connections: {
+      dynamoDb?: AWS.DynamoDB.DocumentClient
+      mongoDb?: MongoClient
+    }
+  ) {
+    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+  }
+
+  public async getTransactions(
+    // TOOD: Add filtering and sorting
+    pagination: { limit: number; skip: number; beforeTimestamp: number }
+  ): Promise<{ total: number; data: Transaction[] }> {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<Transaction>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+    const query = {
+      timestamp: { $lte: pagination.beforeTimestamp },
+    }
+    const transactions = await collection
+      .find(query)
+      .sort({ timestamp: -1 })
+      .limit(pagination.limit)
+      .skip(pagination.skip)
+      .toArray()
+    const total = await collection.count(query)
+    return { total, data: transactions }
   }
 
   public async saveTransaction(

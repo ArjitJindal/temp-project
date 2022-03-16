@@ -6,6 +6,7 @@
   "scripts": {
     "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
     "build": "webpack",
+    "build:watch": "webpack --watch --progress",
     "synth": "cdk synth",
     "synth:dev": "cdk synth dev-tarpon --profile=AWSAdministratorAccess-911899431626",
     "synth:sandbox": "cdk synth sandbox-tarpon --profile=AWSAdministratorAccess-293986822825",
@@ -19,7 +20,6 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "watch": "tsc -w --preserveWatchOutput",
     "openapi:fetch": "bash fetch-openapi.sh",
     "openapi:build:dev": "ENV=dev ./build-openapi.ts",
     "openapi:build:sandbox": "ENV=sandbox ./build-openapi.ts",
