@@ -21,7 +21,7 @@ import styles from './style.less';
 
 type RangePickerValue = RangePickerProps<moment.Moment>['value'];
 //Range Picker value for Rules hit
-type RangePickerValue2 = RangePickerProps<moment.Moment>['value'];
+type RangePickerValueLineChartValue = RangePickerProps<moment.Moment>['value'];
 
 type AnalysisProps = {
   dashboardAndanalysis: AnalysisData;
@@ -33,9 +33,8 @@ const Analysis: FC<AnalysisProps> = () => {
     getTimeDistance('year'),
   );
   // Rules hit rangepicker
-  const [rangePickerValue2, setRangePickerValue2] = useState<RangePickerValue2>(
-    getTimeDistance('year'),
-  );
+  const [rangePickerValueLineChartValue, setRangePickerValueLineChartValue] =
+    useState<RangePickerValueLineChartValue>(getTimeDistance('year'));
 
   const { loading, data } = useRequest(fakeChartData);
 
@@ -43,16 +42,16 @@ const Analysis: FC<AnalysisProps> = () => {
     setRangePickerValue(getTimeDistance(type));
   };
   // Rules hit
-  const selectDate2 = (type: TimeType) => {
-    setRangePickerValue2(getTimeDistance(type));
+  const selectDateLineChartValue = (type: TimeType) => {
+    setRangePickerValueLineChartValue(getTimeDistance(type));
   };
 
   const handleRangePickerChange = (value: RangePickerValue) => {
     setRangePickerValue(value);
   };
   // Rules hit
-  const handleRangePickerChange2 = (value: RangePickerValue2) => {
-    setRangePickerValue2(value);
+  const handleRangePickerChangeLineChartValue = (value: RangePickerValueLineChartValue) => {
+    setRangePickerValueLineChartValue(value);
   };
 
   const isActive = (type: TimeType) => {
@@ -75,20 +74,20 @@ const Analysis: FC<AnalysisProps> = () => {
     return '';
   };
   // Rules hit
-  const isActive2 = (type: TimeType) => {
-    if (!rangePickerValue2) {
+  const isActiveLineChartValue = (type: TimeType) => {
+    if (!rangePickerValueLineChartValue) {
       return '';
     }
     const value = getTimeDistance(type);
     if (!value) {
       return '';
     }
-    if (!rangePickerValue2[0] || !rangePickerValue2[1]) {
+    if (!rangePickerValueLineChartValue[0] || !rangePickerValueLineChartValue[1]) {
       return '';
     }
     if (
-      rangePickerValue2[0].isSame(value[0] as moment.Moment, 'day') &&
-      rangePickerValue2[1].isSame(value[1] as moment.Moment, 'day')
+      rangePickerValueLineChartValue[0].isSame(value[0] as moment.Moment, 'day') &&
+      rangePickerValueLineChartValue[1].isSame(value[1] as moment.Moment, 'day')
     ) {
       return styles.currentDate;
     }
@@ -99,7 +98,6 @@ const Analysis: FC<AnalysisProps> = () => {
 
   const menu = (
     <Menu>
-      {/* Menu items written in chinese  */}
       <Menu.Item>Item 1</Menu.Item>
       <Menu.Item>Item 2</Menu.Item>
     </Menu>
@@ -139,13 +137,13 @@ const Analysis: FC<AnalysisProps> = () => {
         >
           <Col xl={12} lg={24} md={24} sm={24} xs={24}>
             <Suspense fallback={null}>
-              <LineCard
-                rangePickerValue={rangePickerValue2}
+              <LineCard //Line Card component
+                rangePickerValue={rangePickerValueLineChartValue}
                 salesData={data?.salesData || []}
-                isActive={isActive2}
-                handleRangePickerChange={handleRangePickerChange2}
+                isActive={isActiveLineChartValue}
+                handleRangePickerChange={handleRangePickerChangeLineChartValue}
                 loading={loading}
-                selectDate={selectDate2}
+                selectDate={selectDateLineChartValue}
               />
             </Suspense>
           </Col>
