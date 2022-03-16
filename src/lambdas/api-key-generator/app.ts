@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import {
   connectToDB,
-  DASHBOARD_COLLECTION,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'
@@ -69,7 +68,6 @@ export const createDocumentDBCollections = async (tenantId: string) => {
   try {
     await db.createCollection(TRANSACIONS_COLLECTION(tenantId))
     await db.createCollection(USERS_COLLECTION(tenantId))
-    await db.createCollection(DASHBOARD_COLLECTION(tenantId))
   } catch (e) {
     console.log(`Error in creating DocumentDB collections: ${e}`)
   }
