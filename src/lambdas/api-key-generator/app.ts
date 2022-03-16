@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import {
   connectToDB,
-  DASHBOARD_TIMESERIES_COLLECTION,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'

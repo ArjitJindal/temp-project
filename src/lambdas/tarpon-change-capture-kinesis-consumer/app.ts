@@ -2,7 +2,6 @@ import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { Db, MongoClient } from 'mongodb'
 import {
   connectToDB,
-  DASHBOARD_TIMESERIES_COLLECTION,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'
