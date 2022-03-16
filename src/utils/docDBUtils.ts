@@ -75,6 +75,6 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
-export const DASHBOARD_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-dashboard`
+export const DASHBOARD_TIMESERIES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-dashboard-timeseries`
 }

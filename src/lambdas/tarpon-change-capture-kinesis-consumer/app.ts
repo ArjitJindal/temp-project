@@ -2,7 +2,7 @@ import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { Db, MongoClient } from 'mongodb'
 import {
   connectToDB,
-  DASHBOARD_COLLECTION,
+  DASHBOARD_TIMESERIES_COLLECTION,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/docDBUtils'
@@ -40,7 +40,6 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
           TRANSACIONS_COLLECTION(tenantId)
         )
         await transactionsCollection.insertOne(transactionPrimaryItem)
-        await updateTransactionCountStats(transactionPrimaryItem, tenantId, db)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_PRIMARY_KEY_IDENTIFIER
@@ -57,47 +56,6 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
     console.error(err)
     return 'Internal error'
   }
-}
-
-const updateTransactionCountStats = async (
-  transactionPrimaryItem: any,
-  tenantId: string,
-  db: Db
-) => {
-  const executedRules = transactionPrimaryItem.executedRules
-  const dateStringFromTimeStamp = new Date(
-    transactionPrimaryItem.timestamp * 1000
-  )
-    .toISOString()
-    .substring(0, 10)
-
-  const dashboardCollection = db.collection(DASHBOARD_COLLECTION(tenantId))
-  await dashboardCollection.updateOne(
-    {
-      _id: `${dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS}-${dateStringFromTimeStamp}`,
-    },
-    {
-      $set: {
-        _id: `${dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS}-${dateStringFromTimeStamp}`,
-        date: `${dateStringFromTimeStamp}`,
-        type: dashboardMetricsTypes.TRANSACTION_COUNT_STATISTICS,
-        // TODO: Add rule hit stats once ready
-      },
-      $inc: {
-        transactionsCount: 1,
-        flaggedTransactionsCount: checkForTransactionStatus(
-          executedRules,
-          RuleActionEnum.FLAG
-        ),
-        blockedTransactionsCount: checkForTransactionStatus(
-          executedRules,
-          RuleActionEnum.BLOCK
-        ),
-      },
-      checkForTransactionStatus,
-    },
-    { upsert: true }
-  )
 }
 
 const checkForTransactionStatus = (executedRules: any, action: string) => {
