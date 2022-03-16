@@ -14,7 +14,7 @@ export default {
   'menu.lists.create-list': 'Create List',
   'menu.lists.created-lists': 'Created Lists',
   'menu.transactions': 'Transactions',
-  'menu.transactions.transactions-list': 'Transactions List',
+  'menu.transactions.transactions-list': 'Case Management',
   'menu.transactions.transactions-files': 'Transactions Files',
   'menu.users': 'Users',
   'menu.users.users-list': 'Users List',

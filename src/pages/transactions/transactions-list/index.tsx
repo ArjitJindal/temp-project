@@ -1,26 +1,27 @@
-import { Input, Drawer, Tag } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
-import ProDescriptions from '@ant-design/pro-descriptions';
-import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
-import { rule } from './service';
-import type { TableListItem, TableListPagination } from './data.d';
-import { ImportRequestTypeEnum } from '@/apis';
+import { Drawer } from 'antd';
+import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
+import { TransactionDetails } from './components/TransactionDetails';
+import { ImportRequestTypeEnum, TransactionWithRulesResult, Tag as TransactionTag } from '@/apis';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
+import { useApi } from '@/api';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TableListItem>();
+  const [currentRow, setCurrentRow] = useState<TransactionWithRulesResult>();
+  const api = useApi();
 
-  const columns: ProColumns<TableListItem>[] = [
+  const columns: ProColumns<TransactionWithRulesResult>[] = [
     {
-      title: 'Profile Identifier',
-      dataIndex: 'name',
-      tip: 'Identifier of the profile',
+      title: 'Transaction ID',
+      dataIndex: 'transactionId',
+      width: 130,
+      copyable: true,
+      ellipsis: true,
       render: (dom, entity) => {
         return (
           <a
@@ -35,112 +36,101 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: 'Transaction ID',
-      dataIndex: 'transactionId',
-      valueType: 'textarea',
+      title: 'Timestamp',
+      width: 130,
+      dataIndex: 'timestamp',
+      valueType: 'dateTime',
     },
     {
-      title: 'Payment method',
-      dataIndex: 'paymentMethod',
-      valueType: 'textarea',
+      title: 'Sender User ID',
+      dataIndex: 'senderUserId',
+      hideInTable: true,
     },
     {
-      title: 'Payout method',
-      dataIndex: 'payoutMethod',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Rules hit',
-      dataIndex: 'rulesHit',
-      sorter: true,
-      width: 80,
-      hideInForm: true,
-      renderText: (val: number) => `${val} Rule(s)`,
-    },
-    {
-      title: 'Origin Country',
-      dataIndex: 'originCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
-
-    {
-      title: 'Destination Country',
-      dataIndex: 'destinationCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Sending Currency',
-      dataIndex: 'sendingCurrency',
-      valueType: 'textarea',
-      width: 80,
-    },
-
-    {
-      title: 'Receiving Currency',
-      dataIndex: 'receivingCurrency',
-      valueType: 'textarea',
-      width: 80,
-    },
-    {
-      title: 'Tags',
-      dataIndex: 'tags',
-      hideInForm: true,
-      render: (tags: any) => {
-        return (
-          <span>
-            <Tag color={'cyan'}>
-              {tags?.map((tag: any) => {
-                const key = Object.keys(tag)[0];
-                return (
-                  <span>
-                    {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
-                  </span>
-                );
-              })}
-            </Tag>
-          </span>
-        );
+      title: 'Sender Method',
+      render: (dom, entity) => {
+        return entity.senderPaymentDetails?.method;
       },
     },
     {
-      title: 'Transaction time',
+      title: 'Sending Amount',
+      render: (dom, entity) => {
+        return entity.sendingAmountDetails?.transactionAmount;
+      },
+    },
+    {
+      title: 'Sending Currency',
+      render: (dom, entity) => {
+        return entity.sendingAmountDetails?.transactionCurrency;
+      },
+    },
+    {
+      title: 'Sending Country',
+      render: (dom, entity) => {
+        return entity.sendingAmountDetails?.country;
+      },
+    },
+    {
+      title: 'Receiver User ID',
+      dataIndex: 'receiverUserId',
+      hideInTable: true,
+    },
+    {
+      title: 'Receiver Method',
+      render: (dom, entity) => {
+        return entity.receiverPaymentDetails?.method;
+      },
+    },
+    {
+      title: 'Receiving Amount',
+      render: (dom, entity) => {
+        return entity.receivingAmountDetails?.transactionAmount;
+      },
+    },
+    {
+      title: 'Receiving Currency',
+      render: (dom, entity) => {
+        return entity.receivingAmountDetails?.transactionCurrency;
+      },
+    },
+    {
+      title: 'Receiving Country',
+      render: (dom, entity) => {
+        return entity.receivingAmountDetails?.country;
+      },
+    },
+    {
+      title: 'Rules hit',
       sorter: true,
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
+      width: 80,
+      render: (dom, entity) => {
+        return `${entity.executedRules.filter((rule) => rule.ruleHit).length} Rule(s)`;
       },
     },
   ];
 
   return (
     <PageContainer>
-      <ProTable<TableListItem, TableListPagination>
+      <ProTable<TransactionWithRulesResult>
         headerTitle="Transactions"
         actionRef={actionRef}
-        rowKey="key"
+        rowKey="transactionId"
         search={{
           labelWidth: 120,
         }}
-        expandable={{ expandedRowRender: expandedRulesRowRender }}
-        request={rule}
+        expandable={{ expandedRowRender: ExpandedRulesRowRender }}
+        request={async (params) => {
+          const response = await api.getTransactionsList({
+            limit: params.pageSize!,
+            skip: (params.current! - 1) * params.pageSize!,
+            beforeTimestamp: Date.now(),
+          });
+          return {
+            data: response.data,
+            success: true,
+            total: response.total,
+          };
+        }}
         columns={columns}
         toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.Transaction} />]}
       />
@@ -153,19 +143,7 @@ const TableList: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.name && (
-          <ProDescriptions<TableListItem>
-            column={2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<TableListItem>[]}
-          />
-        )}
+        {currentRow?.transactionId && <TransactionDetails transaction={currentRow} />}
       </Drawer>
     </PageContainer>
   );

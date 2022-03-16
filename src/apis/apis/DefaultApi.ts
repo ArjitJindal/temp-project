@@ -29,10 +29,19 @@ import {
   RuleInstance,
   RuleInstanceFromJSON,
   RuleInstanceToJSON,
+  TransactionsListResponse,
+  TransactionsListResponseFromJSON,
+  TransactionsListResponseToJSON,
 } from '../models';
 
 export interface DeleteRuleInstancesRuleInstanceIdRequest {
   ruleInstanceId: string;
+}
+
+export interface GetTransactionsListRequest {
+  limit: number;
+  skip: number;
+  beforeTimestamp: number;
 }
 
 export interface PostApikeyRequest {
@@ -106,6 +115,79 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<void> {
     await this.deleteRuleInstancesRuleInstanceIdRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Transaction - List
+   */
+  async getTransactionsListRaw(
+    requestParameters: GetTransactionsListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<TransactionsListResponse>> {
+    if (requestParameters.limit === null || requestParameters.limit === undefined) {
+      throw new runtime.RequiredError(
+        'limit',
+        'Required parameter requestParameters.limit was null or undefined when calling getTransactionsList.',
+      );
+    }
+
+    if (requestParameters.skip === null || requestParameters.skip === undefined) {
+      throw new runtime.RequiredError(
+        'skip',
+        'Required parameter requestParameters.skip was null or undefined when calling getTransactionsList.',
+      );
+    }
+
+    if (
+      requestParameters.beforeTimestamp === null ||
+      requestParameters.beforeTimestamp === undefined
+    ) {
+      throw new runtime.RequiredError(
+        'beforeTimestamp',
+        'Required parameter requestParameters.beforeTimestamp was null or undefined when calling getTransactionsList.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.skip !== undefined) {
+      queryParameters['skip'] = requestParameters.skip;
+    }
+
+    if (requestParameters.beforeTimestamp !== undefined) {
+      queryParameters['beforeTimestamp'] = requestParameters.beforeTimestamp;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/transactions`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      TransactionsListResponseFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * Transaction - List
+   */
+  async getTransactionsList(
+    requestParameters: GetTransactionsListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<TransactionsListResponse> {
+    const response = await this.getTransactionsListRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**

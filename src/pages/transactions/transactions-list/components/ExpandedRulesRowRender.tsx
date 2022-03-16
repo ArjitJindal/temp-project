@@ -1,50 +1,39 @@
 import { Badge, Table } from 'antd';
+import { TransactionWithRulesResult } from '@/apis';
 
-export const expandedRulesRowRender = () => {
-  const columns = [
-    { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId' },
-    { title: 'Rule Name', dataIndex: 'ruleName', key: 'ruleName', width: 300 },
-    { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
-    {
-      title: 'Action',
-      key: 'action',
-      width: 180,
-      render: () => (
-        <span>
-          <Badge status="error" />
-          Flagged
-        </span>
-      ),
-    },
-  ];
-
-  const rulesData = [
-    {
-      ruleName: 'IP Address from a Sanctioned Country.',
-      ruleDescription: "If a user's IP Address is in a Sanctioned Jurisdiction - perform action.",
-    },
-    {
-      ruleName: 'Same phone number for X number of users.',
-      ruleDescription:
-        'If greater than X number of users register with the same phone number - perform action.',
-    },
-    {
-      ruleName:
-        'Velocity - Unique IBAN: Same user paying from >= X different IBANs in time T minute(s).',
-      ruleDescription:
-        'If a user makes more than transactions in a predefined timeframe T minute(s) using X unique IBANs - perform action',
-    },
-  ];
-
-  const data = [];
-  for (let i = 0; i < 3; ++i) {
-    data.push({
-      key: i,
-      ruleId: `R-${i + 1}-2`,
-      ruleName: rulesData[i].ruleName,
-      ruleDescription: rulesData[i].ruleDescription,
-      upgradeNum: 'Upgraded: 56',
-    });
+function getActionBadgeStatus(ruleAction: string) {
+  if (ruleAction === 'ALLOW') {
+    return 'success';
+  } else if (ruleAction === 'FLAG') {
+    return 'warning';
+  } else if (ruleAction === 'BLOCK') {
+    return 'error';
+  } else {
+    return 'error';
   }
-  return <Table columns={columns} dataSource={data} pagination={false} />;
+}
+
+export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) => {
+  return (
+    <Table
+      columns={[
+        { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId' },
+        { title: 'Rule Name', dataIndex: 'ruleName', key: 'ruleName', width: 300 },
+        { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
+        {
+          title: 'Action',
+          key: 'ruleAction',
+          width: 180,
+          render: (v, entity) => (
+            <span>
+              <Badge status={getActionBadgeStatus(entity.ruleAction)} />
+              {entity.ruleAction}
+            </span>
+          ),
+        },
+      ]}
+      dataSource={transaction.executedRules}
+      pagination={false}
+    />
+  );
 };
