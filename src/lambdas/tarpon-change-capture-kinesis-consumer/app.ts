@@ -8,7 +8,6 @@ import {
 import { unMarshallDynamoDBStream } from '../../utils/dynamodbStream'
 import { TarponStackConstants } from '../../../lib/constants'
 import {
-  dashboardMetricsTypes,
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
@@ -55,15 +54,6 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
     console.error(err)
     return 'Internal error'
   }
-}
-
-const checkForTransactionStatus = (executedRules: any, action: string) => {
-  for (let i = 0; i < executedRules.length; i++) {
-    if (executedRules[i].action === action && executedRules[i].ruleHit) {
-      return 1
-    }
-  }
-  return 0
 }
 
 const handlePrimaryItem = (message: string) => {
