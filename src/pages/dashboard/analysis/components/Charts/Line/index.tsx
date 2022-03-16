@@ -55,7 +55,7 @@ const Page: React.FC = () => {
   ];
 
   //Rules hit categories :
-  const ruleshit = [
+  const rulesHit = [
     'Proof of funds',
     'High Risk Country',
     'TC40 Hit',
@@ -78,7 +78,7 @@ const Page: React.FC = () => {
         data.push({
           year: months[i],
           value: getRandomInt(1, max), //Random to generate data points
-          category: ruleshit[j],
+          category: rulesHit[j],
         });
       }
     }

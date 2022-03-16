@@ -11,7 +11,7 @@ export type TimeType = 'today' | 'week' | 'month' | 'year';
 const { RangePicker } = DatePicker;
 const { TabPane } = Tabs;
 
-const SalesCard = ({
+const LinesCard = ({
   rangePickerValue,
   isActive,
   handleRangePickerChange,
@@ -67,4 +67,4 @@ const SalesCard = ({
   </Card>
 );
 
-export default SalesCard;
+export default LinesCard;
