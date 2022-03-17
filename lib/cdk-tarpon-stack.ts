@@ -311,6 +311,40 @@ export class CdkTarponStack extends cdk.Stack {
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
 
+    /* business users view */
+    const businessUsersViewFunction = this.createFunction(
+      TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+      'app.businessUsersViewHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
+          DB_PORT: '27017',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        },
+      }
+    )
+
+    /* business users view */
+    const consumerUsersViewFunction = this.createFunction(
+      TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+      'app.consumerUsersViewHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
+          DB_PORT: '27017',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        },
+      }
+    )
+
     /* User */
     const userFunction = this.createFunction(
       TarponStackConstants.USER_FUNCTION_NAME,

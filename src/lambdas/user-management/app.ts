@@ -15,7 +15,9 @@ export const userHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
-    const userRepository = new UserRepository(tenantId, dynamoDb)
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb: dynamoDb,
+    })
     const userId = event.pathParameters?.userId
 
     if (event.path.includes('business')) {

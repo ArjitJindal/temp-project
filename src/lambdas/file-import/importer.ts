@@ -80,7 +80,9 @@ export class Importer {
   }
 
   private async importConsumerUser(user: User): Promise<void> {
-    const userRepository = new UserRepository(this.tenantId, this.dynamoDb)
+    const userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
     const userResult = await userRepository.createConsumerUser(user)
     console.debug(`Imported consumer user (id=${userResult.userId})`)
   }
@@ -101,7 +103,9 @@ export class Importer {
   }
 
   private async importBusinessUser(user: Business): Promise<void> {
-    const userRepository = new UserRepository(this.tenantId, this.dynamoDb)
+    const userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
     const userResult = await userRepository.createBusinessUser(user)
     console.debug(`Imported business user (id=${userResult.userId})`)
   }

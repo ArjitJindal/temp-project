@@ -54,6 +54,14 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
       require('./events/view-transactions').event
     ),
+  'view-business-users': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').businessUsersViewHandler(
+      require('./events/view-business-users').event
+    ),
+  'view-consumer-users': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').consumerUsersViewHandler(
+      require('./events/view-consumer-users').event
+    ),
   'verify-transaction': () =>
     require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
