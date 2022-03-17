@@ -1,5 +1,5 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { Db, MongoClient } from 'mongodb'
+import { MongoClient } from 'mongodb'
 import {
   connectToDB,
   TRANSACIONS_COLLECTION,
@@ -11,7 +11,6 @@ import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
-import { RuleActionEnum } from '../../@types/rule/rule-instance'
 
 let client: MongoClient
 
