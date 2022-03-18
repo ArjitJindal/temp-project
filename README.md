@@ -72,7 +72,7 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 
 0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
 1. Run `npm run openapi:fetch`
-1. Run `npm run openapi:build`
+1. Run `npm run openapi:build:dev`
 
 ## Testing Functions Locally
 
