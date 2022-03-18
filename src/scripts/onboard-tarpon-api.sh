@@ -13,14 +13,14 @@ then
 fi
 
 if [ "$env" == "sandbox" ]; then
-    apiPrefix=""$apiPrefix""
-    apiId=5ndo2u1wra
+    apiPrefix="sandbox."
+    apiId=itkfqhhxn5
+elif [ "$env" == "dev" ]; then
+    apiPrefix="dev."
+    apiId=kdlntrvdyi
 elif [ "$env" == "prod" ]; then
-    apiPrefix=""$apiPrefix""
-    apiId=igt4gjot0j
-else
     apiPrefix=""
-    apiId=7t1r57g9h3
+    apiId=igt4gjot0j
 fi
 
 tenantId=`node -e "console.log(require('nanoid').customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10)())"`
