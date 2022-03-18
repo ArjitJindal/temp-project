@@ -520,6 +520,7 @@ components:
     TransactionsListResponse:
       title: TransactionsListResponse
       type: object
+      description: ''
       properties:
         total:
           type: number
@@ -527,7 +528,7 @@ components:
           type: array
           items:
             $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Transaction
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
       required:
         - total
         - data

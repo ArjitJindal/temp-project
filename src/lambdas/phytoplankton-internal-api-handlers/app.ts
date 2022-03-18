@@ -6,25 +6,24 @@ import { RuleInstanceQueryStringParameters } from '../rules-engine/app'
 import { getDynamoDbClient } from '../../utils/dynamodb'
 import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 import { RuleRepository } from '../rules-engine/repositories/rule-repository'
-import { compose } from '../../core/middlewares/compose'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
 import { connectToDB } from '../../utils/docDBUtils'
-import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { TransactionsListResponse } from '../../@types/openapi-internal/TransactionsListResponse'
+import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
 
-export const transactionsViewHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const transactionsViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ): Promise<TransactionsListResponse> => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const params =
-      event.queryStringParameters as unknown as DefaultApiGetTransactionsListRequest
+    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
+    const params: DefaultApiGetTransactionsListRequest = {
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      beforeTimestamp: parseInt(beforeTimestamp),
+    }
     const client = await connectToDB()
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
@@ -33,10 +32,7 @@ export const transactionsViewHandler = compose(
   }
 )
 
-export const ruleInstanceHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const ruleInstanceHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>

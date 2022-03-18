@@ -46,7 +46,7 @@ export const DynamoDbKeys = {
     timestamp?: number
   ) => {
     switch (paymentDetails.method) {
-      case 'BANK': {
+      case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         return {
           PartitionKeyID: `${tenantId}#transaction#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,

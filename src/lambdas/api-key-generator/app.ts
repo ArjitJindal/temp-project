@@ -12,9 +12,7 @@ import {
 } from '../../utils/docDBUtils'
 import { TarponStackConstants } from '../../../lib/constants'
 
-import { compose } from '../../core/middlewares/compose'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 
 let client: MongoClient
 
@@ -72,10 +70,7 @@ export const createDocumentDBCollections = async (tenantId: string) => {
     console.log(`Error in creating DocumentDB collections: ${e}`)
   }
 }
-export const apiKeyGeneratorHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const apiKeyGeneratorHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>

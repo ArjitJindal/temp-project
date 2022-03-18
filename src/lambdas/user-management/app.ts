@@ -4,15 +4,10 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { compose } from '../../core/middlewares/compose'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { UserRepository } from './repositories/user-repository'
 
-export const userHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const userHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>

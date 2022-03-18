@@ -1,7 +1,7 @@
 import { Environment } from 'aws-cdk-lib'
 
 export type Config = {
-  stage: 'dev' | 'sandbox' | 'prod'
+  stage: 'local' | 'dev' | 'sandbox' | 'prod'
   env: Environment
   resource: {
     DYNAMODB: {

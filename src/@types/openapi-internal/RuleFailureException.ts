@@ -10,10 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { TransactionWithRulesResult } from './TransactionWithRulesResult'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionWithRulesResult>
+export class RuleFailureException {
+  /**
+   * Unique rule identifier
+   */
+  'exceptionName': string
+  /**
+   * Name of the rule
+   */
+  'exceptionDescription': string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +29,21 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
-      type: 'number',
+      name: 'exceptionName',
+      baseName: 'exceptionName',
+      type: 'string',
       format: '',
     },
     {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionWithRulesResult>',
+      name: 'exceptionDescription',
+      baseName: 'exceptionDescription',
+      type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return RuleFailureException.attributeTypeMap
   }
 
   public constructor() {}

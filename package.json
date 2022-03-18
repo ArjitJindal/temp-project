@@ -8,6 +8,7 @@
     "build": "webpack",
     "build:watch": "webpack --watch --progress",
     "synth": "cdk synth",
+    "synth:local": "cdk synth local-tarpon",
     "synth:dev": "cdk synth dev-tarpon --profile=AWSAdministratorAccess-911899431626",
     "synth:sandbox": "cdk synth sandbox-tarpon --profile=AWSAdministratorAccess-293986822825",
     "synth:prod": "cdk synth prod-tarpon --profile=AWSAdministratorAccess-870721492449",
@@ -24,10 +25,11 @@
     "openapi:build:dev": "ENV=dev ./build-openapi.ts",
     "openapi:build:sandbox": "ENV=sandbox ./build-openapi.ts",
     "openapi:build:prod": "ENV=prod ./build-openapi.ts",
-    "start-local-api": "sam local start-api -t cdk.out/dev-tarpon.template.json --debug",
+    "start-local-api": "sam local start-api -t cdk.out/local-tarpon.template.json",
     "recreate-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table && aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1",
-    "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb"
+    "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
+    "start-local-mongodb": "docker run -p 27017:27017 mongo"
   },
   "repository": {
     "type": "git",

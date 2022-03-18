@@ -12,7 +12,10 @@ export const httpErrorHandler =
           body: JSON.stringify({
             error: error.name,
             message: error.message,
-            stack: process.env.ENV === 'dev' ? error.stack : undefined,
+            stack:
+              process.env.ENV === 'local' || process.env.ENV === 'dev'
+                ? error.stack
+                : undefined,
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -27,7 +30,7 @@ export const httpErrorHandler =
           error: 'Internal server error',
           message: (error as createError.HttpError)?.message,
           stack:
-            process.env.ENV === 'dev'
+            process.env.ENV === 'local' || process.env.ENV === 'dev'
               ? (error as createError.HttpError)?.stack
               : undefined,
         }),

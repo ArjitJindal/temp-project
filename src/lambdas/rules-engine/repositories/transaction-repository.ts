@@ -7,7 +7,7 @@ import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
 import { ExecutedRulesResult } from '../../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../../@types/openapi-public/FailedRulesResult'
-import { TransactionWithRulesResult } from '../../../@types/openapi-public/TransactionWithRulesResult'
+import { TransactionWithRulesResult } from '../../../@types/openapi-internal/TransactionWithRulesResult'
 import { TRANSACIONS_COLLECTION } from '../../../utils/docDBUtils'
 
 export class TransactionRepository {
@@ -30,9 +30,9 @@ export class TransactionRepository {
   public async getTransactions(
     // TOOD: Add filtering and sorting
     pagination: { limit: number; skip: number; beforeTimestamp: number }
-  ): Promise<{ total: number; data: Transaction[] }> {
+  ): Promise<{ total: number; data: TransactionWithRulesResult[] }> {
     const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
-    const collection = db.collection<Transaction>(
+    const collection = db.collection<TransactionWithRulesResult>(
       TRANSACIONS_COLLECTION(this.tenantId)
     )
     const query = {

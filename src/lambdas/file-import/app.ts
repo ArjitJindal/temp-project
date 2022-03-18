@@ -7,13 +7,11 @@ import {
 import * as createError from 'http-errors'
 import { getDynamoDbClient } from '../../utils/dynamodb'
 import { getS3Client } from '../../utils/s3'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
 import { PresignedUrlResponse } from '../../@types/openapi-internal/PresignedUrlResponse'
-import { compose } from '../../core/middlewares/compose'
 import { ImportResponse } from '../../@types/openapi-internal/ImportResponse'
 import { ImportRequest } from '../../@types/openapi-internal/ImportRequest'
 import { JWTAuthorizerResult } from '../jwt-authorizer/app'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { Importer } from './importer'
 
 export type FileImportConfig = {
@@ -21,10 +19,7 @@ export type FileImportConfig = {
   IMPORT_TMP_BUCKET: string
 }
 
-export const fileImportHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const fileImportHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -69,10 +64,7 @@ export type GetPresignedUrlConfig = {
   IMPORT_TMP_BUCKET: string
 }
 
-export const getPresignedUrlHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const getPresignedUrlHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>

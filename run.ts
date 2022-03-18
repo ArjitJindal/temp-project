@@ -21,7 +21,8 @@ async function setUpMockS3() {
 }
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
-process.env['ENV'] = 'dev'
+process.env['ENV'] = 'local'
+process.env['MONGO_URI'] = 'mongodb://localhost:27017'
 
 const optionDefinitions = [
   { name: 'action', type: String },

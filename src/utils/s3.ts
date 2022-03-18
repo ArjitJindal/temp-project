@@ -17,11 +17,11 @@ export function getS3Client(
     return AWSMock.S3()
   }
 
-  const isDevEnv = !process.env.ENV || process.env.ENV === 'dev'
   return new AWS.S3({
     signatureVersion: 'v4',
-    credentials: isDevEnv
-      ? new AWS.SharedIniFileCredentials()
-      : getCredentialsFromEvent(event),
+    credentials:
+      process.env.ENV === 'local'
+        ? new AWS.SharedIniFileCredentials()
+        : getCredentialsFromEvent(event),
   })
 }

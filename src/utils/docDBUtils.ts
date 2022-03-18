@@ -19,8 +19,10 @@ export async function connectToDB() {
   if (cacheClient) {
     return cacheClient
   }
-  if (process.env.ENV === 'dev') {
-    return await MongoClient.connect('mongodb://localhost:27017')
+  if (process.env.ENV === 'local') {
+    return await MongoClient.connect(
+      process.env.MONGO_URI || 'mongodb://host.docker.internal:27017'
+    )
   }
 
   const credentials = await getCredentials()

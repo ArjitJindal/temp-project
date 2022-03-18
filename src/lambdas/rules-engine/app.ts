@@ -7,11 +7,9 @@ import { Transaction } from '../../@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '../../@types/openapi-public/TransactionMonitoringResult'
 import { getDynamoDbClient } from '../../utils/dynamodb'
 import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
-import { compose } from '../../core/middlewares/compose'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
 import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../@types/openapi-public/FailedRulesResult'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { Aggregators } from './aggregator'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
@@ -94,10 +92,7 @@ export async function verifyTransaction(
   }
 }
 
-export const transactionHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const transactionHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>

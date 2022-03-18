@@ -5,15 +5,10 @@ import {
 } from 'aws-lambda'
 import { parse } from '@fast-csv/parse'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { compose } from '../../core/middlewares/compose'
-import { httpErrorHandler } from '../../core/middlewares/http-error-handler'
-import { jsonSerializer } from '../../core/middlewares/json-serializer'
+import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { ListRepository } from './repositories/list-repository'
 
-export const listImporterHandler = compose(
-  httpErrorHandler(),
-  jsonSerializer()
-)(
+export const listImporterHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
