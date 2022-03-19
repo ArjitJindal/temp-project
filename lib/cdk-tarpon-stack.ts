@@ -345,6 +345,23 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    /* dashboard stats */
+    const dashboardStatsFunction = this.createFunction(
+      TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+      'app.dashboardStatsHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      {
+        securityGroups: [docDbSg],
+        vpc: docDbVpc,
+        environment: {
+          DB_HOST: docDbCluster.clusterEndpoint.hostname,
+          DB_PORT: '27017',
+          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        },
+      }
+    )
+
     /* User */
     const userFunction = this.createFunction(
       TarponStackConstants.USER_FUNCTION_NAME,

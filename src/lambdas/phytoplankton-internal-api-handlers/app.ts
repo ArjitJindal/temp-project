@@ -38,6 +38,16 @@ export const transactionsViewHandler = lambdaApi()(
   }
 )
 
+export const dashboardStatsHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    console.log('To be implemented')
+  }
+)
+
 export const businessUsersViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
