@@ -195,21 +195,23 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Functions
      */
 
+    const docDbFunctionProps = {
+      securityGroups: [docDbSg],
+      vpc: docDbVpc,
+      environment: {
+        DB_HOST: docDbCluster.clusterEndpoint.hostname,
+        DB_PORT: '27017',
+        SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+      },
+    }
+
     /* API Key Generator */
     const apiKeyGeneratorFunction = this.createFunction(
       TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
       'app.apiKeyGeneratorHandler',
       'dist/api-key-generator',
       undefined,
-      {
-        securityGroups: [docDbSg],
-        vpc: docDbVpc,
-        environment: {
-          DB_HOST: docDbCluster.clusterEndpoint.hostname,
-          DB_PORT: '27017',
-          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
-        },
-      }
+      docDbFunctionProps
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
@@ -307,9 +309,27 @@ export class CdkTarponStack extends cdk.Stack {
     const transactionsViewFunction = this.createFunction(
       TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
       'app.transactionsViewHandler',
-      'dist/phytoplankton-internal-api-handlers/'
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+    transactionsViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
 
     /* User */
     const userFunction = this.createFunction(
@@ -335,15 +355,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
       undefined,
-      {
-        securityGroups: [docDbSg],
-        vpc: docDbVpc,
-        environment: {
-          DB_HOST: docDbCluster.clusterEndpoint.hostname,
-          DB_PORT: '27017',
-          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
-        },
-      }
+      docDbFunctionProps
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
