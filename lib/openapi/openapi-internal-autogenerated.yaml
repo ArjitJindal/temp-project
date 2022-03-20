@@ -527,11 +527,1456 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+            $ref: '#/components/schemas/TransactionWithRulesResult'
       required:
         - total
         - data
+    Address:
+      title: Address
+      required:
+        - addressLines
+        - postcode
+        - city
+        - country
+      type: object
+      properties:
+        addressLines:
+          type: array
+          items: {}
+          description: Address lines of the user's residence address
+        postcode:
+          minLength: 1
+          type: string
+          description: Post code of the user's residence address
+        city:
+          minLength: 1
+          type: string
+          description: City of the user's residence address
+        state:
+          minLength: 1
+          type: string
+          description: State of the user's residence address
+        country:
+          minLength: 1
+          type: string
+          description: User's country of residence
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+      description: Model for standardized address
+      example:
+        addressLines:
+          - Klara-Franke Str 20
+        postcode: '10557'
+        city: Berlin
+        state: Berlin
+        country: Germany
+        tags:
+          - key: customKey
+            value: customValue
+    User:
+      title: User
+      type: object
+      description: Model for User details
+      example:
+        createdTimestamp: 1641654664
+        userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        userDetails:
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          dateOfBirth: 0
+          age: 0
+          countryOfResidence: US
+          countryOfNationality: DE
+        legalDocuments:
+          - documentType: passport
+            documentNumber: Z9431P
+            documentIssuedDate: 1639939034
+            documentExpirationDate: 1839939034
+            documentIssuedCountry: DE
+            tags:
+              - key: customerType
+                value: wallet
+        contactDetails:
+          emailIds:
+            - baran@flagright.com
+          contactNumbers:
+            - '+37112345432'
+          websites:
+            - flagright.com
+          addresses:
+            - addressLines:
+                - Klara-Franke Str 20
+              postcode: '10557'
+              city: Berlin
+              state: Berlin
+              country: Germany
+              tags:
+                - key: customKey
+                  value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          description: Unique user ID
+        userDetails:
+          $ref: '#/components/schemas/UserDetails'
+        createdTimestamp:
+          type: number
+        legalDocuments:
+          type: array
+          description: User's legal identity documents - See Document Model for details
+          items:
+            $ref: '#/components/schemas/LegalDocument'
+        contactDetails:
+          $ref: '#/components/schemas/ContactDetails'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+      required:
+        - userId
+        - userDetails
+        - createdTimestamp
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          userDetails:
+            name:
+              firstName: Baran
+              middleName: Realblood
+              lastName: Ozkan
+            dateOfBirth: 636285831
+            age: 32
+            countryOfResidence: US
+            countryOfNationality: DE
+          legalDocuments:
+            - documentType: passport
+              documentNumber: Z9431P
+              documentIssuedDate: 1639939034
+              documentExpirationDate: 1839939034
+              documentIssuedCountry: DE
+              tags:
+                - key: customerType
+                  value: wallet
+          contactDetails:
+            emailIds:
+              - baran@flagright.com
+            contactNumbers:
+              - '+37112345432'
+            websites:
+              - flagright.com
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+          tags:
+            - key: customKey
+              value: customValue
+    Person:
+      title: Person
+      required:
+        - generalDetails
+      type: object
+      properties:
+        generalDetails:
+          $ref: '#/components/schemas/UserDetails'
+        legalDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/LegalDocument'
+          description: User's legal identity documents - See Document Model for details
+        contactDetails:
+          $ref: '#/components/schemas/ContactDetails'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+      description: >-
+        Model for a generic individual - different from User model by not having
+        userId field
+      example:
+        generalDetails:
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          dateOfBirth: 661883439
+          age: 31
+          countryOfResidence: US
+          countryOfNationality: DE
+        legalDocuments:
+          - documentType: passport
+            documentNumber: Z9431P
+            documentIssuedDate: 1639939034
+            documentExpirationDate: 1839939034
+            documentIssuedCountry: DE
+            tags:
+              - key: customerType
+                value: wallet
+        contactDetails:
+          emailIds:
+            - baran@flagright.com
+          contactNumbers:
+            - +371 123132
+          websites:
+            - flagright.com
+          addresses:
+            - addressLines:
+                - Klara-Franke Str 20
+              postcode: '10557'
+              city: Berlin
+              state: Berlin
+              country: Germany
+              tags:
+                - key: customKey
+                  value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+    LegalDocument:
+      title: LegalDocument
+      required:
+        - documentType
+        - documentNumber
+        - documentIssuedCountry
+      type: object
+      properties:
+        documentType:
+          minLength: 1
+          type: string
+          description: User's identity document type such as passport, national ID etc.
+        documentNumber:
+          minLength: 1
+          type: string
+          description: User's unique identity document number such as passport number
+        documentIssuedDate:
+          type: number
+          description: User's identity document issuance date
+        documentExpirationDate:
+          type: number
+          description: User's identity document expiration date
+        documentIssuedCountry:
+          type: string
+          description: User's identity document issuance country
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+        nameOnDocument:
+          $ref: '#/components/schemas/ConsumerName'
+      description: >-
+        LegalDocument model generalizes User's identity document type (ex:
+        Passport)
+      example:
+        documentType: passport
+        documentNumber: Z9431P
+        documentIssuedDate: 1639939034
+        documentExpirationDate: 1839939034
+        documentIssuedCountry: DE
+        tags:
+          - key: customerType
+            value: wallet
+    Tag:
+      title: Tag
+      required:
+        - key
+        - value
+      type: object
+      properties:
+        key:
+          minLength: 1
+          type: string
+          description: Key value when you are creating a custom variable
+        value:
+          minLength: 1
+          type: string
+          description: Value for a given key when you are creating a custom variable
+      description: >-
+        Generic key-value pair model to append a custom variable being sent to
+        Flagright API
+      example:
+        key: customKey
+        value: customValue
+    Transaction:
+      title: Transaction
+      type: object
+      description: Model for transaction payload
+      example:
+        transactionId: 7b80a539eea6e78acbd6d458e5971482
+        senderUserId: 8650a2611d0771cba03310f74bf6
+        receiverUserId: 9350a2611e0771cba03310f74bf6
+        sendingAmountDetails:
+          country: DE
+          transactionAmount: 800
+          transactionCurrency: EUR
+        receivingAmountDetails:
+          country: IN
+          transactionAmount: 68351.34
+          transactionCurrency: INR
+        promotionCodeUsed: true
+        timestamp: 1641654664
+        senderPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: US
+          transactionReferenceField: Deposit
+          3dsDone: true
+        receiverPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: IN
+          transactionReferenceField: Deposit
+          3dsDone: true
+        reference: loan repayment
+        deviceData:
+          batteryLevel: 95
+          deviceLatitude: 13.0033
+          deviceLongitude: 76.1004
+          ipAddress: 10.23.191.2
+          deviceIdentifier: 3c49f915d04485e34caba
+          vpnUsed: false
+          operatingSystem: Android 11.2
+          deviceMaker: ASUS
+          deviceModel: Zenphone M2 Pro Max
+          deviceYear: '2018'
+          appVersion: 1.1.0
+        tags:
+          - key: customKey
+            value: customValue
+      properties:
+        transactionId:
+          minLength: 1
+          type: string
+          description: Unique transaction identifier
+        timestamp:
+          type: number
+        senderUserId:
+          type: string
+        receiverUserId:
+          type: string
+        sendingAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        receivingAmountDetails:
+          $ref: '#/components/schemas/TransactionAmountDetails'
+        senderPaymentDetails:
+          oneOf:
+            - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/IBANDetails'
+            - $ref: '#/components/schemas/ACHDetails'
+            - $ref: '#/components/schemas/UPIDetails'
+          example:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: TR
+            transactionReferenceField: Deposit
+            3dsDone: true
+        receiverPaymentDetails:
+          oneOf:
+            - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/IBANDetails'
+            - $ref: '#/components/schemas/ACHDetails'
+            - $ref: '#/components/schemas/UPIDetails'
+          example:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: TR
+            transactionReferenceField: Deposit
+            3dsDone: true
+        productType:
+          type: string
+          description: >-
+            Type of produce being used by the consumer (ex wallets, payments
+            etc)
+        promotionCodeUsed:
+          type: boolean
+          description: Whether a promotion code was used or not the transaction
+        reference:
+          minLength: 1
+          type: string
+          description: >-
+            Reference field for the transaction indicating the purpose of the
+            transaction etc.
+        deviceData:
+          $ref: '#/components/schemas/DeviceData'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+      required:
+        - timestamp
+        - senderPaymentDetails
+        - receiverPaymentDetails
+    TransactionWithRulesResult:
+      title: TransactionWithRulesResult
+      description: Model for transaction payload with rules result
+      example:
+        transactionId: 7b80a539eea6e78acbd6d458e5971482
+        senderUserId: 8650a2611d0771cba03310f74bf6
+        receiverUserId: 9350a2611e0771cba03310f74bf6
+        sendingAmountDetails:
+          country: DE
+          transactionAmount: 800
+          transactionCurrency: EUR
+        receivingAmountDetails:
+          country: IN
+          transactionAmount: 68351.34
+          transactionCurrency: INR
+        promotionCodeUsed: true
+        timestamp: 1641654664
+        senderPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: US
+          transactionReferenceField: Deposit
+          3dsDone: true
+        receiverPaymentDetails:
+          method: CARD
+          cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+          cardIssuedCountry: IN
+          transactionReferenceField: Deposit
+          3dsDone: true
+        reference: loan repayment
+        deviceData:
+          batteryLevel: 95
+          deviceLatitude: 13.0033
+          deviceLongitude: 76.1004
+          ipAddress: 10.23.191.2
+          deviceIdentifier: 3c49f915d04485e34caba
+          vpnUsed: false
+          operatingSystem: Android 11.2
+          deviceMaker: ASUS
+          deviceModel: Zenphone M2 Pro Max
+          deviceYear: '2018'
+          appVersion: 1.1.0
+        tags:
+          - key: customKey
+            value: customValue
+      allOf:
+        - $ref: '#/components/schemas/Transaction'
+        - type: object
+          properties:
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            failedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/FailedRulesResult'
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          senderUserId: 8650a2611d0771cba03310f74bf6
+          receiverUserId: 9350a2611e0771cba03310f74bf6
+          sendingAmountDetails:
+            country: DE
+            transactionAmount: 800
+            transactionCurrency: EUR
+          receivingAmountDetails:
+            country: IN
+            transactionAmount: 68351.34
+            transactionCurrency: INR
+          promotionCodeUsed: true
+          timestamp: 1641654664
+          senderPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: US
+            transactionReferenceField: Deposit
+            3dsDone: true
+          receiverPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: IN
+            transactionReferenceField: Deposit
+            3dsDone: true
+          reference: loan repayment
+          deviceData:
+            batteryLevel: 95
+            deviceLatitude: 13.0033
+            deviceLongitude: 76.1004
+            ipAddress: 10.23.191.2
+            deviceIdentifier: 3c49f915d04485e34caba
+            vpnUsed: false
+            operatingSystem: Android 11.2
+            deviceMaker: ASUS
+            deviceModel: Zenphone M2 Pro Max
+            deviceYear: '2018'
+            appVersion: 1.1.0
+          tags:
+            - key: customKey
+              value: customValue
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: block
+              ruleHit: true
+          failedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              failureException:
+                exceptionName: MISSING_DATA
+                exceptionDescription: Some data is missing
+    CardDetails:
+      title: CardDetails
+      type: object
+      description: Model for credit or debit card details
+      example:
+        method: CARD
+        cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+        cardIssuedCountry: TR
+        transactionReferenceField: Deposit
+        3dsDone: true
+      properties:
+        method:
+          type: string
+        cardFingerprint:
+          minLength: 1
+          type: string
+          description: >-
+            Unique card fingerprint that helps identify a specific card without
+            having to use explicit card number. This is likely available at your
+            card payment scheme provider
+        cardIssuedCountry:
+          minLength: 1
+          type: string
+          description: The country of issuance for a specific card
+        transactionReferenceField:
+          minLength: 1
+          type: string
+          description: Reference for the transaction
+        3dsDone:
+          type: boolean
+          description: Whether 3ds was successfully enforced for the transaction
+        nameOnCard:
+          $ref: '#/components/schemas/ConsumerName'
+      required:
+        - cardFingerprint
+        - cardIssuedCountry
+    IBANDetails:
+      title: IBANDetails
+      type: object
+      description: Standardized model for Bank Details
+      example:
+        method: BANK
+        BIC: DE761234561
+        bankName: Merryl Lynch
+        IBAN: '1234321'
+        bankAddress:
+          addressLines:
+            - Klara-Franke Str 20
+          postcode: '10557'
+          city: Berlin
+          state: Berlin
+          country: Germany
+          tags:
+            - key: customKey
+              value: customValue
+      properties:
+        method:
+          type: string
+        BIC:
+          minLength: 1
+          type: string
+          description: >-
+            Identifier for the bank. Can be routing number, BIK number, SWIFT
+            code, BIC number etc.
+        bankName:
+          minLength: 1
+          type: string
+          description: Name of the bank
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+        IBAN:
+          type: string
+          description: Account number of the user. Can be account number, IBAN number etc.
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        tags:
+          $ref: '#/components/schemas/Tag'
+        bankBranchCode:
+          type: string
+      required:
+        - method
+        - BIC
+        - IBAN
+      x-examples:
+        example-1:
+          method: IBAN
+          bankIdentifierType: IBAN
+          bankIdentifier: DE761234561
+          bankName: Merryl Lynch
+          accountNumber: '1234321'
+          bankAddress:
+            addressLines:
+              - Klara-Franke Str 20
+            postcode: '10557'
+            city: Berlin
+            state: Berlin
+            country: Germany
+            tags:
+              - key: customKey
+                value: customValue
+    DeviceData:
+      title: DeviceData
+      type: object
+      properties:
+        batteryLevel:
+          type: number
+          description: >-
+            Battery level of the device used for a transaction or event at a
+            given timestamp
+        deviceLatitude:
+          type: number
+          description: Device latitude at a give timestamp for an event or transaction
+        deviceLongitude:
+          type: number
+          description: Device longitude at a give timestamp for an event or transaction
+        ipAddress:
+          minLength: 1
+          type: string
+          description: >-
+            IP address of the device at a given timestamp for an event or
+            transaction
+        deviceIdentifier:
+          minLength: 1
+          type: string
+          description: Device identifier number
+        vpnUsed:
+          type: boolean
+          description: >-
+            Whether VPN was used at a given timestamp for an event or
+            transaction
+        operatingSystem:
+          minLength: 1
+          type: string
+          description: >-
+            Operating system of the device at a given timestamp for an event or
+            transaction
+        deviceMaker:
+          minLength: 1
+          type: string
+          description: >-
+            The maker of the device at a given timestamp for an event or
+            transaction
+        deviceModel:
+          minLength: 1
+          type: string
+          description: >-
+            The model of the device at a given timestamp for an event or
+            transaction
+        deviceYear:
+          minLength: 1
+          type: string
+          description: >-
+            The year the device was manufactured at a given timestamp for an
+            event or transaction
+        appVersion:
+          minLength: 1
+          type: string
+          description: >-
+            The version of the app your user is using on their device at a given
+            timestamp for an event or transaction
+      description: Model for device data
+    TransactionMonitoringResult:
+      title: TransactionMonitoringResult
+      required:
+        - transactionId
+      type: object
+      properties:
+        transactionId:
+          minLength: 1
+          type: string
+          description: Unique transaction identifier
+        executedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
+          description: Unique transaction identifier
+        failedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailedRulesResult'
+          description: Unique transaction identifier
+      example:
+        transactionId: 7b80a539eea6e78acbd6d458e5971482
+        executedRules:
+          - ruleId: R-1a
+            ruleName: Proof of funds for high value transactions
+            ruleDescription: >-
+              If a user makes a remittance transaction >= 1800 in EUR - ask for
+              proof of funds
+            ruleAction: block
+            ruleHit: true
+        failedRules:
+          - ruleId: R-1b
+            ruleName: Proof of funds for high value transactions
+            ruleDescription: >-
+              If a user makes a remittance transaction >= 1800 in EUR - ask for
+              proof of funds
+            failureException:
+              exceptionName: MISSING_DATA
+              exceptionDescription: Some data is missing
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: block
+              ruleHit: true
+          failedRules:
+            - ruleId: R-1b
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              failureException:
+                exceptionName: MISSING_DATA
+                exceptionDescription: Some data is missing
+    ExecutedRulesResult:
+      title: ExecutedRulesResult
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - ruleAction
+        - ruleHit
+      type: object
+      properties:
+        ruleId:
+          minLength: 1
+          type: string
+          description: Unique rule identifier
+        ruleName:
+          minLength: 1
+          type: string
+          description: Name of the rule
+        ruleDescription:
+          minLength: 1
+          type: string
+          description: Description of the rule
+        ruleAction:
+          minLength: 1
+          type: string
+          description: >-
+            The specific action a rule is configured to take if it's hit such as
+            flag (passive monitoring), block transaction, terminate user,
+            whitelist etc.
+        ruleHit:
+          type: boolean
+          description: >-
+            Whether a rule was hit or not. When a rule is hit, it takes the
+            pre-configured action on a transaction and/or user.
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        ruleAction: block
+        ruleHit: true
+    FailedRulesResult:
+      title: FailedRulesResult
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - failureException
+      type: object
+      properties:
+        ruleId:
+          minLength: 1
+          type: string
+          description: Unique rule identifier
+        ruleName:
+          minLength: 1
+          type: string
+          description: Name of the rule
+        ruleDescription:
+          minLength: 1
+          type: string
+          description: Description of the rule
+        failureException:
+          $ref: '#/components/schemas/RuleFailureException'
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        failureException:
+          exceptionName: MISSING_DATA
+          exceptionDescription: Some data is missing
+    RuleFailureException:
+      title: RuleFailureException
+      required:
+        - exceptionName
+        - exceptionDescription
+      type: object
+      properties:
+        exceptionName:
+          minLength: 1
+          type: string
+          description: Unique rule identifier
+        exceptionDescription:
+          minLength: 1
+          type: string
+          description: Name of the rule
+      example:
+        exceptionName: MISSING_DATA
+        exceptionDescription: Some data is missing
+    RiskScoringResult:
+      title: RiskScoringResult
+      required:
+        - kycRiskScore
+        - actionRiskScore
+      type: object
+      properties:
+        kycRiskScore:
+          type: number
+          description: Quantified KYC risk score
+        actionRiskScore:
+          type: number
+          description: Quantified action risk score
+        dynamicRiskScore:
+          type: number
+          description: Quantified dynamic risk score
+      description: Model for results from Risk Scoring
+      example:
+        kycRiskScore: 87.5
+        actionRiskScore: 58.33
+        dynamicRiskScore: 73.92
+    ConsumerName:
+      title: ConsumerName
+      required:
+        - firstName
+      type: object
+      properties:
+        firstName:
+          minLength: 1
+          type: string
+          description: First name of the user
+        middleName:
+          minLength: 1
+          type: string
+          description: Middle name of the user
+        lastName:
+          minLength: 1
+          type: string
+          description: Last name of the user
+      description: Model for a generic consumer name
+      example:
+        firstName: Baran
+        middleName: Realblood
+        lastName: Ozkan
+    TransactionAmountDetails:
+      title: TransactionAmountDetails
+      required:
+        - transactionAmount
+        - transactionCurrency
+      type: object
+      properties:
+        transactionAmount:
+          type: number
+          description: Amount of the transaction
+        transactionCurrency:
+          minLength: 1
+          type: string
+          description: Currency of the transaction
+        country:
+          minLength: 1
+          type: string
+      example:
+        country: DE
+        transactionAmount: 800
+        transactionCurrency: EUR
+    Amount:
+      title: Amount
+      required:
+        - amountValue
+        - amountCurrency
+      type: object
+      properties:
+        amountValue:
+          type: number
+          description: Numerical value of the transaction
+        amountCurrency:
+          minLength: 1
+          type: string
+          description: Currency of the transaction
+      example:
+        amountValue: 800
+        amountCurrency: GBP
+    LegalEntity:
+      title: LegalEntity
+      required:
+        - companyGeneralDetails
+      type: object
+      properties:
+        companyGeneralDetails:
+          $ref: '#/components/schemas/CompanyGeneralDetails'
+        companyFinancialDetails:
+          $ref: '#/components/schemas/CompanyFinancialDetails'
+        companyRegistrationDetails:
+          $ref: '#/components/schemas/CompanyRegistrationDetails'
+        reasonForAccountOpening:
+          type: array
+          items:
+            type: string
+          description: Reason for opening the account at financial institution
+        contactDetails:
+          $ref: '#/components/schemas/ContactDetails'
+    ContactDetails:
+      title: ContactDetails
+      type: object
+      properties:
+        emailIds:
+          type: array
+          items:
+            type: string
+          description: Email addresses of the contacts for a given business customer
+        contactNumbers:
+          type: array
+          items:
+            type: string
+          description: Phone numbers to contact a given business customer
+        faxNumbers:
+          type: array
+          items:
+            type: string
+          description: Fax numbers to contact a business customer
+        websites:
+          type: array
+          items:
+            type: string
+          description: Website of the company
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          description: Address(es) of the company
+    CompanyFinancialDetails:
+      title: CompanyFinancialDetails
+      type: object
+      properties:
+        expectedTransactionAmountPerMonth:
+          $ref: '#/components/schemas/Amount'
+        expectedTurnoverPerMonth:
+          $ref: '#/components/schemas/Amount'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+      example:
+        expectedTransactionAmountPerMonth:
+          amountValue: 800
+          amountCurrency: GBP
+        expectedTurnoverPerMonth:
+          amountValue: 8000
+          amountCurrency: USD
+    UserDetails:
+      title: UserDetails
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        dateOfBirth:
+          type: number
+          description: Date of birth of the user
+        age:
+          type: number
+          description: Age of the user
+        countryOfResidence:
+          minLength: 1
+          type: string
+          description: Country of residence of the user
+        countryOfNationality:
+          minLength: 1
+          type: string
+          description: Country of nationality of the user
+      example:
+        name:
+          firstName: Baran
+          middleName: Realblood
+          lastName: Ozkan
+        dateOfBirth: 661883439
+        age: 31
+        countryOfResidence: US
+        countryOfNationality: DE
+    CompanyGeneralDetails:
+      title: CompanyGeneralDetails
+      required:
+        - legalName
+      type: object
+      properties:
+        legalName:
+          minLength: 1
+          type: string
+          description: Legal name of the company
+        businessIndustry:
+          type: array
+          items:
+            type: string
+          description: The industry the business operates in for a business customer
+        mainProductsServicesSold:
+          type: array
+          items:
+            type: string
+          description: The key products and services provided by the company
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+      example:
+        legalName: Ozkan Hazelnut Export JSC
+        businessIndustry:
+          - Farming
+        mainProductsServicesSold:
+          - Hazelnut
+    CompanyRegistrationDetails:
+      title: CompanyRegistrationDetails
+      required:
+        - registrationIdentifier
+        - registrationCountry
+      type: object
+      properties:
+        registrationIdentifier:
+          minLength: 1
+          type: string
+          description: >-
+            Commercial registry registration number for the company in its
+            registration country
+        registrationCountry:
+          minLength: 1
+          type: string
+          description: Country of registration for the company
+        tag:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: Additional information that can be added via tags
+      example:
+        registrationIdentifier: PSJ554342
+        registrationCountry: DE
+    Business:
+      title: Business
+      type: object
+      example:
+        createdTimestamp: 1641654664
+        userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        legalEntity:
+          companyGeneralDetails:
+            legalName: Ozkan Hazelnut Export JSC
+            businessIndustry:
+              - Farming
+            mainProductsServicesSold:
+              - Hazelnut
+          companyFinancialDetails:
+            expectedTransactionAmountPerMonth:
+              amountValue: 800
+              amountCurrency: GBP
+            expectedTurnoverPerMonth:
+              amountValue: 8000
+              amountCurrency: USD
+          companyRegistrationDetails:
+            registrationIdentifier: PSJ554342
+            registrationCountry: DE
+          reasonForAccountOpening:
+            - string
+          contactDetails:
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+        shareHolders:
+          - generalDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: 661883439
+              age: 31
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034
+                documentExpirationDate: 1839939034
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - +371 123132
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+        directors:
+          - generalDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: 661883439
+              age: 31
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034
+                documentExpirationDate: 1839939034
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - +371 123132
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          legalEntity:
+            companyGeneralDetails:
+              legalName: Ozkan Hazelnut Export JSC
+              businessIndustry:
+                - Farming
+              mainProductsServicesSold:
+                - Hazelnut
+            companyFinancialDetails:
+              expectedTransactionAmountPerMonth:
+                amountValue: 800
+                amountCurrency: GBP
+              expectedTurnoverPerMonth:
+                amountValue: 8000
+                amountCurrency: USD
+            companyRegistrationDetails:
+              registrationIdentifier: PSJ554342
+              registrationCountry: DE
+            reasonForAccountOpening:
+              - string
+            contactDetails:
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+          shareHolders:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth: 661883439
+                age: 31
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034
+                  documentExpirationDate: 1839939034
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          directors:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth: 661883439
+                age: 31
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034
+                  documentExpirationDate: 1839939034
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          tags:
+            - key: customKey
+              value: customValue
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          description: Unique user ID for the user
+        legalEntity:
+          $ref: '#/components/schemas/LegalEntity'
+        createdTimestamp:
+          type: number
+        shareHolders:
+          type: array
+          description: >-
+            Shareholders (beneficiaries) of the company that hold at least 25%
+            ownership. Can be another company or an individual
+          items:
+            $ref: '#/components/schemas/Person'
+        directors:
+          type: array
+          description: Director(s) of the company. Must be at least one
+          items:
+            $ref: '#/components/schemas/Person'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+        transactionLimits:
+          $ref: '#/components/schemas/TransactionLimits'
+      required:
+        - userId
+        - legalEntity
+        - createdTimestamp
+    BusinessUsersResponse:
+      title: BusinessUsersResponse
+      required:
+        - userId
+      type: object
+      properties:
+        userId:
+          minLength: 1
+          type: string
+        userRiskScoreDetails:
+          $ref: '#/components/schemas/RiskScoringResult'
+    ConsumerUsersResponse:
+      title: ConsumerUsersResponse
+      required:
+        - userId
+      type: object
+      properties:
+        userId:
+          minLength: 1
+          type: string
+        userRiskScoreDetails:
+          $ref: '#/components/schemas/RiskScoringResult'
+    ACHDetails:
+      description: ''
+      type: object
+      x-examples:
+        example-2:
+          method: ACH
+          routingNumber: '1231241'
+          accountNumber: '543456675'
+          bankName: Wells Fargo
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          bankAddress:
+            addressLines:
+              - 1201 N Monroe St
+            postcode: '32303'
+            city: Tallahassee
+            state: FL
+            country: United States of America
+            tags:
+              - key: userType
+                value: customValue
+      title: ACHDetails
+      properties:
+        method:
+          type: string
+        routingNumber:
+          type: string
+          minLength: 1
+        accountNumber:
+          type: string
+          minLength: 1
+        bankName:
+          type: string
+          minLength: 1
+        name:
+          oneOf:
+            - $ref: '#/components/schemas/ConsumerName'
+            - type: string
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+      required:
+        - method
+        - routingNumber
+        - accountNumber
+    UPIDetails:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          method: UPI
+          upiID: user@okhdfcbank
+          bankProvider: HDFC Bank
+          interfaceProvider: PhonePe
+      title: UPIDetails
+      properties:
+        method:
+          type: string
+        upiID:
+          type: string
+          minLength: 1
+        bankProvider:
+          type: string
+          minLength: 1
+        interfaceProvider:
+          type: string
+          minLength: 1
+      required:
+        - method
+        - upiID
+    TransactionLimits:
+      title: TransactionLimits
+      type: object
+      x-examples:
+        example-1:
+          maximumDailyTransactionLimit:
+            amountValue: 800
+            amountCurrency: EUR
+          maximumWeeklyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+          maximumMonthlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: EUR
+          maximumQuarterlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+          maximumYearlyTransactionLimit:
+            amountValue: 800
+            amountCurrency: GBP
+      properties:
+        maximumDailyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumWeeklyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumMonthlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumQuarterlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumYearlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
   securitySchemes:
     Authorization:
       type: http
