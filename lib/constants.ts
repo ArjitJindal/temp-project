@@ -26,6 +26,15 @@ export const TarponStackConstants = {
   API_KEY_GENERATOR_FUNCTION_NAME: getResourceName('ApiKeyGeneratorFunction'),
   RULE_INSTANCE_FUNCTION_NAME: getResourceName('RuleInstanceFunction'),
   TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceName('TransactionsViewFunction'),
+  DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME: getResourceName(
+    'DashboardStatsTransactionsFunction'
+  ),
+  BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceName(
+    'BusinessUsersViewFunction'
+  ),
+  CONSUMER_USERS_VIEW_FUNCTION_NAME: getResourceName(
+    'ConsumersUsersViewFunction'
+  ),
   FILE_IMPORT_FUNCTION_NAME: getResourceName('FileImportFunction'),
   GET_PRESIGNED_URL_FUNCTION_NAME: getResourceName('GetPresignedUrlFunction'),
   LIST_IMPORTER_FUNCTION_NAME: getResourceName('ListImporterFunction'),

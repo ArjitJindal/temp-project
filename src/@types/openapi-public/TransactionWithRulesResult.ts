@@ -53,8 +53,8 @@ export class TransactionWithRulesResult {
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>
-  'executedRules'?: Array<ExecutedRulesResult>
-  'failedRules'?: Array<FailedRulesResult>
+  'executedRules': Array<ExecutedRulesResult>
+  'failedRules': Array<FailedRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 

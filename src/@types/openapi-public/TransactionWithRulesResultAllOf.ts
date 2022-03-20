@@ -13,8 +13,8 @@
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 export class TransactionWithRulesResultAllOf {
-  'executedRules'?: Array<ExecutedRulesResult>
-  'failedRules'?: Array<FailedRulesResult>
+  'executedRules': Array<ExecutedRulesResult>
+  'failedRules': Array<FailedRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 

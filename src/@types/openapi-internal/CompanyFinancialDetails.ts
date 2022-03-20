@@ -10,11 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
-export class TransactionWithRulesResultAllOf {
-  'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+import { Amount } from './Amount'
+import { Tag } from './Tag'
+export class CompanyFinancialDetails {
+  'expectedTransactionAmountPerMonth'?: Amount
+  'expectedTurnoverPerMonth'?: Amount
+  /**
+   * Additional information that can be added via tags
+   */
+  'tags'?: Array<Tag>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -25,21 +29,27 @@ export class TransactionWithRulesResultAllOf {
     format: string
   }> = [
     {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
+      name: 'expectedTransactionAmountPerMonth',
+      baseName: 'expectedTransactionAmountPerMonth',
+      type: 'Amount',
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'expectedTurnoverPerMonth',
+      baseName: 'expectedTurnoverPerMonth',
+      type: 'Amount',
+      format: '',
+    },
+    {
+      name: 'tags',
+      baseName: 'tags',
+      type: 'Array<Tag>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionWithRulesResultAllOf.attributeTypeMap
+    return CompanyFinancialDetails.attributeTypeMap
   }
 
   public constructor() {}

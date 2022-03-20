@@ -23,7 +23,7 @@ function replaceRequestParameters(path: string) {
 
 function buildApi(type: 'public' | 'internal') {
   exec(
-    `openapi-generator generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original`
+    `openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original`
   )
   exec(`rm -rf src/@types/openapi-${type}/*`)
   exec(
@@ -33,7 +33,7 @@ function buildApi(type: 'public' | 'internal') {
     `mv /tmp/flagright/${type}_openapi_types/types/ObjectParamAPI.ts src/@types/openapi-${type}/RequestParameters.ts`
   )
   exec(
-    `sed -i '' "s/import { HttpFile } from '..\\/http\\/http'//g" src/@types/openapi-${type}/*`
+    `sed -i "s/import { HttpFile } from '..\\/http\\/http'//g" src/@types/openapi-${type}/*`
   )
   replaceRequestParameters(`src/@types/openapi-${type}/RequestParameters.ts`)
   exec(

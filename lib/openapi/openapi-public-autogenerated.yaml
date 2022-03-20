@@ -1145,6 +1145,9 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FailedRulesResult'
+          required:
+            - executedRules
+            - failedRules
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482

@@ -10,10 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { TransactionWithRulesResultderefoptimizedBundle } from './TransactionWithRulesResultderefoptimizedBundle'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionWithRulesResultderefoptimizedBundle>
+export class Amount {
+  /**
+   * Numerical value of the transaction
+   */
+  'amountValue': number
+  /**
+   * Currency of the transaction
+   */
+  'amountCurrency': string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +29,21 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
+      name: 'amountValue',
+      baseName: 'amountValue',
       type: 'number',
       format: '',
     },
     {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionWithRulesResultderefoptimizedBundle>',
+      name: 'amountCurrency',
+      baseName: 'amountCurrency',
+      type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return Amount.attributeTypeMap
   }
 
   public constructor() {}

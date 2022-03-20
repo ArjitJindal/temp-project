@@ -19,12 +19,12 @@ import { IBANDetails } from './IBANDetails'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
-import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
+import { TransactionWithRulesResultDerefOptimizedBundleAllOf } from './TransactionWithRulesResultDerefOptimizedBundleAllOf'
 import { UPIDetails } from './UPIDetails'
 /**
  * Model for transaction payload with rules result
  */
-export class TransactionWithRulesResult {
+export class TransactionWithRulesResultderefoptimizedBundle {
   /**
    * Unique transaction identifier
    */
@@ -157,7 +157,7 @@ export class TransactionWithRulesResult {
   ]
 
   static getAttributeTypeMap() {
-    return TransactionWithRulesResult.attributeTypeMap
+    return TransactionWithRulesResultderefoptimizedBundle.attributeTypeMap
   }
 
   public constructor() {}

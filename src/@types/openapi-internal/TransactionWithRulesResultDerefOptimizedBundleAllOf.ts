@@ -10,10 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { TransactionWithRulesResultderefoptimizedBundle } from './TransactionWithRulesResultderefoptimizedBundle'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionWithRulesResultderefoptimizedBundle>
+import { ExecutedRulesResult } from './ExecutedRulesResult'
+import { FailedRulesResult } from './FailedRulesResult'
+export class TransactionWithRulesResultDerefOptimizedBundleAllOf {
+  'executedRules': Array<ExecutedRulesResult>
+  'failedRules': Array<FailedRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +25,21 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
-      type: 'number',
+      name: 'executedRules',
+      baseName: 'executedRules',
+      type: 'Array<ExecutedRulesResult>',
       format: '',
     },
     {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionWithRulesResultderefoptimizedBundle>',
+      name: 'failedRules',
+      baseName: 'failedRules',
+      type: 'Array<FailedRulesResult>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return TransactionWithRulesResultDerefOptimizedBundleAllOf.attributeTypeMap
   }
 
   public constructor() {}

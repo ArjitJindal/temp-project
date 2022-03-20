@@ -10,10 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { TransactionWithRulesResultderefoptimizedBundle } from './TransactionWithRulesResultderefoptimizedBundle'
-export class TransactionsListResponse {
+import { Business } from './Business'
+export class BusinessUsersListResponse {
   'total': number
-  'data': Array<TransactionWithRulesResultderefoptimizedBundle>
+  'data': Array<Business>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -32,13 +32,13 @@ export class TransactionsListResponse {
     {
       name: 'data',
       baseName: 'data',
-      type: 'Array<TransactionWithRulesResultderefoptimizedBundle>',
+      type: 'Array<Business>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return BusinessUsersListResponse.attributeTypeMap
   }
 
   public constructor() {}
