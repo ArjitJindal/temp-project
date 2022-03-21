@@ -328,7 +328,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    /* business users view */
+    /* consumer users view */
     const consumerUsersViewFunction = this.createFunction(
       TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
       'app.consumerUsersViewHandler',
