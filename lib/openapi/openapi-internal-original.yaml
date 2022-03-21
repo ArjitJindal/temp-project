@@ -267,6 +267,22 @@ paths:
               type: object
               properties: {}
     parameters: []
+  /transactions/comments:
+    post:
+      summary: Create a Transaction Comment
+      operationId: post-transactions-comments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCommentRequest'
 components:
   schemas:
     RuleInstance:
@@ -360,11 +376,21 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult?deref=optimizedBundle
+            $ref: '#/components/schemas/TransactionCaseManagement'
       required:
         - total
         - data
+    TransactionCaseManagement:
+      allOf:
+        - $ref: >-
+            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+        - type: object
+          properties:
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+      title: TransactionCaseManagement
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
       type: object
@@ -420,6 +446,37 @@ components:
           - date
           - totalTransactions
       title: DashboardStatsTransactionsCount
+    Comment:
+      title: Comment
+      type: object
+      properties:
+        id:
+          type: string
+        body:
+          type: string
+        userId:
+          type: string
+        files:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - body
+    TransactionCommentRequest:
+      title: TransactionCommentRequest
+      type: object
+      properties:
+        transactionId:
+          type: string
+        comment:
+          $ref: '#/components/schemas/Comment'
+      required:
+        - transactionId
+        - comment
   securitySchemes:
     Authorization:
       type: http

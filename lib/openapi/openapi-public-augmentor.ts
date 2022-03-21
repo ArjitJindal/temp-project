@@ -27,7 +27,7 @@ function assertValidLambdaMappings(openapi: any) {
     console.log('Local paths: ', pathsLocal)
     console.log('Remote paths: ', pathsRemote)
     throw new Error(
-      'paths in PathToLambda are not in sync with remote openapi paths. Please update PathToLambda'
+      'paths in PathToLambda are not in sync with remote public openapi paths. Please update PathToLambda'
     )
   }
 }

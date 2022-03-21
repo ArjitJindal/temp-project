@@ -6,6 +6,7 @@ import { Amount } from './Amount'
 import { Business } from './Business'
 import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
+import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
 import { CompanyRegistrationDetails } from './CompanyRegistrationDetails'
@@ -30,9 +31,12 @@ import { RuleInstance } from './RuleInstance'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
+import { TransactionCaseManagement } from './TransactionCaseManagement'
+import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
+import { TransactionCommentRequest } from './TransactionCommentRequest'
 import { TransactionLimits } from './TransactionLimits'
-import { TransactionWithRulesResultDerefOptimizedBundleAllOf } from './TransactionWithRulesResultDerefOptimizedBundleAllOf'
-import { TransactionWithRulesResultderefoptimizedBundle } from './TransactionWithRulesResultderefoptimizedBundle'
+import { TransactionWithRulesResult } from './TransactionWithRulesResult'
+import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { TransactionsListResponse } from './TransactionsListResponse'
 import { UPIDetails } from './UPIDetails'
 import { User } from './User'
@@ -180,6 +184,15 @@ export interface DefaultApiPostRuleInstancesRequest {
    * @memberof DefaultApipostRuleInstances
    */
   RuleInstance?: RuleInstance
+}
+
+export interface DefaultApiPostTransactionsCommentsRequest {
+  /**
+   *
+   * @type TransactionCommentRequest
+   * @memberof DefaultApipostTransactionsComments
+   */
+  TransactionCommentRequest?: TransactionCommentRequest
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

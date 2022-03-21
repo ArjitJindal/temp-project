@@ -12,19 +12,17 @@
 
 import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './CardDetails'
+import { Comment } from './Comment'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { Tag } from './Tag'
-import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
-import { TransactionWithRulesResultDerefOptimizedBundleAllOf } from './TransactionWithRulesResultDerefOptimizedBundleAllOf'
+import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
+import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { UPIDetails } from './UPIDetails'
-/**
- * Model for transaction payload with rules result
- */
-export class TransactionWithRulesResultderefoptimizedBundle {
+export class TransactionCaseManagement {
   /**
    * Unique transaction identifier
    */
@@ -55,6 +53,7 @@ export class TransactionWithRulesResultderefoptimizedBundle {
   'tags'?: Array<Tag>
   'executedRules': Array<ExecutedRulesResult>
   'failedRules': Array<FailedRulesResult>
+  'comments'?: Array<Comment>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -154,10 +153,16 @@ export class TransactionWithRulesResultderefoptimizedBundle {
       type: 'Array<FailedRulesResult>',
       format: '',
     },
+    {
+      name: 'comments',
+      baseName: 'comments',
+      type: 'Array<Comment>',
+      format: '',
+    },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionWithRulesResultderefoptimizedBundle.attributeTypeMap
+    return TransactionCaseManagement.attributeTypeMap
   }
 
   public constructor() {}

@@ -29,6 +29,9 @@ export const TarponStackConstants = {
   DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME: getResourceName(
     'DashboardStatsTransactionsFunction'
   ),
+  TRANSACTION_COMMENTS_FUNCTION_NAME: getResourceName(
+    'TransactionsCommentsFunction'
+  ),
   BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceName(
     'BusinessUsersViewFunction'
   ),

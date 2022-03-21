@@ -10,10 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { TransactionCaseManagement } from './TransactionCaseManagement'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionCaseManagement>
+import { ExecutedRulesResult } from './ExecutedRulesResult'
+import { FailedRulesResult } from './FailedRulesResult'
+export class TransactionWithRulesResultAllOf {
+  'executedRules': Array<ExecutedRulesResult>
+  'failedRules': Array<FailedRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +25,21 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
-      type: 'number',
+      name: 'executedRules',
+      baseName: 'executedRules',
+      type: 'Array<ExecutedRulesResult>',
       format: '',
     },
     {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionCaseManagement>',
+      name: 'failedRules',
+      baseName: 'failedRules',
+      type: 'Array<FailedRulesResult>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return TransactionWithRulesResultAllOf.attributeTypeMap
   }
 
   public constructor() {}

@@ -10,11 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
-export class TransactionWithRulesResultDerefOptimizedBundleAllOf {
-  'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+import { Comment } from './Comment'
+export class TransactionCommentRequest {
+  'transactionId': string
+  'comment': Comment
 
   static readonly discriminator: string | undefined = undefined
 
@@ -25,21 +24,21 @@ export class TransactionWithRulesResultDerefOptimizedBundleAllOf {
     format: string
   }> = [
     {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
+      name: 'transactionId',
+      baseName: 'transactionId',
+      type: 'string',
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'comment',
+      baseName: 'comment',
+      type: 'Comment',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionWithRulesResultDerefOptimizedBundleAllOf.attributeTypeMap
+    return TransactionCommentRequest.attributeTypeMap
   }
 
   public constructor() {}

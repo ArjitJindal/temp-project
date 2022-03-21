@@ -10,10 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { TransactionCaseManagement } from './TransactionCaseManagement'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionCaseManagement>
+import { Comment } from './Comment'
+export class TransactionCaseManagementAllOf {
+  'comments'?: Array<Comment>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +23,15 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionCaseManagement>',
+      name: 'comments',
+      baseName: 'comments',
+      type: 'Array<Comment>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return TransactionCaseManagementAllOf.attributeTypeMap
   }
 
   public constructor() {}
