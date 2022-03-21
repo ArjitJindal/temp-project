@@ -30,6 +30,10 @@ const config: Configuration = {
           from: 'src/ca/rds-combined-ca-bundle.pem',
           to: 'api-key-generator/rds-combined-ca-bundle.pem',
         },
+        {
+          from: 'src/ca/rds-combined-ca-bundle.pem',
+          to: 'phytoplankton-internal-api-handlers/rds-combined-ca-bundle.pem',
+        },
       ],
     }),
   ],
