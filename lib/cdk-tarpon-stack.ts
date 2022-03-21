@@ -337,15 +337,23 @@ export class CdkTarponStack extends cdk.Stack {
       'app.businessUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      {
-        securityGroups: [docDbSg],
-        vpc: docDbVpc,
-        environment: {
-          DB_HOST: docDbCluster.clusterEndpoint.hostname,
-          DB_PORT: '27017',
-          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
-        },
-      }
+      docDbFunctionProps
+    )
+    businessUsersViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
     )
 
     /* consumer users view */
@@ -354,15 +362,23 @@ export class CdkTarponStack extends cdk.Stack {
       'app.consumerUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      {
-        securityGroups: [docDbSg],
-        vpc: docDbVpc,
-        environment: {
-          DB_HOST: docDbCluster.clusterEndpoint.hostname,
-          DB_PORT: '27017',
-          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
-        },
-      }
+      docDbFunctionProps
+    )
+    consumerUsersViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
     )
 
     /* dashboard stats */
@@ -371,15 +387,23 @@ export class CdkTarponStack extends cdk.Stack {
       'app.dashboardStatsHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      {
-        securityGroups: [docDbSg],
-        vpc: docDbVpc,
-        environment: {
-          DB_HOST: docDbCluster.clusterEndpoint.hostname,
-          DB_PORT: '27017',
-          SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
-        },
-      }
+      docDbFunctionProps
+    )
+    dashboardStatsFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
     )
 
     /* User */
