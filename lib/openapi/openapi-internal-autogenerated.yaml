@@ -435,6 +435,264 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /consumer/users:
+    get:
+      summary: Consumer Users - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerUsersListResponse'
+              examples: {}
+      operationId: get-consumer-users-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /business/users:
+    get:
+      summary: Business Users - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerUsersListResponse'
+              examples: {}
+      operationId: get-business-users-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /dashboard_stats/transactions:
+    get:
+      summary: DashboardStats - Transactions
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsTransactionsCount'
+              examples: {}
+      operationId: get-dashboard-stats-transactions
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: category
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: timeframe
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: fromTimestamp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /transactions/comments:
+    post:
+      summary: Create a Transaction Comment
+      operationId: post-transactions-comments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCommentRequest'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsCommentsFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
     RuleInstance:
@@ -521,16 +779,113 @@ components:
       title: TransactionsListResponse
       type: object
       description: ''
+      x-examples: {}
       properties:
         total:
           type: number
         data:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionWithRulesResult'
+            $ref: '#/components/schemas/TransactionCaseManagement'
       required:
         - total
         - data
+    TransactionCaseManagement:
+      allOf:
+        - $ref: '#/components/schemas/TransactionWithRulesResult'
+        - type: object
+          properties:
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+      title: TransactionCaseManagement
+    ConsumerUsersListResponse:
+      title: ConsumerUsersListResponse
+      type: object
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+      required:
+        - total
+        - data
+    BusinessUsersListResponse:
+      title: BusinessUsersListResponse
+      type: object
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+      required:
+        - total
+        - data
+    DashboardStatsTransactionsCount:
+      type: array
+      description: ''
+      minItems: 1
+      uniqueItems: true
+      x-examples:
+        example-1:
+          - date: '2020-01-04'
+            totalTransactions: 2344
+            flaggedTransactions: 121
+            stoppedTransactions: 33
+      items:
+        type: object
+        properties:
+          date:
+            type: string
+            minLength: 1
+          totalTransactions:
+            type: number
+          flaggedTransactions:
+            type: number
+          stoppedTransactions:
+            type: number
+        required:
+          - date
+          - totalTransactions
+      title: DashboardStatsTransactionsCount
+    Comment:
+      title: Comment
+      type: object
+      properties:
+        id:
+          type: string
+        body:
+          type: string
+        userId:
+          type: string
+        files:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - body
+    TransactionCommentRequest:
+      title: TransactionCommentRequest
+      type: object
+      properties:
+        transactionId:
+          type: string
+        comment:
+          $ref: '#/components/schemas/Comment'
+      required:
+        - transactionId
+        - comment
     Address:
       title: Address
       required:
@@ -981,6 +1336,9 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FailedRulesResult'
+          required:
+            - executedRules
+            - failedRules
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482

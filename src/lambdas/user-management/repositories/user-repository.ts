@@ -1,18 +1,51 @@
 import { v4 as uuidv4 } from 'uuid'
+import { MongoClient } from 'mongodb'
 import { TarponStackConstants } from '../../../../lib/constants'
 import { User } from '../../../@types/openapi-public/User'
 import { Business } from '../../../@types/openapi-public/Business'
 import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
+import { USERS_COLLECTION } from '../../../utils/docDBUtils'
 
-type UserType = 'BUSINESS' | 'CONSUMER'
+export type UserType = 'BUSINESS' | 'CONSUMER'
 
 export class UserRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
+  mongoDb: MongoClient
   tenantId: string
 
-  constructor(tenantId: string, dynamoDb: AWS.DynamoDB.DocumentClient) {
-    this.dynamoDb = dynamoDb
+  constructor(
+    tenantId: string,
+    connections: {
+      dynamoDb?: AWS.DynamoDB.DocumentClient
+      mongoDb?: MongoClient
+    }
+  ) {
+    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+  }
+
+  public async getUsers(
+    // TOOD: Add filtering and sorting
+    pagination: { limit: number; skip: number; beforeTimestamp: number },
+    userType: UserType
+  ): Promise<{ total: number; data: any }> {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<Business | User>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const query = {
+      timestamp: { $lte: pagination.beforeTimestamp },
+      type: userType,
+    }
+    const users = await collection
+      .find(query)
+      .sort({ timestamp: -1 })
+      .limit(pagination.limit)
+      .skip(pagination.skip)
+      .toArray()
+    const total = await collection.count(query)
+    return { total, data: users }
   }
 
   public async getBusinessUser(userId: string): Promise<Business> {

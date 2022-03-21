@@ -10,10 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { TransactionCaseManagement } from './TransactionCaseManagement'
-export class TransactionsListResponse {
-  'total': number
-  'data': Array<TransactionCaseManagement>
+import { Amount } from './Amount'
+import { Tag } from './Tag'
+export class CompanyFinancialDetails {
+  'expectedTransactionAmountPerMonth'?: Amount
+  'expectedTurnoverPerMonth'?: Amount
+  /**
+   * Additional information that can be added via tags
+   */
+  'tags'?: Array<Tag>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +29,27 @@ export class TransactionsListResponse {
     format: string
   }> = [
     {
-      name: 'total',
-      baseName: 'total',
-      type: 'number',
+      name: 'expectedTransactionAmountPerMonth',
+      baseName: 'expectedTransactionAmountPerMonth',
+      type: 'Amount',
       format: '',
     },
     {
-      name: 'data',
-      baseName: 'data',
-      type: 'Array<TransactionCaseManagement>',
+      name: 'expectedTurnoverPerMonth',
+      baseName: 'expectedTurnoverPerMonth',
+      type: 'Amount',
+      format: '',
+    },
+    {
+      name: 'tags',
+      baseName: 'tags',
+      type: 'Array<Tag>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionsListResponse.attributeTypeMap
+    return CompanyFinancialDetails.attributeTypeMap
   }
 
   public constructor() {}

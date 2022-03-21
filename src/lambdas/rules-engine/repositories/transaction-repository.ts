@@ -7,7 +7,7 @@ import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '../../../utils/timestampUtils'
 import { ExecutedRulesResult } from '../../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../../@types/openapi-public/FailedRulesResult'
-import { TransactionWithRulesResult } from '../../../@types/openapi-internal/TransactionWithRulesResult'
+import { TransactionWithRulesResult } from '../../../@types/openapi-public/TransactionWithRulesResult'
 import { TRANSACIONS_COLLECTION } from '../../../utils/docDBUtils'
 
 export class TransactionRepository {

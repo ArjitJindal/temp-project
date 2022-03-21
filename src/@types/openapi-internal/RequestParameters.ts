@@ -1,24 +1,47 @@
 import { ACHDetails } from './ACHDetails'
 import { Address } from './Address'
+import { Address1 } from './Address1'
+import { Address2 } from './Address2'
+import { Amount } from './Amount'
+import { Business } from './Business'
+import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
+import { Comment } from './Comment'
+import { CompanyFinancialDetails } from './CompanyFinancialDetails'
+import { CompanyGeneralDetails } from './CompanyGeneralDetails'
+import { CompanyRegistrationDetails } from './CompanyRegistrationDetails'
 import { ConsumerName } from './ConsumerName'
+import { ConsumerUsersListResponse } from './ConsumerUsersListResponse'
+import { ContactDetails } from './ContactDetails'
+import { ContactDetails1 } from './ContactDetails1'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { ImportRequest } from './ImportRequest'
 import { ImportResponse } from './ImportResponse'
+import { LegalDocument } from './LegalDocument'
+import { LegalDocument1 } from './LegalDocument1'
+import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
+import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { RuleFailureException } from './RuleFailureException'
 import { RuleInstance } from './RuleInstance'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
+import { TransactionCaseManagement } from './TransactionCaseManagement'
+import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
+import { TransactionCommentRequest } from './TransactionCommentRequest'
+import { TransactionLimits } from './TransactionLimits'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { TransactionsListResponse } from './TransactionsListResponse'
 import { UPIDetails } from './UPIDetails'
+import { User } from './User'
+import { UserDetails } from './UserDetails'
+import { UserDetails1 } from './UserDetails1'
 
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
@@ -27,6 +50,75 @@ export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApideleteRuleInstancesRuleInstanceId
    */
   ruleInstanceId: string
+}
+
+export interface DefaultApiGetBusinessUsersListRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  limit: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  skip: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  beforeTimestamp: number
+}
+
+export interface DefaultApiGetConsumerUsersListRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  limit: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  skip: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  beforeTimestamp: number
+}
+
+export interface DefaultApiGetDashboardStatsTransactionsRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsTransactions
+   */
+  category: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsTransactions
+   */
+  timeframe: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetDashboardStatsTransactions
+   */
+  fromTimestamp?: string
+  /**
+   *
+   * @type any
+   * @memberof DefaultApigetDashboardStatsTransactions
+   */
+  body?: any
 }
 
 export interface DefaultApiGetTransactionsListRequest {
@@ -92,6 +184,15 @@ export interface DefaultApiPostRuleInstancesRequest {
    * @memberof DefaultApipostRuleInstances
    */
   RuleInstance?: RuleInstance
+}
+
+export interface DefaultApiPostTransactionsCommentsRequest {
+  /**
+   *
+   * @type TransactionCommentRequest
+   * @memberof DefaultApipostTransactionsComments
+   */
+  TransactionCommentRequest?: TransactionCommentRequest
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

@@ -34,7 +34,9 @@ const createBusinessUsers = (
   country: string
 ) => {
   const userIDs: string[] = []
-  const userRepository = new UserRepository(`fake-${tenantId}`, dynamoDb)
+  const userRepository = new UserRepository(`fake-${tenantId}`, {
+    dynamoDb: dynamoDb,
+  })
   for (let i = 0; i < numberOfUsers; i++) {
     const userId = createUuid()
     userIDs.push(userId)

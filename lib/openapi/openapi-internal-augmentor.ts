@@ -18,6 +18,12 @@ const PathToLambda: any = {
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
   '/transactions': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/comments':
+    TarponStackConstants.TRANSACTION_COMMENTS_FUNCTION_NAME,
+  '/consumer/users': TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/business/users': TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+  '/dashboard_stats/transactions':
+    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {
@@ -27,10 +33,12 @@ function assertValidLambdaMappings(openapi: any) {
     pathsLocal.length !== pathsRemote.length ||
     new Set([...pathsLocal, ...pathsRemote]).size !== pathsRemote.length
   ) {
-    console.log('Local paths: ', pathsLocal)
-    console.log('Remote paths: ', pathsRemote)
     throw new Error(
-      'paths in PathToLambda are not in sync with remote openapi paths. Please update PathToLambda'
+      `
+      Local paths: ${pathsLocal}
+      Remote paths: ${pathsRemote}
+
+      paths in PathToLambda are not in sync with remote internal openapi paths. Please update PathToLambda`
     )
   }
 }

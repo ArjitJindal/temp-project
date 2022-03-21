@@ -331,6 +331,81 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
 
+    /* business users view */
+    const businessUsersViewFunction = this.createFunction(
+      TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+      'app.businessUsersViewHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
+    )
+    businessUsersViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
+
+    /* consumer users view */
+    const consumerUsersViewFunction = this.createFunction(
+      TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+      'app.consumerUsersViewHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
+    )
+    consumerUsersViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
+
+    /* dashboard stats */
+    const dashboardStatsFunction = this.createFunction(
+      TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+      'app.dashboardStatsHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
+    )
+    dashboardStatsFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
+
     /* User */
     const userFunction = this.createFunction(
       TarponStackConstants.USER_FUNCTION_NAME,

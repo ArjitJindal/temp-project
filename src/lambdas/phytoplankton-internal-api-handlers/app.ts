@@ -9,7 +9,13 @@ import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 import { connectToDB } from '../../utils/docDBUtils'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { TransactionsListResponse } from '../../@types/openapi-internal/TransactionsListResponse'
+import { BusinessUsersListResponse } from '../../@types/openapi-internal/BusinessUsersListResponse'
+import { ConsumerUsersListResponse } from '../../@types/openapi-internal/ConsumerUsersListResponse'
 import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
+import {
+  UserRepository,
+  UserType,
+} from '../user-management/repositories/user-repository'
 
 export const transactionsViewHandler = lambdaApi()(
   async (
@@ -29,6 +35,58 @@ export const transactionsViewHandler = lambdaApi()(
       mongoDb: client,
     })
     return transactionRepository.getTransactions(params)
+  }
+)
+
+export const dashboardStatsHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    console.log('To be implemented')
+  }
+)
+
+export const businessUsersViewHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ): Promise<BusinessUsersListResponse> => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
+    const params: DefaultApiGetTransactionsListRequest = {
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      beforeTimestamp: parseInt(beforeTimestamp),
+    }
+    const client = await connectToDB()
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb: client,
+    })
+    return userRepository.getUsers(params, 'BUSINESS' as UserType)
+  }
+)
+
+export const consumerUsersViewHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ): Promise<ConsumerUsersListResponse> => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
+    const params: DefaultApiGetTransactionsListRequest = {
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      beforeTimestamp: parseInt(beforeTimestamp),
+    }
+    const client = await connectToDB()
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb: client,
+    })
+    return userRepository.getUsers(params, 'CONSUMER' as UserType)
   }
 )
 
