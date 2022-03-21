@@ -23,8 +23,14 @@ function replaceRequestParameters(path: string) {
 
 function buildApi(type: 'public' | 'internal') {
   exec(
-    `openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original`
+    `
+    if [ "$(uname)" = "Darwin" ]; then
+        openapi-generator generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
+    elif [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
+        openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
+    fi`
   )
+
   exec(`rm -rf src/@types/openapi-${type}/*`)
   exec(
     `mv /tmp/flagright/${type}_openapi_types/models/* src/@types/openapi-${type}/`
@@ -33,7 +39,12 @@ function buildApi(type: 'public' | 'internal') {
     `mv /tmp/flagright/${type}_openapi_types/types/ObjectParamAPI.ts src/@types/openapi-${type}/RequestParameters.ts`
   )
   exec(
-    `sed -i "s/import { HttpFile } from '..\\/http\\/http'//g" src/@types/openapi-${type}/*`
+    `
+    if [ "$(uname)" = "Darwin" ]; then
+        sed -i '' "s/import { HttpFile } from '..\\/http\\/http'//g" src/@types/openapi-${type}/*
+    elif [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
+        sed -i "s/import { HttpFile } from '..\\/http\\/http'//g" src/@types/openapi-${type}/*
+    fi`
   )
   replaceRequestParameters(`src/@types/openapi-${type}/RequestParameters.ts`)
   exec(
