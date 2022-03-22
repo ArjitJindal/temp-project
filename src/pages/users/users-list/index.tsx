@@ -1,26 +1,35 @@
-import { Input, Drawer, Tag } from 'antd';
+import { Drawer, Tag, Tabs, Table } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { expandedRulesRowRender } from './components/ExpandedRulesRowRender';
-import { rule } from './service';
-import type { TableListItem, TableListPagination } from './data.d';
-import { FileImportButton } from '@/components/file-import/FileImportButton';
-import { ImportRequestTypeEnum } from '@/apis';
+import { Link } from 'umi';
+import { customerUsers, businessUsers } from './service';
+import type { CustomerUsersListItem, BusinessUsersListItem, TableListPagination } from './data.d';
+import { tableListDataSource } from './_transactionsMock';
 
-const TableList: React.FC = () => {
+function createUserTransactions() {
+  return Array.from(Array(10).keys()).map(() => {
+    const index = Math.floor(Math.random() * tableListDataSource.length);
+    return {
+      transactionId: tableListDataSource[index].transactionId,
+      transactionTime: tableListDataSource[index].createdAt.toDateString(),
+      amount: `${tableListDataSource[index].amount} ${tableListDataSource[index].sendingCurrency}`,
+    };
+  });
+}
+
+const BusinessUsersTab: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TableListItem>();
-
-  const columns: ProColumns<TableListItem>[] = [
+  const [currentRow, setCurrentRow] = useState<BusinessUsersListItem>();
+  const columns: ProColumns<BusinessUsersListItem>[] = [
     {
-      title: 'Profile Identifier',
-      dataIndex: 'name',
-      tip: 'Identifier of the profile',
+      title: 'User ID',
+      dataIndex: 'userId',
+      tip: 'Unique identification of user.',
       render: (dom, entity) => {
         return (
           <a
@@ -35,58 +44,158 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: 'Transaction ID',
-      dataIndex: 'transactionId',
+      title: 'Legal Name',
+      dataIndex: 'name',
       valueType: 'textarea',
     },
     {
-      title: 'Payment method',
-      dataIndex: 'paymentMethod',
+      title: 'Industry',
+      dataIndex: 'businessIndustry',
       valueType: 'textarea',
     },
     {
-      title: 'Payout method',
-      dataIndex: 'payoutMethod',
+      title: 'Expected Transaction Amount Per Month',
+      dataIndex: 'expectedTransactionAmountPerMonth',
       valueType: 'textarea',
     },
     {
-      title: 'Rules hit',
-      dataIndex: 'rulesHit',
+      title: 'Expected Turnover Amount Per Month',
+      dataIndex: 'expectedTurnoverPerMonth',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Maximum Daily Transaction Limit',
+      dataIndex: 'maximumDailyTransactionLimit',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Registration Identifier',
+      dataIndex: 'registrationIdentifier',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Registration Country',
+      dataIndex: 'registrationCountry',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Created time',
       sorter: true,
-      width: 80,
-      hideInForm: true,
-      renderText: (val: number) => `${val} Rule(s)`,
+      dataIndex: 'createdAt',
+      valueType: 'dateTime',
     },
-    {
-      title: 'Origin Country',
-      dataIndex: 'originCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
+  ];
 
-    {
-      title: 'Destination Country',
-      dataIndex: 'destinationCountry',
-      valueType: 'textarea',
-      width: 80,
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Sending Currency',
-      dataIndex: 'sendingCurrency',
-      valueType: 'textarea',
-      width: 80,
-    },
+  return (
+    <>
+      <ProTable<BusinessUsersListItem, TableListPagination>
+        headerTitle="Business Users"
+        actionRef={actionRef}
+        rowKey="key"
+        search={{
+          labelWidth: 120,
+        }}
+        request={businessUsers}
+        columns={columns}
+      />
+      <Drawer
+        width={800}
+        visible={showDetail}
+        onClose={() => {
+          setCurrentRow(undefined);
+          setShowDetail(false);
+        }}
+        closable={false}
+      >
+        {currentRow?.name && (
+          <>
+            <ProDescriptions<BusinessUsersListItem>
+              column={2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<BusinessUsersListItem>[]}
+            />
+            Transaction History:
+            <Table
+              dataSource={createUserTransactions()}
+              columns={[
+                {
+                  title: 'Transaction ID',
+                  dataIndex: 'transactionId',
+                  key: 'transactionId',
+                  render: (dom, entity) => {
+                    return (
+                      <Link to={`/transactions/transactions-list/${entity.transactionId}`}>
+                        {dom}
+                      </Link>
+                    );
+                  },
+                },
+                {
+                  title: 'Transaction time',
+                  dataIndex: 'transactionTime',
+                  key: 'transactionTime',
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                },
+              ]}
+            />
+          </>
+        )}
+      </Drawer>
+    </>
+  );
+};
 
+const ConsumerUsersTab: React.FC = () => {
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const actionRef = useRef<ActionType>();
+  const [currentRow, setCurrentRow] = useState<CustomerUsersListItem>();
+  const columns: ProColumns<CustomerUsersListItem>[] = [
     {
-      title: 'Receiving Currency',
-      dataIndex: 'receivingCurrency',
+      title: 'User ID',
+      dataIndex: 'userId',
+      tip: 'Unique identification of user.',
+      render: (dom, entity) => {
+        return (
+          <a
+            onClick={() => {
+              setCurrentRow(entity);
+              setShowDetail(true);
+            }}
+          >
+            {dom}
+          </a>
+        );
+      },
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
       valueType: 'textarea',
-      width: 80,
+    },
+    {
+      title: 'Age',
+      dataIndex: 'age',
+      valueType: 'digit',
+    },
+    {
+      title: 'Country of residence',
+      dataIndex: 'countryOfResidence',
+      valueType: 'textarea',
+    },
+    {
+      title: 'Country of nationality',
+      dataIndex: 'countryOfNationality',
+      valueType: 'textarea',
     },
     {
       title: 'Tags',
@@ -110,39 +219,23 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: 'Transaction time',
+      title: 'Created time',
       sorter: true,
-      dataIndex: 'updatedAt',
+      dataIndex: 'createdAt',
       valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
-      },
     },
   ];
-
   return (
-    <PageContainer>
-      <ProTable<TableListItem, TableListPagination>
-        headerTitle="Transactions"
+    <>
+      <ProTable<CustomerUsersListItem, TableListPagination>
+        headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
         search={{
           labelWidth: 120,
         }}
-        expandable={{ expandedRowRender: expandedRulesRowRender }}
-        request={rule}
+        request={customerUsers}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.User} />]}
       />
       <Drawer
         width={600}
@@ -154,19 +247,64 @@ const TableList: React.FC = () => {
         closable={false}
       >
         {currentRow?.name && (
-          <ProDescriptions<TableListItem>
-            column={2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<TableListItem>[]}
-          />
+          <>
+            <ProDescriptions<CustomerUsersListItem>
+              column={2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<CustomerUsersListItem>[]}
+            />
+            Transaction History:
+            <Table
+              dataSource={createUserTransactions()}
+              columns={[
+                {
+                  title: 'Transaction ID',
+                  dataIndex: 'transactionId',
+                  key: 'transactionId',
+                  render: (dom, entity) => {
+                    return (
+                      <Link to={`/transactions/transactions-list/${entity.transactionId}`}>
+                        {dom}
+                      </Link>
+                    );
+                  },
+                },
+                {
+                  title: 'Transaction time',
+                  dataIndex: 'transactionTime',
+                  key: 'transactionTime',
+                },
+                {
+                  title: 'Amount',
+                  dataIndex: 'amount',
+                  key: 'amount',
+                },
+              ]}
+            />
+          </>
         )}
       </Drawer>
+    </>
+  );
+};
+
+const TableList: React.FC = () => {
+  return (
+    <PageContainer>
+      <Tabs type="line">
+        <Tabs.TabPane tab="Consumer Users" key="consumer">
+          <ConsumerUsersTab />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Business Users" key="business">
+          <BusinessUsersTab />
+        </Tabs.TabPane>
+      </Tabs>
     </PageContainer>
   );
 };

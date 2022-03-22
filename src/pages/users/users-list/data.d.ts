@@ -15,6 +15,41 @@ export type TableListItem = {
   status: string;
   updatedAt: Date;
   createdAt: Date;
+  businessIndustry: string[];
+  legalName: string;
+  mainProductsAndServicesSold: string[];
+  expectedTransactionAmountPerMonth: string;
+  expectedTurnoverAmountPerMonth: string;
+  registrationIdentifier: string;
+  registrationCountry: string;
+};
+
+export type CustomerUsersListItem = {
+  key: number;
+  disabled?: boolean;
+  userId: string;
+  name: string;
+  age: number;
+  countryOfResidence: string;
+  countryOfNationality: string;
+  tags: object[];
+  updatedAt: Date;
+  createdAt: Date;
+};
+
+export type BusinessUsersListItem = {
+  key: number;
+  disabled?: boolean;
+  userId: string;
+  name: string;
+  businessIndustry: string;
+  expectedTransactionAmountPerMonth: string;
+  expectedTurnoverPerMonth: string;
+  registrationIdentifier: string;
+  registrationCountry: string;
+  maximumDailyTransactionLimit: string;
+  updatedAt: Date;
+  createdAt: Date;
 };
 
 export type TableListPagination = {
