@@ -6,20 +6,22 @@ Named after the saviors of the environment, [Phytoplankton](https://www.youtube.
 
 ## Flagright back office console
 
-This project is initialized with Ant Design. Follow is the quick guide for how to use.
+This project is initialized with Ant Design.
 
-## Environment Prepare
+## Prepare Environment
 
 Install `node_modules`:
 
 ```bash
-npm install
+yarn
 ```
 
-or
+### Clean up caches
+
+When switching between branches, the local `umi` caches can wreck the build. In order to clean the cache, run:
 
 ```bash
-yarn
+yarn clear
 ```
 
 ## Provided Scripts
