@@ -9,7 +9,8 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended",
     "plugin:import/recommended",
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "plugin:react-hooks/recommended"
   ],
   "rules": {
     "no-console": "off",
@@ -19,6 +20,8 @@
         "ignore": ["@/*"]
       }
     ],
-    "import/order": "error"
+    "import/order": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error"
   }
 }

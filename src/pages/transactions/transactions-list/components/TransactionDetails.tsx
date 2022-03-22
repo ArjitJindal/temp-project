@@ -1,129 +1,356 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Divider, Tag } from 'antd';
+import {
+  Divider,
+  List,
+  Tag,
+  Comment,
+  Avatar,
+  Button,
+  Input,
+  Upload,
+  message,
+  Row,
+  Space,
+  Col,
+  Tooltip,
+} from 'antd';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useCallback, useState } from 'react';
+import { PaperClipOutlined } from '@ant-design/icons';
+import axios from 'axios';
+import filesize from 'filesize';
 import styles from './TransactionDetails.less';
-import { TransactionWithRulesResult, Tag as TransactionTag } from '@/apis';
+import {
+  Tag as TransactionTag,
+  TransactionCaseManagement,
+  Comment as TransactionComment,
+  FileInfo,
+} from '@/apis';
+import { useApi } from '@/api';
 
 interface Props {
-  transaction: TransactionWithRulesResult;
+  transaction: TransactionCaseManagement;
+  onTransactionUpdate: (newTransaction: TransactionCaseManagement) => void;
 }
 
-export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
+interface CommentEditorProps {
+  transactionId: string;
+  onCommentAdded: (comment: TransactionComment) => void;
+}
+
+const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentAdded }) => {
+  const api = useApi();
+  const [commentValue, setCommentValue] = useState('');
+  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const removeFile = useCallback(
+    (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file !== s3Key)),
+    [],
+  );
+  const submitComment = useCallback(async () => {
+    setLoading(true);
+    try {
+      const comment = await api.postTransactionsComments({
+        transactionId,
+        comment: {
+          body: commentValue,
+          files,
+        },
+      });
+      onCommentAdded(comment);
+      setCommentValue('');
+      setFiles([]);
+    } catch (err) {
+      message.error('Failed to add comment');
+    } finally {
+      setLoading(false);
+    }
+  }, [api, commentValue, files, onCommentAdded, transactionId]);
+
   return (
-    <ProDescriptions size="small" column={1} colon={false}>
-      <ProDescriptions.Item label={<b>Transaction ID:</b>} valueType="text">
-        {transaction.transactionId}
-      </ProDescriptions.Item>
-      <ProDescriptions.Item label={<b>Timestamp:</b>} valueType="dateTime">
-        {transaction.timestamp}
-      </ProDescriptions.Item>
-      <ProDescriptions.Item
-        label={
-          <Divider orientation="left" orientationMargin="0">
-            Sender
-          </Divider>
-        }
-        className={styles.verticalDetailsItem}
-      >
-        <ProDescriptions size="small" column={1}>
-          <ProDescriptions.Item label="User ID" valueType="text">
-            {transaction.senderUserId}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Amount" valueType="text">
-            {transaction.sendingAmountDetails?.transactionAmount}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Currency" valueType="text">
-            {transaction.sendingAmountDetails?.transactionCurrency}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Country" valueType="text">
-            {transaction.sendingAmountDetails?.country}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item
-            label="Payment Details"
-            valueType="jsonCode"
-            className={styles.verticalDetailsItem}
-          >
-            {JSON.stringify(transaction.senderPaymentDetails)}
-          </ProDescriptions.Item>
-        </ProDescriptions>
-      </ProDescriptions.Item>
-      <ProDescriptions.Item
-        label={
-          <Divider orientation="left" orientationMargin="0">
-            Receiver
-          </Divider>
-        }
-        className={styles.verticalDetailsItem}
-      >
-        <ProDescriptions size="small" column={1}>
-          <ProDescriptions.Item label="User ID" valueType="text">
-            {transaction.receiverUserId}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Amount" valueType="text">
-            {transaction.receivingAmountDetails?.transactionAmount}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Currency" valueType="text">
-            {transaction.receivingAmountDetails?.transactionCurrency}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item label="Country" valueType="text">
-            {transaction.receivingAmountDetails?.country}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item
-            label="Payment Details"
-            valueType="jsonCode"
-            className={styles.verticalDetailsItem}
-          >
-            {JSON.stringify(transaction.receiverPaymentDetails)}
-          </ProDescriptions.Item>
-        </ProDescriptions>
-      </ProDescriptions.Item>
-      <ProDescriptions.Item
-        label={
-          <Divider orientation="left" orientationMargin="0">
-            Metadata
-          </Divider>
-        }
-        className={styles.verticalDetailsItem}
-      >
-        <ProDescriptions size="small" column={1}>
-          {transaction.productType && (
-            <ProDescriptions.Item label="Product Type" valueType="text">
-              {transaction.productType}
+    <Row gutter={[0, 16]}>
+      <Col span={24}>
+        <Input.TextArea
+          rows={4}
+          onChange={(event) => setCommentValue(event.target.value)}
+          value={commentValue}
+        />
+      </Col>
+      <Col span={24}>
+        <Upload
+          multiple={true}
+          fileList={files.map((file) => ({ uid: file.s3Key, name: file.filename }))}
+          onRemove={(file) =>
+            setFiles((prevFiles) => prevFiles.filter((f) => f.s3Key !== file.uid))
+          }
+          customRequest={async ({ file: f, onError, onSuccess }) => {
+            const file = f as File;
+            setLoading(true);
+            const hideMessage = message.loading('Uploading...', 0);
+            let fileS3Key = '';
+            try {
+              // 1. Get S3 presigned URL
+              const { presignedUrl, s3Key } = await api.postGetPresignedUrl();
+              fileS3Key = s3Key;
+
+              // 2. Upload file to S3 directly
+              await axios.put(presignedUrl, file, {
+                headers: {
+                  'Content-Disposition': `attachment; filename="${file.name}"`,
+                },
+              });
+              if (onSuccess) {
+                onSuccess(s3Key);
+              }
+              setFiles((prevFiles) => [
+                ...prevFiles,
+                { s3Key, filename: file.name, size: file.size },
+              ]);
+              hideMessage();
+            } catch (error) {
+              message.error('Failed to upload the file');
+              if (onError) {
+                onError(new Error());
+                removeFile(fileS3Key);
+              }
+            } finally {
+              hideMessage && hideMessage();
+              setLoading(false);
+            }
+          }}
+        >
+          <Button size="small" icon={<PaperClipOutlined />}>
+            Attach files
+          </Button>
+        </Upload>
+      </Col>
+      <Col span={24}>
+        <Button
+          htmlType="submit"
+          loading={loading}
+          onClick={submitComment}
+          type="primary"
+          disabled={files.length === 0 && !commentValue}
+        >
+          Add Comment
+        </Button>
+      </Col>
+    </Row>
+  );
+};
+
+export const TransactionDetails: React.FC<Props> = ({ transaction, onTransactionUpdate }) => {
+  const { user } = useAuth0();
+  const api = useApi();
+  const currentUserId = user?.sub;
+  const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
+  const handleCommentAdded = useCallback(
+    (newComment: TransactionComment) => {
+      onTransactionUpdate({
+        ...transaction,
+        comments: [...(transaction.comments || []), newComment],
+      });
+    },
+    [onTransactionUpdate, transaction],
+  );
+  const handleDeleteComment = useCallback(
+    async (transactionId: string, commentId: string) => {
+      setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
+      await api.deleteTransactionsTransactionIdCommentsCommentId({
+        transactionId,
+        commentId,
+      });
+      setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
+      onTransactionUpdate({
+        ...transaction,
+        comments: (transaction.comments || []).filter((comment) => comment.id !== commentId),
+      });
+      message.success('Comment deleted');
+    },
+    [api, onTransactionUpdate, transaction],
+  );
+  return (
+    <>
+      <ProDescriptions size="small" column={1} colon={false}>
+        <ProDescriptions.Item label={<b>Transaction ID:</b>} valueType="text">
+          {transaction.transactionId}
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label={<b>Timestamp:</b>} valueType="dateTime">
+          {transaction.timestamp}
+        </ProDescriptions.Item>
+        <ProDescriptions.Item
+          label={
+            <Divider orientation="left" orientationMargin="0">
+              Sender
+            </Divider>
+          }
+          className={styles.verticalDetailsItem}
+        >
+          <ProDescriptions size="small" column={1}>
+            <ProDescriptions.Item label="User ID" valueType="text">
+              {transaction.senderUserId}
             </ProDescriptions.Item>
-          )}
-          {transaction.promotionCodeUsed !== undefined && (
-            <ProDescriptions.Item label="Promotino Code Used" valueType="text">
-              {String(transaction.promotionCodeUsed)}
+            <ProDescriptions.Item label="Amount" valueType="text">
+              {transaction.sendingAmountDetails?.transactionAmount}
             </ProDescriptions.Item>
-          )}
-          {transaction.reference && (
-            <ProDescriptions.Item label="Reference" valueType="text">
-              {transaction.reference}
+            <ProDescriptions.Item label="Currency" valueType="text">
+              {transaction.sendingAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
-          )}
-          {transaction.deviceData && (
+            <ProDescriptions.Item label="Country" valueType="text">
+              {transaction.sendingAmountDetails?.country}
+            </ProDescriptions.Item>
             <ProDescriptions.Item
-              label="Device Data"
+              label="Payment Details"
               valueType="jsonCode"
               className={styles.verticalDetailsItem}
             >
-              {JSON.stringify(transaction.deviceData)}
+              {JSON.stringify(transaction.senderPaymentDetails)}
             </ProDescriptions.Item>
-          )}
-          {transaction.tags && transaction.tags.length > 0 && (
-            <ProDescriptions.Item label="Tags">
-              <span>
-                {transaction.tags.map((tag: TransactionTag) => (
-                  <Tag color={'cyan'}>
-                    <span>
-                      {tag.key}: <span style={{ fontWeight: 700 }}>{tag.value}</span>
-                    </span>
-                  </Tag>
-                ))}
-              </span>
+          </ProDescriptions>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item
+          label={
+            <Divider orientation="left" orientationMargin="0">
+              Receiver
+            </Divider>
+          }
+          className={styles.verticalDetailsItem}
+        >
+          <ProDescriptions size="small" column={1}>
+            <ProDescriptions.Item label="User ID" valueType="text">
+              {transaction.receiverUserId}
             </ProDescriptions.Item>
+            <ProDescriptions.Item label="Amount" valueType="text">
+              {transaction.receivingAmountDetails?.transactionAmount}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="Currency" valueType="text">
+              {transaction.receivingAmountDetails?.transactionCurrency}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="Country" valueType="text">
+              {transaction.receivingAmountDetails?.country}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item
+              label="Payment Details"
+              valueType="jsonCode"
+              className={styles.verticalDetailsItem}
+            >
+              {JSON.stringify(transaction.receiverPaymentDetails)}
+            </ProDescriptions.Item>
+          </ProDescriptions>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item
+          label={
+            <Divider orientation="left" orientationMargin="0">
+              Metadata
+            </Divider>
+          }
+          className={styles.verticalDetailsItem}
+        >
+          <ProDescriptions size="small" column={1}>
+            {transaction.productType && (
+              <ProDescriptions.Item label="Product Type" valueType="text">
+                {transaction.productType}
+              </ProDescriptions.Item>
+            )}
+            {transaction.promotionCodeUsed !== undefined && (
+              <ProDescriptions.Item label="Promotino Code Used" valueType="text">
+                {String(transaction.promotionCodeUsed)}
+              </ProDescriptions.Item>
+            )}
+            {transaction.reference && (
+              <ProDescriptions.Item label="Reference" valueType="text">
+                {transaction.reference}
+              </ProDescriptions.Item>
+            )}
+            {transaction.deviceData && (
+              <ProDescriptions.Item
+                label="Device Data"
+                valueType="jsonCode"
+                className={styles.verticalDetailsItem}
+              >
+                {JSON.stringify(transaction.deviceData)}
+              </ProDescriptions.Item>
+            )}
+            {transaction.tags && transaction.tags.length > 0 && (
+              <ProDescriptions.Item label="Tags">
+                <span>
+                  {transaction.tags.map((tag: TransactionTag, index) => (
+                    <Tag color={'cyan'} key={index}>
+                      <span>
+                        {tag.key}: <span style={{ fontWeight: 700 }}>{tag.value}</span>
+                      </span>
+                    </Tag>
+                  ))}
+                </span>
+              </ProDescriptions.Item>
+            )}
+          </ProDescriptions>
+        </ProDescriptions.Item>
+      </ProDescriptions>
+      {/* Comments */}
+      <Divider orientation="left" orientationMargin="0">
+        {`Comments (${transaction.comments?.length || 0})`}
+      </Divider>
+      {transaction.comments && transaction.comments?.length > 0 && (
+        <List
+          dataSource={transaction.comments}
+          itemLayout="horizontal"
+          renderItem={(comment) => (
+            <Comment
+              actions={
+                currentUserId === comment.userId
+                  ? [
+                      deletingCommentIds.includes(comment.id!) ? (
+                        <span>Deleting...</span>
+                      ) : (
+                        <Tooltip key="delete" title="Delete">
+                          <span
+                            onClick={() =>
+                              deletingCommentIds.length === 0 &&
+                              handleDeleteComment(transaction.transactionId!, comment.id!)
+                            }
+                          >
+                            Delete
+                          </span>
+                        </Tooltip>
+                      ),
+                    ]
+                  : undefined
+              }
+              content={
+                <>
+                  <div className={styles.commentBody}>{comment.body}</div>
+                  {comment.files && (
+                    <>
+                      {comment.files.map((file) => (
+                        <Row align="middle" key={file.s3Key}>
+                          <Space>
+                            <PaperClipOutlined />
+                            <a href={file.downloadLink}>{file.filename}</a>
+                            {`(${filesize(file.size)})`}
+                          </Space>
+                        </Row>
+                      ))}
+                    </>
+                  )}
+                </>
+              }
+              datetime={comment.createdAt && new Date(comment.createdAt).toDateString()}
+              // TODO: Replace user ID with actual user name
+              author={comment.userId}
+            />
           )}
-        </ProDescriptions>
-      </ProDescriptions.Item>
-    </ProDescriptions>
+        />
+      )}
+      <Comment
+        avatar={<Avatar src={user?.picture} />}
+        content={
+          <CommentEditor
+            transactionId={transaction.transactionId!}
+            onCommentAdded={handleCommentAdded}
+          />
+        }
+      />
+    </>
   );
 };

@@ -5,17 +5,20 @@ import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
-import { ImportRequestTypeEnum, TransactionWithRulesResult, Tag as TransactionTag } from '@/apis';
+import { ImportRequestTypeEnum, TransactionCaseManagement } from '@/apis';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import { useApi } from '@/api';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TransactionWithRulesResult>();
+  const [currentRow, setCurrentRow] = useState<TransactionCaseManagement>();
+  const [updatedTransactions, setUpdatedTransactions] = useState<{
+    [key: string]: TransactionCaseManagement;
+  }>({});
   const api = useApi();
 
-  const columns: ProColumns<TransactionWithRulesResult>[] = [
+  const columns: ProColumns<TransactionCaseManagement>[] = [
     {
       title: 'Transaction ID',
       dataIndex: 'transactionId',
@@ -111,7 +114,7 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer>
-      <ProTable<TransactionWithRulesResult>
+      <ProTable<TransactionCaseManagement>
         headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="transactionId"
@@ -135,7 +138,7 @@ const TableList: React.FC = () => {
         toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.Transaction} />]}
       />
       <Drawer
-        width={600}
+        width={700}
         visible={showDetail}
         onClose={() => {
           setCurrentRow(undefined);
@@ -143,7 +146,17 @@ const TableList: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.transactionId && <TransactionDetails transaction={currentRow} />}
+        {currentRow?.transactionId && (
+          <TransactionDetails
+            transaction={updatedTransactions[currentRow.transactionId] || currentRow}
+            onTransactionUpdate={(newTransaction) =>
+              setUpdatedTransactions((prev) => ({
+                ...prev,
+                [newTransaction.transactionId!]: newTransaction,
+              }))
+            }
+          />
+        )}
       </Drawer>
     </PageContainer>
   );
