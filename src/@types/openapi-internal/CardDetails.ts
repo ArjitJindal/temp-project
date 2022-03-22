@@ -15,7 +15,7 @@ import { ConsumerName } from './ConsumerName'
  * Model for credit or debit card details
  */
 export class CardDetails {
-  'method'?: string
+  'method': string
   /**
    * Unique card fingerprint that helps identify a specific card without having to use explicit card number. This is likely available at your card payment scheme provider
    */

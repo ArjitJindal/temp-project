@@ -113,10 +113,10 @@ paths:
                   type: TRANSACTION
                   format: flagright
                   s3Key: s3-key-in-a-bucket
-  /import/getPresignedUrl:
+  /files/getPresignedUrl:
     parameters: []
     post:
-      summary: Import - Get Presigned URL
+      summary: Files - Get Presigned URL
       operationId: post-getPresignedUrl
       responses:
         '200':
@@ -267,7 +267,7 @@ paths:
               type: object
               properties: {}
     parameters: []
-  /transactions/comments:
+  '/transactions/{transactionId}/comments':
     post:
       summary: Create a Transaction Comment
       operationId: post-transactions-comments
@@ -282,7 +282,31 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionCommentRequest'
+              $ref: '#/components/schemas/Comment'
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+  '/transactions/{transactionId}/comments/{commentId}':
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: commentId
+        in: path
+        required: true
+    delete:
+      summary: ''
+      operationId: delete-transactions-transactionId-comments-commentId
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
     RuleInstance:
@@ -459,24 +483,31 @@ components:
         files:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/FileInfo'
         createdAt:
           type: number
         updatedAt:
           type: number
       required:
         - body
-    TransactionCommentRequest:
-      title: TransactionCommentRequest
+    FileInfo:
+      title: FileInfo
       type: object
       properties:
-        transactionId:
+        s3Key:
           type: string
-        comment:
-          $ref: '#/components/schemas/Comment'
+        bucket:
+          type: string
+        filename:
+          type: string
+        size:
+          type: number
+        downloadLink:
+          type: string
       required:
-        - transactionId
-        - comment
+        - s3Key
+        - filename
+        - size
   securitySchemes:
     Authorization:
       type: http

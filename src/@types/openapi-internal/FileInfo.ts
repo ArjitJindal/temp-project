@@ -10,10 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { Comment } from './Comment'
-export class TransactionCommentRequest {
-  'transactionId': string
-  'comment': Comment
+export class FileInfo {
+  's3Key': string
+  'bucket'?: string
+  'filename': string
+  'size': number
+  'downloadLink'?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,21 +26,39 @@ export class TransactionCommentRequest {
     format: string
   }> = [
     {
-      name: 'transactionId',
-      baseName: 'transactionId',
+      name: 's3Key',
+      baseName: 's3Key',
       type: 'string',
       format: '',
     },
     {
-      name: 'comment',
-      baseName: 'comment',
-      type: 'Comment',
+      name: 'bucket',
+      baseName: 'bucket',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'filename',
+      baseName: 'filename',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'size',
+      baseName: 'size',
+      type: 'number',
+      format: '',
+    },
+    {
+      name: 'downloadLink',
+      baseName: 'downloadLink',
+      type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionCommentRequest.attributeTypeMap
+    return FileInfo.attributeTypeMap
   }
 
   public constructor() {}

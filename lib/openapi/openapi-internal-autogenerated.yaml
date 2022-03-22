@@ -271,10 +271,10 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
-  /import/getPresignedUrl:
+  /files/getPresignedUrl:
     parameters: []
     post:
-      summary: Import - Get Presigned URL
+      summary: Files - Get Presigned URL
       operationId: post-getPresignedUrl
       responses:
         '200':
@@ -641,7 +641,7 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
-  /transactions/comments:
+  /transactions/{transactionId}/comments:
     post:
       summary: Create a Transaction Comment
       operationId: post-transactions-comments
@@ -656,12 +656,72 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionCommentRequest'
+              $ref: '#/components/schemas/Comment'
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsCommentsFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /transactions/{transactionId}/comments/{commentId}:
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: commentId
+        in: path
+        required: true
+    delete:
+      summary: ''
+      operationId: delete-transactions-transactionId-comments-commentId
+      responses:
+        '200':
+          description: OK
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -868,24 +928,31 @@ components:
         files:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/FileInfo'
         createdAt:
           type: number
         updatedAt:
           type: number
       required:
         - body
-    TransactionCommentRequest:
-      title: TransactionCommentRequest
+    FileInfo:
+      title: FileInfo
       type: object
       properties:
-        transactionId:
+        s3Key:
           type: string
-        comment:
-          $ref: '#/components/schemas/Comment'
+        bucket:
+          type: string
+        filename:
+          type: string
+        size:
+          type: number
+        downloadLink:
+          type: string
       required:
-        - transactionId
-        - comment
+        - s3Key
+        - filename
+        - size
     Address:
       title: Address
       required:
@@ -1412,6 +1479,7 @@ components:
       properties:
         method:
           type: string
+          pattern: CARD
         cardFingerprint:
           minLength: 1
           type: string
@@ -1433,6 +1501,7 @@ components:
         nameOnCard:
           $ref: '#/components/schemas/ConsumerName'
       required:
+        - method
         - cardFingerprint
         - cardIssuedCountry
     IBANDetails:
@@ -1454,9 +1523,27 @@ components:
           tags:
             - key: customKey
               value: customValue
+      x-examples:
+        example-1:
+          method: IBAN
+          bankIdentifierType: IBAN
+          bankIdentifier: DE761234561
+          bankName: Merryl Lynch
+          accountNumber: '1234321'
+          bankAddress:
+            addressLines:
+              - Klara-Franke Str 20
+            postcode: '10557'
+            city: Berlin
+            state: Berlin
+            country: Germany
+            tags:
+              - key: customKey
+                value: customValue
       properties:
         method:
           type: string
+          pattern: IBAN
         BIC:
           minLength: 1
           type: string
@@ -1482,23 +1569,6 @@ components:
         - method
         - BIC
         - IBAN
-      x-examples:
-        example-1:
-          method: IBAN
-          bankIdentifierType: IBAN
-          bankIdentifier: DE761234561
-          bankName: Merryl Lynch
-          accountNumber: '1234321'
-          bankAddress:
-            addressLines:
-              - Klara-Franke Str 20
-            postcode: '10557'
-            city: Berlin
-            state: Berlin
-            country: Germany
-            tags:
-              - key: customKey
-                value: customValue
     DeviceData:
       title: DeviceData
       type: object
@@ -2260,6 +2330,7 @@ components:
       properties:
         method:
           type: string
+          pattern: ACH
         routingNumber:
           type: string
           minLength: 1
@@ -2270,9 +2341,7 @@ components:
           type: string
           minLength: 1
         name:
-          oneOf:
-            - $ref: '#/components/schemas/ConsumerName'
-            - type: string
+          $ref: '#/components/schemas/ConsumerName'
         bankAddress:
           $ref: '#/components/schemas/Address'
       required:
@@ -2292,6 +2361,7 @@ components:
       properties:
         method:
           type: string
+          pattern: UPI
         upiID:
           type: string
           minLength: 1

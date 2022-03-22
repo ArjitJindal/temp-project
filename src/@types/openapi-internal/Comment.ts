@@ -10,11 +10,12 @@
  * Do not edit the class manually.
  */
 
+import { FileInfo } from './FileInfo'
 export class Comment {
   'id'?: string
   'body': string
   'userId'?: string
-  'files'?: Array<string>
+  'files'?: Array<FileInfo>
   'createdAt'?: number
   'updatedAt'?: number
 
@@ -47,7 +48,7 @@ export class Comment {
     {
       name: 'files',
       baseName: 'files',
-      type: 'Array<string>',
+      type: 'Array<FileInfo>',
       format: '',
     },
     {

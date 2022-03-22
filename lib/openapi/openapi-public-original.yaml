@@ -1011,6 +1011,7 @@ components:
       properties:
         method:
           type: string
+          pattern: CARD
         cardFingerprint:
           minLength: 1
           type: string
@@ -1032,6 +1033,7 @@ components:
         nameOnCard:
           $ref: '#/components/schemas/ConsumerName'
       required:
+        - method
         - cardFingerprint
         - cardIssuedCountry
     IBANDetails:
@@ -1053,9 +1055,27 @@ components:
           tags:
             - key: customKey
               value: customValue
+      x-examples:
+        example-1:
+          method: IBAN
+          bankIdentifierType: IBAN
+          bankIdentifier: DE761234561
+          bankName: Merryl Lynch
+          accountNumber: '1234321'
+          bankAddress:
+            addressLines:
+              - Klara-Franke Str 20
+            postcode: '10557'
+            city: Berlin
+            state: Berlin
+            country: Germany
+            tags:
+              - key: customKey
+                value: customValue
       properties:
         method:
           type: string
+          pattern: IBAN
         BIC:
           minLength: 1
           type: string
@@ -1081,23 +1101,6 @@ components:
         - method
         - BIC
         - IBAN
-      x-examples:
-        example-1:
-          method: IBAN
-          bankIdentifierType: IBAN
-          bankIdentifier: DE761234561
-          bankName: Merryl Lynch
-          accountNumber: '1234321'
-          bankAddress:
-            addressLines:
-              - Klara-Franke Str 20
-            postcode: '10557'
-            city: Berlin
-            state: Berlin
-            country: Germany
-            tags:
-              - key: customKey
-                value: customValue
     DeviceData:
       title: DeviceData
       type: object
@@ -1859,6 +1862,7 @@ components:
       properties:
         method:
           type: string
+          pattern: ACH
         routingNumber:
           type: string
           minLength: 1
@@ -1869,9 +1873,7 @@ components:
           type: string
           minLength: 1
         name:
-          oneOf:
-            - $ref: '#/components/schemas/ConsumerName'
-            - type: string
+          $ref: '#/components/schemas/ConsumerName'
         bankAddress:
           $ref: '#/components/schemas/Address'
       required:
@@ -1891,6 +1893,7 @@ components:
       properties:
         method:
           type: string
+          pattern: UPI
         upiID:
           type: string
           minLength: 1

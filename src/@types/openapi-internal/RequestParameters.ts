@@ -17,6 +17,7 @@ import { ContactDetails1 } from './ContactDetails1'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
+import { FileInfo } from './FileInfo'
 import { IBANDetails } from './IBANDetails'
 import { ImportRequest } from './ImportRequest'
 import { ImportResponse } from './ImportResponse'
@@ -33,7 +34,6 @@ import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagement } from './TransactionCaseManagement'
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
-import { TransactionCommentRequest } from './TransactionCommentRequest'
 import { TransactionLimits } from './TransactionLimits'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
@@ -50,6 +50,21 @@ export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApideleteRuleInstancesRuleInstanceId
    */
   ruleInstanceId: string
+}
+
+export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteTransactionsTransactionIdCommentsCommentId
+   */
+  transactionId: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteTransactionsTransactionIdCommentsCommentId
+   */
+  commentId: string
 }
 
 export interface DefaultApiGetBusinessUsersListRequest {
@@ -189,10 +204,16 @@ export interface DefaultApiPostRuleInstancesRequest {
 export interface DefaultApiPostTransactionsCommentsRequest {
   /**
    *
-   * @type TransactionCommentRequest
+   * @type string
    * @memberof DefaultApipostTransactionsComments
    */
-  TransactionCommentRequest?: TransactionCommentRequest
+  transactionId: string
+  /**
+   *
+   * @type Comment
+   * @memberof DefaultApipostTransactionsComments
+   */
+  Comment?: Comment
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

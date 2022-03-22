@@ -17,7 +17,7 @@ export class ACHDetails {
   'routingNumber': string
   'accountNumber': string
   'bankName'?: string
-  'name'?: ConsumerName | string
+  'name'?: ConsumerName
   'bankAddress'?: Address
 
   static readonly discriminator: string | undefined = undefined
@@ -55,7 +55,7 @@ export class ACHDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName | string',
+      type: 'ConsumerName',
       format: '',
     },
     {
