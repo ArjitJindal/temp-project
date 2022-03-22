@@ -24,6 +24,27 @@ When switching between branches, the local `umi` caches can wreck the build. In 
 yarn clear
 ```
 
+## Console API
+
+### SDK Generation
+
+1. `yarn openapi:fetch` - follow the instructions to update `config/openapi.yaml`
+2. `yarn openapi:build` - generates API SDK and models under `src/apis/`
+
+_NOTE: DO NOT manually modify the files under `src/apis/` as they are auto-generated (exceptions for now: `models/Transaciont.ts`, `models/TransactionWithRulesResult.ts`, `models/TransactionCaseManagement.ts`)_
+
+### API Usage
+
+In a react component, use the API hook to call the APIs.
+
+Example:
+
+```typescript
+import { useApi } from '@/api';
+const api = useApi();
+const response = await api.getTransactionsList();
+```
+
 ## Provided Scripts
 
 Ant Design provides some useful script to help you quick start and build with web project, code style check and test.
