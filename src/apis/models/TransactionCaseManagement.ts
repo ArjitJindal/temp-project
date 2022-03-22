@@ -25,12 +25,25 @@ import {
   CardDetailsFromJSONTyped,
   CardDetailsToJSON,
 } from './CardDetails';
+import { Comment, CommentFromJSON, CommentFromJSONTyped, CommentToJSON } from './Comment';
 import {
   DeviceData,
   DeviceDataFromJSON,
   DeviceDataFromJSONTyped,
   DeviceDataToJSON,
 } from './DeviceData';
+import {
+  ExecutedRulesResult,
+  ExecutedRulesResultFromJSON,
+  ExecutedRulesResultFromJSONTyped,
+  ExecutedRulesResultToJSON,
+} from './ExecutedRulesResult';
+import {
+  FailedRulesResult,
+  FailedRulesResultFromJSON,
+  FailedRulesResultFromJSONTyped,
+  FailedRulesResultToJSON,
+} from './FailedRulesResult';
 import {
   IBANDetails,
   IBANDetailsFromJSON,
@@ -45,6 +58,18 @@ import {
   TransactionAmountDetailsToJSON,
 } from './TransactionAmountDetails';
 import {
+  TransactionCaseManagementAllOf,
+  TransactionCaseManagementAllOfFromJSON,
+  TransactionCaseManagementAllOfFromJSONTyped,
+  TransactionCaseManagementAllOfToJSON,
+} from './TransactionCaseManagementAllOf';
+import {
+  TransactionWithRulesResult,
+  TransactionWithRulesResultFromJSON,
+  TransactionWithRulesResultFromJSONTyped,
+  TransactionWithRulesResultToJSON,
+} from './TransactionWithRulesResult';
+import {
   UPIDetails,
   UPIDetailsFromJSON,
   UPIDetailsFromJSONTyped,
@@ -52,96 +77,117 @@ import {
 } from './UPIDetails';
 
 /**
- * Model for transaction payload
+ *
  * @export
- * @interface Transaction
+ * @interface TransactionCaseManagement
  */
-export interface Transaction {
+export interface TransactionCaseManagement {
   /**
    * Unique transaction identifier
    * @type {string}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   transactionId?: string;
   /**
    *
    * @type {number}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   timestamp: number;
   /**
    *
    * @type {string}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   senderUserId?: string;
   /**
    *
    * @type {string}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   receiverUserId?: string;
   /**
    *
    * @type {TransactionAmountDetails}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   sendingAmountDetails?: TransactionAmountDetails;
   /**
    *
    * @type {TransactionAmountDetails}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   receivingAmountDetails?: TransactionAmountDetails;
   /**
    *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   senderPaymentDetails: CardDetails | IBANDetails | ACHDetails | UPIDetails | null;
   /**
    *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   receiverPaymentDetails: CardDetails | IBANDetails | ACHDetails | UPIDetails | null;
   /**
    * Type of produce being used by the consumer (ex wallets, payments etc)
    * @type {string}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   productType?: string;
   /**
    * Whether a promotion code was used or not the transaction
    * @type {boolean}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   promotionCodeUsed?: boolean;
   /**
    * Reference field for the transaction indicating the purpose of the transaction etc.
    * @type {string}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   reference?: string;
   /**
    *
    * @type {DeviceData}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   deviceData?: DeviceData;
   /**
    * Additional information that can be added via tags
    * @type {Array<Tag>}
-   * @memberof Transaction
+   * @memberof TransactionCaseManagement
    */
   tags?: Array<Tag>;
+  /**
+   *
+   * @type {Array<ExecutedRulesResult>}
+   * @memberof TransactionCaseManagement
+   */
+  executedRules: Array<ExecutedRulesResult>;
+  /**
+   *
+   * @type {Array<FailedRulesResult>}
+   * @memberof TransactionCaseManagement
+   */
+  failedRules: Array<FailedRulesResult>;
+  /**
+   *
+   * @type {Array<Comment>}
+   * @memberof TransactionCaseManagement
+   */
+  comments?: Array<Comment>;
 }
 
-export function TransactionFromJSON(json: any): Transaction {
-  return TransactionFromJSONTyped(json, false);
+export function TransactionCaseManagementFromJSON(json: any): TransactionCaseManagement {
+  return TransactionCaseManagementFromJSONTyped(json, false);
 }
 
-export function TransactionFromJSONTyped(json: any, ignoreDiscriminator: boolean): Transaction {
+export function TransactionCaseManagementFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): TransactionCaseManagement {
   if (json === undefined || json === null) {
     return json;
   }
@@ -182,10 +228,15 @@ export function TransactionFromJSONTyped(json: any, ignoreDiscriminator: boolean
     reference: !exists(json, 'reference') ? undefined : json['reference'],
     deviceData: !exists(json, 'deviceData') ? undefined : DeviceDataFromJSON(json['deviceData']),
     tags: !exists(json, 'tags') ? undefined : (json['tags'] as Array<any>).map(TagFromJSON),
+    executedRules: (json['executedRules'] as Array<any>).map(ExecutedRulesResultFromJSON),
+    failedRules: (json['failedRules'] as Array<any>).map(FailedRulesResultFromJSON),
+    comments: !exists(json, 'comments')
+      ? undefined
+      : (json['comments'] as Array<any>).map(CommentFromJSON),
   };
 }
 
-export function TransactionToJSON(value?: Transaction | null): any {
+export function TransactionCaseManagementToJSON(value?: TransactionCaseManagement | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -225,5 +276,9 @@ export function TransactionToJSON(value?: Transaction | null): any {
     reference: value.reference,
     deviceData: DeviceDataToJSON(value.deviceData),
     tags: value.tags === undefined ? undefined : (value.tags as Array<any>).map(TagToJSON),
+    executedRules: (value.executedRules as Array<any>).map(ExecutedRulesResultToJSON),
+    failedRules: (value.failedRules as Array<any>).map(FailedRulesResultToJSON),
+    comments:
+      value.comments === undefined ? undefined : (value.comments as Array<any>).map(CommentToJSON),
   };
 }

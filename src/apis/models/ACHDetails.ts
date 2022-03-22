@@ -53,10 +53,10 @@ export interface ACHDetails {
   bankName?: string;
   /**
    *
-   * @type {ConsumerName | string}
+   * @type {ConsumerName}
    * @memberof ACHDetails
    */
-  name?: ConsumerName | string | null;
+  name?: ConsumerName;
   /**
    *
    * @type {Address}
@@ -78,7 +78,7 @@ export function ACHDetailsFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     routingNumber: json['routingNumber'],
     accountNumber: json['accountNumber'],
     bankName: !exists(json, 'bankName') ? undefined : json['bankName'],
-    name: !exists(json, 'name') ? undefined : ConsumerName | stringFromJSON(json['name']),
+    name: !exists(json, 'name') ? undefined : ConsumerNameFromJSON(json['name']),
     bankAddress: !exists(json, 'bankAddress') ? undefined : AddressFromJSON(json['bankAddress']),
   };
 }
@@ -95,7 +95,7 @@ export function ACHDetailsToJSON(value?: ACHDetails | null): any {
     routingNumber: value.routingNumber,
     accountNumber: value.accountNumber,
     bankName: value.bankName,
-    name: ConsumerName | stringToJSON(value.name),
+    name: ConsumerNameToJSON(value.name),
     bankAddress: AddressToJSON(value.bankAddress),
   };
 }

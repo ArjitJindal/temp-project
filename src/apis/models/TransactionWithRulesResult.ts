@@ -195,28 +195,25 @@ export function TransactionWithRulesResultFromJSONTyped(
     receivingAmountDetails: !exists(json, 'receivingAmountDetails')
       ? undefined
       : TransactionAmountDetailsFromJSON(json['receivingAmountDetails']),
-    // This part is manually edited as openapi-generator cannot deal with the union type
-    // properly yet.
+    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
-      json['senderPaymentDetails']['method'] === 'IBAN'
-        ? IBANDetailsFromJSON(json['senderPaymentDetails'])
-        : json['senderPaymentDetails']['method'] === 'CARD'
+      json['senderPaymentDetails'].method === 'CARD'
         ? CardDetailsFromJSON(json['senderPaymentDetails'])
-        : json['senderPaymentDetails']['method'] === 'ACH'
+        : json['senderPaymentDetails'].method === 'IBAN'
+        ? IBANDetailsFromJSON(json['senderPaymentDetails'])
+        : json['senderPaymentDetails'].method === 'ACH'
         ? ACHDetailsFromJSON(json['senderPaymentDetails'])
-        : json['senderPaymentDetails']['method'] === 'UPI'
+        : json['senderPaymentDetails'].method === 'UPI'
         ? UPIDetailsFromJSON(json['senderPaymentDetails'])
         : null,
-    // This part is manually edited as openapi-generator cannot deal with the union type
-    // properly yet.
     receiverPaymentDetails:
-      json['receiverPaymentDetails']['method'] === 'IBAN'
-        ? IBANDetailsFromJSON(json['receiverPaymentDetails'])
-        : json['receiverPaymentDetails']['method'] === 'CARD'
+      json['receiverPaymentDetails'].method === 'CARD'
         ? CardDetailsFromJSON(json['receiverPaymentDetails'])
-        : json['receiverPaymentDetails']['method'] === 'ACH'
+        : json['receiverPaymentDetails'].method === 'IBAN'
+        ? IBANDetailsFromJSON(json['receiverPaymentDetails'])
+        : json['receiverPaymentDetails'].method === 'ACH'
         ? ACHDetailsFromJSON(json['receiverPaymentDetails'])
-        : json['receiverPaymentDetails']['method'] === 'UPI'
+        : json['receiverPaymentDetails'].method === 'UPI'
         ? UPIDetailsFromJSON(json['receiverPaymentDetails'])
         : null,
     productType: !exists(json, 'productType') ? undefined : json['productType'],
@@ -243,25 +240,22 @@ export function TransactionWithRulesResultToJSON(value?: TransactionWithRulesRes
     receiverUserId: value.receiverUserId,
     sendingAmountDetails: TransactionAmountDetailsToJSON(value.sendingAmountDetails),
     receivingAmountDetails: TransactionAmountDetailsToJSON(value.receivingAmountDetails),
-    // This part is manually edited as openapi-generator cannot deal with the union type
-    // properly yet.
+    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
-      value.senderPaymentDetails?.method === 'IBAN'
-        ? IBANDetailsToJSON(value.senderPaymentDetails as IBANDetails)
-        : value.senderPaymentDetails?.method === 'CARD'
+      value.senderPaymentDetails?.method === 'CARD'
         ? CardDetailsToJSON(value.senderPaymentDetails as CardDetails)
+        : value.senderPaymentDetails?.method === 'IBAN'
+        ? IBANDetailsToJSON(value.senderPaymentDetails as IBANDetails)
         : value.senderPaymentDetails?.method === 'ACH'
         ? ACHDetailsToJSON(value.senderPaymentDetails as ACHDetails)
         : value.senderPaymentDetails?.method === 'UPI'
         ? UPIDetailsToJSON(value.senderPaymentDetails as UPIDetails)
         : null,
-    // This part is manually edited as openapi-generator cannot deal with the union type
-    // properly yet.
     receiverPaymentDetails:
-      value.receiverPaymentDetails?.method === 'IBAN'
-        ? IBANDetailsToJSON(value.receiverPaymentDetails as IBANDetails)
-        : value.receiverPaymentDetails?.method === 'CARD'
+      value.receiverPaymentDetails?.method === 'CARD'
         ? CardDetailsToJSON(value.receiverPaymentDetails as CardDetails)
+        : value.receiverPaymentDetails?.method === 'IBAN'
+        ? IBANDetailsToJSON(value.receiverPaymentDetails as IBANDetails)
         : value.receiverPaymentDetails?.method === 'ACH'
         ? ACHDetailsToJSON(value.receiverPaymentDetails as ACHDetails)
         : value.receiverPaymentDetails?.method === 'UPI'

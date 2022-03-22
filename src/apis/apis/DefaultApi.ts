@@ -14,6 +14,12 @@
 
 import * as runtime from '../runtime';
 import {
+  Comment,
+  CommentFromJSON,
+  CommentToJSON,
+  ConsumerUsersListResponse,
+  ConsumerUsersListResponseFromJSON,
+  ConsumerUsersListResponseToJSON,
   ImportRequest,
   ImportRequestFromJSON,
   ImportRequestToJSON,
@@ -38,6 +44,30 @@ export interface DeleteRuleInstancesRuleInstanceIdRequest {
   ruleInstanceId: string;
 }
 
+export interface DeleteTransactionsTransactionIdCommentsCommentIdRequest {
+  transactionId: string;
+  commentId: string;
+}
+
+export interface GetBusinessUsersListRequest {
+  limit: number;
+  skip: number;
+  beforeTimestamp: number;
+}
+
+export interface GetConsumerUsersListRequest {
+  limit: number;
+  skip: number;
+  beforeTimestamp: number;
+}
+
+export interface GetDashboardStatsTransactionsRequest {
+  category: number;
+  timeframe: number;
+  fromTimestamp?: string;
+  body?: object;
+}
+
 export interface GetTransactionsListRequest {
   limit: number;
   skip: number;
@@ -59,6 +89,11 @@ export interface PostListsRequest {
 
 export interface PostRuleInstancesRequest {
   ruleInstance?: RuleInstance;
+}
+
+export interface PostTransactionsCommentsRequest {
+  transactionId: string;
+  comment?: Comment;
 }
 
 export interface PutRuleInstancesRuleInstanceIdRequest {
@@ -115,6 +150,270 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<void> {
     await this.deleteRuleInstancesRuleInstanceIdRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   */
+  async deleteTransactionsTransactionIdCommentsCommentIdRaw(
+    requestParameters: DeleteTransactionsTransactionIdCommentsCommentIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.transactionId === null || requestParameters.transactionId === undefined) {
+      throw new runtime.RequiredError(
+        'transactionId',
+        'Required parameter requestParameters.transactionId was null or undefined when calling deleteTransactionsTransactionIdCommentsCommentId.',
+      );
+    }
+
+    if (requestParameters.commentId === null || requestParameters.commentId === undefined) {
+      throw new runtime.RequiredError(
+        'commentId',
+        'Required parameter requestParameters.commentId was null or undefined when calling deleteTransactionsTransactionIdCommentsCommentId.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/transactions/{transactionId}/comments/{commentId}`
+          .replace(
+            `{${'transactionId'}}`,
+            encodeURIComponent(String(requestParameters.transactionId)),
+          )
+          .replace(`{${'commentId'}}`, encodeURIComponent(String(requestParameters.commentId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   */
+  async deleteTransactionsTransactionIdCommentsCommentId(
+    requestParameters: DeleteTransactionsTransactionIdCommentsCommentIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<void> {
+    await this.deleteTransactionsTransactionIdCommentsCommentIdRaw(
+      requestParameters,
+      initOverrides,
+    );
+  }
+
+  /**
+   * Business Users - List
+   */
+  async getBusinessUsersListRaw(
+    requestParameters: GetBusinessUsersListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<ConsumerUsersListResponse>> {
+    if (requestParameters.limit === null || requestParameters.limit === undefined) {
+      throw new runtime.RequiredError(
+        'limit',
+        'Required parameter requestParameters.limit was null or undefined when calling getBusinessUsersList.',
+      );
+    }
+
+    if (requestParameters.skip === null || requestParameters.skip === undefined) {
+      throw new runtime.RequiredError(
+        'skip',
+        'Required parameter requestParameters.skip was null or undefined when calling getBusinessUsersList.',
+      );
+    }
+
+    if (
+      requestParameters.beforeTimestamp === null ||
+      requestParameters.beforeTimestamp === undefined
+    ) {
+      throw new runtime.RequiredError(
+        'beforeTimestamp',
+        'Required parameter requestParameters.beforeTimestamp was null or undefined when calling getBusinessUsersList.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.skip !== undefined) {
+      queryParameters['skip'] = requestParameters.skip;
+    }
+
+    if (requestParameters.beforeTimestamp !== undefined) {
+      queryParameters['beforeTimestamp'] = requestParameters.beforeTimestamp;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/business/users`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ConsumerUsersListResponseFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * Business Users - List
+   */
+  async getBusinessUsersList(
+    requestParameters: GetBusinessUsersListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<ConsumerUsersListResponse> {
+    const response = await this.getBusinessUsersListRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Consumer Users - List
+   */
+  async getConsumerUsersListRaw(
+    requestParameters: GetConsumerUsersListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<ConsumerUsersListResponse>> {
+    if (requestParameters.limit === null || requestParameters.limit === undefined) {
+      throw new runtime.RequiredError(
+        'limit',
+        'Required parameter requestParameters.limit was null or undefined when calling getConsumerUsersList.',
+      );
+    }
+
+    if (requestParameters.skip === null || requestParameters.skip === undefined) {
+      throw new runtime.RequiredError(
+        'skip',
+        'Required parameter requestParameters.skip was null or undefined when calling getConsumerUsersList.',
+      );
+    }
+
+    if (
+      requestParameters.beforeTimestamp === null ||
+      requestParameters.beforeTimestamp === undefined
+    ) {
+      throw new runtime.RequiredError(
+        'beforeTimestamp',
+        'Required parameter requestParameters.beforeTimestamp was null or undefined when calling getConsumerUsersList.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.limit !== undefined) {
+      queryParameters['limit'] = requestParameters.limit;
+    }
+
+    if (requestParameters.skip !== undefined) {
+      queryParameters['skip'] = requestParameters.skip;
+    }
+
+    if (requestParameters.beforeTimestamp !== undefined) {
+      queryParameters['beforeTimestamp'] = requestParameters.beforeTimestamp;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/consumer/users`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ConsumerUsersListResponseFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * Consumer Users - List
+   */
+  async getConsumerUsersList(
+    requestParameters: GetConsumerUsersListRequest,
+    initOverrides?: RequestInit,
+  ): Promise<ConsumerUsersListResponse> {
+    const response = await this.getConsumerUsersListRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * DashboardStats - Transactions
+   */
+  async getDashboardStatsTransactionsRaw(
+    requestParameters: GetDashboardStatsTransactionsRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<Set<object>>> {
+    if (requestParameters.category === null || requestParameters.category === undefined) {
+      throw new runtime.RequiredError(
+        'category',
+        'Required parameter requestParameters.category was null or undefined when calling getDashboardStatsTransactions.',
+      );
+    }
+
+    if (requestParameters.timeframe === null || requestParameters.timeframe === undefined) {
+      throw new runtime.RequiredError(
+        'timeframe',
+        'Required parameter requestParameters.timeframe was null or undefined when calling getDashboardStatsTransactions.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.category !== undefined) {
+      queryParameters['category'] = requestParameters.category;
+    }
+
+    if (requestParameters.timeframe !== undefined) {
+      queryParameters['timeframe'] = requestParameters.timeframe;
+    }
+
+    if (requestParameters.fromTimestamp !== undefined) {
+      queryParameters['fromTimestamp'] = requestParameters.fromTimestamp;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/dashboard_stats/transactions`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters.body as any,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<any>(response);
+  }
+
+  /**
+   * DashboardStats - Transactions
+   */
+  async getDashboardStatsTransactions(
+    requestParameters: GetDashboardStatsTransactionsRequest,
+    initOverrides?: RequestInit,
+  ): Promise<Set<object>> {
+    const response = await this.getDashboardStatsTransactionsRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**
@@ -236,7 +535,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    * Get a presigned URL for uploading a file
-   * Import - Get Presigned URL
+   * Files - Get Presigned URL
    */
   async postGetPresignedUrlRaw(
     initOverrides?: RequestInit,
@@ -247,7 +546,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const response = await this.request(
       {
-        path: `/import/getPresignedUrl`,
+        path: `/files/getPresignedUrl`,
         method: 'POST',
         headers: headerParameters,
         query: queryParameters,
@@ -262,7 +561,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    * Get a presigned URL for uploading a file
-   * Import - Get Presigned URL
+   * Files - Get Presigned URL
    */
   async postGetPresignedUrl(initOverrides?: RequestInit): Promise<PresignedUrlResponse> {
     const response = await this.postGetPresignedUrlRaw(initOverrides);
@@ -376,6 +675,54 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<RuleInstance> {
     const response = await this.postRuleInstancesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Create a Transaction Comment
+   */
+  async postTransactionsCommentsRaw(
+    requestParameters: PostTransactionsCommentsRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<Comment>> {
+    if (requestParameters.transactionId === null || requestParameters.transactionId === undefined) {
+      throw new runtime.RequiredError(
+        'transactionId',
+        'Required parameter requestParameters.transactionId was null or undefined when calling postTransactionsComments.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/transactions/{transactionId}/comments`.replace(
+          `{${'transactionId'}}`,
+          encodeURIComponent(String(requestParameters.transactionId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: CommentToJSON(requestParameters.comment),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => CommentFromJSON(jsonValue));
+  }
+
+  /**
+   * Create a Transaction Comment
+   */
+  async postTransactionsComments(
+    requestParameters: PostTransactionsCommentsRequest,
+    initOverrides?: RequestInit,
+  ): Promise<Comment> {
+    const response = await this.postTransactionsCommentsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

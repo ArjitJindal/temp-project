@@ -14,11 +14,11 @@
 
 import { exists, mapValues } from '../runtime';
 import {
-  TransactionWithRulesResult,
-  TransactionWithRulesResultFromJSON,
-  TransactionWithRulesResultFromJSONTyped,
-  TransactionWithRulesResultToJSON,
-} from './TransactionWithRulesResult';
+  TransactionCaseManagement,
+  TransactionCaseManagementFromJSON,
+  TransactionCaseManagementFromJSONTyped,
+  TransactionCaseManagementToJSON,
+} from './TransactionCaseManagement';
 
 /**
  *
@@ -34,10 +34,10 @@ export interface TransactionsListResponse {
   total: number;
   /**
    *
-   * @type {Array<TransactionWithRulesResult>}
+   * @type {Array<TransactionCaseManagement>}
    * @memberof TransactionsListResponse
    */
-  data: Array<TransactionWithRulesResult>;
+  data: Array<TransactionCaseManagement>;
 }
 
 export function TransactionsListResponseFromJSON(json: any): TransactionsListResponse {
@@ -53,7 +53,7 @@ export function TransactionsListResponseFromJSONTyped(
   }
   return {
     total: json['total'],
-    data: (json['data'] as Array<any>).map(TransactionWithRulesResultFromJSON),
+    data: (json['data'] as Array<any>).map(TransactionCaseManagementFromJSON),
   };
 }
 
@@ -66,6 +66,6 @@ export function TransactionsListResponseToJSON(value?: TransactionsListResponse 
   }
   return {
     total: value.total,
-    data: (value.data as Array<any>).map(TransactionWithRulesResultToJSON),
+    data: (value.data as Array<any>).map(TransactionCaseManagementToJSON),
   };
 }
