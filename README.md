@@ -21,7 +21,7 @@ yarn
 When switching between branches, the local `umi` caches can wreck the build. In order to clean the cache, run:
 
 ```bash
-npm run clean-cache
+yarn clean-cache
 ```
 
 ## Provided Scripts
