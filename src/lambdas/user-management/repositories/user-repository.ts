@@ -35,7 +35,7 @@ export class UserRepository {
       USERS_COLLECTION(this.tenantId)
     )
     const query = {
-      timestamp: { $lte: pagination.beforeTimestamp },
+      createdTimestamp: { $lte: pagination.beforeTimestamp },
       type: userType,
     }
     const users = await collection
