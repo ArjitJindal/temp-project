@@ -42,6 +42,7 @@ import {
   FileImportConfig,
   GetPresignedUrlConfig,
 } from '../src/lambdas/file-import/app'
+import { TransactionViewConfig } from '../src/lambdas/phytoplankton-internal-api-handlers/app'
 import {
   TarponStackConstants,
   getResourceName,
@@ -172,12 +173,24 @@ export class CdkTarponStack extends cdk.Stack {
       autoDeleteObjects: config.stage === 'dev',
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
-    const importTmpBucketName = getS3BucketName(
-      TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX,
+    const documentBucketName = getS3BucketName(
+      TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX,
       config.stage
     )
-    const s3ImportTmpBucket = new s3.Bucket(this, importTmpBucketName, {
-      bucketName: importTmpBucketName,
+    const s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
+      bucketName: documentBucketName,
+      cors: s3BucketCors,
+      removalPolicy:
+        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      autoDeleteObjects: config.stage === 'dev',
+      encryption: s3.BucketEncryption.S3_MANAGED,
+    })
+    const tmpBucketName = getS3BucketName(
+      TarponStackConstants.S3_TMP_BUCKET_PREFIX,
+      config.stage
+    )
+    const s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
+      bucketName: tmpBucketName,
       cors: s3BucketCors,
       removalPolicy:
         config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
@@ -275,13 +288,13 @@ export class CdkTarponStack extends cdk.Stack {
       {
         environment: {
           IMPORT_BUCKET: importBucketName,
-          IMPORT_TMP_BUCKET: importTmpBucketName,
+          TMP_BUCKET: tmpBucketName,
         } as FileImportConfig,
         timeout: Duration.minutes(15),
       }
     )
     dynamoDbTable.grantReadWriteData(fileImportFunction)
-    s3ImportTmpBucket.grantRead(fileImportFunction)
+    s3TmpBucket.grantRead(fileImportFunction)
     s3ImportBucket.grantWrite(fileImportFunction)
 
     const getPresignedUrlFunction = this.createFunction(
@@ -291,11 +304,11 @@ export class CdkTarponStack extends cdk.Stack {
       undefined,
       {
         environment: {
-          IMPORT_TMP_BUCKET: importTmpBucketName,
+          TMP_BUCKET: tmpBucketName,
         } as GetPresignedUrlConfig,
       }
     )
-    s3ImportTmpBucket.grantPut(getPresignedUrlFunction)
+    s3TmpBucket.grantPut(getPresignedUrlFunction)
 
     /* Rule Instance */
     const ruleInstanceFunction = this.createFunction(
@@ -311,9 +324,20 @@ export class CdkTarponStack extends cdk.Stack {
       'app.transactionsViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      {
+        ...docDbFunctionProps,
+        environment: {
+          ...docDbFunctionProps.environment,
+          ...({
+            TMP_BUCKET: tmpBucketName,
+            DOCUMENT_BUCKET: documentBucketName,
+          } as TransactionViewConfig),
+        },
+      }
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+    s3TmpBucket.grantRead(transactionsViewFunction)
+    s3DocumentBucket.grantWrite(transactionsViewFunction)
     transactionsViewFunction.role?.attachInlinePolicy(
       new Policy(
         this,

@@ -1,6 +1,6 @@
 export const event = {
   resource: '/transactions',
-  path: '/import/getPresignedUrl',
+  path: '/files/getPresignedUrl',
   httpMethod: 'POST',
   headers: {},
   requestContext: {

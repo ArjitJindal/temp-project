@@ -16,7 +16,7 @@ import { Importer } from './importer'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
-  IMPORT_TMP_BUCKET: string
+  TMP_BUCKET: string
 }
 
 export const fileImportHandler = lambdaApi()(
@@ -25,7 +25,7 @@ export const fileImportHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ): Promise<ImportResponse> => {
-    const { IMPORT_TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
+    const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
     const { principalId: tenantId, tenantName } =
       event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
@@ -38,7 +38,7 @@ export const fileImportHandler = lambdaApi()(
         tenantName,
         dynamoDb,
         s3,
-        IMPORT_TMP_BUCKET,
+        TMP_BUCKET,
         IMPORT_BUCKET
       )
       if (importRequest.type === 'TRANSACTION') {
@@ -61,7 +61,7 @@ export const fileImportHandler = lambdaApi()(
 )
 
 export type GetPresignedUrlConfig = {
-  IMPORT_TMP_BUCKET: string
+  TMP_BUCKET: string
 }
 
 export const getPresignedUrlHandler = lambdaApi()(
@@ -70,13 +70,13 @@ export const getPresignedUrlHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ): Promise<PresignedUrlResponse> => {
-    const { IMPORT_TMP_BUCKET } = process.env as GetPresignedUrlConfig
+    const { TMP_BUCKET } = process.env as GetPresignedUrlConfig
     const { principalId: tenantId } = event.requestContext.authorizer
     const s3 = getS3Client(event)
 
     const s3Key = `${tenantId}/${uuidv4()}`
     const bucketParams = {
-      Bucket: IMPORT_TMP_BUCKET,
+      Bucket: TMP_BUCKET,
       Key: s3Key,
       Expires: 3600,
     }

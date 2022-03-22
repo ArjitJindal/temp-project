@@ -4,11 +4,8 @@ import {
 } from 'aws-lambda'
 import { RuleInstanceQueryStringParameters } from '../rules-engine/app'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 import { RuleRepository } from '../rules-engine/repositories/rule-repository'
-import { connectToDB } from '../../utils/docDBUtils'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
-import { TransactionsListResponse } from '../../@types/openapi-internal/TransactionsListResponse'
 import { BusinessUsersListResponse } from '../../@types/openapi-internal/BusinessUsersListResponse'
 import { ConsumerUsersListResponse } from '../../@types/openapi-internal/ConsumerUsersListResponse'
 import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
@@ -17,24 +14,63 @@ import {
   UserType,
 } from '../user-management/repositories/user-repository'
 
+import { JWTAuthorizerResult } from '../jwt-authorizer/app'
+import { getS3Client } from '../../utils/s3'
+import { Comment } from '../../@types/openapi-internal/Comment'
+import { connectToDB } from '../../utils/docDBUtils'
+import { TransactionService } from './services/transaction-service'
+
+export type TransactionViewConfig = {
+  TMP_BUCKET: string
+  DOCUMENT_BUCKET: string
+}
+
 export const transactionsViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
-  ): Promise<TransactionsListResponse> => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
-    const params: DefaultApiGetTransactionsListRequest = {
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      beforeTimestamp: parseInt(beforeTimestamp),
+  ) => {
+    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as TransactionViewConfig
+    const s3 = getS3Client(event)
+    const transactionService = new TransactionService(
+      tenantId,
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
+    if (event.httpMethod === 'GET' && event.path === '/transactions') {
+      const { limit, skip, beforeTimestamp } =
+        event.queryStringParameters as any
+      const params: DefaultApiGetTransactionsListRequest = {
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        beforeTimestamp: parseInt(beforeTimestamp),
+      }
+      return transactionService.getTransactions(params)
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.pathParameters?.transactionId &&
+      event.body
+    ) {
+      const comment = JSON.parse(event.body) as Comment
+      return transactionService.saveTransactionComment(
+        event.pathParameters.transactionId,
+        { ...comment, userId }
+      )
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.pathParameters?.transactionId &&
+      event.pathParameters?.commentId
+    ) {
+      return transactionService.deleteTransactionComment(
+        event.pathParameters.transactionId,
+        event.pathParameters.commentId
+      )
     }
-    const client = await connectToDB()
-    const transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb: client,
-    })
-    return transactionRepository.getTransactions(params)
+
+    throw new Error('Unhandled request')
   }
 )
 

@@ -12,11 +12,12 @@ import mkdirp from 'mkdirp'
 import { TarponStackConstants } from './lib/constants'
 
 async function setUpMockS3() {
+  await mkdirp(`/tmp/flagright/s3/${TarponStackConstants.S3_TMP_BUCKET_PREFIX}`)
   await mkdirp(
-    `/tmp/flagright/s3/${TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX}`
+    `/tmp/flagright/s3/${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}`
   )
   await mkdirp(
-    `/tmp/.flagright/s3/${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}`
+    `/tmp/flagright/s3/${TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX}`
   )
 }
 
@@ -62,6 +63,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').consumerUsersViewHandler(
       require('./events/view-consumer-users').event
     ),
+  'create-transaction-comment': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+      require('./events/create-transaction-comment').event
+    ),
   'verify-transaction': () =>
     require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
@@ -76,8 +81,9 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     ),
   'import-transaction': async () => {
     process.env['MOCK_S3'] = 'true'
-    process.env['IMPORT_TMP_BUCKET'] = 'tarpon-import-tmp'
+    process.env['TMP_BUCKET'] = 'tarpon-tmp'
     process.env['IMPORT_BUCKET'] = 'tarpon-import'
+    process.env['DOCUMENT_BUCKET'] = 'tarpon-document'
     await setUpMockS3()
     return require('./src/lambdas/file-import/app').fileImportHandler(
       require('./events/import-transaction').event

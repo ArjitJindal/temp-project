@@ -9,6 +9,8 @@ import { ExecutedRulesResult } from '../../../@types/openapi-public/ExecutedRule
 import { FailedRulesResult } from '../../../@types/openapi-public/FailedRulesResult'
 import { TransactionWithRulesResult } from '../../../@types/openapi-public/TransactionWithRulesResult'
 import { TRANSACIONS_COLLECTION } from '../../../utils/docDBUtils'
+import { Comment } from '../../../@types/openapi-internal/Comment'
+import { TransactionCaseManagement } from '../../../@types/openapi-internal/TransactionCaseManagement'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -30,9 +32,9 @@ export class TransactionRepository {
   public async getTransactions(
     // TOOD: Add filtering and sorting
     pagination: { limit: number; skip: number; beforeTimestamp: number }
-  ): Promise<{ total: number; data: TransactionWithRulesResult[] }> {
+  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionWithRulesResult>(
+    const collection = db.collection<TransactionCaseManagement>(
       TRANSACIONS_COLLECTION(this.tenantId)
     )
     const query = {
@@ -110,6 +112,58 @@ export class TransactionRepository {
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
     return transactionId
+  }
+
+  public async saveTransactionComment(
+    transactionId: string,
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+    const commentToSave: Comment = {
+      ...comment,
+      id: uuidv4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    await collection.updateOne(
+      {
+        transactionId,
+      },
+      {
+        $push: { comments: commentToSave },
+      }
+    )
+    return commentToSave
+  }
+
+  public async deleteTransactionComment(
+    transactionId: string,
+    commentId: string
+  ) {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne(
+      {
+        transactionId,
+      },
+      {
+        $pull: { comments: { id: commentId } },
+      }
+    )
+  }
+  public async getTransactionCaseManagementById(
+    transactionId: string
+  ): Promise<TransactionCaseManagement | null> {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+    return collection.findOne<TransactionCaseManagement>({ transactionId })
   }
 
   public async getTransactionById(

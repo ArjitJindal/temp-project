@@ -22,6 +22,7 @@ export const localDev =
       event.requestContext.authorizer = {
         principalId: 'test',
         tenantName: 'test',
+        userId: 'test',
         ...authorizer,
       }
     }

@@ -16,7 +16,8 @@ export const TarponStackConstants = {
   ),
   JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceName('JwtAuthorizerBaseRole'),
   S3_IMPORT_BUCKET_PREFIX: getResourceName('import', true),
-  S3_IMPORT_TMP_BUCKET_PREFIX: getResourceName('import-tmp', true),
+  S3_DOCUMENT_BUCKET_PREFIX: getResourceName('document', true),
+  S3_TMP_BUCKET_PREFIX: getResourceName('tmp', true),
 
   // Lambda names
   API_KEY_AUTHORIZER_FUNCTION_NAME: getResourceName('ApiKeyAuthorizerFunction'),

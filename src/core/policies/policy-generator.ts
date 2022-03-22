@@ -35,7 +35,8 @@ export default class PolicyBuilder {
       Effect: 'Allow',
       Resource: [
         `arn:aws:s3:::${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}*/${this.tenantId}/*`,
-        `arn:aws:s3:::${TarponStackConstants.S3_IMPORT_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${TarponStackConstants.S3_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
       ],
     })
     return this
