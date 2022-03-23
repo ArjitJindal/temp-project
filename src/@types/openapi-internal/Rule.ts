@@ -16,6 +16,7 @@ export class Rule {
   'description': string
   'parametersSchema': any
   'defaultParameters': any
+  'defaultAction': RuleDefaultActionEnum
   'ruleImplementationFilename': string
   'createdAt'?: number
   'updatedAt'?: number
@@ -59,6 +60,12 @@ export class Rule {
       format: '',
     },
     {
+      name: 'defaultAction',
+      baseName: 'defaultAction',
+      type: 'RuleDefaultActionEnum',
+      format: '',
+    },
+    {
       name: 'ruleImplementationFilename',
       baseName: 'ruleImplementationFilename',
       type: 'string',
@@ -84,3 +91,5 @@ export class Rule {
 
   public constructor() {}
 }
+
+export type RuleDefaultActionEnum = 'FLAG' | 'BLOCK' | 'WHITELIST' | 'ALLOW'

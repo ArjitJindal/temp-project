@@ -6,15 +6,18 @@ import {
 import { Transaction } from '../../@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '../../@types/openapi-public/TransactionMonitoringResult'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { RuleActionEnum, RuleParameters } from '../../@types/rule/rule-instance'
+import { RuleParameters } from '../../@types/rule/rule-instance'
 import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../@types/openapi-public/FailedRulesResult'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
+import { RuleDefaultActionEnum } from '../../@types/openapi-internal/Rule'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 import { RuleError } from './rules/errors'
+
+const DEFAULT_RULE_ACTION: RuleDefaultActionEnum = 'ALLOW'
 
 const ruleAscendingComparator = (
   rule1: ExecutedRulesResult | FailedRulesResult,
@@ -47,7 +50,7 @@ export async function verifyTransaction(
           ruleId: ruleInstance.ruleId,
           ruleName: displayName,
           ruleDescription: description,
-          ruleAction: ruleResult?.action || RuleActionEnum.ALLOW,
+          ruleAction: ruleResult?.action || DEFAULT_RULE_ACTION,
           ruleHit: ruleResult !== undefined,
         }
       } catch (e) {

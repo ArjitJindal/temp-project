@@ -1,8 +1,5 @@
-export enum RuleActionEnum {
-  ALLOW = 'ALLOW',
-  FLAG = 'FLAG',
-  BLOCK = 'BLOCK',
-}
+import { RuleDefaultActionEnum } from '../openapi-internal/Rule'
+
 export type RuleParameters = {
-  action: RuleActionEnum
+  action: RuleDefaultActionEnum
 }
