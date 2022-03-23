@@ -9,6 +9,8 @@ import { Link } from 'umi';
 import { customerUsers, businessUsers } from './service';
 import type { CustomerUsersListItem, BusinessUsersListItem, TableListPagination } from './data.d';
 import { tableListDataSource } from './_transactionsMock';
+import { useApi } from '@/api';
+import { User } from '@/apis';
 
 function createUserTransactions() {
   return Array.from(Array(10).keys()).map(() => {
@@ -158,8 +160,11 @@ const BusinessUsersTab: React.FC = () => {
 const ConsumerUsersTab: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<CustomerUsersListItem>();
-  const columns: ProColumns<CustomerUsersListItem>[] = [
+  const [currentRow, setCurrentRow] = useState<User>();
+
+  const api = useApi();
+
+  const columns: ProColumns<User>[] = [
     {
       title: 'User ID',
       dataIndex: 'userId',
@@ -179,22 +184,30 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Name',
-      dataIndex: 'name',
+      render: (dom, entity) => {
+        return `${entity.userDetails?.name.firstName} ${entity.userDetails?.name.middleName} ${entity.userDetails?.name.lastName}`;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Age',
-      dataIndex: 'age',
+      render: (dom, entity) => {
+        return entity.userDetails?.age;
+      },
       valueType: 'digit',
     },
     {
       title: 'Country of residence',
-      dataIndex: 'countryOfResidence',
+      render: (dom, entity) => {
+        return entity.userDetails?.countryOfResidence;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Country of nationality',
-      dataIndex: 'countryOfNationality',
+      render: (dom, entity) => {
+        return entity.userDetails?.countryOfNationality;
+      },
       valueType: 'textarea',
     },
     {
@@ -202,39 +215,57 @@ const ConsumerUsersTab: React.FC = () => {
       dataIndex: 'tags',
       hideInForm: true,
       render: (tags: any) => {
-        return (
-          <span>
-            <Tag color={'cyan'}>
-              {tags?.map((tag: any) => {
-                const key = Object.keys(tag)[0];
-                return (
-                  <span>
-                    {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
-                  </span>
-                );
-              })}
-            </Tag>
-          </span>
-        );
+        if (tags instanceof Array) {
+          console.log(`TAGZ`);
+          console.log(tags);
+          return (
+            <span>
+              <Tag color={'cyan'}>
+                {tags?.map((tag: any) => {
+                  const key = Object.keys(tag)[0];
+                  return (
+                    <span>
+                      {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
+                    </span>
+                  );
+                })}
+              </Tag>
+            </span>
+          );
+        }
       },
     },
     {
       title: 'Created time',
       sorter: true,
-      dataIndex: 'createdAt',
+      dataIndex: 'createdTimestamp',
       valueType: 'dateTime',
     },
   ];
   return (
     <>
-      <ProTable<CustomerUsersListItem, TableListPagination>
+      <ProTable<User, TableListPagination>
         headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
         search={{
           labelWidth: 120,
         }}
-        request={customerUsers}
+        request={async (params) => {
+          const response = await api.getConsumerUsersList({
+            limit: params.pageSize!,
+            skip: (params.current! - 1) * params.pageSize!,
+            beforeTimestamp: Date.now(),
+          });
+
+          console.log(`LOGGING BIATCHE: `);
+          console.log(JSON.stringify(response.data));
+          return {
+            data: response.data,
+            success: true,
+            total: response.total,
+          };
+        }}
         columns={columns}
       />
       <Drawer
@@ -246,18 +277,18 @@ const ConsumerUsersTab: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.name && (
+        {currentRow?.userDetails.name && (
           <>
-            <ProDescriptions<CustomerUsersListItem>
+            <ProDescriptions<User>
               column={2}
-              title={currentRow?.name}
+              title={`${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`}
               request={async () => ({
                 data: currentRow || {},
               })}
               params={{
-                id: currentRow?.name,
+                id: `${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`,
               }}
-              columns={columns as ProDescriptionsItemProps<CustomerUsersListItem>[]}
+              columns={columns as ProDescriptionsItemProps<User>[]}
             />
             Transaction History:
             <Table
