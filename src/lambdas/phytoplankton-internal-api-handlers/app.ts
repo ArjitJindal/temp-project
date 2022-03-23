@@ -176,7 +176,17 @@ export const ruleHandler = lambdaApi()(
       event.body
     ) {
       const rule = JSON.parse(event.body) as Rule
-      return ruleService.createRule(rule)
+      return ruleService.createOrUpdateRule(rule)
+    } else if (
+      event.httpMethod === 'PUT' &&
+      event.pathParameters?.ruleId &&
+      event.body
+    ) {
+      const rule = JSON.parse(event.body) as Rule
+      return ruleService.createOrUpdateRule({
+        ...rule,
+        id: event.pathParameters?.ruleId,
+      })
     }
 
     throw new Error('Unhandled request')

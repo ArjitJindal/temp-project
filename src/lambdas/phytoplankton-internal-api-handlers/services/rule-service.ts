@@ -15,7 +15,7 @@ export class RuleService {
     return this.ruleRepository.getRules()
   }
 
-  async createRule(rule: Rule): Promise<Rule> {
+  async createOrUpdateRule(rule: Rule): Promise<Rule> {
     let validate: ValidateFunction
     try {
       validate = ajv.compile(rule.parametersSchema)

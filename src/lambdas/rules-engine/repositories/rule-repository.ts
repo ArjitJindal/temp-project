@@ -47,28 +47,24 @@ export class RuleRepository {
     )
   }
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    const isNewRule = rule.id === undefined
-    const existingRules = await this.getRules()
-
+    const existingRules = (await this.getRules()).filter(
+      (existingRule) => existingRule.id !== rule.id
+    )
     const lastRuleId =
       _.last(existingRules.map((existingRule) => existingRule.id).sort()) ||
       'R-0'
     const newIdNumber = parseInt(lastRuleId.split(RULE_ID_PREFIX)[1])
-
-    if (isNewRule) {
-      const existingRuleImplementationFilenames = new Set(
-        existingRules
-          .map((existingRule) => existingRule.ruleImplementationFilename)
-          .filter(Boolean)
+    const existingRuleImplementationFilenames = new Set(
+      existingRules
+        .map((existingRule) => existingRule.ruleImplementationFilename)
+        .filter(Boolean)
+    )
+    if (
+      existingRuleImplementationFilenames.has(rule.ruleImplementationFilename)
+    ) {
+      throw new Error(
+        `Another rule with implementation '${rule.ruleImplementationFilename}' already exists`
       )
-      if (
-        existingRuleImplementationFilenames.has(rule.ruleImplementationFilename)
-      ) {
-        throw new Error(
-          `Cannot create a new rule with implementation '${rule.ruleImplementationFilename}',` +
-            ' because the implementation is already used by an existing rule'
-        )
-      }
     }
 
     const ruleId = rule.id || `${RULE_ID_PREFIX}${newIdNumber + 1}`
