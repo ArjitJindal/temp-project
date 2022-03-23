@@ -1,3 +1,5 @@
+import { RuleInstance } from '../src/@types/openapi-internal/RuleInstance'
+
 export const event = {
   resource: '/rule_instances',
   path: '/rule_instances',
@@ -11,5 +13,5 @@ export const event = {
     ruleId: 'R-2',
     status: 'ACTIVE',
     parameters: { initialTransactions: 5 },
-  }),
+  } as RuleInstance),
 }

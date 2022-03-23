@@ -2,9 +2,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { RuleInstanceQueryStringParameters } from '../rules-engine/app'
 import { getDynamoDbClient } from '../../utils/dynamodb'
-import { RuleRepository } from '../rules-engine/repositories/rule-repository'
+import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { BusinessUsersListResponse } from '../../@types/openapi-internal/BusinessUsersListResponse'
 import { ConsumerUsersListResponse } from '../../@types/openapi-internal/ConsumerUsersListResponse'
@@ -18,8 +17,11 @@ import { JWTAuthorizerResult } from '../jwt-authorizer/app'
 import { getS3Client } from '../../utils/s3'
 import { Comment } from '../../@types/openapi-internal/Comment'
 import { connectToDB } from '../../utils/docDBUtils'
-import { TransactionService } from './services/transaction-service'
 import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
+import { RuleRepository } from '../rules-engine/repositories/rule-repository'
+import { Rule } from '../../@types/openapi-internal/Rule'
+import { TransactionService } from './services/transaction-service'
+import { RuleService } from './services/rule-service'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -35,8 +37,12 @@ export const transactionsViewHandler = lambdaApi()(
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as TransactionViewConfig
     const s3 = getS3Client(event)
+    const client = await connectToDB()
+    const transactionRepository = new TransactionRepository(tenantId, {
+      mongoDb: client,
+    })
     const transactionService = new TransactionService(
-      tenantId,
+      transactionRepository,
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
@@ -101,7 +107,7 @@ export const transactionsPerUserViewHandler = lambdaApi()(
 export const dashboardStatsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
     console.log('To be implemented')
@@ -111,7 +117,7 @@ export const dashboardStatsHandler = lambdaApi()(
 export const businessUsersViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ): Promise<BusinessUsersListResponse> => {
     const { principalId: tenantId } = event.requestContext.authorizer
@@ -150,37 +156,66 @@ export const consumerUsersViewHandler = lambdaApi()(
   }
 )
 
+export const ruleHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClient(event)
+    const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
+    const ruleService = new RuleService(ruleRepository)
+
+    if (event.httpMethod === 'GET' && event.path === '/rules') {
+      const rules = await ruleService.getRules()
+      return rules
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.path === '/rules' &&
+      event.body
+    ) {
+      const rule = JSON.parse(event.body) as Rule
+      return ruleService.createRule(rule)
+    }
+
+    throw new Error('Unhandled request')
+  }
+)
+
 export const ruleInstanceHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { tenantId } =
-      event.queryStringParameters as RuleInstanceQueryStringParameters
+    const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
-    const ruleRepository = new RuleRepository(tenantId, dynamoDb)
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
     const ruleInstanceId = event.pathParameters?.id
 
     if (event.httpMethod === 'PUT' && ruleInstanceId) {
       if (!event.body) {
         throw new Error('missing payload!')
       }
-      await ruleRepository.createOrUpdateRuleInstance({
+      await ruleInstanceRepository.createOrUpdateRuleInstance({
         id: ruleInstanceId,
         ...JSON.parse(event.body),
       })
       return 'OK'
     } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
-      await ruleRepository.deleteRuleInstance(ruleInstanceId)
+      await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
       return 'OK'
     } else if (event.httpMethod === 'POST' && !ruleInstanceId) {
       if (!event.body) {
         throw new Error('missing payload!')
       }
-      const newRuleInstance = await ruleRepository.createOrUpdateRuleInstance(
-        JSON.parse(event.body)
-      )
+      const newRuleInstance =
+        await ruleInstanceRepository.createOrUpdateRuleInstance(
+          JSON.parse(event.body)
+        )
       return newRuleInstance
     }
 

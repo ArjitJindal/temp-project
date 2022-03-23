@@ -43,6 +43,14 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/user-management/app').userHandler(
       require('./events/get-user').event
     ),
+  'create-rule': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+      require('./events/create-rule').event
+    ),
+  'get-rules': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+      require('./events/get-rules').event
+    ),
   'create-rule-instance': () =>
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/create-rule-instance').event

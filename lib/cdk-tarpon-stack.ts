@@ -310,13 +310,53 @@ export class CdkTarponStack extends cdk.Stack {
     )
     s3TmpBucket.grantPut(getPresignedUrlFunction)
 
+    /* Rule Template */
+    const ruleFunction = this.createFunction(
+      TarponStackConstants.RULE_FUNCTION_NAME,
+      'app.ruleHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
+    )
+    dynamoDbTable.grantWriteData(ruleFunction)
+    ruleFunction.role?.attachInlinePolicy(
+      new Policy(this, `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`, {
+        policyName: `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`,
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [docDbCluster.secret!.secretFullArn!],
+          }),
+        ],
+      })
+    )
+
     /* Rule Instance */
     const ruleInstanceFunction = this.createFunction(
       TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
       'app.ruleInstanceHandler',
-      'dist/phytoplankton-internal-api-handlers/'
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      docDbFunctionProps
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
+    ruleInstanceFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
 
     /* Transactions view */
     const transactionsViewFunction = this.createFunction(

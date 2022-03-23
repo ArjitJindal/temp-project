@@ -10,6 +10,8 @@ import { TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
   '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+  '/rules': TarponStackConstants.RULE_FUNCTION_NAME,
+  '/rules/{ruleId}': TarponStackConstants.RULE_FUNCTION_NAME,
   '/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
     TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
@@ -103,7 +105,7 @@ for (const path in openapi.paths) {
     }
 
     // TODO: Remove IAM auth after we can configure these in the FDT console
-    if (['/rule_instances', '/apikey'].includes(path)) {
+    if (['/apikey'].includes(path)) {
       methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }
       methodSetting['security'] = [{ sigv4: [] }]
     } else {

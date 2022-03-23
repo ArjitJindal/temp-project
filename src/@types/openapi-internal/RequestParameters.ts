@@ -27,6 +27,7 @@ import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
+import { Rule } from './Rule'
 import { RuleFailureException } from './RuleFailureException'
 import { RuleInstance } from './RuleInstance'
 import { Tag } from './Tag'
@@ -50,6 +51,15 @@ export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApideleteRuleInstancesRuleInstanceId
    */
   ruleInstanceId: string
+}
+
+export interface DefaultApiDeleteRulesRuleIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteRulesRuleId
+   */
+  ruleId: string
 }
 
 export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdRequest {
@@ -135,6 +145,8 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    */
   body?: any
 }
+
+export interface DefaultApiGetRulesRequest {}
 
 export interface DefaultApiGetTransactionsListRequest {
   /**
@@ -228,6 +240,15 @@ export interface DefaultApiPostRuleInstancesRequest {
   RuleInstance?: RuleInstance
 }
 
+export interface DefaultApiPostRulesRequest {
+  /**
+   *
+   * @type Rule
+   * @memberof DefaultApipostRules
+   */
+  Rule?: Rule
+}
+
 export interface DefaultApiPostTransactionsCommentsRequest {
   /**
    *
@@ -256,4 +277,19 @@ export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApiputRuleInstancesRuleInstanceId
    */
   RuleInstance?: RuleInstance
+}
+
+export interface DefaultApiPutRuleRuleIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiputRuleRuleId
+   */
+  ruleId: string
+  /**
+   *
+   * @type Rule
+   * @memberof DefaultApiputRuleRuleId
+   */
+  Rule?: Rule
 }

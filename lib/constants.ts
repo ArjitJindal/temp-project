@@ -25,6 +25,7 @@ export const TarponStackConstants = {
   TRANSACTION_FUNCTION_NAME: getResourceName('TransactionFunction'),
   USER_FUNCTION_NAME: getResourceName('UserFunction'),
   API_KEY_GENERATOR_FUNCTION_NAME: getResourceName('ApiKeyGeneratorFunction'),
+  RULE_FUNCTION_NAME: getResourceName('RuleTemplateFunction'),
   RULE_INSTANCE_FUNCTION_NAME: getResourceName('RuleInstanceFunction'),
   TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceName('TransactionsViewFunction'),
   TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME: getResourceName(

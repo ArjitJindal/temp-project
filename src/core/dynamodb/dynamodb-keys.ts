@@ -10,6 +10,7 @@ import { CardDetails } from '../../@types/openapi-public/CardDetails'
 import { IBANDetails } from '../../@types/openapi-public/IBANDetails'
 import { UPIDetails } from '../../@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '../../@types/tranasction/payment-type'
+import { FLAGRIGHT_TENANT_ID } from '../constants'
 
 const USER_ID_PREFIX = 'user:'
 
@@ -87,6 +88,11 @@ export const DynamoDbKeys = {
   ) => ({
     PartitionKeyID: `${tenantId}#transaction#${USER_ID_PREFIX}${userId}#${direction}`,
     SortKeyID: `${timestamp}`,
+  }),
+  // Attributes: refer to Rule
+  RULE: (ruleId?: string) => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#rule`,
+    SortKeyID: ruleId,
   }),
   // Attributes: refer to RuleInstance
   RULE_INSTANCE: (tenantId: string, ruleInstanceId?: string) => ({

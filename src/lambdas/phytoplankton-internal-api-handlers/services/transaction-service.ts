@@ -3,41 +3,30 @@ import { Comment } from '../../../@types/openapi-internal/Comment'
 import { FileInfo } from '../../../@types/openapi-internal/FileInfo'
 import { DefaultApiGetTransactionsListRequest } from '../../../@types/openapi-internal/RequestParameters'
 import { TransactionsListResponse } from '../../../@types/openapi-internal/TransactionsListResponse'
-import { connectToDB } from '../../../utils/docDBUtils'
 import { TransactionRepository } from '../../rules-engine/repositories/transaction-repository'
 
 export class TransactionService {
-  tenantId: string
-  transactionRepository?: TransactionRepository
+  transactionRepository: TransactionRepository
   s3: AWS.S3
   documentBucketName: string
   tmpBucketName: string
 
   constructor(
-    tenantId: string,
+    transactionRepository: TransactionRepository,
     s3: AWS.S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
-    this.tenantId = tenantId
+    this.transactionRepository = transactionRepository
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
-  }
-  async initialize() {
-    const client = await connectToDB()
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
-      mongoDb: client,
-    })
   }
 
   async getTransactions(
     params: DefaultApiGetTransactionsListRequest
   ): Promise<TransactionsListResponse> {
-    if (!this.transactionRepository) {
-      await this.initialize()
-    }
-    const result = await this.transactionRepository!.getTransactions(params)
+    const result = await this.transactionRepository.getTransactions(params)
     result.data = result.data.map((transaction) => {
       const commentsWithUrl = transaction.comments?.map((comment) => ({
         ...comment,
@@ -52,10 +41,6 @@ export class TransactionService {
   }
 
   async saveTransactionComment(transactionId: string, comment: Comment) {
-    if (!this.transactionRepository) {
-      await this.initialize()
-    }
-
     // Copy the files from tmp bucket to document bucket
     for (const file of comment.files || []) {
       await this.s3
@@ -71,7 +56,7 @@ export class TransactionService {
       bucket: this.documentBucketName,
     }))
     const savedComment =
-      await this.transactionRepository!.saveTransactionComment(transactionId, {
+      await this.transactionRepository.saveTransactionComment(transactionId, {
         ...comment,
         files,
       })
@@ -85,12 +70,8 @@ export class TransactionService {
   }
 
   async deleteTransactionComment(transactionId: string, commentId: string) {
-    if (!this.transactionRepository) {
-      await this.initialize()
-    }
-
     const tranasction =
-      await this.transactionRepository!.getTransactionCaseManagementById(
+      await this.transactionRepository.getTransactionCaseManagementById(
         transactionId
       )
     if (!tranasction) {
@@ -110,7 +91,7 @@ export class TransactionService {
         Delete: { Objects: comment.files.map((file) => ({ Key: file.s3Key })) },
       })
     }
-    await this.transactionRepository!.deleteTransactionComment(
+    await this.transactionRepository.deleteTransactionComment(
       transactionId,
       commentId
     )

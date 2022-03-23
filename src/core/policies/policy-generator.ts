@@ -1,5 +1,6 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
 import { TarponStackConstants } from '../../../lib/constants'
+import { FLAGRIGHT_TENANT_ID } from '../constants'
 
 export default class PolicyBuilder {
   tenantId: string
@@ -22,6 +23,23 @@ export default class PolicyBuilder {
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${this.tenantId}*`],
+        },
+      },
+    })
+    this.statements.push({
+      Sid: 'ReadOnlyAPIActionsOnFlagrightItems',
+      Effect: 'Allow',
+      Action: [
+        'dynamodb:GetItem',
+        'dynamodb:BatchGetItem',
+        'dynamodb:Scan',
+        'dynamodb:Query',
+        'dynamodb:ConditionCheckItem',
+      ],
+      Resource: [`arn:aws:dynamodb:*:*:table/${table}`],
+      Condition: {
+        'ForAllValues:StringLike': {
+          'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],
         },
       },
     })

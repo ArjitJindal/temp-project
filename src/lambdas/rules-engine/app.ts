@@ -11,7 +11,7 @@ import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesRe
 import { FailedRulesResult } from '../../@types/openapi-public/FailedRulesResult'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { Aggregators } from './aggregator'
-import { RuleRepository } from './repositories/rule-repository'
+import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 import { RuleError } from './rules/errors'
@@ -27,11 +27,11 @@ export async function verifyTransaction(
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ): Promise<TransactionMonitoringResult> {
-  const ruleRepository = new RuleRepository(tenantId, dynamoDb)
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dynamoDb)
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
   })
-  const ruleInstances = await ruleRepository.getActiveRuleInstances()
+  const ruleInstances = await ruleInstanceRepository.getActiveRuleInstances()
   const ruleResults = await Promise.all(
     ruleInstances.map(async (ruleInstance) => {
       const rule = new rules[ruleInstance.ruleId](
