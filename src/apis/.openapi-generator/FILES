@@ -30,6 +30,7 @@ models/LegalEntity.ts
 models/ListImportRequest.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
+models/Rule.ts
 models/RuleFailureException.ts
 models/RuleInstance.ts
 models/Tag.ts

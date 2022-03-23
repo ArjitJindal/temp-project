@@ -25,6 +25,77 @@ paths:
           name: usagePlanId
           description: AWS Gateway usage plan ID
       description: Generate a new Tarpon API key for a tenant
+  /rules:
+    get:
+      summary: Rules - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+              examples:
+                example-1:
+                  value:
+                    - id: string
+                      name: string
+                      description: string
+                      parametersSchema:
+                        title: Awesome rule
+                        description: Awesome rule description
+                        type: object
+                        properties:
+                          threshold:
+                            type: number
+                            title: Threshold
+                      defaultParameters:
+                        threshold: 3
+      operationId: get-rules
+      description: ''
+    parameters: []
+    post:
+      summary: Rules - Create
+      operationId: post-rules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+  '/rules/{ruleId}':
+    parameters:
+      - schema:
+          type: string
+        name: ruleId
+        in: path
+        required: true
+    put:
+      summary: Rule - Update
+      operationId: put-rule-ruleId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+    delete:
+      summary: Rule - Delete
+      operationId: delete-rules-ruleId
+      responses:
+        '200':
+          description: OK
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -309,6 +380,33 @@ paths:
           description: OK
 components:
   schemas:
+    Rule:
+      title: Rule
+      type: object
+      x-examples: {}
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parametersSchema:
+          type: object
+        defaultParameters:
+          type: object
+        ruleImplementationFilename:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - name
+        - description
+        - parametersSchema
+        - defaultParameters
+        - ruleImplementationFilename
     RuleInstance:
       title: RuleInstance
       type: object

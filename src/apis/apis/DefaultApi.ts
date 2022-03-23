@@ -35,6 +35,9 @@ import {
   PresignedUrlResponse,
   PresignedUrlResponseFromJSON,
   PresignedUrlResponseToJSON,
+  Rule,
+  RuleFromJSON,
+  RuleToJSON,
   RuleInstance,
   RuleInstanceFromJSON,
   RuleInstanceToJSON,
@@ -45,6 +48,10 @@ import {
 
 export interface DeleteRuleInstancesRuleInstanceIdRequest {
   ruleInstanceId: string;
+}
+
+export interface DeleteRulesRuleIdRequest {
+  ruleId: string;
 }
 
 export interface DeleteTransactionsTransactionIdCommentsCommentIdRequest {
@@ -94,6 +101,10 @@ export interface PostRuleInstancesRequest {
   ruleInstance?: RuleInstance;
 }
 
+export interface PostRulesRequest {
+  rule?: Rule;
+}
+
 export interface PostTransactionsCommentsRequest {
   transactionId: string;
   comment?: Comment;
@@ -102,6 +113,11 @@ export interface PostTransactionsCommentsRequest {
 export interface PutRuleInstancesRuleInstanceIdRequest {
   ruleInstanceId: string;
   ruleInstance?: RuleInstance;
+}
+
+export interface PutRuleRuleIdRequest {
+  ruleId: string;
+  rule?: Rule;
 }
 
 /**
@@ -153,6 +169,50 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<void> {
     await this.deleteRuleInstancesRuleInstanceIdRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Rule - Delete
+   */
+  async deleteRulesRuleIdRaw(
+    requestParameters: DeleteRulesRuleIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.ruleId === null || requestParameters.ruleId === undefined) {
+      throw new runtime.RequiredError(
+        'ruleId',
+        'Required parameter requestParameters.ruleId was null or undefined when calling deleteRulesRuleId.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/rules/{ruleId}`.replace(
+          `{${'ruleId'}}`,
+          encodeURIComponent(String(requestParameters.ruleId)),
+        ),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Rule - Delete
+   */
+  async deleteRulesRuleId(
+    requestParameters: DeleteRulesRuleIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<void> {
+    await this.deleteRulesRuleIdRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -416,6 +476,35 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit,
   ): Promise<Set<object>> {
     const response = await this.getDashboardStatsTransactionsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Rules - List
+   */
+  async getRulesRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<Array<Rule>>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/rules`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RuleFromJSON));
+  }
+
+  /**
+   * Rules - List
+   */
+  async getRules(initOverrides?: RequestInit): Promise<Array<Rule>> {
+    const response = await this.getRulesRaw(initOverrides);
     return await response.value();
   }
 
@@ -685,6 +774,41 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Rules - Create
+   */
+  async postRulesRaw(
+    requestParameters: PostRulesRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<Rule>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/rules`,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: RuleToJSON(requestParameters.rule),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => RuleFromJSON(jsonValue));
+  }
+
+  /**
+   * Rules - Create
+   */
+  async postRules(requestParameters: PostRulesRequest, initOverrides?: RequestInit): Promise<Rule> {
+    const response = await this.postRulesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Create a Transaction Comment
    */
   async postTransactionsCommentsRaw(
@@ -781,5 +905,52 @@ export class DefaultApi extends runtime.BaseAPI {
   ): Promise<RuleInstance> {
     const response = await this.putRuleInstancesRuleInstanceIdRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * Rule - Update
+   */
+  async putRuleRuleIdRaw(
+    requestParameters: PutRuleRuleIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.ruleId === null || requestParameters.ruleId === undefined) {
+      throw new runtime.RequiredError(
+        'ruleId',
+        'Required parameter requestParameters.ruleId was null or undefined when calling putRuleRuleId.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    const response = await this.request(
+      {
+        path: `/rules/{ruleId}`.replace(
+          `{${'ruleId'}}`,
+          encodeURIComponent(String(requestParameters.ruleId)),
+        ),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: RuleToJSON(requestParameters.rule),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Rule - Update
+   */
+  async putRuleRuleId(
+    requestParameters: PutRuleRuleIdRequest,
+    initOverrides?: RequestInit,
+  ): Promise<void> {
+    await this.putRuleRuleIdRaw(requestParameters, initOverrides);
   }
 }

@@ -29,6 +29,7 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
+export * from './Rule';
 export * from './RuleFailureException';
 export * from './RuleInstance';
 export * from './Tag';
