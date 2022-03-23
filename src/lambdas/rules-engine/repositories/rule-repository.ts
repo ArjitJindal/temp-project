@@ -86,4 +86,13 @@ export class RuleRepository {
     await this.dynamoDb.put(putItemInput).promise()
     return newRule
   }
+
+  async deleteRule(ruleId: string): Promise<void> {
+    const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RULE(ruleId),
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    await this.dynamoDb.delete(deleteItemInput).promise()
+  }
 }

@@ -185,8 +185,10 @@ export const ruleHandler = lambdaApi()(
       const rule = JSON.parse(event.body) as Rule
       return ruleService.createOrUpdateRule({
         ...rule,
-        id: event.pathParameters?.ruleId,
+        id: event.pathParameters.ruleId,
       })
+    } else if (event.httpMethod === 'DELETE' && event.pathParameters?.ruleId) {
+      return await ruleService.deleteRule(event.pathParameters.ruleId)
     }
 
     throw new Error('Unhandled request')

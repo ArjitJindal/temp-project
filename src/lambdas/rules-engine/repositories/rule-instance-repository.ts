@@ -51,18 +51,29 @@ export class RuleInstanceRepository {
 
   async getActiveRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
     const status: RuleInstanceStatusEnum = 'ACTIVE'
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      KeyConditionExpression: 'PartitionKeyID = :pk',
+    return this.getRuleInstances({
       FilterExpression: '#status = :status',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
         ':status': status,
       },
       ExpressionAttributeNames: {
         '#status': 'status',
       },
+    })
+  }
+
+  private async getRuleInstances(
+    query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
+  ): Promise<ReadonlyArray<RuleInstance>> {
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      ...query,
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
+      ExpressionAttributeValues: {
+        ...query.ExpressionAttributeValues,
+        ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
+      },
     }
 
     const result = await this.dynamoDb.query(queryInput).promise()

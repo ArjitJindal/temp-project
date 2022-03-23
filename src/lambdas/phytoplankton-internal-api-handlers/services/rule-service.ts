@@ -34,4 +34,9 @@ export class RuleService {
       )
     }
   }
+
+  async deleteRule(ruleId: string): Promise<void> {
+    // TODO: Forbid deleting a rule if there're rule instances associating with it
+    await this.ruleRepository.deleteRule(ruleId)
+  }
 }
