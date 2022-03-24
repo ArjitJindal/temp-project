@@ -12,9 +12,9 @@ export function getDynamoDbClient(
 ): AWS.DynamoDB.DocumentClient {
   const isLocal = process.env.ENV === 'local'
   return new AWS.DynamoDB.DocumentClient({
-    credentials: isLocal
-      ? new AWS.SharedIniFileCredentials()
-      : getCredentialsFromEvent(event),
-    endpoint: isLocal ? 'http://localhost:8000' : undefined,
+    credentials: isLocal ? undefined : getCredentialsFromEvent(event),
+    endpoint: isLocal
+      ? process.env.DYNAMODB_URI || 'http://host.docker.internal:8000'
+      : undefined,
   })
 }
