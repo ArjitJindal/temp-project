@@ -27,5 +27,6 @@ export const event = {
     defaultParameters: {
       threshold: 3,
     } as RuleParameters,
+    defaultAction: 'FLAG',
   } as Rule),
 }

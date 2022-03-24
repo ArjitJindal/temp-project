@@ -82,6 +82,7 @@ export class RuleInstanceRepository {
         id: item.id,
         ruleId: item.ruleId,
         parameters: item.parameters,
+        action: item.action,
         status: item.status,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,

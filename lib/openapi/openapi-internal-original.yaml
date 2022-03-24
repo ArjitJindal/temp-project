@@ -433,12 +433,7 @@ components:
         defaultParameters:
           type: object
         defaultAction:
-          type: string
-          enum:
-            - FLAG
-            - BLOCK
-            - WHITELIST
-            - ALLOW
+          $ref: '#/components/schemas/RuleAction'
         ruleImplementationFilename:
           type: string
         createdAt:
@@ -460,8 +455,14 @@ components:
           type: string
         ruleId:
           type: string
+        ruleName:
+          type: string
+        ruleDescription:
+          type: string
         parameters:
           type: object
+        action:
+          $ref: '#/components/schemas/RuleAction'
         status:
           type: string
           enum:
@@ -478,6 +479,15 @@ components:
       required:
         - ruleId
         - parameters
+        - action
+    RuleAction:
+      type: string
+      title: RuleAction
+      enum:
+        - FLAG
+        - BLOCK
+        - WHITELIST
+        - ALLOW
     ImportRequest:
       title: ImportRequest
       type: object

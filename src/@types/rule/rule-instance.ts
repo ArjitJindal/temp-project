@@ -1,5 +1,5 @@
-import { RuleDefaultActionEnum } from '../openapi-internal/Rule'
+import { RuleAction } from '../openapi-internal/RuleAction'
 
 export type RuleParameters = {
-  action: RuleDefaultActionEnum
+  action: RuleAction
 }

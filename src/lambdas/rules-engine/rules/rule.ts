@@ -1,4 +1,4 @@
-import { RuleDefaultActionEnum } from '../../../@types/openapi-internal/Rule'
+import { RuleAction } from '../../../@types/openapi-internal/RuleAction'
 import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { RuleParameters } from '../../../@types/rule/rule-instance'
 
@@ -10,7 +10,7 @@ export type RuleInfo = {
 }
 
 export type RuleResult = {
-  action: RuleDefaultActionEnum
+  action: RuleAction
 }
 
 export class Rule<P extends RuleParameters = RuleParameters> {

@@ -220,10 +220,7 @@ export const ruleInstanceHandler = lambdaApi()(
     } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
       await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
       return 'OK'
-    } else if (event.httpMethod === 'POST' && !ruleInstanceId) {
-      if (!event.body) {
-        throw new Error('missing payload!')
-      }
+    } else if (event.httpMethod === 'POST' && !ruleInstanceId && event.body) {
       const newRuleInstance =
         await ruleInstanceRepository.createOrUpdateRuleInstance(
           JSON.parse(event.body)

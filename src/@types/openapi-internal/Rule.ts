@@ -10,13 +10,14 @@
  * Do not edit the class manually.
  */
 
+import { RuleAction } from './RuleAction'
 export class Rule {
   'id'?: string
   'name': string
   'description': string
   'parametersSchema': any
   'defaultParameters': any
-  'defaultAction': RuleDefaultActionEnum
+  'defaultAction': RuleAction
   'ruleImplementationFilename': string
   'createdAt'?: number
   'updatedAt'?: number
@@ -62,7 +63,7 @@ export class Rule {
     {
       name: 'defaultAction',
       baseName: 'defaultAction',
-      type: 'RuleDefaultActionEnum',
+      type: 'RuleAction',
       format: '',
     },
     {
@@ -91,5 +92,3 @@ export class Rule {
 
   public constructor() {}
 }
-
-export type RuleDefaultActionEnum = 'FLAG' | 'BLOCK' | 'WHITELIST' | 'ALLOW'

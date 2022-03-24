@@ -10,14 +10,14 @@ import { RuleParameters } from '../../@types/rule/rule-instance'
 import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '../../@types/openapi-public/FailedRulesResult'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
-import { RuleDefaultActionEnum } from '../../@types/openapi-internal/Rule'
+import { RuleAction } from '../../@types/openapi-internal/RuleAction'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 import { RuleError } from './rules/errors'
 
-const DEFAULT_RULE_ACTION: RuleDefaultActionEnum = 'ALLOW'
+const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
 const ruleAscendingComparator = (
   rule1: ExecutedRulesResult | FailedRulesResult,
@@ -129,7 +129,3 @@ export const transactionHandler = lambdaApi()(
     }
   }
 )
-
-export type RuleInstanceQueryStringParameters = {
-  tenantId: string
-}
