@@ -38,22 +38,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Rule'
-              examples:
-                example-1:
-                  value:
-                    - id: string
-                      name: string
-                      description: string
-                      parametersSchema:
-                        title: Awesome rule
-                        description: Awesome rule description
-                        type: object
-                        properties:
-                          threshold:
-                            type: number
-                            title: Threshold
-                      defaultParameters:
-                        threshold: 3
+              examples: {}
       operationId: get-rules
       description: ''
     parameters: []
@@ -383,7 +368,23 @@ components:
     Rule:
       title: Rule
       type: object
-      x-examples: {}
+      x-examples:
+        example-1:
+          id: R-1
+          name: Rule name
+          description: Rule description
+          parametersSchema:
+            type: object
+            properties:
+              threshold:
+                type: number
+                title: Threshold
+          defaultParameters:
+            threshold: 3
+          defaultAction: FLAG
+          ruleImplementationFilename: code-filename
+          createdAt: 0
+          updatedAt: 0
       properties:
         id:
           type: string
@@ -395,6 +396,8 @@ components:
           type: object
         defaultParameters:
           type: object
+        defaultAction:
+          $ref: '#/components/schemas/RuleAction'
         ruleImplementationFilename:
           type: string
         createdAt:
@@ -406,6 +409,7 @@ components:
         - description
         - parametersSchema
         - defaultParameters
+        - defaultAction
         - ruleImplementationFilename
     RuleInstance:
       title: RuleInstance
@@ -417,6 +421,8 @@ components:
           type: string
         parameters:
           type: object
+        action:
+          $ref: '#/components/schemas/RuleAction'
         status:
           type: string
           enum:
@@ -433,6 +439,15 @@ components:
       required:
         - ruleId
         - parameters
+        - action
+    RuleAction:
+      type: string
+      title: RuleAction
+      enum:
+        - FLAG
+        - BLOCK
+        - WHITELIST
+        - ALLOW
     ImportRequest:
       title: ImportRequest
       type: object

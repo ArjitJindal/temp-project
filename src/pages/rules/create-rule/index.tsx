@@ -1,190 +1,57 @@
-import React, { Dispatch, SetStateAction, useRef, useState } from 'react';
-import { FormInstance, Radio, Card, Result, Button, Descriptions, Divider, Alert } from 'antd';
+import React, { useState } from 'react';
+import { Card, Divider, Steps } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import { StepsForm } from '@ant-design/pro-form';
-import type { RuleAction, ThresholdAllowedDataTypes } from '../data.d';
-import type { StepDataType, ThresholdUpdateDataSourceType } from './data.d';
-import { RulesTableSearch, ThresholdUpdateTable } from './components';
+import { RulesTable, RuleParametersEditor } from './components';
 import styles from './style.less';
+import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
+import { Rule } from '@/apis';
 
-const ruleActionOptions = [
-  { label: 'Flag', value: 'flag' },
-  { label: 'Block', value: 'block' },
-  { label: 'Allow', value: 'allow' },
+const STEPS = [
+  {
+    title: 'Choose Rule',
+    description: '',
+  },
+  {
+    title: 'Customize Rule Parameters',
+    description: '',
+  },
+  {
+    title: 'Activate',
+    description: '',
+  },
 ];
 
-const StepDescriptions: React.FC<{
-  stepData: StepDataType;
-  bordered?: boolean;
-}> = ({ stepData, bordered }) => {
-  const { name, ruleId, ruleDescription } = stepData;
-
-  return (
-    <Descriptions column={1} bordered={bordered}>
-      <Descriptions.Item label="Rule Name"> {name}</Descriptions.Item>
-      <Descriptions.Item label="Rule Template ID"> {ruleId}</Descriptions.Item>
-      <Descriptions.Item label="Rule Description"> {ruleDescription}</Descriptions.Item>
-    </Descriptions>
-  );
-};
-
-const StepRuleAction: React.FC<{
-  stepData: StepDataType;
-  ruleAction: RuleAction;
-  setRuleAction: Dispatch<SetStateAction<RuleAction>>;
-  bordered?: boolean;
-}> = ({ stepData, ruleAction, setRuleAction, bordered }) => {
-  return (
-    <>
-      <h3>Rule Action: </h3>
-
-      <Radio.Group
-        options={ruleActionOptions}
-        onChange={(e) => {
-          setRuleAction(e.target.value);
-        }}
-        value={ruleAction}
-        defaultValue={stepData.ruleAction}
-        optionType="button"
-        buttonStyle="solid"
-        style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
-        size="large"
-      />
-    </>
-  );
-};
-
-const StepResult: React.FC<{
-  onFinish: () => Promise<void>;
-}> = (props) => {
-  return (
-    <Result
-      status="success"
-      title="Rule Successfully created"
-      subTitle="All new transactions will go through this rule"
-      extra={
-        <>
-          <Button type="primary" onClick={props.onFinish}>
-            Create another rule
-          </Button>
-          <Button href="/rules/created-rules">Go to Created rules</Button>
-        </>
-      }
-      className={styles.result}
-    >
-      {props.children}
-    </Result>
-  );
-};
-
 const StepForm: React.FC<Record<string, any>> = () => {
-  // lol is this even the right way of doing this. I bet not. Fix it later
-  const [stepData, setStepData] = useState<StepDataType>({
-    name: 'Proof of funds',
-    ruleId: 'R-1',
-    ruleDescription:
-      'If a user makes a remittance transaction >= x in EUR for a given risk level, flag user & transactions and ask for proof of funds.',
-    ruleAction: 'flag',
-    thresholdData: [
-      {
-        parameter: 'test',
-        type: 'string' as ThresholdAllowedDataTypes,
-        defaultValue: 'test',
-      },
-    ],
-  });
-
-  const [ruleAction, setRuleAction] = useState<RuleAction>(stepData.ruleAction);
+  const [selectedRule, setSelectedRule] = useState<Rule>();
   const [current, setCurrent] = useState(0);
-  const formRef = useRef<FormInstance>();
-
-  const processedData: ThresholdUpdateDataSourceType[] = [
-    {
-      id: 'default',
-      parameter: 'country',
-      defaultValue: 'AF',
-    },
-  ];
-
-  const [dataSource, setDataSource] = useState<ThresholdUpdateDataSourceType[]>(
-    () => processedData,
-  );
-
-  const [editableKeys, setEditableRowKeys] = useState<React.Key[]>(() =>
-    dataSource.map((item) => item.id),
-  );
+  const next = () => setCurrent(current + 1);
+  const prev = () => setCurrent(current - 1);
+  const handleSelectRule = (rule: Rule) => {
+    setCurrent(current + 1);
+    setSelectedRule(rule);
+  };
 
   return (
     <PageContainer content="Create a transaction monitoring rule with a straight-forward 3 step process">
       <Card bordered={false}>
-        <StepsForm
-          containerStyle={{ width: '100%' }}
-          current={current}
-          onCurrentChange={setCurrent}
-          submitter={{
-            render: (props, dom) => {
-              if (props.step === 2) {
-                return null;
-              }
-              return dom;
-            },
-          }}
-        >
-          <StepsForm.StepForm<StepDataType>
-            formRef={formRef}
-            title="Choose Rule"
-            initialValues={stepData}
-          >
-            <RulesTableSearch
-              setStepData={setStepData}
-              setRuleAction={setRuleAction}
-              setDataSource={setDataSource}
-              setEditableRowKeys={setEditableRowKeys}
-            />
-          </StepsForm.StepForm>
+        <Steps current={current}>
+          {STEPS.map((step, index) => (
+            <Steps.Step key={index} title={step.title} description={step.description} />
+          ))}
+        </Steps>
 
-          <StepsForm.StepForm title="Set the threshold">
-            <>
-              <div className={styles.result}>
-                <Alert
-                  closable
-                  showIcon
-                  message="Thresholds are set to default values, update them to match your risk appetite"
-                  style={{ marginBottom: 24 }}
-                />
-                <StepDescriptions stepData={stepData} bordered />
-              </div>
-              <div className={styles.thresholdUpdateWrapper}>
-                <Divider style={{ margin: '18px 0' }} />
-                <ThresholdUpdateTable
-                  editableKeys={editableKeys}
-                  setEditableRowKeys={setEditableRowKeys}
-                  dataSource={dataSource}
-                  setDataSource={setDataSource}
-                />
-                <Divider style={{ margin: '15px 0' }} />
-                <div className={styles.ruleActionSelector}>
-                  <StepRuleAction
-                    stepData={stepData}
-                    ruleAction={ruleAction}
-                    setRuleAction={setRuleAction}
-                  />
-                </div>
-                <Divider style={{ margin: '18px 0' }} />
-              </div>
-            </>
-          </StepsForm.StepForm>
-          <StepsForm.StepForm title="Activate">
-            <StepResult
-              onFinish={async () => {
-                setCurrent(0);
-                formRef.current?.resetFields();
-              }}
-            >
-              <StepDescriptions stepData={stepData} />
-            </StepResult>
-          </StepsForm.StepForm>
-        </StepsForm>
+        <div>
+          {current === 0 ? (
+            <RulesTable onSelectRule={handleSelectRule} />
+          ) : current === 1 && selectedRule ? (
+            <RuleParametersEditor rule={selectedRule} onBack={prev} onActivated={next} />
+          ) : (
+            current === 2 &&
+            selectedRule && (
+              <RuleInstanceCreatedInfo rule={selectedRule} onFinish={async () => setCurrent(0)} />
+            )
+          )}
+        </div>
         <Divider style={{ margin: '40px 0 24px' }} />
         <div className={styles.desc}>
           <h3>Flagright Rules library</h3>

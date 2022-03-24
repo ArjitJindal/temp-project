@@ -1,12 +1,10 @@
-export type RuleAction = 'flag' | 'block' | 'allow';
-
 export type ThresholdAllowedDataTypes = 'string' | 'list' | 'number';
 
 //type this better lol
 export const actionToColor = {
-  flag: 'orange',
-  block: 'red',
-  allow: 'green',
+  FLAG: 'orange',
+  BLOCK: 'red',
+  ALLOW: 'green',
 };
 
 export type ThresholdDataType = {

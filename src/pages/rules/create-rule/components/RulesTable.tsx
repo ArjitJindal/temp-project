@@ -1,0 +1,90 @@
+import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import ProTable from '@ant-design/pro-table';
+import { Button, Tag } from 'antd';
+import { useRef } from 'react';
+
+import { actionToColor } from '../../data.d';
+import { Rule } from '@/apis';
+import { useApi } from '@/api';
+
+interface Props {
+  onSelectRule: (rule: Rule) => void;
+}
+
+export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
+  const api = useApi();
+  const actionRef = useRef<ActionType>();
+  const columns: ProColumns<Rule>[] = [
+    {
+      title: 'Rule ID',
+      width: 100,
+      dataIndex: 'id',
+      sorter: true,
+    },
+    {
+      title: 'Rule name',
+      width: 300,
+      dataIndex: 'name',
+      sorter: true,
+    },
+    {
+      title: 'Rule Description',
+      width: 500,
+      dataIndex: 'description',
+    },
+    {
+      title: 'Default Action',
+      width: 150,
+      dataIndex: 'defaultAction',
+      render: (defaultAction) => {
+        return (
+          <span>
+            <Tag color={actionToColor[defaultAction as string]}>{defaultAction}</Tag>
+          </span>
+        );
+      },
+    },
+    {
+      width: 140,
+      dataIndex: 'status',
+      search: false,
+      key: 'status',
+      fixed: 'right',
+      render: (_, entity) => {
+        return (
+          <span>
+            <Button
+              shape="round"
+              size="small"
+              style={{ borderColor: '#1890ff', color: '#1890ff' }}
+              onClick={() => onSelectRule(entity)}
+            >
+              Select
+            </Button>
+          </span>
+        );
+      },
+    },
+  ];
+
+  return (
+    <ProTable<Rule>
+      headerTitle="Select Rule"
+      actionRef={actionRef}
+      rowKey="id"
+      search={{
+        labelWidth: 30,
+      }}
+      toolBarRender={() => []}
+      request={async (params) => {
+        const rules = await api.getRules();
+        return {
+          data: rules,
+          success: true,
+          total: rules.length,
+        };
+      }}
+      columns={columns}
+    />
+  );
+};

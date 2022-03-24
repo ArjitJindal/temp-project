@@ -1,4 +1,4 @@
-import { ThresholdUpdateTable } from './ThresholdUpdateTable';
-import { RulesTableSearch } from './RulesTableSearch';
+import { RuleParametersEditor } from './RuleParametersEditor';
+import { RulesTable } from './RulesTable';
 
-export { ThresholdUpdateTable, RulesTableSearch };
+export { RuleParametersEditor, RulesTable };

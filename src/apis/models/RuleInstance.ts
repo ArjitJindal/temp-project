@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+  RuleAction,
+  RuleActionFromJSON,
+  RuleActionFromJSONTyped,
+  RuleActionToJSON,
+} from './RuleAction';
+
 /**
  *
  * @export
@@ -37,6 +44,12 @@ export interface RuleInstance {
    * @memberof RuleInstance
    */
   parameters: object;
+  /**
+   *
+   * @type {RuleAction}
+   * @memberof RuleInstance
+   */
+  action: RuleAction;
   /**
    *
    * @type {string}
@@ -90,6 +103,7 @@ export function RuleInstanceFromJSONTyped(json: any, ignoreDiscriminator: boolea
     id: !exists(json, 'id') ? undefined : json['id'],
     ruleId: json['ruleId'],
     parameters: json['parameters'],
+    action: RuleActionFromJSON(json['action']),
     status: !exists(json, 'status') ? undefined : json['status'],
     createdAt: !exists(json, 'createdAt') ? undefined : json['createdAt'],
     updatedAt: !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
@@ -109,6 +123,7 @@ export function RuleInstanceToJSON(value?: RuleInstance | null): any {
     id: value.id,
     ruleId: value.ruleId,
     parameters: value.parameters,
+    action: RuleActionToJSON(value.action),
     status: value.status,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,

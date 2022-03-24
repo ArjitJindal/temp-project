@@ -30,6 +30,7 @@ export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './Rule';
+export * from './RuleAction';
 export * from './RuleFailureException';
 export * from './RuleInstance';
 export * from './Tag';

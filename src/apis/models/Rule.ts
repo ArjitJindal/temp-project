@@ -13,6 +13,13 @@
  */
 
 import { exists, mapValues } from '../runtime';
+import {
+  RuleAction,
+  RuleActionFromJSON,
+  RuleActionFromJSONTyped,
+  RuleActionToJSON,
+} from './RuleAction';
+
 /**
  *
  * @export
@@ -51,6 +58,12 @@ export interface Rule {
   defaultParameters: object;
   /**
    *
+   * @type {RuleAction}
+   * @memberof Rule
+   */
+  defaultAction: RuleAction;
+  /**
+   *
    * @type {string}
    * @memberof Rule
    */
@@ -83,6 +96,7 @@ export function RuleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Rule
     description: json['description'],
     parametersSchema: json['parametersSchema'],
     defaultParameters: json['defaultParameters'],
+    defaultAction: RuleActionFromJSON(json['defaultAction']),
     ruleImplementationFilename: json['ruleImplementationFilename'],
     createdAt: !exists(json, 'createdAt') ? undefined : json['createdAt'],
     updatedAt: !exists(json, 'updatedAt') ? undefined : json['updatedAt'],
@@ -102,6 +116,7 @@ export function RuleToJSON(value?: Rule | null): any {
     description: value.description,
     parametersSchema: value.parametersSchema,
     defaultParameters: value.defaultParameters,
+    defaultAction: RuleActionToJSON(value.defaultAction),
     ruleImplementationFilename: value.ruleImplementationFilename,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
