@@ -1,203 +1,183 @@
-import { Button, Space, Table, Tag, Modal } from 'antd';
+import { Tag, Switch, message, Popover, Progress, Drawer } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { PageContainer } from '@ant-design/pro-layout';
-import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
-import { ProcessMap } from './data.d';
-import { getActiveRules } from './service';
-
-const handleAction = (key: string | number) => {
-  if (key === 'activate') {
-    Modal.confirm({
-      title: 'Confirm Deactivation',
-      content: 'Confirm rule',
-      okText: 'Activate',
-      cancelText: 'Cancel',
-      onOk: () => console.log('WHAAAA'), // deleteItem(currentItem.id),
-    });
-  } else if (key === 'deactivate') {
-    Modal.confirm({
-      title: 'Confirm Deactivation',
-      content: 'Confirm rule',
-      okText: 'Deactivate',
-      cancelText: 'Cancel',
-      onOk: () => console.log('WHAAAA'), // deleteItem(currentItem.id),
-    });
-  }
-};
-
-const columns: ProColumns<RuleTableListItem>[] = [
-  {
-    title: 'Rule ID',
-    width: 80,
-    dataIndex: 'ruleId',
-    fixed: 'left',
-    align: 'left',
-    search: false,
-  },
-  {
-    title: 'Rule Name',
-    width: 240,
-    dataIndex: 'name',
-  },
-  {
-    title: 'Rule Description',
-    dataIndex: 'ruleDescription',
-    align: 'left',
-    search: false,
-  },
-  {
-    title: 'Rule Hit Rate',
-    width: 120,
-    dataIndex: 'hitRate',
-    valueType: (item) => ({
-      type: 'progress',
-      status: ProcessMap[item.hitRate],
-    }),
-  },
-  {
-    title: 'Action',
-    width: 80,
-    dataIndex: 'ruleAction',
-    key: 'ruleAction',
-    render: (ruleAction) => {
-      return (
-        <span>
-          <Tag color={actionToColor[ruleAction as string]}>
-            {(ruleAction as string).toUpperCase()}
-          </Tag>
-        </span>
-      );
-    },
-  },
-  {
-    title: 'Activated At',
-    width: 120,
-    key: 'since',
-    dataIndex: 'activatedAt',
-    valueType: 'date',
-    sorter: (a, b) => a.activatedAt - b.activatedAt,
-  },
-  {
-    title: 'Status',
-    dataIndex: 'status',
-    width: 80,
-    search: false,
-    valueEnum: {
-      0: {
-        text: 'Inactive',
-        status: 'Processing',
-      },
-      1: {
-        text: 'Active',
-        status: 'Success',
-      },
-    },
-  },
-  {
-    title: 'Threshold',
-    dataIndex: 'thresholdData',
-    search: false,
-    width: 300,
-    key: 'thresholdData',
-    render: (thresholdData) => {
-      if (!thresholdData) {
-        return <span>Not Applicable</span>;
-      }
-      const columns = [
-        {
-          title: 'Parameter',
-          dataIndex: 'parameter',
-        },
-        {
-          title: 'Value',
-          dataIndex: 'value',
-        },
-      ];
-      const dataSource = (thresholdData as ThresholdDataType[]).map(
-        (threshold: any, index: number) => {
-          return {
-            key: index,
-            parameter: threshold?.parameter,
-            value: threshold?.defaultValue,
-          };
-        },
-      );
-      return (
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          pagination={false}
-          bordered
-          size={'small'}
-        />
-      );
-    },
-  },
-  {
-    title: 'Action',
-    width: 140,
-    dataIndex: 'status',
-    key: 'status',
-    fixed: 'right',
-    render: (status) => {
-      return (
-        <span>
-          {status == 0 ? (
-            <Button
-              shape="round"
-              size="small"
-              style={{ borderColor: '#1890ff', color: '#1890ff' }}
-              onClick={() => handleAction('activate')}
-            >
-              Activate
-            </Button>
-          ) : (
-            <Button shape="round" size="small" danger onClick={() => handleAction('deactivate')}>
-              Deactivate
-            </Button>
-          )}
-        </span>
-      );
-    },
-  },
-];
+import { useCallback, useMemo, useState } from 'react';
+import _ from 'lodash';
+import { getRuleActionColor } from '../utils';
+import { RuleInstanceDetails } from './components/RuleInstanceDetails';
+import { Rule, RuleInstance, RuleInstanceStatusEnum } from '@/apis';
+import { useApi } from '@/api';
 
 export default () => {
+  const api = useApi();
+  const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
+    {},
+  );
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [currentRow, setCurrentRow] = useState<RuleInstance>();
+  const [rules, setRules] = useState<{ [key: string]: Rule }>({});
+  const handleRuleInstanceUpdate = useCallback(
+    async (newRuleInstance: RuleInstance) => {
+      const ruleInstanceId = newRuleInstance.id as string;
+      setUpdatedRuleInstances((prev) => ({
+        ...prev,
+        [newRuleInstance.id as string]: newRuleInstance,
+      }));
+      try {
+        await api.putRuleInstancesRuleInstanceId({
+          ruleInstanceId,
+          ruleInstance: newRuleInstance,
+        });
+      } catch (e) {
+        setUpdatedRuleInstances((prev) => _.omit(prev, [ruleInstanceId]));
+        throw e;
+      }
+    },
+    [api],
+  );
+  const handleActivationChange = useCallback(
+    async (ruleInstance: RuleInstance, activated: boolean) => {
+      const hideMessage = message.loading(
+        `${activated ? 'Activating' : 'Deactivating'} rule ${ruleInstance.ruleId}...`,
+        0,
+      );
+      try {
+        await handleRuleInstanceUpdate({
+          ...ruleInstance,
+          status: activated ? RuleInstanceStatusEnum.Active : RuleInstanceStatusEnum.Inactive,
+        });
+        message.success(`${activated ? 'Activated' : 'Deactivated'} rule ${ruleInstance.ruleId}`);
+      } catch (e) {
+        message.error(
+          `Failed to ${activated ? 'activate' : 'deactivate'} rule ${ruleInstance.ruleId}`,
+        );
+      } finally {
+        hideMessage();
+      }
+    },
+    [handleRuleInstanceUpdate],
+  );
+  const columns: ProColumns<RuleInstance>[] = useMemo(
+    () => [
+      {
+        title: 'Rule ID',
+        width: 50,
+        render: (_, entity) => {
+          return (
+            <a
+              onClick={() => {
+                setCurrentRow(entity);
+                setShowDetail(true);
+              }}
+            >
+              {entity.ruleId}
+            </a>
+          );
+        },
+      },
+      {
+        title: 'Rule Name',
+        width: 150,
+        render: (_, ruleInstance) => {
+          return (
+            <Popover content={rules[ruleInstance.ruleId].description}>
+              {rules[ruleInstance.ruleId].name}
+            </Popover>
+          );
+        },
+      },
+      {
+        title: 'Rule Hit Rate',
+        width: 100,
+        render: (_, ruleInstance) => {
+          return (
+            <Progress
+              percent={
+                ruleInstance.hitCount && ruleInstance.runCount
+                  ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
+                  : 0
+              }
+            />
+          );
+        },
+      },
+      {
+        title: 'Action',
+        align: 'center',
+        width: 30,
+        render: (_, entity) => {
+          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+          return (
+            <span>
+              <Tag color={getRuleActionColor(ruleInstance.action)}>{ruleInstance.action}</Tag>
+            </span>
+          );
+        },
+      },
+      {
+        title: 'Created At',
+        width: 120,
+        dataIndex: 'createdAt',
+        valueType: 'dateTime',
+      },
+      {
+        title: 'Activated',
+        width: 30,
+        align: 'center',
+        dataIndex: 'status',
+        key: 'status',
+        render: (_, entity) => {
+          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
+          return (
+            <Switch
+              checked={ruleInstance.status === RuleInstanceStatusEnum.Active}
+              onChange={(checked) => handleActivationChange(ruleInstance, checked)}
+            />
+          );
+        },
+      },
+    ],
+    [handleActivationChange, rules, updatedRuleInstances],
+  );
   return (
     <PageContainer content="List of all created rules. Activate/deactivate them in one click">
-      <ProTable<RuleTableListItem>
+      <ProTable<RuleInstance>
+        headerTitle="Rules"
         columns={columns}
-        rowSelection={
-          {
-            // Custom selection item reference: https://ant.design/components/table-cn/#components-table-demo-row-selection-custom
-            // Comment this line, the drop-down option is not displayed by default
-            //selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
-          }
-        }
-        tableAlertRender={({ selectedRowKeys, selectedRows, onCleanSelected }) => (
-          <Space size={24}>
-            <span>
-              Selected {selectedRowKeys.length} Rules
-              <a style={{ marginLeft: 8 }} onClick={onCleanSelected}>
-                Reset
-              </a>
-            </span>
-          </Space>
-        )}
-        tableAlertOptionRender={() => {
-          return (
-            <Space size={16}>
-              <a>Export Data</a>
-            </Space>
-          );
+        request={async () => {
+          const [rules, ruleInstances] = await Promise.all([
+            api.getRules(),
+            api.getRuleInstances(),
+          ]);
+          setRules(_.keyBy(rules, 'id'));
+          return {
+            data: ruleInstances,
+            success: true,
+            total: ruleInstances.length,
+          };
         }}
-        request={getActiveRules}
-        scroll={{ x: 1300 }}
-        options={false}
         search={false}
-        rowKey="key"
+        rowKey="id"
       />
+
+      <Drawer
+        width={500}
+        visible={showDetail}
+        onClose={() => {
+          setCurrentRow(undefined);
+          setShowDetail(false);
+        }}
+        closable={false}
+      >
+        {currentRow?.id && (
+          <RuleInstanceDetails
+            rule={rules[currentRow.ruleId]}
+            ruleInstance={updatedRuleInstances[currentRow.id] || currentRow}
+            onRuleInstanceUpdate={handleRuleInstanceUpdate}
+          />
+        )}
+      </Drawer>
     </PageContainer>
   );
 };

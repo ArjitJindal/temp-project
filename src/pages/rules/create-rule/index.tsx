@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Divider, Steps } from 'antd';
+import { Card, Divider, Row, Steps } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { RulesTable, RuleParametersEditor } from './components';
 import styles from './style.less';
@@ -34,28 +34,30 @@ const StepForm: React.FC<Record<string, any>> = () => {
   return (
     <PageContainer content="Create a transaction monitoring rule with a straight-forward 3 step process">
       <Card bordered={false}>
-        <Steps current={current}>
-          {STEPS.map((step, index) => (
-            <Steps.Step key={index} title={step.title} description={step.description} />
-          ))}
-        </Steps>
+        <Row justify="center">
+          <Steps current={current} className={styles.stepsContainer}>
+            {STEPS.map((step, index) => (
+              <Steps.Step key={index} title={step.title} description={step.description} />
+            ))}
+          </Steps>
+        </Row>
 
-        <div>
-          {current === 0 ? (
-            <RulesTable onSelectRule={handleSelectRule} />
-          ) : current === 1 && selectedRule ? (
-            <RuleParametersEditor rule={selectedRule} onBack={prev} onActivated={next} />
-          ) : (
-            current === 2 &&
-            selectedRule && (
-              <RuleInstanceCreatedInfo rule={selectedRule} onFinish={async () => setCurrent(0)} />
-            )
-          )}
-        </div>
+        <Divider />
+
+        {current === 0 ? (
+          <RulesTable onSelectRule={handleSelectRule} />
+        ) : current === 1 && selectedRule ? (
+          <RuleParametersEditor rule={selectedRule} onBack={prev} onActivated={next} />
+        ) : (
+          current === 2 &&
+          selectedRule && (
+            <RuleInstanceCreatedInfo rule={selectedRule} onFinish={async () => setCurrent(0)} />
+          )
+        )}
         <Divider style={{ margin: '40px 0 24px' }} />
         <div className={styles.desc}>
           <h3>Flagright Rules library</h3>
-          <p>Choose exiting rules, update thresholds if needed</p>
+          <p>Choose exiting rules, customize parameters if needed</p>
           <h4>Can't find a rule you are looking for?</h4>
           <p>
             Use our 'Request a rule' form and we'll build a new rule template and add it to the

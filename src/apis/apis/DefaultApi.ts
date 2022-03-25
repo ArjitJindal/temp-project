@@ -480,6 +480,39 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Rule Instance - List
+   */
+  async getRuleInstancesRaw(
+    initOverrides?: RequestInit,
+  ): Promise<runtime.ApiResponse<Array<RuleInstance>>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    const response = await this.request(
+      {
+        path: `/rule_instances`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      jsonValue.map(RuleInstanceFromJSON),
+    );
+  }
+
+  /**
+   * Rule Instance - List
+   */
+  async getRuleInstances(initOverrides?: RequestInit): Promise<Array<RuleInstance>> {
+    const response = await this.getRuleInstancesRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Rules - List
    */
   async getRulesRaw(initOverrides?: RequestInit): Promise<runtime.ApiResponse<Array<Rule>>> {
