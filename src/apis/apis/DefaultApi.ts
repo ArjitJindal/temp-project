@@ -14,6 +14,9 @@
 
 import * as runtime from '../runtime';
 import {
+  BusinessUsersListResponse,
+  BusinessUsersListResponseFromJSON,
+  BusinessUsersListResponseToJSON,
   Comment,
   CommentFromJSON,
   CommentToJSON,
@@ -212,7 +215,7 @@ export class DefaultApi extends runtime.BaseAPI {
   async getBusinessUsersListRaw(
     requestParameters: GetBusinessUsersListRequest,
     initOverrides?: RequestInit,
-  ): Promise<runtime.ApiResponse<ConsumerUsersListResponse>> {
+  ): Promise<runtime.ApiResponse<BusinessUsersListResponse>> {
     if (requestParameters.limit === null || requestParameters.limit === undefined) {
       throw new runtime.RequiredError(
         'limit',
@@ -264,7 +267,7 @@ export class DefaultApi extends runtime.BaseAPI {
     );
 
     return new runtime.JSONApiResponse(response, (jsonValue) =>
-      ConsumerUsersListResponseFromJSON(jsonValue),
+      BusinessUsersListResponseFromJSON(jsonValue),
     );
   }
 
@@ -274,7 +277,7 @@ export class DefaultApi extends runtime.BaseAPI {
   async getBusinessUsersList(
     requestParameters: GetBusinessUsersListRequest,
     initOverrides?: RequestInit,
-  ): Promise<ConsumerUsersListResponse> {
+  ): Promise<BusinessUsersListResponse> {
     const response = await this.getBusinessUsersListRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -527,7 +530,7 @@ export class DefaultApi extends runtime.BaseAPI {
    * Tarpon API Key - Create
    */
   async postApikey(
-    requestParameters: PostApikeyRequest,
+    requestParameters: PostApikeyRequest = {},
     initOverrides?: RequestInit,
   ): Promise<void> {
     await this.postApikeyRaw(requestParameters, initOverrides);
@@ -599,7 +602,7 @@ export class DefaultApi extends runtime.BaseAPI {
    * Import - Start to Import
    */
   async postImport(
-    requestParameters: PostImportRequest,
+    requestParameters: PostImportRequest = {},
     initOverrides?: RequestInit,
   ): Promise<ImportResponse> {
     const response = await this.postImportRaw(requestParameters, initOverrides);
@@ -636,7 +639,10 @@ export class DefaultApi extends runtime.BaseAPI {
   /**
    * List Import
    */
-  async postLists(requestParameters: PostListsRequest, initOverrides?: RequestInit): Promise<void> {
+  async postLists(
+    requestParameters: PostListsRequest = {},
+    initOverrides?: RequestInit,
+  ): Promise<void> {
     await this.postListsRaw(requestParameters, initOverrides);
   }
 
@@ -671,7 +677,7 @@ export class DefaultApi extends runtime.BaseAPI {
    * Rule Instance - Create
    */
   async postRuleInstances(
-    requestParameters: PostRuleInstancesRequest,
+    requestParameters: PostRuleInstancesRequest = {},
     initOverrides?: RequestInit,
   ): Promise<RuleInstance> {
     const response = await this.postRuleInstancesRaw(requestParameters, initOverrides);

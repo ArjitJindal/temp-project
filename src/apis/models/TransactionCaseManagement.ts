@@ -19,12 +19,7 @@ import {
   ACHDetailsFromJSONTyped,
   ACHDetailsToJSON,
 } from './ACHDetails';
-import {
-  CardDetails,
-  CardDetailsFromJSON,
-  CardDetailsFromJSONTyped,
-  CardDetailsToJSON,
-} from './CardDetails';
+import { CardDetails, CardDetailsFromJSON, CardDetailsToJSON } from './CardDetails';
 import { Comment, CommentFromJSON, CommentFromJSONTyped, CommentToJSON } from './Comment';
 import {
   DeviceData,
@@ -44,12 +39,7 @@ import {
   FailedRulesResultFromJSONTyped,
   FailedRulesResultToJSON,
 } from './FailedRulesResult';
-import {
-  IBANDetails,
-  IBANDetailsFromJSON,
-  IBANDetailsFromJSONTyped,
-  IBANDetailsToJSON,
-} from './IBANDetails';
+import { IBANDetails, IBANDetailsFromJSON, IBANDetailsToJSON } from './IBANDetails';
 import { Tag, TagFromJSON, TagFromJSONTyped, TagToJSON } from './Tag';
 import {
   TransactionAmountDetails,
@@ -69,12 +59,7 @@ import {
   TransactionWithRulesResultFromJSONTyped,
   TransactionWithRulesResultToJSON,
 } from './TransactionWithRulesResult';
-import {
-  UPIDetails,
-  UPIDetailsFromJSON,
-  UPIDetailsFromJSONTyped,
-  UPIDetailsToJSON,
-} from './UPIDetails';
+import { UPIDetails, UPIDetailsFromJSON, UPIDetailsToJSON } from './UPIDetails';
 
 /**
  *
@@ -90,11 +75,15 @@ export interface TransactionCaseManagement {
   transactionId?: string;
   /**
    *
+   *
+   *
    * @type {number}
    * @memberof TransactionCaseManagement
    */
   timestamp: number;
   /**
+   *
+   *
    *
    * @type {string}
    * @memberof TransactionCaseManagement
@@ -102,11 +91,15 @@ export interface TransactionCaseManagement {
   senderUserId?: string;
   /**
    *
+   *
+   *
    * @type {string}
    * @memberof TransactionCaseManagement
    */
   receiverUserId?: string;
   /**
+   *
+   *
    *
    * @type {TransactionAmountDetails}
    * @memberof TransactionCaseManagement
@@ -114,17 +107,23 @@ export interface TransactionCaseManagement {
   sendingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
    * @type {TransactionAmountDetails}
    * @memberof TransactionCaseManagement
    */
   receivingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof TransactionCaseManagement
    */
   senderPaymentDetails: CardDetails | IBANDetails | ACHDetails | UPIDetails | null;
   /**
+   *
+   *
    *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof TransactionCaseManagement
@@ -150,6 +149,8 @@ export interface TransactionCaseManagement {
   reference?: string;
   /**
    *
+   *
+   *
    * @type {DeviceData}
    * @memberof TransactionCaseManagement
    */
@@ -162,17 +163,23 @@ export interface TransactionCaseManagement {
   tags?: Array<Tag>;
   /**
    *
+   *
+   *
    * @type {Array<ExecutedRulesResult>}
    * @memberof TransactionCaseManagement
    */
   executedRules: Array<ExecutedRulesResult>;
   /**
    *
+   *
+   *
    * @type {Array<FailedRulesResult>}
    * @memberof TransactionCaseManagement
    */
   failedRules: Array<FailedRulesResult>;
   /**
+   *
+   *
    *
    * @type {Array<Comment>}
    * @memberof TransactionCaseManagement
@@ -202,7 +209,6 @@ export function TransactionCaseManagementFromJSONTyped(
     receivingAmountDetails: !exists(json, 'receivingAmountDetails')
       ? undefined
       : TransactionAmountDetailsFromJSON(json['receivingAmountDetails']),
-    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
       json['senderPaymentDetails'].method === 'CARD'
         ? CardDetailsFromJSON(json['senderPaymentDetails'])
@@ -250,7 +256,6 @@ export function TransactionCaseManagementToJSON(value?: TransactionCaseManagemen
     receiverUserId: value.receiverUserId,
     sendingAmountDetails: TransactionAmountDetailsToJSON(value.sendingAmountDetails),
     receivingAmountDetails: TransactionAmountDetailsToJSON(value.receivingAmountDetails),
-    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
       value.senderPaymentDetails?.method === 'CARD'
         ? CardDetailsToJSON(value.senderPaymentDetails as CardDetails)

@@ -31,12 +31,7 @@ import {
   DeviceDataFromJSONTyped,
   DeviceDataToJSON,
 } from './DeviceData';
-import {
-  IBANDetails,
-  IBANDetailsFromJSON,
-  IBANDetailsFromJSONTyped,
-  IBANDetailsToJSON,
-} from './IBANDetails';
+import { IBANDetails, IBANDetailsFromJSON, IBANDetailsToJSON } from './IBANDetails';
 import { Tag, TagFromJSON, TagFromJSONTyped, TagToJSON } from './Tag';
 import {
   TransactionAmountDetails,
@@ -44,12 +39,7 @@ import {
   TransactionAmountDetailsFromJSONTyped,
   TransactionAmountDetailsToJSON,
 } from './TransactionAmountDetails';
-import {
-  UPIDetails,
-  UPIDetailsFromJSON,
-  UPIDetailsFromJSONTyped,
-  UPIDetailsToJSON,
-} from './UPIDetails';
+import { UPIDetails, UPIDetailsFromJSON, UPIDetailsToJSON } from './UPIDetails';
 
 /**
  * Model for transaction payload
@@ -65,11 +55,23 @@ export interface Transaction {
   transactionId?: string;
   /**
    *
+   *
+   *
+   *
+   *
+   *
+   *
    * @type {number}
    * @memberof Transaction
    */
   timestamp: number;
   /**
+   *
+   *
+   *
+   *
+   *
+   *
    *
    * @type {string}
    * @memberof Transaction
@@ -77,11 +79,23 @@ export interface Transaction {
   senderUserId?: string;
   /**
    *
+   *
+   *
+   *
+   *
+   *
+   *
    * @type {string}
    * @memberof Transaction
    */
   receiverUserId?: string;
   /**
+   *
+   *
+   *
+   *
+   *
+   *
    *
    * @type {TransactionAmountDetails}
    * @memberof Transaction
@@ -89,17 +103,35 @@ export interface Transaction {
   sendingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
+   *
+   *
+   *
+   *
    * @type {TransactionAmountDetails}
    * @memberof Transaction
    */
   receivingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
+   *
+   *
+   *
+   *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof Transaction
    */
   senderPaymentDetails: CardDetails | IBANDetails | ACHDetails | UPIDetails | null;
   /**
+   *
+   *
+   *
+   *
+   *
+   *
    *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof Transaction
@@ -124,6 +156,12 @@ export interface Transaction {
    */
   reference?: string;
   /**
+   *
+   *
+   *
+   *
+   *
+   *
    *
    * @type {DeviceData}
    * @memberof Transaction

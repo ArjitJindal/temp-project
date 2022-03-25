@@ -26,20 +26,20 @@ class AuthorizationMiddleware implements Middleware {
 }
 
 export function useApi(): FlagrightApi {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenWithPopup } = useAuth0();
   const api = useMemo(() => {
     const configParams: ConfigurationParameters = {
       basePath: API_BASE_PATH,
       middleware: [
-        new AuthorizationMiddleware(() =>
-          getAccessTokenSilently({
+        /*new AuthorizationMiddleware(() =>
+          getAccessTokenWithPopup({
             audience: AUTH0_AUDIENCE,
           }),
-        ),
+        ),*/
       ],
     };
     const apiConfig = new Configuration(configParams);
     return new FlagrightApi(apiConfig);
-  }, [getAccessTokenSilently]);
+  }, [getAccessTokenWithPopup]);
   return api;
 }
