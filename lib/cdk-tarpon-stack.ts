@@ -355,6 +355,37 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
 
+    /* Transactions per user view */
+    const transactionsPerUserViewFunction = this.createFunction(
+      TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
+      'app.transactionsPerUserViewHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      {
+        ...docDbFunctionProps,
+        environment: {
+          ...docDbFunctionProps.environment,
+        },
+      }
+    )
+    dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+    transactionsPerUserViewFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
+
     /* business users view */
     const businessUsersViewFunction = this.createFunction(
       TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
