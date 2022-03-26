@@ -169,6 +169,37 @@ paths:
           in: query
           name: beforeTimestamp
           required: true
+  /user/transactions:
+    get:
+      summary: Transaction Per User - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsListResponse'
+              examples: {}
+      operationId: get-transactions-per-user-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+    parameters: []
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -210,7 +241,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsumerUsersListResponse'
+                $ref: '#/components/schemas/BusinessUsersListResponse'
               examples: {}
       operationId: get-business-users-list
       description: ''
