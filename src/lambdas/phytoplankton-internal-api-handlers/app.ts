@@ -19,6 +19,7 @@ import { getS3Client } from '../../utils/s3'
 import { Comment } from '../../@types/openapi-internal/Comment'
 import { connectToDB } from '../../utils/docDBUtils'
 import { TransactionService } from './services/transaction-service'
+import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -71,6 +72,28 @@ export const transactionsViewHandler = lambdaApi()(
     }
 
     throw new Error('Unhandled request')
+  }
+)
+
+export const transactionsPerUserViewHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const client = await connectToDB()
+    const transactionRepository = new TransactionRepository(tenantId, {
+      mongoDb: client,
+    })
+    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
+    const params: DefaultApiGetTransactionsListRequest = {
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      beforeTimestamp: parseInt(beforeTimestamp),
+    }
+
+    return transactionRepository.getTransactionsPerUser(params, userId)
   }
 )
 
