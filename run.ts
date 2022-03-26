@@ -55,6 +55,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
       require('./events/view-transactions').event
     ),
+  'view-transactions-per-user': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsPerUserViewHandler(
+      require('./events/view-transactions-per-user').event
+    ),
   'view-business-users': () =>
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').businessUsersViewHandler(
       require('./events/view-business-users').event
