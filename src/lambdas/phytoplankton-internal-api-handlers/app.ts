@@ -81,12 +81,13 @@ export const transactionsPerUserViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const { principalId: tenantId } = event.requestContext.authorizer
     const client = await connectToDB()
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
-    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
+    const { limit, skip, beforeTimestamp, userId } =
+      event.queryStringParameters as any
     const params: DefaultApiGetTransactionsListRequest = {
       limit: parseInt(limit),
       skip: parseInt(skip),

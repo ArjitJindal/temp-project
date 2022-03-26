@@ -176,6 +176,12 @@ export interface DefaultApiGetTransactionsPerUserListRequest {
    * @memberof DefaultApigetTransactionsPerUserList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  userId: string
 }
 
 export interface DefaultApiPostApikeyRequest {

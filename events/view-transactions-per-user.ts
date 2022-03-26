@@ -4,7 +4,7 @@ export const event = {
   httpMethod: 'GET',
   headers: {},
   requestContext: {
-    authorizer: { principalId: 'fake-demo-tenant-id-1', userId: 'test' },
+    authorizer: { principalId: 'fake-demo-tenant-id-1' },
   },
   queryStringParameters: {
     limit: 1,
