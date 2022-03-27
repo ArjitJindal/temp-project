@@ -14,8 +14,6 @@ import { RuleAction } from './RuleAction'
 export class RuleInstance {
   'id'?: string
   'ruleId': string
-  'ruleName'?: string
-  'ruleDescription'?: string
   'parameters': any
   'action': RuleAction
   'status'?: RuleInstanceStatusEnum
@@ -41,18 +39,6 @@ export class RuleInstance {
     {
       name: 'ruleId',
       baseName: 'ruleId',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'ruleName',
-      baseName: 'ruleName',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'ruleDescription',
-      baseName: 'ruleDescription',
       type: 'string',
       format: '',
     },

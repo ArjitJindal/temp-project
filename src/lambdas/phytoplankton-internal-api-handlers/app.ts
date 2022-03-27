@@ -165,10 +165,13 @@ export const ruleHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
-    const ruleService = new RuleService(ruleRepository)
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+    const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
 
     if (event.httpMethod === 'GET' && event.path === '/rules') {
-      const rules = await ruleService.getRules()
+      const rules = await ruleService.getAllRules()
       return rules
     } else if (
       event.httpMethod === 'POST' &&
@@ -203,10 +206,12 @@ export const ruleInstanceHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
+    const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
-    const ruleInstanceId = event.pathParameters?.id
+    const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
+    const ruleInstanceId = event.pathParameters?.ruleInstanceId
 
     if (event.httpMethod === 'PUT' && ruleInstanceId) {
       if (!event.body) {
@@ -220,14 +225,19 @@ export const ruleInstanceHandler = lambdaApi()(
     } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
       await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
       return 'OK'
-    } else if (event.httpMethod === 'POST' && !ruleInstanceId && event.body) {
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.path === '/rule_instances' &&
+      event.body
+    ) {
       const newRuleInstance =
         await ruleInstanceRepository.createOrUpdateRuleInstance(
           JSON.parse(event.body)
         )
       return newRuleInstance
+    } else if (event.httpMethod === 'GET' && event.path === '/rule_instances') {
+      return ruleService.getAllRuleInstances()
     }
-
     throw new Error('Unhandled request')
   }
 )

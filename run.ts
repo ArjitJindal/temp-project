@@ -68,6 +68,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
+  'get-rule-instances': () =>
+    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+      require('./events/get-rule-instances').event
+    ),
   'view-transactions': () =>
     require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
       require('./events/view-transactions').event

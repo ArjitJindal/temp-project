@@ -4,14 +4,11 @@ export const event = {
   resource: '/rule_instances',
   path: '/rule_instances',
   httpMethod: 'POST',
-  headers: {},
-  queryStringParameters: {
-    tenantId: 'test-tenant-id',
-  },
-  stageVariables: null,
+  requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   body: JSON.stringify({
-    ruleId: 'R-2',
+    ruleId: 'R-1',
     status: 'ACTIVE',
     parameters: { initialTransactions: 5 },
+    action: 'FLAG',
   } as RuleInstance),
 }

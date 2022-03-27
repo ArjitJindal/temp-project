@@ -23,14 +23,22 @@ export class RuleRepository {
     this.tenantId = tenantId
   }
 
-  async getRules(): Promise<ReadonlyArray<Rule>> {
+  async getAllRules(): Promise<ReadonlyArray<Rule>> {
+    return this.getRules({})
+  }
+
+  private async getRules(
+    query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
+  ): Promise<ReadonlyArray<Rule>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      ...query,
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
-      ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.RULE().PartitionKeyID,
-      },
       ReturnConsumedCapacity: 'TOTAL',
+      ExpressionAttributeValues: {
+        ...query.ExpressionAttributeValues,
+        ':pk': DynamoDbKeys.RULE(this.tenantId).PartitionKeyID,
+      },
     }
 
     const result = await this.dynamoDb.query(queryInput).promise()
@@ -46,8 +54,9 @@ export class RuleRepository {
       })) || []
     )
   }
+
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    const existingRules = (await this.getRules()).filter(
+    const existingRules = (await this.getAllRules()).filter(
       (existingRule) => existingRule.id !== rule.id
     )
     const lastRuleId =

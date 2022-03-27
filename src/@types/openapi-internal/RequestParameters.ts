@@ -147,6 +147,8 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
   body?: any
 }
 
+export interface DefaultApiGetRuleInstancesRequest {}
+
 export interface DefaultApiGetRulesRequest {}
 
 export interface DefaultApiGetTransactionsListRequest {

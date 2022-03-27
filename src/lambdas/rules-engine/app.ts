@@ -30,7 +30,9 @@ export async function verifyTransaction(
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ): Promise<TransactionMonitoringResult> {
-  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, dynamoDb)
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
   })

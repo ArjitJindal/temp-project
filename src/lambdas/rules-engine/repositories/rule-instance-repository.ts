@@ -1,3 +1,4 @@
+import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '../../../../lib/constants'
 import {
@@ -8,10 +9,18 @@ import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
+  mongoDb: MongoClient
   tenantId: string
 
-  constructor(tenantId: string, dynamoDb: AWS.DynamoDB.DocumentClient) {
-    this.dynamoDb = dynamoDb
+  constructor(
+    tenantId: string,
+    connections: {
+      dynamoDb?: AWS.DynamoDB.DocumentClient
+      mongoDb?: MongoClient
+    }
+  ) {
+    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
 
@@ -23,6 +32,7 @@ export class RuleInstanceRepository {
     const newRuleInstance = {
       ...ruleInstance,
       id: ruleInstanceId,
+      status: ruleInstance.status || 'ACTIVE',
       createdAt: ruleInstance.createdAt || now,
       updatedAt: ruleInstance.updatedAt || now,
       runCount: ruleInstance.runCount || 0,
@@ -60,6 +70,10 @@ export class RuleInstanceRepository {
         '#status': 'status',
       },
     })
+  }
+
+  async getAllRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
+    return this.getRuleInstances({})
   }
 
   private async getRuleInstances(
