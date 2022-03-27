@@ -3,15 +3,19 @@ import ProTable from '@ant-design/pro-table';
 import { useMemo, useRef } from 'react';
 import { Button, Tag } from 'antd';
 
+import { useAuth0 } from '@auth0/auth0-react';
 import { getRuleActionColor } from '../../utils';
+import { RuleCreationForm } from './RuleCreationForm';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
+import { isFlagrightUser } from '@/utils/user-utils';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
 }
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
+  const { user } = useAuth0();
   const api = useApi();
   const actionRef = useRef<ActionType>();
   const columns: ProColumns<Rule>[] = useMemo(
@@ -78,7 +82,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       search={{
         labelWidth: 30,
       }}
-      toolBarRender={() => []}
+      toolBarRender={() => (user && isFlagrightUser(user) ? [<RuleCreationForm />] : [])}
       request={async () => {
         const rules = await api.getRules();
         return {
