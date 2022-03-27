@@ -1,4 +1,4 @@
-import { Tag, Switch, message, Popover, Progress, Drawer } from 'antd';
+import { Tag, Switch, message, Popover, Progress, Drawer, Tooltip } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { PageContainer } from '@ant-design/pro-layout';
@@ -92,13 +92,22 @@ export default () => {
         width: 100,
         render: (_, ruleInstance) => {
           return (
-            <Progress
-              percent={
-                ruleInstance.hitCount && ruleInstance.runCount
-                  ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
-                  : 0
+            <Tooltip
+              title={
+                <>
+                  Run: {ruleInstance.runCount} <br />
+                  Hit: {ruleInstance.hitCount}
+                </>
               }
-            />
+            >
+              <Progress
+                percent={
+                  ruleInstance.hitCount && ruleInstance.runCount
+                    ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
+                    : 0
+                }
+              />
+            </Tooltip>
           );
         },
       },
