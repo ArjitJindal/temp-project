@@ -1,22 +1,12 @@
 import { RuleParameters } from '../../../@types/rule/rule-instance'
 import { AggregationRepository } from '../repositories/aggregation-repository'
-import { Rule, RuleInfo } from './rule'
+import { Rule } from './rule'
 
 type TransactionNewCountryRuleParameters = RuleParameters & {
   initialTransactions: number
 }
 
 export default class TransactionNewCountryRule extends Rule<TransactionNewCountryRuleParameters> {
-  public getInfo(): RuleInfo {
-    return {
-      name: 'transaction_new_country',
-      displayName:
-        'Transaction to or from a country that has not been used before by this customer. Trigger the rule after x transactions have been completed',
-      description:
-        'Transaction to or from a country that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between countries.',
-    }
-  }
-
   public async computeRule() {
     const aggregationRepository = new AggregationRepository(
       this.tenantId,

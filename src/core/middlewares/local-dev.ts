@@ -20,8 +20,8 @@ export const localDev =
     if (process.env.ENV === 'local') {
       const authorizer = event.requestContext.authorizer || {}
       event.requestContext.authorizer = {
-        principalId: 'test',
-        tenantName: 'test',
+        principalId: 'flagright',
+        tenantName: 'flagright',
         userId: 'test',
         ...authorizer,
       }

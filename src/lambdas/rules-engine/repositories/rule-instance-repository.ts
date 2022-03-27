@@ -89,7 +89,6 @@ export class RuleInstanceRepository {
         ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
       },
     }
-
     const result = await this.dynamoDb.query(queryInput).promise()
     return (
       result.Items?.map((item) => ({

@@ -27,6 +27,20 @@ export class RuleRepository {
     return this.getRules({})
   }
 
+  async getRulesByIds(ruleIds: string[]): Promise<ReadonlyArray<Rule>> {
+    if (ruleIds.length === 0) {
+      return []
+    }
+
+    const ruleParams = ruleIds.map((ruleId, index) => [`:rule${index}`, ruleId])
+    const ruleKeys = ruleParams.map((params) => params[0])
+    console.log(`id IN (${ruleKeys.join(',')})`)
+    return this.getRules({
+      FilterExpression: `id IN (${ruleKeys.join(',')})`,
+      ExpressionAttributeValues: Object.fromEntries(ruleParams),
+    })
+  }
+
   private async getRules(
     query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
   ): Promise<ReadonlyArray<Rule>> {

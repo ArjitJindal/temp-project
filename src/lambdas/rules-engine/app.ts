@@ -3,6 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import _ from 'lodash'
 import { Transaction } from '../../@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '../../@types/openapi-public/TransactionMonitoringResult'
 import { getDynamoDbClient } from '../../utils/dynamodb'
@@ -11,11 +12,13 @@ import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesRe
 import { FailedRulesResult } from '../../@types/openapi-public/FailedRulesResult'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { RuleAction } from '../../@types/openapi-internal/RuleAction'
+import { Rule } from '../../@types/openapi-internal/Rule'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { rules } from './rules'
 import { RuleError } from './rules/errors'
+import { RuleRepository } from './repositories/rule-repository'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -30,6 +33,9 @@ export async function verifyTransaction(
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ): Promise<TransactionMonitoringResult> {
+  const ruleRepository = new RuleRepository(tenantId, {
+    dynamoDb,
+  })
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
@@ -37,6 +43,12 @@ export async function verifyTransaction(
     dynamoDb,
   })
   const ruleInstances = await ruleInstanceRepository.getActiveRuleInstances()
+  const rulesById = _.keyBy(
+    await ruleRepository.getRulesByIds(
+      ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
+    ),
+    'id'
+  )
   const ruleResults = await Promise.all(
     ruleInstances.map(async (ruleInstance) => {
       const rule = new rules[ruleInstance.ruleId](
@@ -45,13 +57,13 @@ export async function verifyTransaction(
         ruleInstance.parameters as RuleParameters,
         dynamoDb
       )
-      const { displayName, description } = rule.getInfo()
+      const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
       try {
         const ruleResult = await rule.computeRule()
         return {
           ruleId: ruleInstance.ruleId,
-          ruleName: displayName,
-          ruleDescription: description,
+          ruleName: ruleInfo.name,
+          ruleDescription: ruleInfo.description,
           ruleAction: ruleResult?.action || DEFAULT_RULE_ACTION,
           ruleHit: ruleResult !== undefined,
         }
@@ -59,8 +71,8 @@ export async function verifyTransaction(
         console.error(e)
         return {
           ruleId: ruleInstance.ruleId,
-          ruleName: displayName,
-          ruleDescription: description,
+          ruleName: ruleInfo.name,
+          ruleDescription: ruleInfo.description,
           failureException:
             e instanceof RuleError
               ? { exceptionName: e.name, exceptionDescription: e.message }
