@@ -33,7 +33,7 @@ export const RuleParametersEditor: React.FC<Props> = ({ rule, onBack, onActivate
       try {
         setActivating(true);
         await api.postRuleInstances({
-          ruleInstance: {
+          RuleInstance: {
             ruleId: rule.id as string,
             parameters,
             action,

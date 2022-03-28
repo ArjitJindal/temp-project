@@ -5,7 +5,7 @@ import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
-import { ImportRequestTypeEnum, TransactionCaseManagement } from '@/apis';
+import { TransactionCaseManagement } from '@/apis';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import { useApi } from '@/api';
 
@@ -135,7 +135,7 @@ const TableList: React.FC = () => {
           };
         }}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.Transaction} />]}
+        toolBarRender={() => [<FileImportButton type="TRANSACTION" />]}
       />
       <Drawer
         width={700}

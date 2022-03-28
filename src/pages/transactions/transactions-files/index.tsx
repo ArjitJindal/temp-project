@@ -75,7 +75,7 @@ const TableList: React.FC = () => {
         search={false}
         request={files}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={ImportRequestTypeEnum.Transaction} />]}
+        toolBarRender={() => [<FileImportButton type={'TRANSACTION'} />]}
       />
     </PageContainer>
   );

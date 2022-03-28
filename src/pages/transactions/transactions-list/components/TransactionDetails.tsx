@@ -52,7 +52,7 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
     try {
       const comment = await api.postTransactionsComments({
         transactionId,
-        comment: {
+        Comment: {
           body: commentValue,
           files,
         },
@@ -90,7 +90,7 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
             let fileS3Key = '';
             try {
               // 1. Get S3 presigned URL
-              const { presignedUrl, s3Key } = await api.postGetPresignedUrl();
+              const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
               fileS3Key = s3Key;
 
               // 2. Upload file to S3 directly
@@ -156,10 +156,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
   const handleDeleteComment = useCallback(
     async (transactionId: string, commentId: string) => {
       setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
-      await api.deleteTransactionsTransactionIdCommentsCommentId({
-        transactionId,
-        commentId,
-      });
+      await api.deleteTransactionsTransactionIdCommentsCommentId({ transactionId, commentId });
       setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
       onTransactionUpdate({
         ...transaction,

@@ -28,7 +28,7 @@ const FileImport: React.FC<FileImportProps> = ({ type, format, onStart, onEnd, c
         let hideMessage = message.loading('Uploading...', 0);
         try {
           // 1. Get S3 presigned URL
-          const { presignedUrl, s3Key } = await api.postGetPresignedUrl();
+          const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
 
           // 2. Upload file to S3 directly
           await axios.put(presignedUrl, file, {
@@ -42,7 +42,7 @@ const FileImport: React.FC<FileImportProps> = ({ type, format, onStart, onEnd, c
           hideMessage = message.loading('Importing...', 0);
 
           const { importedCount } = await api.postImport({
-            importRequest: {
+            ImportRequest: {
               type,
               format,
               s3Key,
@@ -76,7 +76,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
       <Menu.Item key="flagright">
         <FileImport
           type={type}
-          format={ImportRequestFormatEnum.Flagright}
+          format="flagright"
           onStart={() => setLoading(true)}
           onEnd={() => setLoading(false)}
         >
@@ -87,7 +87,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
         <Menu.Item key="custom">
           <FileImport
             type={type}
-            format={ImportRequestFormatEnum.Custom}
+            format="custom"
             onStart={() => setLoading(true)}
             onEnd={() => setLoading(false)}
           >

@@ -1,19 +1,19 @@
 import { RuleAction } from '@/apis/models/RuleAction';
 
-export const RULE_ACTION_OPTIONS = [
-  { label: 'Flag', value: RuleAction.Flag },
-  { label: 'Block', value: RuleAction.Block },
-  { label: 'Whitelist', value: RuleAction.Whitelist },
+export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
+  { label: 'Flag', value: 'FLAG' },
+  { label: 'Block', value: 'BLOCK' },
+  { label: 'Whitelist', value: 'WHITELIST' },
 ];
 
 export function getRuleActionColor(ruleAction: RuleAction): string {
-  if (ruleAction === RuleAction.Allow) {
+  if (ruleAction === 'ALLOW') {
     return 'green';
-  } else if (ruleAction === RuleAction.Block) {
+  } else if (ruleAction === 'BLOCK') {
     return 'red';
-  } else if (ruleAction === RuleAction.Flag) {
+  } else if (ruleAction === 'FLAG') {
     return 'orange';
-  } else if (ruleAction === RuleAction.Whitelist) {
+  } else if (ruleAction === 'WHITELIST') {
     return 'lime';
   } else {
     return 'yellow';

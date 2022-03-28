@@ -25,10 +25,7 @@ export default () => {
         [newRuleInstance.id as string]: newRuleInstance,
       }));
       try {
-        await api.putRuleInstancesRuleInstanceId({
-          ruleInstanceId,
-          ruleInstance: newRuleInstance,
-        });
+        await api.putRuleInstancesRuleInstanceId({ ruleInstanceId, RuleInstance: newRuleInstance });
       } catch (e) {
         setUpdatedRuleInstances((prev) => _.omit(prev, [ruleInstanceId]));
         throw e;
@@ -45,7 +42,7 @@ export default () => {
       try {
         await handleRuleInstanceUpdate({
           ...ruleInstance,
-          status: activated ? RuleInstanceStatusEnum.Active : RuleInstanceStatusEnum.Inactive,
+          status: activated ? 'ACTIVE' : 'INACTIVE',
         });
         message.success(`${activated ? 'Activated' : 'Deactivated'} rule ${ruleInstance.ruleId}`);
       } catch (e) {
@@ -140,7 +137,7 @@ export default () => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
             <Switch
-              checked={ruleInstance.status === RuleInstanceStatusEnum.Active}
+              checked={ruleInstance.status === 'ACTIVE'}
               onChange={(checked) => handleActivationChange(ruleInstance, checked)}
             />
           );
@@ -156,8 +153,8 @@ export default () => {
         columns={columns}
         request={async () => {
           const [rules, ruleInstances] = await Promise.all([
-            api.getRules(),
-            api.getRuleInstances(),
+            api.getRules({}),
+            api.getRuleInstances({}),
           ]);
           setRules(_.keyBy(rules, 'id'));
           return {

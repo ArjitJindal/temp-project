@@ -84,7 +84,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       }}
       toolBarRender={() => (user && isFlagrightUser(user) ? [<RuleCreationForm />] : [])}
       request={async () => {
-        const rules = await api.getRules();
+        const rules = await api.getRules({});
         return {
           data: rules,
           success: true,

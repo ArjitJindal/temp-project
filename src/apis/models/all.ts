@@ -1,5 +1,3 @@
-/* tslint:disable */
-/* eslint-disable */
 export * from './ACHDetails';
 export * from './Address';
 export * from './Address1';

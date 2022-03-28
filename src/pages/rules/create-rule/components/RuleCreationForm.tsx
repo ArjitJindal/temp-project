@@ -35,7 +35,7 @@ export const RuleCreationForm: React.FC = () => {
       onFinish={async (values) => {
         try {
           await api.postRules({
-            rule: {
+            Rule: {
               name: values.name,
               description: values.description,
               ruleImplementationFilename: values.ruleImplementationFilename,

@@ -1,44 +1,50 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMemo } from 'react';
-import type { ConfigurationParameters, FetchParams, Middleware, ResponseContext } from './apis';
-import { Configuration, DefaultApi as FlagrightApi } from './apis';
+import {
+  AuthorizationAuthentication,
+  Configuration,
+  IsomorphicFetchHttpLibrary,
+  Middleware,
+  RequestContext,
+  ResponseContext,
+  SecurityAuthentication,
+  ServerConfiguration,
+} from './apis';
+import { PromiseMiddlewareWrapper } from './apis/middleware';
+import { ObjectDefaultApi as FlagrightApi } from './apis/types/ObjectParamAPI';
 
 class AuthorizationMiddleware implements Middleware {
-  getAccessToken: () => Promise<string>;
+  auth: SecurityAuthentication;
 
-  constructor(getAccessToken: () => Promise<string>) {
-    this.getAccessToken = getAccessToken;
+  constructor(auth: SecurityAuthentication) {
+    this.auth = auth;
   }
 
-  public async pre(context: ResponseContext): Promise<FetchParams | void> {
-    const accessToken = await this.getAccessToken();
-    return {
-      url: context.url,
-      init: {
-        ...context.init,
-        headers: new Headers({
-          ...context.init.headers,
-          Authorization: `Bearer ${accessToken}`,
-        }),
-      },
-    };
+  public async pre(context: RequestContext): Promise<RequestContext> {
+    await this.auth.applySecurityAuthentication(context);
+    return context;
+  }
+
+  public async post(context: ResponseContext): Promise<ResponseContext> {
+    return context;
   }
 }
 
 export function useApi(): FlagrightApi {
   const { getAccessTokenSilently } = useAuth0();
   const api = useMemo(() => {
-    const configParams: ConfigurationParameters = {
-      basePath: API_BASE_PATH,
-      middleware: [
-        new AuthorizationMiddleware(() =>
-          getAccessTokenSilently({
-            audience: AUTH0_AUDIENCE,
-          }),
-        ),
-      ],
+    const auth = new AuthorizationAuthentication({
+      getToken: () =>
+        getAccessTokenSilently({
+          audience: AUTH0_AUDIENCE,
+        }),
+    });
+    const apiConfig: Configuration = {
+      baseServer: new ServerConfiguration(API_BASE_PATH, {}),
+      httpApi: new IsomorphicFetchHttpLibrary(),
+      middleware: [new PromiseMiddlewareWrapper(new AuthorizationMiddleware(auth))],
+      authMethods: { Authorization: auth },
     };
-    const apiConfig = new Configuration(configParams);
     return new FlagrightApi(apiConfig);
   }, [getAccessTokenSilently]);
   return api;
