@@ -11,15 +11,18 @@
  */
 
 import { ACHDetails } from './ACHDetails'
+import { Assignment } from './Assignment'
 import { CardDetails } from './CardDetails'
 import { Comment } from './Comment'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { IBANDetails } from './IBANDetails'
+import { RuleAction } from './RuleAction'
 import { Tag } from './Tag'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
+import { TransactionStatusChange } from './TransactionStatusChange'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { UPIDetails } from './UPIDetails'
 export class TransactionCaseManagement {
@@ -54,6 +57,9 @@ export class TransactionCaseManagement {
   'executedRules': Array<ExecutedRulesResult>
   'failedRules': Array<FailedRulesResult>
   'comments'?: Array<Comment>
+  'assignments'?: Array<Assignment>
+  'status': RuleAction
+  'statusChanges'?: Array<TransactionStatusChange>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -157,6 +163,24 @@ export class TransactionCaseManagement {
       name: 'comments',
       baseName: 'comments',
       type: 'Array<Comment>',
+      format: '',
+    },
+    {
+      name: 'assignments',
+      baseName: 'assignments',
+      type: 'Array<Assignment>',
+      format: '',
+    },
+    {
+      name: 'status',
+      baseName: 'status',
+      type: 'RuleAction',
+      format: '',
+    },
+    {
+      name: 'statusChanges',
+      baseName: 'statusChanges',
+      type: 'Array<TransactionStatusChange>',
       format: '',
     },
   ]

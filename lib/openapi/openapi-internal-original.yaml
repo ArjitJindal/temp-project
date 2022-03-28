@@ -575,6 +575,18 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Assignment'
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            statusChanges:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionStatusChange'
+          required:
+            - status
       title: TransactionCaseManagement
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
@@ -669,6 +681,34 @@ components:
         - s3Key
         - filename
         - size
+    Assignment:
+      title: Assignment
+      type: object
+      properties:
+        assigneeUserId:
+          type: string
+        assignedByUserId:
+          type: string
+        timestamp:
+          type: number
+      required:
+        - assigneeUserId
+        - assignedByUserId
+        - timestamp
+    TransactionStatusChange:
+      title: TransactionStatusChange
+      type: object
+      properties:
+        userId:
+          type: string
+        status:
+          $ref: '#/components/schemas/RuleAction'
+        timestamp:
+          type: number
+      required:
+        - userId
+        - status
+        - timestamp
   securitySchemes:
     Authorization:
       type: http

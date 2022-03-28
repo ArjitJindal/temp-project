@@ -10,15 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { Assignment } from './Assignment'
-import { Comment } from './Comment'
 import { RuleAction } from './RuleAction'
-import { TransactionStatusChange } from './TransactionStatusChange'
-export class TransactionCaseManagementAllOf {
-  'comments'?: Array<Comment>
-  'assignments'?: Array<Assignment>
+export class TransactionStatusChange {
+  'userId': string
   'status': RuleAction
-  'statusChanges'?: Array<TransactionStatusChange>
+  'timestamp': number
 
   static readonly discriminator: string | undefined = undefined
 
@@ -29,15 +25,9 @@ export class TransactionCaseManagementAllOf {
     format: string
   }> = [
     {
-      name: 'comments',
-      baseName: 'comments',
-      type: 'Array<Comment>',
-      format: '',
-    },
-    {
-      name: 'assignments',
-      baseName: 'assignments',
-      type: 'Array<Assignment>',
+      name: 'userId',
+      baseName: 'userId',
+      type: 'string',
       format: '',
     },
     {
@@ -47,15 +37,15 @@ export class TransactionCaseManagementAllOf {
       format: '',
     },
     {
-      name: 'statusChanges',
-      baseName: 'statusChanges',
-      type: 'Array<TransactionStatusChange>',
+      name: 'timestamp',
+      baseName: 'timestamp',
+      type: 'number',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionCaseManagementAllOf.attributeTypeMap
+    return TransactionStatusChange.attributeTypeMap
   }
 
   public constructor() {}
