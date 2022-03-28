@@ -43,12 +43,7 @@ import {
   FailedRulesResultFromJSONTyped,
   FailedRulesResultToJSON,
 } from './FailedRulesResult';
-import {
-  IBANDetails,
-  IBANDetailsFromJSON,
-  IBANDetailsFromJSONTyped,
-  IBANDetailsToJSON,
-} from './IBANDetails';
+import { IBANDetails, IBANDetailsFromJSON, IBANDetailsToJSON } from './IBANDetails';
 import { Tag, TagFromJSON, TagFromJSONTyped, TagToJSON } from './Tag';
 import {
   Transaction,
@@ -68,12 +63,7 @@ import {
   TransactionWithRulesResultAllOfFromJSONTyped,
   TransactionWithRulesResultAllOfToJSON,
 } from './TransactionWithRulesResultAllOf';
-import {
-  UPIDetails,
-  UPIDetailsFromJSON,
-  UPIDetailsFromJSONTyped,
-  UPIDetailsToJSON,
-} from './UPIDetails';
+import { UPIDetails, UPIDetailsFromJSON, UPIDetailsToJSON } from './UPIDetails';
 
 /**
  * Model for transaction payload with rules result
@@ -89,11 +79,15 @@ export interface TransactionWithRulesResult {
   transactionId?: string;
   /**
    *
+   *
+   *
    * @type {number}
    * @memberof TransactionWithRulesResult
    */
   timestamp: number;
   /**
+   *
+   *
    *
    * @type {string}
    * @memberof TransactionWithRulesResult
@@ -101,11 +95,15 @@ export interface TransactionWithRulesResult {
   senderUserId?: string;
   /**
    *
+   *
+   *
    * @type {string}
    * @memberof TransactionWithRulesResult
    */
   receiverUserId?: string;
   /**
+   *
+   *
    *
    * @type {TransactionAmountDetails}
    * @memberof TransactionWithRulesResult
@@ -113,17 +111,23 @@ export interface TransactionWithRulesResult {
   sendingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
    * @type {TransactionAmountDetails}
    * @memberof TransactionWithRulesResult
    */
   receivingAmountDetails?: TransactionAmountDetails;
   /**
    *
+   *
+   *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof TransactionWithRulesResult
    */
   senderPaymentDetails: CardDetails | IBANDetails | ACHDetails | UPIDetails | null;
   /**
+   *
+   *
    *
    * @type {CardDetails | IBANDetails | ACHDetails | UPIDetails}
    * @memberof TransactionWithRulesResult
@@ -149,6 +153,8 @@ export interface TransactionWithRulesResult {
   reference?: string;
   /**
    *
+   *
+   *
    * @type {DeviceData}
    * @memberof TransactionWithRulesResult
    */
@@ -161,11 +167,15 @@ export interface TransactionWithRulesResult {
   tags?: Array<Tag>;
   /**
    *
+   *
+   *
    * @type {Array<ExecutedRulesResult>}
    * @memberof TransactionWithRulesResult
    */
   executedRules: Array<ExecutedRulesResult>;
   /**
+   *
+   *
    *
    * @type {Array<FailedRulesResult>}
    * @memberof TransactionWithRulesResult
@@ -195,7 +205,6 @@ export function TransactionWithRulesResultFromJSONTyped(
     receivingAmountDetails: !exists(json, 'receivingAmountDetails')
       ? undefined
       : TransactionAmountDetailsFromJSON(json['receivingAmountDetails']),
-    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
       json['senderPaymentDetails'].method === 'CARD'
         ? CardDetailsFromJSON(json['senderPaymentDetails'])
@@ -240,7 +249,6 @@ export function TransactionWithRulesResultToJSON(value?: TransactionWithRulesRes
     receiverUserId: value.receiverUserId,
     sendingAmountDetails: TransactionAmountDetailsToJSON(value.sendingAmountDetails),
     receivingAmountDetails: TransactionAmountDetailsToJSON(value.receivingAmountDetails),
-    // TODO: Handle discriminator properly to avoid this manual modification
     senderPaymentDetails:
       value.senderPaymentDetails?.method === 'CARD'
         ? CardDetailsToJSON(value.senderPaymentDetails as CardDetails)

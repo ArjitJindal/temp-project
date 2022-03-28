@@ -6,9 +6,10 @@ import ProTable from '@ant-design/pro-table';
 import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { Link } from 'umi';
-import { customerUsers, businessUsers } from './service';
-import type { CustomerUsersListItem, BusinessUsersListItem, TableListPagination } from './data.d';
+import type { TableListPagination } from './data.d';
 import { tableListDataSource } from './_transactionsMock';
+import { useApi } from '@/api';
+import { Amount, Business, User } from '@/apis';
 
 function createUserTransactions() {
   return Array.from(Array(10).keys()).map(() => {
@@ -24,8 +25,14 @@ function createUserTransactions() {
 const BusinessUsersTab: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<BusinessUsersListItem>();
-  const columns: ProColumns<BusinessUsersListItem>[] = [
+  const [currentRow, setCurrentRow] = useState<Business>();
+  const api = useApi();
+
+  const createCurrencyString = (amount: Amount | undefined) => {
+    return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
+  };
+
+  const columns: ProColumns<Business>[] = [
     {
       title: 'User ID',
       dataIndex: 'userId',
@@ -45,22 +52,34 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Legal Name',
-      dataIndex: 'name',
+      render: (dom, entity) => {
+        return entity.legalEntity.companyGeneralDetails.legalName;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Industry',
-      dataIndex: 'businessIndustry',
+      render: (dom, entity) => {
+        return entity.legalEntity.companyGeneralDetails.businessIndustry;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Expected Transaction Amount Per Month',
-      dataIndex: 'expectedTransactionAmountPerMonth',
+      render: (dom, entity) => {
+        return createCurrencyString(
+          entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth,
+        );
+      },
       valueType: 'textarea',
     },
     {
       title: 'Expected Turnover Amount Per Month',
-      dataIndex: 'expectedTurnoverPerMonth',
+      render: (dom, entity) => {
+        return createCurrencyString(
+          entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
+        );
+      },
       valueType: 'textarea',
     },
     {
@@ -70,32 +89,48 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Registration Identifier',
-      dataIndex: 'registrationIdentifier',
+      render: (dom, entity) => {
+        return entity.legalEntity.companyRegistrationDetails?.registrationIdentifier;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Registration Country',
-      dataIndex: 'registrationCountry',
+      render: (dom, entity) => {
+        return entity.legalEntity.companyRegistrationDetails?.registrationCountry;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Created time',
       sorter: true,
-      dataIndex: 'createdAt',
+      dataIndex: 'createdTimestamp',
       valueType: 'dateTime',
     },
   ];
 
   return (
     <>
-      <ProTable<BusinessUsersListItem, TableListPagination>
+      <ProTable<Business, TableListPagination>
         headerTitle="Business Users"
         actionRef={actionRef}
         rowKey="key"
         search={{
           labelWidth: 120,
         }}
-        request={businessUsers}
+        request={async (params) => {
+          const response = await api.getBusinessUsersList({
+            limit: params.pageSize!,
+            skip: (params.current! - 1) * params.pageSize!,
+            beforeTimestamp: Date.now(),
+          });
+
+          return {
+            data: response.data,
+            success: true,
+            total: response.total,
+          };
+        }}
         columns={columns}
       />
       <Drawer
@@ -107,18 +142,18 @@ const BusinessUsersTab: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.name && (
+        {currentRow?.legalEntity && (
           <>
-            <ProDescriptions<BusinessUsersListItem>
+            <ProDescriptions<Business>
               column={2}
-              title={currentRow?.name}
+              title={currentRow?.legalEntity.companyGeneralDetails.legalName}
               request={async () => ({
                 data: currentRow || {},
               })}
               params={{
-                id: currentRow?.name,
+                id: currentRow?.legalEntity.companyGeneralDetails.legalName,
               }}
-              columns={columns as ProDescriptionsItemProps<BusinessUsersListItem>[]}
+              columns={columns as ProDescriptionsItemProps<Business>[]}
             />
             Transaction History:
             <Table
@@ -158,8 +193,11 @@ const BusinessUsersTab: React.FC = () => {
 const ConsumerUsersTab: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<CustomerUsersListItem>();
-  const columns: ProColumns<CustomerUsersListItem>[] = [
+  const [currentRow, setCurrentRow] = useState<User>();
+
+  const api = useApi();
+
+  const columns: ProColumns<User>[] = [
     {
       title: 'User ID',
       dataIndex: 'userId',
@@ -179,22 +217,30 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Name',
-      dataIndex: 'name',
+      render: (dom, entity) => {
+        return `${entity.userDetails?.name.firstName} ${entity.userDetails?.name.middleName} ${entity.userDetails?.name.lastName}`;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Age',
-      dataIndex: 'age',
+      render: (dom, entity) => {
+        return entity.userDetails?.age;
+      },
       valueType: 'digit',
     },
     {
       title: 'Country of residence',
-      dataIndex: 'countryOfResidence',
+      render: (dom, entity) => {
+        return entity.userDetails?.countryOfResidence;
+      },
       valueType: 'textarea',
     },
     {
       title: 'Country of nationality',
-      dataIndex: 'countryOfNationality',
+      render: (dom, entity) => {
+        return entity.userDetails?.countryOfNationality;
+      },
       valueType: 'textarea',
     },
     {
@@ -202,39 +248,53 @@ const ConsumerUsersTab: React.FC = () => {
       dataIndex: 'tags',
       hideInForm: true,
       render: (tags: any) => {
-        return (
-          <span>
-            <Tag color={'cyan'}>
-              {tags?.map((tag: any) => {
-                const key = Object.keys(tag)[0];
-                return (
-                  <span>
-                    {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
-                  </span>
-                );
-              })}
-            </Tag>
-          </span>
-        );
+        if (tags instanceof Array) {
+          return (
+            <span>
+              <Tag color={'cyan'}>
+                {tags?.map((tag: any) => {
+                  const key = Object.keys(tag)[0];
+                  return (
+                    <span>
+                      {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
+                    </span>
+                  );
+                })}
+              </Tag>
+            </span>
+          );
+        }
       },
     },
     {
       title: 'Created time',
       sorter: true,
-      dataIndex: 'createdAt',
+      dataIndex: 'createdTimestamp',
       valueType: 'dateTime',
     },
   ];
   return (
     <>
-      <ProTable<CustomerUsersListItem, TableListPagination>
+      <ProTable<User, TableListPagination>
         headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
         search={{
           labelWidth: 120,
         }}
-        request={customerUsers}
+        request={async (params) => {
+          const response = await api.getConsumerUsersList({
+            limit: params.pageSize!,
+            skip: (params.current! - 1) * params.pageSize!,
+            beforeTimestamp: Date.now(),
+          });
+
+          return {
+            data: response.data,
+            success: true,
+            total: response.total,
+          };
+        }}
         columns={columns}
       />
       <Drawer
@@ -246,18 +306,18 @@ const ConsumerUsersTab: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.name && (
+        {currentRow?.userDetails.name && (
           <>
-            <ProDescriptions<CustomerUsersListItem>
+            <ProDescriptions<User>
               column={2}
-              title={currentRow?.name}
+              title={`${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`}
               request={async () => ({
                 data: currentRow || {},
               })}
               params={{
-                id: currentRow?.name,
+                id: `${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`,
               }}
-              columns={columns as ProDescriptionsItemProps<CustomerUsersListItem>[]}
+              columns={columns as ProDescriptionsItemProps<User>[]}
             />
             Transaction History:
             <Table

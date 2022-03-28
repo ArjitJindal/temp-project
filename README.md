@@ -45,14 +45,37 @@ const api = useApi();
 const response = await api.getTransactionsList();
 ```
 
-## Provided Scripts
-
-Ant Design provides some useful script to help you quick start and build with web project, code style check and test.
-
-Scripts provided in `package.json`. It's safe to modify or add additional script:
+## Starting Phytoplankton
 
 Assuming you have nvm and yarn installed:
 
 1. yarn
 2. nvm use 12
 3. yarn start
+
+## Running It Locally With Tarpon API
+
+Setup [tarpon](https://github.com/flagright/tarpon) package in you local. Set up steps and running tarpon locally in the [Tarpon README] (https://github.com/flagright/tarpon#tarpon).
+
+Summary, after Tarpon dependencies are setup (including local DDB instance and MongoDB), in the `tarpon` repo:
+
+1. `npm run start-local-ddb`
+2. `npm run start-local-mongodb`
+3. `npm run synth:local`
+4. `npm run start-local-api`
+
+### Running Chrome (or Chromium) in Unsecure Mode
+
+In order to use the local-api for Phytoplankton, you'll need to use the "unsecured" chrome instance. You can
+
+For Mac, you can run:
+
+```
+open -n -a /usr/bin/google-chrome --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
+```
+
+For Linux:
+
+```
+chromium-browser --disable-web-security --user-data-dir="./tmp"
+```
