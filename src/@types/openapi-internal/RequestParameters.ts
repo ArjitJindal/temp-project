@@ -157,6 +157,33 @@ export interface DefaultApiGetTransactionsListRequest {
   beforeTimestamp: number
 }
 
+export interface DefaultApiGetTransactionsPerUserListRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  limit: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  skip: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  beforeTimestamp: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  userId: string
+}
+
 export interface DefaultApiPostApikeyRequest {
   /**
    * Tenant ID

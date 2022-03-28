@@ -50,6 +50,30 @@ export class TransactionRepository {
     return { total, data: transactions }
   }
 
+  public async getTransactionsPerUser(
+    pagination: { limit: number; skip: number; beforeTimestamp: number },
+    userId: string
+  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+
+    const query = {
+      timestamp: { $lte: pagination.beforeTimestamp },
+      senderUserId: userId,
+    }
+
+    const transactions = await collection
+      .find(query)
+      .sort({ timestamp: -1 })
+      .limit(pagination.limit)
+      .skip(pagination.skip)
+      .toArray()
+    const total = await collection.count(query)
+    return { total, data: transactions }
+  }
+
   public async saveTransaction(
     transaction: Transaction,
     rulesResult: {
