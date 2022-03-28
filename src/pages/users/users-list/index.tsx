@@ -249,8 +249,6 @@ const ConsumerUsersTab: React.FC = () => {
       hideInForm: true,
       render: (tags: any) => {
         if (tags instanceof Array) {
-          console.log(`TAGZ`);
-          console.log(tags);
           return (
             <span>
               <Tag color={'cyan'}>
