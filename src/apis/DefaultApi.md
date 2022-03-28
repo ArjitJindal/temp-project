@@ -5,23 +5,19 @@ All URIs are relative to _http://localhost:3000_
 | Method | HTTP request | Description |
 | --- | --- | --- |
 | [**deleteRuleInstancesRuleInstanceId**](DefaultApi.md#deleteRuleInstancesRuleInstanceId) | **DELETE** /rule_instances/{ruleInstanceId} | Rule Instance - Delete |
-| [**deleteRulesRuleId**](DefaultApi.md#deleteRulesRuleId) | **DELETE** /rules/{ruleId} | Rule - Delete |
 | [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} |
 | [**getBusinessUsersList**](DefaultApi.md#getBusinessUsersList) | **GET** /business/users | Business Users - List |
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
-| [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
-| [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
+| [**getTransactionsPerUserList**](DefaultApi.md#getTransactionsPerUserList) | **GET** /user/transactions | Transaction Per User - List |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
 | [**postGetPresignedUrl**](DefaultApi.md#postGetPresignedUrl) | **POST** /files/getPresignedUrl | Files - Get Presigned URL |
 | [**postImport**](DefaultApi.md#postImport) | **POST** /import | Import - Start to Import |
 | [**postLists**](DefaultApi.md#postLists) | **POST** /lists | List Import |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
-| [**postRules**](DefaultApi.md#postRules) | **POST** /rules | Rules - Create |
 | [**postTransactionsComments**](DefaultApi.md#postTransactionsComments) | **POST** /transactions/{transactionId}/comments | Create a Transaction Comment |
 | [**putRuleInstancesRuleInstanceId**](DefaultApi.md#putRuleInstancesRuleInstanceId) | **PUT** /rule_instances/{ruleInstanceId} | Rule Instance - Update |
-| [**putRuleRuleId**](DefaultApi.md#putRuleRuleId) | **PUT** /rules/{ruleId} | Rule - Update |
 
 # **deleteRuleInstancesRuleInstanceId**
 
@@ -51,56 +47,6 @@ apiInstance.deleteRuleInstancesRuleInstanceId(body).then((data:any) => {
 | Name               | Type         | Description | Notes                 |
 | ------------------ | ------------ | ----------- | --------------------- |
 | **ruleInstanceId** | [**string**] |             | defaults to undefined |
-
-### Return type
-
-**void**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
-# **deleteRulesRuleId**
-
-> void deleteRulesRuleId()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:.DefaultApiDeleteRulesRuleIdRequest = {
-  // string
-  ruleId: "ruleId_example",
-};
-
-apiInstance.deleteRulesRuleId(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-| Name       | Type         | Description | Notes                 |
-| ---------- | ------------ | ----------- | --------------------- |
-| **ruleId** | [**string**] |             | defaults to undefined |
 
 ### Return type
 
@@ -347,96 +293,6 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
-# **getRuleInstances**
-
-> Array<RuleInstance> getRuleInstances()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:any = {};
-
-apiInstance.getRuleInstances(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-**Array<RuleInstance>**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
-# **getRules**
-
-> Array<Rule> getRules()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:any = {};
-
-apiInstance.getRules(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-**Array<Rule>**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
 # **getTransactionsList**
 
 > TransactionsListResponse getTransactionsList()
@@ -471,6 +327,65 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **limit**           | [**number**] |             | defaults to undefined |
 | **skip**            | [**number**] |             | defaults to undefined |
 | **beforeTimestamp** | [**number**] |             | defaults to undefined |
+
+### Return type
+
+**TransactionsListResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getTransactionsPerUserList**
+
+> TransactionsListResponse getTransactionsPerUserList()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetTransactionsPerUserListRequest = {
+  // number
+  limit: 3.14,
+  // number
+  skip: 3.14,
+  // number
+  beforeTimestamp: 3.14,
+  // string
+  userId: "userId_example",
+};
+
+apiInstance.getTransactionsPerUserList(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name                | Type         | Description | Notes                 |
+| ------------------- | ------------ | ----------- | --------------------- |
+| **limit**           | [**number**] |             | defaults to undefined |
+| **skip**            | [**number**] |             | defaults to undefined |
+| **beforeTimestamp** | [**number**] |             | defaults to undefined |
+| **userId**          | [**string**] |             | defaults to undefined |
 
 ### Return type
 
@@ -722,7 +637,6 @@ let body:.DefaultApiPostRuleInstancesRequest = {
     id: "id_example",
     ruleId: "ruleId_example",
     parameters: {},
-    action: "FLAG",
     status: "ACTIVE",
     createdAt: 3.14,
     updatedAt: 3.14,
@@ -745,66 +659,6 @@ apiInstance.postRuleInstances(body).then((data:any) => {
 ### Return type
 
 **RuleInstance**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
-# **postRules**
-
-> Rule postRules()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:.DefaultApiPostRulesRequest = {
-  // Rule (optional)
-  Rule: {
-    id: "id_example",
-    name: "name_example",
-    description: "description_example",
-    parametersSchema: {},
-    defaultParameters: {},
-    defaultAction: "FLAG",
-    ruleImplementationFilename: "ruleImplementationFilename_example",
-    createdAt: 3.14,
-    updatedAt: 3.14,
-  },
-};
-
-apiInstance.postRules(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-| Name     | Type     | Description | Notes |
-| -------- | -------- | ----------- | ----- |
-| **Rule** | **Rule** |             |
-
-### Return type
-
-**Rule**
 
 ### Authorization
 
@@ -912,7 +766,6 @@ let body:.DefaultApiPutRuleInstancesRuleInstanceIdRequest = {
     id: "id_example",
     ruleId: "ruleId_example",
     parameters: {},
-    action: "FLAG",
     status: "ACTIVE",
     createdAt: 3.14,
     updatedAt: 3.14,
@@ -952,68 +805,5 @@ No authorization required
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
 | **201**     | Created     | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
-# **putRuleRuleId**
-
-> void putRuleRuleId()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:.DefaultApiPutRuleRuleIdRequest = {
-  // string
-  ruleId: "ruleId_example",
-  // Rule (optional)
-  Rule: {
-    id: "id_example",
-    name: "name_example",
-    description: "description_example",
-    parametersSchema: {},
-    defaultParameters: {},
-    defaultAction: "FLAG",
-    ruleImplementationFilename: "ruleImplementationFilename_example",
-    createdAt: 3.14,
-    updatedAt: 3.14,
-  },
-};
-
-apiInstance.putRuleRuleId(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-| Name       | Type         | Description | Notes                 |
-| ---------- | ------------ | ----------- | --------------------- |
-| **Rule**   | **Rule**     |             |
-| **ruleId** | [**string**] |             | defaults to undefined |
-
-### Return type
-
-**void**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: Not defined
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)

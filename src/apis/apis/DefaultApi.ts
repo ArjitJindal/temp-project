@@ -5,6 +5,7 @@ import { RequestContext, HttpMethod, ResponseContext, HttpFile } from '../http/h
 import { ObjectSerializer } from '../models/ObjectSerializer';
 import { ApiException } from './exception';
 import { canConsumeForm, isCodeInRange } from '../util';
+import { SecurityAuthentication } from '../auth/auth';
 
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { Comment } from '../models/Comment';
@@ -13,7 +14,6 @@ import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
-import { Rule } from '../models/Rule';
 import { RuleInstance } from '../models/RuleInstance';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
 
@@ -46,33 +46,11 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
-    return requestContext;
-  }
-
-  /**
-   * Rule - Delete
-   * @param ruleId
-   */
-  public async deleteRulesRuleId(
-    ruleId: string,
-    _options?: Configuration,
-  ): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // verify required parameter 'ruleId' is not null or undefined
-    if (ruleId === null || ruleId === undefined) {
-      throw new RequiredError('DefaultApi', 'deleteRulesRuleId', 'ruleId');
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
     }
-
-    // Path Params
-    const localVarPath = '/rules/{ruleId}'.replace(
-      '{' + 'ruleId' + '}',
-      encodeURIComponent(String(ruleId)),
-    );
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     return requestContext;
   }
@@ -114,6 +92,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -172,6 +156,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -227,6 +217,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
     }
 
     return requestContext;
@@ -295,37 +291,11 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
-    return requestContext;
-  }
-
-  /**
-   * Rule Instance - List
-   */
-  public async getRuleInstances(_options?: Configuration): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // Path Params
-    const localVarPath = '/rule_instances';
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
-
-    return requestContext;
-  }
-
-  /**
-   * Rules - List
-   */
-  public async getRules(_options?: Configuration): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // Path Params
-    const localVarPath = '/rules';
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -384,6 +354,87 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
+   * Transaction Per User - List
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param userId
+   */
+  public async getTransactionsPerUserList(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    userId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'limit' is not null or undefined
+    if (limit === null || limit === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'limit');
+    }
+
+    // verify required parameter 'skip' is not null or undefined
+    if (skip === null || skip === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'skip');
+    }
+
+    // verify required parameter 'beforeTimestamp' is not null or undefined
+    if (beforeTimestamp === null || beforeTimestamp === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'beforeTimestamp');
+    }
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/user/transactions';
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Query Params
+    if (limit !== undefined) {
+      requestContext.setQueryParam('limit', ObjectSerializer.serialize(limit, 'number', ''));
+    }
+
+    // Query Params
+    if (skip !== undefined) {
+      requestContext.setQueryParam('skip', ObjectSerializer.serialize(skip, 'number', ''));
+    }
+
+    // Query Params
+    if (beforeTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'beforeTimestamp',
+        ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
+    if (userId !== undefined) {
+      requestContext.setQueryParam('userId', ObjectSerializer.serialize(userId, 'string', ''));
+    }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -420,6 +471,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -436,6 +493,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -466,6 +529,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -494,6 +563,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -524,31 +599,11 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
-    return requestContext;
-  }
-
-  /**
-   * Rules - Create
-   * @param Rule
-   */
-  public async postRules(Rule?: Rule, _options?: Configuration): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // Path Params
-    const localVarPath = '/rules';
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
-
-    // Body Params
-    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
-    requestContext.setHeaderParam('Content-Type', contentType);
-    const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(Rule, 'Rule', ''),
-      contentType,
-    );
-    requestContext.setBody(serializedBody);
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -589,6 +644,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -628,44 +689,11 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
-    return requestContext;
-  }
-
-  /**
-   * Rule - Update
-   * @param ruleId
-   * @param Rule
-   */
-  public async putRuleRuleId(
-    ruleId: string,
-    Rule?: Rule,
-    _options?: Configuration,
-  ): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // verify required parameter 'ruleId' is not null or undefined
-    if (ruleId === null || ruleId === undefined) {
-      throw new RequiredError('DefaultApi', 'putRuleRuleId', 'ruleId');
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
     }
-
-    // Path Params
-    const localVarPath = '/rules/{ruleId}'.replace(
-      '{' + 'ruleId' + '}',
-      encodeURIComponent(String(ruleId)),
-    );
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.PUT);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
-
-    // Body Params
-    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
-    requestContext.setHeaderParam('Content-Type', contentType);
-    const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(Rule, 'Rule', ''),
-      contentType,
-    );
-    requestContext.setBody(serializedBody);
 
     return requestContext;
   }
@@ -680,37 +708,6 @@ export class DefaultApiResponseProcessor {
    * @throws ApiException if the response code was not in [200, 299]
    */
   public async deleteRuleInstancesRuleInstanceId(response: ResponseContext): Promise<void> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      return;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: void = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'void',
-        '',
-      ) as void;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
-   * @params response Response returned by the server for a request to deleteRulesRuleId
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async deleteRulesRuleId(response: ResponseContext): Promise<void> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
       return;
@@ -879,82 +876,48 @@ export class DefaultApiResponseProcessor {
    * Unwraps the actual response sent by the server from the response context and deserializes the response content
    * to the expected objects
    *
-   * @params response Response returned by the server for a request to getRuleInstances
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async getRuleInstances(response: ResponseContext): Promise<Array<RuleInstance>> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Array<RuleInstance> = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<RuleInstance>',
-        '',
-      ) as Array<RuleInstance>;
-      return body;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Array<RuleInstance> = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<RuleInstance>',
-        '',
-      ) as Array<RuleInstance>;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
-   * @params response Response returned by the server for a request to getRules
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async getRules(response: ResponseContext): Promise<Array<Rule>> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Array<Rule> = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<Rule>',
-        '',
-      ) as Array<Rule>;
-      return body;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Array<Rule> = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<Rule>',
-        '',
-      ) as Array<Rule>;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
    * @params response Response returned by the server for a request to getTransactionsList
    * @throws ApiException if the response code was not in [200, 299]
    */
   public async getTransactionsList(response: ResponseContext): Promise<TransactionsListResponse> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: TransactionsListResponse = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionsListResponse',
+        '',
+      ) as TransactionsListResponse;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: TransactionsListResponse = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionsListResponse',
+        '',
+      ) as TransactionsListResponse;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getTransactionsPerUserList
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getTransactionsPerUserList(
+    response: ResponseContext,
+  ): Promise<TransactionsListResponse> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
       const body: TransactionsListResponse = ObjectSerializer.deserialize(
@@ -1157,42 +1120,6 @@ export class DefaultApiResponseProcessor {
    * Unwraps the actual response sent by the server from the response context and deserializes the response content
    * to the expected objects
    *
-   * @params response Response returned by the server for a request to postRules
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async postRules(response: ResponseContext): Promise<Rule> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Rule = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Rule',
-        '',
-      ) as Rule;
-      return body;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Rule = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'Rule',
-        '',
-      ) as Rule;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
    * @params response Response returned by the server for a request to postTransactionsComments
    * @throws ApiException if the response code was not in [200, 299]
    */
@@ -1260,37 +1187,6 @@ export class DefaultApiResponseProcessor {
         'RuleInstance | any',
         '',
       ) as RuleInstance | any;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
-   * @params response Response returned by the server for a request to putRuleRuleId
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async putRuleRuleId(response: ResponseContext): Promise<void> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      return;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: void = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'void',
-        '',
-      ) as void;
       return body;
     }
 

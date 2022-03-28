@@ -42,8 +42,6 @@ models/ListImportRequest.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
-models/Rule.ts
-models/RuleAction.ts
 models/RuleFailureException.ts
 models/RuleInstance.ts
 models/Tag.ts
