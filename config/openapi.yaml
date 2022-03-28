@@ -25,62 +25,6 @@ paths:
           name: usagePlanId
           description: AWS Gateway usage plan ID
       description: Generate a new Tarpon API key for a tenant
-  /rules:
-    get:
-      summary: Rules - List
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Rule'
-              examples: {}
-      operationId: get-rules
-      description: ''
-    parameters: []
-    post:
-      summary: Rules - Create
-      operationId: post-rules
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Rule'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Rule'
-  '/rules/{ruleId}':
-    parameters:
-      - schema:
-          type: string
-        name: ruleId
-        in: path
-        required: true
-    put:
-      summary: Rule - Update
-      operationId: put-rule-ruleId
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Rule'
-    delete:
-      summary: Rule - Delete
-      operationId: delete-rules-ruleId
-      responses:
-        '200':
-          description: OK
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -108,18 +52,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstance'
-    get:
-      summary: Rule Instance - List
-      operationId: get-rule_instances
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RuleInstance'
   '/rule_instances/{ruleInstanceId}':
     parameters:
       - schema:
@@ -237,6 +169,42 @@ paths:
           in: query
           name: beforeTimestamp
           required: true
+  /user/transactions:
+    get:
+      summary: Transaction Per User - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsListResponse'
+              examples: {}
+      operationId: get-transactions-per-user-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+    parameters: []
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -377,52 +345,6 @@ paths:
           description: OK
 components:
   schemas:
-    Rule:
-      title: Rule
-      type: object
-      x-examples:
-        example-1:
-          id: R-1
-          name: Rule name
-          description: Rule description
-          parametersSchema:
-            type: object
-            properties:
-              threshold:
-                type: number
-                title: Threshold
-          defaultParameters:
-            threshold: 3
-          defaultAction: FLAG
-          ruleImplementationFilename: code-filename
-          createdAt: 0
-          updatedAt: 0
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        parametersSchema:
-          type: object
-        defaultParameters:
-          type: object
-        defaultAction:
-          $ref: '#/components/schemas/RuleAction'
-        ruleImplementationFilename:
-          type: string
-        createdAt:
-          type: number
-        updatedAt:
-          type: number
-      required:
-        - name
-        - description
-        - parametersSchema
-        - defaultParameters
-        - defaultAction
-        - ruleImplementationFilename
     RuleInstance:
       title: RuleInstance
       type: object
@@ -433,8 +355,6 @@ components:
           type: string
         parameters:
           type: object
-        action:
-          $ref: '#/components/schemas/RuleAction'
         status:
           type: string
           enum:
@@ -451,15 +371,6 @@ components:
       required:
         - ruleId
         - parameters
-        - action
-    RuleAction:
-      type: string
-      title: RuleAction
-      enum:
-        - FLAG
-        - BLOCK
-        - WHITELIST
-        - ALLOW
     ImportRequest:
       title: ImportRequest
       type: object
@@ -533,7 +444,6 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
-
         - type: object
           properties:
             comments:
@@ -552,7 +462,6 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
-
       required:
         - total
         - data
@@ -567,7 +476,6 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
       required:
         - total
         - data

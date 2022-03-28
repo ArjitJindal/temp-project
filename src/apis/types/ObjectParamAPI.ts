@@ -31,8 +31,6 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
-import { Rule } from '../models/Rule';
-import { RuleAction } from '../models/RuleAction';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
@@ -59,15 +57,6 @@ export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
    * @memberof DefaultApideleteRuleInstancesRuleInstanceId
    */
   ruleInstanceId: string;
-}
-
-export interface DefaultApiDeleteRulesRuleIdRequest {
-  /**
-   *
-   * @type string
-   * @memberof DefaultApideleteRulesRuleId
-   */
-  ruleId: string;
 }
 
 export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdRequest {
@@ -154,10 +143,6 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
   body?: any;
 }
 
-export interface DefaultApiGetRuleInstancesRequest {}
-
-export interface DefaultApiGetRulesRequest {}
-
 export interface DefaultApiGetTransactionsListRequest {
   /**
    *
@@ -177,6 +162,33 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   beforeTimestamp: number;
+}
+
+export interface DefaultApiGetTransactionsPerUserListRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  limit: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  skip: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  beforeTimestamp: number;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsPerUserList
+   */
+  userId: string;
 }
 
 export interface DefaultApiPostApikeyRequest {
@@ -223,15 +235,6 @@ export interface DefaultApiPostRuleInstancesRequest {
   RuleInstance?: RuleInstance;
 }
 
-export interface DefaultApiPostRulesRequest {
-  /**
-   *
-   * @type Rule
-   * @memberof DefaultApipostRules
-   */
-  Rule?: Rule;
-}
-
 export interface DefaultApiPostTransactionsCommentsRequest {
   /**
    *
@@ -262,21 +265,6 @@ export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {
   RuleInstance?: RuleInstance;
 }
 
-export interface DefaultApiPutRuleRuleIdRequest {
-  /**
-   *
-   * @type string
-   * @memberof DefaultApiputRuleRuleId
-   */
-  ruleId: string;
-  /**
-   *
-   * @type Rule
-   * @memberof DefaultApiputRuleRuleId
-   */
-  Rule?: Rule;
-}
-
 export class ObjectDefaultApi {
   private api: ObservableDefaultApi;
 
@@ -297,17 +285,6 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<void> {
     return this.api.deleteRuleInstancesRuleInstanceId(param.ruleInstanceId, options).toPromise();
-  }
-
-  /**
-   * Rule - Delete
-   * @param param the request object
-   */
-  public deleteRulesRuleId(
-    param: DefaultApiDeleteRulesRuleIdRequest,
-    options?: Configuration,
-  ): Promise<void> {
-    return this.api.deleteRulesRuleId(param.ruleId, options).toPromise();
   }
 
   /**
@@ -372,25 +349,6 @@ export class ObjectDefaultApi {
   }
 
   /**
-   * Rule Instance - List
-   * @param param the request object
-   */
-  public getRuleInstances(
-    param: DefaultApiGetRuleInstancesRequest,
-    options?: Configuration,
-  ): Promise<Array<RuleInstance>> {
-    return this.api.getRuleInstances(options).toPromise();
-  }
-
-  /**
-   * Rules - List
-   * @param param the request object
-   */
-  public getRules(param: DefaultApiGetRulesRequest, options?: Configuration): Promise<Array<Rule>> {
-    return this.api.getRules(options).toPromise();
-  }
-
-  /**
    * Transaction - List
    * @param param the request object
    */
@@ -404,11 +362,33 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Transaction Per User - List
+   * @param param the request object
+   */
+  public getTransactionsPerUserList(
+    param: DefaultApiGetTransactionsPerUserListRequest,
+    options?: Configuration,
+  ): Promise<TransactionsListResponse> {
+    return this.api
+      .getTransactionsPerUserList(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.userId,
+        options,
+      )
+      .toPromise();
+  }
+
+  /**
    * Generate a new Tarpon API key for a tenant
    * Tarpon API Key - Create
    * @param param the request object
    */
-  public postApikey(param: DefaultApiPostApikeyRequest, options?: Configuration): Promise<void> {
+  public postApikey(
+    param: DefaultApiPostApikeyRequest = {},
+    options?: Configuration,
+  ): Promise<void> {
     return this.api.postApikey(param.tenantId, param.usagePlanId, options).toPromise();
   }
 
@@ -418,7 +398,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postGetPresignedUrl(
-    param: DefaultApiPostGetPresignedUrlRequest,
+    param: DefaultApiPostGetPresignedUrlRequest = {},
     options?: Configuration,
   ): Promise<PresignedUrlResponse> {
     return this.api.postGetPresignedUrl(options).toPromise();
@@ -429,7 +409,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postImport(
-    param: DefaultApiPostImportRequest,
+    param: DefaultApiPostImportRequest = {},
     options?: Configuration,
   ): Promise<ImportResponse> {
     return this.api.postImport(param.ImportRequest, options).toPromise();
@@ -439,7 +419,7 @@ export class ObjectDefaultApi {
    * List Import
    * @param param the request object
    */
-  public postLists(param: DefaultApiPostListsRequest, options?: Configuration): Promise<void> {
+  public postLists(param: DefaultApiPostListsRequest = {}, options?: Configuration): Promise<void> {
     return this.api.postLists(param.ListImportRequest, options).toPromise();
   }
 
@@ -448,18 +428,10 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postRuleInstances(
-    param: DefaultApiPostRuleInstancesRequest,
+    param: DefaultApiPostRuleInstancesRequest = {},
     options?: Configuration,
   ): Promise<RuleInstance> {
     return this.api.postRuleInstances(param.RuleInstance, options).toPromise();
-  }
-
-  /**
-   * Rules - Create
-   * @param param the request object
-   */
-  public postRules(param: DefaultApiPostRulesRequest, options?: Configuration): Promise<Rule> {
-    return this.api.postRules(param.Rule, options).toPromise();
   }
 
   /**
@@ -486,16 +458,5 @@ export class ObjectDefaultApi {
     return this.api
       .putRuleInstancesRuleInstanceId(param.ruleInstanceId, param.RuleInstance, options)
       .toPromise();
-  }
-
-  /**
-   * Rule - Update
-   * @param param the request object
-   */
-  public putRuleRuleId(
-    param: DefaultApiPutRuleRuleIdRequest,
-    options?: Configuration,
-  ): Promise<void> {
-    return this.api.putRuleRuleId(param.ruleId, param.Rule, options).toPromise();
   }
 }

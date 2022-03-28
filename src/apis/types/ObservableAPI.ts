@@ -32,8 +32,6 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
-import { Rule } from '../models/Rule';
-import { RuleAction } from '../models/RuleAction';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
@@ -101,38 +99,6 @@ export class ObservableDefaultApi {
             map((rsp: ResponseContext) =>
               this.responseProcessor.deleteRuleInstancesRuleInstanceId(rsp),
             ),
-          );
-        }),
-      );
-  }
-
-  /**
-   * Rule - Delete
-   * @param ruleId
-   */
-  public deleteRulesRuleId(ruleId: string, _options?: Configuration): Observable<void> {
-    const requestContextPromise = this.requestFactory.deleteRulesRuleId(ruleId, _options);
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.deleteRulesRuleId(rsp)),
           );
         }),
       );
@@ -319,68 +285,6 @@ export class ObservableDefaultApi {
   }
 
   /**
-   * Rule Instance - List
-   */
-  public getRuleInstances(_options?: Configuration): Observable<Array<RuleInstance>> {
-    const requestContextPromise = this.requestFactory.getRuleInstances(_options);
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.getRuleInstances(rsp)),
-          );
-        }),
-      );
-  }
-
-  /**
-   * Rules - List
-   */
-  public getRules(_options?: Configuration): Observable<Array<Rule>> {
-    const requestContextPromise = this.requestFactory.getRules(_options);
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.getRules(rsp)),
-          );
-        }),
-      );
-  }
-
-  /**
    * Transaction - List
    * @param limit
    * @param skip
@@ -419,6 +323,53 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getTransactionsList(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Transaction Per User - List
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param userId
+   */
+  public getTransactionsPerUserList(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    userId: string,
+    _options?: Configuration,
+  ): Observable<TransactionsListResponse> {
+    const requestContextPromise = this.requestFactory.getTransactionsPerUserList(
+      limit,
+      skip,
+      beforeTimestamp,
+      userId,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getTransactionsPerUserList(rsp)),
           );
         }),
       );
@@ -600,38 +551,6 @@ export class ObservableDefaultApi {
   }
 
   /**
-   * Rules - Create
-   * @param Rule
-   */
-  public postRules(Rule?: Rule, _options?: Configuration): Observable<Rule> {
-    const requestContextPromise = this.requestFactory.postRules(Rule, _options);
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.postRules(rsp)),
-          );
-        }),
-      );
-  }
-
-  /**
    * Create a Transaction Comment
    * @param transactionId
    * @param Comment
@@ -710,39 +629,6 @@ export class ObservableDefaultApi {
             map((rsp: ResponseContext) =>
               this.responseProcessor.putRuleInstancesRuleInstanceId(rsp),
             ),
-          );
-        }),
-      );
-  }
-
-  /**
-   * Rule - Update
-   * @param ruleId
-   * @param Rule
-   */
-  public putRuleRuleId(ruleId: string, Rule?: Rule, _options?: Configuration): Observable<void> {
-    const requestContextPromise = this.requestFactory.putRuleRuleId(ruleId, Rule, _options);
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.putRuleRuleId(rsp)),
           );
         }),
       );

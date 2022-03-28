@@ -10,14 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { RuleAction } from './RuleAction';
 import { HttpFile } from '../http/http';
 
 export class RuleInstance {
   'id'?: string;
   'ruleId': string;
   'parameters': any;
-  'action': RuleAction;
   'status'?: RuleInstanceStatusEnum;
   'createdAt'?: number;
   'updatedAt'?: number;
@@ -48,12 +46,6 @@ export class RuleInstance {
       name: 'parameters',
       baseName: 'parameters',
       type: 'any',
-      format: '',
-    },
-    {
-      name: 'action',
-      baseName: 'action',
-      type: 'RuleAction',
       format: '',
     },
     {

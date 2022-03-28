@@ -27,8 +27,6 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
-export * from './Rule';
-export * from './RuleAction';
 export * from './RuleFailureException';
 export * from './RuleInstance';
 export * from './Tag';
@@ -74,8 +72,6 @@ import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
-import { Rule } from './Rule';
-import { RuleAction } from './RuleAction';
 import { RuleFailureException } from './RuleFailureException';
 import { RuleInstance, RuleInstanceStatusEnum } from './RuleInstance';
 import { Tag } from './Tag';
@@ -104,7 +100,6 @@ const supportedMediaTypes: { [mediaType: string]: number } = {
 let enumsMap: Set<string> = new Set<string>([
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
-  'RuleAction',
   'RuleInstanceStatusEnum',
 ]);
 
@@ -138,7 +133,6 @@ let typeMap: { [index: string]: any } = {
   ListImportRequest: ListImportRequest,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
-  Rule: Rule,
   RuleFailureException: RuleFailureException,
   RuleInstance: RuleInstance,
   Tag: Tag,

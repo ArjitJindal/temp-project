@@ -31,8 +31,6 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
-import { Rule } from '../models/Rule';
-import { RuleAction } from '../models/RuleAction';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
@@ -71,15 +69,6 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<void> {
     const result = this.api.deleteRuleInstancesRuleInstanceId(ruleInstanceId, _options);
-    return result.toPromise();
-  }
-
-  /**
-   * Rule - Delete
-   * @param ruleId
-   */
-  public deleteRulesRuleId(ruleId: string, _options?: Configuration): Promise<void> {
-    const result = this.api.deleteRulesRuleId(ruleId, _options);
     return result.toPromise();
   }
 
@@ -157,22 +146,6 @@ export class PromiseDefaultApi {
   }
 
   /**
-   * Rule Instance - List
-   */
-  public getRuleInstances(_options?: Configuration): Promise<Array<RuleInstance>> {
-    const result = this.api.getRuleInstances(_options);
-    return result.toPromise();
-  }
-
-  /**
-   * Rules - List
-   */
-  public getRules(_options?: Configuration): Promise<Array<Rule>> {
-    const result = this.api.getRules(_options);
-    return result.toPromise();
-  }
-
-  /**
    * Transaction - List
    * @param limit
    * @param skip
@@ -185,6 +158,30 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(limit, skip, beforeTimestamp, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Transaction Per User - List
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param userId
+   */
+  public getTransactionsPerUserList(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    userId: string,
+    _options?: Configuration,
+  ): Promise<TransactionsListResponse> {
+    const result = this.api.getTransactionsPerUserList(
+      limit,
+      skip,
+      beforeTimestamp,
+      userId,
+      _options,
+    );
     return result.toPromise();
   }
 
@@ -246,15 +243,6 @@ export class PromiseDefaultApi {
   }
 
   /**
-   * Rules - Create
-   * @param Rule
-   */
-  public postRules(Rule?: Rule, _options?: Configuration): Promise<Rule> {
-    const result = this.api.postRules(Rule, _options);
-    return result.toPromise();
-  }
-
-  /**
    * Create a Transaction Comment
    * @param transactionId
    * @param Comment
@@ -279,16 +267,6 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<RuleInstance | any> {
     const result = this.api.putRuleInstancesRuleInstanceId(ruleInstanceId, RuleInstance, _options);
-    return result.toPromise();
-  }
-
-  /**
-   * Rule - Update
-   * @param ruleId
-   * @param Rule
-   */
-  public putRuleRuleId(ruleId: string, Rule?: Rule, _options?: Configuration): Promise<void> {
-    const result = this.api.putRuleRuleId(ruleId, Rule, _options);
     return result.toPromise();
   }
 }
