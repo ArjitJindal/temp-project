@@ -1,9 +1,9 @@
 import { Button, Space, Table, Tag, Modal } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { ProcessMap } from './data.d';
-import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
 import { PageContainer } from '@ant-design/pro-layout';
+import { RuleTableListItem, actionToColor, ThresholdDataType } from '../data.d';
+import { ProcessMap } from './data.d';
 import { getActiveRules } from './service';
 
 const handleAction = (key: string | number) => {

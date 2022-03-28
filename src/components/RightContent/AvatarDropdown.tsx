@@ -2,11 +2,10 @@ import React, { useCallback } from 'react';
 import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import { history } from 'umi';
+import { useAuth0 } from '@auth0/auth0-react';
+import type { MenuInfo } from 'rc-menu/lib/interface';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
-import { useAuth0 } from '@auth0/auth0-react';
-
-import type { MenuInfo } from 'rc-menu/lib/interface';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -15,14 +14,17 @@ export type GlobalHeaderRightProps = {
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
   const { user, logout } = useAuth0();
 
-  const onMenuClick = useCallback((event: MenuInfo) => {
-    const { key } = event;
-    if (key === 'logout') {
-      logout({ returnTo: window.location.origin });
-      return;
-    }
-    history.push(`/account/${key}`);
-  }, []);
+  const onMenuClick = useCallback(
+    (event: MenuInfo) => {
+      const { key } = event;
+      if (key === 'logout') {
+        logout({ returnTo: window.location.origin });
+        return;
+      }
+      history.push(`/account/${key}`);
+    },
+    [logout],
+  );
 
   const loading = (
     <span className={`${styles.action} ${styles.account}`}>

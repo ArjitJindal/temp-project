@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { Button, Card, Col, DatePicker, Dropdown, Menu, Row, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
@@ -6,9 +7,9 @@ import { Column } from '@ant-design/charts';
 import type { MenuInfo } from 'rc-menu/lib/interface';
 
 import numeral from 'numeral';
+import { useCallback } from 'react';
 import type { DataItem } from '../data.d';
 import styles from '../style.less';
-import { useCallback } from 'react';
 
 // FIXME: import doesn't work
 const toPng = require('html-to-image').toPng;
@@ -130,7 +131,7 @@ const SalesCard = ({
         exportToPdf(['Month', 'Rule', 'Hits'], exportData, rangePickerValue);
       }
     },
-    [salesData],
+    [rangePickerValue, salesData],
   );
   return (
     <Card loading={loading} bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">

@@ -1,9 +1,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import type { Request, Response } from 'express';
-import type { TableListParams } from './data.d';
-import type { RuleAction, ThresholdAllowedDataTypes, RuleTemplateTableListItem } from '../data.d';
-
 import { parse } from 'url';
+import type { Request, Response } from 'express';
+import type { RuleAction, ThresholdAllowedDataTypes, RuleTemplateTableListItem } from '../data.d';
+import type { TableListParams } from './data.d';
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {

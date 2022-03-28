@@ -2,9 +2,9 @@ import React, { useRef } from 'react';
 import { Card } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
 import { ActionType, EditableProTable, ProColumns } from '@ant-design/pro-table';
+import { ProFormInstance } from '@ant-design/pro-form';
 import type { CreateListsTableListItem } from './data.d';
 import { getActiveLists } from './service';
-import { ProFormInstance } from '@ant-design/pro-form';
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const actionRef = useRef<ActionType>();

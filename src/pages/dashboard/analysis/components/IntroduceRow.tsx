@@ -3,8 +3,8 @@ import { TinyArea, TinyColumn, Progress } from '@ant-design/charts';
 import { Col, Row, Tooltip } from 'antd';
 
 import numeral from 'numeral';
-import { ChartCard } from './Charts';
 import type { DataItem } from '../data.d';
+import { ChartCard } from './Charts';
 
 const topColResponsiveProps = {
   xs: 24,
