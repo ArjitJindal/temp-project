@@ -7,30 +7,30 @@ import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { Link } from 'umi';
 import type { TableListPagination } from './data.d';
-import { tableListDataSource } from './_transactionsMock';
 import { useApi } from '@/api';
-import { Amount, Business, User } from '@/apis';
+import {
+  Amount,
+  Business,
+  TransactionAmountDetails,
+  TransactionCaseManagement,
+  User,
+} from '@/apis';
 
-function createUserTransactions() {
-  return Array.from(Array(10).keys()).map(() => {
-    const index = Math.floor(Math.random() * tableListDataSource.length);
-    return {
-      transactionId: tableListDataSource[index].transactionId,
-      transactionTime: tableListDataSource[index].createdAt.toDateString(),
-      amount: `${tableListDataSource[index].amount} ${tableListDataSource[index].sendingCurrency}`,
-    };
-  });
-}
+const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
+  return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
+};
+
+const createCurrencyStringFromTransactionAmount = (
+  amount: TransactionAmountDetails | undefined,
+) => {
+  return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
+};
 
 const BusinessUsersTab: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<Business>();
   const api = useApi();
-
-  const createCurrencyString = (amount: Amount | undefined) => {
-    return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
-  };
 
   const columns: ProColumns<Business>[] = [
     {
@@ -67,7 +67,7 @@ const BusinessUsersTab: React.FC = () => {
     {
       title: 'Expected Transaction Amount Per Month',
       render: (dom, entity) => {
-        return createCurrencyString(
+        return createCurrencyStringFromAmount(
           entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth,
         );
       },
@@ -76,7 +76,7 @@ const BusinessUsersTab: React.FC = () => {
     {
       title: 'Expected Turnover Amount Per Month',
       render: (dom, entity) => {
-        return createCurrencyString(
+        return createCurrencyStringFromAmount(
           entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
         );
       },
@@ -156,8 +156,21 @@ const BusinessUsersTab: React.FC = () => {
               columns={columns as ProDescriptionsItemProps<Business>[]}
             />
             Transaction History:
-            <Table
-              dataSource={createUserTransactions()}
+            <ProTable<TransactionCaseManagement>
+              request={async (params) => {
+                const response = await api.getTransactionsPerUserList({
+                  limit: params.pageSize!,
+                  skip: (params.current! - 1) * params.pageSize!,
+                  beforeTimestamp: Date.now(),
+                  userId: currentRow?.userId,
+                });
+
+                return {
+                  data: response.data,
+                  success: true,
+                  total: response.total,
+                };
+              }}
               columns={[
                 {
                   title: 'Transaction ID',
@@ -173,12 +186,26 @@ const BusinessUsersTab: React.FC = () => {
                 },
                 {
                   title: 'Transaction time',
-                  dataIndex: 'transactionTime',
+                  dataIndex: 'timestamp',
                   key: 'transactionTime',
                 },
                 {
-                  title: 'Amount',
-                  dataIndex: 'amount',
+                  title: 'Sending Amount',
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.sendingAmountDetails,
+                    )}`;
+                  },
+                  key: 'amount',
+                },
+
+                {
+                  title: 'Receiving Amount',
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.receivingAmountDetails,
+                    )}`;
+                  },
                   key: 'amount',
                 },
               ]}
@@ -320,8 +347,21 @@ const ConsumerUsersTab: React.FC = () => {
               columns={columns as ProDescriptionsItemProps<User>[]}
             />
             Transaction History:
-            <Table
-              dataSource={createUserTransactions()}
+            <ProTable<TransactionCaseManagement>
+              request={async (params) => {
+                const response = await api.getTransactionsPerUserList({
+                  limit: params.pageSize!,
+                  skip: (params.current! - 1) * params.pageSize!,
+                  beforeTimestamp: Date.now(),
+                  userId: currentRow?.userId,
+                });
+
+                return {
+                  data: response.data,
+                  success: true,
+                  total: response.total,
+                };
+              }}
               columns={[
                 {
                   title: 'Transaction ID',
@@ -337,12 +377,26 @@ const ConsumerUsersTab: React.FC = () => {
                 },
                 {
                   title: 'Transaction time',
-                  dataIndex: 'transactionTime',
+                  dataIndex: 'timestamp',
                   key: 'transactionTime',
                 },
                 {
-                  title: 'Amount',
-                  dataIndex: 'amount',
+                  title: 'Sending Amount',
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.sendingAmountDetails,
+                    )}`;
+                  },
+                  key: 'amount',
+                },
+
+                {
+                  title: 'Receiving Amount',
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.receivingAmountDetails,
+                    )}`;
+                  },
                   key: 'amount',
                 },
               ]}
