@@ -117,7 +117,7 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
 
-    const docDbSg = new ec2.SecurityGroup(
+    const atlasSg = new ec2.SecurityGroup(
       this,
       TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
       {
@@ -126,7 +126,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    docDbSg.addIngressRule(ec2.Peer.ipv4(atlasVpcCidr), ec2.Port.tcp(port))
+    atlasSg.addIngressRule(ec2.Peer.ipv4(atlasVpcCidr), ec2.Port.tcp(port))
 
     /**
      * S3 Buckets
@@ -188,7 +188,7 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     const atlasFunctionProps = {
-      securityGroups: [docDbSg],
+      securityGroups: [atlasSg],
       vpc: docDbVpc,
       environment: {
         SM_SECRET_ARN: "arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI",
