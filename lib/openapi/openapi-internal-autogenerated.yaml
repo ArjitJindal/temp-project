@@ -603,6 +603,60 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /transactions/{transactionId}:
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+    post:
+      summary: Transaction - Update
+      operationId: post-transactions-transactionId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdateRequest'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /user/transactions:
     get:
       summary: Transaction Per User - List
@@ -993,6 +1047,56 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /accounts:
+    get:
+      summary: Account - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+      operationId: get-accounts
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponaccountFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
     Rule:
@@ -1074,10 +1178,10 @@ components:
       type: string
       title: RuleAction
       enum:
+        - ALLOW
+        - WHITELIST
         - FLAG
         - BLOCK
-        - WHITELIST
-        - ALLOW
     ImportRequest:
       title: ImportRequest
       type: object
@@ -1290,6 +1394,16 @@ components:
         - userId
         - status
         - timestamp
+    TransactionUpdateRequest:
+      title: TransactionUpdateRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/RuleAction'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
     Address:
       title: Address
       required:
@@ -2028,13 +2142,15 @@ components:
                 exceptionDescription: Some data is missing
     ExecutedRulesResult:
       title: ExecutedRulesResult
-      required:
-        - ruleId
-        - ruleName
-        - ruleDescription
-        - ruleAction
-        - ruleHit
       type: object
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        ruleAction: block
+        ruleHit: true
       properties:
         ruleId:
           minLength: 1
@@ -2049,25 +2165,18 @@ components:
           type: string
           description: Description of the rule
         ruleAction:
-          minLength: 1
-          type: string
-          description: >-
-            The specific action a rule is configured to take if it's hit such as
-            flag (passive monitoring), block transaction, terminate user,
-            whitelist etc.
+          $ref: '#/components/schemas/RuleAction'
         ruleHit:
           type: boolean
           description: >-
             Whether a rule was hit or not. When a rule is hit, it takes the
             pre-configured action on a transaction and/or user.
-      example:
-        ruleId: R-1a
-        ruleName: Proof of funds for high value transactions
-        ruleDescription: >-
-          If a user makes a remittance transaction >= 1800 in EUR - ask for
-          proof of funds
-        ruleAction: block
-        ruleHit: true
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - ruleAction
+        - ruleHit
     FailedRulesResult:
       title: FailedRulesResult
       required:

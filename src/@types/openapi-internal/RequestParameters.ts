@@ -30,6 +30,7 @@ import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { Rule } from './Rule'
 import { RuleAction } from './RuleAction'
+import { RuleAction1 } from './RuleAction1'
 import { RuleFailureException } from './RuleFailureException'
 import { RuleInstance } from './RuleInstance'
 import { Tag } from './Tag'
@@ -39,6 +40,7 @@ import { TransactionCaseManagement } from './TransactionCaseManagement'
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
 import { TransactionLimits } from './TransactionLimits'
 import { TransactionStatusChange } from './TransactionStatusChange'
+import { TransactionUpdateRequest } from './TransactionUpdateRequest'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { TransactionsListResponse } from './TransactionsListResponse'
@@ -79,6 +81,8 @@ export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdReque
    */
   commentId: string
 }
+
+export interface DefaultApiGetAccountsRequest {}
 
 export interface DefaultApiGetBusinessUsersListRequest {
   /**
@@ -267,6 +271,21 @@ export interface DefaultApiPostTransactionsCommentsRequest {
    * @memberof DefaultApipostTransactionsComments
    */
   Comment?: Comment
+}
+
+export interface DefaultApiPostTransactionsTransactionIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostTransactionsTransactionId
+   */
+  transactionId: string
+  /**
+   *
+   * @type TransactionUpdateRequest
+   * @memberof DefaultApipostTransactionsTransactionId
+   */
+  TransactionUpdateRequest?: TransactionUpdateRequest
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

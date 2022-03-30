@@ -1223,13 +1223,15 @@ components:
                 exceptionDescription: Some data is missing
     ExecutedRulesResult:
       title: ExecutedRulesResult
-      required:
-        - ruleId
-        - ruleName
-        - ruleDescription
-        - ruleAction
-        - ruleHit
       type: object
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        ruleAction: block
+        ruleHit: true
       properties:
         ruleId:
           minLength: 1
@@ -1244,25 +1246,18 @@ components:
           type: string
           description: Description of the rule
         ruleAction:
-          minLength: 1
-          type: string
-          description: >-
-            The specific action a rule is configured to take if it's hit such as
-            flag (passive monitoring), block transaction, terminate user,
-            whitelist etc.
+          $ref: '#/components/schemas/RuleAction'
         ruleHit:
           type: boolean
           description: >-
             Whether a rule was hit or not. When a rule is hit, it takes the
             pre-configured action on a transaction and/or user.
-      example:
-        ruleId: R-1a
-        ruleName: Proof of funds for high value transactions
-        ruleDescription: >-
-          If a user makes a remittance transaction >= 1800 in EUR - ask for
-          proof of funds
-        ruleAction: block
-        ruleHit: true
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - ruleAction
+        - ruleHit
     FailedRulesResult:
       title: FailedRulesResult
       required:
@@ -1937,6 +1932,14 @@ components:
           $ref: '#/components/schemas/Amount'
         maximumYearlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
+    RuleAction:
+      type: string
+      title: RuleAction
+      enum:
+        - ALLOW
+        - WHITELIST
+        - FLAG
+        - BLOCK
   securitySchemes:
     x-api-key:
       name: x-api-key
