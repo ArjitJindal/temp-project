@@ -11,16 +11,12 @@
  */
 
 import { Assignment } from './Assignment';
-import { Comment } from './Comment';
 import { RuleAction } from './RuleAction';
-import { TransactionStatusChange } from './TransactionStatusChange';
 import { HttpFile } from '../http/http';
 
-export class TransactionCaseManagementAllOf {
-  'comments'?: Array<Comment>;
+export class TransactionUpdateRequest {
+  'status'?: RuleAction;
   'assignments'?: Array<Assignment>;
-  'status': RuleAction;
-  'statusChanges'?: Array<TransactionStatusChange>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -31,9 +27,9 @@ export class TransactionCaseManagementAllOf {
     format: string;
   }> = [
     {
-      name: 'comments',
-      baseName: 'comments',
-      type: 'Array<Comment>',
+      name: 'status',
+      baseName: 'status',
+      type: 'RuleAction',
       format: '',
     },
     {
@@ -42,22 +38,10 @@ export class TransactionCaseManagementAllOf {
       type: 'Array<Assignment>',
       format: '',
     },
-    {
-      name: 'status',
-      baseName: 'status',
-      type: 'RuleAction',
-      format: '',
-    },
-    {
-      name: 'statusChanges',
-      baseName: 'statusChanges',
-      type: 'Array<TransactionStatusChange>',
-      format: '',
-    },
   ];
 
   static getAttributeTypeMap() {
-    return TransactionCaseManagementAllOf.attributeTypeMap;
+    return TransactionUpdateRequest.attributeTypeMap;
   }
 
   public constructor() {}

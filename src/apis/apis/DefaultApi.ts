@@ -15,6 +15,7 @@ import { ListImportRequest } from '../models/ListImportRequest';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
 import { RuleInstance } from '../models/RuleInstance';
+import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
 
 /**
@@ -113,6 +114,22 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
 
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    return requestContext;
+  }
+
+  /**
+   * Account - List
+   */
+  public async getAccounts(_options?: Configuration): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // Path Params
+    const localVarPath = '/accounts';
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     return requestContext;
@@ -388,6 +405,75 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Transaction Per User - List
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param userId
+   */
+  public async getTransactionsPerUserList(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    userId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'limit' is not null or undefined
+    if (limit === null || limit === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'limit');
+    }
+
+    // verify required parameter 'skip' is not null or undefined
+    if (skip === null || skip === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'skip');
+    }
+
+    // verify required parameter 'beforeTimestamp' is not null or undefined
+    if (beforeTimestamp === null || beforeTimestamp === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'beforeTimestamp');
+    }
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/user/transactions';
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Query Params
+    if (limit !== undefined) {
+      requestContext.setQueryParam('limit', ObjectSerializer.serialize(limit, 'number', ''));
+    }
+
+    // Query Params
+    if (skip !== undefined) {
+      requestContext.setQueryParam('skip', ObjectSerializer.serialize(skip, 'number', ''));
+    }
+
+    // Query Params
+    if (beforeTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'beforeTimestamp',
+        ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
+    if (userId !== undefined) {
+      requestContext.setQueryParam('userId', ObjectSerializer.serialize(userId, 'string', ''));
+    }
+
+    return requestContext;
+  }
+
+  /**
    * Generate a new Tarpon API key for a tenant
    * Tarpon API Key - Create
    * @param tenantId Tenant ID
@@ -593,6 +679,45 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Transaction - Update
+   * @param transactionId
+   * @param TransactionUpdateRequest
+   */
+  public async postTransactionsTransactionId(
+    transactionId: string,
+    TransactionUpdateRequest?: TransactionUpdateRequest,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'transactionId' is not null or undefined
+    if (transactionId === null || transactionId === undefined) {
+      throw new RequiredError('DefaultApi', 'postTransactionsTransactionId', 'transactionId');
+    }
+
+    // Path Params
+    const localVarPath = '/transactions/{transactionId}'.replace(
+      '{' + 'transactionId' + '}',
+      encodeURIComponent(String(transactionId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Body Params
+    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
+    requestContext.setHeaderParam('Content-Type', contentType);
+    const serializedBody = ObjectSerializer.stringify(
+      ObjectSerializer.serialize(TransactionUpdateRequest, 'TransactionUpdateRequest', ''),
+      contentType,
+    );
+    requestContext.setBody(serializedBody);
+
+    return requestContext;
+  }
+
+  /**
    * Rule Instance - Update
    * @param ruleInstanceId
    * @param RuleInstance
@@ -756,6 +881,42 @@ export class DefaultApiResponseProcessor {
         'void',
         '',
       ) as void;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getAccounts
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getAccounts(response: ResponseContext): Promise<Array<any>> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: Array<any> = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'Array<any>',
+        '',
+      ) as Array<any>;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: Array<any> = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'Array<any>',
+        '',
+      ) as Array<any>;
       return body;
     }
 
@@ -955,6 +1116,44 @@ export class DefaultApiResponseProcessor {
    * @throws ApiException if the response code was not in [200, 299]
    */
   public async getTransactionsList(response: ResponseContext): Promise<TransactionsListResponse> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: TransactionsListResponse = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionsListResponse',
+        '',
+      ) as TransactionsListResponse;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: TransactionsListResponse = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionsListResponse',
+        '',
+      ) as TransactionsListResponse;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getTransactionsPerUserList
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getTransactionsPerUserList(
+    response: ResponseContext,
+  ): Promise<TransactionsListResponse> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
       const body: TransactionsListResponse = ObjectSerializer.deserialize(
@@ -1214,6 +1413,37 @@ export class DefaultApiResponseProcessor {
         'Comment',
         '',
       ) as Comment;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to postTransactionsTransactionId
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async postTransactionsTransactionId(response: ResponseContext): Promise<void> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      return;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: void = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'void',
+        '',
+      ) as void;
       return body;
     }
 

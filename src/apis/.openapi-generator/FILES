@@ -17,6 +17,7 @@ models/Address.ts
 models/Address1.ts
 models/Address2.ts
 models/Amount.ts
+models/Assignment.ts
 models/Business.ts
 models/BusinessUsersListResponse.ts
 models/CardDetails.ts
@@ -44,6 +45,7 @@ models/Person.ts
 models/PresignedUrlResponse.ts
 models/Rule.ts
 models/RuleAction.ts
+models/RuleAction1.ts
 models/RuleFailureException.ts
 models/RuleInstance.ts
 models/Tag.ts
@@ -52,6 +54,8 @@ models/TransactionAmountDetails.ts
 models/TransactionCaseManagement.ts
 models/TransactionCaseManagementAllOf.ts
 models/TransactionLimits.ts
+models/TransactionStatusChange.ts
+models/TransactionUpdateRequest.ts
 models/TransactionWithRulesResult.ts
 models/TransactionWithRulesResultAllOf.ts
 models/TransactionsListResponse.ts

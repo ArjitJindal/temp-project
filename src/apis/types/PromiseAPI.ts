@@ -7,6 +7,7 @@ import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
 import { Amount } from '../models/Amount';
+import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
@@ -33,6 +34,7 @@ import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
+import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
@@ -41,6 +43,8 @@ import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
+import { TransactionStatusChange } from '../models/TransactionStatusChange';
+import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
 import { TransactionWithRulesResultAllOf } from '../models/TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
@@ -97,6 +101,14 @@ export class PromiseDefaultApi {
       commentId,
       _options,
     );
+    return result.toPromise();
+  }
+
+  /**
+   * Account - List
+   */
+  public getAccounts(_options?: Configuration): Promise<Array<any>> {
+    const result = this.api.getAccounts(_options);
     return result.toPromise();
   }
 
@@ -189,6 +201,30 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Transaction Per User - List
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param userId
+   */
+  public getTransactionsPerUserList(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    userId: string,
+    _options?: Configuration,
+  ): Promise<TransactionsListResponse> {
+    const result = this.api.getTransactionsPerUserList(
+      limit,
+      skip,
+      beforeTimestamp,
+      userId,
+      _options,
+    );
+    return result.toPromise();
+  }
+
+  /**
    * Generate a new Tarpon API key for a tenant
    * Tarpon API Key - Create
    * @param tenantId Tenant ID
@@ -265,6 +301,24 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<Comment> {
     const result = this.api.postTransactionsComments(transactionId, Comment, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Transaction - Update
+   * @param transactionId
+   * @param TransactionUpdateRequest
+   */
+  public postTransactionsTransactionId(
+    transactionId: string,
+    TransactionUpdateRequest?: TransactionUpdateRequest,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.postTransactionsTransactionId(
+      transactionId,
+      TransactionUpdateRequest,
+      _options,
+    );
     return result.toPromise();
   }
 
