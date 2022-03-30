@@ -1,5 +1,5 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { MongoClient } from 'mongodb'
+import { Db, MongoClient } from 'mongodb'
 import {
   connectToDB,
   TRANSACIONS_COLLECTION,
@@ -7,6 +7,12 @@ import {
 } from '../../utils/docDBUtils'
 import { unMarshallDynamoDBStream } from '../../utils/dynamodbStream'
 import { TarponStackConstants } from '../../../lib/constants'
+import { TransactionWithRulesResult } from '../../@types/openapi-public/TransactionWithRulesResult'
+import { Business } from '../../@types/openapi-public/Business'
+import { User } from '../../@types/openapi-public/User'
+import { TransactionCaseManagement } from '../../@types/openapi-internal/TransactionCaseManagement'
+import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesResult'
+import { RuleAction } from '../../@types/openapi-internal/RuleAction'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
@@ -14,8 +20,42 @@ import {
 
 let client: MongoClient
 
+function getTransactionStatus(
+  rulesResult: ReadonlyArray<ExecutedRulesResult>
+): RuleAction {
+  const rulesPrecedences: RuleAction[] = ['BLOCK', 'FLAG', 'WHITELIST', 'ALLOW']
+  return rulesResult
+    .map((result) => result.ruleAction)
+    .reduce((prev, curr) => {
+      if (rulesPrecedences.indexOf(curr) < rulesPrecedences.indexOf(prev)) {
+        return curr
+      } else {
+        return prev
+      }
+    }, 'ALLOW')
+}
+
+async function transactionHandler(
+  db: Db,
+  tenantId: string,
+  transaction: TransactionWithRulesResult
+) {
+  const transactionsCollection = db.collection<TransactionCaseManagement>(
+    TRANSACIONS_COLLECTION(tenantId)
+  )
+  transaction.executedRules
+  await transactionsCollection.insertOne({
+    ...transaction,
+    status: getTransactionStatus(transaction.executedRules),
+  })
+}
+
+async function userHandler(db: Db, tenantId: string, user: Business | User) {
+  const userCollection = db.collection(USERS_COLLECTION(tenantId))
+  await userCollection.insertOne(user)
+}
+
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
-  // Implementation pending
   try {
     client = await connectToDB()
     const db = client.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
@@ -23,30 +63,24 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
       const payload: KinesisStreamRecordPayload = record.kinesis
       const message: string = Buffer.from(payload.data, 'base64').toString()
       const dynamoDBStreamObject = JSON.parse(message).dynamodb
+      const tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
 
       if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           TRANSACTION_PRIMARY_KEY_IDENTIFIER
         )
       ) {
-        const tenantId =
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-        const transactionPrimaryItem = handlePrimaryItem(message)
-
-        const transactionsCollection = db.collection(
-          TRANSACIONS_COLLECTION(tenantId)
+        await transactionHandler(
+          db,
+          tenantId,
+          handlePrimaryItem(message) as TransactionWithRulesResult
         )
-        await transactionsCollection.insertOne(transactionPrimaryItem)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_PRIMARY_KEY_IDENTIFIER
         )
       ) {
-        const tenantId =
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-        const userPrimaryItem = handlePrimaryItem(message)
-        const userCollection = db.collection(USERS_COLLECTION(tenantId))
-        await userCollection.insertOne(userPrimaryItem)
+        await userHandler(db, tenantId, handlePrimaryItem(message) as User)
       }
     }
   } catch (err) {
