@@ -59,6 +59,27 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
           Edit
         </Button>
+        {editing ? (
+          <Space>
+            <Button onClick={handleCancelEditing} size="small">
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              danger
+              size="small"
+              onClick={handleUpdateRuleInstance}
+              disabled={validationErrors.length > 0}
+              loading={saving}
+            >
+              Save
+            </Button>
+          </Space>
+        ) : (
+          <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
+            Edit
+          </Button>
+        )}
       </Row>
       <ProDescriptions column={1} colon={false} layout="vertical">
         <ProDescriptions.Item label={<b>Rule ID:</b>} valueType="text">
@@ -105,20 +126,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           </JSONSchemaForm>
         </ProDescriptions.Item>
       </ProDescriptions>
-      {editing && (
-        <Space>
-          <Button onClick={handleCancelEditing}>Cancel</Button>
-          <Button
-            type="primary"
-            danger
-            onClick={handleUpdateRuleInstance}
-            disabled={validationErrors.length > 0}
-            loading={saving}
-          >
-            Save
-          </Button>
-        </Space>
-      )}
     </>
   );
 };
