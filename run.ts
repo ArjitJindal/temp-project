@@ -9,6 +9,7 @@
 import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
 import mkdirp from 'mkdirp'
+import { config } from './lib/configs/config-dev'
 import { TarponStackConstants } from './lib/constants'
 
 async function setUpMockS3() {
@@ -126,6 +127,16 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.transactions || 1,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
+  'get-accounts': () => {
+    process.env['AUTH0_DOMAIN'] = config.application.AUTH0_DOMAIN
+    process.env['AUTH0_MANAGEMENT_CLIENT_ID'] =
+      config.application.AUTH0_MANAGEMENT_CLIENT_ID
+    process.env['AUTH0_MANAGEMENT_CLIENT_SECRET'] =
+      config.application.AUTH0_MANAGEMENT_CLIENT_SECRET
+    return require('./src/lambdas/phytoplankton-internal-api-handlers/app').accountsHandler(
+      require('./events/get-accounts').event
+    )
+  },
 }
 
 ;(async () => {

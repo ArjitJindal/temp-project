@@ -42,7 +42,10 @@ import {
   FileImportConfig,
   GetPresignedUrlConfig,
 } from '../src/lambdas/file-import/app'
-import { TransactionViewConfig } from '../src/lambdas/phytoplankton-internal-api-handlers/app'
+import {
+  AccountsConfig,
+  TransactionViewConfig,
+} from '../src/lambdas/phytoplankton-internal-api-handlers/app'
 import {
   TarponStackConstants,
   getResourceName,
@@ -393,6 +396,27 @@ export class CdkTarponStack extends cdk.Stack {
           ],
         }
       )
+    )
+
+    /* Accounts */
+    this.createFunction(
+      TarponStackConstants.ACCOUNT_FUNCTION_NAME,
+      'app.accountsHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      {
+        ...docDbFunctionProps,
+        environment: {
+          ...docDbFunctionProps.environment,
+          ...({
+            AUTH0_DOMAIN: config.application.AUTH0_DOMAIN,
+            AUTH0_MANAGEMENT_CLIENT_ID:
+              config.application.AUTH0_MANAGEMENT_CLIENT_ID,
+            AUTH0_MANAGEMENT_CLIENT_SECRET:
+              config.application.AUTH0_MANAGEMENT_CLIENT_SECRET,
+          } as AccountsConfig),
+        },
+      }
     )
 
     /* Transactions per user view */

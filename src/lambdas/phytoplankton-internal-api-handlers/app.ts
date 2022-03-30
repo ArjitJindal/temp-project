@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { ManagementClient } from 'auth0'
 import { getDynamoDbClient } from '../../utils/dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
@@ -238,6 +239,34 @@ export const ruleInstanceHandler = lambdaApi()(
     } else if (event.httpMethod === 'GET' && event.path === '/rule_instances') {
       return ruleService.getAllRuleInstances()
     }
+    throw new Error('Unhandled request')
+  }
+)
+
+export type AccountsConfig = {
+  AUTH0_DOMAIN: string
+  AUTH0_MANAGEMENT_CLIENT_ID: string
+  AUTH0_MANAGEMENT_CLIENT_SECRET: string
+}
+
+export const accountsHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const config = process.env as AccountsConfig
+    const auth0 = new ManagementClient({
+      domain: config.AUTH0_DOMAIN,
+      clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
+      clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
+    })
+    if (event.httpMethod === 'GET') {
+      // TODO: Switch to Auth0 organizations to have clear tenants separation
+      return auth0.getUsers({ q: `app_metadata.tenantId:"${tenantId}"` })
+    }
+
     throw new Error('Unhandled request')
   }
 )

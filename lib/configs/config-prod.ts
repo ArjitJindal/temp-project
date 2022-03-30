@@ -19,8 +19,12 @@ export const config: Config = {
     },
   },
   application: {
+    AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.com/',
     AUTH0_TOKEN_ISSUER: 'https://flagright.eu.auth0.com/',
     AUTH0_JWKS_URI: 'https://flagright.eu.auth0.com/.well-known/jwks.json',
+    AUTH0_MANAGEMENT_CLIENT_ID: 'gVL7LOtgnFfPMsRgZYRWWhpDk9SjAFZV',
+    AUTH0_MANAGEMENT_CLIENT_SECRET:
+      'aJD1Dxa3cw9ZOrzbMPqbTzr-1lcyUGjQzrtSj1UpV1FDk7Qillpcr_l_h-R6PA0X',
   },
 }

@@ -44,6 +44,7 @@
   "devDependencies": {
     "@tsconfig/node14": "^1.0.1",
     "@types/ajv": "^1.0.0",
+    "@types/auth0": "^2.34.16",
     "@types/aws-lambda": "^8.10.89",
     "@types/chai": "^4.3.0",
     "@types/command-line-args": "^5.2.0",
@@ -84,6 +85,7 @@
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/parse": "^4.3.6",
     "ajv": "^8.11.0",
+    "auth0": "^2.40.0",
     "base-x": "^3.0.9",
     "copy-webpack-plugin": "^10.2.4",
     "dayjs": "^1.10.7",
