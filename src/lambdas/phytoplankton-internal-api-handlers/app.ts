@@ -21,6 +21,8 @@ import { connectToDB } from '../../utils/docDBUtils'
 import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
 import { RuleRepository } from '../rules-engine/repositories/rule-repository'
 import { Rule } from '../../@types/openapi-internal/Rule'
+
+import { TransactionUpdateRequest } from '../../@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 
@@ -59,6 +61,19 @@ export const transactionsViewHandler = lambdaApi()(
       return transactionService.getTransactions(params)
     } else if (
       event.httpMethod === 'POST' &&
+      event.resource === '/transactions/{transactionId}' &&
+      event.pathParameters?.transactionId &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(event.body) as TransactionUpdateRequest
+      return transactionService.updateTransaction(
+        userId,
+        event.pathParameters.transactionId,
+        updateRequest
+      )
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/transactions/{transactionId}/comments' &&
       event.pathParameters?.transactionId &&
       event.body
     ) {

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
+import _ from 'lodash'
 import { TarponStackConstants } from '../../../../lib/constants'
 import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { PaymentDetails } from '../../../@types/tranasction/payment-type'
@@ -11,6 +12,9 @@ import { TransactionWithRulesResult } from '../../../@types/openapi-public/Trans
 import { TRANSACIONS_COLLECTION } from '../../../utils/docDBUtils'
 import { Comment } from '../../../@types/openapi-internal/Comment'
 import { TransactionCaseManagement } from '../../../@types/openapi-internal/TransactionCaseManagement'
+import { RuleAction } from '../../../@types/openapi-internal/RuleAction'
+import { Assignment } from '../../../@types/openapi-internal/Assignment'
+import { TransactionStatusChange } from '../../../@types/openapi-internal/TransactionStatusChange'
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -72,6 +76,30 @@ export class TransactionRepository {
       .toArray()
     const total = await collection.count(query)
     return { total, data: transactions }
+  }
+
+  public async updateTransactionCaseManagement(
+    transactionId: string,
+    updates: {
+      assignments?: Assignment[]
+      status?: RuleAction
+      statusChange?: TransactionStatusChange
+    }
+  ) {
+    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACIONS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne(
+      { transactionId },
+      {
+        $set: _.omitBy<Partial<TransactionCaseManagement>>(
+          { assignments: updates.assignments, status: updates.status },
+          _.isNil
+        ),
+        $push: { statusChanges: updates.statusChange },
+      }
+    )
   }
 
   public async saveTransaction(

@@ -3,6 +3,7 @@ import { Comment } from '../../../@types/openapi-internal/Comment'
 import { FileInfo } from '../../../@types/openapi-internal/FileInfo'
 import { DefaultApiGetTransactionsListRequest } from '../../../@types/openapi-internal/RequestParameters'
 import { TransactionsListResponse } from '../../../@types/openapi-internal/TransactionsListResponse'
+import { TransactionUpdateRequest } from '../../../@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionRepository } from '../../rules-engine/repositories/transaction-repository'
 
 export class TransactionService {
@@ -38,6 +39,27 @@ export class TransactionService {
       return { ...transaction, comments: commentsWithUrl }
     })
     return result
+  }
+
+  async updateTransaction(
+    userId: string,
+    transactionId: string,
+    updateRequest: TransactionUpdateRequest
+  ) {
+    const updates = {
+      assignments: updateRequest.assignments,
+      status: updateRequest.status,
+      statusChange: updateRequest.status && {
+        userId,
+        status: updateRequest.status,
+        timestamp: Date.now(),
+      },
+    }
+    await this.transactionRepository.updateTransactionCaseManagement(
+      transactionId,
+      updates
+    )
+    return 'OK'
   }
 
   async saveTransactionComment(transactionId: string, comment: Comment) {
