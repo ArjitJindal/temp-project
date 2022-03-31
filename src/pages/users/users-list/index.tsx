@@ -1,4 +1,4 @@
-import { Drawer, Tag, Tabs, Table } from 'antd';
+import { Drawer, Tag, Tabs } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
@@ -15,6 +15,7 @@ import {
   TransactionCaseManagement,
   User,
 } from '@/apis';
+import { FileImportButton } from '@/components/file-import/FileImportButton';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -132,6 +133,7 @@ const BusinessUsersTab: React.FC = () => {
           };
         }}
         columns={columns}
+        toolBarRender={() => [<FileImportButton type={'BUSINESS'} />]}
       />
       <Drawer
         width={800}
@@ -323,6 +325,7 @@ const ConsumerUsersTab: React.FC = () => {
           };
         }}
         columns={columns}
+        toolBarRender={() => [<FileImportButton type={'USER'} />]}
       />
       <Drawer
         width={600}
