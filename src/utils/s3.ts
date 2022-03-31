@@ -10,7 +10,7 @@ export function getS3Client(
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ): AWS.S3 {
-  if (process.env.MOCK_S3 === 'true') {
+  if (process.env.ENV === 'local') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const AWSMock = require('mock-aws-s3')
     AWSMock.config.basePath = '/tmp/flagright/s3'
@@ -19,9 +19,6 @@ export function getS3Client(
 
   return new AWS.S3({
     signatureVersion: 'v4',
-    credentials:
-      process.env.ENV === 'local'
-        ? new AWS.SharedIniFileCredentials()
-        : getCredentialsFromEvent(event),
+    credentials: getCredentialsFromEvent(event),
   })
 }

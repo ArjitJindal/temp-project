@@ -19,13 +19,18 @@ const ShPaymentTransaction = t.type({
 })
 type ShPaymentTransaction = t.TypeOf<typeof ShPaymentTransaction>
 
-export const ShPaymentTransactionConverter: ConverterInterface<Transaction> = {
+export class ShPaymentTransactionConverter
+  implements ConverterInterface<Transaction>
+{
+  async initialize(): Promise<void> {
+    return
+  }
   getCsvParserOptions() {
     return { headers: true, skipLines: 13 }
-  },
+  }
   validate(rawTransaction: ShPaymentTransaction): string[] {
     return reporter.report(ShPaymentTransaction.decode(rawTransaction))
-  },
+  }
   convert(rawTransaction: ShPaymentTransaction): Transaction | null {
     const direction = rawTransaction.Direction
     if (direction === 'IN') {
@@ -67,5 +72,5 @@ export const ShPaymentTransactionConverter: ConverterInterface<Transaction> = {
         BIC: rawTransaction['Creditor institution BIC / code'],
       },
     }
-  },
+  }
 }

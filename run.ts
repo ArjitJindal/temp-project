@@ -105,14 +105,13 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/list-importer/app').listImporterHandler(
       require('./events/import-list').event
     ),
-  'import-transaction': async () => {
-    process.env['MOCK_S3'] = 'true'
+  import: async () => {
     process.env['TMP_BUCKET'] = 'tarpon-tmp'
     process.env['IMPORT_BUCKET'] = 'tarpon-import'
     process.env['DOCUMENT_BUCKET'] = 'tarpon-document'
     await setUpMockS3()
     return require('./src/lambdas/file-import/app').fileImportHandler(
-      require('./events/import-transaction').event
+      require('./events/import').event
     )
   },
   'get-presigned-url': async () => {

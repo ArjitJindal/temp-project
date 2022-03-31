@@ -15,7 +15,7 @@ export const event = {
   body: JSON.stringify({
     type: 'TRANSACTION',
     format: 'flagright',
-    // Copy the testing file to /tmp/flagright/s3/tarpon-tmp-local first
-    s3Key: 'test.csv',
+    // Copy the testing file to /tmp/flagright/s3/tarpon-tmp first
+    s3Key: 'transaction.csv',
   } as ImportRequest),
 }

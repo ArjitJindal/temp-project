@@ -9,16 +9,19 @@ const ShPaymentUser = t.type({
 })
 type ShPaymentUser = t.TypeOf<typeof ShPaymentUser>
 
-export const ShPaymentUserConverter: ConverterInterface<User> = {
+export class ShPaymentUserConverter implements ConverterInterface<User> {
+  async initialize(): Promise<void> {
+    return
+  }
   getCsvParserOptions() {
     // TBD
     return { headers: true }
-  },
+  }
   validate(rawUser: ShPaymentUser): string[] {
     return reporter.report(ShPaymentUser.decode(rawUser))
-  },
+  }
   convert(rawUser: ShPaymentUser): User | null {
     // TBD
     return null
-  },
+  }
 }

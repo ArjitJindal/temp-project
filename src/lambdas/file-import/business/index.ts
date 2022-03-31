@@ -1,11 +1,11 @@
 import { ConverterInterface } from '../converter-interface'
-import { FlagrightBusinessConverter } from './flagright-converter'
+import { FlagrightConverter } from '../flagright-converter'
 import { ShPaymentBusinessConverter } from './sh-payment-converter'
 import { Business } from '@/@types/openapi-public/Business'
 
 const internalConverters = {
-  'sh-payment': ShPaymentBusinessConverter,
-  flagright: FlagrightBusinessConverter,
+  'sh-payment': new ShPaymentBusinessConverter(),
+  flagright: new FlagrightConverter('Business'),
 }
 
 export type ImportFormat = keyof typeof internalConverters

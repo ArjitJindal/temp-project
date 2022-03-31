@@ -117,6 +117,8 @@ export class Importer {
   ): Promise<number> {
     const { s3Key } = importRequest
 
+    await converter.initialize()
+
     let importedCount = 0
     const params = {
       Bucket: this.importTmpBucket,

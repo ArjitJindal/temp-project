@@ -9,16 +9,21 @@ const ShPaymentBusiness = t.type({
 })
 type ShPaymentBusiness = t.TypeOf<typeof ShPaymentBusiness>
 
-export const ShPaymentBusinessConverter: ConverterInterface<Business> = {
+export class ShPaymentBusinessConverter
+  implements ConverterInterface<Business>
+{
+  async initialize(): Promise<void> {
+    return
+  }
   getCsvParserOptions() {
     // TBD
     return { headers: true }
-  },
+  }
   validate(rawBusiness: ShPaymentBusiness): string[] {
     return reporter.report(ShPaymentBusiness.decode(rawBusiness))
-  },
+  }
   convert(rawBusiness: ShPaymentBusiness): Business | null {
     // TBD
     return null
-  },
+  }
 }

@@ -34,7 +34,6 @@ export class RuleRepository {
 
     const ruleParams = ruleIds.map((ruleId, index) => [`:rule${index}`, ruleId])
     const ruleKeys = ruleParams.map((params) => params[0])
-    console.log(`id IN (${ruleKeys.join(',')})`)
     return this.getRules({
       FilterExpression: `id IN (${ruleKeys.join(',')})`,
       ExpressionAttributeValues: Object.fromEntries(ruleParams),
