@@ -8,7 +8,8 @@ import {
   getNameString,
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
-import { countries, currencies } from './constants'
+import { countries, currencies, ruleInstances } from './constants'
+import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
 import { UserRepository } from '@/lambdas/user-management/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
@@ -16,7 +17,7 @@ import { TransactionRepository } from '@/services/rules-engine/repositories/tran
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
 */
 
-const paymentMethods = ['CARD', 'BANK']
+const paymentMethods = ['CARD', 'IBAN']
 
 const createCardPaymentDetails = (sendingCountry: string, name: any) => {
   return {
@@ -60,7 +61,7 @@ const productTypes = ['WALLET', 'REMITTANCE', 'BNPL']
 const createBankPaymentDetails = (name: any) => {
   const ibanInfo = IBAN.random()
   return {
-    method: 'BANK',
+    method: 'IBAN',
     BIC: 'DEUTDEFF',
     bankName: `${getNameString()} Bank`,
     IBAN: (ibanInfo.getAccountNumber() !== null
@@ -97,11 +98,12 @@ export const createAndUploadTestData = async (
       profile: profileName,
     }),
   })
+
   const transactionRepository = new TransactionRepository(`fake-${tenantId}`, {
     dynamoDb,
   })
 
-  let transactionObject
+  let transactionObject: TransactionWithRulesResult
   const nameOne = createNameEntity()
   const nameTwo = createNameEntity()
   const countryCurrencyIndexOne = getRandomIntInclusive(0, 8)
@@ -126,7 +128,7 @@ export const createAndUploadTestData = async (
       senderUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       receiverUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       timestamp:
-        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
+        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 300000),
       sendingAmountDetails: {
         transactionAmount: getRandomIntInclusive(1, 10000),
         transactionCurrency: currencyOne,
@@ -141,6 +143,8 @@ export const createAndUploadTestData = async (
       receiverPaymentDetails: createPaymentDetails(countryTwo, nameTwo),
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
+      executedRules: ruleInstances,
+      failedRules: []
     }
     const ddbSaveTransactionResult =
       await transactionRepository.saveTransaction(transactionObject)
