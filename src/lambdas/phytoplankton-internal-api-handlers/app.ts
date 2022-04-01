@@ -50,7 +50,7 @@ export const transactionsViewHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
-    if (event.httpMethod === 'GET' && event.path === '/transactions') {
+    if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
       const { limit, skip, beforeTimestamp } =
         event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
@@ -186,12 +186,12 @@ export const ruleHandler = lambdaApi()(
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
 
-    if (event.httpMethod === 'GET' && event.path === '/rules') {
+    if (event.httpMethod === 'GET' && event.path.endsWith('/rules')) {
       const rules = await ruleService.getAllRules()
       return rules
     } else if (
       event.httpMethod === 'POST' &&
-      event.path === '/rules' &&
+      event.path.endsWith('/rules') &&
       event.body
     ) {
       const rule = JSON.parse(event.body) as Rule
@@ -243,7 +243,7 @@ export const ruleInstanceHandler = lambdaApi()(
       return 'OK'
     } else if (
       event.httpMethod === 'POST' &&
-      event.path === '/rule_instances' &&
+      event.path.endsWith('/rule_instances') &&
       event.body
     ) {
       const newRuleInstance =
@@ -251,7 +251,10 @@ export const ruleInstanceHandler = lambdaApi()(
           JSON.parse(event.body)
         )
       return newRuleInstance
-    } else if (event.httpMethod === 'GET' && event.path === '/rule_instances') {
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/rule_instances')
+    ) {
       return ruleService.getAllRuleInstances()
     }
     throw new Error('Unhandled request')
