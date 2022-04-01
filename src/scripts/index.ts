@@ -10,13 +10,14 @@ import {
   getNameString,
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
-import { countries, currencies } from './constants'
+import { countries, currencies, ruleInstances } from './constants'
+import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
 */
 
-const paymentMethods = ['CARD', 'BANK']
+const paymentMethods = ['CARD', 'IBAN']
 
 const createCardPaymentDetails = (sendingCountry: string, name: any) => {
   return {
@@ -60,7 +61,7 @@ const productTypes = ['WALLET', 'REMITTANCE', 'BNPL']
 const createBankPaymentDetails = (name: any) => {
   const ibanInfo = IBAN.random()
   return {
-    method: 'BANK',
+    method: 'IBAN',
     BIC: 'DEUTDEFF',
     bankName: `${getNameString()} Bank`,
     IBAN: (ibanInfo.getAccountNumber() !== null
@@ -93,15 +94,17 @@ export const createAndUploadTestData = async (
 ) => {
   /* DB init */
   const dynamoDb = new AWS.DynamoDB.DocumentClient({
-    credentials: new AWS.SharedIniFileCredentials({
-      profile: profileName,
-    }),
+    credentials: {
+      accessKeyId: 'ASIA5IULRCLFPLT4ZOG7',
+      secretAccessKey: 'PeCjt3Xf28M2tdaJACSEajPD0Jf0cWKGuaDHLfHq',
+      sessionToken: 'IQoJb3JpZ2luX2VjEIT//////////wEaCXVzLWVhc3QtMiJGMEQCIG7V4LN3rl1egNMPaUmLBDiK6YbCc/vzTD+RgIcb2a8eAiBOPnUEjvWoHRR/npHCmCH+QeMyL4nRTNmmOj+5fTRUeiqPAwgdEAAaDDkxMTg5OTQzMTYyNiIMncOF2e2eS21p4EkQKuwCTtnvOhLBiThAN1LY/0qyUbOJYfkGa/1lQUjYS8g02W5jE7NOsyzHI3o+Euwj6PnUoAEZuiEJ4JgF3NuPcAhvZT7KTR/jWkBP01BnaLf5sGM5AVtFqHwUA3teEpO31BA5J+P6sUjedblBdXNpJV55yhaJLKkjjKHXOsDpGYeSzncKxwrHz3AYBcE22Ii17s+IBAefPBB1YuZ0eHR59KsIlH0xkxp3x/nSUV9dgo5yypVIEnwI8/C2OTlLK6p1J67iAU86UgT43931Af1+ADtp7JdmEAd/84gvDjBTzLHPDwaUHNUqLiRuzu2o1TU6AVy/fT1UCfgCELbQ7tRY7nA2AN4RpRmDfXsrQhAUi2QaPrVn6C4ph77NNqun7ID/B9lVBF93Qs//LlkeKONTS1Cv6LzPatUy+WKlnU6qOk1lnR4sLoYbLlSZG0dniRuYoBDzXLDk8Mu8y2nOf+ej2OYVPviK1kC6buCjFamdPjCFjJiSBjqnASOQjP6VxIK+Ew2K/T0e6E70wHNdp9PJpWhPllb3HtspCEHemc8YuOigSEa19rsCMxn91txwJxVtzN54bSWegCpfa89I6nKFeyNLKIERIJoOxSo1zJfASJS2hRtLahQ6qUjTvz1kWzHzG77gJhX/19AYWi6StX2bqzGAOhc/LvTE31xCu2hOnPoDvJyAkeABGP7aKAV9CIZJzD4h9+Yfi/ppXRAycJFJ'
+    },
   })
   const transactionRepository = new TransactionRepository(`fake-${tenantId}`, {
     dynamoDb,
   })
 
-  let transactionObject
+  let transactionObject: TransactionWithRulesResult
   const nameOne = createNameEntity()
   const nameTwo = createNameEntity()
   const countryCurrencyIndexOne = getRandomIntInclusive(0, 8)
@@ -126,7 +129,7 @@ export const createAndUploadTestData = async (
       senderUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       receiverUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       timestamp:
-        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
+        Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 300000),
       sendingAmountDetails: {
         transactionAmount: getRandomIntInclusive(1, 10000),
         transactionCurrency: currencyOne,
@@ -141,6 +144,8 @@ export const createAndUploadTestData = async (
       receiverPaymentDetails: createPaymentDetails(countryTwo, nameTwo),
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
+      executedRules: ruleInstances,
+      failedRules: []
     }
     const ddbSaveTransactionResult =
       await transactionRepository.saveTransaction(transactionObject)
