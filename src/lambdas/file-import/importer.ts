@@ -7,12 +7,12 @@ import {
 import { Business } from '../../@types/openapi-public/Business'
 import { Transaction } from '../../@types/openapi-public/Transaction'
 import { User } from '../../@types/openapi-public/User'
-import { verifyTransaction } from '../rules-engine/app'
 import { UserRepository } from '../user-management/repositories/user-repository'
 import { ConverterInterface } from './converter-interface'
 import { converters as transactionConverters } from './transaction'
 import { converters as userConverters } from './user'
 import { converters as businessConverters } from './business'
+import { verifyTransaction } from '@/services/rules-engine'
 
 export class Importer {
   tenantId: string

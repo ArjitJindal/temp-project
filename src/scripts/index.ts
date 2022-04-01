@@ -1,7 +1,6 @@
 import * as AWS from 'aws-sdk'
 import { IBAN } from 'ibankit'
 
-import { TransactionRepository } from '../lambdas/rules-engine/repositories/transaction-repository'
 import { UserRepository } from '../lambdas/user-management/repositories/user-repository'
 import {
   createUuid,
@@ -11,6 +10,7 @@ import {
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies } from './constants'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx

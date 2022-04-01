@@ -1,6 +1,7 @@
 import { resolve } from 'path'
 import * as fs from 'fs'
 import { Configuration } from 'webpack'
+import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const CopyPlugin = require('copy-webpack-plugin')
@@ -48,6 +49,7 @@ const config: Configuration = {
   },
   resolve: {
     extensions: ['.js', '.ts'],
+    plugins: [new TsconfigPathsPlugin()],
   },
   target: 'node',
   mode: process.env.ENV === 'prod' ? 'production' : 'development',

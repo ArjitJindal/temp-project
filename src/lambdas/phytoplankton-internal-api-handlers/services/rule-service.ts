@@ -3,8 +3,8 @@ import createHttpError from 'http-errors'
 import _ from 'lodash'
 import { Rule } from '../../../@types/openapi-internal/Rule'
 import { RuleInstance } from '../../../@types/openapi-internal/RuleInstance'
-import { RuleInstanceRepository } from '../../rules-engine/repositories/rule-instance-repository'
-import { RuleRepository } from '../../rules-engine/repositories/rule-repository'
+import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 
 const ajv = new Ajv()
 export class RuleService {
