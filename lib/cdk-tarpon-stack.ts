@@ -1,4 +1,3 @@
-import { config } from 'process'
 import * as cdk from 'aws-cdk-lib'
 import {
   ArnPrincipal,
@@ -39,20 +38,19 @@ import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as docdb from 'aws-cdk-lib/aws-docdb'
 import {
-  FileImportConfig,
-  GetPresignedUrlConfig,
-} from '../src/lambdas/file-import/app'
-import {
-  AccountsConfig,
-  TransactionViewConfig,
-} from '../src/lambdas/phytoplankton-internal-api-handlers/app'
-import {
   TarponStackConstants,
   getResourceName,
   getS3BucketName,
 } from './constants'
-
 import { Config } from './configs/config'
+import {
+  FileImportConfig,
+  GetPresignedUrlConfig,
+} from '@/lambdas/file-import/app'
+import {
+  AccountsConfig,
+  TransactionViewConfig,
+} from '@/lambdas/phytoplankton-internal-api-handlers/app'
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config

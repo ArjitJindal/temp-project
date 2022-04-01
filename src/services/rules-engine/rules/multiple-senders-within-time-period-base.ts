@@ -1,11 +1,11 @@
 import dayjs from 'dayjs'
-import { RuleParameters } from '../../../@types/rule/rule-instance'
-import { keyHasUserId } from '../../../core/dynamodb/dynamodb-keys'
 import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { Rule } from './rule'
+import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
+import { RuleParameters } from '@/@types/rule/rule-instance'
 
 type MultipleSendersWithinTimePeriodRuleParameters = RuleParameters & {
   sendersCount: number

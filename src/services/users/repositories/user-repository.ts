@@ -1,10 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import { TarponStackConstants } from '../../../../lib/constants'
-import { User } from '../../../@types/openapi-public/User'
-import { Business } from '../../../@types/openapi-public/Business'
-import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
-import { USERS_COLLECTION } from '../../../utils/docDBUtils'
+import { TarponStackConstants } from '@cdk/constants'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { USERS_COLLECTION } from '@/utils/docDBUtils'
 
 export type UserType = 'BUSINESS' | 'CONSUMER'
 

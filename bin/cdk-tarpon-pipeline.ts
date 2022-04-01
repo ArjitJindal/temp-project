@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
-import { CdkTarponPipelineStack } from '../lib/cdk-tarpon-pipeline-stack'
-import { CdkTarponStack } from '../lib/cdk-tarpon-stack'
-import { config as deployConfig } from '../lib/configs/config-deployment'
-import { config as localConfig } from '../lib/configs/config-local'
-import { config as devConfig } from '../lib/configs/config-dev'
-import { config as sandboxConfig } from '../lib/configs/config-sandbox'
-import { config as prodConfig } from '../lib/configs/config-prod'
+import { CdkTarponPipelineStack } from '@cdk/cdk-tarpon-pipeline-stack'
+import { CdkTarponStack } from '@cdk/cdk-tarpon-stack'
+import { config as deployConfig } from '@cdk/configs/config-deployment'
+import { config as localConfig } from '@cdk/configs/config-local'
+import { config as devConfig } from '@cdk/configs/config-dev'
+import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
+import { config as prodConfig } from '@cdk/configs/config-prod'
 
 const app = new cdk.App()
 

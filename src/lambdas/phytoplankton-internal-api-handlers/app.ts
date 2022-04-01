@@ -3,28 +3,28 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { ManagementClient } from 'auth0'
-import { getDynamoDbClient } from '../../utils/dynamodb'
-import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
-import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
-import { BusinessUsersListResponse } from '../../@types/openapi-internal/BusinessUsersListResponse'
-import { ConsumerUsersListResponse } from '../../@types/openapi-internal/ConsumerUsersListResponse'
-import { DefaultApiGetTransactionsListRequest } from '../../@types/openapi-internal/RequestParameters'
+import { TransactionService } from './services/transaction-service'
+import { RuleService } from './services/rule-service'
 import {
   UserRepository,
   UserType,
-} from '../user-management/repositories/user-repository'
+} from '@/services/users/repositories/user-repository'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
+import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
+import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 
-import { JWTAuthorizerResult } from '../jwt-authorizer/app'
-import { getS3Client } from '../../utils/s3'
-import { Comment } from '../../@types/openapi-internal/Comment'
-import { connectToDB } from '../../utils/docDBUtils'
-import { TransactionRepository } from '../rules-engine/repositories/transaction-repository'
-import { RuleRepository } from '../rules-engine/repositories/rule-repository'
-import { Rule } from '../../@types/openapi-internal/Rule'
+import { getS3Client } from '@/utils/s3'
+import { Comment } from '@/@types/openapi-internal/Comment'
+import { connectToDB } from '@/utils/docDBUtils'
+import { Rule } from '@/@types/openapi-internal/Rule'
 
-import { TransactionUpdateRequest } from '../../@types/openapi-internal/TransactionUpdateRequest'
-import { TransactionService } from './services/transaction-service'
-import { RuleService } from './services/rule-service'
+import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string

@@ -1,5 +1,5 @@
-import { RuleParameters } from '../../../@types/rule/rule-instance'
 import { Rule } from './rule'
+import { RuleParameters } from '@/@types/rule/rule-instance'
 
 type HighRiskCurrencyRuleParameters = RuleParameters & {
   highRiskCurrencies: string[]

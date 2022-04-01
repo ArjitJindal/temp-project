@@ -4,9 +4,9 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { parse } from '@fast-csv/parse'
-import { getDynamoDbClient } from '../../utils/dynamodb'
-import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { ListRepository } from './repositories/list-repository'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const listImporterHandler = lambdaApi()(
   async (

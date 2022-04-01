@@ -1,22 +1,22 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { Db, MongoClient } from 'mongodb'
-import {
-  connectToDB,
-  TRANSACIONS_COLLECTION,
-  USERS_COLLECTION,
-} from '../../utils/docDBUtils'
-import { unMarshallDynamoDBStream } from '../../utils/dynamodbStream'
-import { TarponStackConstants } from '../../../lib/constants'
-import { TransactionWithRulesResult } from '../../@types/openapi-public/TransactionWithRulesResult'
-import { Business } from '../../@types/openapi-public/Business'
-import { User } from '../../@types/openapi-public/User'
-import { TransactionCaseManagement } from '../../@types/openapi-internal/TransactionCaseManagement'
-import { ExecutedRulesResult } from '../../@types/openapi-public/ExecutedRulesResult'
-import { RuleAction } from '../../@types/openapi-internal/RuleAction'
+import { TarponStackConstants } from '@cdk/constants'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
+import {
+  connectToDB,
+  TRANSACIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/docDBUtils'
+import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { Business } from '@/@types/openapi-public/Business'
+import { User } from '@/@types/openapi-public/User'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 
 let client: MongoClient
 

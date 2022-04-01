@@ -1,4 +1,4 @@
-import { DefaultApiGetTransactionsListRequest } from '../src/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 
 export const event = {
   httpMethod: 'GET',

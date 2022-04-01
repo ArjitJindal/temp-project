@@ -8,13 +8,9 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
-import { TarponStackConstants } from '../../../lib/constants'
-import PolicyBuilder from '../../core/policies/policy-generator'
-
-export interface JWTAuthorizerResult extends AWS.STS.Credentials {
-  userId: string
-  tenantName: string
-}
+import { TarponStackConstants } from '@cdk/constants'
+import PolicyBuilder from '@/core/policies/policy-generator'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 

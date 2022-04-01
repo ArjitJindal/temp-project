@@ -1,5 +1,5 @@
-import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { AggregationRepository } from '../repositories/aggregation-repository'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export abstract class Aggregator {
   tenantId: string

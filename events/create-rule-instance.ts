@@ -1,4 +1,4 @@
-import { RuleInstance } from '../src/@types/openapi-internal/RuleInstance'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export const event = {
   resource: '/rule_instances',

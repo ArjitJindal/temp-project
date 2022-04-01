@@ -1,5 +1,5 @@
-import { User } from '../../../@types/openapi-public/User'
 import { ConverterInterface } from '../converter-interface'
+import { User } from '@/@types/openapi-public/User'
 
 export const FlagrightUserConverter: ConverterInterface<User> = {
   getCsvParserOptions() {

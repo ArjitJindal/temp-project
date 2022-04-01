@@ -5,14 +5,14 @@ import {
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
+import { TarponStackConstants } from '@cdk/constants'
+
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   connectToDB,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
-} from '../../utils/docDBUtils'
-import { TarponStackConstants } from '../../../lib/constants'
-
-import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
+} from '@/utils/docDBUtils'
 
 let client: MongoClient
 

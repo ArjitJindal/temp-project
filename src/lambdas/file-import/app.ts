@@ -5,14 +5,14 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import * as createError from 'http-errors'
-import { getDynamoDbClient } from '../../utils/dynamodb'
-import { getS3Client } from '../../utils/s3'
-import { PresignedUrlResponse } from '../../@types/openapi-internal/PresignedUrlResponse'
-import { ImportResponse } from '../../@types/openapi-internal/ImportResponse'
-import { ImportRequest } from '../../@types/openapi-internal/ImportRequest'
-import { JWTAuthorizerResult } from '../jwt-authorizer/app'
-import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { Importer } from './importer'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getS3Client } from '@/utils/s3'
+import { PresignedUrlResponse } from '@/@types/openapi-internal/PresignedUrlResponse'
+import { ImportResponse } from '@/@types/openapi-internal/ImportResponse'
+import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string

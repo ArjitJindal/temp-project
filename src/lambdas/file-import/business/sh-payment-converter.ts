@@ -1,8 +1,8 @@
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
 
-import { Business } from '../../../@types/openapi-public/Business'
 import { ConverterInterface } from '../converter-interface'
+import { Business } from '@/@types/openapi-public/Business'
 
 const ShPaymentBusiness = t.type({
   // TBD

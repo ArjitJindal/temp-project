@@ -1,6 +1,6 @@
-import { RuleAction } from '../../../@types/openapi-internal/RuleAction'
-import { Transaction } from '../../../@types/openapi-public/Transaction'
-import { RuleParameters } from '../../../@types/rule/rule-instance'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { RuleParameters } from '@/@types/rule/rule-instance'
 
 export type RuleResult = {
   action: RuleAction

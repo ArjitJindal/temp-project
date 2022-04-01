@@ -1,11 +1,11 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
-import { TarponStackConstants } from '../../../../lib/constants'
+import { TarponStackConstants } from '@cdk/constants'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,
   RuleInstanceStatusEnum,
-} from '../../../@types/openapi-internal/RuleInstance'
-import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
+} from '@/@types/openapi-internal/RuleInstance'
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
