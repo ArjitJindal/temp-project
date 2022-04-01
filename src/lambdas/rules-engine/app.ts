@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -16,9 +17,9 @@ import { Rule } from '../../@types/openapi-internal/Rule'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
-import { rules } from './rules'
 import { RuleError } from './rules/errors'
 import { RuleRepository } from './repositories/rule-repository'
+import { Rule as RuleImplementation } from './rules/rule'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -27,7 +28,18 @@ const ruleAscendingComparator = (
   rule2: ExecutedRulesResult | FailedRulesResult
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
-// TODO: Move it to an abstraction layer
+function getRuleImplementation(
+  ruleImplementationFilename: string,
+  tenantId: string,
+  transaction: Transaction,
+  ruleParameters: RuleParameters,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+) {
+  const RuleClass = require(`${__dirname}/rules/${ruleImplementationFilename}`)
+    .default as typeof RuleImplementation
+  return new RuleClass(tenantId, transaction, ruleParameters, dynamoDb)
+}
+
 export async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
@@ -51,14 +63,15 @@ export async function verifyTransaction(
   )
   const ruleResults = await Promise.all(
     ruleInstances.map(async (ruleInstance) => {
-      const rule = new rules[ruleInstance.ruleId](
-        tenantId,
-        transaction,
-        ruleInstance.parameters as RuleParameters,
-        dynamoDb
-      )
       const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
       try {
+        const rule = getRuleImplementation(
+          rulesById[ruleInstance.ruleId].ruleImplementationFilename,
+          tenantId,
+          transaction,
+          ruleInstance.parameters as RuleParameters,
+          dynamoDb
+        )
         const ruleResult = await rule.computeRule()
         return {
           ruleId: ruleInstance.ruleId,
