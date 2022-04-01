@@ -60,7 +60,7 @@ export const documentTypes = [
   'insurance_card',
 ]
 
-export const ruleInstances = [{
+export const ruleInstances: ExecutedRulesResult[] = [{
     'ruleId': 'R-1',
     'ruleName': 'First payment of a Customer',
     'ruleDescription': 'First transaction of a user',
