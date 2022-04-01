@@ -1282,8 +1282,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+            $ref: '#/components/schemas/User'
       required:
         - total
         - data
@@ -1296,8 +1295,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+            $ref: '#/components/schemas/Business'
       required:
         - total
         - data
