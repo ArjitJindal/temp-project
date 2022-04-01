@@ -1,3 +1,5 @@
+import { ExecutedRulesResult } from "@/@types/openapi-public/ExecutedRulesResult"
+
 export const currencies: string[] = [
   'USD',
   'EUR',
@@ -71,35 +73,35 @@ export const ruleInstances: ExecutedRulesResult[] = [{
   'ruleId': 'R-2',
   'ruleName': 'Transaction amount too high',
   'ruleDescription': 'Transaction amount is >= x in USD or equivalent',
-  'ruleAction': 'SUSPEND', 
+  'ruleAction': 'BLOCK', 
   'ruleHit': Math.random() < 0.5,
 },
 {
   'ruleId': 'R-3',
   'ruleName': 'Unexpected origin or destination country',
   'ruleDescription': 'Transaction to or from a country that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between countries.',
-  'ruleAction': 'SUSPEND',
+  'ruleAction': 'BLOCK',
   'ruleHit': Math.random() < 0.5,
 },
 {
   'ruleId': 'R-4',
   'ruleName': ' Unexpected origin or destination currency',
   'ruleDescription': 'Transaction to or from a currency that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between different currencies.',
-  'ruleAction': 'SUSPEND',
+  'ruleAction': 'BLOCK',
   'ruleHit': Math.random() < 0.5,
 },
 {
   'ruleId': 'R-4',
   'ruleName': 'Unexpected origin or destination currency',
   'ruleDescription': 'Transaction to or from a currency that has not been used before by this user. Trigger the rule after x transactions have been completed. x configurable - mostly relevant for when you are moving between different currencies.',
-  'ruleAction': 'SUSPEND',
+  'ruleAction': 'BLOCK',
   'ruleHit': Math.random() < 0.5,
 },
 {
   'ruleId': 'R-5',
   'ruleName': 'Dormant Accounts',
-  'ruleDescription': 'If a user has made a transaction after being inactive for time t, suspend user & transactions.',
-  'ruleAction': 'SUSPEND',
+  'ruleDescription': 'If a user has made a transaction after being inactive for time t, block user & transactions.',
+  'ruleAction': 'BLOCK',
   'ruleHit': Math.random() < 0.5,
 },
 {
