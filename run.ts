@@ -123,8 +123,8 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-and-upload-test-data': () =>
     require('./src/scripts/index').createAndUploadTestData(
       options.tenant || 'demo-tenant-id',
-      options.users || 1,
-      options.transactions || 1,
+      options.users || 10,
+      options.transactions || 100,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
   'get-accounts': () => {
