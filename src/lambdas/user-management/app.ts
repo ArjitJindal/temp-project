@@ -3,9 +3,9 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { getDynamoDbClient } from '../../utils/dynamodb'
-import { lambdaApi } from '../../core/middlewares/lambda-api-middlewares'
 import { UserRepository } from './repositories/user-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 
 export const userHandler = lambdaApi()(
   async (

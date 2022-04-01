@@ -1,8 +1,8 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
 import _ from 'lodash'
-import { Rule } from '../../../@types/openapi-internal/Rule'
-import { RuleInstance } from '../../../@types/openapi-internal/RuleInstance'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 

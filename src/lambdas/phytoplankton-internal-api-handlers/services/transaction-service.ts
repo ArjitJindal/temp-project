@@ -1,9 +1,9 @@
 import * as createError from 'http-errors'
-import { Comment } from '../../../@types/openapi-internal/Comment'
-import { FileInfo } from '../../../@types/openapi-internal/FileInfo'
-import { DefaultApiGetTransactionsListRequest } from '../../../@types/openapi-internal/RequestParameters'
-import { TransactionsListResponse } from '../../../@types/openapi-internal/TransactionsListResponse'
-import { TransactionUpdateRequest } from '../../../@types/openapi-internal/TransactionUpdateRequest'
+import { Comment } from '@/@types/openapi-internal/Comment'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
+import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
+import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 export class TransactionService {

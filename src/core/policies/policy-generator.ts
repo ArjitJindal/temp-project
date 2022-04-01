@@ -1,5 +1,5 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
-import { TarponStackConstants } from '../../../lib/constants'
+import { TarponStackConstants } from '@cdk/constants'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 
 export default class PolicyBuilder {

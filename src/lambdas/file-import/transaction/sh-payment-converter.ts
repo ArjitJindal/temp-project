@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
-import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { ConverterInterface } from '../converter-interface'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 const ShPaymentTransaction = t.type({
   No: t.string,

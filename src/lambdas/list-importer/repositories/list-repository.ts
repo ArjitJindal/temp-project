@@ -1,6 +1,6 @@
-import { TarponStackConstants } from '../../../../lib/constants'
-import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
-import { chunk } from '../../../core/utils/array'
+import { TarponStackConstants } from '@cdk/constants'
+import { chunk } from '@/core/utils/array'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 export class ListRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient

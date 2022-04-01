@@ -1,7 +1,6 @@
 import * as AWS from 'aws-sdk'
 import { IBAN } from 'ibankit'
 
-import { UserRepository } from '../lambdas/user-management/repositories/user-repository'
 import {
   createUuid,
   getRandomIntInclusive,
@@ -10,6 +9,7 @@ import {
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies } from './constants'
+import { UserRepository } from '@/lambdas/user-management/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 /*

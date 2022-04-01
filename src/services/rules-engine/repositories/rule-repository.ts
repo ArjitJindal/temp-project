@@ -1,8 +1,8 @@
 import { MongoClient } from 'mongodb'
 import _ from 'lodash'
-import { TarponStackConstants } from '../../../../lib/constants'
-import { Rule } from '../../../@types/openapi-internal/Rule'
-import { DynamoDbKeys } from '../../../core/dynamodb/dynamodb-keys'
+import { TarponStackConstants } from '@cdk/constants'
+import { Rule } from '@/@types/openapi-internal/Rule'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const RULE_ID_PREFIX = 'R-'
 

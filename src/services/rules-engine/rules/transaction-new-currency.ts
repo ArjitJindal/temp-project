@@ -1,6 +1,6 @@
-import { RuleParameters } from '../../../@types/rule/rule-instance'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Rule } from './rule'
+import { RuleParameters } from '@/@types/rule/rule-instance'
 
 type TransactionNewCurrencyRuleParameters = RuleParameters & {
   initialTransactions: number

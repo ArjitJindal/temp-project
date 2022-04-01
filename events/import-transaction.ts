@@ -1,4 +1,4 @@
-import { ImportRequest } from '../src/@types/openapi-internal/ImportRequest'
+import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 
 export const event = {
   resource: '/import',

@@ -1,7 +1,7 @@
-import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { ConverterInterface } from '../converter-interface'
 import { FlagrightTransactionConverter } from './flagright-converter'
 import { ShPaymentTransactionConverter } from './sh-payment-converter'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 const internalConverters = {
   'sh-payment': ShPaymentTransactionConverter,

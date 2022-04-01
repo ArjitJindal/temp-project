@@ -1,4 +1,4 @@
-import { Comment } from '../src/@types/openapi-internal/Comment'
+import { Comment } from '@/@types/openapi-internal/Comment'
 
 export const event = {
   httpMethod: 'POST',

@@ -1,5 +1,5 @@
 import * as ajv from 'ajv'
-import { Rule } from '../src/@types/openapi-internal/Rule'
+import { Rule } from '@/@types/openapi-internal/Rule'
 
 interface RuleParameters {
   threshold: number

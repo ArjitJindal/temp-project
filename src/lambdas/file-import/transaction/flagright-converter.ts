@@ -1,5 +1,5 @@
-import { Transaction } from '../../../@types/openapi-public/Transaction'
 import { ConverterInterface } from '../converter-interface'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export const FlagrightTransactionConverter: ConverterInterface<Transaction> = {
   getCsvParserOptions() {
