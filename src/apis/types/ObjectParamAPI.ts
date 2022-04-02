@@ -7,6 +7,7 @@ import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
 import { Amount } from '../models/Amount';
+import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
@@ -31,6 +32,9 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
+import { Rule } from '../models/Rule';
+import { RuleAction } from '../models/RuleAction';
+import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
@@ -39,6 +43,8 @@ import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
+import { TransactionStatusChange } from '../models/TransactionStatusChange';
+import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
 import { TransactionWithRulesResultAllOf } from '../models/TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
@@ -73,6 +79,8 @@ export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdReque
    */
   commentId: string;
 }
+
+export interface DefaultApiGetAccountsRequest {}
 
 export interface DefaultApiGetBusinessUsersListRequest {
   /**
@@ -250,6 +258,21 @@ export interface DefaultApiPostTransactionsCommentsRequest {
   Comment?: Comment;
 }
 
+export interface DefaultApiPostTransactionsTransactionIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostTransactionsTransactionId
+   */
+  transactionId: string;
+  /**
+   *
+   * @type TransactionUpdateRequest
+   * @memberof DefaultApipostTransactionsTransactionId
+   */
+  TransactionUpdateRequest?: TransactionUpdateRequest;
+}
+
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {
   /**
    *
@@ -301,6 +324,17 @@ export class ObjectDefaultApi {
         options,
       )
       .toPromise();
+  }
+
+  /**
+   * Account - List
+   * @param param the request object
+   */
+  public getAccounts(
+    param: DefaultApiGetAccountsRequest,
+    options?: Configuration,
+  ): Promise<Array<any>> {
+    return this.api.getAccounts(options).toPromise();
   }
 
   /**
@@ -358,6 +392,25 @@ export class ObjectDefaultApi {
   ): Promise<TransactionsListResponse> {
     return this.api
       .getTransactionsList(param.limit, param.skip, param.beforeTimestamp, options)
+      .toPromise();
+  }
+
+  /**
+   * Transaction Per User - List
+   * @param param the request object
+   */
+  public getTransactionsPerUserList(
+    param: DefaultApiGetTransactionsPerUserListRequest,
+    options?: Configuration,
+  ): Promise<TransactionsListResponse> {
+    return this.api
+      .getTransactionsPerUserList(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.userId,
+        options,
+      )
       .toPromise();
   }
 
@@ -444,6 +497,19 @@ export class ObjectDefaultApi {
   ): Promise<Comment> {
     return this.api
       .postTransactionsComments(param.transactionId, param.Comment, options)
+      .toPromise();
+  }
+
+  /**
+   * Transaction - Update
+   * @param param the request object
+   */
+  public postTransactionsTransactionId(
+    param: DefaultApiPostTransactionsTransactionIdRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api
+      .postTransactionsTransactionId(param.transactionId, param.TransactionUpdateRequest, options)
       .toPromise();
   }
 

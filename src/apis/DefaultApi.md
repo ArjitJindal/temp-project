@@ -6,6 +6,7 @@ All URIs are relative to _http://localhost:3000_
 | --- | --- | --- |
 | [**deleteRuleInstancesRuleInstanceId**](DefaultApi.md#deleteRuleInstancesRuleInstanceId) | **DELETE** /rule_instances/{ruleInstanceId} | Rule Instance - Delete |
 | [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} |
+| [**getAccounts**](DefaultApi.md#getAccounts) | **GET** /accounts | Account - List |
 | [**getBusinessUsersList**](DefaultApi.md#getBusinessUsersList) | **GET** /business/users | Business Users - List |
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
@@ -17,6 +18,7 @@ All URIs are relative to _http://localhost:3000_
 | [**postLists**](DefaultApi.md#postLists) | **POST** /lists | List Import |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
 | [**postTransactionsComments**](DefaultApi.md#postTransactionsComments) | **POST** /transactions/{transactionId}/comments | Create a Transaction Comment |
+| [**postTransactionsTransactionId**](DefaultApi.md#postTransactionsTransactionId) | **POST** /transactions/{transactionId} | Transaction - Update |
 | [**putRuleInstancesRuleInstanceId**](DefaultApi.md#putRuleInstancesRuleInstanceId) | **PUT** /rule_instances/{ruleInstanceId} | Rule Instance - Update |
 
 # **deleteRuleInstancesRuleInstanceId**
@@ -113,6 +115,51 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getAccounts**
+
+> Array<any> getAccounts()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getAccounts(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Array<any>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 ### HTTP response details
 
@@ -327,6 +374,65 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **limit**           | [**number**] |             | defaults to undefined |
 | **skip**            | [**number**] |             | defaults to undefined |
 | **beforeTimestamp** | [**number**] |             | defaults to undefined |
+
+### Return type
+
+**TransactionsListResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getTransactionsPerUserList**
+
+> TransactionsListResponse getTransactionsPerUserList()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetTransactionsPerUserListRequest = {
+  // number
+  limit: 3.14,
+  // number
+  skip: 3.14,
+  // number
+  beforeTimestamp: 3.14,
+  // string
+  userId: "userId_example",
+};
+
+apiInstance.getTransactionsPerUserList(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name                | Type         | Description | Notes                 |
+| ------------------- | ------------ | ----------- | --------------------- |
+| **limit**           | [**number**] |             | defaults to undefined |
+| **skip**            | [**number**] |             | defaults to undefined |
+| **beforeTimestamp** | [**number**] |             | defaults to undefined |
+| **userId**          | [**string**] |             | defaults to undefined |
 
 ### Return type
 
@@ -736,6 +842,68 @@ No authorization required
 
 - **Content-Type**: application/json
 - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postTransactionsTransactionId**
+
+> void postTransactionsTransactionId()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostTransactionsTransactionIdRequest = {
+  // string
+  transactionId: "transactionId_example",
+  // TransactionUpdateRequest (optional)
+  TransactionUpdateRequest: {
+    status: "FLAG",
+    assignments: [
+      {
+        assigneeUserId: "assigneeUserId_example",
+        assignedByUserId: "assignedByUserId_example",
+        timestamp: 3.14,
+      },
+    ],
+  },
+};
+
+apiInstance.postTransactionsTransactionId(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **TransactionUpdateRequest** | **TransactionUpdateRequest** |  |
+| **transactionId** | [**string**] |  | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
 
 ### HTTP response details
 

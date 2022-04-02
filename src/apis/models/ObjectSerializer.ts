@@ -3,6 +3,7 @@ export * from './Address';
 export * from './Address1';
 export * from './Address2';
 export * from './Amount';
+export * from './Assignment';
 export * from './Business';
 export * from './BusinessUsersListResponse';
 export * from './CardDetails';
@@ -27,6 +28,9 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
+export * from './Rule';
+export * from './RuleAction';
+export * from './RuleAction1';
 export * from './RuleFailureException';
 export * from './RuleInstance';
 export * from './Tag';
@@ -35,6 +39,8 @@ export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
 export * from './TransactionCaseManagementAllOf';
 export * from './TransactionLimits';
+export * from './TransactionStatusChange';
+export * from './TransactionUpdateRequest';
 export * from './TransactionWithRulesResult';
 export * from './TransactionWithRulesResultAllOf';
 export * from './TransactionsListResponse';
@@ -48,6 +54,7 @@ import { Address } from './Address';
 import { Address1 } from './Address1';
 import { Address2 } from './Address2';
 import { Amount } from './Amount';
+import { Assignment } from './Assignment';
 import { Business } from './Business';
 import { BusinessUsersListResponse } from './BusinessUsersListResponse';
 import { CardDetails } from './CardDetails';
@@ -72,6 +79,9 @@ import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
+import { Rule } from './Rule';
+import { RuleAction } from './RuleAction';
+import { RuleAction1 } from './RuleAction1';
 import { RuleFailureException } from './RuleFailureException';
 import { RuleInstance, RuleInstanceStatusEnum } from './RuleInstance';
 import { Tag } from './Tag';
@@ -80,6 +90,8 @@ import { TransactionAmountDetails } from './TransactionAmountDetails';
 import { TransactionCaseManagement } from './TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf';
 import { TransactionLimits } from './TransactionLimits';
+import { TransactionStatusChange } from './TransactionStatusChange';
+import { TransactionUpdateRequest } from './TransactionUpdateRequest';
 import { TransactionWithRulesResult } from './TransactionWithRulesResult';
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from './TransactionsListResponse';
@@ -100,6 +112,8 @@ const supportedMediaTypes: { [mediaType: string]: number } = {
 let enumsMap: Set<string> = new Set<string>([
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
+  'RuleAction',
+  'RuleAction1',
   'RuleInstanceStatusEnum',
 ]);
 
@@ -109,6 +123,7 @@ let typeMap: { [index: string]: any } = {
   Address1: Address1,
   Address2: Address2,
   Amount: Amount,
+  Assignment: Assignment,
   Business: Business,
   BusinessUsersListResponse: BusinessUsersListResponse,
   CardDetails: CardDetails,
@@ -141,6 +156,8 @@ let typeMap: { [index: string]: any } = {
   TransactionCaseManagement: TransactionCaseManagement,
   TransactionCaseManagementAllOf: TransactionCaseManagementAllOf,
   TransactionLimits: TransactionLimits,
+  TransactionStatusChange: TransactionStatusChange,
+  TransactionUpdateRequest: TransactionUpdateRequest,
   TransactionWithRulesResult: TransactionWithRulesResult,
   TransactionWithRulesResultAllOf: TransactionWithRulesResultAllOf,
   TransactionsListResponse: TransactionsListResponse,

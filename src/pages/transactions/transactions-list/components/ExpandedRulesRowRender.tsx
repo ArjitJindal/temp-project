@@ -1,17 +1,6 @@
-import { Badge, Table } from 'antd';
+import { Table } from 'antd';
+import { RuleActionStatus } from './RuleActionStatus';
 import { TransactionWithRulesResult } from '@/apis';
-
-function getActionBadgeStatus(ruleAction: string) {
-  if (ruleAction === 'ALLOW') {
-    return 'success';
-  } else if (ruleAction === 'FLAG') {
-    return 'warning';
-  } else if (ruleAction === 'BLOCK') {
-    return 'error';
-  } else {
-    return 'error';
-  }
-}
 
 export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) => {
   return (
@@ -24,12 +13,7 @@ export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) 
           title: 'Action',
           key: 'ruleAction',
           width: 180,
-          render: (v, entity) => (
-            <span>
-              <Badge status={getActionBadgeStatus(entity.ruleAction)} />
-              {entity.ruleAction}
-            </span>
-          ),
+          render: (v, entity) => <RuleActionStatus ruleAction={entity.ruleAction} />,
         },
       ]}
       dataSource={transaction.executedRules}

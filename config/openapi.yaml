@@ -169,6 +169,24 @@ paths:
           in: query
           name: beforeTimestamp
           required: true
+  '/transactions/{transactionId}':
+    parameters:
+      - schema:
+          type: string
+        name: transactionId
+        in: path
+        required: true
+    post:
+      summary: Transaction - Update
+      operationId: post-transactions-transactionId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdateRequest'
   /user/transactions:
     get:
       summary: Transaction Per User - List
@@ -343,6 +361,20 @@ paths:
       responses:
         '200':
           description: OK
+  /accounts:
+    get:
+      summary: Account - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+      operationId: get-accounts
 components:
   schemas:
     RuleInstance:
@@ -444,12 +476,25 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+
         - type: object
           properties:
             comments:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Assignment'
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            statusChanges:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransactionStatusChange'
+          required:
+            - status
       title: TransactionCaseManagement
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
@@ -462,6 +507,7 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+
       required:
         - total
         - data
@@ -476,6 +522,7 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+
       required:
         - total
         - data
@@ -544,6 +591,44 @@ components:
         - s3Key
         - filename
         - size
+    Assignment:
+      title: Assignment
+      type: object
+      properties:
+        assigneeUserId:
+          type: string
+        assignedByUserId:
+          type: string
+        timestamp:
+          type: number
+      required:
+        - assigneeUserId
+        - assignedByUserId
+        - timestamp
+    TransactionStatusChange:
+      title: TransactionStatusChange
+      type: object
+      properties:
+        userId:
+          type: string
+        status:
+          $ref: '#/components/schemas/RuleAction'
+        timestamp:
+          type: number
+      required:
+        - userId
+        - status
+        - timestamp
+    TransactionUpdateRequest:
+      title: TransactionUpdateRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/RuleAction'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
   securitySchemes:
     Authorization:
       type: http

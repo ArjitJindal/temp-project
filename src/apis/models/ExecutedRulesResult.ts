@@ -10,6 +10,7 @@
  * Do not edit the class manually.
  */
 
+import { RuleAction1 } from './RuleAction1';
 import { HttpFile } from '../http/http';
 
 export class ExecutedRulesResult {
@@ -25,10 +26,7 @@ export class ExecutedRulesResult {
    * Description of the rule
    */
   'ruleDescription': string;
-  /**
-   * The specific action a rule is configured to take if it's hit such as flag (passive monitoring), block transaction, terminate user, whitelist etc.
-   */
-  'ruleAction': string;
+  'ruleAction': RuleAction1;
   /**
    * Whether a rule was hit or not. When a rule is hit, it takes the pre-configured action on a transaction and/or user.
    */
@@ -63,7 +61,7 @@ export class ExecutedRulesResult {
     {
       name: 'ruleAction',
       baseName: 'ruleAction',
-      type: 'string',
+      type: 'RuleAction1',
       format: '',
     },
     {
