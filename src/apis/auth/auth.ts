@@ -43,6 +43,7 @@ export class AuthorizationAuthentication implements SecurityAuthentication {
 }
 
 export type AuthMethods = {
+  default?: SecurityAuthentication;
   Authorization?: SecurityAuthentication;
 };
 
@@ -52,6 +53,7 @@ export type HttpBearerConfiguration = { tokenProvider: TokenProvider };
 export type OAuth2Configuration = { accessToken: string };
 
 export type AuthMethodsConfiguration = {
+  default?: SecurityAuthentication;
   Authorization?: HttpBearerConfiguration;
 };
 
@@ -65,6 +67,7 @@ export function configureAuthMethods(config: AuthMethodsConfiguration | undefine
   if (!config) {
     return authMethods;
   }
+  authMethods['default'] = config['default'];
 
   if (config['Authorization']) {
     authMethods['Authorization'] = new AuthorizationAuthentication(

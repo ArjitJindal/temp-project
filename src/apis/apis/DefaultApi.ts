@@ -5,6 +5,7 @@ import { RequestContext, HttpMethod, ResponseContext, HttpFile } from '../http/h
 import { ObjectSerializer } from '../models/ObjectSerializer';
 import { ApiException } from './exception';
 import { canConsumeForm, isCodeInRange } from '../util';
+import { SecurityAuthentication } from '../auth/auth';
 
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { Comment } from '../models/Comment';
@@ -47,6 +48,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -74,6 +81,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -116,6 +129,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -131,6 +150,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -189,6 +214,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -244,6 +275,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
     }
 
     return requestContext;
@@ -312,6 +349,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -328,6 +371,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -343,6 +392,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -399,6 +454,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
     }
 
     return requestContext;
@@ -470,6 +531,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam('userId', ObjectSerializer.serialize(userId, 'string', ''));
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -506,6 +573,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -522,6 +595,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -552,6 +631,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -580,6 +665,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -610,6 +701,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -635,6 +732,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -675,6 +778,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -713,6 +822,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }
@@ -753,6 +868,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     );
     requestContext.setBody(serializedBody);
 
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
     return requestContext;
   }
 
@@ -791,6 +912,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
 
     return requestContext;
   }

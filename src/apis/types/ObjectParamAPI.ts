@@ -379,7 +379,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public getAccounts(
-    param: DefaultApiGetAccountsRequest,
+    param: DefaultApiGetAccountsRequest = {},
     options?: Configuration,
   ): Promise<Array<any>> {
     return this.api.getAccounts(options).toPromise();
@@ -435,7 +435,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public getRuleInstances(
-    param: DefaultApiGetRuleInstancesRequest,
+    param: DefaultApiGetRuleInstancesRequest = {},
     options?: Configuration,
   ): Promise<Array<RuleInstance>> {
     return this.api.getRuleInstances(options).toPromise();
@@ -445,7 +445,10 @@ export class ObjectDefaultApi {
    * Rules - List
    * @param param the request object
    */
-  public getRules(param: DefaultApiGetRulesRequest, options?: Configuration): Promise<Array<Rule>> {
+  public getRules(
+    param: DefaultApiGetRulesRequest = {},
+    options?: Configuration,
+  ): Promise<Array<Rule>> {
     return this.api.getRules(options).toPromise();
   }
 
@@ -486,7 +489,10 @@ export class ObjectDefaultApi {
    * Tarpon API Key - Create
    * @param param the request object
    */
-  public postApikey(param: DefaultApiPostApikeyRequest, options?: Configuration): Promise<void> {
+  public postApikey(
+    param: DefaultApiPostApikeyRequest = {},
+    options?: Configuration,
+  ): Promise<void> {
     return this.api.postApikey(param.tenantId, param.usagePlanId, options).toPromise();
   }
 
@@ -496,7 +502,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postGetPresignedUrl(
-    param: DefaultApiPostGetPresignedUrlRequest,
+    param: DefaultApiPostGetPresignedUrlRequest = {},
     options?: Configuration,
   ): Promise<PresignedUrlResponse> {
     return this.api.postGetPresignedUrl(options).toPromise();
@@ -507,7 +513,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postImport(
-    param: DefaultApiPostImportRequest,
+    param: DefaultApiPostImportRequest = {},
     options?: Configuration,
   ): Promise<ImportResponse> {
     return this.api.postImport(param.ImportRequest, options).toPromise();
@@ -517,7 +523,7 @@ export class ObjectDefaultApi {
    * List Import
    * @param param the request object
    */
-  public postLists(param: DefaultApiPostListsRequest, options?: Configuration): Promise<void> {
+  public postLists(param: DefaultApiPostListsRequest = {}, options?: Configuration): Promise<void> {
     return this.api.postLists(param.ListImportRequest, options).toPromise();
   }
 
@@ -526,7 +532,7 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public postRuleInstances(
-    param: DefaultApiPostRuleInstancesRequest,
+    param: DefaultApiPostRuleInstancesRequest = {},
     options?: Configuration,
   ): Promise<RuleInstance> {
     return this.api.postRuleInstances(param.RuleInstance, options).toPromise();
@@ -536,7 +542,7 @@ export class ObjectDefaultApi {
    * Rules - Create
    * @param param the request object
    */
-  public postRules(param: DefaultApiPostRulesRequest, options?: Configuration): Promise<Rule> {
+  public postRules(param: DefaultApiPostRulesRequest = {}, options?: Configuration): Promise<Rule> {
     return this.api.postRules(param.Rule, options).toPromise();
   }
 
