@@ -148,6 +148,7 @@ let typeMap: { [index: string]: any } = {
   ListImportRequest: ListImportRequest,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
+  Rule: Rule,
   RuleFailureException: RuleFailureException,
   RuleInstance: RuleInstance,
   Tag: Tag,

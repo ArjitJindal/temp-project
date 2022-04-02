@@ -13,16 +13,16 @@
 import { RuleAction } from './RuleAction';
 import { HttpFile } from '../http/http';
 
-export class RuleInstance {
+export class Rule {
   'id'?: string;
-  'ruleId': string;
-  'parameters': any;
-  'action': RuleAction;
-  'status'?: RuleInstanceStatusEnum;
+  'name': string;
+  'description': string;
+  'parametersSchema': any;
+  'defaultParameters': any;
+  'defaultAction': RuleAction;
+  'ruleImplementationFilename': string;
   'createdAt'?: number;
   'updatedAt'?: number;
-  'runCount'?: number;
-  'hitCount'?: number;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -39,27 +39,39 @@ export class RuleInstance {
       format: '',
     },
     {
-      name: 'ruleId',
-      baseName: 'ruleId',
+      name: 'name',
+      baseName: 'name',
       type: 'string',
       format: '',
     },
     {
-      name: 'parameters',
-      baseName: 'parameters',
+      name: 'description',
+      baseName: 'description',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'parametersSchema',
+      baseName: 'parametersSchema',
       type: 'any',
       format: '',
     },
     {
-      name: 'action',
-      baseName: 'action',
+      name: 'defaultParameters',
+      baseName: 'defaultParameters',
+      type: 'any',
+      format: '',
+    },
+    {
+      name: 'defaultAction',
+      baseName: 'defaultAction',
       type: 'RuleAction',
       format: '',
     },
     {
-      name: 'status',
-      baseName: 'status',
-      type: 'RuleInstanceStatusEnum',
+      name: 'ruleImplementationFilename',
+      baseName: 'ruleImplementationFilename',
+      type: 'string',
       format: '',
     },
     {
@@ -74,25 +86,11 @@ export class RuleInstance {
       type: 'number',
       format: '',
     },
-    {
-      name: 'runCount',
-      baseName: 'runCount',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'hitCount',
-      baseName: 'hitCount',
-      type: 'number',
-      format: '',
-    },
   ];
 
   static getAttributeTypeMap() {
-    return RuleInstance.attributeTypeMap;
+    return Rule.attributeTypeMap;
   }
 
   public constructor() {}
 }
-
-export type RuleInstanceStatusEnum = 'ACTIVE' | 'INACTIVE';
