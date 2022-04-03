@@ -76,6 +76,21 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
+export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_MONTHLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-transaction-monthly-stats`
+}
+
+export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-transaction-monthly-daily`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }
+
+export const MONTH_DATE_FORMAT = '%Y-%m'
+export const DAY_DATE_FORMAT = '%Y-%m-%d'
