@@ -90,13 +90,13 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /*
-     * Document DB
+     * Atlas DB
      */
 
     const atlasVpcCidr = '10.0.0.0/21'
     const port = 27017
 
-    const docDbVpc = new ec2.Vpc(this, 'vpc', {
+    const atlasVpc = new ec2.Vpc(this, 'vpc', {
       cidr: atlasVpcCidr,
       subnetConfiguration: [
         {
@@ -119,10 +119,10 @@ export class CdkTarponStack extends cdk.Stack {
 
     const atlasSg = new ec2.SecurityGroup(
       this,
-      TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+      TarponStackConstants.MONGO_DB_SECURITY_GROUP_NAME,
       {
-        vpc: docDbVpc,
-        securityGroupName: TarponStackConstants.DOCUMENT_DB_SECURITY_GROUP_NAME,
+        vpc: atlasVpc,
+        securityGroupName: TarponStackConstants.MONGO_DB_SECURITY_GROUP_NAME,
       }
     )
 
@@ -189,7 +189,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const atlasFunctionProps = {
       securityGroups: [atlasSg],
-      vpc: docDbVpc,
+      vpc: atlasVpc,
       environment: {
         SM_SECRET_ARN: "arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI",
       },

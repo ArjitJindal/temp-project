@@ -30,7 +30,7 @@ export class UserRepository {
     pagination: { limit: number; skip: number; beforeTimestamp: number },
     userType: UserType
   ): Promise<{ total: number; data: any }> {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<Business | User>(
       USERS_COLLECTION(this.tenantId)
     )

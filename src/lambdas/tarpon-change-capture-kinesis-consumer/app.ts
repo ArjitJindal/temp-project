@@ -66,7 +66,7 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   try {
     client = await connectToDB()
-    const db = client.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     for (const record of event.Records) {
       const payload: KinesisStreamRecordPayload = record.kinesis
       const message: string = Buffer.from(payload.data, 'base64').toString()

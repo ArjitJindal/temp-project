@@ -19,7 +19,7 @@ export class ImportRepository {
   }
 
   public async createFileImport(fileImport: FileImport) {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection(IMPORT_COLLECTION(this.tenantId))
     await collection.insertOne({
       ...fileImport,
@@ -28,7 +28,7 @@ export class ImportRepository {
   }
 
   public async completeFileImport(importId: string, importedRecords: number) {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
@@ -41,7 +41,7 @@ export class ImportRepository {
     )
   }
   public async failFileImport(importId: string, error: string) {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
@@ -55,7 +55,7 @@ export class ImportRepository {
   }
 
   public async getFileImport(importId: string): Promise<FileImport | null> {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
