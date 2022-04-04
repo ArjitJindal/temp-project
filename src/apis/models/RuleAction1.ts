@@ -12,4 +12,4 @@
 
 import { HttpFile } from '../http/http';
 
-export type RuleAction1 = 'ALLOW' | 'WHITELIST' | 'FLAG' | 'BLOCK';
+export type RuleAction1 = 'ALLOW' | 'WHITELIST' | 'FLAG' | 'BLOCK' | 'SUSPEND';
