@@ -10,7 +10,7 @@ import {
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies, ruleInstances } from './constants'
 import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
-import { UserRepository } from '@/lambdas/user-management/repositories/user-repository'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 /*
