@@ -26,11 +26,18 @@ function getRuleImplementation(
   tenantId: string,
   transaction: Transaction,
   ruleParameters: RuleParameters,
+  ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ) {
   const RuleClass = require(`${__dirname}/rules/${ruleImplementationFilename}`)
     .default as typeof RuleImplementation
-  return new RuleClass(tenantId, transaction, ruleParameters, dynamoDb)
+  return new RuleClass(
+    tenantId,
+    transaction,
+    ruleParameters,
+    ruleAction,
+    dynamoDb
+  )
 }
 
 export async function verifyTransaction(
@@ -63,6 +70,7 @@ export async function verifyTransaction(
           tenantId,
           transaction,
           ruleInstance.parameters as RuleParameters,
+          ruleInstance.action,
           dynamoDb
         )
         const ruleResult = await rule.computeRule()

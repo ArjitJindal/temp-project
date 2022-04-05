@@ -11,17 +11,20 @@ export class Rule<P extends RuleParameters = RuleParameters> {
   transaction: Transaction
   parameters: P
   dynamoDb: AWS.DynamoDB.DocumentClient
+  action: RuleAction
 
   constructor(
     tenantId: string,
     transaction: Transaction,
     parameters: P,
+    action: RuleAction,
     dynamoDb: AWS.DynamoDB.DocumentClient
   ) {
     this.tenantId = tenantId
     this.transaction = transaction
     this.parameters = parameters
     this.dynamoDb = dynamoDb
+    this.action = action
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
