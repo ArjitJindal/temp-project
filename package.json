@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
+  "engines": {
+    "npm": "^8.6.0",
+    "node": "^14.0.0"
+  },
   "scripts": {
     "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
     "build": "webpack",
