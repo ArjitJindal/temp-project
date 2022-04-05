@@ -6,7 +6,6 @@ import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { RuleError } from './rules/errors'
 import { Rule as RuleImplementation } from './rules/rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -25,7 +24,7 @@ function getRuleImplementation(
   ruleImplementationFilename: string,
   tenantId: string,
   transaction: Transaction,
-  ruleParameters: RuleParameters,
+  ruleParameters: object,
   ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ) {
@@ -69,7 +68,7 @@ export async function verifyTransaction(
           rulesById[ruleInstance.ruleId].ruleImplementationFilename,
           tenantId,
           transaction,
-          ruleInstance.parameters as RuleParameters,
+          ruleInstance.parameters,
           ruleInstance.action,
           dynamoDb
         )

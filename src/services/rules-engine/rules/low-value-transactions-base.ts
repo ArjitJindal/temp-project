@@ -3,10 +3,9 @@ import { MissingRuleParameter } from './errors'
 import { Rule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 
-type LowValueTransactionsRuleParameters = RuleParameters & {
+type LowValueTransactionsRuleParameters = {
   lowTransactionValues: {
     [currency: string]: {
       max: number
@@ -92,7 +91,7 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
         )
       })
       if (areAllTransactionsLowValue) {
-        return { action: this.parameters.action }
+        return { action: this.action }
       }
     }
   }

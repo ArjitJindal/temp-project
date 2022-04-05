@@ -1,8 +1,7 @@
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Rule } from './rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-type TransactionNewCurrencyRuleParameters = RuleParameters & {
+type TransactionNewCurrencyRuleParameters = {
   initialTransactions: number
 }
 
@@ -49,7 +48,7 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
         !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency))
     ) {
       return {
-        action: this.parameters.action,
+        action: this.action,
       }
     }
   }

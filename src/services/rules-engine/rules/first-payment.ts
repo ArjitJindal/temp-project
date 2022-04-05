@@ -1,10 +1,7 @@
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule } from './rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-type FirstPaymentRuleParameters = RuleParameters
-
-export default class FirstPaymentRule extends Rule<FirstPaymentRuleParameters> {
+export default class FirstPaymentRule extends Rule<unknown> {
   public async computeRule() {
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -16,7 +13,7 @@ export default class FirstPaymentRule extends Rule<FirstPaymentRuleParameters> {
       ))
     if (isFirstPayment) {
       return {
-        action: this.parameters.action,
+        action: this.action,
       }
     }
   }

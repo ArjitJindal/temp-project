@@ -1,7 +1,6 @@
 import { Rule } from '../rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-export default class TestSuccessRule extends Rule<RuleParameters> {
+export default class TestSuccessRule extends Rule<unknown> {
   public async computeRule() {
     return {
       action: this.action,

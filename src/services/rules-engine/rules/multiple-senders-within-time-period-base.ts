@@ -5,9 +5,8 @@ import {
 } from '../repositories/transaction-repository'
 import { Rule } from './rule'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-type MultipleSendersWithinTimePeriodRuleParameters = RuleParameters & {
+type MultipleSendersWithinTimePeriodRuleParameters = {
   sendersCount: number
   timePeriodDays: number
 }
@@ -23,7 +22,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<Multip
   }
 
   public async computeRule() {
-    const { action, timePeriodDays, sendersCount } = this.parameters
+    const { timePeriodDays, sendersCount } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -56,7 +55,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<Multip
         .map((transaction) => transaction.senderKeyId)
     )
     if (uniqueSenders.size + 1 > sendersCount) {
-      return { action }
+      return { action: this.action }
     }
   }
 }

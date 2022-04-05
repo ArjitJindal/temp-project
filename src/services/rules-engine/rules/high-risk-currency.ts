@@ -1,7 +1,6 @@
 import { Rule } from './rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-type HighRiskCurrencyRuleParameters = RuleParameters & {
+type HighRiskCurrencyRuleParameters = {
   highRiskCurrencies: string[]
 }
 
@@ -19,7 +18,7 @@ export default class HighRiskCurrencyRule extends Rule<HighRiskCurrencyRuleParam
         this.parameters.highRiskCurrencies.includes(receivingCurrency))
     ) {
       return {
-        action: this.parameters.action,
+        action: this.action,
       }
     }
   }

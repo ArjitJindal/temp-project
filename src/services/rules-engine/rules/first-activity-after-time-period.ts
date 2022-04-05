@@ -1,9 +1,8 @@
 import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule } from './rule'
-import { RuleParameters } from '@/@types/rule/rule-instance'
 
-type FirstActivityAfterLongTimeRuleParameters = RuleParameters & {
+type FirstActivityAfterLongTimeRuleParameters = {
   dormancyPeriodDays: number
 }
 
@@ -28,7 +27,7 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
           'day'
         ) > this.parameters.dormancyPeriodDays
       ) {
-        return { action: this.parameters.action }
+        return { action: this.action }
       }
     }
   }
