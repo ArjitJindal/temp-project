@@ -22,10 +22,10 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
       )[0]
     if (lastSendingThinTransaction) {
       if (
-        dayjs(this.transaction.timestamp).diff(
-          lastSendingThinTransaction.timestamp,
-          'day'
-        ) > this.parameters.dormancyPeriodDays
+        dayjs
+          .unix(this.transaction.timestamp)
+          .diff(lastSendingThinTransaction.timestamp, 'day') >
+        this.parameters.dormancyPeriodDays
       ) {
         return { action: this.action }
       }

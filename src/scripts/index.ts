@@ -1,6 +1,7 @@
 import * as AWS from 'aws-sdk'
 import { IBAN } from 'ibankit'
 
+import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
 import {
   createUuid,
   getRandomIntInclusive,
@@ -9,7 +10,6 @@ import {
 } from './utils'
 import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies, ruleInstances } from './constants'
-import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
@@ -144,7 +144,7 @@ export const createAndUploadTestData = async (
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
       executedRules: ruleInstances,
-      failedRules: []
+      failedRules: [],
     }
     const ddbSaveTransactionResult =
       await transactionRepository.saveTransaction(transactionObject)

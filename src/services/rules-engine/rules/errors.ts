@@ -8,7 +8,7 @@ export class NoData extends RuleError {
 }
 
 export class MissingRuleParameter extends RuleError {
-  constructor(message: string) {
+  constructor(message = 'Missing required rule parameters') {
     super(message)
     this.name = 'MISSING_RULE_PARAMETER'
   }

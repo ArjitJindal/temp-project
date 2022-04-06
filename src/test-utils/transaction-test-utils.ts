@@ -2,10 +2,9 @@ import _ from 'lodash'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export function getTestTransaction(
-  transaction: Partial<Transaction>
+  transaction: Partial<Transaction> = {}
 ): Transaction {
   return {
-    transactionId: '7b80a539eea6e78acbd6d458e5971482',
     senderUserId: '8650a2611d0771cba03310f74bf6',
     receiverUserId: '9350a2611e0771cba03310f74bf6',
     sendingAmountDetails: {
@@ -34,6 +33,6 @@ export function getTestTransaction(
       transactionReferenceField: 'Deposit',
       _3dsDone: true,
     },
-    ..._.omitBy(transaction, _.isNil),
+    ...transaction,
   }
 }

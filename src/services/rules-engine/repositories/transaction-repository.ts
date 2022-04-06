@@ -16,6 +16,8 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 
+type QueryCountResult = { count: number; scannedCount: number }
+
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
   mongoDb: MongoClient
@@ -357,6 +359,28 @@ export class TransactionRepository {
     )
   }
 
+  public async getAfterTimeUserSendingTransactionsCount(
+    userId: string,
+    afterTimestamp: number
+  ): Promise<QueryCountResult> {
+    return this.getAfterTimeUserThinTransactionsCount(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
+        .PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  public async getAfterTimeUserReceivingTransactionsCount(
+    userId: string,
+    afterTimestamp: number
+  ): Promise<QueryCountResult> {
+    return this.getAfterTimeUserThinTransactionsCount(
+      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
+        .PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
   public async getAfterTimeNonUserSendingThinTransactions(
     paymentDetails: PaymentDetails,
     afterTimestamp: number
@@ -385,21 +409,31 @@ export class TransactionRepository {
     )
   }
 
-  private async getAfterTimeUserThinTransactions(
+  private getAfterTimeUserTransactionsQuery(
     partitionKeyId: string,
-    afterTimestamp: number
-  ): Promise<Array<ThinTransaction>> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    timestamp: number
+  ): AWS.DynamoDB.DocumentClient.QueryInput {
+    return {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID > :sk',
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
-        ':sk': `${afterTimestamp}`,
+        ':sk': `${timestamp}`,
       },
       ScanIndexForward: false,
       ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.query(queryInput).promise()
+  }
+
+  private async getAfterTimeUserThinTransactions(
+    partitionKeyId: string,
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    const result = await this.dynamoDb
+      .query(
+        this.getAfterTimeUserTransactionsQuery(partitionKeyId, afterTimestamp)
+      )
+      .promise()
     return (
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
@@ -408,6 +442,25 @@ export class TransactionRepository {
         receiverKeyId: item.receiverKeyId,
       })) || []
     )
+  }
+
+  private async getAfterTimeUserThinTransactionsCount(
+    partitionKeyId: string,
+    afterTimestamp: number
+  ): Promise<QueryCountResult> {
+    const result = await this.dynamoDb
+      .query({
+        ...this.getAfterTimeUserTransactionsQuery(
+          partitionKeyId,
+          afterTimestamp
+        ),
+        Select: 'COUNT',
+      })
+      .promise()
+    return {
+      count: result.Count as number,
+      scannedCount: result.ScannedCount as number,
+    }
   }
 }
 
