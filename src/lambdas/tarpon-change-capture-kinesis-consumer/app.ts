@@ -44,15 +44,23 @@ async function transactionHandler(
     TRANSACIONS_COLLECTION(tenantId)
   )
   transaction.executedRules
-  await transactionsCollection.insertOne({
-    ...transaction,
-    status: getTransactionStatus(transaction.executedRules),
-  })
+  await transactionsCollection.replaceOne(
+    { transactionId: transaction.transactionId },
+    {
+      ...transaction,
+      status: getTransactionStatus(transaction.executedRules),
+    },
+    { upsert: true }
+  )
 }
 
 async function userHandler(db: Db, tenantId: string, user: Business | User) {
-  const userCollection = db.collection(USERS_COLLECTION(tenantId))
-  await userCollection.insertOne(user)
+  const userCollection = db.collection<Business | User>(
+    USERS_COLLECTION(tenantId)
+  )
+  await userCollection.replaceOne({ userId: user.userId }, user, {
+    upsert: true,
+  })
 }
 
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
