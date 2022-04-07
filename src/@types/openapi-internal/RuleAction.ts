@@ -10,4 +10,4 @@
  * Do not edit the class manually.
  */
 
-export type RuleAction = 'FLAG' | 'BLOCK' | 'WHITELIST' | 'ALLOW'
+export type RuleAction = 'FLAG' | 'BLOCK' | 'WHITELIST' | 'ALLOW' | 'SUSPEND'

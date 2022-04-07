@@ -528,6 +528,7 @@ components:
         - BLOCK
         - WHITELIST
         - ALLOW
+        - SUSPEND
     ImportRequest:
       title: ImportRequest
       type: object

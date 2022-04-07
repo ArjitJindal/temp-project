@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import _ from 'lodash'
+import { UserRepository } from '../users/repositories/user-repository'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -12,6 +13,8 @@ import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -24,6 +27,8 @@ function getRuleImplementation(
   ruleImplementationFilename: string,
   tenantId: string,
   transaction: Transaction,
+  senderUser: User | Business | undefined,
+  receiverUser: User | Business | undefined,
   ruleParameters: object,
   ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -32,9 +37,8 @@ function getRuleImplementation(
     .default as typeof RuleImplementation
   return new RuleClass(
     tenantId,
-    transaction,
-    ruleParameters,
-    ruleAction,
+    { transaction, senderUser, receiverUser },
+    { parameters: ruleParameters, action: ruleAction },
     dynamoDb
   )
 }
@@ -53,7 +57,18 @@ export async function verifyTransaction(
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
   })
-  const ruleInstances = await ruleInstanceRepository.getActiveRuleInstances()
+  const userRepository = new UserRepository(tenantId, {
+    dynamoDb,
+  })
+  const [senderUser, receiverUser, ruleInstances] = await Promise.all([
+    transaction.senderUserId
+      ? userRepository.getUser<User | Business>(transaction.senderUserId)
+      : undefined,
+    transaction.receiverUserId
+      ? userRepository.getUser<User | Business>(transaction.receiverUserId)
+      : undefined,
+    ruleInstanceRepository.getActiveRuleInstances(),
+  ])
   const rulesById = _.keyBy(
     await ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -68,6 +83,8 @@ export async function verifyTransaction(
           rulesById[ruleInstance.ruleId].ruleImplementationFilename,
           tenantId,
           transaction,
+          senderUser,
+          receiverUser,
           ruleInstance.parameters,
           ruleInstance.action,
           dynamoDb

@@ -85,7 +85,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionMonitoringResult'
-              examples: {}
+              examples:
+                example-1:
+                  value:
+                    transactionId: 7b80a539eea6e78acbd6d458e5971482
+                    executedRules:
+                      - ruleId: R-1a
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        ruleAction: BLOCK
+                        ruleHit: true
+                    failedRules:
+                      - ruleId: R-1b
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        failureException:
+                          exceptionName: MISSING_DATA
+                          exceptionDescription: Some data is missing
         '401':
           description: Unauthorized
           headers: {}
@@ -224,8 +244,10 @@ paths:
                       firstName: Baran
                       middleName: Realblood
                       lastName: Ozkan
-                    dateOfBirth: 636285831
-                    age: 32
+                    dateOfBirth:
+                      day: 1
+                      month: 1
+                      year: 1990
                     countryOfResidence: US
                     countryOfNationality: DE
                   legalDocuments:
@@ -271,11 +293,9 @@ paths:
                   value:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userRiskScoreDetails:
-                      baseSafetyScore: 87.5
-                      actionSafetyScore: 58.33
-                      actionRiskScore: 72.32
-                      dynamicSafetyScore: 73.92
                       kycRiskScore: 63.36
+                      actionRiskScore: 72.32
+                      dynamicRiskScore: 73.92
         '401':
           description: Unauthorized
           headers: {}
@@ -354,8 +374,10 @@ paths:
                         firstName: Baran
                         middleName: Realblood
                         lastName: Ozkan
-                      dateOfBirth: 0
-                      age: 0
+                      dateOfBirth:
+                        day: 1
+                        month: 1
+                        year: 1990
                       countryOfResidence: US
                       countryOfNationality: DE
                     legalDocuments:
@@ -460,11 +482,9 @@ paths:
                   value:
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userRiskScoreDetails:
-                      baseSafetyScore: 87.5
-                      actionSafetyScore: 58.33
-                      actionRiskScore: 72.32
-                      dynamicSafetyScore: 73.92
                       kycRiskScore: 63.36
+                      actionRiskScore: 72.32
+                      dynamicRiskScore: 73.92
         '401':
           description: Unauthorized
           headers: {}
@@ -574,8 +594,10 @@ paths:
                             firstName: Baran
                             middleName: Realblood
                             lastName: Ozkan
-                          dateOfBirth: 661883439
-                          age: 31
+                          dateOfBirth:
+                            day: 1
+                            month: 1
+                            year: 1990
                           countryOfResidence: US
                           countryOfNationality: DE
                         legalDocuments:
@@ -613,8 +635,10 @@ paths:
                             firstName: Baran
                             middleName: Realblood
                             lastName: Ozkan
-                          dateOfBirth: 661883439
-                          age: 31
+                          dateOfBirth:
+                            day: 1
+                            month: 1
+                            year: 1990
                           countryOfResidence: US
                           countryOfNationality: DE
                         legalDocuments:
@@ -752,8 +776,10 @@ components:
             firstName: Baran
             middleName: Realblood
             lastName: Ozkan
-          dateOfBirth: 0
-          age: 0
+          dateOfBirth:
+            day: 1
+            month: 1
+            year: 1990
           countryOfResidence: US
           countryOfNationality: DE
         legalDocuments:
@@ -818,8 +844,10 @@ components:
               firstName: Baran
               middleName: Realblood
               lastName: Ozkan
-            dateOfBirth: 636285831
-            age: 32
+            dateOfBirth:
+              day: 1
+              month: 1
+              year: 1990
             countryOfResidence: US
             countryOfNationality: DE
           legalDocuments:
@@ -880,8 +908,10 @@ components:
             firstName: Baran
             middleName: Realblood
             lastName: Ozkan
-          dateOfBirth: 661883439
-          age: 31
+          dateOfBirth:
+            day: 1
+            month: 1
+            year: 1990
           countryOfResidence: US
           countryOfNationality: DE
         legalDocuments:
@@ -1197,7 +1227,7 @@ components:
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              ruleAction: block
+              ruleAction: BLOCK
               ruleHit: true
           failedRules:
             - ruleId: R-1a
@@ -1251,7 +1281,7 @@ components:
       type: object
       description: Standardized model for Bank Details
       example:
-        method: BANK
+        method: IBAN
         BIC: DE761234561
         bankName: Merryl Lynch
         IBAN: '1234321'
@@ -1400,7 +1430,7 @@ components:
             ruleDescription: >-
               If a user makes a remittance transaction >= 1800 in EUR - ask for
               proof of funds
-            ruleAction: block
+            ruleAction: BLOCK
             ruleHit: true
         failedRules:
           - ruleId: R-1b
@@ -1440,7 +1470,7 @@ components:
         ruleDescription: >-
           If a user makes a remittance transaction >= 1800 in EUR - ask for
           proof of funds
-        ruleAction: block
+        ruleAction: BLOCK
         ruleHit: true
       properties:
         ruleId:
@@ -1670,18 +1700,23 @@ components:
           amountCurrency: USD
     UserDetails:
       title: UserDetails
-      required:
-        - name
       type: object
+      example:
+        name:
+          firstName: Baran
+          middleName: Realblood
+          lastName: Ozkan
+        dateOfBirth:
+          day: 1
+          month: 1
+          year: 1990
+        countryOfResidence: US
+        countryOfNationality: DE
       properties:
         name:
           $ref: '#/components/schemas/ConsumerName'
         dateOfBirth:
-          type: number
-          description: Date of birth of the user
-        age:
-          type: number
-          description: Age of the user
+          $ref: '#/components/schemas/Date'
         countryOfResidence:
           minLength: 1
           type: string
@@ -1690,15 +1725,8 @@ components:
           minLength: 1
           type: string
           description: Country of nationality of the user
-      example:
-        name:
-          firstName: Baran
-          middleName: Realblood
-          lastName: Ozkan
-        dateOfBirth: 661883439
-        age: 31
-        countryOfResidence: US
-        countryOfNationality: DE
+      required:
+        - name
     CompanyGeneralDetails:
       title: CompanyGeneralDetails
       required:
@@ -1797,8 +1825,10 @@ components:
                 firstName: Baran
                 middleName: Realblood
                 lastName: Ozkan
-              dateOfBirth: 661883439
-              age: 31
+              dateOfBirth:
+                day: 1
+                month: 1
+                year: 1990
               countryOfResidence: US
               countryOfNationality: DE
             legalDocuments:
@@ -1836,8 +1866,10 @@ components:
                 firstName: Baran
                 middleName: Realblood
                 lastName: Ozkan
-              dateOfBirth: 661883439
-              age: 31
+              dateOfBirth:
+                day: 1
+                month: 1
+                year: 1990
               countryOfResidence: US
               countryOfNationality: DE
             legalDocuments:
@@ -1911,8 +1943,10 @@ components:
                   firstName: Baran
                   middleName: Realblood
                   lastName: Ozkan
-                dateOfBirth: 661883439
-                age: 31
+                dateOfBirth:
+                  day: 1
+                  month: 1
+                  year: 1990
                 countryOfResidence: US
                 countryOfNationality: DE
               legalDocuments:
@@ -1950,8 +1984,10 @@ components:
                   firstName: Baran
                   middleName: Realblood
                   lastName: Ozkan
-                dateOfBirth: 661883439
-                age: 31
+                dateOfBirth:
+                  day: 1
+                  month: 1
+                  year: 1990
                 countryOfResidence: US
                 countryOfNationality: DE
               legalDocuments:
@@ -2040,6 +2076,13 @@ components:
           type: string
         userRiskScoreDetails:
           $ref: '#/components/schemas/RiskScoringResult'
+      x-examples:
+        example-1:
+          userId: string
+          userRiskScoreDetails:
+            kycRiskScore: 87.5
+            actionRiskScore: 58.33
+            dynamicRiskScore: 73.92
     ACHDetails:
       description: ''
       type: object
@@ -2150,6 +2193,21 @@ components:
         - WHITELIST
         - FLAG
         - BLOCK
+        - SUSPEND
+    Date:
+      title: Date
+      type: object
+      properties:
+        day:
+          type: number
+        month:
+          type: number
+        year:
+          type: number
+      required:
+        - day
+        - month
+        - year
   securitySchemes:
     x-api-key:
       name: x-api-key
