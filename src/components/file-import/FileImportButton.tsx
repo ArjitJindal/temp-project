@@ -39,6 +39,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
   const handleClose = useCallback(() => {
     setIsModalVisible(false);
     setFile(undefined);
+    setErrorText(undefined);
   }, []);
   const handleImport = useCallback(() => {
     async function startImport() {
