@@ -56,7 +56,7 @@ export class UserRepository {
     return await this.getUser<User>(userId)
   }
 
-  private async getUser<T>(userId: string): Promise<T> {
+  public async getUser<T>(userId: string): Promise<T> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
@@ -100,5 +100,14 @@ export class UserRepository {
     }
     await this.dynamoDb.put(putItemInput).promise()
     return newUser
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.USER(this.tenantId, userId),
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    await this.dynamoDb.delete(deleteItemInput).promise()
   }
 }

@@ -1,0 +1,144 @@
+import dayjs from 'dayjs'
+import { AgeTransactionAmountRuleParameters } from '../age-transaction-amount'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  setUpRulesHooks,
+  createRuleTestCase,
+  RuleTestCase,
+} from '@/test-utils/rule-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import {
+  getTestUser,
+  setUpConsumerUsersHooks,
+} from '@/test-utils/user-test-utils'
+
+const TEST_TENANT_ID = getTestTenantId()
+
+dynamoDbSetupHook()
+
+setUpRulesHooks(TEST_TENANT_ID, [
+  {
+    ruleImplementationFilename: 'age-transaction-amount',
+    defaultParameters: {
+      transactionAmountThreshold: { EUR: 1000 },
+      ageRange: { minAge: 18, maxAge: 25 },
+    } as AgeTransactionAmountRuleParameters,
+    defaultAction: 'FLAG',
+  },
+])
+
+const user1DateOfBirth = dayjs().subtract(20, 'years')
+const user2DateOfBirth = dayjs().subtract(40, 'years')
+
+setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  getTestUser({
+    userId: '1',
+    userDetails: {
+      name: {
+        firstName: '1',
+      },
+      dateOfBirth: {
+        day: user1DateOfBirth.day(),
+        month: user1DateOfBirth.month(),
+        year: user1DateOfBirth.year(),
+      },
+    },
+  }),
+  getTestUser({
+    userId: '2',
+    userDetails: {
+      name: {
+        firstName: '2',
+      },
+      dateOfBirth: {
+        day: user2DateOfBirth.day(),
+        month: user2DateOfBirth.month(),
+        year: user2DateOfBirth.year(),
+      },
+    },
+  }),
+])
+
+describe.each<RuleTestCase>([
+  {
+    name: 'User in the target age range AND too big transaction amount - hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: '1',
+        sendingAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedActions: ['FLAG'],
+  },
+  {
+    name: 'User in the target age range AND too big transaction amount (currency not in the rule params) - hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: '1',
+        sendingAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'USD',
+        },
+      }),
+    ],
+    expectedActions: ['FLAG'],
+  },
+  {
+    name: 'User in the target age range AND normal transaction amount - not hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: '1',
+        sendingAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW'],
+  },
+  {
+    name: 'User not in the target range AND too big transaction amount - not hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: '2',
+        sendingAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW'],
+  },
+  {
+    name: 'User not in the target range AND normal transaction amount - not hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: '2',
+        sendingAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW'],
+  },
+  {
+    name: 'Missing sender user ID - not hit',
+    transactions: [
+      getTestTransaction({
+        senderUserId: undefined,
+        sendingAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW'],
+  },
+])('', ({ name, transactions, expectedActions }) => {
+  createRuleTestCase(name, TEST_TENANT_ID, transactions, expectedActions)
+})

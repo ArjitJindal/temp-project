@@ -1,6 +1,6 @@
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { MissingRuleParameter } from './errors'
 import { Rule } from './rule'
+import { isTransactionAmountBetweenThreshold } from './utils/transaction-rule-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -69,27 +69,19 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
         )),
         this.transaction,
       ]
-      const areAllTransactionsLowValue = transactions.every((transaction) => {
-        const transactionAmountDetails =
-          this.getTransactionAmountDetails(transaction)
-        if (!transactionAmountDetails) {
-          return false
-        }
-        const { transactionCurrency, transactionAmount } =
-          transactionAmountDetails
-
-        const thresholdValue =
-          this.parameters.lowTransactionValues[transactionCurrency]
-        if (thresholdValue === undefined) {
-          throw new MissingRuleParameter(
-            `Rule parameter lowTransactionValues doesn't include currency ${transactionCurrency}`
+      const areAllTransactionsLowValue = transactions.every(
+        async (transaction) => {
+          const transactionAmountDetails =
+            this.getTransactionAmountDetails(transaction)
+          if (!transactionAmountDetails) {
+            return false
+          }
+          return await isTransactionAmountBetweenThreshold(
+            transactionAmountDetails,
+            this.parameters.lowTransactionValues
           )
         }
-        return (
-          transactionAmount > thresholdValue.min &&
-          transactionAmount < thresholdValue.max
-        )
-      })
+      )
       if (areAllTransactionsLowValue) {
         return { action: this.action }
       }

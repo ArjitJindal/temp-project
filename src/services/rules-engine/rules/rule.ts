@@ -1,5 +1,7 @@
-import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { Business } from '@/@types/openapi-public/Business'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { User } from '@/@types/openapi-public/User'
 
 export type RuleResult = {
   action: RuleAction
@@ -8,22 +10,32 @@ export type RuleResult = {
 export class Rule<P> {
   tenantId: string
   transaction: Transaction
+  senderUser?: User | Business
+  receiverUser?: User | Business
   parameters: P
-  dynamoDb: AWS.DynamoDB.DocumentClient
   action: RuleAction
+  dynamoDb: AWS.DynamoDB.DocumentClient
 
   constructor(
     tenantId: string,
-    transaction: Transaction,
-    parameters: P,
-    action: RuleAction,
+    data: {
+      transaction: Transaction
+      senderUser?: User | Business
+      receiverUser?: User | Business
+    },
+    params: {
+      parameters: P
+      action: RuleAction
+    },
     dynamoDb: AWS.DynamoDB.DocumentClient
   ) {
     this.tenantId = tenantId
-    this.transaction = transaction
-    this.parameters = parameters
+    this.transaction = data.transaction
+    this.senderUser = data.senderUser
+    this.receiverUser = data.receiverUser
+    this.parameters = params.parameters
+    this.action = params.action
     this.dynamoDb = dynamoDb
-    this.action = action
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
