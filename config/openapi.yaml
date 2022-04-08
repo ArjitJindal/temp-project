@@ -97,6 +97,7 @@ paths:
                   value:
                     id: string
                     ruleId: string
+                    action: FLAG
                     parameters: {}
                     status: ACTIVE
                     createdAt: 0
@@ -169,7 +170,7 @@ paths:
               examples:
                 example-1:
                   value:
-                    importedTransactions: 100
+                    importedCount: 100
       requestBody:
         content:
           application/json:
@@ -181,6 +182,24 @@ paths:
                   type: TRANSACTION
                   format: flagright
                   s3Key: s3-key-in-a-bucket
+  '/import/{importId}':
+    parameters:
+      - schema:
+          type: string
+        name: importId
+        in: path
+        required: true
+    get:
+      summary: Import - Get Import Info
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImport'
+      operationId: get-import-importId
   /files/getPresignedUrl:
     parameters: []
     post:
@@ -546,10 +565,13 @@ components:
             - custom
         s3Key:
           type: string
+        filename:
+          type: string
       required:
         - type
         - format
         - s3Key
+        - filename
     PresignedUrlResponse:
       title: PresignedUrlResponse
       type: object
@@ -755,6 +777,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+    FileImport:
+      title: FileImport
+      type: object
+      properties:
+        _id:
+          type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+            - BUSINESS
+        s3Key:
+          type: string
+        filename:
+          type: string
+        importedRecords:
+          type: number
+        error:
+          type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileImportStatusChange'
+      required:
+        - type
+        - s3Key
+        - filename
+        - statuses
+    FileImportStatusChange:
+      type: object
+      title: FileImportStatusChange
+      enum:
+        - IN_PROGRESS
+        - PENDING
+        - FAILED
+        - SUCCESS
+      properties:
+        status:
+          type: string
+          enum:
+            - IN_PROGRESS
+            - PENDING
+            - SUCCESS
+            - FAILED
+        timestamp:
+          type: number
+      required:
+        - status
+        - timestamp
   securitySchemes:
     Authorization:
       type: http

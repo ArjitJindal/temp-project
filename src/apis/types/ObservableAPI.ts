@@ -23,6 +23,8 @@ import { ContactDetails1 } from '../models/ContactDetails1';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FailedRulesResult } from '../models/FailedRulesResult';
+import { FileImport } from '../models/FileImport';
+import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
@@ -31,6 +33,7 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -348,6 +351,38 @@ export class ObservableDefaultApi {
             map((rsp: ResponseContext) =>
               this.responseProcessor.getDashboardStatsTransactions(rsp),
             ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Import - Get Import Info
+   * @param importId
+   */
+  public getImportImportId(importId: string, _options?: Configuration): Observable<FileImport> {
+    const requestContextPromise = this.requestFactory.getImportImportId(importId, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getImportImportId(rsp)),
           );
         }),
       );

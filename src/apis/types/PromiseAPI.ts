@@ -22,6 +22,8 @@ import { ContactDetails1 } from '../models/ContactDetails1';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FailedRulesResult } from '../models/FailedRulesResult';
+import { FileImport } from '../models/FileImport';
+import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
@@ -30,6 +32,7 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -165,6 +168,15 @@ export class PromiseDefaultApi {
       body,
       _options,
     );
+    return result.toPromise();
+  }
+
+  /**
+   * Import - Get Import Info
+   * @param importId
+   */
+  public getImportImportId(importId: string, _options?: Configuration): Promise<FileImport> {
+    const result = this.api.getImportImportId(importId, _options);
     return result.toPromise();
   }
 

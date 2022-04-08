@@ -18,6 +18,8 @@ export * from './ContactDetails1';
 export * from './DeviceData';
 export * from './ExecutedRulesResult';
 export * from './FailedRulesResult';
+export * from './FileImport';
+export * from './FileImportStatusChange';
 export * from './FileInfo';
 export * from './IBANDetails';
 export * from './ImportRequest';
@@ -26,6 +28,7 @@ export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
 export * from './ListImportRequest';
+export * from './ModelDate';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './Rule';
@@ -69,6 +72,8 @@ import { ContactDetails1 } from './ContactDetails1';
 import { DeviceData } from './DeviceData';
 import { ExecutedRulesResult } from './ExecutedRulesResult';
 import { FailedRulesResult } from './FailedRulesResult';
+import { FileImport, FileImportTypeEnum } from './FileImport';
+import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './FileImportStatusChange';
 import { FileInfo } from './FileInfo';
 import { IBANDetails } from './IBANDetails';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
@@ -77,6 +82,7 @@ import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
+import { ModelDate } from './ModelDate';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { Rule } from './Rule';
@@ -110,6 +116,8 @@ const supportedMediaTypes: { [mediaType: string]: number } = {
 };
 
 let enumsMap: Set<string> = new Set<string>([
+  'FileImportTypeEnum',
+  'FileImportStatusChangeStatusEnum',
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
   'RuleAction',
@@ -138,6 +146,8 @@ let typeMap: { [index: string]: any } = {
   DeviceData: DeviceData,
   ExecutedRulesResult: ExecutedRulesResult,
   FailedRulesResult: FailedRulesResult,
+  FileImport: FileImport,
+  FileImportStatusChange: FileImportStatusChange,
   FileInfo: FileInfo,
   IBANDetails: IBANDetails,
   ImportRequest: ImportRequest,
@@ -146,6 +156,7 @@ let typeMap: { [index: string]: any } = {
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
   ListImportRequest: ListImportRequest,
+  ModelDate: ModelDate,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
   Rule: Rule,

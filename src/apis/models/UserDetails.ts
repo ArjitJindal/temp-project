@@ -11,18 +11,12 @@
  */
 
 import { ConsumerName } from './ConsumerName';
+import { ModelDate } from './ModelDate';
 import { HttpFile } from '../http/http';
 
 export class UserDetails {
   'name': ConsumerName;
-  /**
-   * Date of birth of the user
-   */
-  'dateOfBirth'?: number;
-  /**
-   * Age of the user
-   */
-  'age'?: number;
+  'dateOfBirth'?: ModelDate;
   /**
    * Country of residence of the user
    */
@@ -49,13 +43,7 @@ export class UserDetails {
     {
       name: 'dateOfBirth',
       baseName: 'dateOfBirth',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'age',
-      baseName: 'age',
-      type: 'number',
+      type: 'ModelDate',
       format: '',
     },
     {

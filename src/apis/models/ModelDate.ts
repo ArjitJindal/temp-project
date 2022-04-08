@@ -12,11 +12,10 @@
 
 import { HttpFile } from '../http/http';
 
-export class ImportRequest {
-  'type': ImportRequestTypeEnum;
-  'format': ImportRequestFormatEnum;
-  's3Key': string;
-  'filename': string;
+export class ModelDate {
+  'day': number;
+  'month': number;
+  'year': number;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -27,37 +26,28 @@ export class ImportRequest {
     format: string;
   }> = [
     {
-      name: 'type',
-      baseName: 'type',
-      type: 'ImportRequestTypeEnum',
+      name: 'day',
+      baseName: 'day',
+      type: 'number',
       format: '',
     },
     {
-      name: 'format',
-      baseName: 'format',
-      type: 'ImportRequestFormatEnum',
+      name: 'month',
+      baseName: 'month',
+      type: 'number',
       format: '',
     },
     {
-      name: 's3Key',
-      baseName: 's3Key',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'filename',
-      baseName: 'filename',
-      type: 'string',
+      name: 'year',
+      baseName: 'year',
+      type: 'number',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return ImportRequest.attributeTypeMap;
+    return ModelDate.attributeTypeMap;
   }
 
   public constructor() {}
 }
-
-export type ImportRequestTypeEnum = 'TRANSACTION' | 'USER' | 'BUSINESS';
-export type ImportRequestFormatEnum = 'flagright' | 'custom';

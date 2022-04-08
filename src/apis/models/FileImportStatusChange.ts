@@ -12,11 +12,9 @@
 
 import { HttpFile } from '../http/http';
 
-export class ImportRequest {
-  'type': ImportRequestTypeEnum;
-  'format': ImportRequestFormatEnum;
-  's3Key': string;
-  'filename': string;
+export class FileImportStatusChange {
+  'status': FileImportStatusChangeStatusEnum;
+  'timestamp': number;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -27,37 +25,24 @@ export class ImportRequest {
     format: string;
   }> = [
     {
-      name: 'type',
-      baseName: 'type',
-      type: 'ImportRequestTypeEnum',
+      name: 'status',
+      baseName: 'status',
+      type: 'FileImportStatusChangeStatusEnum',
       format: '',
     },
     {
-      name: 'format',
-      baseName: 'format',
-      type: 'ImportRequestFormatEnum',
-      format: '',
-    },
-    {
-      name: 's3Key',
-      baseName: 's3Key',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'filename',
-      baseName: 'filename',
-      type: 'string',
+      name: 'timestamp',
+      baseName: 'timestamp',
+      type: 'number',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return ImportRequest.attributeTypeMap;
+    return FileImportStatusChange.attributeTypeMap;
   }
 
   public constructor() {}
 }
 
-export type ImportRequestTypeEnum = 'TRANSACTION' | 'USER' | 'BUSINESS';
-export type ImportRequestFormatEnum = 'flagright' | 'custom';
+export type FileImportStatusChangeStatusEnum = 'IN_PROGRESS' | 'PENDING' | 'SUCCESS' | 'FAILED';

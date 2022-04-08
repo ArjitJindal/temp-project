@@ -10,6 +10,7 @@ import { SecurityAuthentication } from '../auth/auth';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { Comment } from '../models/Comment';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
+import { FileImport } from '../models/FileImport';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { ListImportRequest } from '../models/ListImportRequest';
@@ -348,6 +349,40 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       contentType,
     );
     requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
+   * Import - Get Import Info
+   * @param importId
+   */
+  public async getImportImportId(
+    importId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'importId' is not null or undefined
+    if (importId === null || importId === undefined) {
+      throw new RequiredError('DefaultApi', 'getImportImportId', 'importId');
+    }
+
+    // Path Params
+    const localVarPath = '/import/{importId}'.replace(
+      '{' + 'importId' + '}',
+      encodeURIComponent(String(importId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
@@ -1152,6 +1187,42 @@ export class DefaultApiResponseProcessor {
         'Set<any>',
         '',
       ) as Set<any>;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getImportImportId
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getImportImportId(response: ResponseContext): Promise<FileImport> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: FileImport = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'FileImport',
+        '',
+      ) as FileImport;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: FileImport = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'FileImport',
+        '',
+      ) as FileImport;
       return body;
     }
 

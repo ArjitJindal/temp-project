@@ -11,6 +11,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getBusinessUsersList**](DefaultApi.md#getBusinessUsersList) | **GET** /business/users | Business Users - List |
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
+| [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
@@ -395,6 +396,56 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getImportImportId**
+
+> FileImport getImportImportId()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetImportImportIdRequest = {
+  // string
+  importId: "importId_example",
+};
+
+apiInstance.getImportImportId(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name         | Type         | Description | Notes                 |
+| ------------ | ------------ | ----------- | --------------------- |
+| **importId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**FileImport**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getRuleInstances**
 
 > Array<RuleInstance> getRuleInstances()
@@ -721,6 +772,7 @@ let body:.DefaultApiPostImportRequest = {
     type: "TRANSACTION",
     format: "flagright",
     s3Key: "s3Key_example",
+    filename: "filename_example",
   },
 };
 

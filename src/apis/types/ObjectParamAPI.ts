@@ -22,6 +22,8 @@ import { ContactDetails1 } from '../models/ContactDetails1';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FailedRulesResult } from '../models/FailedRulesResult';
+import { FileImport } from '../models/FileImport';
+import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
@@ -30,6 +32,7 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -158,6 +161,15 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    * @memberof DefaultApigetDashboardStatsTransactions
    */
   body?: any;
+}
+
+export interface DefaultApiGetImportImportIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetImportImportId
+   */
+  importId: string;
 }
 
 export interface DefaultApiGetRuleInstancesRequest {}
@@ -428,6 +440,17 @@ export class ObjectDefaultApi {
         options,
       )
       .toPromise();
+  }
+
+  /**
+   * Import - Get Import Info
+   * @param param the request object
+   */
+  public getImportImportId(
+    param: DefaultApiGetImportImportIdRequest,
+    options?: Configuration,
+  ): Promise<FileImport> {
+    return this.api.getImportImportId(param.importId, options).toPromise();
   }
 
   /**

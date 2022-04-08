@@ -32,6 +32,8 @@ models/ContactDetails1.ts
 models/DeviceData.ts
 models/ExecutedRulesResult.ts
 models/FailedRulesResult.ts
+models/FileImport.ts
+models/FileImportStatusChange.ts
 models/FileInfo.ts
 models/IBANDetails.ts
 models/ImportRequest.ts
@@ -40,6 +42,7 @@ models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts
 models/ListImportRequest.ts
+models/ModelDate.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
