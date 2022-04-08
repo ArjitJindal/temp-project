@@ -127,6 +127,7 @@ export class TransactionRepository {
               PutRequest: {
                 Item: {
                   ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+                  transactionId,
                   ...transaction,
                   ...rulesResult,
                 },
