@@ -17,6 +17,7 @@ const PathToLambda: any = {
   '/rule_instances/{ruleInstanceId}':
     TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
   '/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+  '/import/{importId}': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
   '/files/getPresignedUrl':
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,

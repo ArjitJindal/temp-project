@@ -287,7 +287,9 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/file-import/',
       undefined,
       {
+        ...docDbFunctionProps,
         environment: {
+          ...docDbFunctionProps.environment,
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
         } as FileImportConfig,
@@ -297,6 +299,22 @@ export class CdkTarponStack extends cdk.Stack {
     dynamoDbTable.grantReadWriteData(fileImportFunction)
     s3TmpBucket.grantRead(fileImportFunction)
     s3ImportBucket.grantWrite(fileImportFunction)
+    fileImportFunction.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.FILE_IMPORT_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.FILE_IMPORT_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [docDbCluster.secret!.secretFullArn!],
+            }),
+          ],
+        }
+      )
+    )
 
     const getPresignedUrlFunction = this.createFunction(
       TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,

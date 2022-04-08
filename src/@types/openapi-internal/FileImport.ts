@@ -10,11 +10,15 @@
  * Do not edit the class manually.
  */
 
-export class ImportRequest {
-  'type': ImportRequestTypeEnum
-  'format': ImportRequestFormatEnum
+import { FileImportStatusChange } from './FileImportStatusChange'
+export class FileImport {
+  '_id'?: string
+  'type': FileImportTypeEnum
   's3Key': string
   'filename': string
+  'importedRecords'?: number
+  'error'?: string
+  'statuses': Array<FileImportStatusChange>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -25,15 +29,15 @@ export class ImportRequest {
     format: string
   }> = [
     {
-      name: 'type',
-      baseName: 'type',
-      type: 'ImportRequestTypeEnum',
+      name: '_id',
+      baseName: '_id',
+      type: 'string',
       format: '',
     },
     {
-      name: 'format',
-      baseName: 'format',
-      type: 'ImportRequestFormatEnum',
+      name: 'type',
+      baseName: 'type',
+      type: 'FileImportTypeEnum',
       format: '',
     },
     {
@@ -48,14 +52,31 @@ export class ImportRequest {
       type: 'string',
       format: '',
     },
+    {
+      name: 'importedRecords',
+      baseName: 'importedRecords',
+      type: 'number',
+      format: '',
+    },
+    {
+      name: 'error',
+      baseName: 'error',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'statuses',
+      baseName: 'statuses',
+      type: 'Array<FileImportStatusChange>',
+      format: '',
+    },
   ]
 
   static getAttributeTypeMap() {
-    return ImportRequest.attributeTypeMap
+    return FileImport.attributeTypeMap
   }
 
   public constructor() {}
 }
 
-export type ImportRequestTypeEnum = 'TRANSACTION' | 'USER' | 'BUSINESS'
-export type ImportRequestFormatEnum = 'flagright' | 'custom'
+export type FileImportTypeEnum = 'TRANSACTION' | 'USER' | 'BUSINESS'
