@@ -5,8 +5,10 @@ import axios from 'axios';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/lib/upload/Dragger';
 import filesize from 'filesize';
-import { ApiException, FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
+import _ from 'lodash';
+import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
+import { sleep } from '@/utils/time-utils';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:
@@ -46,30 +48,42 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
       setLoading(true);
       const hideMessage = message.loading('Importing...', 0);
       try {
-        const { importedCount } = await api.postImport({
-          ImportRequest: {
-            type,
-            format,
-            s3Key: file?.s3Key as string,
-          },
-        });
-        message.success(`Imported ${importedCount} ${type.toLowerCase()} records`);
-        setErrorText(undefined);
-        handleClose();
-      } catch (error) {
-        if (error instanceof ApiException) {
-          setErrorText(JSON.parse(error.body).message);
-        } else {
-          setErrorText('Unknown error');
+        try {
+          await api.postImport({
+            ImportRequest: {
+              type,
+              format,
+              s3Key: file?.s3Key as string,
+              filename: file?.filename as string,
+            },
+          });
+        } catch (e) {
+          // If the import takes more than 29 seconds, we ignore the error and
+          // poll for the import status
         }
-        message.error('Failed to import the file');
+        const importId = file?.s3Key.replace(/\//g, '') as string;
+        for (const i of _.range(0, 100)) {
+          const importInfo = await api.getImportImportId({ importId });
+          const latestStatus = _.last(importInfo.statuses);
+          if (latestStatus?.status === 'FAILED') {
+            setErrorText(importInfo.error);
+            message.error('Failed to import the file');
+            return;
+          } else if (latestStatus?.status === 'SUCCESS') {
+            message.success(`Imported ${importInfo.importedRecords} ${type.toLowerCase()} records`);
+            handleClose();
+            return;
+          }
+          await sleep(10 * 1000);
+        }
+        message.error('Failed to import the file - timeout');
       } finally {
         hideMessage && hideMessage();
         setLoading(false);
       }
     }
     startImport();
-  }, [api, file?.s3Key, format, handleClose, type]);
+  }, [api, file?.filename, file?.s3Key, format, handleClose, type]);
 
   return (
     <>
