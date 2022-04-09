@@ -9,7 +9,7 @@ import {
   connectToDB,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/docDBUtils'
+} from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'

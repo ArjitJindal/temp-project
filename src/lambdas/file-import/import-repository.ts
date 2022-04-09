@@ -1,7 +1,7 @@
 import { TarponStackConstants } from '@cdk/constants'
 import { MongoClient } from 'mongodb'
 import _ from 'lodash'
-import { IMPORT_COLLECTION } from '@/utils/docDBUtils'
+import { IMPORT_COLLECTION } from '@/utils/mongoDBUtils'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
 
 export class ImportRepository {

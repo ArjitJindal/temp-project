@@ -13,7 +13,7 @@ import { PresignedUrlResponse } from '@/@types/openapi-internal/PresignedUrlResp
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { connectToDB } from '@/utils/docDBUtils'
+import { connectToDB } from '@/utils/mongoDBUtils'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
