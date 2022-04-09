@@ -88,9 +88,16 @@ export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY = (
   return `${tenantId}-dashboard-transaction-monthly-daily`
 }
 
+export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-transaction-monthly-hourly`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }
 
 export const MONTH_DATE_FORMAT = '%Y-%m'
 export const DAY_DATE_FORMAT = '%Y-%m-%d'
+export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'

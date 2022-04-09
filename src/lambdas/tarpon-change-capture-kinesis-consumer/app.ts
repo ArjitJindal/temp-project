@@ -13,6 +13,8 @@ import {
   USERS_COLLECTION,
   MONTH_DATE_FORMAT,
   DAY_DATE_FORMAT,
+  HOUR_DATE_FORMAT,
+  DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -142,6 +144,12 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         tenantId,
         DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY(tenantId),
         DAY_DATE_FORMAT
+      )
+      await dashboardTransactionStatsHandler(
+        db,
+        tenantId,
+        DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY(tenantId),
+        HOUR_DATE_FORMAT
       )
     }
   } catch (err) {
