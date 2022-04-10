@@ -4,7 +4,7 @@ import { TarponStackConstants } from '@cdk/constants'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { USERS_COLLECTION } from '@/utils/docDBUtils'
+import { USERS_COLLECTION } from '@/utils/mongoDBUtils'
 
 export type UserType = 'BUSINESS' | 'CONSUMER'
 

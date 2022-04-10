@@ -12,7 +12,7 @@ import {
   connectToDB,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/docDBUtils'
+} from '@/utils/mongoDBUtils'
 
 let client: MongoClient
 
