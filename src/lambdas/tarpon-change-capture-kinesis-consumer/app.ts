@@ -7,14 +7,14 @@ import {
 } from './constants'
 import {
   connectToDB,
-  DASHBOARD_TRANSACIONS_STATS_COLLECTION_MONTHLY,
-  DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY,
-  TRANSACIONS_COLLECTION,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   MONTH_DATE_FORMAT,
   DAY_DATE_FORMAT,
   HOUR_DATE_FORMAT,
-  DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -47,7 +47,7 @@ async function transactionHandler(
   transaction: TransactionWithRulesResult
 ) {
   const transactionsCollection = db.collection<TransactionCaseManagement>(
-    TRANSACIONS_COLLECTION(tenantId)
+    TRANSACTIONS_COLLECTION(tenantId)
   )
   transaction.executedRules
   await transactionsCollection.replaceOne(
@@ -76,7 +76,7 @@ const dashboardTransactionStatsHandler = async (
   dateIdFormat: string
 ) => {
   const transactionsCollection = db.collection<TransactionCaseManagement>(
-    TRANSACIONS_COLLECTION(tenantId)
+    TRANSACTIONS_COLLECTION(tenantId)
   )
   try {
     const aggregationCursor = await transactionsCollection.aggregate([
@@ -136,19 +136,19 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
       await dashboardTransactionStatsHandler(
         db,
         tenantId,
-        DASHBOARD_TRANSACIONS_STATS_COLLECTION_MONTHLY(tenantId),
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
         MONTH_DATE_FORMAT
       )
       await dashboardTransactionStatsHandler(
         db,
         tenantId,
-        DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY(tenantId),
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
         DAY_DATE_FORMAT
       )
       await dashboardTransactionStatsHandler(
         db,
         tenantId,
-        DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY(tenantId),
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
         HOUR_DATE_FORMAT
       )
     }

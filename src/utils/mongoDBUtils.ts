@@ -68,7 +68,7 @@ function buildResponse(statusCode: number, body: object): object {
   }
 }
 
-export const TRANSACIONS_COLLECTION = (tenantId: string) => {
+export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
 }
 
@@ -76,19 +76,19 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
-export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_MONTHLY = (
+export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-monthly-stats`
 }
 
-export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_DAILY = (
+export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-monthly-daily`
 }
 
-export const DASHBOARD_TRANSACIONS_STATS_COLLECTION_HOURLY = (
+export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
   return `${tenantId}-dashboard-transaction-monthly-hourly`
