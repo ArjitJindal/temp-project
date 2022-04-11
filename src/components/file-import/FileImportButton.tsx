@@ -9,6 +9,7 @@ import _ from 'lodash';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
+import { getUserTenant } from '@/utils/user-utils';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:
@@ -37,7 +38,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
   const { user } = useAuth0();
   const api = useApi();
   const isCustomFormatSupported =
-    user && CUSTOM_FORMAT_TENANTS.includes(user['https://flagright.com/tenantName']);
+    user && CUSTOM_FORMAT_TENANTS.includes(getUserTenant(user).tenantName);
   const handleClose = useCallback(() => {
     setIsModalVisible(false);
     setFile(undefined);

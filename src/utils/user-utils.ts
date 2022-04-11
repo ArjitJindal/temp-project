@@ -3,10 +3,40 @@ import _ from 'lodash';
 import type { User } from 'auth0';
 import { useApi } from '@/api';
 
+export enum UserRole {
+  ROOT,
+  ADMIN,
+  USER,
+}
+
 let cachedUsers: { [userId: string]: User } | null = null;
 
 export function isFlagrightUser(user: User): boolean {
   return user['https://flagright.com/tenantId'] === 'flagright';
+}
+
+export function getUserTenant(user: User): { tenantId: string; tenantName: string } {
+  return {
+    tenantId: user['https://flagright.com/tenantId'],
+    tenantName: user['https://flagright.com/tenantName'],
+  };
+}
+
+export function getUserRole(user: User): UserRole {
+  const role = user['https://flagright.com/role'];
+  switch (role) {
+    case 'root':
+      return UserRole.ROOT;
+    case 'admin':
+      return UserRole.ADMIN;
+    case 'user':
+    default:
+      return UserRole.USER;
+  }
+}
+
+export function isAtLeastAdmin(user: User) {
+  return getUserRole(user)?.valueOf() <= UserRole.ADMIN.valueOf();
 }
 
 export function useUsers(): [{ [userId: string]: User }, boolean] {
