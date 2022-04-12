@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import _ from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
+import { WriteRequest } from 'aws-sdk/clients/dynamodb'
+import { getReceiverKeys, getSenderKeys } from '../utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -115,20 +117,8 @@ export class TransactionRepository {
       transaction.transactionId ||
       `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
 
-    const senderKeys = DynamoDbKeys.ALL_TRANSACTION(
-      this.tenantId,
-      transaction.senderUserId,
-      transaction.senderPaymentDetails,
-      'sending',
-      transaction.timestamp
-    )
-    const receiverKeys = DynamoDbKeys.ALL_TRANSACTION(
-      this.tenantId,
-      transaction.receiverUserId,
-      transaction.receiverPaymentDetails,
-      'receiving',
-      transaction.timestamp
-    )
+    const senderKeys = getSenderKeys(this.tenantId, transaction)
+    const receiverKeys = getReceiverKeys(this.tenantId, transaction)
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -160,7 +150,20 @@ export class TransactionRepository {
                 },
               },
             },
-          ],
+            transaction?.deviceData?.ipAddress && {
+              PutRequest: {
+                Item: {
+                  ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
+                    this.tenantId,
+                    transaction.deviceData.ipAddress,
+                    transaction.timestamp
+                  ),
+                  transactionId,
+                  senderKeyId: senderKeys.PartitionKeyID,
+                },
+              },
+            },
+          ].filter(Boolean) as WriteRequest[],
         },
         ReturnConsumedCapacity: 'TOTAL',
       }
@@ -341,7 +344,7 @@ export class TransactionRepository {
     userId: string,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimeUserThinTransactions(
+    return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
         .PartitionKeyID,
       afterTimestamp
@@ -352,7 +355,7 @@ export class TransactionRepository {
     userId: string,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimeUserThinTransactions(
+    return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
         .PartitionKeyID,
       afterTimestamp
@@ -385,7 +388,7 @@ export class TransactionRepository {
     paymentDetails: PaymentDetails,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimeUserThinTransactions(
+    return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
@@ -399,7 +402,7 @@ export class TransactionRepository {
     paymentDetails: PaymentDetails,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimeUserThinTransactions(
+    return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
@@ -409,7 +412,18 @@ export class TransactionRepository {
     )
   }
 
-  private getAfterTimeUserTransactionsQuery(
+  public async getAfterTimestampIpAddressThinTransactions(
+    ipAddress: string,
+    afterTimestamp: number
+  ): Promise<Array<ThinTransaction>> {
+    return this.getAfterTimestampThinTransactions(
+      DynamoDbKeys.IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
+        .PartitionKeyID,
+      afterTimestamp
+    )
+  }
+
+  private getAfterTimestampTransactionsQuery(
     partitionKeyId: string,
     timestamp: number
   ): AWS.DynamoDB.DocumentClient.QueryInput {
@@ -425,13 +439,13 @@ export class TransactionRepository {
     }
   }
 
-  private async getAfterTimeUserThinTransactions(
+  private async getAfterTimestampThinTransactions(
     partitionKeyId: string,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
     const result = await this.dynamoDb
       .query(
-        this.getAfterTimeUserTransactionsQuery(partitionKeyId, afterTimestamp)
+        this.getAfterTimestampTransactionsQuery(partitionKeyId, afterTimestamp)
       )
       .promise()
     return (
@@ -450,7 +464,7 @@ export class TransactionRepository {
   ): Promise<QueryCountResult> {
     const result = await this.dynamoDb
       .query({
-        ...this.getAfterTimeUserTransactionsQuery(
+        ...this.getAfterTimestampTransactionsQuery(
           partitionKeyId,
           afterTimestamp
         ),

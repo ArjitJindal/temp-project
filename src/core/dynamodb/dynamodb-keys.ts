@@ -89,6 +89,14 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#transaction#${USER_ID_PREFIX}${userId}#${direction}`,
     SortKeyID: `${timestamp}`,
   }),
+  IP_ADDRESS_TRANSACTION: (
+    tenantId: string,
+    ipAddress: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#transaction#ip:${ipAddress}`,
+    SortKeyID: `${timestamp}`,
+  }),
   // Attributes: refer to Rule
   RULE: (ruleId?: string) => ({
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#rule`,
