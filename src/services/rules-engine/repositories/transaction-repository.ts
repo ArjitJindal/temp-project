@@ -284,7 +284,7 @@ export class TransactionRepository {
     const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
       RequestItems: {
         [TarponStackConstants.DYNAMODB_TABLE_NAME]: {
-          Keys: transactionIds.map((transactionId) =>
+          Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
             DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
           ),
           ProjectionExpression: transactionAttributeNames
