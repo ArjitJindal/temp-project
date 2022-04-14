@@ -21,6 +21,7 @@ import { UPIDetails } from './UPIDetails'
  * Model for transaction payload
  */
 export class Transaction {
+  'type'?: string
   /**
    * Unique transaction identifier
    */
@@ -58,6 +59,12 @@ export class Transaction {
     type: string
     format: string
   }> = [
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'string',
+      format: '',
+    },
     {
       name: 'transactionId',
       baseName: 'transactionId',

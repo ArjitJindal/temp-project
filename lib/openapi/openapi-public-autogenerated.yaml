@@ -1055,6 +1055,8 @@ components:
           - key: customKey
             value: customValue
       properties:
+        type:
+          type: string
         transactionId:
           minLength: 1
           type: string

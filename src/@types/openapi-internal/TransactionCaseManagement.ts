@@ -26,6 +26,7 @@ import { TransactionStatusChange } from './TransactionStatusChange'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { UPIDetails } from './UPIDetails'
 export class TransactionCaseManagement {
+  'type'?: string
   /**
    * Unique transaction identifier
    */
@@ -69,6 +70,12 @@ export class TransactionCaseManagement {
     type: string
     format: string
   }> = [
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'string',
+      format: '',
+    },
     {
       name: 'transactionId',
       baseName: 'transactionId',

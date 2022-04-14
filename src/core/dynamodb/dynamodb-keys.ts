@@ -13,6 +13,7 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const USER_ID_PREFIX = 'user:'
+const TRANSACTION_TYPE_PREFIX = 'type:'
 
 export const DynamoDbKeys = {
   TENANT: (tenantId: string) => ({
@@ -28,6 +29,7 @@ export const DynamoDbKeys = {
     userId: string | undefined,
     paymentDetails: PaymentDetails,
     direction: 'sending' | 'receiving',
+    transactionType?: string,
     timestamp?: number
   ) => {
     return userId === undefined
@@ -35,43 +37,52 @@ export const DynamoDbKeys = {
           tenantId,
           paymentDetails,
           direction,
+          transactionType,
           timestamp
         )
-      : DynamoDbKeys.USER_TRANSACTION(tenantId, userId, direction, timestamp)
+      : DynamoDbKeys.USER_TRANSACTION(
+          tenantId,
+          userId,
+          direction,
+          transactionType,
+          timestamp
+        )
   },
   // Attributes: [transactionId]
   NON_USER_TRANSACTION: (
     tenantId: string,
     paymentDetails: PaymentDetails,
     direction: 'sending' | 'receiving',
+    transactionType?: string,
     timestamp?: number
   ) => {
+    const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     switch (paymentDetails.method) {
       case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction#paymentDetails#upiID:${upiID}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
@@ -84,11 +95,15 @@ export const DynamoDbKeys = {
     tenantId: string,
     userId: string,
     direction: 'sending' | 'receiving',
+    transactionType?: string,
     timestamp?: number
-  ) => ({
-    PartitionKeyID: `${tenantId}#transaction#${USER_ID_PREFIX}${userId}#${direction}`,
-    SortKeyID: `${timestamp}`,
-  }),
+  ) => {
+    const tranasctionTypeKey = getTransactionTypeKey(transactionType)
+    return {
+      PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
+      SortKeyID: `${timestamp}`,
+    }
+  },
   IP_ADDRESS_TRANSACTION: (
     tenantId: string,
     ipAddress: string,
@@ -121,6 +136,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,
   }),
+}
+
+function getTransactionTypeKey(transactionType: string | undefined): string {
+  return transactionType ? `#${TRANSACTION_TYPE_PREFIX}${transactionType}` : ''
 }
 
 export function keyHasUserId(key: string) {

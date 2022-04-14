@@ -119,6 +119,14 @@ export class TransactionRepository {
 
     const senderKeys = getSenderKeys(this.tenantId, transaction)
     const receiverKeys = getReceiverKeys(this.tenantId, transaction)
+    const senderKeysOfTransactionType =
+      transaction.type === undefined
+        ? undefined
+        : getSenderKeys(this.tenantId, transaction, transaction.type)
+    const receiverKeysOfTransactionType =
+      transaction.type === undefined
+        ? undefined
+        : getReceiverKeys(this.tenantId, transaction, transaction.type)
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -148,6 +156,24 @@ export class TransactionRepository {
                   ...receiverKeys,
                   transactionId,
                   senderKeyId: senderKeys.PartitionKeyID,
+                },
+              },
+            },
+            senderKeysOfTransactionType && {
+              PutRequest: {
+                Item: {
+                  ...senderKeysOfTransactionType,
+                  transactionId,
+                  receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+                },
+              },
+            },
+            receiverKeysOfTransactionType && {
+              PutRequest: {
+                Item: {
+                  ...receiverKeysOfTransactionType,
+                  transactionId,
+                  senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
                 },
               },
             },
@@ -279,13 +305,20 @@ export class TransactionRepository {
     )
   }
 
-  public async hasAnySendingTransaction(userId: string): Promise<boolean> {
+  public async hasAnySendingTransaction(
+    userId: string,
+    transactionType?: string
+  ): Promise<boolean> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
-          .PartitionKeyID,
+        ':pk': DynamoDbKeys.USER_TRANSACTION(
+          this.tenantId,
+          userId,
+          'sending',
+          transactionType
+        ).PartitionKeyID,
       },
       Limit: 1,
       ReturnConsumedCapacity: 'TOTAL',
@@ -296,22 +329,32 @@ export class TransactionRepository {
 
   public async getLastNUserSendingThinTransactions(
     userId: string,
-    n: number
+    n: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getLastNThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'sending',
+        transactionType
+      ).PartitionKeyID,
       n
     )
   }
 
   public getLastNUserReceivingThinTransactions(
     userId: string,
-    n: number
+    n: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getLastNThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'receiving',
+        transactionType
+      ).PartitionKeyID,
       n
     )
   }
@@ -343,57 +386,79 @@ export class TransactionRepository {
 
   public async getAfterTimeUserSendingThinTransactions(
     userId: string,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimestampThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'sending',
+        transactionType
+      ).PartitionKeyID,
       afterTimestamp
     )
   }
 
   public async getAfterTimeUserReceivingThinTransactions(
     userId: string,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimestampThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'receiving',
+        transactionType
+      ).PartitionKeyID,
       afterTimestamp
     )
   }
 
   public async getAfterTimeUserSendingTransactionsCount(
     userId: string,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<QueryCountResult> {
     return this.getAfterTimeUserThinTransactionsCount(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'sending')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'sending',
+        transactionType
+      ).PartitionKeyID,
       afterTimestamp
     )
   }
 
   public async getAfterTimeUserReceivingTransactionsCount(
     userId: string,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<QueryCountResult> {
     return this.getAfterTimeUserThinTransactionsCount(
-      DynamoDbKeys.USER_TRANSACTION(this.tenantId, userId, 'receiving')
-        .PartitionKeyID,
+      DynamoDbKeys.USER_TRANSACTION(
+        this.tenantId,
+        userId,
+        'receiving',
+        transactionType
+      ).PartitionKeyID,
       afterTimestamp
     )
   }
 
   public async getAfterTimeNonUserSendingThinTransactions(
     paymentDetails: PaymentDetails,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
-        'sending'
+        'sending',
+        transactionType
       ).PartitionKeyID,
       afterTimestamp
     )
@@ -401,13 +466,15 @@ export class TransactionRepository {
 
   public async getAfterTimeNonUserReceivingThinTransactions(
     paymentDetails: PaymentDetails,
-    afterTimestamp: number
+    afterTimestamp: number,
+    transactionType?: string
   ): Promise<Array<ThinTransaction>> {
     return this.getAfterTimestampThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
-        'receiving'
+        'receiving',
+        transactionType
       ).PartitionKeyID,
       afterTimestamp
     )
