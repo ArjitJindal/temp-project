@@ -61,28 +61,28 @@ export const DynamoDbKeys = {
       case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
         return {
-          PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
@@ -100,7 +100,7 @@ export const DynamoDbKeys = {
   ) => {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     return {
-      PartitionKeyID: `${tenantId}#transaction${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
+      PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#${USER_ID_PREFIX}${userId}#${direction}`,
       SortKeyID: `${timestamp}`,
     }
   },
@@ -139,7 +139,7 @@ export const DynamoDbKeys = {
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {
-  return transactionType ? `#${TRANSACTION_TYPE_PREFIX}${transactionType}` : ''
+  return `${TRANSACTION_TYPE_PREFIX}${transactionType || 'all'}`
 }
 
 export function keyHasUserId(key: string) {
