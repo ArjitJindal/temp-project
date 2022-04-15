@@ -378,8 +378,8 @@ export class TransactionRepository {
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
         timestamp: item.SortKeyID,
-        senderUserId: item.senderUserId,
-        receiverUserId: item.receiverUserId,
+        senderKeyId: item.senderKeyId,
+        receiverKeyId: item.receiverKeyId,
       })) || []
     )
   }
@@ -549,6 +549,6 @@ export class TransactionRepository {
 export type ThinTransaction = {
   transactionId: string
   timestamp: number
-  senderKeyId?: string
-  receiverKeyId?: string
+  senderKeyId: string | undefined
+  receiverKeyId: string | undefined
 }

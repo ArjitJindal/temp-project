@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import dayjs from 'dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export function getTestTransaction(
@@ -18,7 +19,7 @@ export function getTestTransaction(
       transactionCurrency: 'INR',
     },
     promotionCodeUsed: true,
-    timestamp: 1641654664,
+    timestamp: dayjs().unix(),
     senderPaymentDetails: {
       method: 'CARD',
       cardFingerprint: '20ac00fed8ef913aefb17cfae1097cce',
