@@ -123,7 +123,8 @@ export const dashboardStatsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    console.log('To be implemented')
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const client = await connectToDB()
   }
 )
 
