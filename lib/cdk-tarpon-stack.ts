@@ -192,7 +192,7 @@ export class CdkTarponStack extends cdk.Stack {
       vpc: atlasVpc,
       environment: {
         SM_SECRET_ARN:
-          'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+          config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
     }
 
@@ -220,7 +220,7 @@ export class CdkTarponStack extends cdk.Stack {
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
             resources: [
-              'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+              config.application.ATLAS_CREDENTIALS_SECRET_ARN,
             ],
           }),
         ],
@@ -289,7 +289,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -327,7 +327,7 @@ export class CdkTarponStack extends cdk.Stack {
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
             resources: [
-              'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+              config.application.ATLAS_CREDENTIALS_SECRET_ARN,
             ],
           }),
         ],
@@ -354,7 +354,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -393,7 +393,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -447,7 +447,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -474,7 +474,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -501,7 +501,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -528,7 +528,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
@@ -583,7 +583,7 @@ export class CdkTarponStack extends cdk.Stack {
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
               resources: [
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI',
+                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
               ],
             }),
           ],
