@@ -285,7 +285,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
