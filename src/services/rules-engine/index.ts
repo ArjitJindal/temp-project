@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import _ from 'lodash'
+import * as _ from 'lodash'
 import { UserRepository } from '../users/repositories/user-repository'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
@@ -15,6 +15,7 @@ import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { everyAsync } from '@/core/utils/array'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -89,7 +90,11 @@ export async function verifyTransaction(
           ruleInstance.action,
           dynamoDb
         )
-        const ruleResult = await rule.computeRule()
+        const shouldCompute = await everyAsync(
+          rule.getFilters(),
+          async (ruleFilter) => ruleFilter()
+        )
+        const ruleResult = shouldCompute ? await rule.computeRule() : null
         return {
           ruleId: ruleInstance.ruleId,
           ruleName: ruleInfo.name,

@@ -1,16 +1,23 @@
 import dayjs from 'dayjs'
-import _ from 'lodash'
+import * as _ from 'lodash'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 
 export function isUserBetweenAge(
-  user: User,
-  ageRange: { minAge: number; maxAge: number }
-): boolean | undefined {
-  if (!user.userDetails.dateOfBirth) {
-    return undefined
+  user: User | Business | undefined,
+  ageRange: { minAge: number; maxAge: number } | undefined
+): boolean {
+  if (!user || !isConsumerUser(user)) {
+    return false
   }
-  const { day, month, year } = user.userDetails.dateOfBirth
+  if (!ageRange) {
+    return true
+  }
+  const consumerUser = user as User
+  if (!consumerUser.userDetails?.dateOfBirth) {
+    return false
+  }
+  const { day, month, year } = consumerUser.userDetails.dateOfBirth
   const age = dayjs().diff(dayjs(new Date(year, month, day)), 'year')
   return _.inRange(age, ageRange.minAge, ageRange.maxAge)
 }
@@ -21,4 +28,14 @@ export function isConsumerUser(user: User | Business) {
 
 export function isBusinessUser(user: User | Business) {
   return !isConsumerUser(user)
+}
+
+export function isUserInList(
+  user: User | Business | undefined,
+  userIds: string[] | undefined
+) {
+  if (!userIds || userIds.length === 0) {
+    return true
+  }
+  return !user || userIds.includes(user.userId)
 }

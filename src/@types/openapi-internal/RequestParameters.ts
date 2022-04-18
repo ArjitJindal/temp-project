@@ -18,6 +18,8 @@ import { ContactDetails1 } from './ContactDetails1'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
+import { FileImport } from './FileImport'
+import { FileImportStatusChange } from './FileImportStatusChange'
 import { FileInfo } from './FileInfo'
 import { IBANDetails } from './IBANDetails'
 import { ImportRequest } from './ImportRequest'
@@ -152,6 +154,15 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    * @memberof DefaultApigetDashboardStatsTransactions
    */
   body?: any
+}
+
+export interface DefaultApiGetImportImportIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetImportImportId
+   */
+  importId: string
 }
 
 export interface DefaultApiGetRuleInstancesRequest {}

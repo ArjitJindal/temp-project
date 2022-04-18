@@ -227,6 +227,7 @@ paths:
                   value:
                     id: string
                     ruleId: string
+                    action: FLAG
                     parameters: {}
                     status: ACTIVE
                     createdAt: 0
@@ -391,7 +392,7 @@ paths:
               examples:
                 example-1:
                   value:
-                    importedTransactions: 100
+                    importedCount: 100
       requestBody:
         content:
           application/json:
@@ -403,6 +404,60 @@ paths:
                   type: TRANSACTION
                   format: flagright
                   s3Key: s3-key-in-a-bucket
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /import/{importId}:
+    parameters:
+      - schema:
+          type: string
+        name: importId
+        in: path
+        required: true
+    get:
+      summary: Import - Get Import Info
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileImport'
+      operationId: get-import-importId
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1200,10 +1255,13 @@ components:
             - custom
         s3Key:
           type: string
+        filename:
+          type: string
       required:
         - type
         - format
         - s3Key
+        - filename
     PresignedUrlResponse:
       title: PresignedUrlResponse
       type: object
@@ -1403,6 +1461,56 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+    FileImport:
+      title: FileImport
+      type: object
+      properties:
+        _id:
+          type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+            - BUSINESS
+        s3Key:
+          type: string
+        filename:
+          type: string
+        importedRecords:
+          type: number
+        error:
+          type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileImportStatusChange'
+      required:
+        - type
+        - s3Key
+        - filename
+        - statuses
+    FileImportStatusChange:
+      type: object
+      title: FileImportStatusChange
+      enum:
+        - IN_PROGRESS
+        - PENDING
+        - FAILED
+        - SUCCESS
+      properties:
+        status:
+          type: string
+          enum:
+            - IN_PROGRESS
+            - PENDING
+            - SUCCESS
+            - FAILED
+        timestamp:
+          type: number
+      required:
+        - status
+        - timestamp
     Address:
       title: Address
       required:
