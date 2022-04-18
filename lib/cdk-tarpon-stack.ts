@@ -93,11 +93,11 @@ export class CdkTarponStack extends cdk.Stack {
      * Document DB
      */
 
-    const docdbVpcCidr = '10.0.0.0/21'
+    const atlasVpcCidr = '10.0.0.0/21'
     const port = 27017
 
     const docDbVpc = new ec2.Vpc(this, 'vpc', {
-      cidr: docdbVpcCidr,
+      cidr: atlasVpcCidr,
       subnetConfiguration: [
         {
           subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
@@ -126,7 +126,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
+    docDbSg.addIngressRule(ec2.Peer.ipv4(atlasVpcCidr), ec2.Port.tcp(port))
 
     /**
      * S3 Buckets
@@ -187,7 +187,7 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Functions
      */
 
-    const docDbFunctionProps = {
+    const atlasFunctionProps = {
       securityGroups: [docDbSg],
       vpc: docDbVpc,
       environment: {
@@ -201,7 +201,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.apiKeyGeneratorHandler',
       'dist/api-key-generator',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
@@ -263,9 +263,9 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/file-import/',
       undefined,
       {
-        ...docDbFunctionProps,
+        ...atlasFunctionProps,
         environment: {
-          ...docDbFunctionProps.environment,
+          ...atlasFunctionProps.environment,
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
         } as FileImportConfig,
@@ -311,7 +311,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.ruleHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     dynamoDbTable.grantWriteData(ruleFunction)
     ruleFunction.role?.attachInlinePolicy(
@@ -333,7 +333,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.ruleInstanceHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
    ruleInstanceFunction.role?.attachInlinePolicy(
@@ -360,9 +360,9 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
       {
-        ...docDbFunctionProps,
+        ...atlasFunctionProps,
         environment: {
-          ...docDbFunctionProps.environment,
+          ...atlasFunctionProps.environment,
           ...({
             TMP_BUCKET: tmpBucketName,
             DOCUMENT_BUCKET: documentBucketName,
@@ -397,9 +397,9 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
       {
-        ...docDbFunctionProps,
+        ...atlasFunctionProps,
         environment: {
-          ...docDbFunctionProps.environment,
+          ...atlasFunctionProps.environment,
           ...({
             AUTH0_DOMAIN: config.application.AUTH0_DOMAIN,
             AUTH0_MANAGEMENT_CLIENT_ID:
@@ -418,9 +418,9 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
       {
-        ...docDbFunctionProps,
+        ...atlasFunctionProps,
         environment: {
-          ...docDbFunctionProps.environment,
+          ...atlasFunctionProps.environment,
         },
       }
     )
@@ -448,7 +448,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.businessUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     businessUsersViewFunction.role?.attachInlinePolicy(
       new Policy(
@@ -473,7 +473,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.consumerUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     consumerUsersViewFunction.role?.attachInlinePolicy(
       new Policy(
@@ -498,7 +498,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.dashboardStatsHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
     dashboardStatsFunction.role?.attachInlinePolicy(
       new Policy(
@@ -541,7 +541,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
       undefined,
-      docDbFunctionProps
+      atlasFunctionProps
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
