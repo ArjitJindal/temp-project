@@ -36,7 +36,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { Stream } from 'aws-cdk-lib/aws-kinesis'
 import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
-import * as docdb from 'aws-cdk-lib/aws-docdb'
+
 import {
   TarponStackConstants,
   getResourceName,
@@ -128,28 +128,6 @@ export class CdkTarponStack extends cdk.Stack {
 
     docDbSg.addIngressRule(ec2.Peer.ipv4(docdbVpcCidr), ec2.Port.tcp(port))
 
-    const docDbCluster = new docdb.DatabaseCluster(
-      this,
-      TarponStackConstants.DOCUMENT_DB_DATABASE_NAME,
-      {
-        masterUser: {
-          username: TarponStackConstants.DOCUMENT_DB_USERNAME_NAME,
-        },
-        instanceType: ec2.InstanceType.of(
-          ec2.InstanceClass.T3,
-          ec2.InstanceSize.MEDIUM
-        ),
-        vpcSubnets: {
-          subnetType: ec2.SubnetType.PUBLIC,
-        },
-        securityGroup: docDbSg,
-        vpc: docDbVpc,
-        deletionProtection: config.stage !== 'dev',
-        removalPolicy:
-          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      }
-    )
-
     /**
      * S3 Buckets
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
@@ -213,9 +191,7 @@ export class CdkTarponStack extends cdk.Stack {
       securityGroups: [docDbSg],
       vpc: docDbVpc,
       environment: {
-        DB_HOST: docDbCluster.clusterEndpoint.hostname,
-        DB_PORT: '27017',
-        SM_SECRET_ARN: docDbCluster.secret!.secretFullArn!,
+        SM_SECRET_ARN: "arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI",
       },
     }
 
@@ -242,7 +218,7 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
-            resources: [docDbCluster.secret!.secretFullArn!],
+            resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
           }),
         ],
       })
@@ -327,7 +303,7 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
-            resources: [docDbCluster.secret!.secretFullArn!],
+            resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
           }),
         ],
       })
@@ -342,7 +318,7 @@ export class CdkTarponStack extends cdk.Stack {
       docDbFunctionProps
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
-    ruleInstanceFunction.role?.attachInlinePolicy(
+   ruleInstanceFunction.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
@@ -352,7 +328,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -389,7 +365,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -441,7 +417,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -466,7 +442,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -491,7 +467,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -516,7 +492,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
@@ -569,7 +545,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [docDbCluster.secret!.secretFullArn!],
+              resources: ["arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI"],
             }),
           ],
         }
