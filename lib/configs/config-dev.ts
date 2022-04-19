@@ -2,7 +2,7 @@ import { Config } from './config'
 
 export const config: Config = {
   stage: 'dev',
-  env: { account: '911899431626', region: 'us-east-2' },
+  env: { account: '911899431626', region: 'eu-central-1' },
   resource: {
     DYNAMODB: {
       READ_CAPACITY: 1,

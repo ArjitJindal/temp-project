@@ -9,7 +9,7 @@ import {
   connectToDB,
   TRANSACIONS_COLLECTION,
   USERS_COLLECTION,
-} from '@/utils/docDBUtils'
+} from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
@@ -66,7 +66,7 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   try {
     client = await connectToDB()
-    const db = client.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     for (const record of event.Records) {
       const payload: KinesisStreamRecordPayload = record.kinesis
       const message: string = Buffer.from(payload.data, 'base64').toString()

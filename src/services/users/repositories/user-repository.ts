@@ -4,7 +4,7 @@ import { TarponStackConstants } from '@cdk/constants'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { USERS_COLLECTION } from '@/utils/docDBUtils'
+import { USERS_COLLECTION } from '@/utils/mongoDBUtils'
 
 export type UserType = 'BUSINESS' | 'CONSUMER'
 
@@ -30,7 +30,7 @@ export class UserRepository {
     pagination: { limit: number; skip: number; beforeTimestamp: number },
     userType: UserType
   ): Promise<{ total: number; data: any }> {
-    const db = this.mongoDb.db(TarponStackConstants.DOCUMENT_DB_DATABASE_NAME)
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<Business | User>(
       USERS_COLLECTION(this.tenantId)
     )

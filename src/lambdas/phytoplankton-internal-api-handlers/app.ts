@@ -16,7 +16,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 
 import { getS3Client } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { connectToDB } from '@/utils/docDBUtils'
+import { connectToDB } from '@/utils/mongoDBUtils'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
