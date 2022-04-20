@@ -25,11 +25,33 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public async getUsers(
+  public async getBusinessUsers(pagination: {
+    limit: number
+    skip: number
+    beforeTimestamp: number
+  }): Promise<{ total: number; data: Array<Business> }> {
+    return (await this.getUsers(pagination, 'BUSINESS')) as {
+      total: number
+      data: Array<Business>
+    }
+  }
+
+  public async getConsumerUsers(pagination: {
+    limit: number
+    skip: number
+    beforeTimestamp: number
+  }): Promise<{ total: number; data: Array<User> }> {
+    return (await this.getUsers(pagination, 'CONSUMER')) as {
+      total: number
+      data: Array<User>
+    }
+  }
+
+  private async getUsers(
     // TOOD: Add filtering and sorting
     pagination: { limit: number; skip: number; beforeTimestamp: number },
     userType: UserType
-  ): Promise<{ total: number; data: any }> {
+  ): Promise<{ total: number; data: Array<Business | User> }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<Business | User>(
       USERS_COLLECTION(this.tenantId)

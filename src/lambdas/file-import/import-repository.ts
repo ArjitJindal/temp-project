@@ -21,10 +21,13 @@ export class ImportRepository {
   public async createFileImport(fileImport: FileImport) {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection(IMPORT_COLLECTION(this.tenantId))
-    await collection.insertOne({
-      ...fileImport,
-      _id: fileImport._id as any,
-    })
+    await collection.replaceOne(
+      {
+        _id: fileImport._id,
+      },
+      fileImport,
+      { upsert: true }
+    )
   }
 
   public async completeFileImport(importId: string, importedRecords: number) {

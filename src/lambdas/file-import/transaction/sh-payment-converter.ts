@@ -1,8 +1,10 @@
 import dayjs from 'dayjs'
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
+import { MongoClient } from 'mongodb'
 import { ConverterInterface } from '../converter-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const ShPaymentTransaction = t.type({
   No: t.string,
@@ -22,11 +24,32 @@ type ShPaymentTransaction = t.TypeOf<typeof ShPaymentTransaction>
 export class ShPaymentTransactionConverter
   implements ConverterInterface<Transaction>
 {
-  async initialize(): Promise<void> {
+  accountToUserId: { [key: string]: string } = {}
+
+  async initialize(
+    tenantId: string,
+    connections: {
+      mongoDb: MongoClient
+    }
+  ): Promise<void> {
+    const userRepository = new UserRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+    })
+    const allBusinessUsers = await userRepository.getBusinessUsers({
+      limit: Infinity,
+      skip: 0,
+      beforeTimestamp: Infinity,
+    })
+    allBusinessUsers.data.forEach((user) => {
+      const account = user.tags?.filter((tag) => tag.key === 'Account')[0].value
+      if (account) {
+        this.accountToUserId[account] = user.userId
+      }
+    })
     return
   }
   getCsvParserOptions() {
-    return { headers: true, skipLines: 13 }
+    return { headers: true }
   }
   validate(rawTransaction: ShPaymentTransaction): string[] {
     return reporter.report(ShPaymentTransaction.decode(rawTransaction))
@@ -49,12 +72,14 @@ export class ShPaymentTransactionConverter
       transactionId: rawTransaction.No,
       timestamp: dayjs(rawTransaction['Input Date']).unix(),
       reference: rawTransaction['Reference No'],
+      senderUserId: this.accountToUserId[rawTransaction['Debtor account']],
+      receiverUserId: this.accountToUserId[rawTransaction['Creditor account']],
       sendingAmountDetails: {
         transactionAmount: parseFloat(transactionAmount),
         transactionCurrency,
       },
       senderPaymentDetails: {
-        method: 'BANK',
+        method: 'IBAN',
         name: {
           firstName: senderFirstName,
           lastName: senderLastName,
@@ -63,7 +88,7 @@ export class ShPaymentTransactionConverter
         BIC: rawTransaction['Debtor institution BIC'],
       },
       receiverPaymentDetails: {
-        method: 'BANK',
+        method: 'IBAN',
         name: {
           firstName: receiverFirstName,
           lastName: receiverLastName,

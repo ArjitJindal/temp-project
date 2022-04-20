@@ -1,5 +1,6 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
+import { MongoClient } from 'mongodb'
 import { ConverterInterface } from './converter-interface'
 import { converters as transactionConverters } from './transaction'
 import { converters as userConverters } from './user'
@@ -17,23 +18,28 @@ import { verifyTransaction } from '@/services/rules-engine'
 export class Importer {
   tenantId: string
   tenantName: string
-  dynamoDb: AWS.DynamoDB.DocumentClient
-  s3: AWS.S3
+  connections: {
+    dynamoDb: AWS.DynamoDB.DocumentClient
+    mongoDb: MongoClient
+    s3: AWS.S3
+  }
   importTmpBucket: string
   importBucket: string
 
   constructor(
     tenantId: string,
     tenantName: string,
-    dynamoDb: AWS.DynamoDB.DocumentClient,
-    s3: AWS.S3,
+    connections: {
+      dynamoDb: AWS.DynamoDB.DocumentClient
+      mongoDb: MongoClient
+      s3: AWS.S3
+    },
     importTmpBucket: string,
     importBucket: string
   ) {
     this.tenantId = tenantId
     this.tenantName = tenantName
-    this.dynamoDb = dynamoDb
-    this.s3 = s3
+    this.connections = connections
     this.importTmpBucket = importTmpBucket
     this.importBucket = importBucket
   }
@@ -57,7 +63,7 @@ export class Importer {
     const transactionResult = await verifyTransaction(
       transaction,
       this.tenantId,
-      this.dynamoDb
+      this.connections.dynamoDb
     )
     console.debug(
       `Imported transaction (id=${transactionResult.transactionId})`
@@ -81,7 +87,7 @@ export class Importer {
 
   private async importConsumerUser(user: User): Promise<void> {
     const userRepository = new UserRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
+      dynamoDb: this.connections.dynamoDb,
     })
     const userResult = await userRepository.createConsumerUser(user)
     console.debug(`Imported consumer user (id=${userResult.userId})`)
@@ -104,7 +110,7 @@ export class Importer {
 
   private async importBusinessUser(user: Business): Promise<void> {
     const userRepository = new UserRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
+      dynamoDb: this.connections.dynamoDb,
     })
     const userResult = await userRepository.createBusinessUser(user)
     console.debug(`Imported business user (id=${userResult.userId})`)
@@ -117,14 +123,17 @@ export class Importer {
   ): Promise<number> {
     const { s3Key } = importRequest
 
-    await converter.initialize()
+    await converter.initialize(this.tenantId, {
+      dynamoDb: this.connections.dynamoDb,
+      mongoDb: this.connections.mongoDb,
+    })
 
     let importedCount = 0
     const params = {
       Bucket: this.importTmpBucket,
       Key: s3Key,
     }
-    const stream = this.s3
+    const stream = this.connections.s3
       .getObject(params)
       .createReadStream()
       .pipe(parse(converter.getCsvParserOptions()))
@@ -140,7 +149,7 @@ export class Importer {
         importedCount += 1
       }
     }
-    await this.s3
+    await this.connections.s3
       .copyObject({
         CopySource: `${this.importTmpBucket}/${s3Key}`,
         Bucket: this.importBucket,

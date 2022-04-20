@@ -32,6 +32,7 @@ export const fileImportHandler = lambdaApi()(
       event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
     const s3 = getS3Client(event)
+    const mongoDb = await connectToDB()
     const importRepository = new ImportRepository(tenantId, {
       mongoDb: await connectToDB(),
     })
@@ -41,8 +42,7 @@ export const fileImportHandler = lambdaApi()(
       const importer = new Importer(
         tenantId,
         tenantName,
-        dynamoDb,
-        s3,
+        { dynamoDb, s3, mongoDb },
         TMP_BUCKET,
         IMPORT_BUCKET
       )

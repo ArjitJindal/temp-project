@@ -6,7 +6,7 @@ const AWS = require('aws-sdk')
 interface DBCredentials {
   username: string
   password: string
-  host:string
+  host: string
 }
 
 const secretsmanager = new AWS.SecretsManager()

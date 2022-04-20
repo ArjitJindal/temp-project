@@ -147,7 +147,7 @@ export const businessUsersViewHandler = lambdaApi()(
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getUsers(params, 'BUSINESS' as UserType)
+    return userRepository.getBusinessUsers(params)
   }
 )
 
@@ -168,7 +168,7 @@ export const consumerUsersViewHandler = lambdaApi()(
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getUsers(params, 'CONSUMER' as UserType)
+    return userRepository.getConsumerUsers(params)
   }
 )
 
