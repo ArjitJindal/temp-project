@@ -1,8 +1,11 @@
 import { Config } from './config'
 
+const account = '911899431626'
+const region = 'eu-central-1'
+
 export const config: Config = {
   stage: 'local',
-  env: { account: '911899431626', region: 'us-east-2' },
+  env: { account: account, region: region },
   resource: {
     DYNAMODB: {
       READ_CAPACITY: 1,
@@ -26,5 +29,6 @@ export const config: Config = {
     AUTH0_MANAGEMENT_CLIENT_ID: 'O5XVh8xujWiL7Ij7gFCNbQdLrS5UPS6F',
     AUTH0_MANAGEMENT_CLIENT_SECRET:
       'RrqgajkOImtw1ugT-32DiFzYsqMAMa7dwhiLhEJcQeSLnCkcR-GvYr1jLy9xv2U6',
+      ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`
   },
 }
