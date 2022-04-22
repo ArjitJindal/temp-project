@@ -40,8 +40,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import {
   TarponStackConstants,
   getResourceName,
-  getS3BucketName,
-  getGlobalResourceName
+  getNameForGlobalResource,
 } from './constants'
 import { Config } from './configs/config'
 import {
@@ -141,8 +140,9 @@ export class CdkTarponStack extends cdk.Stack {
         allowedHeaders: ['*'],
       },
     ]
-    const importBucketName = getS3BucketName(
-      getGlobalResourceName(TarponStackConstants.S3_IMPORT_BUCKET_PREFIX, config.env.region),
+    const importBucketName = getNameForGlobalResource(
+      TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
+      config.env.region,
       config.stage
     )
     const s3ImportBucket = new s3.Bucket(this, importBucketName, {
@@ -153,8 +153,9 @@ export class CdkTarponStack extends cdk.Stack {
       autoDeleteObjects: config.stage === 'dev',
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
-    const documentBucketName = getS3BucketName(
-      getGlobalResourceName(TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX, config.env.region),      
+    const documentBucketName = getNameForGlobalResource(
+      TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX, 
+      config.env.region,    
       config.stage
     )
     const s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
@@ -165,8 +166,9 @@ export class CdkTarponStack extends cdk.Stack {
       autoDeleteObjects: config.stage === 'dev',
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
-    const tmpBucketName = getS3BucketName(
-      getGlobalResourceName(TarponStackConstants.S3_TMP_BUCKET_PREFIX, config.env.region),      
+    const tmpBucketName = getNameForGlobalResource(
+      TarponStackConstants.S3_TMP_BUCKET_PREFIX, 
+      config.env.region,    
       config.stage
     )
     const s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
@@ -648,9 +650,9 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const apiKeyAuthorizerBaseRole = new Role(
       this,
-      getGlobalResourceName(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region),      
+      getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),      
       {
-        roleName: getGlobalResourceName(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region),
+        roleName: getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
         assumedBy: new ArnPrincipal(
           apiKeyAuthorizerFunction.role?.roleArn as string
         ),
@@ -673,9 +675,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const jwtAuthorizerBaseRole = new Role(
       this,
-      getGlobalResourceName(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region),
+      getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
       {
-        roleName: getGlobalResourceName(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region),
+        roleName: getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
         assumedBy: new ArnPrincipal(
           jwtAuthorizerFunction.role?.roleArn as string
         ),
