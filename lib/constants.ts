@@ -6,6 +6,10 @@ export function getS3BucketName(name: string, stage?: string) {
   return name + (stage ? `-${stage}` : '')
 }
 
+export const getGlobalResourceName = (name: string, region: string | undefined) => {
+  return `${name}-${region ? region : 'eu-central-1'}`
+}
+
 export const TarponStackConstants = {
   DYNAMODB_TABLE_NAME: 'Tarpon',
   MONGO_DB_DATABASE_NAME: 'tarpon',
