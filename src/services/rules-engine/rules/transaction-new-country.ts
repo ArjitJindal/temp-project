@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Rule } from './rule'
 
@@ -6,6 +7,17 @@ type TransactionNewCountryRuleParameters = {
 }
 
 export default class TransactionNewCountryRule extends Rule<TransactionNewCountryRuleParameters> {
+  public static getSchema(): JSONSchemaType<TransactionNewCountryRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        initialTransactions: { type: 'integer' },
+      },
+      required: ['initialTransactions'],
+      additionalProperties: false,
+    }
+  }
+
   public async computeRule() {
     const aggregationRepository = new AggregationRepository(
       this.tenantId,

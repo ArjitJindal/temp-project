@@ -5,7 +5,7 @@ import MultipleSendersWithinTimePeriodRuleBase, {
 export default class MultipleCounterpartySendersWithinTimePeriodRule extends MultipleSendersWithinTimePeriodRuleBase {
   getSenderReceiverTypes(): SenderReceiverTypes {
     return {
-      senderTypes: ['USER'],
+      senderTypes: ['NON_USER'],
       receiverTypes: ['USER', 'NON_USER'],
     }
   }

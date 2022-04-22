@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import dayjs from 'dayjs'
+import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule } from './rule'
 
@@ -12,6 +13,30 @@ export type ConsecutiveTransactionSameTypeRuleParameters = {
 
 export default class ConsecutiveTransactionsameTypeRule extends Rule<ConsecutiveTransactionSameTypeRuleParameters> {
   transactionRepository?: TransactionRepository
+
+  public static getSchema(): JSONSchemaType<ConsecutiveTransactionSameTypeRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        targetTransactionsThreshold: { type: 'integer' },
+        targetTransactionType: { type: 'string' },
+        otherTransactionTypes: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+        },
+        timeWindowInDays: { type: 'integer' },
+      },
+      required: [
+        'targetTransactionsThreshold',
+        'targetTransactionType',
+        'otherTransactionTypes',
+        'timeWindowInDays',
+      ],
+      additionalProperties: false,
+    }
+  }
 
   public getFilters() {
     const { targetTransactionType } = this.parameters

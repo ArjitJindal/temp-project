@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import { Rule } from './rule'
 
 type HighRiskCurrencyRuleParameters = {
@@ -5,6 +6,17 @@ type HighRiskCurrencyRuleParameters = {
 }
 
 export default class HighRiskCurrencyRule extends Rule<HighRiskCurrencyRuleParameters> {
+  public static getSchema(): JSONSchemaType<HighRiskCurrencyRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        highRiskCurrencies: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['highRiskCurrencies'],
+      additionalProperties: false,
+    }
+  }
+
   public async computeRule() {
     const sendingCurrency =
       this.transaction.sendingAmountDetails?.transactionCurrency
