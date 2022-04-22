@@ -12,7 +12,7 @@
 
 import { FileImportStatusChange } from './FileImportStatusChange'
 export class FileImport {
-  '_id'?: string
+  '_id': string
   'type': FileImportTypeEnum
   's3Key': string
   'filename': string

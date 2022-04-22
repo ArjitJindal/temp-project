@@ -1,4 +1,3 @@
-import * as ajv from 'ajv'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 interface RuleParameters {
@@ -14,19 +13,10 @@ export const event = {
     ruleId: 'R-1',
   },
   body: JSON.stringify({
+    id: 'R-1',
     name: 'Updated awesome rule name',
     description: 'Awesome rule description',
-    ruleImplementationFilename: 'code-path',
-    parametersSchema: {
-      type: 'object',
-      properties: {
-        threshold: {
-          type: 'number',
-          title: 'Threshold',
-        },
-      },
-      required: ['threshold'],
-    } as ajv.JSONSchemaType<RuleParameters>,
+    ruleImplementationName: 'code-path',
     defaultParameters: {
       threshold: 3,
     } as RuleParameters,

@@ -15,7 +15,7 @@ dynamoDbSetupHook()
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {
-    ruleImplementationFilename: 'ip-address-multiple-users',
+    ruleImplementationName: 'ip-address-multiple-users',
     defaultParameters: {
       uniqueUsersCountThreshold: 1,
       timeWindowInDays: 1,

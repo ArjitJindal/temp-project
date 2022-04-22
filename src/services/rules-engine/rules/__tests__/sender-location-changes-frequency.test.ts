@@ -15,7 +15,7 @@ dynamoDbSetupHook()
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {
-    ruleImplementationFilename: 'sender-location-changes-frequency',
+    ruleImplementationName: 'sender-location-changes-frequency',
     defaultParameters: {
       uniqueCitiesCountThreshold: 2,
       timeWindowInDays: 1,

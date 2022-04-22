@@ -12,13 +12,13 @@
 
 import { RuleAction } from './RuleAction'
 export class Rule {
-  'id'?: string
+  'id': string
   'name': string
   'description': string
-  'parametersSchema': any
   'defaultParameters': any
   'defaultAction': RuleAction
-  'ruleImplementationFilename': string
+  'ruleImplementationName': string
+  'labels': Array<string>
   'createdAt'?: number
   'updatedAt'?: number
 
@@ -49,12 +49,6 @@ export class Rule {
       format: '',
     },
     {
-      name: 'parametersSchema',
-      baseName: 'parametersSchema',
-      type: 'any',
-      format: '',
-    },
-    {
       name: 'defaultParameters',
       baseName: 'defaultParameters',
       type: 'any',
@@ -67,9 +61,15 @@ export class Rule {
       format: '',
     },
     {
-      name: 'ruleImplementationFilename',
-      baseName: 'ruleImplementationFilename',
+      name: 'ruleImplementationName',
+      baseName: 'ruleImplementationName',
       type: 'string',
+      format: '',
+    },
+    {
+      name: 'labels',
+      baseName: 'labels',
+      type: 'Array<string>',
       format: '',
     },
     {

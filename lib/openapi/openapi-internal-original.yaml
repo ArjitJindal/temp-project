@@ -57,6 +57,50 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Rule'
+  /iam/rules:
+    parameters: []
+    post:
+      summary: Rules - Create
+      operationId: post-iam-rules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+  /rule_implementations:
+    get:
+      summary: Rule Implementations - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleImplementation'
+              examples: {}
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+      operationId: get-rule-implementations
+      description: ''
+    parameters: []
   '/rules/{ruleId}':
     parameters:
       - schema:
@@ -121,6 +165,41 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RuleInstance'
+  /iam/rule_instances:
+    post:
+      summary: Rule Instance - Create
+      operationId: post-iam-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    ruleId: string
+                    action: FLAG
+                    parameters: {}
+                    status: ACTIVE
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+    parameters: []
   '/rule_instances/{ruleInstanceId}':
     parameters:
       - schema:
@@ -472,16 +551,10 @@ components:
           id: R-1
           name: Rule name
           description: Rule description
-          parametersSchema:
-            type: object
-            properties:
-              threshold:
-                type: number
-                title: Threshold
           defaultParameters:
             threshold: 3
           defaultAction: FLAG
-          ruleImplementationFilename: code-filename
+          ruleImplementationName: code-filename
           createdAt: 0
           updatedAt: 0
       properties:
@@ -491,25 +564,28 @@ components:
           type: string
         description:
           type: string
-        parametersSchema:
-          type: object
         defaultParameters:
           type: object
         defaultAction:
           $ref: '#/components/schemas/RuleAction'
-        ruleImplementationFilename:
+        ruleImplementationName:
           type: string
+        labels:
+          type: array
+          items:
+            type: string
         createdAt:
           type: number
         updatedAt:
           type: number
       required:
+        - id
         - name
         - description
-        - parametersSchema
         - defaultParameters
         - defaultAction
-        - ruleImplementationFilename
+        - ruleImplementationName
+        - labels
     RuleInstance:
       title: RuleInstance
       type: object
@@ -622,8 +698,7 @@ components:
         - data
     TransactionCaseManagement:
       allOf:
-        - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult'
         - type: object
           properties:
             comments:
@@ -652,8 +727,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
       required:
         - total
         - data
@@ -666,8 +740,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
       required:
         - total
         - data
@@ -799,6 +872,7 @@ components:
           items:
             $ref: '#/components/schemas/FileImportStatusChange'
       required:
+        - _id
         - type
         - s3Key
         - filename
@@ -824,6 +898,17 @@ components:
       required:
         - status
         - timestamp
+    RuleImplementation:
+      title: RuleImplementation
+      type: object
+      properties:
+        name:
+          type: string
+        parametersSchema:
+          type: object
+      required:
+        - name
+        - parametersSchema
   securitySchemes:
     Authorization:
       type: http

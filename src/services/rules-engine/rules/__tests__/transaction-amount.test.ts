@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { AgeTransactionAmountRuleParameters } from '../transaction-amount'
+import { TransactionAmountRuleParameters } from '../transaction-amount'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -19,11 +19,11 @@ dynamoDbSetupHook()
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {
-    ruleImplementationFilename: 'transaction-amount',
+    ruleImplementationName: 'transaction-amount',
     defaultParameters: {
       transactionAmountThreshold: { EUR: 1000 },
       ageRange: { minAge: 18, maxAge: 25 },
-    } as AgeTransactionAmountRuleParameters,
+    } as TransactionAmountRuleParameters,
     defaultAction: 'FLAG',
   },
 ])

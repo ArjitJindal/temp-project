@@ -5,6 +5,8 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { RuleImplementation } from '@/@types/openapi-internal/RuleImplementation'
+import { rules } from '@/services/rules-engine/rules'
 
 const ajv = new Ajv()
 export class RuleService {
@@ -23,20 +25,48 @@ export class RuleService {
     return this.ruleRepository.getAllRules()
   }
 
+  getAllRuleImplementations(): ReadonlyArray<RuleImplementation> {
+    return Object.entries(rules).map((entry) => ({
+      name: entry[0],
+      parametersSchema: entry[1].getSchema(),
+    }))
+  }
+
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    let validate: ValidateFunction
-    try {
-      validate = ajv.compile(rule.parametersSchema)
-    } catch (e) {
-      throw new createHttpError.BadRequest(
-        'parametersSchema is not a valid json schema'
-      )
-    }
+    const validate: ValidateFunction = ajv.compile(
+      rules[rule.ruleImplementationName].getSchema()
+    )
     if (validate(rule.defaultParameters)) {
       return this.ruleRepository.createOrUpdateRule(rule)
     } else {
       throw new createHttpError.BadRequest(
         `Invalid defaultParameters: ${validate.errors
+          ?.map((error) => error.message)
+          .join(', ')}`
+      )
+    }
+  }
+
+  async createOrUpdateRuleInstance(
+    ruleInstance: RuleInstance
+  ): Promise<RuleInstance> {
+    const rule = await this.ruleRepository.getRuleById(ruleInstance.ruleId)
+    if (!rule) {
+      throw new createHttpError.BadRequest(
+        `Rule ID ${ruleInstance.ruleId} not found`
+      )
+    }
+
+    const validate: ValidateFunction = ajv.compile(
+      rules[rule.ruleImplementationName].getSchema()
+    )
+    if (validate(ruleInstance.parameters)) {
+      return this.ruleInstanceRepository.createOrUpdateRuleInstance(
+        ruleInstance
+      )
+    } else {
+      throw new createHttpError.BadRequest(
+        `Invalid parameters: ${validate.errors
           ?.map((error) => error.message)
           .join(', ')}`
       )
