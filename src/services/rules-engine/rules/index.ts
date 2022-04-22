@@ -8,7 +8,6 @@ import LowValueOutgoingTransactionsRule from './low-value-outgoing-transactions'
 import MultipleCounterpartySendersWithinTimePeriodRule from './multiple-counterparty-senders-within-time-period'
 import MultipleUserSendersWithinTimePeriodRule from './multiple-user-senders-within-time-period'
 import { Rule } from './rule'
-import SenderLocationChangesFrequencyRule from './sender-location-changes-frequency'
 import TransactionAmountRule from './transaction-amount'
 import TransactionNewCountryRule from './transaction-new-country'
 import TransactionNewCurrencyRule from './transaction-new-currency'
@@ -27,7 +26,10 @@ export const rules = {
     MultipleCounterpartySendersWithinTimePeriodRule,
   'multiple-user-senders-within-time-period':
     MultipleUserSendersWithinTimePeriodRule,
-  'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
+
+  // TODO: re-enable the rule after we move fast-geoip to lambda layer
+  // 'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
+
   'transaction-amount': TransactionAmountRule,
   'transaction-new-country': TransactionNewCountryRule,
   'transaction-new-currency': TransactionNewCurrencyRule,

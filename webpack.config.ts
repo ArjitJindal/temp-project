@@ -21,14 +21,15 @@ const config: Configuration = {
     path: resolve(__dirname, 'dist'),
   },
   plugins: [
-    new CopyPlugin({
-      patterns: [
-        {
-          from: 'node_modules/fast-geoip',
-          to: 'rules-engine/node_modules/fast-geoip',
-        },
-      ],
-    }),
+    // TODO: re-enable the plugin after we move fast-geoip to lambda layer
+    // new CopyPlugin({
+    //   patterns: [
+    //     {
+    //       from: 'node_modules/fast-geoip',
+    //       to: 'rules-engine/node_modules/fast-geoip',
+    //     },
+    //   ],
+    // }),
   ],
   module: {
     rules: [
