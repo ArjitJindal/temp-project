@@ -142,8 +142,7 @@ export class CdkTarponStack extends cdk.Stack {
     ]
     const importBucketName = getNameForGlobalResource(
       TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
-      config.env.region,
-      config.stage
+      config
     )
     const s3ImportBucket = new s3.Bucket(this, importBucketName, {
       bucketName: importBucketName,
@@ -155,8 +154,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
     const documentBucketName = getNameForGlobalResource(
       TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX, 
-      config.env.region,    
-      config.stage
+      config
     )
     const s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
       bucketName: documentBucketName,
@@ -168,8 +166,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
     const tmpBucketName = getNameForGlobalResource(
       TarponStackConstants.S3_TMP_BUCKET_PREFIX, 
-      config.env.region,    
-      config.stage
+      config
     )
     const s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
       bucketName: tmpBucketName,
@@ -650,9 +647,9 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const apiKeyAuthorizerBaseRole = new Role(
       this,
-      getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),      
+      getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config),      
       {
-        roleName: getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
+        roleName: getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config),
         assumedBy: new ArnPrincipal(
           apiKeyAuthorizerFunction.role?.roleArn as string
         ),
@@ -675,9 +672,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const jwtAuthorizerBaseRole = new Role(
       this,
-      getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
+      getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config),
       {
-        roleName: getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config.env.region, config.stage),
+        roleName: getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config),
         assumedBy: new ArnPrincipal(
           jwtAuthorizerFunction.role?.roleArn as string
         ),

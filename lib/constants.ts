@@ -1,9 +1,11 @@
+import { Config } from "./configs/config"
+
 export function getResourceName(resourceName: string, dash = false) {
   return `tarpon${dash ? '-' : ''}${resourceName}`
 }
 
-export function getNameForGlobalResource(name: string, region?: string, stage?: string) {
-  return `${name + (stage ? `-${stage}` : '')}-${region ? region : 'eu-central-1'}`
+export function getNameForGlobalResource(name: string, config: Config) {
+  return `${name + (config.stage ? `-${config.stage}` : '')}-${config.env.region ? config.env.region : 'eu-central-1'}`
 }
 
 
