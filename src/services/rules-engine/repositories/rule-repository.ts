@@ -4,8 +4,6 @@ import { TarponStackConstants } from '@cdk/constants'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
-const RULE_ID_PREFIX = 'R-'
-
 export class RuleRepository {
   tenantId: string
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -25,6 +23,17 @@ export class RuleRepository {
 
   async getAllRules(): Promise<ReadonlyArray<Rule>> {
     return this.getRules({})
+  }
+
+  async getRuleById(ruleId: string): Promise<Rule | undefined> {
+    return (
+      await this.getRules({
+        FilterExpression: 'id = :id',
+        ExpressionAttributeValues: {
+          ':id': ruleId,
+        },
+      })
+    )[0]
   }
 
   async getRulesByIds(ruleIds: string[]): Promise<ReadonlyArray<Rule>> {
@@ -60,47 +69,26 @@ export class RuleRepository {
         id: item.id,
         name: item.name,
         description: item.description,
-        parametersSchema: item.parametersSchema,
         defaultParameters: item.defaultParameters,
         defaultAction: item.defaultAction,
-        ruleImplementationFilename: item.ruleImplementationFilename,
+        ruleImplementationName: item.ruleImplementationName,
+        // TODO: Implement labels
+        labels: [],
       })) || []
     )
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
-    const existingRules = (await this.getAllRules()).filter(
-      (existingRule) => existingRule.id !== rule.id
-    )
-    const lastRuleId =
-      _.last(existingRules.map((existingRule) => existingRule.id).sort()) ||
-      'R-0'
-    const newIdNumber = parseInt(lastRuleId.split(RULE_ID_PREFIX)[1])
-    const existingRuleImplementationFilenames = new Set(
-      existingRules
-        .map((existingRule) => existingRule.ruleImplementationFilename)
-        .filter(Boolean)
-    )
-    if (
-      existingRuleImplementationFilenames.has(rule.ruleImplementationFilename)
-    ) {
-      throw new Error(
-        `Another rule with implementation '${rule.ruleImplementationFilename}' already exists`
-      )
-    }
-
-    const ruleId = rule.id || `${RULE_ID_PREFIX}${newIdNumber + 1}`
     const now = Date.now()
     const newRule: Rule = {
       ...rule,
-      id: ruleId,
       createdAt: rule.createdAt || now,
       updatedAt: rule.updatedAt || now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.RULE(ruleId),
+        ...DynamoDbKeys.RULE(rule.id),
         ...newRule,
       },
       ReturnConsumedCapacity: 'TOTAL',

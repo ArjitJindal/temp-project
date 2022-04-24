@@ -141,6 +141,124 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /iam/rules:
+    parameters: []
+    post:
+      summary: Rules - Create
+      operationId: post-iam-rules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      x-amazon-apigateway-auth:
+        type: AWS_IAM
+      security:
+        - sigv4: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /rule_implementations:
+    get:
+      summary: Rule Implementations - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleImplementation'
+              examples: {}
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+      operationId: get-rule-implementations
+      description: ''
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rules/{ruleId}:
     parameters:
       - schema:
@@ -271,6 +389,79 @@ paths:
         passthroughBehavior: never
       security:
         - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /iam/rule_instances:
+    post:
+      summary: Rule Instance - Create
+      operationId: post-iam-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    ruleId: string
+                    action: FLAG
+                    parameters: {}
+                    status: ACTIVE
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      x-amazon-apigateway-auth:
+        type: AWS_IAM
+      security:
+        - sigv4: []
+    parameters: []
     options:
       parameters: []
       responses:
@@ -1162,16 +1353,10 @@ components:
           id: R-1
           name: Rule name
           description: Rule description
-          parametersSchema:
-            type: object
-            properties:
-              threshold:
-                type: number
-                title: Threshold
           defaultParameters:
             threshold: 3
           defaultAction: FLAG
-          ruleImplementationFilename: code-filename
+          ruleImplementationName: code-filename
           createdAt: 0
           updatedAt: 0
       properties:
@@ -1181,25 +1366,28 @@ components:
           type: string
         description:
           type: string
-        parametersSchema:
-          type: object
         defaultParameters:
           type: object
         defaultAction:
           $ref: '#/components/schemas/RuleAction'
-        ruleImplementationFilename:
+        ruleImplementationName:
           type: string
+        labels:
+          type: array
+          items:
+            type: string
         createdAt:
           type: number
         updatedAt:
           type: number
       required:
+        - id
         - name
         - description
-        - parametersSchema
         - defaultParameters
         - defaultAction
-        - ruleImplementationFilename
+        - ruleImplementationName
+        - labels
     RuleInstance:
       title: RuleInstance
       type: object
@@ -1486,6 +1674,7 @@ components:
           items:
             $ref: '#/components/schemas/FileImportStatusChange'
       required:
+        - _id
         - type
         - s3Key
         - filename
@@ -1511,6 +1700,17 @@ components:
       required:
         - status
         - timestamp
+    RuleImplementation:
+      title: RuleImplementation
+      type: object
+      properties:
+        name:
+          type: string
+        parametersSchema:
+          type: object
+      required:
+        - name
+        - parametersSchema
     Address:
       title: Address
       required:

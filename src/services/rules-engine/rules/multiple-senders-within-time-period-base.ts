@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
   TransactionRepository,
@@ -17,6 +18,18 @@ export type SenderReceiverTypes = {
 }
 
 export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<MultipleSendersWithinTimePeriodRuleParameters> {
+  public static getSchema(): JSONSchemaType<MultipleSendersWithinTimePeriodRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        sendersCount: { type: 'integer' },
+        timePeriodDays: { type: 'integer' },
+      },
+      required: ['sendersCount', 'timePeriodDays'],
+      additionalProperties: false,
+    }
+  }
+
   protected getSenderReceiverTypes(): SenderReceiverTypes {
     throw new Error('Not implemented')
   }

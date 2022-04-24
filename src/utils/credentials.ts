@@ -9,7 +9,7 @@ export function getCredentialsFromEvent(
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ): CredentialsOptions | undefined {
-  if (process.env.ENV === 'local') {
+  if (process.env.ENV === 'local' || !event.requestContext.authorizer) {
     return undefined
   }
   const { AccessKeyId, SecretAccessKey, SessionToken } =

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule } from './rule'
 import { MissingRuleParameter } from './errors'
@@ -19,6 +20,29 @@ export type TransactionsVelocityRuleParameters = {
 
 export default class TransactionsVelocityRule extends Rule<TransactionsVelocityRuleParameters> {
   transactionRepository?: TransactionRepository
+
+  public static getSchema(): JSONSchemaType<TransactionsVelocityRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        transactionsPerSecond: { type: 'integer' },
+        timeWindowInSeconds: { type: 'integer' },
+        userIdsToCheck: {
+          type: 'array',
+          items: { type: 'string' },
+          nullable: true,
+        },
+        checkTimeWindow: {
+          type: 'object',
+          properties: { from: { type: 'string' }, to: { type: 'string' } },
+          required: ['from', 'to'],
+          nullable: true,
+        },
+      },
+      required: ['transactionsPerSecond', 'timeWindowInSeconds'],
+      additionalProperties: false,
+    }
+  }
 
   public getFilters() {
     const { userIdsToCheck, checkTimeWindow } = this.parameters

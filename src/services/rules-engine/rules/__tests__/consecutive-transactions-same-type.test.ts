@@ -19,7 +19,7 @@ dynamoDbSetupHook()
 
 setUpRulesHooks(TEST_TENANT_ID, [
   {
-    ruleImplementationFilename: 'consecutive-transactions-same-type',
+    ruleImplementationName: 'consecutive-transactions-same-type',
     defaultParameters: {
       targetTransactionsThreshold: 2,
       targetTransactionType: 'CRYPTO_DEPOSIT',

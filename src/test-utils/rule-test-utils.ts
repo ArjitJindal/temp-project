@@ -17,12 +17,13 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
     dynamoDb,
   })
   const createdRule = await ruleRepository.createOrUpdateRule({
+    id: 'rule id',
     name: 'test rule name',
     description: 'test rule description',
-    parametersSchema: {},
     defaultParameters: {},
     defaultAction: 'FLAG',
-    ruleImplementationFilename: 'first-payment',
+    ruleImplementationName: 'first-payment',
+    labels: [],
     ...rule,
   })
   const createdRuleInstance =
@@ -75,12 +76,12 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
     for (const rule of rules) {
       cleanups.push(
         await createRule(tenantId, {
+          id: 'rule id',
           name: 'test rule name',
           description: 'test rule description',
-          parametersSchema: {},
           defaultParameters: {},
           defaultAction: 'FLAG',
-          ruleImplementationFilename: 'tests/test-success-rule',
+          ruleImplementationName: 'tests/test-success-rule',
           ...rule,
         })
       )

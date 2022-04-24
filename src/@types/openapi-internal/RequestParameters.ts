@@ -35,6 +35,7 @@ import { Rule } from './Rule'
 import { RuleAction } from './RuleAction'
 import { RuleAction1 } from './RuleAction1'
 import { RuleFailureException } from './RuleFailureException'
+import { RuleImplementation } from './RuleImplementation'
 import { RuleInstance } from './RuleInstance'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
@@ -165,6 +166,8 @@ export interface DefaultApiGetImportImportIdRequest {
   importId: string
 }
 
+export interface DefaultApiGetRuleImplementationsRequest {}
+
 export interface DefaultApiGetRuleInstancesRequest {}
 
 export interface DefaultApiGetRulesRequest {}
@@ -233,6 +236,24 @@ export interface DefaultApiPostApikeyRequest {
 }
 
 export interface DefaultApiPostGetPresignedUrlRequest {}
+
+export interface DefaultApiPostIamRuleInstancesRequest {
+  /**
+   *
+   * @type RuleInstance
+   * @memberof DefaultApipostIamRuleInstances
+   */
+  RuleInstance?: RuleInstance
+}
+
+export interface DefaultApiPostIamRulesRequest {
+  /**
+   *
+   * @type Rule
+   * @memberof DefaultApipostIamRules
+   */
+  Rule?: Rule
+}
 
 export interface DefaultApiPostImportRequest {
   /**

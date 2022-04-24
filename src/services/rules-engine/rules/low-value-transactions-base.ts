@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { Rule } from './rule'
 import { isTransactionAmountBetweenThreshold } from './utils/transaction-rule-utils'
@@ -16,6 +17,29 @@ type LowValueTransactionsRuleParameters = {
 }
 
 export default class LowValueTransactionsRule extends Rule<LowValueTransactionsRuleParameters> {
+  public static getSchema(): JSONSchemaType<LowValueTransactionsRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        lowTransactionValues: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              max: { type: 'integer' },
+              min: { type: 'integer' },
+            },
+            required: ['max', 'min'],
+          },
+          required: [],
+        },
+        lowTransactionCount: { type: 'integer' },
+      },
+      required: ['lowTransactionValues', 'lowTransactionCount'],
+      additionalProperties: false,
+    }
+  }
+
   private getTransactionUserId(): string | undefined {
     const direction = this.getDirection()
     switch (direction) {

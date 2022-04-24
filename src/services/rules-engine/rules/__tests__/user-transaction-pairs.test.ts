@@ -20,10 +20,10 @@ describe('With transaction type', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      ruleImplementationFilename: 'user-transaction-pairs',
+      ruleImplementationName: 'user-transaction-pairs',
       defaultParameters: {
         userPairsThreshold: 1,
-        timeWindowInDays: 1,
+        timeWindowInSeconds: 86400,
         transactionType: 'MATCH_ORDER',
       } as UserTransactionPairsRuleParameters,
       defaultAction: 'FLAG',
@@ -149,10 +149,10 @@ describe('Without transaction type', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      ruleImplementationFilename: 'user-transaction-pairs',
+      ruleImplementationName: 'user-transaction-pairs',
       defaultParameters: {
         userPairsThreshold: 1,
-        timeWindowInDays: 1,
+        timeWindowInSeconds: 86400,
       } as UserTransactionPairsRuleParameters,
       defaultAction: 'FLAG',
     },

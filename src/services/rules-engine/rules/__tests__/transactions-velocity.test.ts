@@ -20,7 +20,7 @@ describe('Core logic', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      ruleImplementationFilename: 'transactions-velocity',
+      ruleImplementationName: 'transactions-velocity',
       defaultParameters: {
         transactionsPerSecond: 0.4,
         timeWindowInSeconds: 5,
@@ -201,7 +201,7 @@ describe('Optional parameters', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      ruleImplementationFilename: 'transactions-velocity',
+      ruleImplementationName: 'transactions-velocity',
       defaultParameters: {
         transactionsPerSecond: 1,
         timeWindowInSeconds: 1,

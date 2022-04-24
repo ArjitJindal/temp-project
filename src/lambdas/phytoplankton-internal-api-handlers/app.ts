@@ -178,7 +178,8 @@ export const ruleHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
+    const tenantId = (event.requestContext.authorizer?.principalId ||
+      event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClient(event)
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
@@ -189,6 +190,11 @@ export const ruleHandler = lambdaApi()(
     if (event.httpMethod === 'GET' && event.path.endsWith('/rules')) {
       const rules = await ruleService.getAllRules()
       return rules
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/rule_implementations')
+    ) {
+      return ruleService.getAllRuleImplementations()
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/rules') &&
@@ -220,7 +226,8 @@ export const ruleInstanceHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
+    const tenantId = (event.requestContext.authorizer?.principalId ||
+      event.queryStringParameters?.tenantId) as string
     const dynamoDb = getDynamoDbClient(event)
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
@@ -233,7 +240,7 @@ export const ruleInstanceHandler = lambdaApi()(
       if (!event.body) {
         throw new Error('missing payload!')
       }
-      await ruleInstanceRepository.createOrUpdateRuleInstance({
+      await ruleService.createOrUpdateRuleInstance({
         id: ruleInstanceId,
         ...JSON.parse(event.body),
       })
@@ -246,10 +253,9 @@ export const ruleInstanceHandler = lambdaApi()(
       event.path.endsWith('/rule_instances') &&
       event.body
     ) {
-      const newRuleInstance =
-        await ruleInstanceRepository.createOrUpdateRuleInstance(
-          JSON.parse(event.body)
-        )
+      const newRuleInstance = await ruleService.createOrUpdateRuleInstance(
+        JSON.parse(event.body)
+      )
       return newRuleInstance
     } else if (
       event.httpMethod === 'GET' &&

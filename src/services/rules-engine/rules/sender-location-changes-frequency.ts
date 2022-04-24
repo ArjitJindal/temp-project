@@ -1,5 +1,5 @@
+import { JSONSchemaType } from 'ajv'
 import dayjs = require('dayjs')
-import * as geoIp from 'fast-geoip'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { MissingRuleParameter } from './errors'
 import { Rule } from './rule'
@@ -11,6 +11,18 @@ export type SenderLocationChangesFrequencyRuleParameters = {
 }
 
 export default class SenderLocationChangesFrequencyRule extends Rule<SenderLocationChangesFrequencyRuleParameters> {
+  public static getSchema(): JSONSchemaType<SenderLocationChangesFrequencyRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        uniqueCitiesCountThreshold: { type: 'integer' },
+        timeWindowInDays: { type: 'integer' },
+      },
+      required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
+      additionalProperties: false,
+    }
+  }
+
   public async computeRule() {
     const { uniqueCitiesCountThreshold, timeWindowInDays } = this.parameters
     if (
@@ -44,6 +56,8 @@ export default class SenderLocationChangesFrequencyRule extends Rule<SenderLocat
       )),
       this.transaction,
     ].filter((transaction) => transaction.deviceData?.ipAddress)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const geoIp = require('fast-geoip')
     const ipInfos = await Promise.all(
       transactionsWithIpAddress.map((transaction) =>
         geoIp.lookup(transaction.deviceData?.ipAddress as string)

@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
@@ -5,12 +6,25 @@ import { Rule } from './rule'
 
 export type UserTransactionPairsRuleParameters = {
   userPairsThreshold: number
-  timeWindowInDays: number
+  timeWindowInSeconds: number
   transactionType?: string
 }
 
 export default class UserTransactionPairsRule extends Rule<UserTransactionPairsRuleParameters> {
   transactionRepository?: TransactionRepository
+
+  public static getSchema(): JSONSchemaType<UserTransactionPairsRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        userPairsThreshold: { type: 'integer' },
+        timeWindowInSeconds: { type: 'integer' },
+        transactionType: { type: 'string', nullable: true },
+      },
+      required: ['userPairsThreshold', 'timeWindowInSeconds'],
+      additionalProperties: false,
+    }
+  }
 
   public getFilters() {
     const { transactionType } = this.parameters
@@ -21,7 +35,7 @@ export default class UserTransactionPairsRule extends Rule<UserTransactionPairsR
   }
 
   public async computeRule() {
-    const { userPairsThreshold, timeWindowInDays, transactionType } =
+    const { userPairsThreshold, timeWindowInSeconds, transactionType } =
       this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -37,7 +51,7 @@ export default class UserTransactionPairsRule extends Rule<UserTransactionPairsR
         this.senderUser!.userId,
         dayjs
           .unix(this.transaction.timestamp)
-          .subtract(timeWindowInDays, 'day')
+          .subtract(timeWindowInSeconds, 'second')
           .unix(),
         transactionType
       )

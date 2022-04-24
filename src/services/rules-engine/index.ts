@@ -6,7 +6,7 @@ import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { RuleError } from './rules/errors'
-import { Rule as RuleImplementation } from './rules/rule'
+import { rules } from './rules'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -25,7 +25,7 @@ const ruleAscendingComparator = (
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
 function getRuleImplementation(
-  ruleImplementationFilename: string,
+  ruleImplementationName: string,
   tenantId: string,
   transaction: Transaction,
   senderUser: User | Business | undefined,
@@ -34,8 +34,10 @@ function getRuleImplementation(
   ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ) {
-  const RuleClass = require(`${__dirname}/rules/${ruleImplementationFilename}`)
-    .default as typeof RuleImplementation
+  const RuleClass = rules[ruleImplementationName]
+  if (!RuleClass) {
+    throw new Error(`${ruleImplementationName} rule implementation not found!`)
+  }
   return new RuleClass(
     tenantId,
     { transaction, senderUser, receiverUser },
@@ -81,7 +83,7 @@ export async function verifyTransaction(
       const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
       try {
         const rule = getRuleImplementation(
-          rulesById[ruleInstance.ruleId].ruleImplementationFilename,
+          rulesById[ruleInstance.ruleId].ruleImplementationName,
           tenantId,
           transaction,
           senderUser,

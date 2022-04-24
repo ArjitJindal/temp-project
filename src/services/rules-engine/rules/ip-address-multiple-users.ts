@@ -1,3 +1,4 @@
+import { JSONSchemaType } from 'ajv'
 import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getSenderKeys } from '../utils'
@@ -10,6 +11,18 @@ export type IpAddressMultipleUsersRuleParameters = {
 }
 
 export default class IpAddressMultipleUsersRule extends Rule<IpAddressMultipleUsersRuleParameters> {
+  public static getSchema(): JSONSchemaType<IpAddressMultipleUsersRuleParameters> {
+    return {
+      type: 'object',
+      properties: {
+        uniqueUsersCountThreshold: { type: 'integer' },
+        timeWindowInDays: { type: 'integer' },
+      },
+      required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
+      additionalProperties: false,
+    }
+  }
+
   public async computeRule() {
     const { uniqueUsersCountThreshold, timeWindowInDays } = this.parameters
     if (
