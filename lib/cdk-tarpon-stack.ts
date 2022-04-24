@@ -153,7 +153,7 @@ export class CdkTarponStack extends cdk.Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
     const documentBucketName = getNameForGlobalResource(
-      TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX, 
+      TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX,
       config
     )
     const s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
@@ -165,7 +165,7 @@ export class CdkTarponStack extends cdk.Stack {
       encryption: s3.BucketEncryption.S3_MANAGED,
     })
     const tmpBucketName = getNameForGlobalResource(
-      TarponStackConstants.S3_TMP_BUCKET_PREFIX, 
+      TarponStackConstants.S3_TMP_BUCKET_PREFIX,
       config
     )
     const s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
@@ -191,8 +191,7 @@ export class CdkTarponStack extends cdk.Stack {
       securityGroups: [atlasSg],
       vpc: atlasVpc,
       environment: {
-        SM_SECRET_ARN:
-          config.application.ATLAS_CREDENTIALS_SECRET_ARN,
+        SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
     }
 
@@ -219,9 +218,7 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
-            resources: [
-              config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-            ],
+            resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
           }),
         ],
       })
@@ -288,9 +285,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -326,9 +321,7 @@ export class CdkTarponStack extends cdk.Stack {
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
-            resources: [
-              config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-            ],
+            resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
           }),
         ],
       })
@@ -353,9 +346,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -392,9 +383,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -446,9 +435,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -473,9 +460,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -500,9 +485,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -527,9 +510,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -582,9 +563,7 @@ export class CdkTarponStack extends cdk.Stack {
             new PolicyStatement({
               effect: Effect.ALLOW,
               actions: ['secretsmanager:GetSecretValue'],
-              resources: [
-                config.application.ATLAS_CREDENTIALS_SECRET_ARN,
-              ],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
             }),
           ],
         }
@@ -645,11 +624,15 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * IAM roles
      */
+    const apiKeyAuthorizerBaseRoleName = getNameForGlobalResource(
+      TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME,
+      config
+    )
     const apiKeyAuthorizerBaseRole = new Role(
       this,
-      getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config),      
+      apiKeyAuthorizerBaseRoleName,
       {
-        roleName: getNameForGlobalResource(TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME, config),
+        roleName: apiKeyAuthorizerBaseRoleName,
         assumedBy: new ArnPrincipal(
           apiKeyAuthorizerFunction.role?.roleArn as string
         ),
@@ -670,19 +653,24 @@ export class CdkTarponStack extends cdk.Stack {
         ],
       })
     )
-    const jwtAuthorizerBaseRole = new Role(
-      this,
-      getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config),
-      {
-        roleName: getNameForGlobalResource(TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME, config),
-        assumedBy: new ArnPrincipal(
-          jwtAuthorizerFunction.role?.roleArn as string
-        ),
-        managedPolicies: [
-          ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
-        ],
-      }
+    apiKeyAuthorizerFunction.addEnvironment(
+      'AUTHORIZER_BASE_ROLE_ARN',
+      apiKeyAuthorizerBaseRole.roleArn
     )
+
+    const jwtAuthorizerBaseRoleName = getNameForGlobalResource(
+      TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME,
+      config
+    )
+    const jwtAuthorizerBaseRole = new Role(this, jwtAuthorizerBaseRoleName, {
+      roleName: jwtAuthorizerBaseRoleName,
+      assumedBy: new ArnPrincipal(
+        jwtAuthorizerFunction.role?.roleArn as string
+      ),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
+      ],
+    })
     jwtAuthorizerFunction.role?.attachInlinePolicy(
       new Policy(this, getResourceName('JwtAuthorizerPolicy'), {
         policyName: getResourceName('JwtAuthorizerPolicy'),
@@ -694,6 +682,10 @@ export class CdkTarponStack extends cdk.Stack {
           }),
         ],
       })
+    )
+    jwtAuthorizerFunction.addEnvironment(
+      'AUTHORIZER_BASE_ROLE_ARN',
+      jwtAuthorizerBaseRole.roleArn
     )
 
     /**

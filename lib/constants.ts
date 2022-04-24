@@ -1,13 +1,14 @@
-import { Config } from "./configs/config"
+import { Config } from './configs/config'
 
 export function getResourceName(resourceName: string, dash = false) {
   return `tarpon${dash ? '-' : ''}${resourceName}`
 }
 
 export function getNameForGlobalResource(name: string, config: Config) {
-  return `${name + (config.stage ? `-${config.stage}` : '')}-${config.env.region ? config.env.region : 'eu-central-1'}`
+  return `${name + (config.stage ? `-${config.stage}` : '')}-${
+    config.env.region ? config.env.region : 'eu-central-1'
+  }`
 }
-
 
 export const TarponStackConstants = {
   DYNAMODB_TABLE_NAME: 'Tarpon',
