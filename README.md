@@ -34,8 +34,16 @@ sam local invoke "VerifyTransactionFunction" --event events/event.json -t cdk.ou
 
 ## Deploy
 
+In order to deploy to a new account (or the first time you're deploying), you have to run `cdk bootstrap` like so:
+
+```
+cdk bootstrap --profile <profileName>
+```
+
+Then you can deploy to dev like so:
+
 ```bash
-cdk deploy
+npm run deploy:dev
 ```
 
 ## Add a resource to your application
