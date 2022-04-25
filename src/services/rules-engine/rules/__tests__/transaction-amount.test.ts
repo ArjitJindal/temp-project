@@ -65,8 +65,8 @@ describe.each<RuleTestCase>([
     name: 'User in the target age range AND too big transaction amount - hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
-        sendingAmountDetails: {
+        originUserId: '1',
+        originAmountDetails: {
           transactionAmount: 10000,
           transactionCurrency: 'EUR',
         },
@@ -78,8 +78,8 @@ describe.each<RuleTestCase>([
     name: 'User in the target age range AND too big transaction amount (currency not in the rule params) - hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
-        sendingAmountDetails: {
+        originUserId: '1',
+        originAmountDetails: {
           transactionAmount: 10000,
           transactionCurrency: 'USD',
         },
@@ -91,8 +91,8 @@ describe.each<RuleTestCase>([
     name: 'User in the target age range AND normal transaction amount - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
-        sendingAmountDetails: {
+        originUserId: '1',
+        originAmountDetails: {
           transactionAmount: 100,
           transactionCurrency: 'EUR',
         },
@@ -104,8 +104,8 @@ describe.each<RuleTestCase>([
     name: 'User not in the target range AND too big transaction amount - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '2',
-        sendingAmountDetails: {
+        originUserId: '2',
+        originAmountDetails: {
           transactionAmount: 10000,
           transactionCurrency: 'EUR',
         },
@@ -117,8 +117,8 @@ describe.each<RuleTestCase>([
     name: 'User not in the target range AND normal transaction amount - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '2',
-        sendingAmountDetails: {
+        originUserId: '2',
+        originAmountDetails: {
           transactionAmount: 100,
           transactionCurrency: 'EUR',
         },
@@ -130,8 +130,8 @@ describe.each<RuleTestCase>([
     name: 'Missing sender user ID - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: undefined,
-        sendingAmountDetails: {
+        originUserId: undefined,
+        originAmountDetails: {
           transactionAmount: 10000,
           transactionCurrency: 'EUR',
         },

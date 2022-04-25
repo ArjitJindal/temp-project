@@ -21,7 +21,7 @@ const config: Configuration = {
     path: resolve(__dirname, 'dist'),
   },
   plugins: [
-    // TODO: re-enable the plugin after we move fast-geoip to lambda layer
+    // TODO: re-enable the plugin after https://flagright.atlassian.net/browse/FDT-145
     // new CopyPlugin({
     //   patterns: [
     //     {

@@ -46,16 +46,16 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Rule<Multip
       .subtract(timePeriodDays, 'day')
       .unix()
     let senderTransactions: ThinTransaction[] = []
-    if (receiverTypes.includes('USER') && this.transaction.receiverUserId) {
+    if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =
         await transactionRepository.getAfterTimeUserReceivingThinTransactions(
-          this.transaction.receiverUserId,
+          this.transaction.destinationUserId,
           afterTimestamp
         )
     } else if (receiverTypes.includes('NON_USER')) {
       senderTransactions =
         await transactionRepository.getAfterTimeNonUserReceivingThinTransactions(
-          this.transaction.receiverPaymentDetails,
+          this.transaction.destinationPaymentDetails,
           afterTimestamp
         )
     }

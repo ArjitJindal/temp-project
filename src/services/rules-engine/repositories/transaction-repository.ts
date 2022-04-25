@@ -69,7 +69,7 @@ export class TransactionRepository {
 
     const query = {
       timestamp: { $lte: pagination.beforeTimestamp },
-      senderUserId: userId,
+      originUserId: userId,
     }
 
     const transactions = await collection

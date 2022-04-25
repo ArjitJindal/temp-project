@@ -49,7 +49,7 @@ export default class TransactionAmountRule extends Rule<TransactionAmountRulePar
     const { transactionAmountThreshold } = this.parameters
     if (
       await isTransactionAmountAboveThreshold(
-        this.transaction.sendingAmountDetails,
+        this.transaction.originAmountDetails,
         transactionAmountThreshold
       )
     ) {

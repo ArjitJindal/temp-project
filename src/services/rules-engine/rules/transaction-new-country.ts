@@ -23,23 +23,23 @@ export default class TransactionNewCountryRule extends Rule<TransactionNewCountr
       this.tenantId,
       this.dynamoDb
     )
-    const { senderUserId, receiverUserId } = this.transaction
-    const senderCountry = this.transaction.sendingAmountDetails?.country
-    const receiverCountry = this.transaction.receivingAmountDetails?.country
+    const { originUserId, destinationUserId } = this.transaction
+    const senderCountry = this.transaction.originAmountDetails?.country
+    const receiverCountry = this.transaction.destinationAmountDetails?.country
     const [
       senderTransactionCountries,
       senderTransactionsCount,
       receiverTransactionCountries,
       receiverTransactionsCount,
     ] = await Promise.all([
-      senderUserId &&
-        aggregationRepository.getUserTransactionCountries(senderUserId),
-      senderUserId &&
-        aggregationRepository.getUserTransactionsCount(senderUserId),
-      receiverUserId &&
-        aggregationRepository.getUserTransactionCountries(receiverUserId),
-      receiverUserId &&
-        aggregationRepository.getUserTransactionsCount(receiverUserId),
+      originUserId &&
+        aggregationRepository.getUserTransactionCountries(originUserId),
+      originUserId &&
+        aggregationRepository.getUserTransactionsCount(originUserId),
+      destinationUserId &&
+        aggregationRepository.getUserTransactionCountries(destinationUserId),
+      destinationUserId &&
+        aggregationRepository.getUserTransactionsCount(destinationUserId),
     ])
 
     if (

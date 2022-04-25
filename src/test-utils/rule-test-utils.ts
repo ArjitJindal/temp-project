@@ -76,7 +76,7 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
     for (const rule of rules) {
       cleanups.push(
         await createRule(tenantId, {
-          id: 'rule id',
+          id: 'test rule id',
           name: 'test rule name',
           description: 'test rule description',
           defaultParameters: {},

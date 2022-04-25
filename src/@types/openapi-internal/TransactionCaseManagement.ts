@@ -19,12 +19,14 @@ import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { RuleAction } from './RuleAction'
+import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
 import { TransactionStatusChange } from './TransactionStatusChange'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { UPIDetails } from './UPIDetails'
+import { WalletDetails } from './WalletDetails'
 export class TransactionCaseManagement {
   'type'?: string
   /**
@@ -32,12 +34,24 @@ export class TransactionCaseManagement {
    */
   'transactionId'?: string
   'timestamp': number
-  'senderUserId'?: string
-  'receiverUserId'?: string
-  'sendingAmountDetails'?: TransactionAmountDetails
-  'receivingAmountDetails'?: TransactionAmountDetails
-  'senderPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
-  'receiverPaymentDetails': CardDetails | IBANDetails | ACHDetails | UPIDetails
+  'originUserId'?: string
+  'destinationUserId'?: string
+  'originAmountDetails'?: TransactionAmountDetails
+  'destinationAmountDetails'?: TransactionAmountDetails
+  'originPaymentDetails':
+    | CardDetails
+    | IBANDetails
+    | ACHDetails
+    | SWIFTDetails
+    | UPIDetails
+    | WalletDetails
+  'destinationPaymentDetails':
+    | CardDetails
+    | IBANDetails
+    | ACHDetails
+    | UPIDetails
+    | WalletDetails
+    | SWIFTDetails
   /**
    * Type of produce being used by the consumer (ex wallets, payments etc)
    */
@@ -89,39 +103,39 @@ export class TransactionCaseManagement {
       format: '',
     },
     {
-      name: 'senderUserId',
-      baseName: 'senderUserId',
+      name: 'originUserId',
+      baseName: 'originUserId',
       type: 'string',
       format: '',
     },
     {
-      name: 'receiverUserId',
-      baseName: 'receiverUserId',
+      name: 'destinationUserId',
+      baseName: 'destinationUserId',
       type: 'string',
       format: '',
     },
     {
-      name: 'sendingAmountDetails',
-      baseName: 'sendingAmountDetails',
+      name: 'originAmountDetails',
+      baseName: 'originAmountDetails',
       type: 'TransactionAmountDetails',
       format: '',
     },
     {
-      name: 'receivingAmountDetails',
-      baseName: 'receivingAmountDetails',
+      name: 'destinationAmountDetails',
+      baseName: 'destinationAmountDetails',
       type: 'TransactionAmountDetails',
       format: '',
     },
     {
-      name: 'senderPaymentDetails',
-      baseName: 'senderPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails',
+      name: 'originPaymentDetails',
+      baseName: 'originPaymentDetails',
+      type: 'CardDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
       format: '',
     },
     {
-      name: 'receiverPaymentDetails',
-      baseName: 'receiverPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails',
+      name: 'destinationPaymentDetails',
+      baseName: 'destinationPaymentDetails',
+      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
       format: '',
     },
     {

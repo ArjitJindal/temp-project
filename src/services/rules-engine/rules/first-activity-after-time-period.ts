@@ -25,10 +25,10 @@ export default class FirstActivityAfterLongTimeRule extends Rule<FirstActivityAf
     })
 
     const lastSendingThinTransaction =
-      this.transaction.senderUserId &&
+      this.transaction.originUserId &&
       (
         await transactionRepository.getLastNUserSendingThinTransactions(
-          this.transaction.senderUserId,
+          this.transaction.originUserId,
           1
         )
       )[0]

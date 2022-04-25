@@ -34,7 +34,7 @@ export default class SenderLocationChangesFrequencyRule extends Rule<SenderLocat
 
     if (
       !this.transaction.deviceData?.ipAddress ||
-      !this.transaction.senderUserId
+      !this.transaction.originUserId
     ) {
       return
     }
@@ -44,7 +44,7 @@ export default class SenderLocationChangesFrequencyRule extends Rule<SenderLocat
     })
     const thinTransactions =
       await transactionRepository.getAfterTimeUserSendingThinTransactions(
-        this.transaction.senderUserId,
+        this.transaction.originUserId,
         dayjs
           .unix(this.transaction.timestamp)
           .subtract(timeWindowInDays, 'day')

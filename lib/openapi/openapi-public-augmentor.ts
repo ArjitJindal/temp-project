@@ -6,6 +6,7 @@
 
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
+import _ from 'lodash'
 import { TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
@@ -16,6 +17,10 @@ const PathToLambda: any = {
   '/consumer/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
   '/business/users': TarponStackConstants.USER_FUNCTION_NAME,
   '/business/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
+  '/events/transaction/{eventId}': null,
+  '/events/transaction': null,
+  '/internal/users': null,
+  '/internal/users/{employeeId}': null,
 }
 function assertValidLambdaMappings(openapi: any) {
   const pathsLocal = Object.keys(PathToLambda)
@@ -37,6 +42,12 @@ const openapi = yaml.load(
 ) as any
 
 assertValidLambdaMappings(openapi)
+
+// Filter out not-yet-implemented paths
+openapi.paths = _.omit(
+  openapi.paths,
+  Object.keys(PathToLambda).filter((path) => !PathToLambda[path])
+)
 
 // Request validator setting
 openapi['x-amazon-apigateway-request-validators'] = {

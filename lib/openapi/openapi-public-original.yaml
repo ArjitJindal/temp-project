@@ -26,34 +26,25 @@ paths:
               example-1:
                 value:
                   transactionId: 7b80a539eea6e78acbd6d458e5971482
-                  timestamp: 1641654664
-                  senderUserId: 96647cfd9e8fe66ee0f3362e011e34e8
-                  receiverUserId: 8650a2611d0771cba03310f74bf6
-                  sendingAmountDetails:
+                  originUserId: 8650a2611d0771cba03310f74bf6
+                  destinationUserId: 9350a2611e0771cba03310f74bf6
+                  originAmountDetails:
                     country: DE
                     transactionAmount: 800
                     transactionCurrency: EUR
-                  receivingAmountDetails:
+                  destinationAmountDetails:
                     country: IN
                     transactionAmount: 68351.34
                     transactionCurrency: INR
-                  paymentMethod: CreditCard
-                  payoutMethod: CreditCard
                   promotionCodeUsed: true
-                  senderName:
-                    firstName: Jules
-                    lastName: Winnfield
-                  receiverName:
-                    firstName: Baran
-                    middleName: Realblood
-                    lastName: Ozkan
-                  senderPaymentDetails:
+                  timestamp: 1641654664
+                  originPaymentDetails:
                     method: CARD
                     cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
                     cardIssuedCountry: US
                     transactionReferenceField: Deposit
                     3dsDone: true
-                  receiverPaymentDetails:
+                  destinationPaymentDetails:
                     method: CARD
                     cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
                     cardIssuedCountry: IN
@@ -138,7 +129,179 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionWithRulesResult'
-              examples: {}
+              examples:
+                example-1:
+                  value:
+                    transactionId: 7b80a539eea6e78acbd6d458e5971482
+                    originUserId: 8650a2611d0771cba03310f74bf6
+                    destinationUserId: 9350a2611e0771cba03310f74bf6
+                    originAmountDetails:
+                      country: DE
+                      transactionAmount: 800
+                      transactionCurrency: EUR
+                    destinationAmountDetails:
+                      country: IN
+                      transactionAmount: 68351.34
+                      transactionCurrency: INR
+                    promotionCodeUsed: true
+                    timestamp: 1641654664
+                    originPaymentDetails:
+                      method: CARD
+                      cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+                      cardIssuedCountry: US
+                      transactionReferenceField: Deposit
+                      3dsDone: true
+                    destinationPaymentDetails:
+                      method: CARD
+                      cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+                      cardIssuedCountry: IN
+                      transactionReferenceField: Deposit
+                      3dsDone: true
+                    reference: loan repayment
+                    deviceData:
+                      batteryLevel: 95
+                      deviceLatitude: 13.0033
+                      deviceLongitude: 76.1004
+                      ipAddress: 10.23.191.2
+                      deviceIdentifier: 3c49f915d04485e34caba
+                      vpnUsed: false
+                      operatingSystem: Android 11.2
+                      deviceMaker: ASUS
+                      deviceModel: Zenphone M2 Pro Max
+                      deviceYear: '2018'
+                      appVersion: 1.1.0
+                    tags:
+                      - key: customKey
+                        value: customValue
+                    executedRules:
+                      - ruleId: R-1a
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        ruleAction: BLOCK
+                        ruleHit: true
+                    failedRules:
+                      - ruleId: R-1b
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        failureException:
+                          exceptionName: MISSING_DATA
+                          exceptionDescription: Some data is missing
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+  /events/transaction:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a Transaction Event
+      description: Create a Transaction Event
+      operationId: post-transaction-event
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionEvent'
+            examples:
+              example-2:
+                value:
+                  eventType: CREATED
+                  timestamp: 1231231244
+                  transactionID: 443dea26147a406b957d9ee3a1247b11
+                  eventId: aaeeb166147a406b957dd9147a406b957
+                  eventDescription: Transaction created
+                  employeeID: 8cdeb166147a406b957dd9e709907b89
+                  metaData:
+                    batteryLevel: 76.3
+                    deviceLatitude: 13.009711
+                    deviceLongitude: 76.102898
+                    ipAddress: 79.144.2.20
+                    vpnUsed: true
+        required: false
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionMonitoringResult'
+              examples:
+                example-1:
+                  value:
+                    transactionId: 7b80a539eea6e78acbd6d458e5971482
+                    executedRules:
+                      - ruleId: R-1a
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        ruleAction: BLOCK
+                        ruleHit: true
+                    failedRules:
+                      - ruleId: R-1b
+                        ruleName: Proof of funds for high value transactions
+                        ruleDescription: >-
+                          If a user makes a remittance transaction >= 1800 in
+                          EUR - ask for proof of funds
+                        failureException:
+                          exceptionName: MISSING_DATA
+                          exceptionDescription: Some data is missing
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+  '/events/transaction/{eventId}':
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve a Transaction Event
+      description: Retrieve a Transaction Event
+      operationId: get-transaction-event
+      parameters:
+        - name: eventId
+          in: path
+          description: Unique Transaction Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionEvent'
+              examples:
+                example-1:
+                  value:
+                    eventType: CREATED
+                    employeeID: 8cdeb166147a406b957dd9e709907b89
+                    transactionID: 443dea26147a406b957d9ee3a1247b11
+                    timestamp: 1641654664
+                    metaData:
+                      ipAddress: 144.13.22.19
+                      vpnUsed: true
         '401':
           description: Unauthorized
           headers: {}
@@ -303,6 +466,95 @@ paths:
                     tags:
                       - key: customKey
                         value: customValue
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+  /internal/users:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create an Internal User
+      description: Create an Internal User
+      operationId: post-interal-user
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalUser'
+            examples:
+              example-1:
+                value:
+                  employeeID: 8cdeb166147a406b957dd9e709907b89
+                  employeeLevel: L4
+                  employeeDesignation: Senior Analyst
+                  employeeName: Baran Ozkan
+                  employeeNationality: IN
+        required: false
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employeeId:
+                    type: string
+              examples:
+                example-1:
+                  value:
+                    employeeId: 8cdeb166147a406b957dd9e709907b89
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+  '/internal/users/{employeeId}':
+    get:
+      security:
+        - x-api-key: []
+      summary: Retrieve an Internal User
+      description: Retrieve a Consumer User
+      operationId: get-internal-user
+      parameters:
+        - name: employeeId
+          in: path
+          description: ''
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalUser'
+              examples:
+                example-1:
+                  value:
+                    employeeID: 8cdeb166147a406b957dd9e709907b89
+                    employeeLevel: L4
+                    employeeDesignation: Senior Analyst
+                    employeeName: Baran Ozkan
+                    employeeNationality: IN
         '401':
           description: Unauthorized
           headers: {}
@@ -804,25 +1056,25 @@ components:
       description: Model for transaction payload
       example:
         transactionId: 7b80a539eea6e78acbd6d458e5971482
-        senderUserId: 8650a2611d0771cba03310f74bf6
-        receiverUserId: 9350a2611e0771cba03310f74bf6
-        sendingAmountDetails:
+        originUserId: 8650a2611d0771cba03310f74bf6
+        destinationUserId: 9350a2611e0771cba03310f74bf6
+        originAmountDetails:
           country: DE
           transactionAmount: 800
           transactionCurrency: EUR
-        receivingAmountDetails:
+        destinationAmountDetails:
           country: IN
           transactionAmount: 68351.34
           transactionCurrency: INR
         promotionCodeUsed: true
         timestamp: 1641654664
-        senderPaymentDetails:
+        originPaymentDetails:
           method: CARD
           cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
           cardIssuedCountry: US
           transactionReferenceField: Deposit
           3dsDone: true
-        receiverPaymentDetails:
+        destinationPaymentDetails:
           method: CARD
           cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
           cardIssuedCountry: IN
@@ -844,6 +1096,49 @@ components:
         tags:
           - key: customKey
             value: customValue
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          originUserId: 8650a2611d0771cba03310f74bf6
+          destinationUserId: 9350a2611e0771cba03310f74bf6
+          originAmountDetails:
+            country: DE
+            transactionAmount: 800
+            transactionCurrency: EUR
+          destinationAmountDetails:
+            country: IN
+            transactionAmount: 68351.34
+            transactionCurrency: INR
+          promotionCodeUsed: true
+          timestamp: 1641654664
+          originPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: US
+            transactionReferenceField: Deposit
+            3dsDone: true
+          destinationPaymentDetails:
+            method: CARD
+            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+            cardIssuedCountry: IN
+            transactionReferenceField: Deposit
+            3dsDone: true
+          reference: loan repayment
+          deviceData:
+            batteryLevel: 95
+            deviceLatitude: 13.0033
+            deviceLongitude: 76.1004
+            ipAddress: 10.23.191.2
+            deviceIdentifier: 3c49f915d04485e34caba
+            vpnUsed: false
+            operatingSystem: Android 11.2
+            deviceMaker: ASUS
+            deviceModel: Zenphone M2 Pro Max
+            deviceYear: '2018'
+            appVersion: 1.1.0
+          tags:
+            - key: customKey
+              value: customValue
       properties:
         type:
           type: string
@@ -853,32 +1148,30 @@ components:
           description: Unique transaction identifier
         timestamp:
           type: number
-        senderUserId:
+        originUserId:
           type: string
-        receiverUserId:
+        destinationUserId:
           type: string
-        sendingAmountDetails:
+        originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
-        receivingAmountDetails:
+        destinationAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
-        senderPaymentDetails:
+        originPaymentDetails:
+          oneOf:
+            - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/IBANDetails'
+            - $ref: '#/components/schemas/ACHDetails'
+            - $ref: '#/components/schemas/SWIFTDetails'
+            - $ref: '#/components/schemas/UPIDetails'
+            - $ref: '#/components/schemas/WalletDetails'
+        destinationPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/UPIDetails'
-          example:
-            method: CARD
-            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-            cardIssuedCountry: TR
-            transactionReferenceField: Deposit
-            3dsDone: true
-        receiverPaymentDetails:
-          oneOf:
-            - $ref: '#/components/schemas/CardDetails'
-            - $ref: '#/components/schemas/IBANDetails'
-            - $ref: '#/components/schemas/ACHDetails'
-            - $ref: '#/components/schemas/UPIDetails'
+            - $ref: '#/components/schemas/WalletDetails'
+            - $ref: '#/components/schemas/SWIFTDetails'
           example:
             method: CARD
             cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -908,32 +1201,32 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - timestamp
-        - senderPaymentDetails
-        - receiverPaymentDetails
+        - originPaymentDetails
+        - destinationPaymentDetails
     TransactionWithRulesResult:
       title: TransactionWithRulesResult
       description: Model for transaction payload with rules result
       example:
         transactionId: 7b80a539eea6e78acbd6d458e5971482
-        senderUserId: 8650a2611d0771cba03310f74bf6
-        receiverUserId: 9350a2611e0771cba03310f74bf6
-        sendingAmountDetails:
+        originUserId: 8650a2611d0771cba03310f74bf6
+        destinationUserId: 9350a2611e0771cba03310f74bf6
+        originAmountDetails:
           country: DE
           transactionAmount: 800
           transactionCurrency: EUR
-        receivingAmountDetails:
+        destinationAmountDetails:
           country: IN
           transactionAmount: 68351.34
           transactionCurrency: INR
         promotionCodeUsed: true
         timestamp: 1641654664
-        senderPaymentDetails:
+        originPaymentDetails:
           method: CARD
           cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
           cardIssuedCountry: US
           transactionReferenceField: Deposit
           3dsDone: true
-        receiverPaymentDetails:
+        destinationPaymentDetails:
           method: CARD
           cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
           cardIssuedCountry: IN
@@ -973,25 +1266,25 @@ components:
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
-          senderUserId: 8650a2611d0771cba03310f74bf6
-          receiverUserId: 9350a2611e0771cba03310f74bf6
-          sendingAmountDetails:
+          originUserId: 8650a2611d0771cba03310f74bf6
+          destinationUserId: 9350a2611e0771cba03310f74bf6
+          originAmountDetails:
             country: DE
             transactionAmount: 800
             transactionCurrency: EUR
-          receivingAmountDetails:
+          destinationAmountDetails:
             country: IN
             transactionAmount: 68351.34
             transactionCurrency: INR
           promotionCodeUsed: true
           timestamp: 1641654664
-          senderPaymentDetails:
+          originPaymentDetails:
             method: CARD
             cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
             cardIssuedCountry: US
             transactionReferenceField: Deposit
             3dsDone: true
-          receiverPaymentDetails:
+          destinationPaymentDetails:
             method: CARD
             cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
             cardIssuedCountry: IN
@@ -1066,8 +1359,6 @@ components:
           $ref: '#/components/schemas/ConsumerName'
       required:
         - method
-        - cardFingerprint
-        - cardIssuedCountry
     IBANDetails:
       title: IBANDetails
       type: object
@@ -1133,6 +1424,37 @@ components:
         - method
         - BIC
         - IBAN
+    WalletDetails:
+      title: WalletDetails
+      type: object
+      description: Standardized model for a Generic wallet transaction
+      x-examples: {}
+      properties:
+        method:
+          type: string
+          minLength: 1
+          description: 'Type: WALLET'
+          pattern: WALLET
+        walletType:
+          type: string
+        walletId:
+          minLength: 1
+          type: string
+          description: Unique ID of the wallet
+        paymentChannel:
+          type: string
+          description: Payment Channel used through wallet
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        tags:
+          $ref: '#/components/schemas/Tag'
+        walletPhoneNumber:
+          type: string
+        '':
+          type: string
+      required:
+        - method
+        - walletType
     DeviceData:
       title: DeviceData
       type: object
@@ -1916,10 +2238,40 @@ components:
           $ref: '#/components/schemas/ConsumerName'
         bankAddress:
           $ref: '#/components/schemas/Address'
+        beneficiaryName:
+          type: string
       required:
         - method
         - routingNumber
         - accountNumber
+    SWIFTDetails:
+      description: ''
+      type: object
+      x-examples: {}
+      title: SWIFTDetails
+      properties:
+        method:
+          type: string
+          pattern: SWIFT
+        swiftCode:
+          type: string
+          minLength: 1
+        accountNumber:
+          type: string
+          minLength: 1
+        accountType:
+          type: string
+        bankName:
+          type: string
+          minLength: 1
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+        specialInstructions:
+          type: string
+      required:
+        - method
     UPIDetails:
       description: ''
       type: object
@@ -1986,6 +2338,83 @@ components:
         - FLAG
         - BLOCK
         - SUSPEND
+    InternalUser:
+      description: Internal user- employees
+      type: object
+      x-examples:
+        example-1:
+          employeeID: 8cdeb166147a406b957dd9e709907b89
+          employeeLevel: L4
+          employeeDesignation: Senior Analyst
+          employeeName: Baran Ozkan
+          employeeNationality: IN
+      title: InternalUser
+      properties:
+        employeeID:
+          type: string
+          minLength: 1
+        employeeLevel:
+          type: string
+          minLength: 1
+        employeeDesignation:
+          type: string
+          minLength: 1
+        employeeName:
+          type: string
+          minLength: 1
+        employeeNationality:
+          type: string
+          minLength: 1
+      required:
+        - employeeID
+    TransactionEvent:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          eventType: CREATED
+          timestamp: 1231231244
+          transactionID: 443dea26147a406b957d9ee3a1247b11
+          eventId: aaeeb166147a406b957dd9147a406b957
+          eventDescription: Transaction created
+          employeeID: 8cdeb166147a406b957dd9e709907b89
+          metaData:
+            batteryLevel: 76.3
+            deviceLatitude: 13.009711
+            deviceLongitude: 76.102898
+            ipAddress: 79.144.2.20
+            vpnUsed: true
+      properties:
+        eventType:
+          type: string
+          minLength: 1
+          enum:
+            - CREATED
+            - REFUNDED
+            - DECLINED
+            - PROCESSING
+            - SUCCESSFUL
+            - SUSPENDED
+            - EXPIRED
+            - SENT
+        timestamp:
+          type: number
+        transactionID:
+          type: string
+          minLength: 1
+        eventId:
+          type: string
+        eventDescription:
+          type: string
+        employeeID:
+          type: string
+          minLength: 1
+        metaData:
+          $ref: '#/components/schemas/DeviceData'
+      required:
+        - eventType
+        - timestamp
+        - transactionID
     Date:
       title: Date
       type: object

@@ -29,6 +29,6 @@ export const config: Config = {
     AUTH0_MANAGEMENT_CLIENT_ID: 'O5XVh8xujWiL7Ij7gFCNbQdLrS5UPS6F',
     AUTH0_MANAGEMENT_CLIENT_SECRET:
       'RrqgajkOImtw1ugT-32DiFzYsqMAMa7dwhiLhEJcQeSLnCkcR-GvYr1jLy9xv2U6',
-    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`
+    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
   },
 }

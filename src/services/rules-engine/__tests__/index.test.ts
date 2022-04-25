@@ -30,7 +30,7 @@ test('Verify Transaction: returns empty executed rules if no rules are configure
 
 describe('Verify Transaction: executed rules', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
-    { ruleImplementationName: 'tests/test-success-rule' },
+    { id: 'R-1', ruleImplementationName: 'tests/test-success-rule' },
   ])
 
   test('returns executed rules', async () => {
@@ -58,7 +58,7 @@ describe('Verify Transaction: executed rules', () => {
 
 describe('Verify Transaction: failed rules', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
-    { ruleImplementationName: 'tests/test-failure-rule' },
+    { id: 'R-1', ruleImplementationName: 'tests/test-failure-rule' },
   ])
 
   test('returns failed rules', async () => {
@@ -88,7 +88,7 @@ describe('Verify Transaction: failed rules', () => {
 
 describe('Verify Transaction: non-existent rules', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
-    { ruleImplementationName: 'tests/test-ghost-rule' },
+    { id: 'R-1', ruleImplementationName: 'tests/test-ghost-rule' },
   ])
 
   test('returns failed rules', async () => {
@@ -118,8 +118,8 @@ describe('Verify Transaction: non-existent rules', () => {
 
 describe('Verify Transaction: executed and failed rules', () => {
   setUpRulesHooks(TEST_TENANT_ID, [
-    { ruleImplementationName: 'tests/test-success-rule' },
-    { ruleImplementationName: 'tests/test-failure-rule' },
+    { id: 'R-1', ruleImplementationName: 'tests/test-success-rule' },
+    { id: 'R-2', ruleImplementationName: 'tests/test-failure-rule' },
   ])
 
   test('returns both executed and failed rules and the transaction is persisted', async () => {

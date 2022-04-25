@@ -2,15 +2,15 @@ import { Aggregator } from './aggregator'
 
 export class UserTransactionsCount extends Aggregator {
   public async aggregate(): Promise<void> {
-    if (this.transaction.senderUserId) {
+    if (this.transaction.originUserId) {
       await this.aggregationRepository.addUserTransactionsCount(
-        this.transaction.senderUserId,
+        this.transaction.originUserId,
         'sending'
       )
     }
-    if (this.transaction.receiverUserId) {
+    if (this.transaction.destinationUserId) {
       await this.aggregationRepository.addUserTransactionsCount(
-        this.transaction.receiverUserId,
+        this.transaction.destinationUserId,
         'receiving'
       )
     }

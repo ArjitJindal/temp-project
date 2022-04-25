@@ -19,6 +19,7 @@ export class ACHDetails {
   'bankName'?: string
   'name'?: ConsumerName
   'bankAddress'?: Address
+  'beneficiaryName'?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -62,6 +63,12 @@ export class ACHDetails {
       name: 'bankAddress',
       baseName: 'bankAddress',
       type: 'Address',
+      format: '',
+    },
+    {
+      name: 'beneficiaryName',
+      baseName: 'beneficiaryName',
+      type: 'string',
       format: '',
     },
   ]
