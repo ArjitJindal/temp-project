@@ -35,6 +35,7 @@ export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
 export * from './RuleFailureException';
+export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './Tag';
 export * from './Transaction';
@@ -89,6 +90,7 @@ import { Rule } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
 import { RuleFailureException } from './RuleFailureException';
+import { RuleImplementation } from './RuleImplementation';
 import { RuleInstance, RuleInstanceStatusEnum } from './RuleInstance';
 import { Tag } from './Tag';
 import { Transaction } from './Transaction';
@@ -161,6 +163,7 @@ let typeMap: { [index: string]: any } = {
   PresignedUrlResponse: PresignedUrlResponse,
   Rule: Rule,
   RuleFailureException: RuleFailureException,
+  RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,
   Tag: Tag,
   Transaction: Transaction,

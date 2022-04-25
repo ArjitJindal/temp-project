@@ -50,6 +50,7 @@ models/Rule.ts
 models/RuleAction.ts
 models/RuleAction1.ts
 models/RuleFailureException.ts
+models/RuleImplementation.ts
 models/RuleInstance.ts
 models/Tag.ts
 models/Transaction.ts

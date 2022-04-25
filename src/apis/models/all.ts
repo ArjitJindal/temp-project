@@ -35,6 +35,7 @@ export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
 export * from './RuleFailureException';
+export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './Tag';
 export * from './Transaction';

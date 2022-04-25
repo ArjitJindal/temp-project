@@ -39,6 +39,7 @@ import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
+import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
@@ -177,6 +178,14 @@ export class PromiseDefaultApi {
    */
   public getImportImportId(importId: string, _options?: Configuration): Promise<FileImport> {
     const result = this.api.getImportImportId(importId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Rule Implementations - List
+   */
+  public getRuleImplementations(_options?: Configuration): Promise<Array<RuleImplementation>> {
+    const result = this.api.getRuleImplementations(_options);
     return result.toPromise();
   }
 

@@ -12,6 +12,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
+| [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
@@ -437,6 +438,51 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getRuleImplementations**
+
+> Array<RuleImplementation> getRuleImplementations()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getRuleImplementations(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Array<RuleImplementation>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json, application/xml
 
 ### HTTP response details
 
@@ -941,10 +987,12 @@ let body:.DefaultApiPostRulesRequest = {
     id: "id_example",
     name: "name_example",
     description: "description_example",
-    parametersSchema: {},
     defaultParameters: {},
     defaultAction: "FLAG",
-    ruleImplementationFilename: "ruleImplementationFilename_example",
+    ruleImplementationName: "ruleImplementationName_example",
+    labels: [
+      "labels_example",
+    ],
     createdAt: 3.14,
     updatedAt: 3.14,
   },
@@ -1197,10 +1245,12 @@ let body:.DefaultApiPutRuleRuleIdRequest = {
     id: "id_example",
     name: "name_example",
     description: "description_example",
-    parametersSchema: {},
     defaultParameters: {},
     defaultAction: "FLAG",
-    ruleImplementationFilename: "ruleImplementationFilename_example",
+    ruleImplementationName: "ruleImplementationName_example",
+    labels: [
+      "labels_example",
+    ],
     createdAt: 3.14,
     updatedAt: 3.14,
   },

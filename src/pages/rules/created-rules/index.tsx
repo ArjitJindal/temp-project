@@ -6,8 +6,9 @@ import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { getRuleActionColor } from '../utils';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
-import { Rule, RuleInstance, RuleInstanceStatusEnum } from '@/apis';
+import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
+import { RuleImplementation } from '@/apis/models/RuleImplementation';
 
 export default () => {
   const api = useApi();
@@ -17,6 +18,9 @@ export default () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const [rules, setRules] = useState<{ [key: string]: Rule }>({});
+  const [ruleImplementations, setRuleImplementations] = useState<{
+    [key: string]: RuleImplementation;
+  }>({});
   const handleRuleInstanceUpdate = useCallback(
     async (newRuleInstance: RuleInstance) => {
       const ruleInstanceId = newRuleInstance.id as string;
@@ -152,11 +156,13 @@ export default () => {
         headerTitle="Rules"
         columns={columns}
         request={async () => {
-          const [rules, ruleInstances] = await Promise.all([
+          const [rules, ruleInstances, ruleImplementations] = await Promise.all([
             api.getRules({}),
             api.getRuleInstances({}),
+            api.getRuleImplementations({}),
           ]);
           setRules(_.keyBy(rules, 'id'));
+          setRuleImplementations(_.keyBy(ruleImplementations, 'name'));
           return {
             data: ruleInstances,
             success: true,
@@ -179,6 +185,9 @@ export default () => {
         {currentRow?.id && (
           <RuleInstanceDetails
             rule={rules[currentRow.ruleId]}
+            ruleParametersSchema={
+              ruleImplementations[rules[currentRow.ruleId]?.ruleImplementationName].parametersSchema
+            }
             ruleInstance={updatedRuleInstances[currentRow.id] || currentRow}
             onRuleInstanceUpdate={handleRuleInstanceUpdate}
           />

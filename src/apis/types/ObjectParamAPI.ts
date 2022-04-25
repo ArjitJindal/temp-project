@@ -39,6 +39,7 @@ import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
+import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
@@ -55,6 +56,7 @@ import { UPIDetails } from '../models/UPIDetails';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
 import { UserDetails1 } from '../models/UserDetails1';
+import { WalletDetails } from '../models/WalletDetails';
 
 import { ObservableDefaultApi } from './ObservableAPI';
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
@@ -171,6 +173,8 @@ export interface DefaultApiGetImportImportIdRequest {
    */
   importId: string;
 }
+
+export interface DefaultApiGetRuleImplementationsRequest {}
 
 export interface DefaultApiGetRuleInstancesRequest {}
 
@@ -451,6 +455,17 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<FileImport> {
     return this.api.getImportImportId(param.importId, options).toPromise();
+  }
+
+  /**
+   * Rule Implementations - List
+   * @param param the request object
+   */
+  public getRuleImplementations(
+    param: DefaultApiGetRuleImplementationsRequest = {},
+    options?: Configuration,
+  ): Promise<Array<RuleImplementation>> {
+    return this.api.getRuleImplementations(options).toPromise();
   }
 
   /**

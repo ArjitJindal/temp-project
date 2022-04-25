@@ -28,6 +28,7 @@ import { UPIDetails } from './UPIDetails';
 import { HttpFile } from '../http/http';
 
 export class TransactionCaseManagement {
+  'type'?: string;
   /**
    * Unique transaction identifier
    */
@@ -71,6 +72,12 @@ export class TransactionCaseManagement {
     type: string;
     format: string;
   }> = [
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'string',
+      format: '',
+    },
     {
       name: 'transactionId',
       baseName: 'transactionId',

@@ -40,6 +40,7 @@ import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
+import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
@@ -56,6 +57,7 @@ import { UPIDetails } from '../models/UPIDetails';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
 import { UserDetails1 } from '../models/UserDetails1';
+import { WalletDetails } from '../models/WalletDetails';
 
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
 export class ObservableDefaultApi {
@@ -383,6 +385,37 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getImportImportId(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Rule Implementations - List
+   */
+  public getRuleImplementations(_options?: Configuration): Observable<Array<RuleImplementation>> {
+    const requestContextPromise = this.requestFactory.getRuleImplementations(_options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getRuleImplementations(rsp)),
           );
         }),
       );

@@ -12,12 +12,14 @@ const JSONSchemaForm = withTheme(Theme);
 
 interface Props {
   rule: Rule;
+  ruleParametersSchema: object;
   ruleInstance: RuleInstance;
   onRuleInstanceUpdate: (newRuleInstance: RuleInstance) => Promise<void>;
 }
 export const RuleInstanceDetails: React.FC<Props> = ({
   rule,
   ruleInstance,
+  ruleParametersSchema,
   onRuleInstanceUpdate,
 }) => {
   const [editing, setEditing] = useState(false);
@@ -56,9 +58,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   return (
     <>
       <Row justify="end">
-        <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
-          Edit
-        </Button>
         {editing ? (
           <Space>
             <Button onClick={handleCancelEditing} size="small">
@@ -116,7 +115,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Parameters:</b>} valueType="text">
           <JSONSchemaForm
-            schema={rule.parametersSchema}
+            schema={ruleParametersSchema}
             formData={ruleInstance.parameters}
             onChange={handleParametersChange}
             readonly={!editing}

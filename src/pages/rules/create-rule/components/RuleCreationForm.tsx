@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, message } from 'antd';
 import {
   ProFormText,
@@ -6,14 +6,22 @@ import {
   ProFormRadio,
   ProFormInstance,
   DrawerForm,
+  ProFormSelect,
 } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
 import { RULE_ACTION_OPTIONS } from '../../utils';
 import { useApi } from '@/api';
+import { RuleImplementation } from '@/apis/models/RuleImplementation';
 
 export const RuleCreationForm: React.FC = () => {
   const api = useApi();
   const restFormRef = useRef<ProFormInstance>();
+  const [ruleImplementations, setRuleImplementations] = useState<RuleImplementation[]>([]);
+  useEffect(() => {
+    api
+      .getRuleImplementations({})
+      .then((ruleImplementations) => setRuleImplementations(ruleImplementations));
+  }, [api]);
   return (
     <DrawerForm
       title="Create a New Rule"
@@ -36,12 +44,14 @@ export const RuleCreationForm: React.FC = () => {
         try {
           await api.postRules({
             Rule: {
+              id: values.id,
               name: values.name,
               description: values.description,
-              ruleImplementationFilename: values.ruleImplementationFilename,
+              ruleImplementationName: values.ruleImplementationName,
               defaultAction: values.defaultAction,
               defaultParameters: JSON.parse(values.defaultParameters),
-              parametersSchema: JSON.parse(values.parametersSchema),
+              // TODO: Implement assigning labels
+              labels: [],
             },
           });
           message.success('Rule created!');
@@ -54,6 +64,16 @@ export const RuleCreationForm: React.FC = () => {
         }
       }}
     >
+      <ProFormText
+        width="xl"
+        name="id"
+        label="Rule ID"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      />
       <ProFormText
         width="xl"
         name="name"
@@ -74,15 +94,19 @@ export const RuleCreationForm: React.FC = () => {
           },
         ]}
       />
-      <ProFormText
+      <ProFormSelect
         width="xl"
-        name="ruleImplementationFilename"
-        label="Rule Implementation Filename"
+        name="ruleImplementationName"
+        label="Rule Implementation Name"
         rules={[
           {
             required: true,
           },
         ]}
+        options={ruleImplementations.map((ruleImplementation) => ({
+          value: ruleImplementation.name,
+          label: ruleImplementation.name,
+        }))}
       />
       <ProFormRadio.Group
         name="defaultAction"
@@ -94,26 +118,6 @@ export const RuleCreationForm: React.FC = () => {
             required: true,
           },
         ]}
-      />
-      <ProFormTextArea
-        width="xl"
-        name="parametersSchema"
-        label="Parameter Schema"
-        rules={[
-          {
-            required: true,
-          },
-        ]}
-        placeholder={`{
-    "type": "object",
-    "properties": {
-        "dummy": {
-        "type": "number",
-        "title": "Dummay Parameter"
-        }
-    },
-    "required": ["dummy"]
-}`}
       />
       <ProFormTextArea
         width="xl"

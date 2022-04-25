@@ -14,7 +14,7 @@ import { FileImportStatusChange } from './FileImportStatusChange';
 import { HttpFile } from '../http/http';
 
 export class FileImport {
-  '_id'?: string;
+  '_id': string;
   'type': FileImportTypeEnum;
   's3Key': string;
   'filename': string;

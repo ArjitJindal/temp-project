@@ -13,11 +13,17 @@ const JSONSchemaForm = withTheme(Theme);
 
 interface Props {
   rule: Rule;
+  ruleParametersSchema: object;
   onBack: () => void;
   onActivated: () => void;
 }
 
-export const RuleParametersEditor: React.FC<Props> = ({ rule, onBack, onActivated }) => {
+export const RuleParametersEditor: React.FC<Props> = ({
+  rule,
+  ruleParametersSchema,
+  onBack,
+  onActivated,
+}) => {
   const api = useApi();
   const [ruleAction, setRuleAction] = useState<RuleAction>(rule.defaultAction);
   const [parameters, setParameters] = useState(rule.defaultParameters);
@@ -70,7 +76,7 @@ export const RuleParametersEditor: React.FC<Props> = ({ rule, onBack, onActivate
             style={{ marginBottom: 24 }}
           />
           <JSONSchemaForm
-            schema={rule.parametersSchema}
+            schema={ruleParametersSchema}
             formData={parameters}
             onChange={handleParametersChange}
             liveValidate

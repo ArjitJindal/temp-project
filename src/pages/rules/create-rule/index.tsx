@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Divider, Row, Steps } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
+import _ from 'lodash';
 import { RulesTable, RuleParametersEditor } from './components';
 import styles from './style.less';
 import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
 import { Rule } from '@/apis';
+import { RuleImplementation } from '@/apis/models/RuleImplementation';
+import { useApi } from '@/api';
 
 const STEPS = [
   {
@@ -22,17 +25,29 @@ const STEPS = [
 ];
 
 const StepForm: React.FC<Record<string, any>> = () => {
+  const api = useApi();
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [current, setCurrent] = useState(0);
+  const [ruleImplementations, setRuleImplementations] = useState<{
+    [key: string]: RuleImplementation;
+  }>();
   const next = () => setCurrent(current + 1);
   const prev = () => setCurrent(current - 1);
   const handleSelectRule = (rule: Rule) => {
     setCurrent(current + 1);
     setSelectedRule(rule);
   };
+  useEffect(() => {
+    api
+      .getRuleImplementations({})
+      .then((ruleImplementations) => setRuleImplementations(_.keyBy(ruleImplementations, 'name')));
+  }, [api]);
 
   return (
-    <PageContainer content="Create a transaction monitoring rule with a straight-forward 3 step process">
+    <PageContainer
+      content="Create a transaction monitoring rule with a straight-forward 3 step process"
+      loading={!ruleImplementations}
+    >
       <Card bordered={false}>
         <Row justify="center">
           <Steps current={current} className={styles.stepsContainer}>
@@ -47,7 +62,14 @@ const StepForm: React.FC<Record<string, any>> = () => {
         {current === 0 ? (
           <RulesTable onSelectRule={handleSelectRule} />
         ) : current === 1 && selectedRule ? (
-          <RuleParametersEditor rule={selectedRule} onBack={prev} onActivated={next} />
+          <RuleParametersEditor
+            rule={selectedRule}
+            ruleParametersSchema={
+              ruleImplementations?.[selectedRule.ruleImplementationName].parametersSchema
+            }
+            onBack={prev}
+            onActivated={next}
+          />
         ) : (
           current === 2 &&
           selectedRule && (
