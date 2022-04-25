@@ -7,28 +7,28 @@ export const event = {
   stageVariables: null,
   body: JSON.stringify({
     transactionId: '7b80a539eea6e78acbd6d458e5971482',
-    senderUserId: '8650a2611d0771cba03310f74bf6',
-    receiverUserId: '9350a2611e0771cba03310f74bf6',
-    sendingAmountDetails: {
+    originUserId: '8650a2611d0771cba03310f74bf6',
+    destinationUserId: '9350a2611e0771cba03310f74bf6',
+    originAmountDetails: {
       country: 'DE',
       transactionAmount: 800,
       transactionCurrency: 'EUR',
     },
-    receivingAmountDetails: {
+    destinationAmountDetails: {
       country: 'IN',
       transactionAmount: 68351.34,
       transactionCurrency: 'INR',
     },
     promotionCodeUsed: true,
     timestamp: 1641654664,
-    senderPaymentDetails: {
+    originPaymentDetails: {
       method: 'CARD',
       cardFingerprint: '20ac00fed8ef913aefb17cfae1097cce',
       cardIssuedCountry: 'US',
       transactionReferenceField: 'Deposit',
       '3dsDone': true,
     },
-    receiverPaymentDetails: {
+    destinationPaymentDetails: {
       method: 'CARD',
       cardFingerprint: '20ac00fed8ef913aefb17cfae1097cce',
       cardIssuedCountry: 'IN',

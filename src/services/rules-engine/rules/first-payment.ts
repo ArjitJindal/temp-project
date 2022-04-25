@@ -11,9 +11,9 @@ export default class FirstPaymentRule extends Rule<unknown> {
       dynamoDb: this.dynamoDb,
     })
     const isFirstPayment =
-      this.transaction.senderUserId &&
+      this.transaction.originUserId &&
       !(await transactionRepository.hasAnySendingTransaction(
-        this.transaction.senderUserId
+        this.transaction.originUserId
       ))
     if (isFirstPayment) {
       return {

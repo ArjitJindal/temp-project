@@ -11,8 +11,8 @@ export function getSenderKeys(
 } {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
-    transaction.senderUserId,
-    transaction.senderPaymentDetails,
+    transaction.originUserId,
+    transaction.originPaymentDetails,
     'sending',
     transactionType,
     transaction.timestamp
@@ -29,8 +29,8 @@ export function getReceiverKeys(
 } {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
-    transaction.receiverUserId,
-    transaction.receiverPaymentDetails,
+    transaction.destinationUserId,
+    transaction.destinationPaymentDetails,
     'receiving',
     transactionType,
     transaction.timestamp

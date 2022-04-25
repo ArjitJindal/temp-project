@@ -19,9 +19,9 @@ export default class HighRiskCurrencyRule extends Rule<HighRiskCurrencyRuleParam
 
   public async computeRule() {
     const sendingCurrency =
-      this.transaction.sendingAmountDetails?.transactionCurrency
+      this.transaction.originAmountDetails?.transactionCurrency
     const receivingCurrency =
-      this.transaction.receivingAmountDetails?.transactionCurrency
+      this.transaction.destinationAmountDetails?.transactionCurrency
 
     if (
       (sendingCurrency &&

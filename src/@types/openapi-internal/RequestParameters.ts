@@ -37,6 +37,7 @@ import { RuleAction1 } from './RuleAction1'
 import { RuleFailureException } from './RuleFailureException'
 import { RuleImplementation } from './RuleImplementation'
 import { RuleInstance } from './RuleInstance'
+import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
@@ -52,6 +53,7 @@ import { UPIDetails } from './UPIDetails'
 import { User } from './User'
 import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
+import { WalletDetails } from './WalletDetails'
 
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
@@ -239,6 +241,12 @@ export interface DefaultApiPostGetPresignedUrlRequest {}
 
 export interface DefaultApiPostIamRuleInstancesRequest {
   /**
+   * Tenant ID
+   * @type string
+   * @memberof DefaultApipostIamRuleInstances
+   */
+  tenantId?: string
+  /**
    *
    * @type RuleInstance
    * @memberof DefaultApipostIamRuleInstances
@@ -247,6 +255,12 @@ export interface DefaultApiPostIamRuleInstancesRequest {
 }
 
 export interface DefaultApiPostIamRulesRequest {
+  /**
+   * Tenant ID
+   * @type string
+   * @memberof DefaultApipostIamRules
+   */
+  tenantId?: string
   /**
    *
    * @type Rule

@@ -43,22 +43,22 @@ describe.each<RuleTestCase>([
     transactions: [
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-05T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-10T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-20T06:00:00.000Z').unix(),
       }),
     ],
@@ -69,22 +69,22 @@ describe.each<RuleTestCase>([
     transactions: [
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-05T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-10T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-20T06:00:00.000Z').unix(),
       }),
     ],
@@ -95,32 +95,32 @@ describe.each<RuleTestCase>([
     transactions: [
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-03T00:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-05T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'OTHER_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-06T00:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-07T00:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'CRYPTO_DEPOSIT',
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-07T00:00:00.000Z').unix(),
       }),
     ],
@@ -131,22 +131,22 @@ describe.each<RuleTestCase>([
     transactions: [
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '4-1',
+        originUserId: '4-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '4-1',
+        originUserId: '4-1',
         timestamp: dayjs('2022-01-05T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '4-1',
+        originUserId: '4-1',
         timestamp: dayjs('2022-01-10T06:00:00.000Z').unix(),
       }),
       getTestTransaction({
         type: 'FIAT_DEPOSIT',
-        senderUserId: '4-1',
+        originUserId: '4-1',
         timestamp: dayjs('2022-01-20T06:00:00.000Z').unix(),
       }),
     ],

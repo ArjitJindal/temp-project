@@ -33,18 +33,18 @@ describe('Core logic', () => {
       name: 'Too frequent sending transactions - hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '1-1',
-          receiverUserId: '1-2',
+          originUserId: '1-1',
+          destinationUserId: '1-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '1-1',
-          receiverUserId: '1-3',
+          originUserId: '1-1',
+          destinationUserId: '1-3',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '1-1',
-          receiverUserId: '1-4',
+          originUserId: '1-1',
+          destinationUserId: '1-4',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
       ],
@@ -54,18 +54,18 @@ describe('Core logic', () => {
       name: 'Too frequent receiving transactions - hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '2-2',
-          receiverUserId: '2-1',
+          originUserId: '2-2',
+          destinationUserId: '2-1',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '2-3',
-          receiverUserId: '2-1',
+          originUserId: '2-3',
+          destinationUserId: '2-1',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '2-4',
-          receiverUserId: '2-1',
+          originUserId: '2-4',
+          destinationUserId: '2-1',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
       ],
@@ -75,18 +75,18 @@ describe('Core logic', () => {
       name: 'Too frequent sending and receiving transactions - hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '3-1',
-          receiverUserId: '3-2',
+          originUserId: '3-1',
+          destinationUserId: '3-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '3-3',
-          receiverUserId: '3-1',
+          originUserId: '3-3',
+          destinationUserId: '3-1',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '3-1',
-          receiverUserId: '3-4',
+          originUserId: '3-1',
+          destinationUserId: '3-4',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
       ],
@@ -96,18 +96,18 @@ describe('Core logic', () => {
       name: 'Frequent transactions by different users - not hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '4-1',
-          receiverUserId: '4-2',
+          originUserId: '4-1',
+          destinationUserId: '4-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '4-3',
-          receiverUserId: '4-4',
+          originUserId: '4-3',
+          destinationUserId: '4-4',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '4-5',
-          receiverUserId: '4-6',
+          originUserId: '4-5',
+          destinationUserId: '4-6',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
       ],
@@ -117,18 +117,18 @@ describe('Core logic', () => {
       name: 'Frequent transactions without user IDs - not hit',
       transactions: [
         getTestTransaction({
-          senderUserId: undefined,
-          receiverUserId: undefined,
+          originUserId: undefined,
+          destinationUserId: undefined,
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: undefined,
-          receiverUserId: undefined,
+          originUserId: undefined,
+          destinationUserId: undefined,
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: undefined,
-          receiverUserId: undefined,
+          originUserId: undefined,
+          destinationUserId: undefined,
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
       ],
@@ -138,18 +138,18 @@ describe('Core logic', () => {
       name: 'Normal transactions - not hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '5-1',
-          receiverUserId: '5-2',
+          originUserId: '5-1',
+          destinationUserId: '5-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '5-1',
-          receiverUserId: '5-3',
+          originUserId: '5-1',
+          destinationUserId: '5-3',
           timestamp: dayjs('2022-01-01T00:00:10.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '5-1',
-          receiverUserId: '5-4',
+          originUserId: '5-1',
+          destinationUserId: '5-4',
           timestamp: dayjs('2022-01-01T00:00:20.000Z').unix(),
         }),
       ],
@@ -159,33 +159,33 @@ describe('Core logic', () => {
       name: 'Too frequent transactions - hit twice',
       transactions: [
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-2',
+          originUserId: '6-1',
+          destinationUserId: '6-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-3',
+          originUserId: '6-1',
+          destinationUserId: '6-3',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-4',
+          originUserId: '6-1',
+          destinationUserId: '6-4',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-2',
+          originUserId: '6-1',
+          destinationUserId: '6-2',
           timestamp: dayjs('2022-01-01T00:10:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-3',
+          originUserId: '6-1',
+          destinationUserId: '6-3',
           timestamp: dayjs('2022-01-01T00:10:01.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '6-1',
-          receiverUserId: '6-4',
+          originUserId: '6-1',
+          destinationUserId: '6-4',
           timestamp: dayjs('2022-01-01T00:10:02.000Z').unix(),
         }),
       ],
@@ -225,13 +225,13 @@ describe('Optional parameters', () => {
       name: 'User in the list and transaction time within the window - hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '1-1',
-          receiverUserId: '1-2',
+          originUserId: '1-1',
+          destinationUserId: '1-2',
           timestamp: dayjs('2022-01-01T10:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '1-1',
-          receiverUserId: '1-3',
+          originUserId: '1-1',
+          destinationUserId: '1-3',
           timestamp: dayjs('2022-01-01T10:00:00.100Z').unix(),
         }),
       ],
@@ -241,13 +241,13 @@ describe('Optional parameters', () => {
       name: 'User not in the list - not hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '2-1',
-          receiverUserId: '2-2',
+          originUserId: '2-1',
+          destinationUserId: '2-2',
           timestamp: dayjs('2022-01-01T10:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '2-1',
-          receiverUserId: '2-3',
+          originUserId: '2-1',
+          destinationUserId: '2-3',
           timestamp: dayjs('2022-01-01T10:00:00.100Z').unix(),
         }),
       ],
@@ -257,13 +257,13 @@ describe('Optional parameters', () => {
       name: 'Transaction time not within the window - not hit',
       transactions: [
         getTestTransaction({
-          senderUserId: '3-1',
-          receiverUserId: '3-2',
+          originUserId: '3-1',
+          destinationUserId: '3-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         }),
         getTestTransaction({
-          senderUserId: '3-1',
-          receiverUserId: '3-3',
+          originUserId: '3-1',
+          destinationUserId: '3-3',
           timestamp: dayjs('2022-01-01T00:00:00.100Z').unix(),
         }),
       ],

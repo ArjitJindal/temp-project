@@ -29,7 +29,7 @@ describe.each<RuleTestCase>([
     name: 'Sender user changes cities too frequently - hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           // City: Sungai Petani
@@ -37,7 +37,7 @@ describe.each<RuleTestCase>([
         },
       }),
       getTestTransaction({
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
         deviceData: {
           // City: Bourg-en-Bresse
@@ -45,7 +45,7 @@ describe.each<RuleTestCase>([
         },
       }),
       getTestTransaction({
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-01T12:00:00.000Z').unix(),
         deviceData: {
           // City: Newcastle-under-Lyme
@@ -53,7 +53,7 @@ describe.each<RuleTestCase>([
         },
       }),
       getTestTransaction({
-        senderUserId: '1-1',
+        originUserId: '1-1',
         timestamp: dayjs('2022-01-03T12:00:00.000Z').unix(),
         deviceData: {
           // City: Rock Hill
@@ -67,21 +67,21 @@ describe.each<RuleTestCase>([
     name: 'Sender user in the same city - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '175.141.76.76',
         },
       }),
       getTestTransaction({
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '175.141.76.77',
         },
       }),
       getTestTransaction({
-        senderUserId: '2-1',
+        originUserId: '2-1',
         timestamp: dayjs('2022-01-01T12:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '175.141.76.78',
@@ -94,21 +94,21 @@ describe.each<RuleTestCase>([
     name: 'Sender user changes cities not too frequently - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '175.141.76.76',
         },
       }),
       getTestTransaction({
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-03T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '176.135.186.17',
         },
       }),
       getTestTransaction({
-        senderUserId: '3-1',
+        originUserId: '3-1',
         timestamp: dayjs('2022-01-06T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '160.5.125.137',
@@ -121,21 +121,21 @@ describe.each<RuleTestCase>([
     name: 'Different sender users in different cities - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '4-1',
+        originUserId: '4-1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '175.141.76.76',
         },
       }),
       getTestTransaction({
-        senderUserId: '4-2',
+        originUserId: '4-2',
         timestamp: dayjs('2022-01-01T01:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '176.135.186.17',
         },
       }),
       getTestTransaction({
-        senderUserId: '4-3',
+        originUserId: '4-3',
         timestamp: dayjs('2022-01-01T02:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '160.5.125.137',

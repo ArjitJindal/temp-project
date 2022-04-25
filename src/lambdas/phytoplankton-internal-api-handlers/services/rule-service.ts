@@ -26,10 +26,12 @@ export class RuleService {
   }
 
   getAllRuleImplementations(): ReadonlyArray<RuleImplementation> {
-    return Object.entries(rules).map((entry) => ({
-      name: entry[0],
-      parametersSchema: entry[1].getSchema(),
-    }))
+    return Object.entries(rules)
+      .filter((entry) => !entry[0].startsWith('tests/'))
+      .map((entry) => ({
+        name: entry[0],
+        parametersSchema: entry[1].getSchema(),
+      }))
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

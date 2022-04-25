@@ -69,12 +69,12 @@ export default class TransactionsVelocityRule extends Rule<TransactionsVelocityR
       .unix(this.transaction.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
       .unix()
-    const senderTransactionsCountPromise = this.transaction.senderUserId
-      ? this.getTransactionsCount(this.transaction.senderUserId, afterTimestamp)
+    const senderTransactionsCountPromise = this.transaction.originUserId
+      ? this.getTransactionsCount(this.transaction.originUserId, afterTimestamp)
       : Promise.resolve(0)
-    const receiverTransactionsCountPromise = this.transaction.receiverUserId
+    const receiverTransactionsCountPromise = this.transaction.destinationUserId
       ? this.getTransactionsCount(
-          this.transaction.receiverUserId,
+          this.transaction.destinationUserId,
           afterTimestamp
         )
       : Promise.resolve(0)
@@ -85,10 +85,10 @@ export default class TransactionsVelocityRule extends Rule<TransactionsVelocityR
       ])
 
     if (
-      (this.transaction.senderUserId &&
+      (this.transaction.originUserId &&
         (senderTransactionsCount + 1) / timeWindowInSeconds >
           transactionsPerSecond) ||
-      (this.transaction.receiverUserId &&
+      (this.transaction.destinationUserId &&
         (receiverTransactionsCount + 1) / timeWindowInSeconds >
           transactionsPerSecond)
     ) {

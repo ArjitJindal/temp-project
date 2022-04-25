@@ -64,11 +64,11 @@ export async function verifyTransaction(
     dynamoDb,
   })
   const [senderUser, receiverUser, ruleInstances] = await Promise.all([
-    transaction.senderUserId
-      ? userRepository.getUser<User | Business>(transaction.senderUserId)
+    transaction.originUserId
+      ? userRepository.getUser<User | Business>(transaction.originUserId)
       : undefined,
-    transaction.receiverUserId
-      ? userRepository.getUser<User | Business>(transaction.receiverUserId)
+    transaction.destinationUserId
+      ? userRepository.getUser<User | Business>(transaction.destinationUserId)
       : undefined,
     ruleInstanceRepository.getActiveRuleInstances(),
   ])

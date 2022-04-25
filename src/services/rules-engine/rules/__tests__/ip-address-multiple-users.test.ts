@@ -29,35 +29,35 @@ describe.each<RuleTestCase>([
     name: 'Different users using the same IP address in a short time - hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T01:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '2',
+        originUserId: '2',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '2',
+        originUserId: '2',
         timestamp: dayjs('2022-01-01T07:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '3',
+        originUserId: '3',
         timestamp: dayjs('2022-01-07T07:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '1.1.1.1',
@@ -70,14 +70,14 @@ describe.each<RuleTestCase>([
     name: 'Different users using the same IP address not in a short time - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '2.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '2',
+        originUserId: '2',
         timestamp: dayjs('2022-01-07T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '2.1.1.1',
@@ -90,14 +90,14 @@ describe.each<RuleTestCase>([
     name: 'Same user using the same IP address - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '3.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '3.1.1.1',
@@ -110,14 +110,14 @@ describe.each<RuleTestCase>([
     name: 'Different users using different IP addresses - not hit',
     transactions: [
       getTestTransaction({
-        senderUserId: '1',
+        originUserId: '1',
         timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '4.1.1.1',
         },
       }),
       getTestTransaction({
-        senderUserId: '2',
+        originUserId: '2',
         timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
         deviceData: {
           ipAddress: '4.2.1.1',

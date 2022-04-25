@@ -72,13 +72,14 @@ export class ShPaymentTransactionConverter
       transactionId: rawTransaction.No,
       timestamp: dayjs(rawTransaction['Input Date']).unix(),
       reference: rawTransaction['Reference No'],
-      senderUserId: this.accountToUserId[rawTransaction['Debtor account']],
-      receiverUserId: this.accountToUserId[rawTransaction['Creditor account']],
-      sendingAmountDetails: {
+      originUserId: this.accountToUserId[rawTransaction['Debtor account']],
+      destinationUserId:
+        this.accountToUserId[rawTransaction['Creditor account']],
+      originAmountDetails: {
         transactionAmount: parseFloat(transactionAmount),
         transactionCurrency,
       },
-      senderPaymentDetails: {
+      originPaymentDetails: {
         method: 'IBAN',
         name: {
           firstName: senderFirstName,
@@ -87,7 +88,7 @@ export class ShPaymentTransactionConverter
         IBAN: rawTransaction['Debtor account'],
         BIC: rawTransaction['Debtor institution BIC'],
       },
-      receiverPaymentDetails: {
+      destinationPaymentDetails: {
         method: 'IBAN',
         name: {
           firstName: receiverFirstName,

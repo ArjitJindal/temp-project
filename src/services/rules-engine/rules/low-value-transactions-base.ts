@@ -44,9 +44,9 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
     const direction = this.getDirection()
     switch (direction) {
       case 'sending':
-        return this.transaction.senderUserId
+        return this.transaction.originUserId
       case 'receiving':
-        return this.transaction.receiverUserId
+        return this.transaction.destinationUserId
     }
   }
 
@@ -56,9 +56,9 @@ export default class LowValueTransactionsRule extends Rule<LowValueTransactionsR
     const direction = this.getDirection()
     switch (direction) {
       case 'sending':
-        return transaction.sendingAmountDetails
+        return transaction.originAmountDetails
       case 'receiving':
-        return transaction.receivingAmountDetails
+        return transaction.destinationAmountDetails
     }
   }
   protected getDirection(): PaymentDirection {

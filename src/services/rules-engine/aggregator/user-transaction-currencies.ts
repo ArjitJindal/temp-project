@@ -3,22 +3,22 @@ import { Aggregator } from './aggregator'
 export class UserTransactionCurrencies extends Aggregator {
   public async aggregate(): Promise<void> {
     if (
-      this.transaction.senderUserId &&
-      this.transaction.receivingAmountDetails?.transactionCurrency
+      this.transaction.originUserId &&
+      this.transaction.destinationAmountDetails?.transactionCurrency
     ) {
       await this.aggregationRepository.addUserTransactionCurrency(
-        this.transaction.senderUserId,
-        this.transaction.receivingAmountDetails.transactionCurrency,
+        this.transaction.originUserId,
+        this.transaction.destinationAmountDetails.transactionCurrency,
         'sending'
       )
     }
     if (
-      this.transaction.receiverUserId &&
-      this.transaction.sendingAmountDetails?.transactionCurrency
+      this.transaction.destinationUserId &&
+      this.transaction.originAmountDetails?.transactionCurrency
     ) {
       await this.aggregationRepository.addUserTransactionCurrency(
-        this.transaction.receiverUserId,
-        this.transaction.sendingAmountDetails.transactionCurrency,
+        this.transaction.destinationUserId,
+        this.transaction.originAmountDetails.transactionCurrency,
         'receiving'
       )
     }

@@ -23,25 +23,25 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
       this.tenantId,
       this.dynamoDb
     )
-    const { senderUserId, receiverUserId } = this.transaction
+    const { originUserId, destinationUserId } = this.transaction
     const senderCurrency =
-      this.transaction.sendingAmountDetails?.transactionCurrency
+      this.transaction.originAmountDetails?.transactionCurrency
     const receiverCurrency =
-      this.transaction.sendingAmountDetails?.transactionCurrency
+      this.transaction.originAmountDetails?.transactionCurrency
     const [
       senderTransactionCurrencies,
       senderTransactionsCount,
       receiverTransactionCurrencies,
       receiverTransactionsCount,
     ] = await Promise.all([
-      senderUserId &&
-        aggregationRepository.getUserTransactionCurrencies(senderUserId),
-      senderUserId &&
-        aggregationRepository.getUserTransactionsCount(senderUserId),
-      receiverUserId &&
-        aggregationRepository.getUserTransactionCurrencies(receiverUserId),
-      receiverUserId &&
-        aggregationRepository.getUserTransactionsCount(receiverUserId),
+      originUserId &&
+        aggregationRepository.getUserTransactionCurrencies(originUserId),
+      originUserId &&
+        aggregationRepository.getUserTransactionsCount(originUserId),
+      destinationUserId &&
+        aggregationRepository.getUserTransactionCurrencies(destinationUserId),
+      destinationUserId &&
+        aggregationRepository.getUserTransactionsCount(destinationUserId),
     ])
 
     if (
@@ -51,7 +51,7 @@ export default class TransactionNewCurrencyRule extends Rule<TransactionNewCurre
         senderTransactionCurrencies &&
         receiverCurrency &&
         !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)) ||
-      (receiverUserId &&
+      (destinationUserId &&
         receiverTransactionsCount &&
         receiverTransactionsCount.receivingTransactionsCount >=
           this.parameters.initialTransactions &&

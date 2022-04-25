@@ -12,14 +12,15 @@
 
 import { Address } from './Address'
 import { ConsumerName } from './ConsumerName'
-export class ACHDetails {
+export class SWIFTDetails {
   'method': string
-  'routingNumber': string
-  'accountNumber': string
+  'swiftCode'?: string
+  'accountNumber'?: string
+  'accountType'?: string
   'bankName'?: string
   'name'?: ConsumerName
   'bankAddress'?: Address
-  'beneficiaryName'?: string
+  'specialInstructions'?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -36,14 +37,20 @@ export class ACHDetails {
       format: '',
     },
     {
-      name: 'routingNumber',
-      baseName: 'routingNumber',
+      name: 'swiftCode',
+      baseName: 'swiftCode',
       type: 'string',
       format: '',
     },
     {
       name: 'accountNumber',
       baseName: 'accountNumber',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'accountType',
+      baseName: 'accountType',
       type: 'string',
       format: '',
     },
@@ -66,15 +73,15 @@ export class ACHDetails {
       format: '',
     },
     {
-      name: 'beneficiaryName',
-      baseName: 'beneficiaryName',
+      name: 'specialInstructions',
+      baseName: 'specialInstructions',
       type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return ACHDetails.attributeTypeMap
+    return SWIFTDetails.attributeTypeMap
   }
 
   public constructor() {}

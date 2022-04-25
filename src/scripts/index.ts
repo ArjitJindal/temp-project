@@ -125,22 +125,22 @@ export const createAndUploadTestData = async (
 
   for (let i = 0; i < numberOfTransactions; i++) {
     transactionObject = {
-      senderUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
-      receiverUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
+      originUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
+      destinationUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       timestamp:
         Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 300000),
-      sendingAmountDetails: {
+      originAmountDetails: {
         transactionAmount: getRandomIntInclusive(1, 10000),
         transactionCurrency: currencyOne,
         country: countryOne,
       },
-      receivingAmountDetails: {
+      destinationAmountDetails: {
         transactionAmount: getRandomIntInclusive(1, 10000),
         transactionCurrency: currencyTwo,
         country: countryTwo,
       },
-      senderPaymentDetails: createPaymentDetails(countryOne, nameOne),
-      receiverPaymentDetails: createPaymentDetails(countryTwo, nameTwo),
+      originPaymentDetails: createPaymentDetails(countryOne, nameOne),
+      destinationPaymentDetails: createPaymentDetails(countryTwo, nameTwo),
       productType: productTypes[getRandomIntInclusive(0, 3)],
       promotionCodeUsed: getRandomIntInclusive(0, 10) > 8 ? true : false,
       executedRules: ruleInstances,
