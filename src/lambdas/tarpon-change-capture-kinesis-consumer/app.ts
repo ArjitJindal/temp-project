@@ -101,7 +101,7 @@ const dashboardTransactionStatsHandler = async (
     ])
     await aggregationCursor.next()
   } catch (e) {
-    console.log(`ERROR ${e}`)
+    console.error`ERROR ${e}`)
   }
 }
 
