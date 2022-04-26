@@ -85,7 +85,7 @@ export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
   tenantId: string
 ) => {
-  return `${tenantId}-dashboard-transaction-monthly-daily`
+  return `${tenantId}-dashboard-transaction-stats-daily`
 }
 
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
