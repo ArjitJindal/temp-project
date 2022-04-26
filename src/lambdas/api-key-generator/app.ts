@@ -10,7 +10,7 @@ import { TarponStackConstants } from '@cdk/constants'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   connectToDB,
-  TRANSACIONS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 
@@ -64,7 +64,7 @@ export const createDocumentDBCollections = async (tenantId: string) => {
   client = await connectToDB()
   const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
   try {
-    await db.createCollection(TRANSACIONS_COLLECTION(tenantId))
+    await db.createCollection(TRANSACTIONS_COLLECTION(tenantId))
     await db.createCollection(USERS_COLLECTION(tenantId))
   } catch (e) {
     console.log(`Error in creating DocumentDB collections: ${e}`)

@@ -7,8 +7,14 @@ import {
 } from './constants'
 import {
   connectToDB,
-  TRANSACIONS_COLLECTION,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  MONTH_DATE_FORMAT,
+  DAY_DATE_FORMAT,
+  HOUR_DATE_FORMAT,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -41,7 +47,7 @@ async function transactionHandler(
   transaction: TransactionWithRulesResult
 ) {
   const transactionsCollection = db.collection<TransactionCaseManagement>(
-    TRANSACIONS_COLLECTION(tenantId)
+    TRANSACTIONS_COLLECTION(tenantId)
   )
   transaction.executedRules
   await transactionsCollection.replaceOne(
@@ -63,15 +69,51 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
   })
 }
 
+const dashboardTransactionStatsHandler = async (
+  db: Db,
+  tenantId: string,
+  aggregatedCollectionName: string,
+  dateIdFormat: string
+) => {
+  const transactionsCollection = db.collection<TransactionCaseManagement>(
+    TRANSACTIONS_COLLECTION(tenantId)
+  )
+  try {
+    const aggregationCursor = await transactionsCollection.aggregate([
+      { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: dateIdFormat,
+              date: { $toDate: { $toLong: '$timestamp' } },
+            },
+          },
+          transactionsCount: { $sum: 1 },
+        },
+      },
+      {
+        $merge: {
+          into: aggregatedCollectionName,
+          whenMatched: 'replace',
+        },
+      },
+    ]).next()
+  } catch (e) {
+    console.error`ERROR ${e}`)
+  }
+}
+
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   try {
+    let tenantId
     client = await connectToDB()
     const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     for (const record of event.Records) {
       const payload: KinesisStreamRecordPayload = record.kinesis
       const message: string = Buffer.from(payload.data, 'base64').toString()
       const dynamoDBStreamObject = JSON.parse(message).dynamodb
-      const tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
+      tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
 
       if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
@@ -90,6 +132,24 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
       ) {
         await userHandler(db, tenantId, handlePrimaryItem(message) as User)
       }
+      await dashboardTransactionStatsHandler(
+        db,
+        tenantId,
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
+        MONTH_DATE_FORMAT
+      )
+      await dashboardTransactionStatsHandler(
+        db,
+        tenantId,
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
+        DAY_DATE_FORMAT
+      )
+      await dashboardTransactionStatsHandler(
+        db,
+        tenantId,
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
+        HOUR_DATE_FORMAT
+      )
     }
   } catch (err) {
     console.error(err)

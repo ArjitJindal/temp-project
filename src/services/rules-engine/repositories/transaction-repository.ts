@@ -11,7 +11,7 @@ import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { TRANSACIONS_COLLECTION } from '@/utils/mongoDBUtils'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
@@ -43,7 +43,7 @@ export class TransactionRepository {
   ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const query = {
       timestamp: { $lte: pagination.beforeTimestamp },
@@ -64,7 +64,7 @@ export class TransactionRepository {
   ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
 
     const query = {
@@ -92,7 +92,7 @@ export class TransactionRepository {
   ) {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     await collection.updateOne(
       { transactionId },
@@ -204,7 +204,7 @@ export class TransactionRepository {
   ): Promise<Comment> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const commentToSave: Comment = {
       ...comment,
@@ -229,7 +229,7 @@ export class TransactionRepository {
   ) {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     await collection.updateOne(
       {
@@ -245,7 +245,7 @@ export class TransactionRepository {
   ): Promise<TransactionCaseManagement | null> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
-      TRANSACIONS_COLLECTION(this.tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     return collection.findOne<TransactionCaseManagement>({ transactionId })
   }
