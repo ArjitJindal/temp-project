@@ -10,18 +10,31 @@
  * Do not edit the class manually.
  */
 
-import { Address } from './Address';
 import { ConsumerName } from './ConsumerName';
+import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
-export class ACHDetails {
+/**
+ * Standardized model for a Generic wallet transaction
+ */
+export class WalletDetails {
+  /**
+   * Type: WALLET
+   */
   'method': string;
-  'routingNumber': string;
-  'accountNumber': string;
-  'bankName'?: string;
+  'walletType': string;
+  /**
+   * Unique ID of the wallet
+   */
+  'walletId'?: string;
+  /**
+   * Payment Channel used through wallet
+   */
+  'paymentChannel'?: string;
   'name'?: ConsumerName;
-  'bankAddress'?: Address;
-  'beneficiaryName'?: string;
+  'tags'?: Tag;
+  'walletPhoneNumber'?: string;
+  ''?: string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -38,20 +51,20 @@ export class ACHDetails {
       format: '',
     },
     {
-      name: 'routingNumber',
-      baseName: 'routingNumber',
+      name: 'walletType',
+      baseName: 'walletType',
       type: 'string',
       format: '',
     },
     {
-      name: 'accountNumber',
-      baseName: 'accountNumber',
+      name: 'walletId',
+      baseName: 'walletId',
       type: 'string',
       format: '',
     },
     {
-      name: 'bankName',
-      baseName: 'bankName',
+      name: 'paymentChannel',
+      baseName: 'paymentChannel',
       type: 'string',
       format: '',
     },
@@ -62,21 +75,27 @@ export class ACHDetails {
       format: '',
     },
     {
-      name: 'bankAddress',
-      baseName: 'bankAddress',
-      type: 'Address',
+      name: 'tags',
+      baseName: 'tags',
+      type: 'Tag',
       format: '',
     },
     {
-      name: 'beneficiaryName',
-      baseName: 'beneficiaryName',
+      name: 'walletPhoneNumber',
+      baseName: 'walletPhoneNumber',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: '',
+      baseName: '',
       type: 'string',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return ACHDetails.attributeTypeMap;
+    return WalletDetails.attributeTypeMap;
   }
 
   public constructor() {}

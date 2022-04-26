@@ -45,6 +45,7 @@ export const RuleCreationForm: React.FC = () => {
           await api.postRules({
             Rule: {
               id: values.id,
+              type: values.type,
               name: values.name,
               description: values.description,
               ruleImplementationName: values.ruleImplementationName,
@@ -72,6 +73,20 @@ export const RuleCreationForm: React.FC = () => {
           {
             required: true,
           },
+        ]}
+      />
+      <ProFormSelect
+        width="xl"
+        name="type"
+        label="Rule Type"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+        options={[
+          { value: 'TRANSACTION', label: 'TRANSACTION' },
+          { value: 'USER', label: 'USER' },
         ]}
       />
       <ProFormText

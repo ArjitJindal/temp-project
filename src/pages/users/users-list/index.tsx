@@ -192,20 +192,20 @@ const BusinessUsersTab: React.FC = () => {
                   key: 'transactionTime',
                 },
                 {
-                  title: 'Sending Amount',
+                  title: 'Origin Amount',
                   render: (dom, entity) => {
                     return `${createCurrencyStringFromTransactionAmount(
-                      entity.sendingAmountDetails,
+                      entity.originAmountDetails,
                     )}`;
                   },
                   key: 'amount',
                 },
 
                 {
-                  title: 'Receiving Amount',
+                  title: 'Destination Amount',
                   render: (dom, entity) => {
                     return `${createCurrencyStringFromTransactionAmount(
-                      entity.receivingAmountDetails,
+                      entity.destinationAmountDetails,
                     )}`;
                   },
                   key: 'amount',
@@ -384,20 +384,20 @@ const ConsumerUsersTab: React.FC = () => {
                   key: 'transactionTime',
                 },
                 {
-                  title: 'Sending Amount',
+                  title: 'Origin Amount',
                   render: (dom, entity) => {
                     return `${createCurrencyStringFromTransactionAmount(
-                      entity.sendingAmountDetails,
+                      entity.originAmountDetails,
                     )}`;
                   },
                   key: 'amount',
                 },
 
                 {
-                  title: 'Receiving Amount',
+                  title: 'Destination Amount',
                   render: (dom, entity) => {
                     return `${createCurrencyStringFromTransactionAmount(
-                      entity.receivingAmountDetails,
+                      entity.destinationAmountDetails,
                     )}`;
                   },
                   key: 'amount',

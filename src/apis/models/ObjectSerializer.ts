@@ -37,6 +37,7 @@ export * from './RuleAction1';
 export * from './RuleFailureException';
 export * from './RuleImplementation';
 export * from './RuleInstance';
+export * from './SWIFTDetails';
 export * from './Tag';
 export * from './Transaction';
 export * from './TransactionAmountDetails';
@@ -52,6 +53,7 @@ export * from './UPIDetails';
 export * from './User';
 export * from './UserDetails';
 export * from './UserDetails1';
+export * from './WalletDetails';
 
 import { ACHDetails } from './ACHDetails';
 import { Address } from './Address';
@@ -86,12 +88,13 @@ import { ListImportRequest } from './ListImportRequest';
 import { ModelDate } from './ModelDate';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
-import { Rule } from './Rule';
+import { Rule, RuleTypeEnum } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
 import { RuleFailureException } from './RuleFailureException';
 import { RuleImplementation } from './RuleImplementation';
-import { RuleInstance, RuleInstanceStatusEnum } from './RuleInstance';
+import { RuleInstance, RuleInstanceTypeEnum, RuleInstanceStatusEnum } from './RuleInstance';
+import { SWIFTDetails } from './SWIFTDetails';
 import { Tag } from './Tag';
 import { Transaction } from './Transaction';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
@@ -107,6 +110,7 @@ import { UPIDetails } from './UPIDetails';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
 import { UserDetails1 } from './UserDetails1';
+import { WalletDetails } from './WalletDetails';
 
 /* tslint:disable:no-unused-variable */
 let primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any'];
@@ -122,8 +126,10 @@ let enumsMap: Set<string> = new Set<string>([
   'FileImportStatusChangeStatusEnum',
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
+  'RuleTypeEnum',
   'RuleAction',
   'RuleAction1',
+  'RuleInstanceTypeEnum',
   'RuleInstanceStatusEnum',
 ]);
 
@@ -165,6 +171,7 @@ let typeMap: { [index: string]: any } = {
   RuleFailureException: RuleFailureException,
   RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,
+  SWIFTDetails: SWIFTDetails,
   Tag: Tag,
   Transaction: Transaction,
   TransactionAmountDetails: TransactionAmountDetails,
@@ -180,6 +187,7 @@ let typeMap: { [index: string]: any } = {
   User: User,
   UserDetails: UserDetails,
   UserDetails1: UserDetails1,
+  WalletDetails: WalletDetails,
 };
 
 export class ObjectSerializer {

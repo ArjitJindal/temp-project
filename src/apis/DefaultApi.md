@@ -19,6 +19,8 @@ All URIs are relative to _http://localhost:3000_
 | [**getTransactionsPerUserList**](DefaultApi.md#getTransactionsPerUserList) | **GET** /user/transactions | Transaction Per User - List |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
 | [**postGetPresignedUrl**](DefaultApi.md#postGetPresignedUrl) | **POST** /files/getPresignedUrl | Files - Get Presigned URL |
+| [**postIamRuleInstances**](DefaultApi.md#postIamRuleInstances) | **POST** /iam/rule_instances | Rule Instance - Create |
+| [**postIamRules**](DefaultApi.md#postIamRules) | **POST** /iam/rules | Rules - Create |
 | [**postImport**](DefaultApi.md#postImport) | **POST** /import | Import - Start to Import |
 | [**postLists**](DefaultApi.md#postLists) | **POST** /lists | List Import |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
@@ -799,6 +801,136 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **postIamRuleInstances**
+
+> RuleInstance postIamRuleInstances()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostIamRuleInstancesRequest = {
+  // string | Tenant ID (optional)
+  tenantId: "tenantId_example",
+  // RuleInstance (optional)
+  RuleInstance: {
+    id: "id_example",
+    type: "TRANSACTION",
+    ruleId: "ruleId_example",
+    parameters: {},
+    action: "FLAG",
+    status: "ACTIVE",
+    createdAt: 3.14,
+    updatedAt: 3.14,
+    runCount: 3.14,
+    hitCount: 3.14,
+  },
+};
+
+apiInstance.postIamRuleInstances(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name             | Type             | Description | Notes                            |
+| ---------------- | ---------------- | ----------- | -------------------------------- |
+| **RuleInstance** | **RuleInstance** |             |
+| **tenantId**     | [**string**]     | Tenant ID   | (optional) defaults to undefined |
+
+### Return type
+
+**RuleInstance**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postIamRules**
+
+> Rule postIamRules()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostIamRulesRequest = {
+  // string | Tenant ID (optional)
+  tenantId: "tenantId_example",
+  // Rule (optional)
+  Rule: {
+    id: "id_example",
+    type: "TRANSACTION",
+    name: "name_example",
+    description: "description_example",
+    defaultParameters: {},
+    defaultAction: "FLAG",
+    ruleImplementationName: "ruleImplementationName_example",
+    labels: [
+      "labels_example",
+    ],
+    createdAt: 3.14,
+    updatedAt: 3.14,
+  },
+};
+
+apiInstance.postIamRules(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name         | Type         | Description | Notes                            |
+| ------------ | ------------ | ----------- | -------------------------------- |
+| **Rule**     | **Rule**     |             |
+| **tenantId** | [**string**] | Tenant ID   | (optional) defaults to undefined |
+
+### Return type
+
+**Rule**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **postImport**
 
 > ImportResponse postImport()
@@ -925,6 +1057,7 @@ let body:.DefaultApiPostRuleInstancesRequest = {
   // RuleInstance (optional)
   RuleInstance: {
     id: "id_example",
+    type: "TRANSACTION",
     ruleId: "ruleId_example",
     parameters: {},
     action: "FLAG",
@@ -985,6 +1118,7 @@ let body:.DefaultApiPostRulesRequest = {
   // Rule (optional)
   Rule: {
     id: "id_example",
+    type: "TRANSACTION",
     name: "name_example",
     description: "description_example",
     defaultParameters: {},
@@ -1179,6 +1313,7 @@ let body:.DefaultApiPutRuleInstancesRuleInstanceIdRequest = {
   // RuleInstance (optional)
   RuleInstance: {
     id: "id_example",
+    type: "TRANSACTION",
     ruleId: "ruleId_example",
     parameters: {},
     action: "FLAG",
@@ -1243,6 +1378,7 @@ let body:.DefaultApiPutRuleRuleIdRequest = {
   // Rule (optional)
   Rule: {
     id: "id_example",
+    type: "TRANSACTION",
     name: "name_example",
     description: "description_example",
     defaultParameters: {},

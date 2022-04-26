@@ -42,6 +42,7 @@ import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
+import { SWIFTDetails } from '../models/SWIFTDetails';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
@@ -639,6 +640,80 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.postGetPresignedUrl(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Rule Instance - Create
+   * @param tenantId Tenant ID
+   * @param RuleInstance
+   */
+  public postIamRuleInstances(
+    tenantId?: string,
+    RuleInstance?: RuleInstance,
+    _options?: Configuration,
+  ): Observable<RuleInstance> {
+    const requestContextPromise = this.requestFactory.postIamRuleInstances(
+      tenantId,
+      RuleInstance,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postIamRuleInstances(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Rules - Create
+   * @param tenantId Tenant ID
+   * @param Rule
+   */
+  public postIamRules(tenantId?: string, Rule?: Rule, _options?: Configuration): Observable<Rule> {
+    const requestContextPromise = this.requestFactory.postIamRules(tenantId, Rule, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postIamRules(rsp)),
           );
         }),
       );

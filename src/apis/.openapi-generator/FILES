@@ -52,6 +52,7 @@ models/RuleAction1.ts
 models/RuleFailureException.ts
 models/RuleImplementation.ts
 models/RuleInstance.ts
+models/SWIFTDetails.ts
 models/Tag.ts
 models/Transaction.ts
 models/TransactionAmountDetails.ts
@@ -67,6 +68,7 @@ models/UPIDetails.ts
 models/User.ts
 models/UserDetails.ts
 models/UserDetails1.ts
+models/WalletDetails.ts
 models/all.ts
 package.json
 rxjsStub.ts

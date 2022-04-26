@@ -41,6 +41,7 @@ import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
+import { SWIFTDetails } from '../models/SWIFTDetails';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
@@ -56,6 +57,7 @@ import { UPIDetails } from '../models/UPIDetails';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
 import { UserDetails1 } from '../models/UserDetails1';
+import { WalletDetails } from '../models/WalletDetails';
 import { ObservableDefaultApi } from './ObservableAPI';
 
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
@@ -266,6 +268,30 @@ export class PromiseDefaultApi {
    */
   public postGetPresignedUrl(_options?: Configuration): Promise<PresignedUrlResponse> {
     const result = this.api.postGetPresignedUrl(_options);
+    return result.toPromise();
+  }
+
+  /**
+   * Rule Instance - Create
+   * @param tenantId Tenant ID
+   * @param RuleInstance
+   */
+  public postIamRuleInstances(
+    tenantId?: string,
+    RuleInstance?: RuleInstance,
+    _options?: Configuration,
+  ): Promise<RuleInstance> {
+    const result = this.api.postIamRuleInstances(tenantId, RuleInstance, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Rules - Create
+   * @param tenantId Tenant ID
+   * @param Rule
+   */
+  public postIamRules(tenantId?: string, Rule?: Rule, _options?: Configuration): Promise<Rule> {
+    const result = this.api.postIamRules(tenantId, Rule, _options);
     return result.toPromise();
   }
 

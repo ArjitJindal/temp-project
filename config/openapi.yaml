@@ -57,6 +57,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Rule'
+  /iam/rules:
+    parameters: []
+    post:
+      summary: Rules - Create
+      operationId: post-iam-rules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rule'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
   /rule_implementations:
     get:
       summary: Rule Implementations - List
@@ -142,6 +165,41 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RuleInstance'
+  /iam/rule_instances:
+    post:
+      summary: Rule Instance - Create
+      operationId: post-iam-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    ruleId: string
+                    action: FLAG
+                    parameters: {}
+                    status: ACTIVE
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstance'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: tenantId
+          description: Tenant ID
+    parameters: []
   '/rule_instances/{ruleInstanceId}':
     parameters:
       - schema:
@@ -502,6 +560,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         name:
           type: string
         description:
@@ -522,6 +585,7 @@ components:
           type: number
       required:
         - id
+        - type
         - name
         - description
         - defaultParameters
@@ -534,6 +598,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         ruleId:
           type: string
         parameters:

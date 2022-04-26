@@ -328,60 +328,60 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
         <ProDescriptions.Item
           label={
             <Divider orientation="left" orientationMargin="0">
-              Sender
+              Origin
             </Divider>
           }
           className={styles.verticalDetailsItem}
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.senderUserId}
+              {transaction.originUserId}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
-              {transaction.sendingAmountDetails?.transactionAmount}
+              {transaction.originAmountDetails?.transactionAmount}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Currency" valueType="text">
-              {transaction.sendingAmountDetails?.transactionCurrency}
+              {transaction.originAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Country" valueType="text">
-              {transaction.sendingAmountDetails?.country}
+              {transaction.originAmountDetails?.country}
             </ProDescriptions.Item>
             <ProDescriptions.Item
               label="Payment Details"
               valueType="jsonCode"
               className={styles.verticalDetailsItem}
             >
-              {JSON.stringify(transaction.senderPaymentDetails)}
+              {JSON.stringify(transaction.originPaymentDetails)}
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProDescriptions.Item>
         <ProDescriptions.Item
           label={
             <Divider orientation="left" orientationMargin="0">
-              Receiver
+              Destination
             </Divider>
           }
           className={styles.verticalDetailsItem}
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.receiverUserId}
+              {transaction.destinationUserId}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
-              {transaction.receivingAmountDetails?.transactionAmount}
+              {transaction.destinationAmountDetails?.transactionAmount}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Currency" valueType="text">
-              {transaction.receivingAmountDetails?.transactionCurrency}
+              {transaction.destinationAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Country" valueType="text">
-              {transaction.receivingAmountDetails?.country}
+              {transaction.destinationAmountDetails?.country}
             </ProDescriptions.Item>
             <ProDescriptions.Item
               label="Payment Details"
               valueType="jsonCode"
               className={styles.verticalDetailsItem}
             >
-              {JSON.stringify(transaction.receiverPaymentDetails)}
+              {JSON.stringify(transaction.destinationPaymentDetails)}
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProDescriptions.Item>

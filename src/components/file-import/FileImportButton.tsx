@@ -114,7 +114,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
                   <a href={OPENAPI_REF[type]} target="_blank">
                     schema
                   </a>
-                  . For example, 'sendingAmountDetails.country', or 'tags.0.key' for array type.
+                  . For example, 'originAmountDetails.country', or 'tags.0.key' for array type.
                 </p>
                 <a href={EXAMPLE_FILE_URL[type]} target="_blank">
                   Example file

@@ -15,6 +15,7 @@ import { HttpFile } from '../http/http';
 
 export class RuleInstance {
   'id'?: string;
+  'type'?: RuleInstanceTypeEnum;
   'ruleId': string;
   'parameters': any;
   'action': RuleAction;
@@ -36,6 +37,12 @@ export class RuleInstance {
       name: 'id',
       baseName: 'id',
       type: 'string',
+      format: '',
+    },
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'RuleInstanceTypeEnum',
       format: '',
     },
     {
@@ -95,4 +102,5 @@ export class RuleInstance {
   public constructor() {}
 }
 
+export type RuleInstanceTypeEnum = 'TRANSACTION' | 'USER';
 export type RuleInstanceStatusEnum = 'ACTIVE' | 'INACTIVE';

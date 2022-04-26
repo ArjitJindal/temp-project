@@ -57,61 +57,61 @@ const TableList: React.FC = () => {
         valueType: 'dateTime',
       },
       {
-        title: 'Sender User ID',
-        dataIndex: 'senderUserId',
+        title: 'Origin User ID',
+        dataIndex: 'originUserId',
         hideInTable: true,
       },
       {
-        title: 'Sender Method',
+        title: 'Origin Method',
         render: (dom, entity) => {
-          return entity.senderPaymentDetails?.method;
+          return entity.originPaymentDetails?.method;
         },
       },
       {
-        title: 'Sending Amount',
+        title: 'Origin Amount',
         render: (dom, entity) => {
-          return entity.sendingAmountDetails?.transactionAmount;
+          return entity.originAmountDetails?.transactionAmount;
         },
       },
       {
-        title: 'Sending Currency',
+        title: 'Origin Currency',
         render: (dom, entity) => {
-          return entity.sendingAmountDetails?.transactionCurrency;
+          return entity.originAmountDetails?.transactionCurrency;
         },
       },
       {
-        title: 'Sending Country',
+        title: 'Origin Country',
         render: (dom, entity) => {
-          return entity.sendingAmountDetails?.country;
+          return entity.originAmountDetails?.country;
         },
       },
       {
-        title: 'Receiver User ID',
-        dataIndex: 'receiverUserId',
+        title: 'Destination User ID',
+        dataIndex: 'destinationUserId',
         hideInTable: true,
       },
       {
-        title: 'Receiver Method',
+        title: 'Destination Method',
         render: (dom, entity) => {
-          return entity.receiverPaymentDetails?.method;
+          return entity.destinationPaymentDetails?.method;
         },
       },
       {
-        title: 'Receiving Amount',
+        title: 'Destination Amount',
         render: (dom, entity) => {
-          return entity.receivingAmountDetails?.transactionAmount;
+          return entity.destinationAmountDetails?.transactionAmount;
         },
       },
       {
-        title: 'Receiving Currency',
+        title: 'Destination Currency',
         render: (dom, entity) => {
-          return entity.receivingAmountDetails?.transactionCurrency;
+          return entity.destinationAmountDetails?.transactionCurrency;
         },
       },
       {
-        title: 'Receiving Country',
+        title: 'Destination Country',
         render: (dom, entity) => {
-          return entity.receivingAmountDetails?.country;
+          return entity.destinationAmountDetails?.country;
         },
       },
       {

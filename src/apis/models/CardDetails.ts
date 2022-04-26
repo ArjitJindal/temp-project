@@ -21,11 +21,11 @@ export class CardDetails {
   /**
    * Unique card fingerprint that helps identify a specific card without having to use explicit card number. This is likely available at your card payment scheme provider
    */
-  'cardFingerprint': string;
+  'cardFingerprint'?: string;
   /**
    * The country of issuance for a specific card
    */
-  'cardIssuedCountry': string;
+  'cardIssuedCountry'?: string;
   /**
    * Reference for the transaction
    */

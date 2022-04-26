@@ -5,7 +5,6 @@ import ProTable from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
-import { ImportRequestTypeEnum } from '@/apis';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 
 function getStatusColor(status: string): string {

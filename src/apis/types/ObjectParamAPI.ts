@@ -41,6 +41,7 @@ import { RuleAction1 } from '../models/RuleAction1';
 import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
+import { SWIFTDetails } from '../models/SWIFTDetails';
 import { Tag } from '../models/Tag';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
@@ -244,6 +245,36 @@ export interface DefaultApiPostApikeyRequest {
 }
 
 export interface DefaultApiPostGetPresignedUrlRequest {}
+
+export interface DefaultApiPostIamRuleInstancesRequest {
+  /**
+   * Tenant ID
+   * @type string
+   * @memberof DefaultApipostIamRuleInstances
+   */
+  tenantId?: string;
+  /**
+   *
+   * @type RuleInstance
+   * @memberof DefaultApipostIamRuleInstances
+   */
+  RuleInstance?: RuleInstance;
+}
+
+export interface DefaultApiPostIamRulesRequest {
+  /**
+   * Tenant ID
+   * @type string
+   * @memberof DefaultApipostIamRules
+   */
+  tenantId?: string;
+  /**
+   *
+   * @type Rule
+   * @memberof DefaultApipostIamRules
+   */
+  Rule?: Rule;
+}
 
 export interface DefaultApiPostImportRequest {
   /**
@@ -544,6 +575,28 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<PresignedUrlResponse> {
     return this.api.postGetPresignedUrl(options).toPromise();
+  }
+
+  /**
+   * Rule Instance - Create
+   * @param param the request object
+   */
+  public postIamRuleInstances(
+    param: DefaultApiPostIamRuleInstancesRequest = {},
+    options?: Configuration,
+  ): Promise<RuleInstance> {
+    return this.api.postIamRuleInstances(param.tenantId, param.RuleInstance, options).toPromise();
+  }
+
+  /**
+   * Rules - Create
+   * @param param the request object
+   */
+  public postIamRules(
+    param: DefaultApiPostIamRulesRequest = {},
+    options?: Configuration,
+  ): Promise<Rule> {
+    return this.api.postIamRules(param.tenantId, param.Rule, options).toPromise();
   }
 
   /**

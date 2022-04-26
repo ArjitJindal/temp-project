@@ -92,7 +92,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     new CfnOutput(this, 'DistributionDomainName', { value: distribution.distributionDomainName });
 
     console.log(
-      `❗❗For initial deployment, please follow https://flagright.atlassian.net/wiki/spaces/EN/pages/9633819/DNS+configuration#AWS-CloudFront-(for-FDT-console) to configure DNS.
+      `❗❗For initial deployment, please follow https://www.notion.so/flagright/DNS-configuration-864d7518d87c448d862baa74b99c3d33#de01aa3894a842bb910ab8904a1d21be to configure DNS.
 It involves the following steps
 1. Create a new certificate for ${config.SITE_DOMAIN} in us-east-1 region
 2. Set up CNAME in Route53 for the certificate
