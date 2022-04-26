@@ -79,7 +79,7 @@ export const USERS_COLLECTION = (tenantId: string) => {
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
   tenantId: string
 ) => {
-  return `${tenantId}-dashboard-transaction-monthly-stats`
+  return `${tenantId}-dashboard-transaction-stats-monthly`
 }
 
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
