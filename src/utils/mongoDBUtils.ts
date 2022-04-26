@@ -91,7 +91,7 @@ export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY = (
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {
-  return `${tenantId}-dashboard-transaction-monthly-hourly`
+  return `${tenantId}-dashboard-transaction-stats-hourly`
 }
 
 export const IMPORT_COLLECTION = (tenantId: string) => {
