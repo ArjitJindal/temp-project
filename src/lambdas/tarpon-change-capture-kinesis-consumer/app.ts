@@ -98,8 +98,7 @@ const dashboardTransactionStatsHandler = async (
           whenMatched: 'replace',
         },
       },
-    ])
-    await aggregationCursor.next()
+    ]).next()
   } catch (e) {
     console.error`ERROR ${e}`)
   }
