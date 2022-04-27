@@ -150,6 +150,9 @@ const TableList: React.FC = () => {
   return (
     <PageContainer>
       <ProTable<TransactionCaseManagement>
+        form={{
+          labelWrap: true,
+        }}
         headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="transactionId"

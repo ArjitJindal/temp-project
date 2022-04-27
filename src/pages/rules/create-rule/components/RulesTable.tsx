@@ -76,6 +76,9 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
 
   return (
     <ProTable<Rule>
+      form={{
+        labelWrap: true,
+      }}
       headerTitle="Select Rule"
       actionRef={actionRef}
       rowKey="id"
