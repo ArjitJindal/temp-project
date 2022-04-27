@@ -68,6 +68,9 @@ const TableList: React.FC = () => {
   return (
     <PageContainer>
       <ProTable<TableListItem, TableListPagination>
+        form={{
+          labelWrap: true,
+        }}
         headerTitle="Files"
         actionRef={actionRef}
         rowKey="id"

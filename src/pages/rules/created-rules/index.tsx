@@ -153,6 +153,9 @@ export default () => {
   return (
     <PageContainer content="List of all created rules. Activate/deactivate them in one click">
       <ProTable<RuleInstance>
+        form={{
+          labelWrap: true,
+        }}
         headerTitle="Rules"
         columns={columns}
         request={async () => {

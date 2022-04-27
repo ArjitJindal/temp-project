@@ -113,6 +113,9 @@ const BusinessUsersTab: React.FC = () => {
   return (
     <>
       <ProTable<Business, TableListPagination>
+        form={{
+          labelWrap: true,
+        }}
         headerTitle="Business Users"
         actionRef={actionRef}
         rowKey="key"
@@ -159,6 +162,9 @@ const BusinessUsersTab: React.FC = () => {
             />
             Transaction History:
             <ProTable<TransactionCaseManagement>
+              form={{
+                labelWrap: true,
+              }}
               request={async (params) => {
                 const response = await api.getTransactionsPerUserList({
                   limit: params.pageSize!,
@@ -305,6 +311,9 @@ const ConsumerUsersTab: React.FC = () => {
   return (
     <>
       <ProTable<User, TableListPagination>
+        form={{
+          labelWrap: true,
+        }}
         headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
@@ -351,6 +360,9 @@ const ConsumerUsersTab: React.FC = () => {
             />
             Transaction History:
             <ProTable<TransactionCaseManagement>
+              form={{
+                labelWrap: true,
+              }}
               request={async (params) => {
                 const response = await api.getTransactionsPerUserList({
                   limit: params.pageSize!,
