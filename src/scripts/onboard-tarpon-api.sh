@@ -16,7 +16,7 @@ fi
 
 if [ "$env" == "sandbox" ]; then
     apiPrefix="sandbox."
-    apiId="s8v9vrpcad"
+    apiId=i5deptp279
 elif [ "$env" == "dev" ]; then
     apiPrefix="dev."
     apiId=lujzovzbk3
