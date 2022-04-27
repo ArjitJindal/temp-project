@@ -247,4 +247,20 @@ awscurl --service execute-api \
     -d '{"ruleId":"R-111","parameters":{"userPairsThreshold":1,"timeWindowInSeconds":3600},"action":"FLAG"}' \
     https://"$apiPrefix"api.flagright.com/console/iam/rule_instances?tenantId=$tenantId
 
+# R-113
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-113","name":"User city changes too many times based on IP address","description":"User''s IP address show > x different cities within t days","defaultParameters":{"uniqueCitiesCountThreshold":1,"timeWindowInDays":1},"defaultAction":"FLAG","ruleImplementationName":"sender-location-changes-frequency","labels":["AML", "Fraud"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"ruleId":"R-113","parameters":{"uniqueCitiesCountThreshold":1,"timeWindowInDays":1},"action":"FLAG"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rule_instances?tenantId=$tenantId
+
+
 echo "Rules and rule instances created."

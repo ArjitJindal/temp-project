@@ -27,6 +27,7 @@ import {
   Tracing,
   StartingPosition,
   Alias,
+  LayerVersion,
 } from 'aws-cdk-lib/aws-lambda'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 
@@ -184,6 +185,16 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     /**
+     * Lambda Layers
+     */
+
+    const fastGeoIpLayer = new LayerVersion(this, 'fast-geoip-layer', {
+      compatibleRuntimes: [Runtime.NODEJS_14_X],
+      code: Code.fromAsset('dist/layers/fast-geoip'),
+      description: 'fast-geoip npm module',
+    })
+
+    /**
      * Lambda Functions
      */
 
@@ -252,7 +263,8 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TRANSACTION_FUNCTION_NAME,
       'app.transactionHandler',
       'dist/rules-engine',
-      config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY
+      config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+      { layers: [fastGeoIpLayer] }
     )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 

@@ -11,6 +11,7 @@
     "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
     "build": "webpack",
     "build:watch": "webpack --watch --progress",
+    "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth",
     "synth:local": "cdk synth local-tarpon",
     "synth:dev": "cdk synth dev-tarpon --profile=AWSAdministratorAccess-911899431626",

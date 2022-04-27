@@ -20,16 +20,20 @@ const config: Configuration = {
     libraryTarget: 'commonjs2',
     path: resolve(__dirname, 'dist'),
   },
+  externals: [
+    // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
+    // it from being bundled and copy node_modules/fast-geoip to dist/rules-engine/node_modules/fast-geoip
+    'fast-geoip',
+  ],
   plugins: [
-    // TODO: re-enable the plugin after https://flagright.atlassian.net/browse/FDT-145
-    // new CopyPlugin({
-    //   patterns: [
-    //     {
-    //       from: 'node_modules/fast-geoip',
-    //       to: 'rules-engine/node_modules/fast-geoip',
-    //     },
-    //   ],
-    // }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: 'node_modules/fast-geoip',
+          to: 'layers/fast-geoip/nodejs/node_modules/fast-geoip',
+        },
+      ],
+    }),
   ],
   module: {
     rules: [
@@ -46,11 +50,6 @@ const config: Configuration = {
   },
   target: 'node',
   mode: process.env.ENV === 'prod' ? 'production' : 'development',
-  externals: [
-    // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
-    // it from being bundled and copy node_modules/fast-geoip to dist/rules-engine/node_modules/fast-geoip
-    'fast-geoip',
-  ],
 }
 
 export default config
