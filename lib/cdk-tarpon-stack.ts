@@ -256,6 +256,14 @@ export class CdkTarponStack extends cdk.Stack {
     )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
+    /* User Event */
+    const userEventFunction = this.createFunction(
+      TarponStackConstants.USER_EVENT_FUNCTION_NAME,
+      'app.userEventHandler',
+      'dist/rules-engine'
+    )
+    dynamoDbTable.grantReadWriteData(userEventFunction)
+
     /* File Import */
     const fileImportFunction = this.createFunction(
       TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,

@@ -13,9 +13,9 @@
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { RulesResults } from './RulesResults'
-import { TransactionMonitoringResultAllOf } from './TransactionMonitoringResultAllOf'
-export class TransactionMonitoringResult {
-  'transactionId': string
+import { UserMonitoringResultAllOf } from './UserMonitoringResultAllOf'
+export class UserMonitoringResult {
+  'userId': string
   /**
    * Unique transaction identifier
    */
@@ -34,8 +34,8 @@ export class TransactionMonitoringResult {
     format: string
   }> = [
     {
-      name: 'transactionId',
-      baseName: 'transactionId',
+      name: 'userId',
+      baseName: 'userId',
       type: 'string',
       format: '',
     },
@@ -54,7 +54,7 @@ export class TransactionMonitoringResult {
   ]
 
   static getAttributeTypeMap() {
-    return TransactionMonitoringResult.attributeTypeMap
+    return UserMonitoringResult.attributeTypeMap
   }
 
   public constructor() {}

@@ -6,6 +6,7 @@ import {
   RuleInstance,
   RuleInstanceStatusEnum,
 } from '@/@types/openapi-internal/RuleInstance'
+import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -59,15 +60,19 @@ export class RuleInstanceRepository {
     await this.dynamoDb.delete(deleteItemInput).promise()
   }
 
-  async getActiveRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
+  async getActiveRuleInstances(
+    type: RuleTypeEnum
+  ): Promise<ReadonlyArray<RuleInstance>> {
     const status: RuleInstanceStatusEnum = 'ACTIVE'
     return this.getRuleInstances({
-      FilterExpression: '#status = :status',
+      FilterExpression: '#status = :status AND #type = :type ',
       ExpressionAttributeValues: {
         ':status': status,
+        ':type': type,
       },
       ExpressionAttributeNames: {
         '#status': 'status',
+        '#type': 'type',
       },
     })
   }
@@ -93,6 +98,7 @@ export class RuleInstanceRepository {
     return (
       result.Items?.map((item) => ({
         id: item.id,
+        type: item.type,
         ruleId: item.ruleId,
         parameters: item.parameters,
         action: item.action,

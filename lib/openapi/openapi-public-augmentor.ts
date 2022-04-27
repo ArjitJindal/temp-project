@@ -19,6 +19,7 @@ const PathToLambda: any = {
   '/business/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
   '/events/transaction/{eventId}': null,
   '/events/transaction': null,
+  '/events/user': null,
   '/internal/users': null,
   '/internal/users/{employeeId}': null,
 }

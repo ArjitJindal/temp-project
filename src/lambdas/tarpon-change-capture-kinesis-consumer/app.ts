@@ -3,6 +3,7 @@ import { Db, MongoClient } from 'mongodb'
 import { TarponStackConstants } from '@cdk/constants'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
+  USER_EVENT_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
 import {
@@ -15,30 +16,29 @@ import {
   DAY_DATE_FORMAT,
   HOUR_DATE_FORMAT,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
+  USER_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 
 let client: MongoClient
 
-function getTransactionStatus(
-  rulesResult: ReadonlyArray<ExecutedRulesResult>
+function getAggregatedRuleStatus(
+  ruleActions: ReadonlyArray<RuleAction>
 ): RuleAction {
   const rulesPrecedences: RuleAction[] = ['BLOCK', 'FLAG', 'WHITELIST', 'ALLOW']
-  return rulesResult
-    .map((result) => result.ruleAction)
-    .reduce((prev, curr) => {
-      if (rulesPrecedences.indexOf(curr) < rulesPrecedences.indexOf(prev)) {
-        return curr
-      } else {
-        return prev
-      }
-    }, 'ALLOW')
+  return ruleActions.reduce((prev, curr) => {
+    if (rulesPrecedences.indexOf(curr) < rulesPrecedences.indexOf(prev)) {
+      return curr
+    } else {
+      return prev
+    }
+  }, 'ALLOW')
 }
 
 async function transactionHandler(
@@ -54,7 +54,9 @@ async function transactionHandler(
     { transactionId: transaction.transactionId },
     {
       ...transaction,
-      status: getTransactionStatus(transaction.executedRules),
+      status: getAggregatedRuleStatus(
+        transaction.executedRules.map((rule) => rule.ruleAction)
+      ),
     },
     { upsert: true }
   )
@@ -69,6 +71,30 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
   })
 }
 
+async function userEventHandler(
+  db: Db,
+  tenantId: string,
+  userEvent: UserEventWithRulesResult
+) {
+  const userEventCollection = db.collection<UserEventWithRulesResult>(
+    USER_EVENTS_COLLECTION(tenantId)
+  )
+  const aggregatedStatus = getAggregatedRuleStatus(
+    userEvent.executedRules.map((rule) => rule.ruleAction)
+  )
+  // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
+  await userEventCollection.replaceOne(
+    { eventId: userEvent.eventId },
+    {
+      ...userEvent,
+      status: aggregatedStatus,
+    },
+    {
+      upsert: true,
+    }
+  )
+}
+
 const dashboardTransactionStatsHandler = async (
   db: Db,
   tenantId: string,
@@ -79,28 +105,30 @@ const dashboardTransactionStatsHandler = async (
     TRANSACTIONS_COLLECTION(tenantId)
   )
   try {
-    const aggregationCursor = await transactionsCollection.aggregate([
-      { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-      {
-        $group: {
-          _id: {
-            $dateToString: {
-              format: dateIdFormat,
-              date: { $toDate: { $toLong: '$timestamp' } },
+    await transactionsCollection
+      .aggregate([
+        { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: dateIdFormat,
+                date: { $toDate: { $toLong: '$timestamp' } },
+              },
             },
+            transactionsCount: { $sum: 1 },
           },
-          transactionsCount: { $sum: 1 },
         },
-      },
-      {
-        $merge: {
-          into: aggregatedCollectionName,
-          whenMatched: 'replace',
+        {
+          $merge: {
+            into: aggregatedCollectionName,
+            whenMatched: 'replace',
+          },
         },
-      },
-    ]).next()
+      ])
+      .next()
   } catch (e) {
-    console.error`ERROR ${e}`)
+    console.error(`ERROR ${e}`)
   }
 }
 
@@ -125,31 +153,41 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
           tenantId,
           handlePrimaryItem(message) as TransactionWithRulesResult
         )
+        await dashboardTransactionStatsHandler(
+          db,
+          tenantId,
+          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
+          MONTH_DATE_FORMAT
+        )
+        await dashboardTransactionStatsHandler(
+          db,
+          tenantId,
+          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
+          DAY_DATE_FORMAT
+        )
+        await dashboardTransactionStatsHandler(
+          db,
+          tenantId,
+          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
+          HOUR_DATE_FORMAT
+        )
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_PRIMARY_KEY_IDENTIFIER
         )
       ) {
         await userHandler(db, tenantId, handlePrimaryItem(message) as User)
+      } else if (
+        dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
+          USER_EVENT_KEY_IDENTIFIER
+        )
+      ) {
+        await userEventHandler(
+          db,
+          tenantId,
+          handlePrimaryItem(message) as UserEventWithRulesResult
+        )
       }
-      await dashboardTransactionStatsHandler(
-        db,
-        tenantId,
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
-        MONTH_DATE_FORMAT
-      )
-      await dashboardTransactionStatsHandler(
-        db,
-        tenantId,
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
-        DAY_DATE_FORMAT
-      )
-      await dashboardTransactionStatsHandler(
-        db,
-        tenantId,
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
-        HOUR_DATE_FORMAT
-      )
     }
   } catch (err) {
     console.error(err)

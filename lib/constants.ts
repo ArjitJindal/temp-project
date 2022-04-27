@@ -29,6 +29,7 @@ export const TarponStackConstants = {
   JWT_AUTHORIZER_FUNCTION_NAME: getResourceName('JWTAuthorizerFunction'),
   TRANSACTION_FUNCTION_NAME: getResourceName('TransactionFunction'),
   USER_FUNCTION_NAME: getResourceName('UserFunction'),
+  USER_EVENT_FUNCTION_NAME: getResourceName('UserEventFunction'),
   API_KEY_GENERATOR_FUNCTION_NAME: getResourceName('ApiKeyGeneratorFunction'),
   RULE_FUNCTION_NAME: getResourceName('RuleTemplateFunction'),
   RULE_INSTANCE_FUNCTION_NAME: getResourceName('RuleInstanceFunction'),

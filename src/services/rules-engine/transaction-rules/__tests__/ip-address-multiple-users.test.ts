@@ -1,0 +1,137 @@
+import dayjs from 'dayjs'
+import { IpAddressMultipleUsersRuleParameters } from '../ip-address-multiple-users'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  setUpRulesHooks,
+  createTransactionRuleTestCase,
+  TransactionRuleTestCase,
+} from '@/test-utils/rule-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+const TEST_TENANT_ID = getTestTenantId()
+
+dynamoDbSetupHook()
+
+setUpRulesHooks(TEST_TENANT_ID, [
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'ip-address-multiple-users',
+    defaultParameters: {
+      uniqueUsersCountThreshold: 1,
+      timeWindowInDays: 1,
+    } as IpAddressMultipleUsersRuleParameters,
+    defaultAction: 'FLAG',
+  },
+])
+
+describe.each<TransactionRuleTestCase>([
+  {
+    name: 'Different users using the same IP address in a short time - hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T01:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-01T07:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '3',
+        timestamp: dayjs('2022-01-07T07:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'ALLOW'],
+  },
+  {
+    name: 'Different users using the same IP address not in a short time - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '2.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-07T00:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '2.1.1.1',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW', 'ALLOW'],
+  },
+  {
+    name: 'Same user using the same IP address - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '3.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '3.1.1.1',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW', 'ALLOW'],
+  },
+  {
+    name: 'Different users using different IP addresses - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '4.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        deviceData: {
+          ipAddress: '4.2.1.1',
+        },
+      }),
+    ],
+    expectedActions: ['ALLOW', 'ALLOW'],
+  },
+])('', ({ name, transactions, expectedActions }) => {
+  createTransactionRuleTestCase(
+    name,
+    TEST_TENANT_ID,
+    transactions,
+    expectedActions
+  )
+})

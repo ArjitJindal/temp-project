@@ -12,17 +12,10 @@
 
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
-import { RulesResults } from './RulesResults'
-import { TransactionMonitoringResultAllOf } from './TransactionMonitoringResultAllOf'
-export class TransactionMonitoringResult {
-  'transactionId': string
-  /**
-   * Unique transaction identifier
-   */
+import { RuleAction } from './RuleAction'
+export class UserEventWithRulesResultAllOf {
+  'status'?: RuleAction
   'executedRules': Array<ExecutedRulesResult>
-  /**
-   * Unique transaction identifier
-   */
   'failedRules': Array<FailedRulesResult>
 
   static readonly discriminator: string | undefined = undefined
@@ -34,9 +27,9 @@ export class TransactionMonitoringResult {
     format: string
   }> = [
     {
-      name: 'transactionId',
-      baseName: 'transactionId',
-      type: 'string',
+      name: 'status',
+      baseName: 'status',
+      type: 'RuleAction',
       format: '',
     },
     {
@@ -54,7 +47,7 @@ export class TransactionMonitoringResult {
   ]
 
   static getAttributeTypeMap() {
-    return TransactionMonitoringResult.attributeTypeMap
+    return UserEventWithRulesResultAllOf.attributeTypeMap
   }
 
   public constructor() {}

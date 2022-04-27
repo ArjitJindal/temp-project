@@ -6,7 +6,13 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleImplementation } from '@/@types/openapi-internal/RuleImplementation'
-import { rules } from '@/services/rules-engine/rules'
+import { TRANSACTION_RULES } from '@/services/rules-engine/transaction-rules'
+import { USER_RULES } from '@/services/rules-engine/user-rules'
+
+const ALL_RULES = {
+  ...TRANSACTION_RULES,
+  ...USER_RULES,
+}
 
 const ajv = new Ajv()
 export class RuleService {
@@ -26,7 +32,7 @@ export class RuleService {
   }
 
   getAllRuleImplementations(): ReadonlyArray<RuleImplementation> {
-    return Object.entries(rules)
+    return Object.entries(ALL_RULES)
       .filter((entry) => !entry[0].startsWith('tests/'))
       .map((entry) => ({
         name: entry[0],
@@ -36,7 +42,7 @@ export class RuleService {
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {
     const validate: ValidateFunction = ajv.compile(
-      rules[rule.ruleImplementationName].getSchema()
+      ALL_RULES[rule.ruleImplementationName].getSchema()
     )
     if (validate(rule.defaultParameters)) {
       return this.ruleRepository.createOrUpdateRule(rule)
@@ -60,12 +66,13 @@ export class RuleService {
     }
 
     const validate: ValidateFunction = ajv.compile(
-      rules[rule.ruleImplementationName].getSchema()
+      ALL_RULES[rule.ruleImplementationName].getSchema()
     )
     if (validate(ruleInstance.parameters)) {
-      return this.ruleInstanceRepository.createOrUpdateRuleInstance(
-        ruleInstance
-      )
+      return this.ruleInstanceRepository.createOrUpdateRuleInstance({
+        ...ruleInstance,
+        type: rule.type,
+      })
     } else {
       throw new createHttpError.BadRequest(
         `Invalid parameters: ${validate.errors

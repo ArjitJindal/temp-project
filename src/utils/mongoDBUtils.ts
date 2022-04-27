@@ -76,6 +76,10 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
+export const USER_EVENTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-user-events`
+}
+
 export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY = (
   tenantId: string
 ) => {

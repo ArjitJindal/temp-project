@@ -23,6 +23,7 @@ import { Person } from './Person'
 import { RiskScoringResult } from './RiskScoringResult'
 import { RuleAction } from './RuleAction'
 import { RuleFailureException } from './RuleFailureException'
+import { RulesResults } from './RulesResults'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
@@ -30,11 +31,17 @@ import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionEvent } from './TransactionEvent'
 import { TransactionLimits } from './TransactionLimits'
 import { TransactionMonitoringResult } from './TransactionMonitoringResult'
+import { TransactionMonitoringResultAllOf } from './TransactionMonitoringResultAllOf'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { UPIDetails } from './UPIDetails'
 import { User } from './User'
 import { UserDetails } from './UserDetails'
+import { UserEvent } from './UserEvent'
+import { UserEventWithRulesResult } from './UserEventWithRulesResult'
+import { UserEventWithRulesResultAllOf } from './UserEventWithRulesResultAllOf'
+import { UserMonitoringResult } from './UserMonitoringResult'
+import { UserMonitoringResultAllOf } from './UserMonitoringResultAllOf'
 import { WalletDetails } from './WalletDetails'
 
 export interface DefaultApiGetBusinessUserUserIdRequest {
@@ -125,4 +132,13 @@ export interface DefaultApiPostTransactionEventRequest {
    * @memberof DefaultApipostTransactionEvent
    */
   TransactionEvent?: TransactionEvent
+}
+
+export interface DefaultApiPostUserEventRequest {
+  /**
+   *
+   * @type UserEvent
+   * @memberof DefaultApipostUserEvent
+   */
+  UserEvent?: UserEvent
 }

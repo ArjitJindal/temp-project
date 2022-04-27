@@ -12,10 +12,7 @@
 
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
-import { RulesResults } from './RulesResults'
-import { TransactionMonitoringResultAllOf } from './TransactionMonitoringResultAllOf'
-export class TransactionMonitoringResult {
-  'transactionId': string
+export class RulesResults {
   /**
    * Unique transaction identifier
    */
@@ -34,12 +31,6 @@ export class TransactionMonitoringResult {
     format: string
   }> = [
     {
-      name: 'transactionId',
-      baseName: 'transactionId',
-      type: 'string',
-      format: '',
-    },
-    {
       name: 'executedRules',
       baseName: 'executedRules',
       type: 'Array<ExecutedRulesResult>',
@@ -54,7 +45,7 @@ export class TransactionMonitoringResult {
   ]
 
   static getAttributeTypeMap() {
-    return TransactionMonitoringResult.attributeTypeMap
+    return RulesResults.attributeTypeMap
   }
 
   public constructor() {}

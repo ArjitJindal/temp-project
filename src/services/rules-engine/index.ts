@@ -5,8 +5,11 @@ import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
-import { RuleError } from './rules/errors'
-import { rules } from './rules'
+import { RuleError } from './transaction-rules/errors'
+import { TRANSACTION_RULES } from './transaction-rules'
+import { Rule as RuleBase } from './rule'
+import { USER_RULES } from './user-rules'
+import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -16,6 +19,9 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { everyAsync } from '@/core/utils/array'
+import { UserEvent } from '@/@types/openapi-public/UserEvent'
+import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -24,7 +30,7 @@ const ruleAscendingComparator = (
   rule2: ExecutedRulesResult | FailedRulesResult
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
-function getRuleImplementation(
+function getTransactionRuleImplementation(
   ruleImplementationName: string,
   tenantId: string,
   transaction: Transaction,
@@ -34,7 +40,7 @@ function getRuleImplementation(
   ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ) {
-  const RuleClass = rules[ruleImplementationName]
+  const RuleClass = TRANSACTION_RULES[ruleImplementationName]
   if (!RuleClass) {
     throw new Error(`${ruleImplementationName} rule implementation not found!`)
   }
@@ -51,9 +57,6 @@ export async function verifyTransaction(
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
 ): Promise<TransactionMonitoringResult> {
-  const ruleRepository = new RuleRepository(tenantId, {
-    dynamoDb,
-  })
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
@@ -70,8 +73,124 @@ export async function verifyTransaction(
     transaction.destinationUserId
       ? userRepository.getUser<User | Business>(transaction.destinationUserId)
       : undefined,
-    ruleInstanceRepository.getActiveRuleInstances(),
+    ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
   ])
+
+  const { executedRules, failedRules } = await getRulesResult(
+    tenantId,
+    dynamoDb,
+    ruleInstances,
+    (ruleImplementationName, ruleInstance) =>
+      getTransactionRuleImplementation(
+        ruleImplementationName,
+        tenantId,
+        transaction,
+        senderUser,
+        receiverUser,
+        ruleInstance.parameters,
+        ruleInstance.action,
+        dynamoDb
+      )
+  )
+
+  // TODO: Refactor the following logic to be event-driven
+  const transactionId = await transactionRepository.saveTransaction(
+    transaction,
+    {
+      executedRules,
+      failedRules,
+    }
+  )
+  await Promise.all(
+    Aggregators.map((Aggregator) =>
+      new Aggregator(tenantId, transaction, dynamoDb).aggregate()
+    )
+  )
+
+  return {
+    transactionId,
+    executedRules: executedRules,
+    failedRules: failedRules,
+  }
+}
+
+function getUserRuleImplementation(
+  ruleImplementationName: string,
+  tenantId: string,
+  user: User | Business,
+  userEvent: UserEvent,
+  ruleParameters: object,
+  ruleAction: RuleAction,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+) {
+  const RuleClass = USER_RULES[ruleImplementationName]
+  if (!RuleClass) {
+    throw new Error(`${ruleImplementationName} rule implementation not found!`)
+  }
+  return new RuleClass(
+    tenantId,
+    { user, userEvent },
+    { parameters: ruleParameters, action: ruleAction },
+    dynamoDb
+  )
+}
+
+export async function verifyUserEvent(
+  userEvent: UserEvent,
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+): Promise<UserMonitoringResult> {
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const userRepository = new UserRepository(tenantId, {
+    dynamoDb,
+  })
+  const userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
+
+  const [user, ruleInstances] = await Promise.all([
+    userRepository.getUser<User | Business>(userEvent.userId),
+    ruleInstanceRepository.getActiveRuleInstances('USER'),
+  ])
+  const { executedRules, failedRules } = await getRulesResult(
+    tenantId,
+    dynamoDb,
+    ruleInstances,
+    (ruleImplementationName, ruleInstance) =>
+      getUserRuleImplementation(
+        ruleImplementationName,
+        tenantId,
+        user,
+        userEvent,
+        ruleInstance.parameters,
+        ruleInstance.action,
+        dynamoDb
+      )
+  )
+  await userEventRepository.saveUserEvent(userEvent, {
+    executedRules,
+    failedRules,
+  })
+
+  return {
+    userId: userEvent.userId,
+    executedRules,
+    failedRules,
+  }
+}
+
+async function getRulesResult(
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  ruleInstances: ReadonlyArray<RuleInstance>,
+  getRuleImplementationCallback: (
+    ruleImplementationName: string,
+    ruleInstance: RuleInstance
+  ) => RuleBase
+) {
+  const ruleRepository = new RuleRepository(tenantId, {
+    dynamoDb,
+  })
   const rulesById = _.keyBy(
     await ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -82,15 +201,9 @@ export async function verifyTransaction(
     ruleInstances.map(async (ruleInstance) => {
       const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
       try {
-        const rule = getRuleImplementation(
+        const rule = getRuleImplementationCallback(
           rulesById[ruleInstance.ruleId].ruleImplementationName,
-          tenantId,
-          transaction,
-          senderUser,
-          receiverUser,
-          ruleInstance.parameters,
-          ruleInstance.action,
-          dynamoDb
+          ruleInstance
         )
         const shouldCompute = await everyAsync(
           rule.getFilters(),
@@ -125,23 +238,8 @@ export async function verifyTransaction(
     .filter((result) => !result.ruleAction)
     .sort(ruleAscendingComparator) as FailedRulesResult[]
 
-  // TODO: Refactor the following logic to be event-driven
-  const transactionId = await transactionRepository.saveTransaction(
-    transaction,
-    {
-      executedRules,
-      failedRules,
-    }
-  )
-  await Promise.all(
-    Aggregators.map((Aggregator) =>
-      new Aggregator(tenantId, transaction, dynamoDb).aggregate()
-    )
-  )
-
   return {
-    transactionId,
-    executedRules: executedRules,
-    failedRules: failedRules,
+    executedRules,
+    failedRules,
   }
 }

@@ -560,6 +560,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         name:
           type: string
         description:
@@ -580,6 +585,7 @@ components:
           type: number
       required:
         - id
+        - type
         - name
         - description
         - defaultParameters
@@ -592,6 +598,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         ruleId:
           type: string
         parameters:

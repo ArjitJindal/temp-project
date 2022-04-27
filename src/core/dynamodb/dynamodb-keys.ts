@@ -11,9 +11,10 @@ import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 
 const USER_ID_PREFIX = 'user:'
-const TRANSACTION_TYPE_PREFIX = 'type:'
+const TYPE_PREFIX = 'type:'
 
 export const DynamoDbKeys = {
   TENANT: (tenantId: string) => ({
@@ -132,6 +133,16 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#user#primary`,
     SortKeyID: userId,
   }),
+  // Attributes: refer to UserEvent
+  USER_EVENT: (
+    tenantId: string,
+    eventType: UserEventTypeEnum,
+    userId: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#user-event#${TYPE_PREFIX}${eventType}#${USER_ID_PREFIX}${userId}`,
+    SortKeyID: `${timestamp}`,
+  }),
   LIST: (tenantId: string, listName: string, indexName: string) => ({
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,
@@ -139,7 +150,7 @@ export const DynamoDbKeys = {
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {
-  return `${TRANSACTION_TYPE_PREFIX}${transactionType || 'all'}`
+  return `${TYPE_PREFIX}${transactionType || 'all'}`
 }
 
 export function keyHasUserId(key: string) {

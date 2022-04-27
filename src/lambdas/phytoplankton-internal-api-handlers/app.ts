@@ -5,10 +5,7 @@ import {
 import { ManagementClient } from 'auth0'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
-import {
-  UserRepository,
-  UserType,
-} from '@/services/users/repositories/user-repository'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
 import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'

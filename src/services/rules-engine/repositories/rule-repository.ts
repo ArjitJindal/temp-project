@@ -67,13 +67,13 @@ export class RuleRepository {
     return (
       result.Items?.map((item) => ({
         id: item.id,
+        type: item.type,
         name: item.name,
         description: item.description,
         defaultParameters: item.defaultParameters,
         defaultAction: item.defaultAction,
         ruleImplementationName: item.ruleImplementationName,
-        // TODO: Implement labels
-        labels: [],
+        labels: item.labels,
       })) || []
     )
   }

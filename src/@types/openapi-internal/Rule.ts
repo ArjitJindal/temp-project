@@ -13,6 +13,7 @@
 import { RuleAction } from './RuleAction'
 export class Rule {
   'id': string
+  'type': RuleTypeEnum
   'name': string
   'description': string
   'defaultParameters': any
@@ -34,6 +35,12 @@ export class Rule {
       name: 'id',
       baseName: 'id',
       type: 'string',
+      format: '',
+    },
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'RuleTypeEnum',
       format: '',
     },
     {
@@ -92,3 +99,5 @@ export class Rule {
 
   public constructor() {}
 }
+
+export type RuleTypeEnum = 'TRANSACTION' | 'USER'

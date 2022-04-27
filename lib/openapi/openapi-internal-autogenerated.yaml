@@ -1362,6 +1362,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         name:
           type: string
         description:
@@ -1382,6 +1387,7 @@ components:
           type: number
       required:
         - id
+        - type
         - name
         - description
         - defaultParameters
@@ -1394,6 +1400,11 @@ components:
       properties:
         id:
           type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
         ruleId:
           type: string
         parameters:
@@ -2273,6 +2284,27 @@ components:
               failureException:
                 exceptionName: MISSING_DATA
                 exceptionDescription: Some data is missing
+    UserEventWithRulesResult:
+      title: UserEventWithRulesResult
+      description: Model for user event payload with rules result
+      allOf:
+        - $ref: '#/components/schemas/UserEvent'
+        - type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            failedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/FailedRulesResult'
+          required:
+            - executedRules
+            - failedRules
+      x-examples: {}
     CardDetails:
       title: CardDetails
       type: object
@@ -2467,25 +2499,26 @@ components:
             timestamp for an event or transaction
       description: Model for device data
     TransactionMonitoringResult:
-      title: TransactionMonitoringResult
-      required:
-        - transactionId
+      allOf:
+        - type: object
+          properties:
+            transactionId:
+              type: string
+          required:
+            - transactionId
+        - $ref: '#/components/schemas/RulesResults'
+    UserMonitoringResult:
+      allOf:
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
+        - $ref: '#/components/schemas/RulesResults'
+    RulesResults:
+      title: RulesResults
       type: object
-      properties:
-        transactionId:
-          minLength: 1
-          type: string
-          description: Unique transaction identifier
-        executedRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExecutedRulesResult'
-          description: Unique transaction identifier
-        failedRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/FailedRulesResult'
-          description: Unique transaction identifier
       example:
         transactionId: 7b80a539eea6e78acbd6d458e5971482
         executedRules:
@@ -2525,6 +2558,20 @@ components:
               failureException:
                 exceptionName: MISSING_DATA
                 exceptionDescription: Some data is missing
+      properties:
+        executedRules:
+          type: array
+          description: Unique transaction identifier
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
+        failedRules:
+          type: array
+          description: Unique transaction identifier
+          items:
+            $ref: '#/components/schemas/FailedRulesResult'
+      required:
+        - executedRules
+        - failedRules
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -3356,6 +3403,31 @@ components:
         - eventType
         - timestamp
         - transactionID
+    UserEvent:
+      description: ''
+      type: object
+      x-examples: {}
+      properties:
+        type:
+          type: string
+          minLength: 1
+          enum:
+            - LOGGED_IN
+        timestamp:
+          type: number
+        userId:
+          type: string
+          minLength: 1
+        eventId:
+          type: string
+        eventDescription:
+          type: string
+        metaData:
+          $ref: '#/components/schemas/DeviceData'
+      required:
+        - type
+        - timestamp
+        - userId
     Date:
       title: Date
       type: object

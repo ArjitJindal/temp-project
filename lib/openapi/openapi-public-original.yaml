@@ -269,6 +269,41 @@ paths:
           content: {}
       deprecated: false
       tags: []
+  /events/user:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a User Event
+      description: Create a User Event
+      operationId: post-user-event
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserEvent'
+            examples: {}
+        required: false
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMonitoringResult'
+              examples: {}
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
   '/events/transaction/{eventId}':
     get:
       security:
@@ -1323,6 +1358,27 @@ components:
               failureException:
                 exceptionName: MISSING_DATA
                 exceptionDescription: Some data is missing
+    UserEventWithRulesResult:
+      title: UserEventWithRulesResult
+      description: Model for user event payload with rules result
+      allOf:
+        - $ref: '#/components/schemas/UserEvent'
+        - type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            failedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/FailedRulesResult'
+          required:
+            - executedRules
+            - failedRules
+      x-examples: {}
     CardDetails:
       title: CardDetails
       type: object
@@ -1517,41 +1573,38 @@ components:
             timestamp for an event or transaction
       description: Model for device data
     TransactionMonitoringResult:
-      title: TransactionMonitoringResult
-      required:
-        - transactionId
+      allOf:
+        - type: object
+          properties:
+            transactionId:
+              type: string
+          required:
+            - transactionId
+        - $ref: '#/components/schemas/RulesResults'
+    UserMonitoringResult:
+      allOf:
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
+        - $ref: '#/components/schemas/RulesResults'
+    RulesResults:
+      title: RulesResults
       type: object
-      properties:
-        transactionId:
-          minLength: 1
-          type: string
-          description: Unique transaction identifier
-        executedRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExecutedRulesResult'
-          description: Unique transaction identifier
-        failedRules:
-          type: array
-          items:
-            $ref: '#/components/schemas/FailedRulesResult'
-          description: Unique transaction identifier
       example:
         transactionId: 7b80a539eea6e78acbd6d458e5971482
         executedRules:
           - ruleId: R-1a
             ruleName: Proof of funds for high value transactions
-            ruleDescription: >-
-              If a user makes a remittance transaction >= 1800 in EUR - ask for
-              proof of funds
+            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
             ruleAction: BLOCK
             ruleHit: true
         failedRules:
           - ruleId: R-1b
             ruleName: Proof of funds for high value transactions
-            ruleDescription: >-
-              If a user makes a remittance transaction >= 1800 in EUR - ask for
-              proof of funds
+            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
             failureException:
               exceptionName: MISSING_DATA
               exceptionDescription: Some data is missing
@@ -1561,20 +1614,30 @@ components:
           executedRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: >-
-                If a user makes a remittance transaction >= 1800 in EUR - ask
-                for proof of funds
+              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
               ruleAction: block
               ruleHit: true
           failedRules:
             - ruleId: R-1b
               ruleName: Proof of funds for high value transactions
-              ruleDescription: >-
-                If a user makes a remittance transaction >= 1800 in EUR - ask
-                for proof of funds
+              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
               failureException:
                 exceptionName: MISSING_DATA
                 exceptionDescription: Some data is missing
+      properties:
+        executedRules:
+          type: array
+          description: Unique transaction identifier
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
+        failedRules:
+          type: array
+          description: Unique transaction identifier
+          items:
+            $ref: '#/components/schemas/FailedRulesResult'
+      required:
+        - executedRules
+        - failedRules
     ExecutedRulesResult:
       title: ExecutedRulesResult
       type: object
@@ -2415,6 +2478,31 @@ components:
         - eventType
         - timestamp
         - transactionID
+    UserEvent:
+      description: ''
+      type: object
+      x-examples: {}
+      properties:
+        type:
+          type: string
+          minLength: 1
+          enum:
+            - LOGGED_IN
+        timestamp:
+          type: number
+        userId:
+          type: string
+          minLength: 1
+        eventId:
+          type: string
+        eventDescription:
+          type: string
+        metaData:
+          $ref: '#/components/schemas/DeviceData'
+      required:
+        - type
+        - timestamp
+        - userId
     Date:
       title: Date
       type: object
