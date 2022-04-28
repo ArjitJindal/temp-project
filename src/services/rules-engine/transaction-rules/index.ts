@@ -14,6 +14,7 @@ import TestSuccessRule from './tests/test-success-rule'
 import TransactionAmountRule from './transaction-amount'
 import TransactionNewCountryRule from './transaction-new-country'
 import TransactionNewCurrencyRule from './transaction-new-currency'
+import TransactionReferenceKeywordRule from './transaction-reference-keyword'
 import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
 import UserTransactionPairsRule from './user-transaction-pairs'
@@ -32,6 +33,7 @@ export const TRANSACTION_RULES = {
   'multiple-user-senders-within-time-period':
     MultipleUserSendersWithinTimePeriodRule,
   'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
+  'transaction-reference-keyword': TransactionReferenceKeywordRule,
   'transaction-amount': TransactionAmountRule,
   'transaction-new-country': TransactionNewCountryRule,
   'transaction-new-currency': TransactionNewCurrencyRule,
