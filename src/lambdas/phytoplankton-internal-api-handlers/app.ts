@@ -23,7 +23,7 @@ import { TransactionRepository } from '@/services/rules-engine/repositories/tran
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
-import { timeframeToTimestampConverter } from './constants'
+import { timeframeToTimestampConverter } from './utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string

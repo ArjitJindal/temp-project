@@ -8,10 +8,10 @@ import {
 } from '@/utils/mongoDBUtils'
 import {
   DashboardTimeFrameType,
-  padToDate,
   timeFrameValues,
   TransactionDashboardStats,
 } from '../constants'
+import { padToDate } from '../utils'
 
 export class DashboardStatsRepository {
   mongoDb: MongoClient
