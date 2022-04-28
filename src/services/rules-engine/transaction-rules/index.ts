@@ -15,6 +15,7 @@ import TransactionAmountRule from './transaction-amount'
 import TransactionNewCountryRule from './transaction-new-country'
 import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionsVelocityRule from './transactions-velocity'
+import TransactionsVolumeRule from './transactions-volume'
 import UserTransactionPairsRule from './user-transaction-pairs'
 
 export const TRANSACTION_RULES = {
@@ -34,6 +35,7 @@ export const TRANSACTION_RULES = {
   'transaction-new-country': TransactionNewCountryRule,
   'transaction-new-currency': TransactionNewCurrencyRule,
   'transactions-velocity': TransactionsVelocityRule,
+  'transactions-volume': TransactionsVolumeRule,
   'user-transaction-pairs': UserTransactionPairsRule,
 
   // For testing only

@@ -107,10 +107,11 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
     await Promise.all(cleanups.map((cleanup) => cleanup()))
   })
 }
-export interface TransactionRuleTestCase {
+export interface TransactionRuleTestCase<T = object> {
   name: string
   transactions: Transaction[]
   expectedActions: RuleAction[]
+  ruleParams?: T
 }
 
 export function createTransactionRuleTestCase(
