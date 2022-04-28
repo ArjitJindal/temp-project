@@ -7,7 +7,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
 } from '@/utils/mongoDBUtils'
 import {
-  deashboardTimeFrameType,
+  DashboardTimeFrameType,
   padToDate,
   timeFrameValues,
   TransactionDashboardStats,
@@ -28,7 +28,7 @@ export class DashboardStatsRepository {
   }
 
   public async getTransactionCountStats(
-    timeframe: deashboardTimeFrameType,
+    timeframe: DashboardTimeFrameType,
     beforeTimestamp: number
   ): Promise<any> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
@@ -42,9 +42,9 @@ export class DashboardStatsRepository {
       )
       query = {
         _id: {
-          $lte: `${timestampToDate.getFullYear()}-${
+          $gte: `${timestampToDate.getFullYear()}-${padToDate(
             timestampToDate.getMonth() + 1
-          }`,
+          )}`,
         },
       }
     } else if (timeframe === timeFrameValues.MONTH) {
@@ -53,20 +53,22 @@ export class DashboardStatsRepository {
       )
       query = {
         _id: {
-          $lte: `${timestampToDate.getFullYear()}-${padToDate(
+          $gte: `${timestampToDate.getFullYear()}-${padToDate(
             timestampToDate.getMonth() + 1
           )}-${padToDate(timestampToDate.getDate())}`,
         },
       }
     } else if (timeframe === timeFrameValues.DAY) {
+      collection = db.collection<TransactionDashboardStats>(
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(this.tenantId)
+      )
       query = {
         _id: {
-          $lte: `${timestampToDate.getFullYear()}-${padToDate(
+          $gte: `${timestampToDate.getFullYear()}-${padToDate(
             timestampToDate.getMonth() + 1
           )}-${padToDate(timestampToDate.getDate())}`,
         },
       }
-      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(this.tenantId)
     }
 
     if (collection && query) {
@@ -75,7 +77,9 @@ export class DashboardStatsRepository {
         .sort({ timestamp: -1 })
 
         .toArray()
-      return { transactionStats }
+      return {
+        transactionStats,
+      }
     }
   }
 }

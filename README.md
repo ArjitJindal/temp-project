@@ -25,12 +25,71 @@ npm install
 npm run build
 ```
 
-## Test locally
+## Testing Functions Locally
 
-```bash
-sam local start-api -t cdk.out/tarpon.template.json
-sam local invoke "VerifyTransactionFunction" --event events/event.json -t cdk.out/tarpon.template.json
+You can test functions locally, ensure you've your SSO configured (including default region - `region` field in `~/.aws/config`) before running.
+
+You will also need to add a `default` profile in `~/.aws/credentials`:
+
 ```
+[default]
+region=us-east-2
+aws_access_key_id=false
+aws_secret_access_key=false
+
+```
+
+### For first run
+
+Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
+
+```
+npm run start-local-ddb
+```
+
+For the first run create the database using:
+
+```
+npm run create-local-ddb
+```
+
+Run the below command to recreate the table:
+
+```
+npm run recreate-local-ddb
+```
+
+You can now run the following:
+
+```
+npm run create-user
+npm run get-user
+npm run create-rule-instance
+npm run update-rule-instance
+npm run verify-transaction
+npm run get-transaction
+npm run import-list
+```
+
+For console, you will also need mongoDB. You can start a local containerized instance using"
+
+```
+npm run start-local-mongodb
+```
+
+Then you can synthesize local cdk template like so:
+
+```
+npm run synth:local
+```
+
+Finally, you can start local api:
+
+```
+npm run start-local-api
+```
+
+Local environment config (ex: tenantID) is stored in `local-dev.ts`.
 
 ## Deploy
 
@@ -81,52 +140,6 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 0. Install [openapi-generator](https://openapi-generator.tech/docs/installation)
 1. Run `npm run openapi:fetch`
 1. Run `npm run openapi:build:dev`
-
-## Testing Functions Locally
-
-You can test functions locally, ensure you've your SSO configured (including default region - `region` field in `~/.aws/config`) before running.
-
-You will also need to add a `default` profile in `~/.aws/credentials`:
-
-```
-[default]
-region=us-east-2
-aws_access_key_id=false
-aws_secret_access_key=false
-
-```
-
-### For first run
-
-Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
-
-```
-npm run start-local-ddb
-```
-
-For the first run create the database using:
-
-```
-npm run create-local-ddb
-```
-
-Run the below command to recreate the table:
-
-```
-npm run recreate-local-ddb
-```
-
-You can now run the following:
-
-```
-npm run create-user
-npm run get-user
-npm run create-rule-instance
-npm run update-rule-instance
-npm run verify-transaction
-npm run get-transaction
-npm run import-list
-```
 
 ### Creating and uploading test data
 
