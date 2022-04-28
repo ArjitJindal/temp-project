@@ -7,7 +7,6 @@ import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { TransactionCaseManagement } from '@/apis';
-import { FileImportButton } from '@/components/file-import/FileImportButton';
 import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
 
@@ -174,7 +173,6 @@ const TableList: React.FC = () => {
           };
         }}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type="TRANSACTION" />]}
       />
       <Drawer
         width={700}
