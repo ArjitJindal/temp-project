@@ -7,6 +7,7 @@ import {
   RuleInstanceStatusEnum,
 } from '@/@types/openapi-internal/RuleInstance'
 import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
+import { paginateQuery } from '@/utils/dynamodb'
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -94,7 +95,7 @@ export class RuleInstanceRepository {
         ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
       },
     }
-    const result = await this.dynamoDb.query(queryInput).promise()
+    const result = await paginateQuery(this.dynamoDb, queryInput)
     return (
       result.Items?.map((item) => ({
         id: item.id,

@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { paginateQuery } from '@/utils/dynamodb'
 
 export class RuleRepository {
   tenantId: string
@@ -63,7 +64,7 @@ export class RuleRepository {
       },
     }
 
-    const result = await this.dynamoDb.query(queryInput).promise()
+    const result = await paginateQuery(this.dynamoDb, queryInput)
     return (
       result.Items?.map((item) => ({
         id: item.id,
