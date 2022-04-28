@@ -15,7 +15,6 @@ import {
   TransactionCaseManagement,
   User,
 } from '@/apis';
-import { FileImportButton } from '@/components/file-import/FileImportButton';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -136,7 +135,6 @@ const BusinessUsersTab: React.FC = () => {
           };
         }}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={'BUSINESS'} />]}
       />
       <Drawer
         width={800}
@@ -334,7 +332,6 @@ const ConsumerUsersTab: React.FC = () => {
           };
         }}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={'USER'} />]}
       />
       <Drawer
         width={600}
