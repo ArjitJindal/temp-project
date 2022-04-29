@@ -64,9 +64,5 @@ export function useUserName(userId: string | null | undefined): string {
   if (isLoading) {
     return userId ?? 'Unknown user';
   }
-  const user = users[userId];
-  if (!user) {
-    return userId ?? 'Unknown user';
-  }
-  return user.name ?? userId ?? 'Unknown user';
+  return users[userId]?.name ?? userId ?? 'Unknown user'
 }
