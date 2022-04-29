@@ -57,3 +57,12 @@ export function useUsers(): [{ [userId: string]: User }, boolean] {
   }, [api, users]);
   return [users, loading];
 }
+
+export function useUserName(userId: string | null | undefined): string {
+  const [users, isLoading] = useUsers();
+  // todo: i18n
+  if (isLoading) {
+    return userId ?? 'Unknown user';
+  }
+  return users[userId]?.name ?? userId ?? 'Unknown user'
+}
