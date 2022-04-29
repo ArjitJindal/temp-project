@@ -74,7 +74,7 @@ export class DashboardStatsRepository {
     if (collection && query) {
       const transactionStats = await collection
         .find(query)
-        .sort({ timestamp: -1 })
+        .sort({ _id: -1 })
 
         .toArray()
       return {
