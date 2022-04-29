@@ -22,6 +22,8 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
+import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
+import { timeframeToTimestampConverter } from './utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -123,7 +125,20 @@ export const dashboardStatsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    console.log('To be implemented')
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const client = await connectToDB()
+    const { timeframe } = event.queryStringParameters as any
+    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+      mongoDb: client,
+    })
+    const transactionStatsData =
+      await dashboardStatsRepository.getTransactionCountStats(
+        timeframe,
+        timeframeToTimestampConverter(timeframe)
+      )
+    return {
+      transactionStatsData,
+    }
   }
 )
 
