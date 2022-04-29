@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
+import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { getReceiverKeys, getSenderKeys } from '../utils'
@@ -17,6 +17,7 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
+import { paginateQuery } from '@/utils/dynamodb'
 
 type QueryCountResult = { count: number; scannedCount: number }
 
@@ -36,6 +37,8 @@ export class TransactionRepository {
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
+
+  /* MongoDB operations */
 
   public async getTransactions(
     // TOOD: Add filtering and sorting
@@ -105,6 +108,61 @@ export class TransactionRepository {
       }
     )
   }
+
+  public async saveTransactionComment(
+    transactionId: string,
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const commentToSave: Comment = {
+      ...comment,
+      id: uuidv4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    await collection.updateOne(
+      {
+        transactionId,
+      },
+      {
+        $push: { comments: commentToSave },
+      }
+    )
+    return commentToSave
+  }
+
+  public async deleteTransactionComment(
+    transactionId: string,
+    commentId: string
+  ) {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne(
+      {
+        transactionId,
+      },
+      {
+        $pull: { comments: { id: commentId } },
+      }
+    )
+  }
+
+  public async getTransactionCaseManagementById(
+    transactionId: string
+  ): Promise<TransactionCaseManagement | null> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    return collection.findOne<TransactionCaseManagement>({ transactionId })
+  }
+
+  /* DynamoDB operations */
 
   public async saveTransaction(
     transaction: Transaction,
@@ -198,58 +256,6 @@ export class TransactionRepository {
     return transactionId
   }
 
-  public async saveTransactionComment(
-    transactionId: string,
-    comment: Comment
-  ): Promise<Comment> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    const commentToSave: Comment = {
-      ...comment,
-      id: uuidv4(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
-    await collection.updateOne(
-      {
-        transactionId,
-      },
-      {
-        $push: { comments: commentToSave },
-      }
-    )
-    return commentToSave
-  }
-
-  public async deleteTransactionComment(
-    transactionId: string,
-    commentId: string
-  ) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    await collection.updateOne(
-      {
-        transactionId,
-      },
-      {
-        $pull: { comments: { id: commentId } },
-      }
-    )
-  }
-  public async getTransactionCaseManagementById(
-    transactionId: string
-  ): Promise<TransactionCaseManagement | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    return collection.findOne<TransactionCaseManagement>({ transactionId })
-  }
-
   public async getTransactionById(
     transactionId: string
   ): Promise<TransactionWithRulesResult> {
@@ -268,6 +274,18 @@ export class TransactionRepository {
   }
 
   public async getTransactionsByIds(
+    transactionIds: string[]
+  ): Promise<Transaction[]> {
+    const transactions = []
+    for (const transactionIdsChunk of chunk(transactionIds, 100)) {
+      transactions.push(
+        ...(await this.getTransactionsByIdsChunk(transactionIdsChunk))
+      )
+    }
+    return transactions
+  }
+
+  private async getTransactionsByIdsChunk(
     transactionIds: string[]
   ): Promise<Transaction[]> {
     if (transactionIds.length > 100) {
@@ -323,7 +341,7 @@ export class TransactionRepository {
       Limit: 1,
       ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.query(queryInput).promise()
+    const result = await paginateQuery(this.dynamoDb, queryInput)
     return !!result.Count
   }
 
@@ -373,7 +391,7 @@ export class TransactionRepository {
       ScanIndexForward: false,
       ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.query(queryInput).promise()
+    const result = await paginateQuery(this.dynamoDb, queryInput)
     return (
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
@@ -511,11 +529,10 @@ export class TransactionRepository {
     partitionKeyId: string,
     afterTimestamp: number
   ): Promise<Array<ThinTransaction>> {
-    const result = await this.dynamoDb
-      .query(
-        this.getAfterTimestampTransactionsQuery(partitionKeyId, afterTimestamp)
-      )
-      .promise()
+    const result = await paginateQuery(
+      this.dynamoDb,
+      this.getAfterTimestampTransactionsQuery(partitionKeyId, afterTimestamp)
+    )
     return (
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
@@ -530,15 +547,13 @@ export class TransactionRepository {
     partitionKeyId: string,
     afterTimestamp: number
   ): Promise<QueryCountResult> {
-    const result = await this.dynamoDb
-      .query({
-        ...this.getAfterTimestampTransactionsQuery(
-          partitionKeyId,
-          afterTimestamp
-        ),
-        Select: 'COUNT',
-      })
-      .promise()
+    const result = await paginateQuery(this.dynamoDb, {
+      ...this.getAfterTimestampTransactionsQuery(
+        partitionKeyId,
+        afterTimestamp
+      ),
+      Select: 'COUNT',
+    })
     return {
       count: result.Count as number,
       scannedCount: result.ScannedCount as number,

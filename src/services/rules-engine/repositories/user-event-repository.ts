@@ -7,6 +7,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { UserEvent, UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
+import { paginateQuery } from '@/utils/dynamodb'
 
 export class UserEventRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -76,11 +77,10 @@ export class UserEventRepository {
     partitionKeyId: string,
     afterTimestamp: number
   ): Promise<ReadonlyArray<UserEvent>> {
-    const result = await this.dynamoDb
-      .query(
-        this.getAfterTimestampUserEventsQuery(partitionKeyId, afterTimestamp)
-      )
-      .promise()
+    const result = await paginateQuery(
+      this.dynamoDb,
+      this.getAfterTimestampUserEventsQuery(partitionKeyId, afterTimestamp)
+    )
     return result.Items as unknown as ReadonlyArray<UserEvent>
   }
 

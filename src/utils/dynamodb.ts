@@ -18,3 +18,42 @@ export function getDynamoDbClient(
       : undefined,
   })
 }
+
+export async function paginateQuery(
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  pagesLimit?: number
+): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
+  return paginateQueryInternal(dynamoDb, query, 0, pagesLimit)
+}
+
+async function paginateQueryInternal(
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  currentPage: number,
+  pagesLimit = Infinity
+): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
+  const result = await dynamoDb.query(query).promise()
+  if (result.LastEvaluatedKey && currentPage + 1 < pagesLimit) {
+    const nextResult = await paginateQueryInternal(
+      dynamoDb,
+      {
+        ...query,
+        ExclusiveStartKey: result.LastEvaluatedKey,
+      },
+      currentPage + 1,
+      pagesLimit
+    )
+    return {
+      Items: result.Items?.concat(nextResult.Items || []),
+      Count:
+        result.Count &&
+        result.Count + (nextResult.Count ? nextResult.Count : 0),
+      ScannedCount:
+        result.ScannedCount &&
+        result.ScannedCount +
+          (nextResult.ScannedCount ? nextResult.ScannedCount : 0),
+    }
+  }
+  return result
+}

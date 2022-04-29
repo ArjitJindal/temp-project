@@ -1,5 +1,5 @@
 import { TarponStackConstants } from '@cdk/constants'
-import { chunk } from '@/core/utils/array'
+import { chunk } from 'lodash'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 export class ListRepository {
