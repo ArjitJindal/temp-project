@@ -81,5 +81,6 @@ export class DashboardStatsRepository {
         transactionStats,
       }
     }
+    return { transactionStats: [] }
   }
 }
