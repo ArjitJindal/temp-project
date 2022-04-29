@@ -30,7 +30,7 @@ export class DashboardStatsRepository {
   public async getTransactionCountStats(
     timeframe: DashboardTimeFrameType,
     beforeTimestamp: number
-  ): Promise<any> {
+  ): Promise<{ transactionStats: TransactionDashboardStats[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const timestampToDate = new Date(beforeTimestamp)
 
