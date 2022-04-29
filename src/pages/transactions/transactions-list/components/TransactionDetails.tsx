@@ -4,7 +4,7 @@ import {
   Divider,
   List,
   Tag,
-  Comment,
+  Comment as AntComment,
   Avatar,
   Button,
   Input,
@@ -29,6 +29,7 @@ import axios from 'axios';
 import filesize from 'filesize';
 import styles from './TransactionDetails.less';
 import { RuleActionStatus } from './RuleActionStatus';
+import Comment from './Comment';
 import {
   Tag as TransactionTag,
   TransactionCaseManagement,
@@ -444,52 +445,17 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           itemLayout="horizontal"
           renderItem={(comment) => (
             <Comment
-              actions={
-                currentUserId === comment.userId
-                  ? [
-                      deletingCommentIds.includes(comment.id!) ? (
-                        <span>Deleting...</span>
-                      ) : (
-                        <Tooltip key="delete" title="Delete">
-                          <span
-                            onClick={() =>
-                              deletingCommentIds.length === 0 &&
-                              handleDeleteComment(transaction.transactionId!, comment.id!)
-                            }
-                          >
-                            Delete
-                          </span>
-                        </Tooltip>
-                      ),
-                    ]
-                  : undefined
-              }
-              content={
-                <>
-                  <div className={styles.commentBody}>{comment.body}</div>
-                  {comment.files && (
-                    <>
-                      {comment.files.map((file) => (
-                        <Row align="middle" key={file.s3Key}>
-                          <Space>
-                            <PaperClipOutlined />
-                            <a href={file.downloadLink}>{file.filename}</a>
-                            {`(${filesize(file.size)})`}
-                          </Space>
-                        </Row>
-                      ))}
-                    </>
-                  )}
-                </>
-              }
-              datetime={comment.createdAt && new Date(comment.createdAt).toDateString()}
-              // TODO: Replace user ID with actual user name
-              author={comment.userId}
+              comment={comment}
+              currentUserId={currentUserId}
+              deletingCommentIds={deletingCommentIds}
+              onDelete={() => {
+                handleDeleteComment(transaction.transactionId!, comment.id!);
+              }}
             />
           )}
         />
       )}
-      <Comment
+      <AntComment
         avatar={<Avatar src={user?.picture} />}
         content={
           <CommentEditor
