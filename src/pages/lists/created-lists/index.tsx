@@ -1,10 +1,8 @@
 import React, { useRef } from 'react';
-import { Card } from 'antd';
 import { PageContainer } from '@ant-design/pro-layout';
-import { ActionType, EditableProTable, ProColumns } from '@ant-design/pro-table';
+import { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProFormInstance } from '@ant-design/pro-form';
 import type { CreateListsTableListItem } from './data.d';
-import { getActiveLists } from './service';
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const actionRef = useRef<ActionType>();
@@ -61,33 +59,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
     },
   ];
 
-  return (
-    <PageContainer content="Custom lists you have created">
-      <Card bordered={false}>
-        <>
-          <h1>Whitelisted receiver IBANs - Global</h1>
-          <EditableProTable<CreateListsTableListItem>
-            columns={columns}
-            request={getActiveLists}
-            actionRef={actionRef}
-            scroll={{ x: 1300 }}
-            options={false}
-            search={false}
-            rowKey="key"
-            recordCreatorProps={{
-              record: {
-                listId: '',
-                ibanNumber: '',
-                createdAt: 0,
-              },
-              creatorButtonText: 'Add Row',
-              'aria-errormessage': 'Please add one row at a time',
-            }}
-          />
-        </>
-      </Card>
-    </PageContainer>
-  );
+  return <PageContainer content="Custom lists you have created"></PageContainer>;
 };
 
 export default StepForm;
