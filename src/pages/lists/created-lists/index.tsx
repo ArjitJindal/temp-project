@@ -75,6 +75,11 @@ const StepForm: React.FC<Record<string, any>> = () => {
             search={false}
             rowKey="key"
             recordCreatorProps={{
+              record: {
+                listId: '',
+                ibanNumber: '',
+                createdAt: 0,
+              },
               creatorButtonText: 'Add Row',
               'aria-errormessage': 'Please add one row at a time',
             }}
