@@ -258,6 +258,9 @@ const ConsumerUsersTab: React.FC = () => {
     {
       title: 'Age',
       render: (dom, entity) => {
+        // todo: it seems, we need to use dateOfBirth now
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         return entity.userDetails?.age;
       },
       valueType: 'digit',

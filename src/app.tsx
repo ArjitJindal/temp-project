@@ -21,7 +21,7 @@ export const initialStateConfig = {
  * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser;
+  currentUser?: LegacyAPI.CurrentUser;
 }> {
   return {
     settings: {},

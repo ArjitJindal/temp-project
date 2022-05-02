@@ -61,8 +61,8 @@ export function useUsers(): [{ [userId: string]: User }, boolean] {
 export function useUserName(userId: string | null | undefined): string {
   const [users, isLoading] = useUsers();
   // todo: i18n
-  if (isLoading) {
+  if (isLoading || !userId) {
     return userId ?? 'Unknown user';
   }
-  return users[userId]?.name ?? userId ?? 'Unknown user'
+  return users[userId]?.name ?? userId ?? 'Unknown user';
 }

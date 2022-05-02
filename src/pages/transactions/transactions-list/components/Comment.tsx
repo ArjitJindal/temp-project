@@ -21,7 +21,7 @@ export default function Comment(props: Props) {
       actions={
         currentUserId === comment.userId
           ? [
-              deletingCommentIds.includes(comment.id) ? (
+              comment.id && deletingCommentIds.includes(comment.id) ? (
                 <span>Deleting...</span>
               ) : (
                 <Ant.Tooltip key="delete" title="Delete">

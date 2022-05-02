@@ -1,6 +1,6 @@
 // typings of url-parse are incorrect...
 // @ts-ignore
-import URLParse from 'url-parse';
+import * as URLParse from 'url-parse';
 import { Observable, from } from '../rxjsStub';
 
 export * from './isomorphic-fetch';
@@ -42,7 +42,7 @@ export type RequestBody = undefined | string | FormData | URLSearchParams;
 export class RequestContext {
   private headers: { [key: string]: string } = {};
   private body: RequestBody = undefined;
-  private url: URLParse;
+  private url: URLParse<Record<string, string | undefined>>;
 
   /**
    * Creates the request context using a http method and request resource url

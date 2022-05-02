@@ -118,7 +118,7 @@ export default () => {
 | count | 有多少未读通知 | `number` | - |
 | bell | 铃铛的图表 | `ReactNode` | - |
 | onClear | 点击清空数据按钮 | `(tabName: string, tabKey: string) => void` | - |
-| onItemClick | 未读消息列被点击 | `(item: API.NoticeIconData, tabProps: NoticeIconTabProps) => void` | - |
+| onItemClick | 未读消息列被点击 | `(item: LegacyAPI.NoticeIconData, tabProps: NoticeIconTabProps) => void` | - |
 | onViewMore | 查看更多的按钮点击 | `(tabProps: NoticeIconTabProps, e: MouseEvent) => void` | - |
 | onTabChange | 通知 Tab 的切换 | `(tabTile: string) => void;` | - |
 | popupVisible | 通知显示是否展示 | `boolean` | - |
@@ -130,19 +130,19 @@ export default () => {
 
 ### NoticeIcon.Tab API
 
-| 参数         | 说明               | 类型                                 | 默认值 |
-| ------------ | ------------------ | ------------------------------------ | ------ |
-| count        | 有多少未读通知     | `number`                             | -      |
-| title        | 通知 Tab 的标题    | `ReactNode`                          | -      |
-| showClear    | 展示清除按钮       | `boolean`                            | `true` |
-| showViewMore | 展示加载更         | `boolean`                            | `true` |
-| tabKey       | Tab 的唯一 key     | `string`                             | -      |
-| onClick      | 子项的单击事件     | `(item: API.NoticeIconData) => void` | -      |
-| onClear      | 清楚按钮的点击     | `()=>void`                           | -      |
-| emptyText    | 为空的时候测试     | `()=>void`                           | -      |
-| viewMoreText | 查看更多的按钮文字 | `string`                             | -      |
-| onViewMore   | 查看更多的按钮点击 | `( e: MouseEvent) => void`           | -      |
-| list         | 通知信息的列表     | `API.NoticeIconData`                 | -      |
+| 参数         | 说明               | 类型                                       | 默认值 |
+| ------------ | ------------------ | ------------------------------------------ | ------ |
+| count        | 有多少未读通知     | `number`                                   | -      |
+| title        | 通知 Tab 的标题    | `ReactNode`                                | -      |
+| showClear    | 展示清除按钮       | `boolean`                                  | `true` |
+| showViewMore | 展示加载更         | `boolean`                                  | `true` |
+| tabKey       | Tab 的唯一 key     | `string`                                   | -      |
+| onClick      | 子项的单击事件     | `(item: LegacyAPI.NoticeIconData) => void` | -      |
+| onClear      | 清楚按钮的点击     | `()=>void`                                 | -      |
+| emptyText    | 为空的时候测试     | `()=>void`                                 | -      |
+| viewMoreText | 查看更多的按钮文字 | `string`                                   | -      |
+| onViewMore   | 查看更多的按钮点击 | `( e: MouseEvent) => void`                 | -      |
+| list         | 通知信息的列表     | `LegacyAPI.NoticeIconData`                 | -      |
 
 ### NoticeIconData
 

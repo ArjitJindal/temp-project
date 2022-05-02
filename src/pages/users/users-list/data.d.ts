@@ -45,3 +45,7 @@ export type TableListParams = {
   filter?: Record<string, any[]>;
   sorter?: Record<string, any>;
 };
+
+// todo: it looks like these types are outdates, need to use API types in mocks
+export type BusinessUsersListItem = any;
+export type CustomerUsersListItem = any;

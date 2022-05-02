@@ -5,7 +5,7 @@ import { parse } from 'url';
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
-  const tableListDataSource: API.RuleListItem[] = [];
+  const tableListDataSource: LegacyAPI.RuleListItem[] = [];
 
   for (let i = 0; i < pageSize; i += 1) {
     const index = (current - 1) * 10 + i;
@@ -39,8 +39,8 @@ function getRule(req: Request, res: Response, u: string) {
     realUrl = req.url;
   }
   const { current = 1, pageSize = 10 } = req.query;
-  const params = parse(realUrl, true).query as unknown as API.PageParams &
-    API.RuleListItem & {
+  const params = parse(realUrl, true).query as unknown as LegacyAPI.PageParams &
+    LegacyAPI.RuleListItem & {
       sorter: any;
       filter: any;
     };
@@ -121,7 +121,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
     case 'post':
       (() => {
         const i = Math.ceil(Math.random() * 10000);
-        const newRule: API.RuleListItem = {
+        const newRule: LegacyAPI.RuleListItem = {
           key: tableListDataSource.length,
           href: 'https://ant.design',
           avatar: [

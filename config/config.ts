@@ -174,4 +174,7 @@ export default defineConfig({
   mfsu: {},
   extraBabelPlugins: ['@babel/plugin-proposal-class-properties'],
   exportStatic: {},
+  forkTSChecker: {
+    typescript: true,
+  },
 });
