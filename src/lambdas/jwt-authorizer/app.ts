@@ -52,7 +52,8 @@ async function getTenantScopeCredentials(
 }
 
 export const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
-  const token = headers?['authorization'] ?? headers?['Authorization']
+  const token =
+    event.headers?.['authorization'] ?? event.headers?.['Authorization']
   if (!token) {
     throw new Error('Expected "Authorization" header to be set')
   }
