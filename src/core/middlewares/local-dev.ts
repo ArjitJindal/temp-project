@@ -86,9 +86,9 @@ export const localDev =
       }
       const authorizer = event.requestContext.authorizer || {}
       event.requestContext.authorizer = {
-        principalId: principalId,
-        tenantName: tenantName,
-        userId: userId,
+        principalId,
+        tenantName,
+        userId,
         ...authorizer,
       }
     }
