@@ -416,19 +416,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.accountsHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-          ...({
-            AUTH0_DOMAIN: config.application.AUTH0_DOMAIN,
-            AUTH0_MANAGEMENT_CLIENT_ID:
-              config.application.AUTH0_MANAGEMENT_CLIENT_ID,
-            AUTH0_MANAGEMENT_CLIENT_SECRET:
-              config.application.AUTH0_MANAGEMENT_CLIENT_SECRET,
-          } as AccountsConfig),
-        },
-      }
+      atlasFunctionProps
     )
 
     /* Transactions per user view */
@@ -437,12 +425,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.transactionsPerUserViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
-      {
-        ...atlasFunctionProps,
-        environment: {
-          ...atlasFunctionProps.environment,
-        },
-      }
+      atlasFunctionProps
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
     transactionsPerUserViewFunction.role?.attachInlinePolicy(
@@ -752,7 +735,11 @@ export class CdkTarponStack extends cdk.Stack {
       timeout: Duration.seconds(100),
       ...{
         ...props,
-        environment: { ...props.environment, ENV: this.config.stage },
+        environment: {
+          ...props.environment,
+          ENV: this.config.stage,
+          ...this.config.application,
+        },
       },
     })
     // This is needed because of the usage of SpecRestApi
