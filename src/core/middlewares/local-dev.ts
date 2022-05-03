@@ -32,10 +32,10 @@ export const localDev =
 
       const authorizer = event.requestContext.authorizer || {}
       event.requestContext.authorizer = {
-        principalId: userInfo[CUSTOM_CLAIMS_NS + '/tenantId'],
+        principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
         tenantName:
-          userInfo[CUSTOM_CLAIMS_NS + '/tenantName'] ?? 'Unnamed tenant',
-        userId: userInfo[CUSTOM_CLAIMS_NS + '/userId'],
+          userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
+        userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
         ...authorizer,
       }
     }
