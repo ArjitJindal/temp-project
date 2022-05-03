@@ -12,8 +12,13 @@ import { PlusOutlined } from '@ant-design/icons';
 import { RULE_ACTION_OPTIONS } from '../../utils';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
+import { Rule } from '@/apis';
 
-export const RuleCreationForm: React.FC = () => {
+interface RuleCreationFormProps {
+  rule?: Rule;
+}
+
+export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, children }) => {
   const api = useApi();
   const restFormRef = useRef<ProFormInstance>();
   const [ruleImplementations, setRuleImplementations] = useState<RuleImplementation[]>([]);
@@ -24,38 +29,70 @@ export const RuleCreationForm: React.FC = () => {
   }, [api]);
   return (
     <DrawerForm
-      title="Create a New Rule"
+      title={rule ? 'Update Rule' : 'Create a New Rule'}
       formRef={restFormRef}
       trigger={
-        <Button type="primary">
-          <PlusOutlined />
-          Create
-        </Button>
+        children ? (
+          <div>{children}</div>
+        ) : (
+          <Button type="primary">
+            <PlusOutlined />
+            Create
+          </Button>
+        )
       }
       submitter={{
         searchConfig: {
           resetText: 'Cancel',
-          submitText: 'Create',
+          submitText: rule ? 'Save' : 'Create',
+        },
+        render: (props, defaultDoms) => {
+          return [
+            ...defaultDoms,
+            rule && (
+              <Button
+                key="delete"
+                onClick={async () => {
+                  await api.deleteRulesRuleId({ ruleId: rule.id });
+                  message.success('Rule deleted');
+                }}
+                danger
+              >
+                Delete
+              </Button>
+            ),
+          ];
         },
       }}
       autoFocusFirstInput
       onVisibleChange={() => restFormRef.current?.resetFields()}
       onFinish={async (values) => {
         try {
-          await api.postRules({
-            Rule: {
-              id: values.id,
-              type: values.type,
-              name: values.name,
-              description: values.description,
-              ruleImplementationName: values.ruleImplementationName,
-              defaultAction: values.defaultAction,
-              defaultParameters: JSON.parse(values.defaultParameters),
-              // TODO: Implement assigning labels
-              labels: [],
-            },
-          });
-          message.success('Rule created!');
+          const newRule = {
+            ...(rule ?? {}),
+            id: values.id,
+            type: values.type,
+            name: values.name,
+            description: values.description,
+            ruleImplementationName: values.ruleImplementationName,
+            defaultAction: values.defaultAction,
+            defaultParameters: JSON.parse(values.defaultParameters),
+            tenantIds: values.tenantIds && values.tenantIds.split(','),
+            // TODO: Implement assigning labels
+            labels: rule?.labels || [],
+          };
+          if (rule) {
+            await api.putRuleRuleId({
+              ruleId: rule.id,
+              Rule: newRule,
+            });
+            message.success('Rule updated');
+          } else {
+            await api.postRules({
+              Rule: newRule,
+            });
+            message.success('Rule created');
+          }
           restFormRef.current?.resetFields();
           return true;
         } catch (e) {
@@ -74,6 +111,8 @@ export const RuleCreationForm: React.FC = () => {
             required: true,
           },
         ]}
+        initialValue={rule?.id}
+        disabled={rule !== undefined}
       />
       <ProFormSelect
         width="xl"
@@ -88,6 +127,7 @@ export const RuleCreationForm: React.FC = () => {
           { value: 'TRANSACTION', label: 'TRANSACTION' },
           { value: 'USER', label: 'USER' },
         ]}
+        initialValue={rule?.type}
       />
       <ProFormText
         width="xl"
@@ -98,6 +138,7 @@ export const RuleCreationForm: React.FC = () => {
             required: true,
           },
         ]}
+        initialValue={rule?.name}
       />
       <ProFormTextArea
         label="Rule Description"
@@ -108,6 +149,7 @@ export const RuleCreationForm: React.FC = () => {
             required: true,
           },
         ]}
+        initialValue={rule?.description}
       />
       <ProFormSelect
         width="xl"
@@ -122,6 +164,7 @@ export const RuleCreationForm: React.FC = () => {
           value: ruleImplementation.name,
           label: ruleImplementation.name,
         }))}
+        initialValue={rule?.ruleImplementationName}
       />
       <ProFormRadio.Group
         name="defaultAction"
@@ -133,6 +176,7 @@ export const RuleCreationForm: React.FC = () => {
             required: true,
           },
         ]}
+        initialValue={rule?.defaultAction}
       />
       <ProFormTextArea
         width="xl"
@@ -146,6 +190,13 @@ export const RuleCreationForm: React.FC = () => {
         placeholder={`{
     "dummy": 100
 }`}
+        initialValue={JSON.stringify(rule?.defaultParameters)}
+      />
+      <ProFormText
+        width="xl"
+        name="tenantIds"
+        label="Tenant IDs"
+        initialValue={rule?.tenantIds?.join(',')}
       />
     </DrawerForm>
   );

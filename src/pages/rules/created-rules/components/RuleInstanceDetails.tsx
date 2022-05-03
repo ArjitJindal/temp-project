@@ -2,11 +2,12 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { Button, message, Radio, Row, Space, Tag } from 'antd';
 import { withTheme, AjvError, IChangeEvent } from '@rjsf/core';
 import { Theme } from '@rjsf/antd';
-import { EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { Fragment, useCallback, useState } from 'react';
 import { getRuleActionColor, RULE_ACTION_OPTIONS } from '../../utils';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
+import { useApi } from '@/api';
 
 const JSONSchemaForm = withTheme(Theme);
 
@@ -15,15 +16,19 @@ interface Props {
   ruleParametersSchema: object;
   ruleInstance: RuleInstance;
   onRuleInstanceUpdate: (newRuleInstance: RuleInstance) => Promise<void>;
+  onRuleInstanceDeleted: () => void;
 }
 export const RuleInstanceDetails: React.FC<Props> = ({
   rule,
   ruleInstance,
   ruleParametersSchema,
   onRuleInstanceUpdate,
+  onRuleInstanceDeleted,
 }) => {
+  const api = useApi();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [parameters, setParameters] = useState(ruleInstance.parameters);
   const [ruleAction, setRuleAction] = useState<RuleAction>(ruleInstance.action);
   const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
@@ -54,6 +59,13 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       setSaving(false);
     }
   }, [onRuleInstanceUpdate, parameters, rule.id, ruleAction, ruleInstance]);
+  const handleDeleteRuleInstance = useCallback(async () => {
+    setDeleting(true);
+    await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId: ruleInstance.id as string });
+    message.success(`Successfully deleted rule ${rule.id}`);
+    onRuleInstanceDeleted();
+    setDeleting(false);
+  }, [api, onRuleInstanceDeleted, rule.id, ruleInstance.id]);
 
   return (
     <>
@@ -75,9 +87,20 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             </Button>
           </Space>
         ) : (
-          <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
-            Edit
-          </Button>
+          <Space>
+            <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
+              Edit
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteRuleInstance}
+              size="small"
+              loading={deleting}
+              danger
+            >
+              Delete
+            </Button>
+          </Space>
         )}
       </Row>
       <ProDescriptions column={1} colon={false} layout="vertical">

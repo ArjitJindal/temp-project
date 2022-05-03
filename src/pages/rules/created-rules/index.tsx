@@ -193,6 +193,10 @@ export default () => {
             }
             ruleInstance={updatedRuleInstances[currentRow.id] || currentRow}
             onRuleInstanceUpdate={handleRuleInstanceUpdate}
+            onRuleInstanceDeleted={() => {
+              setCurrentRow(undefined);
+              setShowDetail(false);
+            }}
           />
         )}
       </Drawer>

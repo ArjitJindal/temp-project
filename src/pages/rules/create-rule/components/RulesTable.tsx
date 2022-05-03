@@ -23,8 +23,16 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       {
         title: 'Rule ID',
         width: 100,
-        dataIndex: 'id',
         sorter: true,
+        render: (_, entity) => {
+          return user && isFlagrightUser(user) ? (
+            <RuleCreationForm rule={entity}>
+              <a>{entity.id}</a>
+            </RuleCreationForm>
+          ) : (
+            <span>{entity.id}</span>
+          );
+        },
       },
       {
         title: 'Rule Name',
@@ -71,7 +79,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         },
       },
     ],
-    [onSelectRule],
+    [onSelectRule, user],
   );
 
   return (
