@@ -5,7 +5,6 @@
  * This dev-only util allows to directly execute lambda handler without using SAM.
  * Modify the lambda events in ./events/ for testing.
  */
-
 import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
 import mkdirp from 'mkdirp'
