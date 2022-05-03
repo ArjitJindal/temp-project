@@ -135,17 +135,11 @@ export interface DefaultApiGetConsumerUsersListRequest {
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
-   *
-   * @type number
+   * MONTH, DAY or YEAR
+   * @type &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  category: number
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetDashboardStatsTransactions
-   */
-  timeframe: number
+  timeframe: 'MONTH' | 'DAY' | 'YEAR'
   /**
    *
    * @type string

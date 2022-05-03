@@ -594,6 +594,7 @@ paths:
                 value:
                   type: TRANSACTION
                   format: flagright
+                  filename: filename
                   s3Key: s3-key-in-a-bucket
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
@@ -1125,15 +1126,15 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
-          in: query
-          name: category
-          required: true
-        - schema:
-            type: number
+            type: string
+            enum:
+              - MONTH
+              - DAY
+              - YEAR
           in: query
           name: timeframe
           required: true
+          description: MONTH, DAY or YEAR
         - schema:
             type: string
           in: query
@@ -1385,6 +1386,10 @@ components:
           type: number
         updatedAt:
           type: number
+        tenantIds:
+          type: array
+          items:
+            type: string
       required:
         - id
         - type

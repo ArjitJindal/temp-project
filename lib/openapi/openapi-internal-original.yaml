@@ -260,6 +260,7 @@ paths:
                 value:
                   type: TRANSACTION
                   format: flagright
+                  filename: filename
                   s3Key: s3-key-in-a-bucket
   '/import/{importId}':
     parameters:
@@ -467,15 +468,15 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
-          in: query
-          name: category
-          required: true
-        - schema:
-            type: number
+            type: string
+            enum:
+              - MONTH
+              - DAY
+              - YEAR
           in: query
           name: timeframe
           required: true
+          description: 'MONTH, DAY or YEAR'
         - schema:
             type: string
           in: query
@@ -583,6 +584,10 @@ components:
           type: number
         updatedAt:
           type: number
+        tenantIds:
+          type: array
+          items:
+            type: string
       required:
         - id
         - type
@@ -709,7 +714,8 @@ components:
         - data
     TransactionCaseManagement:
       allOf:
-        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult'
+        - $ref: >-
+            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
         - type: object
           properties:
             comments:
@@ -738,7 +744,8 @@ components:
         data:
           type: array
           items:
-            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
       required:
         - total
         - data
@@ -751,7 +758,8 @@ components:
         data:
           type: array
           items:
-            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
       required:
         - total
         - data

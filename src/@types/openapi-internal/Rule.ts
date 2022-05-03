@@ -22,6 +22,7 @@ export class Rule {
   'labels': Array<string>
   'createdAt'?: number
   'updatedAt'?: number
+  'tenantIds'?: Array<string>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -89,6 +90,12 @@ export class Rule {
       name: 'updatedAt',
       baseName: 'updatedAt',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'tenantIds',
+      baseName: 'tenantIds',
+      type: 'Array<string>',
       format: '',
     },
   ]
