@@ -51,8 +51,9 @@ async function getTenantScopeCredentials(
   return assumeRoleResult.Credentials
 }
 
-const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
-  const token = event.headers?.['authorization']
+export const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
+  const headers = event.headers ?? {}
+  const token = headers['authorization'] ?? headers['Authorization']
   if (!token) {
     throw new Error('Expected "Authorization" header to be set')
   }
