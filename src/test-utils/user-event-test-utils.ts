@@ -6,7 +6,7 @@ export function getTestUserEvent(
 ): UserEvent {
   return {
     type: 'LOGGED_IN',
-    timestamp: dayjs().unix(),
+    timestamp: dayjs().valueOf(),
     userId: 'user id',
     eventId: 'even id',
     eventDescription: 'event description',

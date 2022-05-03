@@ -70,7 +70,7 @@ export class ShPaymentTransactionConverter
       rawTransaction['Creditor name'].split(' ')
     return {
       transactionId: rawTransaction.No,
-      timestamp: dayjs(rawTransaction['Input Date']).unix(),
+      timestamp: dayjs(rawTransaction['Input Date']).valueOf(),
       reference: rawTransaction['Reference No'],
       originUserId: this.accountToUserId[rawTransaction['Debtor account']],
       destinationUserId:

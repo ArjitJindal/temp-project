@@ -72,11 +72,12 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       ),
     ])
 
-    const afterTimestamp = dayjs
-      .unix(this.transaction.timestamp)
-      .subtract(timeWindowInDays, 'day')
+    const afterTimestamp = dayjs(this.transaction.timestamp).subtract(
+      timeWindowInDays,
+      'day'
+    )
     const filteredTargetTransactions = targetTransactions.filter(
-      (transaction) => dayjs.unix(transaction.timestamp) > afterTimestamp
+      (transaction) => dayjs(transaction.timestamp) > afterTimestamp
     )
     const lastOtherTransaction = _.last(
       _.sortBy(
@@ -84,9 +85,7 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
           .map((otherTransactions) => otherTransactions[0])
           .filter(Boolean),
         'timestamp'
-      ).filter(
-        (transaction) => dayjs.unix(transaction.timestamp) > afterTimestamp
-      )
+      ).filter((transaction) => dayjs(transaction.timestamp) > afterTimestamp)
     )
 
     const lastTargetTransactionTimestamp = _.last(

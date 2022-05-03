@@ -49,10 +49,9 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     const sendingTransactions =
       await transactionRepository.getAfterTimeUserSendingThinTransactions(
         this.senderUser!.userId,
-        dayjs
-          .unix(this.transaction.timestamp)
+        dayjs(this.transaction.timestamp)
           .subtract(timeWindowInSeconds, 'second')
-          .unix(),
+          .valueOf(),
         transactionType
       )
 

@@ -3,7 +3,7 @@ import { DashboardTimeFrameType, timeFrameValues } from './constants'
 export const timeframeToTimestampConverter = (
   timeframe: DashboardTimeFrameType
 ): number => {
-  let afterTimeStamp = new Date()
+  const afterTimeStamp = new Date()
   if (timeframe === timeFrameValues.MONTH) {
     afterTimeStamp.setMonth(afterTimeStamp.getMonth() - 1)
   } else if (timeframe === timeFrameValues.DAY) {

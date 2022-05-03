@@ -38,7 +38,7 @@ paths:
                     transactionAmount: 68351.34
                     transactionCurrency: INR
                   promotionCodeUsed: true
-                  timestamp: 1641654664
+                  timestamp: 1641654664000
                   originPaymentDetails:
                     method: CARD
                     cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -180,7 +180,7 @@ paths:
                       transactionAmount: 68351.34
                       transactionCurrency: INR
                     promotionCodeUsed: true
-                    timestamp: 1641654664
+                    timestamp: 1641654664000
                     originPaymentDetails:
                       method: CARD
                       cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -288,7 +288,7 @@ paths:
             examples:
               example-1:
                 value:
-                  createdTimestamp: 1641654664
+                  createdTimestamp: 1641654664000
                   userId: 96647cfd9e8fe66ee0f3362e011e34e8
                   userDetails:
                     name:
@@ -418,7 +418,7 @@ paths:
               examples:
                 example-1:
                   value:
-                    createdTimestamp: 1641654664
+                    createdTimestamp: 1641654664000
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     userDetails:
                       name:
@@ -607,7 +607,7 @@ paths:
               examples:
                 example-2:
                   value:
-                    createdTimestamp: 1641654664
+                    createdTimestamp: 1641654664000
                     userId: 96647cfd9e8fe66ee0f3362e011e34e8
                     legalEntity:
                       companyGeneralDetails:
@@ -820,7 +820,7 @@ components:
       type: object
       description: Model for User details
       example:
-        createdTimestamp: 1641654664
+        createdTimestamp: 1641654664000
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
         userDetails:
           name:
@@ -862,31 +862,6 @@ components:
         tags:
           - key: customKey
             value: customValue
-      properties:
-        userId:
-          minLength: 1
-          type: string
-          description: Unique user ID
-        userDetails:
-          $ref: '#/components/schemas/UserDetails'
-        createdTimestamp:
-          type: number
-        legalDocuments:
-          type: array
-          description: User's legal identity documents - See Document Model for details
-          items:
-            $ref: '#/components/schemas/LegalDocument'
-        contactDetails:
-          $ref: '#/components/schemas/ContactDetails'
-        tags:
-          type: array
-          description: Additional information that can be added via tags
-          items:
-            $ref: '#/components/schemas/Tag'
-      required:
-        - userId
-        - userDetails
-        - createdTimestamp
       x-examples:
         example-1:
           userId: 96647cfd9e8fe66ee0f3362e011e34e8
@@ -930,6 +905,34 @@ components:
           tags:
             - key: customKey
               value: customValue
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          description: Unique user ID
+        userDetails:
+          $ref: '#/components/schemas/UserDetails'
+        createdTimestamp:
+          type: number
+          minimum: 1609455600000
+        legalDocuments:
+          type: array
+          description: User's legal identity documents - See Document Model for details
+          items:
+            $ref: '#/components/schemas/LegalDocument'
+        contactDetails:
+          $ref: '#/components/schemas/ContactDetails'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
+        transactionLimits:
+          $ref: '#/components/schemas/TransactionLimits'
+      required:
+        - userId
+        - userDetails
+        - createdTimestamp
     Person:
       title: Person
       required:
@@ -1076,7 +1079,7 @@ components:
           transactionAmount: 68351.34
           transactionCurrency: INR
         promotionCodeUsed: true
-        timestamp: 1641654664
+        timestamp: 1641654664000
         originPaymentDetails:
           method: CARD
           cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -1157,6 +1160,7 @@ components:
           description: Unique transaction identifier
         timestamp:
           type: number
+          minimum: 1609455600000
         originUserId:
           type: string
         destinationUserId:
@@ -1555,6 +1559,26 @@ components:
           required:
             - transactionId
         - $ref: '#/components/schemas/RulesResults'
+      x-examples:
+        example-1:
+          transactionId: 7b80a539eea6e78acbd6d458e5971482
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: BLOCK
+              ruleHit: true
+          failedRules:
+            - ruleId: R-1b
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              failureException:
+                exceptionName: MISSING_DATA
+                exceptionDescription: Some data is missing
     UserMonitoringResult:
       allOf:
         - type: object
@@ -1946,7 +1970,7 @@ components:
       title: Business
       type: object
       example:
-        createdTimestamp: 1641654664
+        createdTimestamp: 1641654664000
         userId: 96647cfd9e8fe66ee0f3362e011e34e8
         legalEntity:
           companyGeneralDetails:
@@ -2190,6 +2214,7 @@ components:
           $ref: '#/components/schemas/LegalEntity'
         createdTimestamp:
           type: number
+          minimum: 1609455600000
         shareHolders:
           type: array
           description: >-
@@ -2417,7 +2442,7 @@ components:
       type: object
       x-examples:
         example-1:
-          eventType: CREATED
+          transactionState: CREATED
           timestamp: 1231231244
           transactionID: 443dea26147a406b957d9ee3a1247b11
           eventId: aaeeb166147a406b957dd9147a406b957
@@ -2430,7 +2455,7 @@ components:
             ipAddress: 79.144.2.20
             vpnUsed: true
       properties:
-        eventType:
+        transactionState:
           type: string
           minLength: 1
           enum:
@@ -2457,7 +2482,7 @@ components:
         metaData:
           $ref: '#/components/schemas/DeviceData'
       required:
-        - eventType
+        - transactionState
         - timestamp
         - transactionID
     UserEvent:

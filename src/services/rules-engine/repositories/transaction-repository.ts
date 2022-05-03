@@ -395,7 +395,7 @@ export class TransactionRepository {
     return (
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
-        timestamp: item.SortKeyID,
+        timestamp: parseInt(item.SortKeyID),
         senderKeyId: item.senderKeyId,
         receiverKeyId: item.receiverKeyId,
       })) || []
@@ -536,7 +536,7 @@ export class TransactionRepository {
     return (
       result.Items?.map((item) => ({
         transactionId: item.transactionId,
-        timestamp: item.SortKeyID,
+        timestamp: parseInt(item.SortKeyID),
         senderKeyId: item.senderKeyId,
         receiverKeyId: item.receiverKeyId,
       })) || []

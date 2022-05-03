@@ -5,6 +5,8 @@ import {
 import { ManagementClient } from 'auth0'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
+import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
+import { timeframeToTimestampConverter } from './utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
@@ -22,8 +24,6 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
-import { timeframeToTimestampConverter } from './utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string

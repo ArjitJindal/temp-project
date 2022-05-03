@@ -19,7 +19,7 @@ export function getTestTransaction(
       transactionCurrency: 'INR',
     },
     promotionCodeUsed: true,
-    timestamp: dayjs().unix(),
+    timestamp: dayjs().valueOf(),
     originPaymentDetails: {
       method: 'CARD',
       cardFingerprint: '20ac00fed8ef913aefb17cfae1097cce',

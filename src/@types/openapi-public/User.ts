@@ -13,6 +13,7 @@
 import { ContactDetails } from './ContactDetails'
 import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
+import { TransactionLimits } from './TransactionLimits'
 import { UserDetails } from './UserDetails'
 /**
  * Model for User details
@@ -33,6 +34,7 @@ export class User {
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>
+  'transactionLimits'?: TransactionLimits
 
   static readonly discriminator: string | undefined = undefined
 
@@ -76,6 +78,12 @@ export class User {
       name: 'tags',
       baseName: 'tags',
       type: 'Array<Tag>',
+      format: '',
+    },
+    {
+      name: 'transactionLimits',
+      baseName: 'transactionLimits',
+      type: 'TransactionLimits',
       format: '',
     },
   ]

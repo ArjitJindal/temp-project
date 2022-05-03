@@ -12,7 +12,7 @@
 
 import { DeviceData } from './DeviceData'
 export class TransactionEvent {
-  'eventType': TransactionEventEventTypeEnum
+  'transactionState': TransactionEventTransactionStateEnum
   'timestamp': number
   'transactionID': string
   'eventId'?: string
@@ -29,9 +29,9 @@ export class TransactionEvent {
     format: string
   }> = [
     {
-      name: 'eventType',
-      baseName: 'eventType',
-      type: 'TransactionEventEventTypeEnum',
+      name: 'transactionState',
+      baseName: 'transactionState',
+      type: 'TransactionEventTransactionStateEnum',
       format: '',
     },
     {
@@ -79,7 +79,7 @@ export class TransactionEvent {
   public constructor() {}
 }
 
-export type TransactionEventEventTypeEnum =
+export type TransactionEventTransactionStateEnum =
   | 'CREATED'
   | 'REFUNDED'
   | 'DECLINED'

@@ -45,10 +45,9 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
     const thinTransactions =
       await transactionRepository.getAfterTimeUserSendingThinTransactions(
         this.transaction.originUserId,
-        dayjs
-          .unix(this.transaction.timestamp)
+        dayjs(this.transaction.timestamp)
           .subtract(timeWindowInDays, 'day')
-          .unix()
+          .valueOf()
       )
     const transactionsWithIpAddress = [
       ...(await transactionRepository.getTransactionsByIds(

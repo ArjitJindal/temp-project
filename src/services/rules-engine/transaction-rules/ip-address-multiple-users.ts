@@ -42,10 +42,9 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
     const thinTransactionsFromIpAddress =
       await transactionRepository.getAfterTimestampIpAddressThinTransactions(
         this.transaction.deviceData.ipAddress,
-        dayjs
-          .unix(this.transaction.timestamp)
+        dayjs(this.transaction.timestamp)
           .subtract(timeWindowInDays, 'day')
-          .unix()
+          .valueOf()
       )
     const senderKeyId = getSenderKeys(
       this.tenantId,

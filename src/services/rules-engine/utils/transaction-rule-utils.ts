@@ -74,7 +74,7 @@ export function isTransactionWithinTimeWindow(
   if (!timeWindow) {
     return true
   }
-  const transactionTime = dayjs.unix(transaction.timestamp)
+  const transactionTime = dayjs(transaction.timestamp)
   const transactionDateString = transactionTime.format('YYYY-MM-DD')
   const fromTime = dayjs(`${transactionDateString}T${timeWindow.from}`)
   const toTime = dayjs(`${transactionDateString}T${timeWindow.to}`)

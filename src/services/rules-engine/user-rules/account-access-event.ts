@@ -56,10 +56,9 @@ export default class AccountAccessEventRule extends UserRule<AccountAccessEventR
       dynamoDb: this.dynamoDb,
     })
     const userEvent = this.userEvent as UserEvent
-    const afterTimestamp = dayjs
-      .unix(userEvent.timestamp)
+    const afterTimestamp = dayjs(userEvent.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
-      .unix()
+      .valueOf()
     const accessEvents =
       await userEventRepository.getAfterTimestampTypeUserEvents(
         userEvent.userId,

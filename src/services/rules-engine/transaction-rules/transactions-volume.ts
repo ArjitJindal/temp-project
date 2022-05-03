@@ -61,10 +61,9 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     })
 
     // Retrieve all the transactions during the target time window
-    const afterTimestamp = dayjs
-      .unix(this.transaction.timestamp)
+    const afterTimestamp = dayjs(this.transaction.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
-      .unix()
+      .valueOf()
     const senderTransactionsPromise =
       this.transaction.originUserId && checkSender !== 'none'
         ? this.getTransactions(

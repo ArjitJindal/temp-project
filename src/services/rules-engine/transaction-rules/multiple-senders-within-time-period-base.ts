@@ -41,10 +41,9 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
       dynamoDb: this.dynamoDb,
     })
 
-    const afterTimestamp = dayjs
-      .unix(this.transaction.timestamp)
+    const afterTimestamp = dayjs(this.transaction.timestamp)
       .subtract(timePeriodDays, 'day')
-      .unix()
+      .valueOf()
     let senderTransactions: ThinTransaction[] = []
     if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =

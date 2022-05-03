@@ -31,35 +31,35 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T01:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '2',
-        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '2',
-        timestamp: dayjs('2022-01-01T07:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T07:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '3',
-        timestamp: dayjs('2022-01-07T07:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-07T07:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '1.1.1.1',
         },
@@ -72,14 +72,14 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '2.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '2',
-        timestamp: dayjs('2022-01-07T00:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '2.1.1.1',
         },
@@ -92,14 +92,14 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '3.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '3.1.1.1',
         },
@@ -112,14 +112,14 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originUserId: '1',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '4.1.1.1',
         },
       }),
       getTestTransaction({
         originUserId: '2',
-        timestamp: dayjs('2022-01-01T06:00:00.000Z').unix(),
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         deviceData: {
           ipAddress: '4.2.1.1',
         },

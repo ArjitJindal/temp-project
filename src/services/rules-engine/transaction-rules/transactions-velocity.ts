@@ -65,10 +65,9 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       dynamoDb: this.dynamoDb,
     })
 
-    const afterTimestamp = dayjs
-      .unix(this.transaction.timestamp)
+    const afterTimestamp = dayjs(this.transaction.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
-      .unix()
+      .valueOf()
     const senderTransactionsCountPromise = this.transaction.originUserId
       ? this.getTransactionsCount(this.transaction.originUserId, afterTimestamp)
       : Promise.resolve(0)
