@@ -4,6 +4,7 @@ import { TarponStackConstants } from '@cdk/constants'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export class RuleRepository {
   tenantId: string
@@ -23,7 +24,16 @@ export class RuleRepository {
   }
 
   async getAllRules(): Promise<ReadonlyArray<Rule>> {
-    return this.getRules({})
+    return this.getRules(
+      this.tenantId === FLAGRIGHT_TENANT_ID
+        ? {}
+        : {
+            FilterExpression: `contains(tenantIds, :tenantId) OR attribute_not_exists(tenantIds)`,
+            ExpressionAttributeValues: {
+              ':tenantId': this.tenantId,
+            },
+          }
+    )
   }
 
   async getRuleById(ruleId: string): Promise<Rule | undefined> {
@@ -60,7 +70,7 @@ export class RuleRepository {
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
         ...query.ExpressionAttributeValues,
-        ':pk': DynamoDbKeys.RULE(this.tenantId).PartitionKeyID,
+        ':pk': DynamoDbKeys.RULE().PartitionKeyID,
       },
     }
 
@@ -75,6 +85,8 @@ export class RuleRepository {
         defaultAction: item.defaultAction,
         ruleImplementationName: item.ruleImplementationName,
         labels: item.labels,
+        tenantIds:
+          this.tenantId === FLAGRIGHT_TENANT_ID ? item.tenantIds : undefined,
       })) || []
     )
   }
@@ -84,7 +96,7 @@ export class RuleRepository {
     const newRule: Rule = {
       ...rule,
       createdAt: rule.createdAt || now,
-      updatedAt: rule.updatedAt || now,
+      updatedAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,

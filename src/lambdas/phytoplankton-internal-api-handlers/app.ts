@@ -225,7 +225,8 @@ export const ruleHandler = lambdaApi()(
         id: event.pathParameters.ruleId,
       })
     } else if (event.httpMethod === 'DELETE' && event.pathParameters?.ruleId) {
-      return await ruleService.deleteRule(event.pathParameters.ruleId)
+      await ruleService.deleteRule(event.pathParameters.ruleId)
+      return 'OK'
     }
 
     throw new Error('Unhandled request')
