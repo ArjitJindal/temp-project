@@ -37,14 +37,14 @@ export class TransactionWithRulesResult {
   'destinationUserId'?: string
   'originAmountDetails'?: TransactionAmountDetails
   'destinationAmountDetails'?: TransactionAmountDetails
-  'originPaymentDetails':
+  'originPaymentDetails'?:
     | CardDetails
     | IBANDetails
     | ACHDetails
     | SWIFTDetails
     | UPIDetails
     | WalletDetails
-  'destinationPaymentDetails':
+  'destinationPaymentDetails'?:
     | CardDetails
     | IBANDetails
     | ACHDetails

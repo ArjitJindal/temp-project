@@ -45,7 +45,7 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
       this.tenantId,
       this.transaction,
       transactionType
-    ).PartitionKeyID
+    )?.PartitionKeyID
     const sendingTransactions =
       await transactionRepository.getAfterTimeUserSendingThinTransactions(
         this.senderUser!.userId,

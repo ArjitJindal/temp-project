@@ -51,7 +51,10 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
           this.transaction.destinationUserId,
           afterTimestamp
         )
-    } else if (receiverTypes.includes('NON_USER')) {
+    } else if (
+      receiverTypes.includes('NON_USER') &&
+      this.transaction.destinationPaymentDetails
+    ) {
       senderTransactions =
         await transactionRepository.getAfterTimeNonUserReceivingThinTransactions(
           this.transaction.destinationPaymentDetails,

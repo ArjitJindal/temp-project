@@ -199,24 +199,26 @@ export class TransactionRepository {
                 },
               },
             },
-            {
-              PutRequest: {
-                Item: {
-                  ...senderKeys,
-                  transactionId,
-                  receiverKeyId: receiverKeys.PartitionKeyID,
+            senderKeys &&
+              receiverKeys && {
+                PutRequest: {
+                  Item: {
+                    ...senderKeys,
+                    transactionId,
+                    receiverKeyId: receiverKeys.PartitionKeyID,
+                  },
                 },
               },
-            },
-            {
-              PutRequest: {
-                Item: {
-                  ...receiverKeys,
-                  transactionId,
-                  senderKeyId: senderKeys.PartitionKeyID,
+            senderKeys &&
+              receiverKeys && {
+                PutRequest: {
+                  Item: {
+                    ...receiverKeys,
+                    transactionId,
+                    senderKeyId: senderKeys.PartitionKeyID,
+                  },
                 },
               },
-            },
             senderKeysOfTransactionType && {
               PutRequest: {
                 Item: {
@@ -235,19 +237,20 @@ export class TransactionRepository {
                 },
               },
             },
-            transaction?.deviceData?.ipAddress && {
-              PutRequest: {
-                Item: {
-                  ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
-                    this.tenantId,
-                    transaction.deviceData.ipAddress,
-                    transaction.timestamp
-                  ),
-                  transactionId,
-                  senderKeyId: senderKeys.PartitionKeyID,
+            senderKeys &&
+              transaction?.deviceData?.ipAddress && {
+                PutRequest: {
+                  Item: {
+                    ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
+                      this.tenantId,
+                      transaction.deviceData.ipAddress,
+                      transaction.timestamp
+                    ),
+                    transactionId,
+                    senderKeyId: senderKeys.PartitionKeyID,
+                  },
                 },
               },
-            },
           ].filter(Boolean) as WriteRequest[],
         },
         ReturnConsumedCapacity: 'TOTAL',

@@ -28,19 +28,20 @@ export const DynamoDbKeys = {
   ALL_TRANSACTION: (
     tenantId: string,
     userId: string | undefined,
-    paymentDetails: PaymentDetails,
+    paymentDetails: PaymentDetails | undefined,
     direction: 'sending' | 'receiving',
     transactionType?: string,
     timestamp?: number
   ) => {
     return userId === undefined
-      ? DynamoDbKeys.NON_USER_TRANSACTION(
-          tenantId,
-          paymentDetails,
-          direction,
-          transactionType,
-          timestamp
-        )
+      ? paymentDetails &&
+          DynamoDbKeys.NON_USER_TRANSACTION(
+            tenantId,
+            paymentDetails,
+            direction,
+            transactionType,
+            timestamp
+          )
       : DynamoDbKeys.USER_TRANSACTION(
           tenantId,
           userId,

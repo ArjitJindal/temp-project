@@ -2166,8 +2166,6 @@ components:
             $ref: '#/components/schemas/Tag'
       required:
         - timestamp
-        - originPaymentDetails
-        - destinationPaymentDetails
     TransactionWithRulesResult:
       title: TransactionWithRulesResult
       description: Model for transaction payload with rules result

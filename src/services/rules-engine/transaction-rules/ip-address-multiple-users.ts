@@ -32,7 +32,12 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       throw new MissingRuleParameter()
     }
 
-    if (!this.transaction.deviceData?.ipAddress) {
+    const senderKeyId = getSenderKeys(
+      this.tenantId,
+      this.transaction
+    )?.PartitionKeyID
+
+    if (!senderKeyId || !this.transaction.deviceData?.ipAddress) {
       return
     }
 
@@ -46,10 +51,6 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
           .subtract(timeWindowInDays, 'day')
           .valueOf()
       )
-    const senderKeyId = getSenderKeys(
-      this.tenantId,
-      this.transaction
-    ).PartitionKeyID
     const uniqueUsers = new Set(
       thinTransactionsFromIpAddress
         .map((transaction) => transaction.senderKeyId)
