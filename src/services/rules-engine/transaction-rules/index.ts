@@ -17,6 +17,7 @@ import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
 import UserTransactionPairsRule from './user-transaction-pairs'
+import UserTransactionPairsIcrypexRule from './user-transaction-pairs-icrypex'
 
 export const TRANSACTION_RULES = {
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
@@ -37,6 +38,7 @@ export const TRANSACTION_RULES = {
   'transactions-velocity': TransactionsVelocityRule,
   'transactions-volume': TransactionsVolumeRule,
   'user-transaction-pairs': UserTransactionPairsRule,
+  'user-transaction-pairs-icrypex': UserTransactionPairsIcrypexRule,
 
   // For testing only
   'tests/test-success-rule': TestSuccessRule,

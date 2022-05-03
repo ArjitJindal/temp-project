@@ -35,18 +35,25 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
   }
 
   public async computeRule() {
-    const { userPairsThreshold, timeWindowInSeconds, transactionType } =
-      this.parameters
-    const transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
+    const { userPairsThreshold } = this.parameters
+    const sendingTransactions = await this.getSenderSendingTransactions()
 
+    if (sendingTransactions.length > userPairsThreshold) {
+      return { action: this.action }
+    }
+  }
+
+  protected async getSenderSendingTransactions() {
+    const { timeWindowInSeconds, transactionType } = this.parameters
     const receiverKeyId = getReceiverKeys(
       this.tenantId,
       this.transaction,
       transactionType
     )?.PartitionKeyID
-    const sendingTransactions =
+    const transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    const sendingTransactions = (
       await transactionRepository.getAfterTimeUserSendingThinTransactions(
         this.senderUser!.userId,
         dayjs(this.transaction.timestamp)
@@ -54,13 +61,16 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
           .valueOf(),
         transactionType
       )
-
-    const userPairsCount = sendingTransactions.filter(
+    ).concat([
+      {
+        transactionId: this.transaction.transactionId as string,
+        timestamp: this.transaction.timestamp,
+        receiverKeyId,
+        senderKeyId: undefined,
+      },
+    ])
+    return sendingTransactions.filter(
       (transaction) => transaction.receiverKeyId === receiverKeyId
-    ).length
-
-    if (userPairsCount + 1 > userPairsThreshold) {
-      return { action: this.action }
-    }
+    )
   }
 }
