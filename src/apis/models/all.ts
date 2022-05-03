@@ -44,6 +44,7 @@ export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
 export * from './TransactionCaseManagementAllOf';
 export * from './TransactionLimits';
+export * from './TransactionLimits1';
 export * from './TransactionStatusChange';
 export * from './TransactionUpdateRequest';
 export * from './TransactionWithRulesResult';

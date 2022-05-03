@@ -59,6 +59,7 @@ models/TransactionAmountDetails.ts
 models/TransactionCaseManagement.ts
 models/TransactionCaseManagementAllOf.ts
 models/TransactionLimits.ts
+models/TransactionLimits1.ts
 models/TransactionStatusChange.ts
 models/TransactionUpdateRequest.ts
 models/TransactionWithRulesResult.ts

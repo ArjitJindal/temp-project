@@ -49,6 +49,7 @@ import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
+import { TransactionLimits1 } from '../models/TransactionLimits1';
 import { TransactionStatusChange } from '../models/TransactionStatusChange';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
@@ -312,20 +313,17 @@ export class ObservableDefaultApi {
 
   /**
    * DashboardStats - Transactions
-   * @param category
-   * @param timeframe
+   * @param timeframe MONTH, DAY or YEAR
    * @param fromTimestamp
    * @param body
    */
   public getDashboardStatsTransactions(
-    category: number,
-    timeframe: number,
+    timeframe: 'MONTH' | 'DAY' | 'YEAR',
     fromTimestamp?: string,
     body?: any,
     _options?: Configuration,
   ): Observable<Set<any>> {
     const requestContextPromise = this.requestFactory.getDashboardStatsTransactions(
-      category,
       timeframe,
       fromTimestamp,
       body,

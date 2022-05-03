@@ -290,24 +290,17 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
 
   /**
    * DashboardStats - Transactions
-   * @param category
-   * @param timeframe
+   * @param timeframe MONTH, DAY or YEAR
    * @param fromTimestamp
    * @param body
    */
   public async getDashboardStatsTransactions(
-    category: number,
-    timeframe: number,
+    timeframe: 'MONTH' | 'DAY' | 'YEAR',
     fromTimestamp?: string,
     body?: any,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
-
-    // verify required parameter 'category' is not null or undefined
-    if (category === null || category === undefined) {
-      throw new RequiredError('DefaultApi', 'getDashboardStatsTransactions', 'category');
-    }
 
     // verify required parameter 'timeframe' is not null or undefined
     if (timeframe === null || timeframe === undefined) {
@@ -322,15 +315,10 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     // Query Params
-    if (category !== undefined) {
-      requestContext.setQueryParam('category', ObjectSerializer.serialize(category, 'number', ''));
-    }
-
-    // Query Params
     if (timeframe !== undefined) {
       requestContext.setQueryParam(
         'timeframe',
-        ObjectSerializer.serialize(timeframe, 'number', ''),
+        ObjectSerializer.serialize(timeframe, "'MONTH' | 'DAY' | 'YEAR'", ''),
       );
     }
 

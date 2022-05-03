@@ -354,10 +354,8 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiGetDashboardStatsTransactionsRequest = {
-  // number
-  category: 3.14,
-  // number
-  timeframe: 3.14,
+  // 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
+  timeframe: "MONTH",
   // string (optional)
   fromTimestamp: "fromTimestamp_example",
   // any (optional)
@@ -371,12 +369,11 @@ apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
 
 ### Parameters
 
-| Name              | Type         | Description | Notes                            |
-| ----------------- | ------------ | ----------- | -------------------------------- |
-| **body**          | **any**      |             |
-| **category**      | [**number**] |             | defaults to undefined            |
-| **timeframe**     | [**number**] |             | defaults to undefined            |
-| **fromTimestamp** | [**string**] |             | (optional) defaults to undefined |
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- | --- | --- |
+| **body** | **any** |  |
+| **timeframe** | [\*\*&#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;**]**Array<&#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
+| **fromTimestamp** | [**string**] |  | (optional) defaults to undefined |
 
 ### Return type
 
@@ -895,6 +892,9 @@ let body:.DefaultApiPostIamRulesRequest = {
     ],
     createdAt: 3.14,
     updatedAt: 3.14,
+    tenantIds: [
+      "tenantIds_example",
+    ],
   },
 };
 
@@ -1129,6 +1129,9 @@ let body:.DefaultApiPostRulesRequest = {
     ],
     createdAt: 3.14,
     updatedAt: 3.14,
+    tenantIds: [
+      "tenantIds_example",
+    ],
   },
 };
 
@@ -1389,6 +1392,9 @@ let body:.DefaultApiPutRuleRuleIdRequest = {
     ],
     createdAt: 3.14,
     updatedAt: 3.14,
+    tenantIds: [
+      "tenantIds_example",
+    ],
   },
 };
 

@@ -13,7 +13,7 @@
 import { LegalEntity } from './LegalEntity';
 import { Person } from './Person';
 import { Tag } from './Tag';
-import { TransactionLimits } from './TransactionLimits';
+import { TransactionLimits1 } from './TransactionLimits1';
 import { HttpFile } from '../http/http';
 
 export class Business {
@@ -35,7 +35,7 @@ export class Business {
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>;
-  'transactionLimits'?: TransactionLimits;
+  'transactionLimits'?: TransactionLimits1;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -84,7 +84,7 @@ export class Business {
     {
       name: 'transactionLimits',
       baseName: 'transactionLimits',
-      type: 'TransactionLimits',
+      type: 'TransactionLimits1',
       format: '',
     },
   ];

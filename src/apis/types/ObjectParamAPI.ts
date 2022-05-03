@@ -48,6 +48,7 @@ import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
+import { TransactionLimits1 } from '../models/TransactionLimits1';
 import { TransactionStatusChange } from '../models/TransactionStatusChange';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
@@ -141,17 +142,11 @@ export interface DefaultApiGetConsumerUsersListRequest {
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
-   *
-   * @type number
+   * MONTH, DAY or YEAR
+   * @type &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  category: number;
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetDashboardStatsTransactions
-   */
-  timeframe: number;
+  timeframe: 'MONTH' | 'DAY' | 'YEAR';
   /**
    *
    * @type string
@@ -467,13 +462,7 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<Set<any>> {
     return this.api
-      .getDashboardStatsTransactions(
-        param.category,
-        param.timeframe,
-        param.fromTimestamp,
-        param.body,
-        options,
-      )
+      .getDashboardStatsTransactions(param.timeframe, param.fromTimestamp, param.body, options)
       .toPromise();
   }
 

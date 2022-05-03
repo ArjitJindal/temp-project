@@ -44,6 +44,7 @@ export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
 export * from './TransactionCaseManagementAllOf';
 export * from './TransactionLimits';
+export * from './TransactionLimits1';
 export * from './TransactionStatusChange';
 export * from './TransactionUpdateRequest';
 export * from './TransactionWithRulesResult';
@@ -101,6 +102,7 @@ import { TransactionAmountDetails } from './TransactionAmountDetails';
 import { TransactionCaseManagement } from './TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf';
 import { TransactionLimits } from './TransactionLimits';
+import { TransactionLimits1 } from './TransactionLimits1';
 import { TransactionStatusChange } from './TransactionStatusChange';
 import { TransactionUpdateRequest } from './TransactionUpdateRequest';
 import { TransactionWithRulesResult } from './TransactionWithRulesResult';
@@ -178,6 +180,7 @@ let typeMap: { [index: string]: any } = {
   TransactionCaseManagement: TransactionCaseManagement,
   TransactionCaseManagementAllOf: TransactionCaseManagementAllOf,
   TransactionLimits: TransactionLimits,
+  TransactionLimits1: TransactionLimits1,
   TransactionStatusChange: TransactionStatusChange,
   TransactionUpdateRequest: TransactionUpdateRequest,
   TransactionWithRulesResult: TransactionWithRulesResult,
