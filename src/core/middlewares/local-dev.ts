@@ -22,21 +22,42 @@ export const localDev =
     context: any,
     callback: any
   ): Promise<APIGatewayProxyResult> => {
-    if (process.env.ENV === 'local') {
-      const token = getToken(event)
-      const decoded = jwt.decode(token, { complete: true })
-      if (!decoded || !decoded.header || !decoded.header.kid) {
-        throw new Error('Unable to read user data from token')
-      }
-      const userInfo = decoded.payload as Record<string, unknown>
-
-      const authorizer = event.requestContext.authorizer || {}
+    const authorizer = event.requestContext.authorizer || {}
+    if (process.env.EXEC_SOURCE === 'cli') {
       event.requestContext.authorizer = {
-        principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
-        tenantName:
-          userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
-        userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
+        principalId: 'unset',
+        tenantName: 'unset',
+        userId: 'unset',
         ...authorizer,
+      }
+    } else if (process.env.ENV === 'local') {
+      if (
+        event.headers?.['authorization'] ||
+        event.headers?.['Authorization']
+      ) {
+        // For requests from Console
+        const token = getToken(event)
+        const decoded = jwt.decode(token, { complete: true })
+        if (!decoded || !decoded.header || !decoded.header.kid) {
+          throw new Error('Unable to read user data from token')
+        }
+        const userInfo = decoded.payload as Record<string, unknown>
+
+        event.requestContext.authorizer = {
+          principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
+          tenantName:
+            userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
+          userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
+          ...authorizer,
+        }
+      } else {
+        // For requests of the public REST APIs
+        event.requestContext.authorizer = {
+          principalId: event.headers?.['Tenant-Id'] || 'unset',
+          tenantName: event.headers?.['Tenant-Name'] || 'unset',
+          userId: event.headers?.['User-Id'] || 'unset',
+          ...authorizer,
+        }
       }
     }
     return handler(event, context, callback)

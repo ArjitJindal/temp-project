@@ -6,9 +6,10 @@ export const event = {
   httpMethod: 'POST',
   requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   body: JSON.stringify({
+    type: 'TRANSACTION',
     ruleId: 'R-1',
     status: 'ACTIVE',
-    parameters: { initialTransactions: 5 },
+    parameters: {},
     action: 'FLAG',
   } as RuleInstance),
 }

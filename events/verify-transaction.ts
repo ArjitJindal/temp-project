@@ -3,7 +3,7 @@ export const event = {
   path: '/transactions',
   httpMethod: 'POST',
   headers: {},
-  requestContext: { authorizer: { principalId: 'flagright' } },
+  requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   stageVariables: null,
   body: JSON.stringify({
     transactionId: '7b80a539eea6e78acbd6d458e5971482',

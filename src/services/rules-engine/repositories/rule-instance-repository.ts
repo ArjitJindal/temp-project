@@ -26,12 +26,12 @@ export class RuleInstanceRepository {
     this.tenantId = tenantId
   }
 
-  async createOrUpdateRuleInstance(
+  public async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance
   ): Promise<RuleInstance> {
     const ruleInstanceId = ruleInstance.id || uuidv4()
     const now = Date.now()
-    const newRuleInstance = {
+    const newRuleInstance: RuleInstance = {
       ...ruleInstance,
       id: ruleInstanceId,
       status: ruleInstance.status || 'ACTIVE',
@@ -52,7 +52,7 @@ export class RuleInstanceRepository {
     return newRuleInstance
   }
 
-  async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
+  public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
@@ -61,7 +61,7 @@ export class RuleInstanceRepository {
     await this.dynamoDb.delete(deleteItemInput).promise()
   }
 
-  async getActiveRuleInstances(
+  public async getActiveRuleInstances(
     type: RuleTypeEnum
   ): Promise<ReadonlyArray<RuleInstance>> {
     const status: RuleInstanceStatusEnum = 'ACTIVE'
@@ -78,7 +78,7 @@ export class RuleInstanceRepository {
     })
   }
 
-  async getAllRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
+  public async getAllRuleInstances(): Promise<ReadonlyArray<RuleInstance>> {
     return this.getRuleInstances({})
   }
 
@@ -109,6 +109,31 @@ export class RuleInstanceRepository {
         runCount: item.runCount,
         hitCount: item.hitCount,
       })) || []
+    )
+  }
+
+  public async incrementRuleInstanceStatsCount(
+    runRuleInstanceIds: string[],
+    hitRuleInstanceIds: string[]
+  ) {
+    const hitRuleInstanceIdsSet = new Set(hitRuleInstanceIds)
+    await Promise.all(
+      runRuleInstanceIds.map((runRuleInstanceId) => {
+        const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
+          TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+          Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
+          UpdateExpression: `SET runCount = runCount + :runCountInc, hitCount = hitCount + :hitCountInc`,
+          ExpressionAttributeValues: {
+            ':runCountInc': 1,
+            ':hitCountInc': hitRuleInstanceIdsSet.has(runRuleInstanceId)
+              ? 1
+              : 0,
+          },
+          ReturnValues: 'UPDATED_NEW',
+          ReturnConsumedCapacity: 'TOTAL',
+        }
+        return this.dynamoDb.update(updateItemInput).promise()
+      })
     )
   }
 }

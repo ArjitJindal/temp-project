@@ -7,6 +7,7 @@ export const event = {
   requestContext: { authorizer: { principalId: 'test-tenant-id' } },
   body: JSON.stringify({
     id: 'R-1',
+    type: 'TRANSACTION',
     name: 'Awesome rule name',
     description: 'Awesome rule description',
     ruleImplementationName: 'first-payment',

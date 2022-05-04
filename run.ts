@@ -23,6 +23,7 @@ async function setUpMockS3() {
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 process.env['ENV'] = 'local'
+process.env['EXEC_SOURCE'] = 'cli'
 process.env['MONGO_URI'] = 'mongodb://localhost:27017'
 process.env['DYNAMODB_URI'] = 'http://localhost:8000'
 
