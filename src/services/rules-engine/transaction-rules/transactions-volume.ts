@@ -5,10 +5,12 @@ import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { isTransactionAmountAboveThreshold } from '../utils/transaction-rule-utils'
+import {
+  getTransactionsTotalAmount,
+  isTransactionAmountAboveThreshold,
+  sumTransactionAmountDetails,
+} from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
-import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 export type TransactionsVolumeRuleParameters = {
   transactionVolumeThreshold: {
@@ -121,25 +123,25 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
-    const senderSendingAmount = await this.getTransactionsTotalAmount(
+    const senderSendingAmount = await getTransactionsTotalAmount(
       senderSendingTransactions
         .concat(this.transaction)
         .map((transaction) => transaction.originAmountDetails),
       targetCurrency
     )
-    const senderReceivingAmount = await this.getTransactionsTotalAmount(
+    const senderReceivingAmount = await getTransactionsTotalAmount(
       senderReceivingTransactions.map(
         (transaction) => transaction.destinationAmountDetails
       ),
       targetCurrency
     )
-    const receiverSendingAmount = await this.getTransactionsTotalAmount(
+    const receiverSendingAmount = await getTransactionsTotalAmount(
       receiverSendingTransactions.map(
         (transaction) => transaction.originAmountDetails
       ),
       targetCurrency
     )
-    const receiverReceivingAmount = await this.getTransactionsTotalAmount(
+    const receiverReceivingAmount = await getTransactionsTotalAmount(
       receiverReceivingTransactions
         .concat(this.transaction)
         .map((transaction) => transaction.destinationAmountDetails),
@@ -154,7 +156,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         ))) ||
       (checkSender === 'all' &&
         (await isTransactionAmountAboveThreshold(
-          this.sumTransactionAmountDetails(
+          sumTransactionAmountDetails(
             senderSendingAmount,
             senderReceivingAmount
           ),
@@ -167,7 +169,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         ))) ||
       (checkReceiver === 'all' &&
         (await isTransactionAmountAboveThreshold(
-          this.sumTransactionAmountDetails(
+          sumTransactionAmountDetails(
             receiverSendingAmount,
             receiverReceivingAmount
           ),
@@ -205,47 +207,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     return {
       sendingTransactions,
       receivingTransactions,
-    }
-  }
-
-  private async getTransactionsTotalAmount(
-    amountDetailsList: (TransactionAmountDetails | undefined)[],
-    targetCurrency: string
-  ): Promise<TransactionAmountDetails> {
-    let totalAmount: TransactionAmountDetails = {
-      transactionAmount: 0,
-      transactionCurrency: targetCurrency,
-    }
-    for (const amountDetails of amountDetailsList) {
-      if (amountDetails) {
-        const targetAmount = await getTargetCurrencyAmount(
-          amountDetails,
-          targetCurrency
-        )
-        totalAmount = this.sumTransactionAmountDetails(
-          totalAmount,
-          targetAmount
-        )
-      }
-    }
-    return totalAmount
-  }
-
-  private sumTransactionAmountDetails(
-    transactionAmountDetails1: TransactionAmountDetails,
-    transactionAmountDetails2: TransactionAmountDetails
-  ): TransactionAmountDetails {
-    if (
-      transactionAmountDetails1.transactionCurrency !==
-      transactionAmountDetails2.transactionCurrency
-    ) {
-      throw new Error('Currencies should be the same in order to sum up')
-    }
-    return {
-      transactionAmount:
-        transactionAmountDetails1.transactionAmount +
-        transactionAmountDetails2.transactionAmount,
-      transactionCurrency: transactionAmountDetails1.transactionCurrency,
     }
   }
 }

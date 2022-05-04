@@ -17,6 +17,7 @@ import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionReferenceKeywordRule from './transaction-reference-keyword'
 import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
+import TransactionsVolumeQuantilesRule from './transactions-volume-quantiles'
 import UserTransactionPairsRule from './user-transaction-pairs'
 import UserTransactionPairsIcrypexRule from './user-transaction-pairs-icrypex'
 
@@ -39,6 +40,7 @@ export const TRANSACTION_RULES = {
   'transaction-new-currency': TransactionNewCurrencyRule,
   'transactions-velocity': TransactionsVelocityRule,
   'transactions-volume': TransactionsVolumeRule,
+  'transactions-volume-quantiles': TransactionsVolumeQuantilesRule,
   'user-transaction-pairs': UserTransactionPairsRule,
   'user-transaction-pairs-icrypex': UserTransactionPairsIcrypexRule,
 

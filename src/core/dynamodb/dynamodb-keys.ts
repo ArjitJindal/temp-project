@@ -16,6 +16,8 @@ import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 
+export type TimeGranularity = 'day' | 'month' | 'year'
+
 export const DynamoDbKeys = {
   TENANT: (tenantId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#primary`,
@@ -128,6 +130,16 @@ export const DynamoDbKeys = {
   USER_AGGREGATION: (tenantId: string, userId: string) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}`,
     SortKeyID: userId,
+  }),
+  // Attributes: refer to UserAggregationAttributes
+  USER_TIME_AGGREGATION: (
+    tenantId: string,
+    userId: string,
+    // e.g 2022-01-01, 2022-01, 2022
+    timeLabel: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time`,
+    SortKeyID: timeLabel,
   }),
   // Attributes: refer to User / Business
   USER: (tenantId: string, userId: string) => ({
