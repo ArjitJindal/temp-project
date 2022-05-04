@@ -1,16 +1,30 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Drawer } from 'antd';
+import { Avatar, Drawer, Tooltip } from 'antd';
+import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
+import { RuleActionStatus } from './components/RuleActionStatus';
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
+import { useUsers } from '@/utils/user-utils';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [users] = useUsers();
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<TransactionCaseManagement>();
+  const [updatedTransactions, setUpdatedTransactions] = useState<{
+    [key: string]: TransactionCaseManagement;
+  }>({});
+  const handleTransactionUpdate = useCallback(async (newTransaction: TransactionCaseManagement) => {
+    const transactionId = newTransaction.transactionId as string;
+    setUpdatedTransactions((prev) => ({
+      ...prev,
+      [transactionId]: newTransaction,
+    }));
+  }, []);
   const api = useApi();
 
   const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
@@ -99,8 +113,37 @@ const TableList: React.FC = () => {
           return entity.destinationAmountDetails?.country;
         },
       },
+      {
+        title: 'Status',
+        sorter: true,
+        width: 120,
+        render: (dom, entity) => {
+          const transaction = updatedTransactions[entity.transactionId as string] || entity;
+          return <RuleActionStatus ruleAction={transaction.status} />;
+        },
+      },
+      {
+        title: 'Assignees',
+        width: 100,
+        ellipsis: true,
+        render: (dom, entity) => {
+          const transaction = updatedTransactions[entity.transactionId as string] || entity;
+          return (
+            <Avatar.Group maxCount={3}>
+              {transaction.assignments?.map((assignment) => (
+                <Tooltip
+                  key={assignment.assigneeUserId}
+                  title={users[assignment.assigneeUserId]?.name}
+                >
+                  <Avatar size="small" src={users[assignment.assigneeUserId]?.picture} />
+                </Tooltip>
+              ))}
+            </Avatar.Group>
+          );
+        },
+      },
     ],
-    [],
+    [updatedTransactions, users],
   );
 
   return (
@@ -116,6 +159,7 @@ const TableList: React.FC = () => {
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
+        expandable={{ expandedRowRender: ExpandedRulesRowRender }}
         request={async (params) => {
           const response = await api.getTransactionsList({
             limit: params.pageSize!,
@@ -139,7 +183,12 @@ const TableList: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.transactionId && <TransactionDetails transaction={currentRow} />}
+        {currentRow?.transactionId && (
+          <TransactionDetails
+            transaction={updatedTransactions[currentRow.transactionId] || currentRow}
+            onTransactionUpdate={handleTransactionUpdate}
+          />
+        )}
       </Drawer>
     </PageContainer>
   );

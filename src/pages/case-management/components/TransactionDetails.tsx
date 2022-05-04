@@ -1,11 +1,35 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Divider, Tag, Button, Input, Upload, message, Row, Col } from 'antd';
+import {
+  Divider,
+  List,
+  Tag,
+  Comment as AntComment,
+  Avatar,
+  Button,
+  Input,
+  Upload,
+  message,
+  Row,
+  Space,
+  Col,
+  Tooltip,
+  Select,
+  Popover,
+} from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useCallback, useState } from 'react';
-import { PaperClipOutlined } from '@ant-design/icons';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  EditOutlined,
+  HistoryOutlined,
+  LoadingOutlined,
+  PaperClipOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
+import filesize from 'filesize';
 import styles from './TransactionDetails.less';
+import { RuleActionStatus } from './RuleActionStatus';
+import Comment from './Comment';
 import {
   Tag as TransactionTag,
   TransactionCaseManagement,
@@ -13,9 +37,14 @@ import {
   FileInfo,
 } from '@/apis';
 import { useApi } from '@/api';
+import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
+import { useUsers } from '@/utils/user-utils';
+
+const equal = require('fast-deep-equal');
 
 interface Props {
   transaction: TransactionCaseManagement;
+  onTransactionUpdate: (newTransaction: TransactionCaseManagement) => void;
 }
 
 interface CommentEditorProps {
@@ -124,16 +153,178 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
   );
 };
 
-export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
+export const TransactionDetails: React.FC<Props> = ({ transaction, onTransactionUpdate }) => {
   const { user } = useAuth0();
+  const api = useApi();
+  const [users, loadingUsers] = useUsers();
+  const currentUserId = user?.sub;
+  const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [assignments, setAssignments] = useState(transaction.assignments || []);
+  const [status, setStatus] = useState(transaction.status);
+  const canSave = useMemo(() => {
+    return status !== transaction.status || !equal(assignments, transaction.assignments);
+  }, [assignments, status, transaction.assignments, transaction.status]);
+  const handleCancelEditing = useCallback(() => {
+    setEditing(false);
+    setStatus(transaction.status);
+    setAssignments(transaction.assignments || []);
+  }, [transaction.assignments, transaction.status]);
+  const handleCommentAdded = useCallback(
+    (newComment: TransactionComment) => {
+      onTransactionUpdate({
+        ...transaction,
+        comments: [...(transaction.comments || []), newComment],
+      });
+    },
+    [onTransactionUpdate, transaction],
+  );
+  const handleDeleteComment = useCallback(
+    async (transactionId: string, commentId: string) => {
+      setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
+      await api.deleteTransactionsTransactionIdCommentsCommentId({ transactionId, commentId });
+      setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
+      onTransactionUpdate({
+        ...transaction,
+        comments: (transaction.comments || []).filter((comment) => comment.id !== commentId),
+      });
+      message.success('Comment deleted');
+    },
+    [api, onTransactionUpdate, transaction],
+  );
+  const handleUpdateAssignments = useCallback(
+    (assignees: string[]) => {
+      setAssignments(
+        assignees.map((assigneeUserId) => ({
+          assignedByUserId: currentUserId as string,
+          assigneeUserId,
+          timestamp: Date.now(),
+        })),
+      );
+    },
+    [currentUserId],
+  );
+  const handleUpdateTransaction = useCallback(async () => {
+    const hideMessage = message.loading(`Saving...`, 0);
+    try {
+      setSaving(true);
+      await api.postTransactionsTransactionId({
+        transactionId: transaction.transactionId as string,
+        TransactionUpdateRequest: {
+          status: status === transaction.status ? undefined : status,
+          assignments,
+        },
+      });
+      onTransactionUpdate({
+        ...transaction,
+        status,
+        assignments,
+      });
+      message.success('Saved');
+      setEditing(false);
+    } catch (e) {
+      message.error('Failed to save');
+    } finally {
+      hideMessage();
+      setSaving(false);
+    }
+  }, [api, assignments, onTransactionUpdate, status, transaction]);
   return (
     <>
+      <Row justify="end">
+        {editing ? (
+          <Space>
+            <Button onClick={handleCancelEditing} size="small">
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              danger
+              size="small"
+              onClick={handleUpdateTransaction}
+              loading={saving}
+              disabled={!canSave}
+            >
+              Save
+            </Button>
+          </Space>
+        ) : (
+          <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
+            Edit
+          </Button>
+        )}
+      </Row>
       <ProDescriptions size="small" column={1} colon={false}>
         <ProDescriptions.Item label={<b>Transaction ID:</b>} valueType="text">
           {transaction.transactionId}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Timestamp:</b>} valueType="dateTime">
           {transaction.timestamp}
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label={<b>Status:</b>}>
+          {editing ? (
+            <Select disabled={!editing} style={{ width: 120 }} value={status} onChange={setStatus}>
+              {RULE_ACTION_OPTIONS.map((option) => (
+                <Select.Option key={option.value}>
+                  <RuleActionStatus ruleAction={option.value} />
+                </Select.Option>
+              ))}
+            </Select>
+          ) : (
+            <Row align="middle">
+              <Space>
+                <RuleActionStatus ruleAction={status} />
+                <Popover
+                  content={transaction.statusChanges?.map((statusChange) => (
+                    <Row>
+                      {`Changed to ${statusChange.status} by ${
+                        users[statusChange.userId]?.name || statusChange.userId
+                      } at ${new Date(statusChange.timestamp).toISOString()}`}
+                    </Row>
+                  ))}
+                >
+                  <HistoryOutlined />
+                </Popover>
+              </Space>
+            </Row>
+          )}
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label={<b>Assignees:</b>}>
+          {editing ? (
+            <Select<string[]>
+              mode="multiple"
+              allowClear
+              style={{ width: '100%' }}
+              disabled={loadingUsers}
+              placeholder={
+                loadingUsers ? (
+                  <>
+                    <LoadingOutlined /> Loading...
+                  </>
+                ) : (
+                  ''
+                )
+              }
+              onChange={handleUpdateAssignments}
+              value={loadingUsers ? [] : assignments.map((assignment) => assignment.assigneeUserId)}
+            >
+              {Object.values(users).map((user) => (
+                <Select.Option key={user.user_id}>
+                  <Avatar size={15} src={user.picture} /> {user.name}
+                </Select.Option>
+              ))}
+            </Select>
+          ) : (
+            assignments?.map((assignment) => (
+              <Tag>
+                <Space>
+                  <Avatar size={15} src={users[assignment.assigneeUserId]?.picture} />
+                  {users[assignment.assigneeUserId]?.name}
+                </Space>
+              </Tag>
+            ))
+          )}
         </ProDescriptions.Item>
         <ProDescriptions.Item
           label={
@@ -244,6 +435,35 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
           </ProDescriptions>
         </ProDescriptions.Item>
       </ProDescriptions>
+      {/* Comments */}
+      <Divider orientation="left" orientationMargin="0">
+        {`Comments (${transaction.comments?.length || 0})`}
+      </Divider>
+      {transaction.comments && transaction.comments?.length > 0 && (
+        <List
+          dataSource={transaction.comments}
+          itemLayout="horizontal"
+          renderItem={(comment) => (
+            <Comment
+              comment={comment}
+              currentUserId={currentUserId}
+              deletingCommentIds={deletingCommentIds}
+              onDelete={() => {
+                handleDeleteComment(transaction.transactionId!, comment.id!);
+              }}
+            />
+          )}
+        />
+      )}
+      <AntComment
+        avatar={<Avatar src={user?.picture} />}
+        content={
+          <CommentEditor
+            transactionId={transaction.transactionId!}
+            onCommentAdded={handleCommentAdded}
+          />
+        }
+      />
     </>
   );
 };
