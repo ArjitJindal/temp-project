@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { MongoClient, ServerApiVersion } from 'mongodb'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AWS = require('aws-sdk')
@@ -30,6 +30,10 @@ export async function connectToDB() {
   const DB_HOST = credentials['host']
   const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}`
   cacheClient = await MongoClient.connect(DB_URL as string, {
+    maxIdleTimeMS: 270000,
+    minPoolSize: 2,
+    maxPoolSize: 4,
+    serverApi: ServerApiVersion.v1,
     retryWrites: false,
     socketTimeoutMS: 5000000,
   })
