@@ -93,20 +93,15 @@ export default () => {
         width: 100,
         render: (_, ruleInstance) => {
           return (
-            <Tooltip
-              title={
-                <>
-                  Run: {ruleInstance.runCount} <br />
-                  Hit: {ruleInstance.hitCount}
-                </>
-              }
-            >
+            <Tooltip title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}>
               <Progress
                 percent={
                   ruleInstance.hitCount && ruleInstance.runCount
                     ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
                     : 0
                 }
+                format={(percent) => `${percent?.toFixed(2)}%`}
+                status={ruleInstance.status === 'ACTIVE' ? 'active' : 'normal'}
               />
             </Tooltip>
           );
