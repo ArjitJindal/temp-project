@@ -26,6 +26,7 @@ import {
   LayerVersion,
   Runtime,
   StartingPosition,
+  ILayerVersion,
   Tracing,
 } from 'aws-cdk-lib/aws-lambda'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
@@ -51,11 +52,19 @@ import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-hand
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
-
+  cwInsightsLayer: LayerVersion
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, { env: config.env })
     this.config = config
-
+    /* Cloudwatch Insights Layer
+    Deets: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html
+    */
+    const cwInsightsLayerArn: string = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
+    this.cwInsightsLayer = LayerVersion.fromLayerVersionArn(
+      this,
+      `LayerFromArn`,
+      cwInsightsLayerArn
+    ) as LayerVersion
     /*
      * Kinesis Data Streams
      *
@@ -208,6 +217,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.apiKeyGeneratorHandler',
       'dist/api-key-generator',
       undefined,
+      undefined,
       atlasFunctionProps
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
@@ -245,6 +255,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.jwtAuthorizer',
       'dist/jwt-authorizer',
       undefined,
+      undefined,
       {
         environment: {
           AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
@@ -260,7 +271,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.transactionHandler',
       'dist/rules-engine',
       config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
-      { layers: [fastGeoIpLayer] }
+      [fastGeoIpLayer]
     )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
@@ -277,6 +288,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
       'app.fileImportHandler',
       'dist/file-import/',
+      undefined,
       undefined,
       {
         ...atlasFunctionProps,
@@ -313,6 +325,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.getPresignedUrlHandler',
       'dist/file-import/',
       undefined,
+      undefined,
       {
         environment: {
           TMP_BUCKET: tmpBucketName,
@@ -326,6 +339,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.RULE_FUNCTION_NAME,
       'app.ruleHandler',
       'dist/phytoplankton-internal-api-handlers/',
+      undefined,
       undefined,
       atlasFunctionProps
     )
@@ -348,6 +362,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
       'app.ruleInstanceHandler',
       'dist/phytoplankton-internal-api-handlers/',
+      undefined,
       undefined,
       atlasFunctionProps
     )
@@ -374,6 +389,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
       'app.transactionsViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
+      undefined,
       undefined,
       {
         ...atlasFunctionProps,
@@ -412,6 +428,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.accountsHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
+      undefined,
       atlasFunctionProps
     )
 
@@ -420,6 +437,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
       'app.transactionsPerUserViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
+      undefined,
       undefined,
       atlasFunctionProps
     )
@@ -447,6 +465,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.businessUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
+      undefined,
       atlasFunctionProps
     )
     businessUsersViewFunction.role?.attachInlinePolicy(
@@ -472,6 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
       'app.consumerUsersViewHandler',
       'dist/phytoplankton-internal-api-handlers/',
       undefined,
+      undefined,
       atlasFunctionProps
     )
     consumerUsersViewFunction.role?.attachInlinePolicy(
@@ -496,6 +516,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
       'app.dashboardStatsHandler',
       'dist/phytoplankton-internal-api-handlers/',
+      undefined,
       undefined,
       atlasFunctionProps
     )
@@ -539,6 +560,7 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
       'app.tarponChangeCaptureHandler',
       'dist/tarpon-change-capture-kinesis-consumer',
+      undefined,
       undefined,
       atlasFunctionProps
     )
@@ -720,8 +742,12 @@ export class CdkTarponStack extends cdk.Stack {
     handler: string,
     codePath: string,
     provisionedConcurrency?: number,
+    layers?: Array<ILayerVersion>,
     props: Partial<FunctionProps> = {}
   ): LambdaFunction {
+    if (layers) {
+      layers.push(this.cwInsightsLayer)
+    }
     const func = new LambdaFunction(this, name, {
       functionName: name,
       runtime: Runtime.NODEJS_14_X,
@@ -729,6 +755,7 @@ export class CdkTarponStack extends cdk.Stack {
       code: Code.fromAsset(codePath),
       tracing: Tracing.ACTIVE,
       timeout: Duration.seconds(100),
+      layers: layers ? layers : [this.cwInsightsLayer],
       ...{
         ...props,
         environment: {
@@ -742,6 +769,12 @@ export class CdkTarponStack extends cdk.Stack {
     func.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
     // This is needed to allow using ${Function.Arn} in openapi.yaml
     ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
+    // Add permissions for lambda insights in cloudWatch
+    func.role?.addManagedPolicy(
+      ManagedPolicy.fromAwsManagedPolicyName(
+        'CloudWatchLambdaInsightsExecutionRolePolicy'
+      )
+    )
 
     // Provisioned concurrency settings
     if (provisionedConcurrency) {
