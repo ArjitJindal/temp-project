@@ -23,7 +23,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { JWTAuthorizerResult } from '@/@types/jwt'
+import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -286,24 +286,70 @@ export type AccountsConfig = {
   AUTH0_MANAGEMENT_CLIENT_SECRET: string
 }
 
+// todo: move to config
+const CONNECTION_NAME = 'Username-Password-Authentication'
+
 export const accountsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
+    const {
+      principalId: tenantId,
+      tenantName,
+      role,
+    } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
-    const auth0 = new ManagementClient({
+    const managementClient = new ManagementClient({
       domain: config.AUTH0_DOMAIN,
       clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
       clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
     })
     if (event.httpMethod === 'GET') {
       // TODO: Switch to Auth0 organizations to have clear tenants separation
-      return auth0.getUsers({ q: `app_metadata.tenantId:"${tenantId}"` })
+      return managementClient.getUsers({
+        q: `app_metadata.tenantId:"${tenantId}"`,
+      })
+    }
+    if (event.httpMethod === 'POST') {
+      assertRole(role, 'admin')
+      if (event.body == null) {
+        throw new Error(`Body should not be empty`)
+      }
+      // todo: validate
+      const { email, password } = JSON.parse(event.body)
+      return await managementClient.createUser({
+        connection: CONNECTION_NAME,
+        email,
+        password,
+        app_metadata: {
+          tenantName: tenantName,
+          tenantId: tenantId,
+          role: 'user',
+        },
+      })
+    } else if (event.httpMethod === 'DELETE') {
+      const userId = event.pathParameters?.userId
+      if (!userId) {
+        throw new Error(`userId is not provided`)
+      }
+      assertRole(role, 'admin')
+      const users = await managementClient.getUsers({
+        q: `app_metadata.tenantId:${tenantId} AND user_id:${userId}`,
+      })
+      if (users.length === 0) {
+        throw new Error(`Unable to find user ${userId} in the tenant`)
+      }
+      const [user] = users
+      await managementClient.deleteUser({ id: user.user_id! })
+      return true
     }
 
     throw new Error('Unhandled request')
   }
 )
+
+type DefaultAppMetadata = {
+  tenantId: string
+}

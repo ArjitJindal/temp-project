@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib'
+import { CfnOutput, Duration, Fn, RemovalPolicy } from 'aws-cdk-lib'
 import {
   ArnPrincipal,
   Effect,
@@ -16,18 +17,16 @@ import {
   SpecRestApi,
 } from 'aws-cdk-lib/aws-apigateway'
 
-import { CfnOutput, Duration, Fn, RemovalPolicy } from 'aws-cdk-lib'
-
 import {
+  Alias,
   CfnFunction,
   Code,
   Function as LambdaFunction,
   FunctionProps,
-  Runtime,
-  Tracing,
-  StartingPosition,
-  Alias,
   LayerVersion,
+  Runtime,
+  StartingPosition,
+  Tracing,
 } from 'aws-cdk-lib/aws-lambda'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 
@@ -39,19 +38,16 @@ import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 
 import {
-  TarponStackConstants,
-  getResourceName,
   getNameForGlobalResource,
+  getResourceName,
+  TarponStackConstants,
 } from './constants'
 import { Config } from './configs/config'
 import {
   FileImportConfig,
   GetPresignedUrlConfig,
 } from '@/lambdas/file-import/app'
-import {
-  AccountsConfig,
-  TransactionViewConfig,
-} from '@/lambdas/phytoplankton-internal-api-handlers/app'
+import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
