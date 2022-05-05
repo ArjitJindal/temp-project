@@ -289,7 +289,6 @@ export type AccountsConfig = {
 // todo: move to config
 const CONNECTION_NAME = 'Username-Password-Authentication'
 
-
 export const accountsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -298,7 +297,7 @@ export const accountsHandler = lambdaApi()(
   ) => {
     const {
       principalId: tenantId,
-      userId: currentUserId,
+      tenantName,
       role,
     } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
@@ -314,8 +313,7 @@ export const accountsHandler = lambdaApi()(
       })
     }
     if (event.httpMethod === 'POST') {
-      assertRole(role, 'root')
-
+      assertRole(role, 'admin')
       if (event.body == null) {
         throw new Error(`Body should not be empty`)
       }
@@ -326,40 +324,17 @@ export const accountsHandler = lambdaApi()(
         email,
         password,
         app_metadata: {
+          tenantName: tenantName,
           tenantId: tenantId,
+          role: 'user',
         },
       })
-    }
-
-    throw new Error('Unhandled request')
-  }
-)
-
-type DefaultAppMetadata = {
-  tenantId: string
-}
-
-export const accountsItemHandler = lambdaApi()(
-  async (
-    event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
-    >
-  ) => {
-    const { principalId: tenantId, role } = event.requestContext.authorizer
-    const config = process.env as AccountsConfig
-    const managementClient = new ManagementClient<DefaultAppMetadata>({
-      domain: config.AUTH0_DOMAIN,
-      clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
-      clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
-    })
-
-    const userId = event.pathParameters?.userId
-    if (!userId) {
-      throw new Error(`userId is not provided`)
-    }
-
-    if (event.httpMethod === 'DELETE') {
-      assertRole(role, 'root')
+    } else if (event.httpMethod === 'DELETE') {
+      const userId = event.pathParameters?.userId
+      if (!userId) {
+        throw new Error(`userId is not provided`)
+      }
+      assertRole(role, 'admin')
       const users = await managementClient.getUsers({
         q: `app_metadata.tenantId:${tenantId} AND user_id:${userId}`,
       })
@@ -374,3 +349,7 @@ export const accountsItemHandler = lambdaApi()(
     throw new Error('Unhandled request')
   }
 )
+
+type DefaultAppMetadata = {
+  tenantId: string
+}

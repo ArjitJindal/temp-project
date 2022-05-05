@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk'
 import { Forbidden } from 'http-errors'
 
-export const JWT_ROLES = ['root', 'user', 'admin']
+export const JWT_ROLES = ['root', 'admin', 'user']
 export type JwtRole = typeof JWT_ROLES[number]
 
 export function isJwtRole(role: string): role is JwtRole {
@@ -9,9 +9,9 @@ export function isJwtRole(role: string): role is JwtRole {
 }
 
 export function assertRole(userRole: JwtRole, requiredRole: JwtRole) {
-  if (userRole !== requiredRole) {
+  if (JWT_ROLES.indexOf(userRole) > JWT_ROLES.indexOf(requiredRole)) {
     throw new Forbidden(
-      `You need to have "${requiredRole}" role to perform this action`
+      `You need to have at least "${requiredRole}" role to perform this action`
     )
   }
 }

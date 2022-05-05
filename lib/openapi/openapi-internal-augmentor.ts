@@ -10,7 +10,7 @@ import { TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
   '/accounts': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
-  '/accounts/{userId}': TarponStackConstants.ACCOUNT_ITEM_FUNCTION_NAME,
+  '/accounts/{userId}': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
   '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/rule_implementations': TarponStackConstants.RULE_FUNCTION_NAME,
   '/iam/rules': TarponStackConstants.RULE_FUNCTION_NAME,
