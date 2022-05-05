@@ -4,6 +4,8 @@ All URIs are relative to _http://localhost:3000_
 
 | Method | HTTP request | Description |
 | --- | --- | --- |
+| [**accountsDelete**](DefaultApi.md#accountsDelete) | **DELETE** /accounts/{userId} | Account - Delete |
+| [**accountsInvite**](DefaultApi.md#accountsInvite) | **POST** /accounts | Account - Invite |
 | [**deleteRuleInstancesRuleInstanceId**](DefaultApi.md#deleteRuleInstancesRuleInstanceId) | **DELETE** /rule_instances/{ruleInstanceId} | Rule Instance - Delete |
 | [**deleteRulesRuleId**](DefaultApi.md#deleteRulesRuleId) | **DELETE** /rules/{ruleId} | Rule - Delete |
 | [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} |
@@ -29,6 +31,109 @@ All URIs are relative to _http://localhost:3000_
 | [**postTransactionsTransactionId**](DefaultApi.md#postTransactionsTransactionId) | **POST** /transactions/{transactionId} | Transaction - Update |
 | [**putRuleInstancesRuleInstanceId**](DefaultApi.md#putRuleInstancesRuleInstanceId) | **PUT** /rule_instances/{ruleInstanceId} | Rule Instance - Update |
 | [**putRuleRuleId**](DefaultApi.md#putRuleRuleId) | **PUT** /rules/{ruleId} | Rule - Update |
+
+# **accountsDelete**
+
+> void accountsDelete()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiAccountsDeleteRequest = {
+  // string
+  userId: "userId_example",
+};
+
+apiInstance.accountsDelete(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name       | Type         | Description | Notes                 |
+| ---------- | ------------ | ----------- | --------------------- |
+| **userId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **accountsInvite**
+
+> Account accountsInvite()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiAccountsInviteRequest = {
+  // AccountInvitePayload (optional)
+  AccountInvitePayload: {
+    email: "email_example",
+    password: "password_example",
+  },
+};
+
+apiInstance.accountsInvite(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name                     | Type                     | Description | Notes |
+| ------------------------ | ------------------------ | ----------- | ----- |
+| **AccountInvitePayload** | **AccountInvitePayload** |             |
+
+### Return type
+
+**Account**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
 # **deleteRuleInstancesRuleInstanceId**
 
@@ -185,7 +290,7 @@ No authorization required
 
 # **getAccounts**
 
-> Array<any> getAccounts()
+> Array<Account> getAccounts()
 
 ### Example
 
@@ -209,7 +314,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-**Array<any>**
+**Array<Account>**
 
 ### Authorization
 

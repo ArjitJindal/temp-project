@@ -12,10 +12,9 @@
 
 import { HttpFile } from '../http/http';
 
-export class ModelDate {
-  'day': number;
-  'month': number;
-  'year': number;
+export class AccountInvitePayload {
+  'email': string;
+  'password': string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -26,27 +25,21 @@ export class ModelDate {
     format: string;
   }> = [
     {
-      name: 'day',
-      baseName: 'day',
-      type: 'number',
+      name: 'email',
+      baseName: 'email',
+      type: 'string',
       format: '',
     },
     {
-      name: 'month',
-      baseName: 'month',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'year',
-      baseName: 'year',
-      type: 'number',
+      name: 'password',
+      baseName: 'password',
+      type: 'string',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return ModelDate.attributeTypeMap;
+    return AccountInvitePayload.attributeTypeMap;
   }
 
   public constructor() {}

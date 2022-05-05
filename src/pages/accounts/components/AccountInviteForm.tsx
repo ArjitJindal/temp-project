@@ -39,7 +39,7 @@ export default function AccountInviteForm(props: Props) {
       onFinish={async (values) => {
         try {
           await api.accountsInvite({
-            body: {
+            AccountInvitePayload: {
               email: values.email.trim(),
               password: values.password.trim(),
             },

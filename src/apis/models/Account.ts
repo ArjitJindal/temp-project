@@ -10,20 +10,16 @@
  * Do not edit the class manually.
  */
 
-import { ConsumerName } from './ConsumerName';
 import { HttpFile } from '../http/http';
 
-export class UserDetails1 {
-  'name': ConsumerName;
-  'dateOfBirth'?: string;
-  /**
-   * Country of residence of the user
-   */
-  'countryOfResidence'?: string;
-  /**
-   * Country of nationality of the user
-   */
-  'countryOfNationality'?: string;
+export class Account {
+  'user_id': string;
+  'created_at': string;
+  'updated_at': string;
+  'email': string;
+  'email_verified': boolean;
+  'name'?: string;
+  'nickname'?: string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -34,33 +30,51 @@ export class UserDetails1 {
     format: string;
   }> = [
     {
+      name: 'user_id',
+      baseName: 'user_id',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'created_at',
+      baseName: 'created_at',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'updated_at',
+      baseName: 'updated_at',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'email',
+      baseName: 'email',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'email_verified',
+      baseName: 'email_verified',
+      type: 'boolean',
+      format: '',
+    },
+    {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
-      format: '',
-    },
-    {
-      name: 'dateOfBirth',
-      baseName: 'dateOfBirth',
       type: 'string',
       format: '',
     },
     {
-      name: 'countryOfResidence',
-      baseName: 'countryOfResidence',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'countryOfNationality',
-      baseName: 'countryOfNationality',
+      name: 'nickname',
+      baseName: 'nickname',
       type: 'string',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return UserDetails1.attributeTypeMap;
+    return Account.attributeTypeMap;
   }
 
   public constructor() {}
