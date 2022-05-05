@@ -124,10 +124,10 @@ export default defineConfig({
       ],
     },
     {
-      path: '/tenant',
-      icon: 'FlagOutlined',
-      name: 'tenant',
-      component: './tenant',
+      path: '/accounts',
+      icon: 'UserSwitchOutlined',
+      name: 'accounts',
+      component: './accounts',
     },
     {
       path: '/',

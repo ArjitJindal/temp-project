@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function InviteForm(props: Props) {
+export default function AccountInviteForm(props: Props) {
   const { onClose } = props;
   const api = useApi();
   const formRef = useRef<ProFormInstance>();

@@ -5,16 +5,15 @@ import ProTable, { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Button, message, Popconfirm } from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
-import InviteForm from './components/InviteForm';
+import AccountInviteForm from './components/AccountInviteForm';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
-import { getUserRole, UserRole } from '@/utils/user-utils';
+import { isAtLeastAdmin } from '@/utils/user-utils';
 
 export default function () {
   const api = useApi();
   const { user } = useAuth0();
   const actionRef = useRef<ActionType>();
-  const role = getUserRole(user);
 
   function refreshTable() {
     if (actionRef.current) {
@@ -55,7 +54,7 @@ export default function () {
     },
   ];
 
-  if (role === UserRole.ROOT) {
+  if (isAtLeastAdmin(user)) {
     columns.push({
       title: 'Actions',
       width: 10,
@@ -97,10 +96,10 @@ export default function () {
           labelWrap: true,
         }}
         search={false}
-        headerTitle="Team members"
+        headerTitle="Tenant accounts"
         rowKey="user_id"
         toolBarRender={() => {
-          return role === UserRole.ROOT ? [<InviteForm onClose={refreshTable} />] : [];
+          return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];
         }}
         request={async () => {
           const accounts: Array<Account> = await api.getAccounts();
