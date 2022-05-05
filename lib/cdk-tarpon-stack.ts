@@ -418,6 +418,13 @@ export class CdkTarponStack extends cdk.Stack {
       undefined,
       atlasFunctionProps
     )
+    this.createFunction(
+      TarponStackConstants.ACCOUNT_ITEM_FUNCTION_NAME,
+      'app.accountsItemHandler',
+      'dist/phytoplankton-internal-api-handlers/',
+      undefined,
+      atlasFunctionProps
+    )
 
     /* Transactions per user view */
     const transactionsPerUserViewFunction = this.createFunction(

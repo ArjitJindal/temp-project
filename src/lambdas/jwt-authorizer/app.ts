@@ -10,7 +10,7 @@ import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
-import { JWTAuthorizerResult } from '@/@types/jwt'
+import { isJwtRole, JWTAuthorizerResult } from '@/@types/jwt'
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
@@ -86,8 +86,7 @@ export const jwtAuthorizer = async (
   ) as jwt.JwtPayload
 
   // TODO: Use role
-  // const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]
-
+  const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]
   const tenantId = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantId`]
   const tenantName =
     verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
@@ -115,6 +114,7 @@ export const jwtAuthorizer = async (
     context: {
       ...tenantScopeCredentials,
       userId: verifiedDecoded.sub,
+      role: isJwtRole(role) ? role : 'user',
       tenantName,
     } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
   }

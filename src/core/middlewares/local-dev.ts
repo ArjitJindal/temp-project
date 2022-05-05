@@ -28,6 +28,7 @@ export const localDev =
         principalId: 'unset',
         tenantName: 'unset',
         userId: 'unset',
+        role: 'user'
         ...authorizer,
       }
     } else if (process.env.ENV === 'local') {
@@ -48,6 +49,7 @@ export const localDev =
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
+          role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
           ...authorizer,
         }
       } else {
