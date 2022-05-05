@@ -106,9 +106,16 @@ export async function verifyTransaction(
 
   // TODO: Refactor the following logic to be event-driven
   await Promise.all(
-    Aggregators.map((Aggregator) =>
-      new Aggregator(tenantId, transaction, dynamoDb).aggregate()
-    )
+    Aggregators.map(async (Aggregator) => {
+      try {
+        await new Aggregator(tenantId, transaction, dynamoDb).aggregate()
+      } catch (e) {
+        console.error(
+          `Aggregator ${Aggregator.name} failed: ${(e as Error)?.message}`
+        )
+        console.error(e)
+      }
+    })
   )
 
   return {
