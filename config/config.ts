@@ -124,6 +124,12 @@ export default defineConfig({
       ],
     },
     {
+      path: '/tenant',
+      icon: 'FlagOutlined',
+      name: 'tenant',
+      component: './tenant',
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

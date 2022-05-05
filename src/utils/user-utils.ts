@@ -22,8 +22,8 @@ export function getUserTenant(user: User): { tenantId: string; tenantName: strin
   };
 }
 
-export function getUserRole(user: User): UserRole {
-  const role = user['https://flagright.com/role'];
+export function getUserRole(user: User | undefined): UserRole {
+  const role = user ? user['https://flagright.com/role'] : 'user';
   switch (role) {
     case 'root':
       return UserRole.ROOT;
@@ -36,7 +36,7 @@ export function getUserRole(user: User): UserRole {
 }
 
 export function isAtLeastAdmin(user: User) {
-  return getUserRole(user)?.valueOf() <= UserRole.ADMIN.valueOf();
+  return getUserRole(user).valueOf() <= UserRole.ADMIN.valueOf();
 }
 
 export function useUsers(): [{ [userId: string]: User }, boolean] {
