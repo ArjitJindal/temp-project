@@ -1,4 +1,6 @@
 export * from './ACHDetails';
+export * from './Account';
+export * from './AccountInvitePayload';
 export * from './Address';
 export * from './Address1';
 export * from './Address2';
@@ -28,7 +30,6 @@ export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
 export * from './ListImportRequest';
-export * from './ModelDate';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './Rule';

@@ -528,7 +528,36 @@ paths:
       responses:
         '200':
           description: OK
+  /accounts/{userId}:
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    delete:
+      summary: 'Account - Delete'
+      operationId: accounts-delete
+      responses:
+        '200':
+          description: OK
   /accounts:
+    post:
+      summary: Account - Invite
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountInvitePayload'
+      operationId: accounts-invite
     get:
       summary: Account - List
       tags: []
@@ -540,7 +569,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
+                  $ref: '#/components/schemas/Account'
       operationId: get-accounts
 components:
   schemas:
@@ -931,6 +960,41 @@ components:
       required:
         - name
         - parametersSchema
+    Account:
+      title: Account
+      type: object
+      properties:
+        user_id:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        email:
+          type: string
+        email_verified:
+          type: boolean
+        name:
+          type: string
+        nickname:
+          type: string
+      required:
+        - user_id
+        - created_at
+        - updated_at
+        - email
+        - email_verified
+    AccountInvitePayload:
+      title: AccountInvitePayload
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
   securitySchemes:
     Authorization:
       type: http

@@ -4,6 +4,8 @@ import { Configuration } from '../configuration';
 import { Observable, of, from } from '../rxjsStub';
 import { mergeMap, map } from '../rxjsStub';
 import { ACHDetails } from '../models/ACHDetails';
+import { Account } from '../models/Account';
+import { AccountInvitePayload } from '../models/AccountInvitePayload';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -33,7 +35,6 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
-import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -75,6 +76,76 @@ export class ObservableDefaultApi {
     this.configuration = configuration;
     this.requestFactory = requestFactory || new DefaultApiRequestFactory(configuration);
     this.responseProcessor = responseProcessor || new DefaultApiResponseProcessor();
+  }
+
+  /**
+   * Account - Delete
+   * @param userId
+   */
+  public accountsDelete(userId: string, _options?: Configuration): Observable<void> {
+    const requestContextPromise = this.requestFactory.accountsDelete(userId, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.accountsDelete(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Account - Invite
+   * @param AccountInvitePayload
+   */
+  public accountsInvite(
+    AccountInvitePayload?: AccountInvitePayload,
+    _options?: Configuration,
+  ): Observable<Account> {
+    const requestContextPromise = this.requestFactory.accountsInvite(
+      AccountInvitePayload,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.accountsInvite(rsp)),
+          );
+        }),
+      );
   }
 
   /**
@@ -195,7 +266,7 @@ export class ObservableDefaultApi {
   /**
    * Account - List
    */
-  public getAccounts(_options?: Configuration): Observable<Array<any>> {
+  public getAccounts(_options?: Configuration): Observable<Array<Account>> {
     const requestContextPromise = this.requestFactory.getAccounts(_options);
 
     // build promise chain

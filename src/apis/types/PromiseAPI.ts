@@ -3,6 +3,8 @@ import * as models from '../models/all';
 import { Configuration } from '../configuration';
 
 import { ACHDetails } from '../models/ACHDetails';
+import { Account } from '../models/Account';
+import { AccountInvitePayload } from '../models/AccountInvitePayload';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -32,7 +34,6 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
-import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -71,6 +72,27 @@ export class PromiseDefaultApi {
     responseProcessor?: DefaultApiResponseProcessor,
   ) {
     this.api = new ObservableDefaultApi(configuration, requestFactory, responseProcessor);
+  }
+
+  /**
+   * Account - Delete
+   * @param userId
+   */
+  public accountsDelete(userId: string, _options?: Configuration): Promise<void> {
+    const result = this.api.accountsDelete(userId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Account - Invite
+   * @param AccountInvitePayload
+   */
+  public accountsInvite(
+    AccountInvitePayload?: AccountInvitePayload,
+    _options?: Configuration,
+  ): Promise<Account> {
+    const result = this.api.accountsInvite(AccountInvitePayload, _options);
+    return result.toPromise();
   }
 
   /**
@@ -114,7 +136,7 @@ export class PromiseDefaultApi {
   /**
    * Account - List
    */
-  public getAccounts(_options?: Configuration): Promise<Array<any>> {
+  public getAccounts(_options?: Configuration): Promise<Array<Account>> {
     const result = this.api.getAccounts(_options);
     return result.toPromise();
   }

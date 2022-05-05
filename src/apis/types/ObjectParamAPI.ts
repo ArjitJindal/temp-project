@@ -3,6 +3,8 @@ import * as models from '../models/all';
 import { Configuration } from '../configuration';
 
 import { ACHDetails } from '../models/ACHDetails';
+import { Account } from '../models/Account';
+import { AccountInvitePayload } from '../models/AccountInvitePayload';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -32,7 +34,6 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
-import { ModelDate } from '../models/ModelDate';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -62,6 +63,24 @@ import { WalletDetails } from '../models/WalletDetails';
 
 import { ObservableDefaultApi } from './ObservableAPI';
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
+
+export interface DefaultApiAccountsDeleteRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiaccountsDelete
+   */
+  userId: string;
+}
+
+export interface DefaultApiAccountsInviteRequest {
+  /**
+   *
+   * @type AccountInvitePayload
+   * @memberof DefaultApiaccountsInvite
+   */
+  AccountInvitePayload?: AccountInvitePayload;
+}
 
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
@@ -379,6 +398,28 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Account - Delete
+   * @param param the request object
+   */
+  public accountsDelete(
+    param: DefaultApiAccountsDeleteRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api.accountsDelete(param.userId, options).toPromise();
+  }
+
+  /**
+   * Account - Invite
+   * @param param the request object
+   */
+  public accountsInvite(
+    param: DefaultApiAccountsInviteRequest = {},
+    options?: Configuration,
+  ): Promise<Account> {
+    return this.api.accountsInvite(param.AccountInvitePayload, options).toPromise();
+  }
+
+  /**
    * Rule Instance - Delete
    * @param param the request object
    */
@@ -423,7 +464,7 @@ export class ObjectDefaultApi {
   public getAccounts(
     param: DefaultApiGetAccountsRequest = {},
     options?: Configuration,
-  ): Promise<Array<any>> {
+  ): Promise<Array<Account>> {
     return this.api.getAccounts(options).toPromise();
   }
 

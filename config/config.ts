@@ -130,6 +130,12 @@ export default defineConfig({
       ],
     },
     {
+      path: '/accounts',
+      icon: 'UserSwitchOutlined',
+      name: 'accounts',
+      component: './accounts',
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

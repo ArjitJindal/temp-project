@@ -1,4 +1,6 @@
 export * from './ACHDetails';
+export * from './Account';
+export * from './AccountInvitePayload';
 export * from './Address';
 export * from './Address1';
 export * from './Address2';
@@ -28,7 +30,6 @@ export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
 export * from './ListImportRequest';
-export * from './ModelDate';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './Rule';
@@ -57,6 +58,8 @@ export * from './UserDetails1';
 export * from './WalletDetails';
 
 import { ACHDetails } from './ACHDetails';
+import { Account } from './Account';
+import { AccountInvitePayload } from './AccountInvitePayload';
 import { Address } from './Address';
 import { Address1 } from './Address1';
 import { Address2 } from './Address2';
@@ -86,7 +89,6 @@ import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
-import { ModelDate } from './ModelDate';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { Rule, RuleTypeEnum } from './Rule';
@@ -137,6 +139,8 @@ let enumsMap: Set<string> = new Set<string>([
 
 let typeMap: { [index: string]: any } = {
   ACHDetails: ACHDetails,
+  Account: Account,
+  AccountInvitePayload: AccountInvitePayload,
   Address: Address,
   Address1: Address1,
   Address2: Address2,
@@ -166,7 +170,6 @@ let typeMap: { [index: string]: any } = {
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
   ListImportRequest: ListImportRequest,
-  ModelDate: ModelDate,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
   Rule: Rule,

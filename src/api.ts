@@ -31,13 +31,22 @@ class AuthorizationMiddleware implements Middleware {
 }
 
 export function useApi(): FlagrightApi {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
   const api = useMemo(() => {
     const auth = new AuthorizationAuthentication({
-      getToken: () =>
-        getAccessTokenSilently({
-          audience: AUTH0_AUDIENCE,
-        }),
+      getToken: async () => {
+        try {
+          return await getAccessTokenSilently({
+            scope: 'openid profile email write:tenant',
+            audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+          });
+        } catch (e) {
+          return await getAccessTokenWithPopup({
+            scope: 'openid profile email write:tenant',
+            audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+          });
+        }
+      },
     });
     const apiConfig: Configuration = {
       baseServer: new ServerConfiguration(API_BASE_PATH, {}),
@@ -46,6 +55,6 @@ export function useApi(): FlagrightApi {
       authMethods: { Authorization: auth },
     };
     return new FlagrightApi(apiConfig);
-  }, [getAccessTokenSilently]);
+  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
   return api;
 }

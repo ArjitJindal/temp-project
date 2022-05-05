@@ -13,6 +13,8 @@ http/isomorphic-fetch.ts
 index.ts
 middleware.ts
 models/ACHDetails.ts
+models/Account.ts
+models/AccountInvitePayload.ts
 models/Address.ts
 models/Address1.ts
 models/Address2.ts
@@ -42,7 +44,6 @@ models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts
 models/ListImportRequest.ts
-models/ModelDate.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
