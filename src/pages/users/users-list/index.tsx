@@ -256,14 +256,11 @@ const ConsumerUsersTab: React.FC = () => {
       valueType: 'textarea',
     },
     {
-      title: 'Age',
+      title: 'Date of Birth',
       render: (dom, entity) => {
-        // todo: it seems, we need to use dateOfBirth now
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return entity.userDetails?.age;
+        return entity.userDetails?.dateOfBirth;
       },
-      valueType: 'digit',
+      valueType: 'textarea',
     },
     {
       title: 'Country of residence',
