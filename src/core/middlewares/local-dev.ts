@@ -28,7 +28,7 @@ export const localDev =
         principalId: 'unset',
         tenantName: 'unset',
         userId: 'unset',
-        role: 'user'
+        role: 'user',
         ...authorizer,
       }
     } else if (process.env.ENV === 'local') {
