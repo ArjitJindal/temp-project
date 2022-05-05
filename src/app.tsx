@@ -1,13 +1,14 @@
 import React from 'react';
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
-import type { RunTimeLayoutConfig } from 'umi';
-import { history, Link } from 'umi';
+import { RunTimeLayoutConfig, setLocale, history, Link } from 'umi';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
+
+setLocale('en-US', false);
 
 const isDev = process.env.NODE_ENV === 'development';
 
