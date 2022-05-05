@@ -118,9 +118,7 @@ const BusinessUsersTab: React.FC = () => {
         headerTitle="Business Users"
         actionRef={actionRef}
         rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
+        search={false}
         request={async (params) => {
           const response = await api.getBusinessUsersList({
             limit: params.pageSize!,
@@ -315,9 +313,7 @@ const ConsumerUsersTab: React.FC = () => {
         headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
+        search={false}
         request={async (params) => {
           const response = await api.getConsumerUsersList({
             limit: params.pageSize!,

@@ -165,9 +165,7 @@ const TableList: React.FC = () => {
         headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="transactionId"
-        search={{
-          labelWidth: 120,
-        }}
+        search={false}
         scroll={{ x: 1300 }}
         expandable={{ expandedRowRender: ExpandedRulesRowRender }}
         request={async (params) => {
