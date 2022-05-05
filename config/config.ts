@@ -49,6 +49,12 @@ export default defineConfig({
       ],
     },
     {
+      path: '/case-management',
+      name: 'case-management',
+      icon: 'FlagOutlined',
+      component: './case-management',
+    },
+    {
       path: '/users',
       icon: 'UsergroupAddOutlined',
       name: 'users',
