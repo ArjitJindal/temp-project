@@ -124,29 +124,6 @@ export default defineConfig({
       ],
     },
     {
-      path: '/lists',
-      icon: 'OrderedListOutlined',
-      name: 'lists',
-      routes: [
-        {
-          path: '/lists',
-          redirect: '/lists/create-list',
-        },
-        {
-          name: 'create-list',
-          icon: 'smile',
-          path: '/lists/create-list',
-          component: './lists/create-list',
-        },
-        {
-          name: 'created-lists',
-          icon: 'smile',
-          path: '/lists/created-lists',
-          component: './lists/created-lists',
-        },
-      ],
-    },
-    {
       path: '/',
       redirect: '/dashboard/analysis',
     },
