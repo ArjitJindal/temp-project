@@ -374,10 +374,7 @@ paths:
                       firstName: Baran
                       middleName: Realblood
                       lastName: Ozkan
-                    dateOfBirth:
-                      day: 1
-                      month: 1
-                      year: 1990
+                    dateOfBirth: '1991-01-01'
                     countryOfResidence: US
                     countryOfNationality: DE
                   legalDocuments:
@@ -469,10 +466,7 @@ paths:
                         firstName: Baran
                         middleName: Realblood
                         lastName: Ozkan
-                      dateOfBirth:
-                        day: 1
-                        month: 1
-                        year: 1990
+                      dateOfBirth: '1991-01-01'
                       countryOfResidence: US
                       countryOfNationality: DE
                     legalDocuments:
@@ -710,10 +704,7 @@ paths:
                             firstName: Baran
                             middleName: Realblood
                             lastName: Ozkan
-                          dateOfBirth:
-                            day: 1
-                            month: 1
-                            year: 1990
+                          dateOfBirth: '1991-01-01'
                           countryOfResidence: US
                           countryOfNationality: DE
                         legalDocuments:
@@ -751,10 +742,7 @@ paths:
                             firstName: Baran
                             middleName: Realblood
                             lastName: Ozkan
-                          dateOfBirth:
-                            day: 1
-                            month: 1
-                            year: 1990
+                          dateOfBirth: '1991-01-01'
                           countryOfResidence: US
                           countryOfNationality: DE
                         legalDocuments:
@@ -858,10 +846,7 @@ components:
             firstName: Baran
             middleName: Realblood
             lastName: Ozkan
-          dateOfBirth:
-            day: 1
-            month: 1
-            year: 1990
+          dateOfBirth: '1991-01-01'
           countryOfResidence: US
           countryOfNationality: DE
         legalDocuments:
@@ -945,7 +930,7 @@ components:
           $ref: '#/components/schemas/UserDetails'
         createdTimestamp:
           type: number
-          minimum: 1609455600000
+          minimum: 1262300400000
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -993,10 +978,7 @@ components:
             firstName: Baran
             middleName: Realblood
             lastName: Ozkan
-          dateOfBirth:
-            day: 1
-            month: 1
-            year: 1990
+          dateOfBirth: '1991-01-01'
           countryOfResidence: US
           countryOfNationality: DE
         legalDocuments:
@@ -1191,7 +1173,7 @@ components:
           description: Unique transaction identifier
         timestamp:
           type: number
-          minimum: 1609455600000
+          minimum: 1262300400000
         originUserId:
           type: string
         destinationUserId:
@@ -1918,17 +1900,15 @@ components:
           firstName: Baran
           middleName: Realblood
           lastName: Ozkan
-        dateOfBirth:
-          day: 1
-          month: 1
-          year: 1990
+        dateOfBirth: '1991-01-01'
         countryOfResidence: US
         countryOfNationality: DE
       properties:
         name:
           $ref: '#/components/schemas/ConsumerName'
         dateOfBirth:
-          $ref: '#/components/schemas/Date'
+          type: string
+          pattern: '^(\d{4}-\d{2}-\d{2})*$'
         countryOfResidence:
           minLength: 1
           type: string
@@ -2037,10 +2017,7 @@ components:
                 firstName: Baran
                 middleName: Realblood
                 lastName: Ozkan
-              dateOfBirth:
-                day: 1
-                month: 1
-                year: 1990
+              dateOfBirth: '1991-01-01'
               countryOfResidence: US
               countryOfNationality: DE
             legalDocuments:
@@ -2078,10 +2055,7 @@ components:
                 firstName: Baran
                 middleName: Realblood
                 lastName: Ozkan
-              dateOfBirth:
-                day: 1
-                month: 1
-                year: 1990
+              dateOfBirth: '1991-01-01'
               countryOfResidence: US
               countryOfNationality: DE
             legalDocuments:
@@ -2243,7 +2217,7 @@ components:
           $ref: '#/components/schemas/LegalEntity'
         createdTimestamp:
           type: number
-          minimum: 1609455600000
+          minimum: 1262300400000
         shareHolders:
           type: array
           description: >-

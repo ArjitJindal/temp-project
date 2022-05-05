@@ -39,11 +39,7 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
       name: {
         firstName: '1',
       },
-      dateOfBirth: {
-        day: user1DateOfBirth.day(),
-        month: user1DateOfBirth.month(),
-        year: user1DateOfBirth.year(),
-      },
+      dateOfBirth: user1DateOfBirth.format('YYYY-MM-DD'),
     },
   }),
   getTestUser({
@@ -52,11 +48,7 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
       name: {
         firstName: '2',
       },
-      dateOfBirth: {
-        day: user2DateOfBirth.day(),
-        month: user2DateOfBirth.month(),
-        year: user2DateOfBirth.year(),
-      },
+      dateOfBirth: user2DateOfBirth.format('YYYY-MM-DD'),
     },
   }),
 ])

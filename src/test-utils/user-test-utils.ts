@@ -12,11 +12,7 @@ export function getTestUser(user: Partial<User> = {}): User {
         middleName: 'Realblood',
         lastName: 'Ozkan',
       },
-      dateOfBirth: {
-        day: 1,
-        month: 1,
-        year: 1990,
-      },
+      dateOfBirth: '1990-01-01',
       countryOfResidence: 'US',
       countryOfNationality: 'DE',
     },

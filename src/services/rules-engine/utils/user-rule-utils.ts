@@ -18,8 +18,7 @@ export function isUserBetweenAge(
   if (!consumerUser.userDetails?.dateOfBirth) {
     return false
   }
-  const { day, month, year } = consumerUser.userDetails.dateOfBirth
-  const age = dayjs().diff(dayjs(new Date(year, month, day)), 'year')
+  const age = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'year')
   return _.inRange(age, ageRange.minAge, ageRange.maxAge)
 }
 

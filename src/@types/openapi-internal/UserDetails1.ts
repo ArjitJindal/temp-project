@@ -11,10 +11,9 @@
  */
 
 import { ConsumerName } from './ConsumerName'
-import { ModelDate } from './ModelDate'
 export class UserDetails1 {
   'name': ConsumerName
-  'dateOfBirth'?: ModelDate
+  'dateOfBirth'?: string
   /**
    * Country of residence of the user
    */
@@ -41,7 +40,7 @@ export class UserDetails1 {
     {
       name: 'dateOfBirth',
       baseName: 'dateOfBirth',
-      type: 'ModelDate',
+      type: 'string',
       format: '',
     },
     {
