@@ -556,7 +556,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/AccountInvitePayload'
       operationId: accounts-invite
     get:
       summary: Account - List
@@ -981,6 +981,17 @@ components:
         - updated_at
         - email
         - email_verified
+    AccountInvitePayload:
+      title: AccountInvitePayload
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
   securitySchemes:
     Authorization:
       type: http
