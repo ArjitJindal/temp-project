@@ -80,3 +80,45 @@ export function isTransactionWithinTimeWindow(
   const toTime = dayjs(`${transactionDateString}T${timeWindow.to}`)
   return fromTime <= transactionTime && toTime >= transactionTime
 }
+
+export async function getTransactionsTotalAmount(
+  amountDetailsList: (TransactionAmountDetails | undefined)[],
+  targetCurrency: string
+): Promise<TransactionAmountDetails> {
+  let totalAmount: TransactionAmountDetails = {
+    transactionAmount: 0,
+    transactionCurrency: targetCurrency,
+  }
+  for (const amountDetails of amountDetailsList) {
+    if (amountDetails) {
+      const targetAmount = await getTargetCurrencyAmount(
+        amountDetails,
+        targetCurrency
+      )
+      totalAmount = {
+        transactionAmount:
+          totalAmount.transactionAmount + targetAmount.transactionAmount,
+        transactionCurrency: targetCurrency,
+      }
+    }
+  }
+  return totalAmount
+}
+
+export function sumTransactionAmountDetails(
+  transactionAmountDetails1: TransactionAmountDetails,
+  transactionAmountDetails2: TransactionAmountDetails
+): TransactionAmountDetails {
+  if (
+    transactionAmountDetails1.transactionCurrency !==
+    transactionAmountDetails2.transactionCurrency
+  ) {
+    throw new Error('Currencies should be the same for summing up.')
+  }
+  return {
+    transactionAmount:
+      transactionAmountDetails1.transactionAmount +
+      transactionAmountDetails2.transactionAmount,
+    transactionCurrency: transactionAmountDetails1.transactionCurrency,
+  }
+}
