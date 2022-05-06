@@ -59,7 +59,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Cloudwatch Insights Layer
     Deets: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html
     */
-    const cwInsightsLayerArn: string = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
+    const cwInsightsLayerArn = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
     this.cwInsightsLayer = LayerVersion.fromLayerVersionArn(
       this,
       `LayerFromArn`,
@@ -742,10 +742,13 @@ export class CdkTarponStack extends cdk.Stack {
     handler: string,
     codePath: string,
     provisionedConcurrency?: number,
-    layers?: Array<ILayerVersion>,
+    layers: Array<ILayerVersion> = [],
     props: Partial<FunctionProps> = {}
   ): LambdaFunction {
-    if (layers) {
+    if (
+      !layers.includes(this.cwInsightsLayer) &&
+      this.config.stage !== 'local'
+    ) {
       layers.push(this.cwInsightsLayer)
     }
     const func = new LambdaFunction(this, name, {
@@ -755,7 +758,7 @@ export class CdkTarponStack extends cdk.Stack {
       code: Code.fromAsset(codePath),
       tracing: Tracing.ACTIVE,
       timeout: Duration.seconds(100),
-      layers: layers ? layers : [this.cwInsightsLayer],
+      layers,
       ...{
         ...props,
         environment: {
