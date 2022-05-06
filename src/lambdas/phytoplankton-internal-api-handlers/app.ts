@@ -335,11 +335,16 @@ export const accountsHandler = lambdaApi()(
         throw new Error(`userId is not provided`)
       }
       assertRole(role, 'admin')
+      // todo: do proper input sanitize to prevent injections
       const users = await managementClient.getUsers({
-        q: `app_metadata.tenantId:${tenantId} AND user_id:${userId}`,
+        q: `app_metadata.tenantId:${tenantId} AND user_id:${decodeURIComponent(
+          userId
+        )}`,
       })
       if (users.length === 0) {
-        throw new Error(`Unable to find user ${userId} in the tenant`)
+        throw new Error(
+          `Unable to find user "${userId}| in the tenant |${tenantId}|`
+        )
       }
       const [user] = users
       await managementClient.deleteUser({ id: user.user_id! })
