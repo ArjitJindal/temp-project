@@ -299,17 +299,23 @@ export class ObservableDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getBusinessUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Observable<BusinessUsersListResponse> {
     const requestContextPromise = this.requestFactory.getBusinessUsersList(
       limit,
       skip,
       beforeTimestamp,
+      afterTimestamp,
+      filterId,
       _options,
     );
 
@@ -343,17 +349,23 @@ export class ObservableDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getConsumerUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Observable<ConsumerUsersListResponse> {
     const requestContextPromise = this.requestFactory.getConsumerUsersList(
       limit,
       skip,
       beforeTimestamp,
+      afterTimestamp,
+      filterId,
       _options,
     );
 
@@ -558,17 +570,23 @@ export class ObservableDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getTransactionsList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
       limit,
       skip,
       beforeTimestamp,
+      afterTimestamp,
+      filterId,
       _options,
     );
 

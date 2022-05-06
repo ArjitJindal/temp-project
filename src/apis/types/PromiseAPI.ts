@@ -146,14 +146,25 @@ export class PromiseDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getBusinessUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<BusinessUsersListResponse> {
-    const result = this.api.getBusinessUsersList(limit, skip, beforeTimestamp, _options);
+    const result = this.api.getBusinessUsersList(
+      limit,
+      skip,
+      beforeTimestamp,
+      afterTimestamp,
+      filterId,
+      _options,
+    );
     return result.toPromise();
   }
 
@@ -162,14 +173,25 @@ export class PromiseDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getConsumerUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<ConsumerUsersListResponse> {
-    const result = this.api.getConsumerUsersList(limit, skip, beforeTimestamp, _options);
+    const result = this.api.getConsumerUsersList(
+      limit,
+      skip,
+      beforeTimestamp,
+      afterTimestamp,
+      filterId,
+      _options,
+    );
     return result.toPromise();
   }
 
@@ -227,14 +249,25 @@ export class PromiseDefaultApi {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public getTransactionsList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
-    const result = this.api.getTransactionsList(limit, skip, beforeTimestamp, _options);
+    const result = this.api.getTransactionsList(
+      limit,
+      skip,
+      beforeTimestamp,
+      afterTimestamp,
+      filterId,
+      _options,
+    );
     return result.toPromise();
   }
 

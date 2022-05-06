@@ -334,6 +334,10 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
         - schema:
@@ -422,8 +426,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
     parameters: []
   /business/users:
     get:
@@ -453,8 +465,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
     parameters: []
   /dashboard_stats/transactions:
     get:

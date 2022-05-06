@@ -136,6 +136,18 @@ export interface DefaultApiGetBusinessUsersListRequest {
    * @memberof DefaultApigetBusinessUsersList
    */
   beforeTimestamp: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  afterTimestamp?: number;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  filterId?: string;
 }
 
 export interface DefaultApiGetConsumerUsersListRequest {
@@ -157,6 +169,18 @@ export interface DefaultApiGetConsumerUsersListRequest {
    * @memberof DefaultApigetConsumerUsersList
    */
   beforeTimestamp: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  afterTimestamp?: number;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  filterId?: string;
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
@@ -214,6 +238,18 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   beforeTimestamp: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  afterTimestamp?: number;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterId?: string;
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
@@ -477,7 +513,14 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<BusinessUsersListResponse> {
     return this.api
-      .getBusinessUsersList(param.limit, param.skip, param.beforeTimestamp, options)
+      .getBusinessUsersList(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.afterTimestamp,
+        param.filterId,
+        options,
+      )
       .toPromise();
   }
 
@@ -490,7 +533,14 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<ConsumerUsersListResponse> {
     return this.api
-      .getConsumerUsersList(param.limit, param.skip, param.beforeTimestamp, options)
+      .getConsumerUsersList(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.afterTimestamp,
+        param.filterId,
+        options,
+      )
       .toPromise();
   }
 
@@ -560,7 +610,14 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<TransactionsListResponse> {
     return this.api
-      .getTransactionsList(param.limit, param.skip, param.beforeTimestamp, options)
+      .getTransactionsList(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.afterTimestamp,
+        param.filterId,
+        options,
+      )
       .toPromise();
   }
 
