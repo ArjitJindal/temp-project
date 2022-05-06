@@ -24,11 +24,8 @@ function replaceRequestParameters(path: string) {
 function buildApi(type: 'public' | 'internal') {
   exec(
     `
-    if [ "$(uname)" = "Darwin" ]; then
-        openapi-generator generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
-    elif [ "$(expr substr $(uname -s) 1 5)" = "Linux" ]; then
-        openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
-    fi`
+    openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
+    `
   )
 
   exec(`rm -rf src/@types/openapi-${type}/*`)

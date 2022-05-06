@@ -1,4 +1,6 @@
 import { ACHDetails } from './ACHDetails'
+import { Account } from './Account'
+import { AccountInvitePayload } from './AccountInvitePayload'
 import { Address } from './Address'
 import { Address1 } from './Address1'
 import { Address2 } from './Address2'
@@ -54,6 +56,24 @@ import { User } from './User'
 import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
 import { WalletDetails } from './WalletDetails'
+
+export interface DefaultApiAccountsDeleteRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiaccountsDelete
+   */
+  userId: string
+}
+
+export interface DefaultApiAccountsInviteRequest {
+  /**
+   *
+   * @type AccountInvitePayload
+   * @memberof DefaultApiaccountsInvite
+   */
+  AccountInvitePayload?: AccountInvitePayload
+}
 
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**

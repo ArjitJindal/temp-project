@@ -60,9 +60,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rules:
     get:
       summary: Rules - List
@@ -138,9 +138,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /iam/rules:
     parameters: []
     post:
@@ -199,9 +199,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_implementations:
     get:
       summary: Rule Implementations - List
@@ -256,9 +256,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rules/{ruleId}:
     parameters:
       - schema:
@@ -326,9 +326,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances:
     post:
       summary: Rule Instance - Create
@@ -412,9 +412,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /iam/rule_instances:
     post:
       summary: Rule Instance - Create
@@ -485,9 +485,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances/{ruleInstanceId}:
     parameters:
       - schema:
@@ -565,9 +565,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /import:
     parameters: []
     post:
@@ -629,9 +629,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /import/{importId}:
     parameters:
       - schema:
@@ -683,9 +683,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /files/getPresignedUrl:
     parameters: []
     post:
@@ -733,9 +733,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /lists:
     post:
       summary: List Import
@@ -781,9 +781,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions:
     get:
       summary: Transaction - List
@@ -847,9 +847,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}:
     parameters:
       - schema:
@@ -901,9 +901,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /user/transactions:
     get:
       summary: Transaction Per User - List
@@ -973,9 +973,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -1040,9 +1040,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /business/users:
     get:
       summary: Business Users - List
@@ -1107,9 +1107,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /dashboard_stats/transactions:
     get:
       summary: DashboardStats - Transactions
@@ -1179,9 +1179,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}/comments:
     post:
       summary: Create a Transaction Comment
@@ -1237,9 +1237,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}/comments/{commentId}:
     parameters:
       - schema:
@@ -1291,9 +1291,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts/{userId}:
     parameters:
       - schema:
@@ -1340,9 +1340,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts:
     post:
       summary: Account - Invite
@@ -1358,7 +1358,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/AccountInvitePayload'
       operationId: accounts-invite
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
@@ -1416,9 +1416,9 @@ paths:
           default:
             statusCode: 200
             responseParameters:
-              method.response.header.Access-Control-Allow-Headers: '''*'''
-              method.response.header.Access-Control-Allow-Methods: '''OPTIONS,POST,GET'''
-              method.response.header.Access-Control-Allow-Origin: '''https://undefined.console.flagright.com'''
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
     Rule:
@@ -1826,6 +1826,17 @@ components:
         - updated_at
         - email
         - email_verified
+    AccountInvitePayload:
+      title: AccountInvitePayload
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
     Address:
       title: Address
       required:
