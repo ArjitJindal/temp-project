@@ -38,12 +38,12 @@ export function useApi(): FlagrightApi {
         try {
           return await getAccessTokenSilently({
             scope: 'openid profile email write:tenant',
-            audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+            audience: `${AUTH0_AUDIENCE}`,
           });
         } catch (e) {
           return await getAccessTokenWithPopup({
             scope: 'openid profile email write:tenant',
-            audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+            audience: `${AUTH0_AUDIENCE}`,
           });
         }
       },
