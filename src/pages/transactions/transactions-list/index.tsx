@@ -3,9 +3,13 @@ import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
+import moment from 'moment';
 import { TransactionDetails } from './components/TransactionDetails';
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
+
+// todo: move to config
+export const DATE_TIME_FORMAT = 'L LTS';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -39,33 +43,41 @@ const TableList: React.FC = () => {
         width: 130,
         ellipsis: true,
         dataIndex: 'timestamp',
-        valueType: 'dateTime',
+        valueType: 'dateTimeRange',
+        render: (_, transaction) => {
+          return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
+        },
       },
       {
         title: 'Origin User ID',
         dataIndex: 'originUserId',
         hideInTable: true,
+        hideInSearch: true,
       },
       {
         title: 'Origin Method',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originPaymentDetails?.method;
         },
       },
       {
         title: 'Origin Amount',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionAmount;
         },
       },
       {
         title: 'Origin Currency',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
         },
       },
       {
         title: 'Origin Country',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
         },
@@ -74,27 +86,32 @@ const TableList: React.FC = () => {
         title: 'Destination User ID',
         dataIndex: 'destinationUserId',
         hideInTable: true,
+        hideInSearch: true,
       },
       {
         title: 'Destination Method',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationPaymentDetails?.method;
         },
       },
       {
         title: 'Destination Amount',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionAmount;
         },
       },
       {
         title: 'Destination Currency',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
         },
       },
       {
         title: 'Destination Country',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
         },
@@ -115,10 +132,13 @@ const TableList: React.FC = () => {
         search={false}
         scroll={{ x: 1300 }}
         request={async (params) => {
+          const { pageSize, current, timestamp, transactionId } = params;
           const response = await api.getTransactionsList({
-            limit: params.pageSize!,
-            skip: (params.current! - 1) * params.pageSize!,
-            beforeTimestamp: Date.now(),
+            limit: pageSize!,
+            skip: (current! - 1) * pageSize!,
+            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+            filterId: transactionId,
           });
           return {
             data: response.data,

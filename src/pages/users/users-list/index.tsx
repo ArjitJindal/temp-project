@@ -6,6 +6,7 @@ import ProTable from '@ant-design/pro-table';
 import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { Link } from 'umi';
+import moment from 'moment';
 import type { TableListPagination } from './data.d';
 import { useApi } from '@/api';
 import {
@@ -15,6 +16,7 @@ import {
   TransactionCaseManagement,
   User,
 } from '@/apis';
+import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -52,6 +54,7 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Legal Name',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyGeneralDetails.legalName;
       },
@@ -59,6 +62,7 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Industry',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyGeneralDetails.businessIndustry;
       },
@@ -66,6 +70,7 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Expected Transaction Amount Per Month',
+      hideInSearch: true,
       render: (dom, entity) => {
         return createCurrencyStringFromAmount(
           entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth,
@@ -75,6 +80,7 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Expected Turnover Amount Per Month',
+      hideInSearch: true,
       render: (dom, entity) => {
         return createCurrencyStringFromAmount(
           entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
@@ -84,11 +90,13 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Maximum Daily Transaction Limit',
+      hideInSearch: true,
       dataIndex: 'maximumDailyTransactionLimit',
       valueType: 'textarea',
     },
     {
       title: 'Registration Identifier',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyRegistrationDetails?.registrationIdentifier;
       },
@@ -96,16 +104,20 @@ const BusinessUsersTab: React.FC = () => {
     },
     {
       title: 'Registration Country',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyRegistrationDetails?.registrationCountry;
       },
       valueType: 'textarea',
     },
     {
-      title: 'Created time',
+      title: 'Creation time',
       sorter: true,
       dataIndex: 'createdTimestamp',
-      valueType: 'dateTime',
+      valueType: 'dateTimeRange',
+      render: (_, user) => {
+        return moment(user.createdTimestamp).format(DATE_TIME_FORMAT);
+      },
     },
   ];
 
@@ -120,12 +132,14 @@ const BusinessUsersTab: React.FC = () => {
         rowKey="key"
         search={false}
         request={async (params) => {
+          const { pageSize, current, userId, createdTimestamp } = params;
           const response = await api.getBusinessUsersList({
-            limit: params.pageSize!,
-            skip: (params.current! - 1) * params.pageSize!,
-            beforeTimestamp: Date.now(),
+            limit: pageSize!,
+            skip: (current! - 1) * pageSize!,
+            afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+            beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+            filterId: userId,
           });
-
           return {
             data: response.data,
             success: true,
@@ -248,6 +262,7 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Name',
+      hideInSearch: true,
       render: (dom, entity) => {
         return `${entity.userDetails?.name.firstName} ${entity.userDetails?.name.middleName} ${entity.userDetails?.name.lastName}`;
       },
@@ -255,6 +270,7 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Date of Birth',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.dateOfBirth;
       },
@@ -262,6 +278,7 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Country of residence',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.countryOfResidence;
       },
@@ -269,6 +286,7 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Country of nationality',
+      hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.countryOfNationality;
       },
@@ -276,6 +294,7 @@ const ConsumerUsersTab: React.FC = () => {
     },
     {
       title: 'Tags',
+      hideInSearch: true,
       dataIndex: 'tags',
       hideInForm: true,
       render: (tags: any) => {
@@ -301,7 +320,10 @@ const ConsumerUsersTab: React.FC = () => {
       title: 'Created time',
       sorter: true,
       dataIndex: 'createdTimestamp',
-      valueType: 'dateTime',
+      valueType: 'dateTimeRange',
+      render: (_, user) => {
+        return moment(user.createdTimestamp).format(DATE_TIME_FORMAT);
+      },
     },
   ];
   return (
@@ -315,10 +337,13 @@ const ConsumerUsersTab: React.FC = () => {
         rowKey="key"
         search={false}
         request={async (params) => {
+          const { pageSize, current, userId, createdTimestamp } = params;
           const response = await api.getConsumerUsersList({
-            limit: params.pageSize!,
-            skip: (params.current! - 1) * params.pageSize!,
-            beforeTimestamp: Date.now(),
+            limit: pageSize!,
+            skip: (current! - 1) * pageSize!,
+            afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+            beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+            filterId: userId,
           });
 
           return {

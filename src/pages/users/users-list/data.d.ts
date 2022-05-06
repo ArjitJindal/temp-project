@@ -28,6 +28,8 @@ export type TableListPagination = {
   total: number;
   pageSize: number;
   current: number;
+  createdTimestamp?: [string, string];
+  userId?: string;
 };
 
 export type TableListData = {
