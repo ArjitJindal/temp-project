@@ -129,6 +129,18 @@ export interface DefaultApiGetBusinessUsersListRequest {
    * @memberof DefaultApigetBusinessUsersList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetConsumerUsersListRequest {
@@ -150,6 +162,18 @@ export interface DefaultApiGetConsumerUsersListRequest {
    * @memberof DefaultApigetConsumerUsersList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
@@ -207,6 +231,18 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

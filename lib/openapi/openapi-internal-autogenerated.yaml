@@ -812,8 +812,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1004,8 +1012,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1071,8 +1087,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:

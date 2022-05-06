@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
@@ -40,22 +40,32 @@ export class TransactionRepository {
 
   /* MongoDB operations */
 
-  public async getTransactions(
-    // TOOD: Add filtering and sorting
-    pagination: { limit: number; skip: number; beforeTimestamp: number }
-  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
+  public async getTransactions(params: {
+    limit: number
+    skip: number
+    afterTimestamp?: number
+    beforeTimestamp: number
+    filterId?: string
+  }): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const query = {
-      timestamp: { $lte: pagination.beforeTimestamp },
+    const query: Filter<TransactionCaseManagement> = {
+      timestamp: {
+        $gte: params.afterTimestamp ?? 0,
+        $lte: params.beforeTimestamp,
+      },
     }
+    if (params.filterId != null) {
+      query['transactionId'] = { $regex: params.filterId }
+    }
+
     const transactions = await collection
       .find(query)
       .sort({ timestamp: -1 })
-      .limit(pagination.limit)
-      .skip(pagination.skip)
+      .limit(params.limit)
+      .skip(params.skip)
       .toArray()
     const total = await collection.count(query)
     return { total, data: transactions }
