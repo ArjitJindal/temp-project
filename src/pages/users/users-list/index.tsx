@@ -335,7 +335,9 @@ const ConsumerUsersTab: React.FC = () => {
         headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="key"
-        search={false}
+        search={{
+          labelWidth: 120,
+        }}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
           const response = await api.getConsumerUsersList({

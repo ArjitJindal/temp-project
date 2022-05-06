@@ -129,7 +129,9 @@ const TableList: React.FC = () => {
         headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="transactionId"
-        search={false}
+        search={{
+          labelWidth: 120,
+        }}
         scroll={{ x: 1300 }}
         request={async (params) => {
           const { pageSize, current, timestamp, transactionId } = params;
