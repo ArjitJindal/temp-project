@@ -27,6 +27,7 @@ const TableList: React.FC = () => {
   }, []);
   const api = useApi();
 
+  // todo: i18n
   const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
     () => [
       {
@@ -54,6 +55,15 @@ const TableList: React.FC = () => {
         ellipsis: true,
         dataIndex: 'timestamp',
         valueType: 'dateTime',
+      },
+      {
+        title: 'Rules hit',
+        width: 100,
+        ellipsis: true,
+        hideInSearch: true,
+        render: (_, transaction) => {
+          return `${transaction.executedRules.length} rule(s)`;
+        },
       },
       {
         title: 'Origin User ID',
