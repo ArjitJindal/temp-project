@@ -94,32 +94,6 @@ const Analysis: FC<AnalysisProps> = () => {
             selectDate={selectDate}
           />
         </Suspense>
-
-        <Row
-          gutter={24}
-          style={{
-            marginTop: 24,
-          }}
-        >
-          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Suspense fallback={null}>
-              <Card title="Location overview" bordered={false}>
-                <div className={styles.mapChart}>
-                  <Map />
-                </div>
-              </Card>
-            </Suspense>
-          </Col>
-          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Suspense fallback={null}>
-              <ProportionSales
-                dropdownGroup={dropdownGroup}
-                loading={loading}
-                salesPieData={salesPieData || []}
-              />
-            </Suspense>
-          </Col>
-        </Row>
       </>
     </GridContent>
   );
