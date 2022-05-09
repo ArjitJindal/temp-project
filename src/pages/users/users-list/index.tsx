@@ -15,6 +15,7 @@ import {
   TransactionCaseManagement,
   User,
 } from '@/apis';
+import { getFullName } from '@/utils/api/users';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -251,7 +252,7 @@ const ConsumerUsersTab: React.FC = () => {
     {
       title: 'Name',
       render: (dom, entity) => {
-        return `${entity.userDetails?.name.firstName} ${entity.userDetails?.name.middleName} ${entity.userDetails?.name.lastName}`;
+        return getFullName(entity.userDetails);
       },
       valueType: 'textarea',
     },
@@ -346,12 +347,12 @@ const ConsumerUsersTab: React.FC = () => {
           <>
             <ProDescriptions<User>
               column={2}
-              title={`${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`}
+              title={getFullName(currentRow?.userDetails)}
               request={async () => ({
                 data: currentRow || {},
               })}
               params={{
-                id: `${currentRow?.userDetails.name.firstName} ${currentRow?.userDetails.name.middleName} ${currentRow?.userDetails.name.lastName}`,
+                id: getFullName(currentRow?.userDetails),
               }}
               columns={columns as ProDescriptionsItemProps<User>[]}
             />
@@ -367,7 +368,6 @@ const ConsumerUsersTab: React.FC = () => {
                   beforeTimestamp: Date.now(),
                   userId: currentRow?.userId,
                 });
-
                 return {
                   data: response.data,
                   success: true,
