@@ -343,78 +343,72 @@ const ConsumerUsersTab: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.userDetails.name && (
-          <>
-            <ProDescriptions<User>
-              column={2}
-              title={getFullName(currentRow?.userDetails)}
-              request={async () => ({
-                data: currentRow || {},
-              })}
-              params={{
-                id: getFullName(currentRow?.userDetails),
-              }}
-              columns={columns as ProDescriptionsItemProps<User>[]}
-            />
-            Transaction History:
-            <ProTable<TransactionCaseManagement>
-              form={{
-                labelWrap: true,
-              }}
-              request={async (params) => {
-                const response = await api.getTransactionsPerUserList({
-                  limit: params.pageSize!,
-                  skip: (params.current! - 1) * params.pageSize!,
-                  beforeTimestamp: Date.now(),
-                  userId: currentRow?.userId,
-                });
-                return {
-                  data: response.data,
-                  success: true,
-                  total: response.total,
-                };
-              }}
-              columns={[
-                {
-                  title: 'Transaction ID',
-                  dataIndex: 'transactionId',
-                  key: 'transactionId',
-                  render: (dom, entity) => {
-                    return (
-                      <Link to={`/transactions/transactions-list/${entity.transactionId}`}>
-                        {dom}
-                      </Link>
-                    );
-                  },
-                },
-                {
-                  title: 'Transaction time',
-                  dataIndex: 'timestamp',
-                  key: 'transactionTime',
-                },
-                {
-                  title: 'Origin Amount',
-                  render: (dom, entity) => {
-                    return `${createCurrencyStringFromTransactionAmount(
-                      entity.originAmountDetails,
-                    )}`;
-                  },
-                  key: 'amount',
-                },
-
-                {
-                  title: 'Destination Amount',
-                  render: (dom, entity) => {
-                    return `${createCurrencyStringFromTransactionAmount(
-                      entity.destinationAmountDetails,
-                    )}`;
-                  },
-                  key: 'amount',
-                },
-              ]}
-            />
-          </>
-        )}
+        <ProDescriptions<User>
+          column={2}
+          title={getFullName(currentRow?.userDetails)}
+          request={async () => ({
+            data: currentRow || {},
+          })}
+          params={{
+            id: getFullName(currentRow?.userDetails),
+          }}
+          columns={columns as ProDescriptionsItemProps<User>[]}
+        />
+        Transaction History:
+        <ProTable<TransactionCaseManagement>
+          form={{
+            labelWrap: true,
+          }}
+          request={async (params) => {
+            if (currentRow?.userId == null) {
+              throw new Error(`User id is null, unable to fetch transaction history`);
+            }
+            const response = await api.getTransactionsPerUserList({
+              limit: params.pageSize!,
+              skip: (params.current! - 1) * params.pageSize!,
+              beforeTimestamp: Date.now(),
+              userId: currentRow?.userId,
+            });
+            return {
+              data: response.data,
+              success: true,
+              total: response.total,
+            };
+          }}
+          columns={[
+            {
+              title: 'Transaction ID',
+              dataIndex: 'transactionId',
+              key: 'transactionId',
+              render: (dom, entity) => {
+                return (
+                  <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
+                );
+              },
+            },
+            {
+              title: 'Transaction time',
+              dataIndex: 'timestamp',
+              key: 'transactionTime',
+            },
+            {
+              title: 'Origin Amount',
+              render: (dom, entity) => {
+                return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
+              },
+              key: 'amount',
+            },
+            {
+              title: 'Destination Amount',
+              render: (dom, entity) => {
+                return `${createCurrencyStringFromTransactionAmount(
+                  entity.destinationAmountDetails,
+                )}`;
+              },
+              key: 'amount',
+            },
+          ]}
+        />
       </Drawer>
     </>
   );
