@@ -27,7 +27,8 @@ const OPENAPI_REF: Record<ImportRequestTypeEnum, string> = {
 const CUSTOM_FORMAT_TENANTS = ['sh-payment'];
 
 // Limit of .csv file to be uploaded
-const FILE_UPLOAD_LIMIT = 10;
+const FILE_UPLOAD_LIMIT_SIZE_IN_MB = 10;
+const FILE_UPLOAD_LIMIT_IN_BYTE = 10240000;
 
 interface FileImportButtonProps {
   type: ImportRequestTypeEnum;
@@ -145,30 +146,29 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               const fsize = file.size;
               const files = Math.round(fsize / 1024);
               // The size of the file.
-              if (files >= 10240) {
-                message.error('File too Big, please select a file less than 10mb');
+              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE / 1000) {
+                message.error('File too Big, please select a file less than 10MB');
                 return;
-              } else {
-                setLoading(true);
-                const hideMessage = message.loading('Uploading...', 0);
-                try {
-                  // 1. Get S3 presigned URL
-                  const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
+              }
+              setLoading(true);
+              const hideMessage = message.loading('Uploading...', 0);
+              try {
+                // 1. Get S3 presigned URL
+                const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
 
-                  // 2. Upload file to S3 directly
-                  await axios.put(presignedUrl, file, {
-                    headers: {
-                      'Content-Disposition': `attachment; filename="${file?.name}"`,
-                    },
-                  });
-                  setFile({ s3Key, filename: file.name, size: file.size });
-                  hideMessage();
-                } catch (error) {
-                  message.error('Failed to upload the file');
-                } finally {
-                  hideMessage && hideMessage();
-                  setLoading(false);
-                }
+                // 2. Upload file to S3 directly
+                await axios.put(presignedUrl, file, {
+                  headers: {
+                    'Content-Disposition': `attachment; filename="${file?.name}"`,
+                  },
+                });
+                setFile({ s3Key, filename: file.name, size: file.size });
+                hideMessage();
+              } catch (error) {
+                message.error('Failed to upload the file');
+              } finally {
+                hideMessage && hideMessage();
+                setLoading(false);
               }
             }}
           >
@@ -177,7 +177,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
             </p>
             <p className="ant-upload-text">
               Click or drag file to this area to upload a CSV file (comma delimited). Max file size:{' '}
-              {FILE_UPLOAD_LIMIT}MB
+              {FILE_UPLOAD_LIMIT_SIZE_IN_MB}MB
             </p>
           </Dragger>
         )}
