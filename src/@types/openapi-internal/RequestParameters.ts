@@ -1,4 +1,6 @@
 import { ACHDetails } from './ACHDetails'
+import { Account } from './Account'
+import { AccountInvitePayload } from './AccountInvitePayload'
 import { Address } from './Address'
 import { Address1 } from './Address1'
 import { Address2 } from './Address2'
@@ -55,6 +57,24 @@ import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
 import { WalletDetails } from './WalletDetails'
 
+export interface DefaultApiAccountsDeleteRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiaccountsDelete
+   */
+  userId: string
+}
+
+export interface DefaultApiAccountsInviteRequest {
+  /**
+   *
+   * @type AccountInvitePayload
+   * @memberof DefaultApiaccountsInvite
+   */
+  AccountInvitePayload?: AccountInvitePayload
+}
+
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
    *
@@ -109,6 +129,18 @@ export interface DefaultApiGetBusinessUsersListRequest {
    * @memberof DefaultApigetBusinessUsersList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetBusinessUsersList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetConsumerUsersListRequest {
@@ -130,6 +162,18 @@ export interface DefaultApiGetConsumerUsersListRequest {
    * @memberof DefaultApigetConsumerUsersList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetConsumerUsersList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
@@ -187,6 +231,18 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsList
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterId?: string
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

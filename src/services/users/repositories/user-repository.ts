@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { MongoClient } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
 import { TarponStackConstants } from '@cdk/constants'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -28,7 +28,9 @@ export class UserRepository {
   public async getBusinessUsers(pagination: {
     limit: number
     skip: number
+    afterTimestamp?: number
     beforeTimestamp: number
+    filterId?: string
   }): Promise<{ total: number; data: Array<Business> }> {
     return (await this.getUsers(pagination, 'BUSINESS')) as {
       total: number
@@ -39,7 +41,9 @@ export class UserRepository {
   public async getConsumerUsers(pagination: {
     limit: number
     skip: number
+    afterTimestamp?: number
     beforeTimestamp: number
+    filterId?: string
   }): Promise<{ total: number; data: Array<User> }> {
     return (await this.getUsers(pagination, 'CONSUMER')) as {
       total: number
@@ -48,23 +52,35 @@ export class UserRepository {
   }
 
   private async getUsers(
-    // TOOD: Add filtering and sorting
-    pagination: { limit: number; skip: number; beforeTimestamp: number },
+    params: {
+      limit: number
+      skip: number
+      afterTimestamp?: number
+      beforeTimestamp: number
+      filterId?: string
+    },
     userType: UserType
   ): Promise<{ total: number; data: Array<Business | User> }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<Business | User>(
       USERS_COLLECTION(this.tenantId)
     )
-    const query = {
-      createdTimestamp: { $lte: pagination.beforeTimestamp },
+    const query: Filter<Business | User> = {
+      createdTimestamp: {
+        $gte: params.afterTimestamp || 0,
+        $lte: params.beforeTimestamp,
+      },
       type: userType,
     }
+    if (params.filterId != null) {
+      query['userId'] = { $regex: params.filterId }
+    }
+
     const users = await collection
       .find(query)
       .sort({ timestamp: -1 })
-      .limit(pagination.limit)
-      .skip(pagination.skip)
+      .limit(params.limit)
+      .skip(params.skip)
       .toArray()
     const total = await collection.count(query)
     return { total, data: users }

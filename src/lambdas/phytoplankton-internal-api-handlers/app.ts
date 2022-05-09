@@ -50,12 +50,14 @@ export const transactionsViewHandler = lambdaApi()(
       DOCUMENT_BUCKET
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
-      const { limit, skip, beforeTimestamp } =
+      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
         event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
         skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
       }
       return transactionService.getTransactions(params)
     } else if (
@@ -107,12 +109,14 @@ export const transactionsPerUserViewHandler = lambdaApi()(
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
-    const { limit, skip, beforeTimestamp, userId } =
+    const { limit, skip, afterTimestamp, beforeTimestamp, userId, filterId, } =
       event.queryStringParameters as any
     const params: DefaultApiGetTransactionsListRequest = {
       limit: parseInt(limit),
       skip: parseInt(skip),
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
+      filterId,
     }
 
     return transactionRepository.getTransactionsPerUser(params, userId)
@@ -149,17 +153,19 @@ export const businessUsersViewHandler = lambdaApi()(
     >
   ): Promise<BusinessUsersListResponse> => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
-    const params: DefaultApiGetTransactionsListRequest = {
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      beforeTimestamp: parseInt(beforeTimestamp),
-    }
+    const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
+      event.queryStringParameters as any
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getBusinessUsers(params)
+    return userRepository.getBusinessUsers({
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
+      beforeTimestamp: parseInt(beforeTimestamp),
+      filterId,
+    })
   }
 )
 
@@ -170,17 +176,19 @@ export const consumerUsersViewHandler = lambdaApi()(
     >
   ): Promise<ConsumerUsersListResponse> => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { limit, skip, beforeTimestamp } = event.queryStringParameters as any
-    const params: DefaultApiGetTransactionsListRequest = {
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      beforeTimestamp: parseInt(beforeTimestamp),
-    }
+    const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
+      event.queryStringParameters as any
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getConsumerUsers(params)
+    return userRepository.getConsumerUsers({
+      limit: parseInt(limit),
+      skip: parseInt(skip),
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
+      beforeTimestamp: parseInt(beforeTimestamp),
+      filterId,
+    })
   }
 )
 

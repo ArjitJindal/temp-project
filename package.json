@@ -53,6 +53,7 @@
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.5.1",
     "@tsconfig/node14": "^1.0.1",
     "@types/ajv": "^1.0.0",
     "@types/auth0": "^2.34.16",
@@ -72,6 +73,7 @@
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.9.1",
     "@typescript-eslint/parser": "^5.9.1",
+    "aws-cdk": "^2.23.0",
     "aws-cdk-lib": "^2.14.0",
     "aws-sdk": "^2.1062.0",
     "chai": "^4.3.4",
