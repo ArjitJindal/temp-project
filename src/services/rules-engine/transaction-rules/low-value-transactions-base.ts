@@ -5,6 +5,7 @@ import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
+import { everyAsync } from '@/core/utils/array'
 
 type LowValueTransactionsRuleParameters = {
   lowTransactionValues: {
@@ -93,7 +94,8 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
         )),
         this.transaction,
       ]
-      const areAllTransactionsLowValue = transactions.every(
+      const areAllTransactionsLowValue = await everyAsync(
+        transactions,
         async (transaction) => {
           const transactionAmountDetails =
             this.getTransactionAmountDetails(transaction)
