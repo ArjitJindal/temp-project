@@ -137,25 +137,34 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
             showUploadList={false}
             customRequest={async ({ file: f }) => {
               const file = f as File;
-              setLoading(true);
-              const hideMessage = message.loading('Uploading...', 0);
-              try {
-                // 1. Get S3 presigned URL
-                const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
 
-                // 2. Upload file to S3 directly
-                await axios.put(presignedUrl, file, {
-                  headers: {
-                    'Content-Disposition': `attachment; filename="${file?.name}"`,
-                  },
-                });
-                setFile({ s3Key, filename: file.name, size: file.size });
-                hideMessage();
-              } catch (error) {
-                message.error('Failed to upload the file');
-              } finally {
-                hideMessage && hideMessage();
-                setLoading(false);
+              //to check the size of csv file
+              const fsize = file.size;
+              const files = Math.round(fsize / 1024);
+              // The size of the file.
+              if (files >= 10240) {
+                alert('File too Big, please select a file less than 10mb');
+              } else {
+                setLoading(true);
+                const hideMessage = message.loading('Uploading...', 0);
+                try {
+                  // 1. Get S3 presigned URL
+                  const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
+
+                  // 2. Upload file to S3 directly
+                  await axios.put(presignedUrl, file, {
+                    headers: {
+                      'Content-Disposition': `attachment; filename="${file?.name}"`,
+                    },
+                  });
+                  setFile({ s3Key, filename: file.name, size: file.size });
+                  hideMessage();
+                } catch (error) {
+                  message.error('Failed to upload the file');
+                } finally {
+                  hideMessage && hideMessage();
+                  setLoading(false);
+                }
               }
             }}
           >
