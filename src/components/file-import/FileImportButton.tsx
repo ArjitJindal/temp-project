@@ -177,7 +177,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
             </p>
             <p className="ant-upload-text">
               Click or drag file to this area to upload a CSV file (comma delimited). Max file size:{' '}
-              {FILE_UPLOAD_LIMIT_SIZE_IN_MB}MB
+              {filesize(FILE_UPLOAD_LIMIT_IN_BYTE)}
             </p>
           </Dragger>
         )}
