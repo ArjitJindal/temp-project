@@ -67,7 +67,7 @@ export class UserRepository {
     )
     const query: Filter<Business | User> = {
       createdTimestamp: {
-        $gte: params.afterTimestamp ?? 0,
+        $gte: params.afterTimestamp || 0,
         $lte: params.beforeTimestamp,
       },
       type: userType,

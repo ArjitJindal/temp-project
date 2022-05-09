@@ -53,7 +53,7 @@ export class TransactionRepository {
     )
     const query: Filter<TransactionCaseManagement> = {
       timestamp: {
-        $gte: params.afterTimestamp ?? 0,
+        $gte: params.afterTimestamp || 0,
         $lte: params.beforeTimestamp,
       },
     }
@@ -72,7 +72,12 @@ export class TransactionRepository {
   }
 
   public async getTransactionsPerUser(
-    pagination: { limit: number; skip: number; beforeTimestamp: number },
+    pagination: {
+      limit: number
+      skip: number
+      afterTimestamp?: number
+      beforeTimestamp: number
+    },
     userId: string
   ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
@@ -81,7 +86,10 @@ export class TransactionRepository {
     )
 
     const query = {
-      timestamp: { $lte: pagination.beforeTimestamp },
+      timestamp: {
+        $gte: pagination.afterTimestamp || 0,
+        $lte: pagination.beforeTimestamp,
+      },
       originUserId: userId,
     }
 

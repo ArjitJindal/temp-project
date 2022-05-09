@@ -55,7 +55,7 @@ export const transactionsViewHandler = lambdaApi()(
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
         skip: parseInt(skip),
-        afterTimestamp: parseInt(afterTimestamp) ?? 0,
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
       }
@@ -109,13 +109,14 @@ export const transactionsPerUserViewHandler = lambdaApi()(
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
-    const { limit, skip, afterTimestamp, beforeTimestamp, userId } =
+    const { limit, skip, afterTimestamp, beforeTimestamp, userId, filterId, } =
       event.queryStringParameters as any
     const params: DefaultApiGetTransactionsListRequest = {
       limit: parseInt(limit),
       skip: parseInt(skip),
-      afterTimestamp: parseInt(afterTimestamp) ?? 0,
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
+      filterId,
     }
 
     return transactionRepository.getTransactionsPerUser(params, userId)
@@ -161,7 +162,7 @@ export const businessUsersViewHandler = lambdaApi()(
     return userRepository.getBusinessUsers({
       limit: parseInt(limit),
       skip: parseInt(skip),
-      afterTimestamp: parseInt(afterTimestamp),
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
       filterId,
     })
@@ -184,7 +185,7 @@ export const consumerUsersViewHandler = lambdaApi()(
     return userRepository.getConsumerUsers({
       limit: parseInt(limit),
       skip: parseInt(skip),
-      afterTimestamp: afterTimestamp ? parseInt(afterTimestamp) : undefined,
+      afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
       filterId,
     })
