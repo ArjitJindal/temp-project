@@ -26,6 +26,9 @@ const OPENAPI_REF: Record<ImportRequestTypeEnum, string> = {
 // TODO: Use server-provided feature flag
 const CUSTOM_FORMAT_TENANTS = ['sh-payment'];
 
+// Limit of .csv file to be uploaded
+const FILE_UPLOAD_LIMIT = 10;
+
 interface FileImportButtonProps {
   type: ImportRequestTypeEnum;
 }
@@ -143,7 +146,8 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               const files = Math.round(fsize / 1024);
               // The size of the file.
               if (files >= 10240) {
-                alert('File too Big, please select a file less than 10mb');
+                message.error('File too Big, please select a file less than 10mb');
+                return;
               } else {
                 setLoading(true);
                 const hideMessage = message.loading('Uploading...', 0);
@@ -172,7 +176,8 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               <InboxOutlined />
             </p>
             <p className="ant-upload-text">
-              Click or drag file to this area to upload a CSV file (comma delimited)
+              Click or drag file to this area to upload a CSV file (comma delimited). Max file size:{' '}
+              {FILE_UPLOAD_LIMIT}MB
             </p>
           </Dragger>
         )}
