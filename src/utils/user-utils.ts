@@ -3,6 +3,7 @@ import _ from 'lodash';
 import type { User } from 'auth0';
 import { useApi } from '@/api';
 
+// todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
   ROOT,
   ADMIN,
