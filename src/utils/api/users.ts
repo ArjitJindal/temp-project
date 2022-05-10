@@ -6,7 +6,7 @@ export function getFullName(userDetails: UserDetails | undefined): string {
     userDetails?.name.middleName,
     userDetails?.name.lastName,
   ]
-    .filter((x) => x != null)
+    .filter(Boolean)
     .join(' ');
   // todo: i18n
   if (result === '') {
