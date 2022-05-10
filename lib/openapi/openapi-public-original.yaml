@@ -2400,6 +2400,8 @@ components:
           $ref: '#/components/schemas/Amount'
         maximumQuarterlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
+        maximumTransactionLimit:
+          $ref: '#/components/schemas/Amount'
         maximumYearlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
     RuleAction:

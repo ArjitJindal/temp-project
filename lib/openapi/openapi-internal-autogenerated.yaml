@@ -61,7 +61,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /rules:
     get:
@@ -139,7 +139,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /iam/rules:
     parameters: []
@@ -200,7 +200,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_implementations:
     get:
@@ -257,7 +257,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /rules/{ruleId}:
     parameters:
@@ -327,7 +327,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances:
     post:
@@ -413,7 +413,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /iam/rule_instances:
     post:
@@ -486,7 +486,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /rule_instances/{ruleInstanceId}:
     parameters:
@@ -566,7 +566,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /import:
     parameters: []
@@ -630,7 +630,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /import/{importId}:
     parameters:
@@ -684,7 +684,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /files/getPresignedUrl:
     parameters: []
@@ -734,7 +734,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /lists:
     post:
@@ -782,7 +782,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions:
     get:
@@ -856,7 +856,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}:
     parameters:
@@ -910,7 +910,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /user/transactions:
     get:
@@ -982,7 +982,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /consumer/users:
     get:
@@ -1057,7 +1057,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /business/users:
     get:
@@ -1132,7 +1132,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /dashboard_stats/transactions:
     get:
@@ -1204,7 +1204,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}/comments:
     post:
@@ -1262,7 +1262,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /transactions/{transactionId}/comments/{commentId}:
     parameters:
@@ -1316,7 +1316,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts/{userId}:
     parameters:
@@ -1365,7 +1365,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts:
     post:
@@ -1441,7 +1441,7 @@ paths:
             statusCode: 200
             responseParameters:
               method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
@@ -3471,6 +3471,8 @@ components:
         maximumMonthlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
         maximumQuarterlyTransactionLimit:
+          $ref: '#/components/schemas/Amount'
+        maximumTransactionLimit:
           $ref: '#/components/schemas/Amount'
         maximumYearlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
