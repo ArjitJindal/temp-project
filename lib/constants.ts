@@ -24,7 +24,7 @@ export const TarponStackConstants = {
   S3_TMP_BUCKET_PREFIX: getResourceName('tmp', true),
 
   // Lambda names
-  ACCOUNT_FUNCTION_NAME: getResourceName('accountFunction'),
+  ACCOUNT_FUNCTION_NAME: getResourceName('AccountFunction'),
   API_KEY_AUTHORIZER_FUNCTION_NAME: getResourceName('ApiKeyAuthorizerFunction'),
   JWT_AUTHORIZER_FUNCTION_NAME: getResourceName('JWTAuthorizerFunction'),
   TRANSACTION_FUNCTION_NAME: getResourceName('TransactionFunction'),
