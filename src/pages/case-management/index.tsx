@@ -3,12 +3,14 @@ import { PageContainer } from '@ant-design/pro-layout';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
+import moment from 'moment';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
+import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -54,7 +56,10 @@ const TableList: React.FC = () => {
         width: 130,
         ellipsis: true,
         dataIndex: 'timestamp',
-        valueType: 'dateTime',
+        valueType: 'dateTimeRange',
+        render: (_, transaction) => {
+          return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
+        },
       },
       {
         title: 'Rules hit',
@@ -171,10 +176,13 @@ const TableList: React.FC = () => {
         scroll={{ x: 1300 }}
         expandable={{ expandedRowRender: ExpandedRulesRowRender }}
         request={async (params) => {
+          const { pageSize, current, timestamp, transactionId } = params;
           const response = await api.getTransactionsList({
-            limit: params.pageSize!,
-            skip: (params.current! - 1) * params.pageSize!,
-            beforeTimestamp: Date.now(),
+            limit: pageSize!,
+            skip: (current! - 1) * pageSize!,
+            filterId: transactionId,
+            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
           });
           return {
             data: response.data,

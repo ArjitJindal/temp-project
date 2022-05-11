@@ -353,6 +353,10 @@ let body:.DefaultApiGetBusinessUsersListRequest = {
   skip: 3.14,
   // number
   beforeTimestamp: 3.14,
+  // number (optional)
+  afterTimestamp: 3.14,
+  // string (optional)
+  filterId: "filterId_example",
 };
 
 apiInstance.getBusinessUsersList(body).then((data:any) => {
@@ -362,11 +366,13 @@ apiInstance.getBusinessUsersList(body).then((data:any) => {
 
 ### Parameters
 
-| Name                | Type         | Description | Notes                 |
-| ------------------- | ------------ | ----------- | --------------------- |
-| **limit**           | [**number**] |             | defaults to undefined |
-| **skip**            | [**number**] |             | defaults to undefined |
-| **beforeTimestamp** | [**number**] |             | defaults to undefined |
+| Name                | Type         | Description | Notes                            |
+| ------------------- | ------------ | ----------- | -------------------------------- |
+| **limit**           | [**number**] |             | defaults to undefined            |
+| **skip**            | [**number**] |             | defaults to undefined            |
+| **beforeTimestamp** | [**number**] |             | defaults to undefined            |
+| **afterTimestamp**  | [**number**] |             | (optional) defaults to undefined |
+| **filterId**        | [**string**] |             | (optional) defaults to undefined |
 
 ### Return type
 
@@ -409,6 +415,10 @@ let body:.DefaultApiGetConsumerUsersListRequest = {
   skip: 3.14,
   // number
   beforeTimestamp: 3.14,
+  // number (optional)
+  afterTimestamp: 3.14,
+  // string (optional)
+  filterId: "filterId_example",
 };
 
 apiInstance.getConsumerUsersList(body).then((data:any) => {
@@ -418,11 +428,13 @@ apiInstance.getConsumerUsersList(body).then((data:any) => {
 
 ### Parameters
 
-| Name                | Type         | Description | Notes                 |
-| ------------------- | ------------ | ----------- | --------------------- |
-| **limit**           | [**number**] |             | defaults to undefined |
-| **skip**            | [**number**] |             | defaults to undefined |
-| **beforeTimestamp** | [**number**] |             | defaults to undefined |
+| Name                | Type         | Description | Notes                            |
+| ------------------- | ------------ | ----------- | -------------------------------- |
+| **limit**           | [**number**] |             | defaults to undefined            |
+| **skip**            | [**number**] |             | defaults to undefined            |
+| **beforeTimestamp** | [**number**] |             | defaults to undefined            |
+| **afterTimestamp**  | [**number**] |             | (optional) defaults to undefined |
+| **filterId**        | [**string**] |             | (optional) defaults to undefined |
 
 ### Return type
 
@@ -706,6 +718,10 @@ let body:.DefaultApiGetTransactionsListRequest = {
   skip: 3.14,
   // number
   beforeTimestamp: 3.14,
+  // number (optional)
+  afterTimestamp: 3.14,
+  // string (optional)
+  filterId: "filterId_example",
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -715,11 +731,13 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 
 ### Parameters
 
-| Name                | Type         | Description | Notes                 |
-| ------------------- | ------------ | ----------- | --------------------- |
-| **limit**           | [**number**] |             | defaults to undefined |
-| **skip**            | [**number**] |             | defaults to undefined |
-| **beforeTimestamp** | [**number**] |             | defaults to undefined |
+| Name                | Type         | Description | Notes                            |
+| ------------------- | ------------ | ----------- | -------------------------------- |
+| **limit**           | [**number**] |             | defaults to undefined            |
+| **skip**            | [**number**] |             | defaults to undefined            |
+| **beforeTimestamp** | [**number**] |             | defaults to undefined            |
+| **afterTimestamp**  | [**number**] |             | (optional) defaults to undefined |
+| **filterId**        | [**string**] |             | (optional) defaults to undefined |
 
 ### Return type
 

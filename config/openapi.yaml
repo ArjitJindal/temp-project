@@ -334,8 +334,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
   '/transactions/{transactionId}':
     parameters:
       - schema:
@@ -418,8 +426,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
     parameters: []
   /business/users:
     get:
@@ -449,8 +465,16 @@ paths:
         - schema:
             type: number
           in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
           name: beforeTimestamp
           required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
     parameters: []
   /dashboard_stats/transactions:
     get:
@@ -745,7 +769,6 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
-
         - type: object
           properties:
             comments:
@@ -776,7 +799,6 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
-
       required:
         - total
         - data
@@ -791,7 +813,6 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
       required:
         - total
         - data

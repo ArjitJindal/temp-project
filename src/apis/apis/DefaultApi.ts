@@ -235,11 +235,15 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public async getBusinessUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -277,11 +281,24 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     // Query Params
+    if (afterTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'afterTimestamp',
+        ObjectSerializer.serialize(afterTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
     if (beforeTimestamp !== undefined) {
       requestContext.setQueryParam(
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    // Query Params
+    if (filterId !== undefined) {
+      requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
     }
 
     const defaultAuth: SecurityAuthentication | undefined =
@@ -298,11 +315,15 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public async getConsumerUsersList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -340,11 +361,24 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     // Query Params
+    if (afterTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'afterTimestamp',
+        ObjectSerializer.serialize(afterTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
     if (beforeTimestamp !== undefined) {
       requestContext.setQueryParam(
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    // Query Params
+    if (filterId !== undefined) {
+      requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
     }
 
     const defaultAuth: SecurityAuthentication | undefined =
@@ -521,11 +555,15 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param limit
    * @param skip
    * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
    */
   public async getTransactionsList(
     limit: number,
     skip: number,
     beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -563,11 +601,24 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     // Query Params
+    if (afterTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'afterTimestamp',
+        ObjectSerializer.serialize(afterTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
     if (beforeTimestamp !== undefined) {
       requestContext.setQueryParam(
         'beforeTimestamp',
         ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
       );
+    }
+
+    // Query Params
+    if (filterId !== undefined) {
+      requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
     }
 
     const defaultAuth: SecurityAuthentication | undefined =
