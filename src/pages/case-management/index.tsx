@@ -1,6 +1,6 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
-import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
@@ -11,6 +11,7 @@ import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
+import AllowForm from '@/pages/case-management/components/AllowForm';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -67,7 +68,7 @@ const TableList: React.FC = () => {
         ellipsis: true,
         hideInSearch: true,
         render: (_, transaction) => {
-          return `${transaction.executedRules.filter(rule => rule.ruleHit).length} rule(s)`;
+          return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
         },
       },
       {
@@ -135,6 +136,14 @@ const TableList: React.FC = () => {
         render: (dom, entity) => {
           const transaction = updatedTransactions[entity.transactionId as string] || entity;
           return <RuleActionStatus ruleAction={transaction.status} />;
+        },
+      },
+      {
+        title: 'Operations',
+        sorter: true,
+        width: 120,
+        render: (dom, entity) => {
+          return <AllowForm />;
         },
       },
       {
