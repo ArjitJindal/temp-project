@@ -7,6 +7,8 @@ import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { Link } from 'umi';
 import type { TableListPagination } from './data.d';
+import styles from './UsersList.less';
+
 import { useApi } from '@/api';
 import {
   Amount,
@@ -112,6 +114,9 @@ const BusinessUsersTab: React.FC = () => {
   return (
     <>
       <ProTable<Business, TableListPagination>
+        rowClassName={(record, index) =>
+          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
+        }
         form={{
           labelWrap: true,
         }}
