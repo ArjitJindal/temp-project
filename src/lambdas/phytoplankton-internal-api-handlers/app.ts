@@ -50,13 +50,20 @@ export const transactionsViewHandler = lambdaApi()(
       DOCUMENT_BUCKET
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
-      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
-        event.queryStringParameters as any
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterOutStatus,
+      } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
+        filterOutStatus: filterOutStatus,
         filterId,
       }
       return transactionService.getTransactions(params)
@@ -109,14 +116,22 @@ export const transactionsPerUserViewHandler = lambdaApi()(
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
-    const { limit, skip, afterTimestamp, beforeTimestamp, userId, filterId } =
-      event.queryStringParameters as any
+    const {
+      limit,
+      skip,
+      afterTimestamp,
+      beforeTimestamp,
+      userId,
+      filterId,
+      filterOutStatus,
+    } = event.queryStringParameters as any
     const params: DefaultApiGetTransactionsListRequest = {
       limit: parseInt(limit),
       skip: parseInt(skip),
       afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
       filterId,
+      filterOutStatus,
     }
 
     return transactionRepository.getTransactionsPerUser(params, userId)

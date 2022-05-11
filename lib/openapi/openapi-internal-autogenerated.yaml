@@ -822,6 +822,10 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1748,6 +1752,10 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/RuleAction'
+        reason:
+          type: array
+          items:
+            type: string
         timestamp:
           type: number
       required:
@@ -1764,6 +1772,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+        reason:
+          type: array
+          items:
+            type: string
     FileImport:
       title: FileImport
       type: object
