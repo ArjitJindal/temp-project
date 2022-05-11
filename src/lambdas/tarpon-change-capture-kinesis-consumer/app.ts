@@ -148,11 +148,11 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
           TRANSACTION_PRIMARY_KEY_IDENTIFIER
         )
       ) {
-        await transactionHandler(
-          db,
-          tenantId,
-          handlePrimaryItem(message) as TransactionWithRulesResult
-        )
+        const transaction = handlePrimaryItem(
+          message
+        ) as TransactionWithRulesResult
+        console.info(`Processing transaction ${transaction.transactionId}`)
+        await transactionHandler(db, tenantId, transaction)
         await dashboardTransactionStatsHandler(
           db,
           tenantId,
@@ -176,17 +176,19 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
           USER_PRIMARY_KEY_IDENTIFIER
         )
       ) {
-        await userHandler(db, tenantId, handlePrimaryItem(message) as User)
+        const user = handlePrimaryItem(message) as User
+        console.info(`Processing user ${user.userId}`)
+        await userHandler(db, tenantId, user)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_EVENT_KEY_IDENTIFIER
         )
       ) {
-        await userEventHandler(
-          db,
-          tenantId,
-          handlePrimaryItem(message) as UserEventWithRulesResult
+        const userEvent = handlePrimaryItem(message) as UserEventWithRulesResult
+        console.info(
+          `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
         )
+        await userEventHandler(db, tenantId, userEvent)
       }
     }
   } catch (err) {
