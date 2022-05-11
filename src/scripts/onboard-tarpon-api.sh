@@ -22,7 +22,7 @@ elif [ "$env" == "dev" ]; then
     apiId=lujzovzbk3
 elif [ "$env" == "prod" ]; then
     apiPrefix=""
-    apiId=""
+    apiId=chw09486vg
 fi
 
 tenantId=`node -e "console.log(require('nanoid').customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10)())"`
