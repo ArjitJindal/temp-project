@@ -67,7 +67,7 @@ const TableList: React.FC = () => {
         ellipsis: true,
         hideInSearch: true,
         render: (_, transaction) => {
-          return `${transaction.executedRules.filter(rule => rule.ruleHit).length} rule(s)`;
+          return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
         },
       },
       {

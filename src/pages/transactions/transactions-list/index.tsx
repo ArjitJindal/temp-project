@@ -5,6 +5,8 @@ import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { TransactionDetails } from './components/TransactionDetails';
+import styles from './components/TransactionDetails.less';
+
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 
@@ -123,6 +125,9 @@ const TableList: React.FC = () => {
   return (
     <PageContainer>
       <ProTable<TransactionCaseManagement>
+        rowClassName={(record, index) =>
+          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
+        }
         form={{
           labelWrap: true,
         }}
