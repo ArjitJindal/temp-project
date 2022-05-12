@@ -192,16 +192,16 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       .transactionRepository as TransactionRepository
     const [sendingTransactions, receivingTransactions] = await Promise.all([
       checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getAfterTimeUserSendingThinTransactions(
-            userId,
-            afterTimestamp
-          )
+        ? transactionRepository.getUserSendingThinTransactions(userId, {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp,
+          })
         : Promise.resolve([]),
       checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getAfterTimeUserReceivingThinTransactions(
-            userId,
-            afterTimestamp
-          )
+        ? transactionRepository.getUserReceivingThinTransactions(userId, {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp,
+          })
         : Promise.resolve([]),
     ])
     return {

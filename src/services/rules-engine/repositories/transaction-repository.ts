@@ -20,6 +20,10 @@ import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionSt
 import { paginateQuery } from '@/utils/dynamodb'
 
 type QueryCountResult = { count: number; scannedCount: number }
+type TimeRange = {
+  beforeTimestamp: number
+  afterTimestamp: number
+}
 
 export class TransactionRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -425,136 +429,138 @@ export class TransactionRepository {
     )
   }
 
-  public async getAfterTimeUserSendingThinTransactions(
+  public async getUserSendingThinTransactions(
     userId: string,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimestampThinTransactions(
+    return this.getThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'sending',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimeUserReceivingThinTransactions(
+  public async getUserReceivingThinTransactions(
     userId: string,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimestampThinTransactions(
+    return this.getThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'receiving',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimeUserSendingTransactionsCount(
+  public async getUserSendingTransactionsCount(
     userId: string,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<QueryCountResult> {
-    return this.getAfterTimeUserThinTransactionsCount(
+    return this.getUserThinTransactionsCount(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'sending',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimeUserReceivingTransactionsCount(
+  public async getUserReceivingTransactionsCount(
     userId: string,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<QueryCountResult> {
-    return this.getAfterTimeUserThinTransactionsCount(
+    return this.getUserThinTransactionsCount(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'receiving',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimeNonUserSendingThinTransactions(
+  public async getNonUserSendingThinTransactions(
     paymentDetails: PaymentDetails,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimestampThinTransactions(
+    return this.getThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
         'sending',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimeNonUserReceivingThinTransactions(
+  public async getNonUserReceivingThinTransactions(
     paymentDetails: PaymentDetails,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     transactionType?: string
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimestampThinTransactions(
+    return this.getThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
         'receiving',
         transactionType
       ).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  public async getAfterTimestampIpAddressThinTransactions(
+  public async getIpAddressThinTransactions(
     ipAddress: string,
-    afterTimestamp: number
+    timeRange: TimeRange
   ): Promise<Array<ThinTransaction>> {
-    return this.getAfterTimestampThinTransactions(
+    return this.getThinTransactions(
       DynamoDbKeys.IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
         .PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  private getAfterTimestampTransactionsQuery(
+  private getTransactionsQuery(
     partitionKeyId: string,
-    timestamp: number
+    timeRange: TimeRange
   ): AWS.DynamoDB.DocumentClient.QueryInput {
     return {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID > :sk',
+      KeyConditionExpression:
+        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
-        ':sk': `${timestamp}`,
+        ':skfrom': `${timeRange.afterTimestamp}`,
+        ':skto': `${timeRange.beforeTimestamp}`,
       },
       ScanIndexForward: false,
       ReturnConsumedCapacity: 'TOTAL',
     }
   }
 
-  private async getAfterTimestampThinTransactions(
+  private async getThinTransactions(
     partitionKeyId: string,
-    afterTimestamp: number
+    timeRange: TimeRange
   ): Promise<Array<ThinTransaction>> {
     const result = await paginateQuery(
       this.dynamoDb,
-      this.getAfterTimestampTransactionsQuery(partitionKeyId, afterTimestamp)
+      this.getTransactionsQuery(partitionKeyId, timeRange)
     )
     return (
       result.Items?.map((item) => ({
@@ -566,15 +572,12 @@ export class TransactionRepository {
     )
   }
 
-  private async getAfterTimeUserThinTransactionsCount(
+  private async getUserThinTransactionsCount(
     partitionKeyId: string,
-    afterTimestamp: number
+    timeRange: TimeRange
   ): Promise<QueryCountResult> {
     const result = await paginateQuery(this.dynamoDb, {
-      ...this.getAfterTimestampTransactionsQuery(
-        partitionKeyId,
-        afterTimestamp
-      ),
+      ...this.getTransactionsQuery(partitionKeyId, timeRange),
       Select: 'COUNT',
     })
     return {

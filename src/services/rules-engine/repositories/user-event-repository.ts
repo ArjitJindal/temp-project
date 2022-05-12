@@ -9,6 +9,11 @@ import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { UserEvent, UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
 
+type TimeRange = {
+  beforeTimestamp: number
+  afterTimestamp: number
+}
+
 export class UserEventRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
   mongoDb: MongoClient
@@ -62,41 +67,43 @@ export class UserEventRepository {
     return eventId
   }
 
-  public async getAfterTimestampTypeUserEvents(
+  public async getTypeUserEvents(
     userId: string,
-    afterTimestamp: number,
+    timeRange: TimeRange,
     eventType: UserEventTypeEnum
   ): Promise<ReadonlyArray<UserEvent>> {
-    return this.getAfterTimestampUserEvents(
+    return this.getUserEvents(
       DynamoDbKeys.USER_EVENT(this.tenantId, eventType, userId).PartitionKeyID,
-      afterTimestamp
+      timeRange
     )
   }
 
-  private async getAfterTimestampUserEvents(
+  private async getUserEvents(
     partitionKeyId: string,
-    afterTimestamp: number
+    timeRange: TimeRange
   ): Promise<ReadonlyArray<UserEvent>> {
     const result = await paginateQuery(
       this.dynamoDb,
-      this.getAfterTimestampUserEventsQuery(partitionKeyId, afterTimestamp)
+      this.getUserEventsQuery(partitionKeyId, timeRange)
     )
     return result.Items as unknown as ReadonlyArray<UserEvent>
   }
 
-  private getAfterTimestampUserEventsQuery(
+  private getUserEventsQuery(
     partitionKeyId: string,
-    timestamp: number
+    timeRange: TimeRange
   ): AWS.DynamoDB.DocumentClient.QueryInput {
     const userEventAttributeNames = UserEvent.getAttributeTypeMap().map(
       (attribute) => attribute.name
     )
     return {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-      KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID > :sk',
+      KeyConditionExpression:
+        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
-        ':sk': `${timestamp}`,
+        ':skfrom': `${timeRange.afterTimestamp}`,
+        ':skto': `${timeRange.beforeTimestamp}`,
       },
       ProjectionExpression: userEventAttributeNames
         .map((name) => `#${name}`)

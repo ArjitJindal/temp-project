@@ -43,11 +43,14 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
       dynamoDb: this.dynamoDb,
     })
     const thinTransactions =
-      await transactionRepository.getAfterTimeUserSendingThinTransactions(
+      await transactionRepository.getUserSendingThinTransactions(
         this.transaction.originUserId,
-        dayjs(this.transaction.timestamp)
-          .subtract(timeWindowInDays, 'day')
-          .valueOf()
+        {
+          afterTimestamp: dayjs(this.transaction.timestamp)
+            .subtract(timeWindowInDays, 'day')
+            .valueOf(),
+          beforeTimestamp: this.transaction.timestamp,
+        }
       )
     const transactionsWithIpAddress = [
       ...(await transactionRepository.getTransactionsByIds(

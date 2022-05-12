@@ -45,11 +45,14 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
       dynamoDb: this.dynamoDb,
     })
     const thinTransactionsFromIpAddress =
-      await transactionRepository.getAfterTimestampIpAddressThinTransactions(
+      await transactionRepository.getIpAddressThinTransactions(
         this.transaction.deviceData.ipAddress,
-        dayjs(this.transaction.timestamp)
-          .subtract(timeWindowInDays, 'day')
-          .valueOf()
+        {
+          afterTimestamp: dayjs(this.transaction.timestamp)
+            .subtract(timeWindowInDays, 'day')
+            .valueOf(),
+          beforeTimestamp: this.transaction.timestamp,
+        }
       )
     const uniqueUsers = new Set(
       thinTransactionsFromIpAddress

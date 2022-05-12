@@ -54,11 +54,14 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
       dynamoDb: this.dynamoDb,
     })
     const sendingTransactions = (
-      await transactionRepository.getAfterTimeUserSendingThinTransactions(
+      await transactionRepository.getUserSendingThinTransactions(
         this.senderUser!.userId,
-        dayjs(this.transaction.timestamp)
-          .subtract(timeWindowInSeconds, 'second')
-          .valueOf(),
+        {
+          afterTimestamp: dayjs(this.transaction.timestamp)
+            .subtract(timeWindowInSeconds, 'second')
+            .valueOf(),
+          beforeTimestamp: this.transaction.timestamp,
+        },
         transactionType
       )
     ).concat([

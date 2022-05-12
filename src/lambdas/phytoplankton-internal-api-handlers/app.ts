@@ -109,7 +109,7 @@ export const transactionsPerUserViewHandler = lambdaApi()(
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
-    const { limit, skip, afterTimestamp, beforeTimestamp, userId, filterId, } =
+    const { limit, skip, afterTimestamp, beforeTimestamp, userId, filterId } =
       event.queryStringParameters as any
     const params: DefaultApiGetTransactionsListRequest = {
       limit: parseInt(limit),

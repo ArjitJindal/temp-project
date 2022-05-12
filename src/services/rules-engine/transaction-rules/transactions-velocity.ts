@@ -99,14 +99,14 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     const transactionRepository = this
       .transactionRepository as TransactionRepository
     const transactionsCount = await Promise.all([
-      transactionRepository.getAfterTimeUserSendingTransactionsCount(
-        userId,
-        afterTimestamp
-      ),
-      transactionRepository.getAfterTimeUserReceivingTransactionsCount(
-        userId,
-        afterTimestamp
-      ),
+      transactionRepository.getUserSendingTransactionsCount(userId, {
+        afterTimestamp,
+        beforeTimestamp: this.transaction.timestamp,
+      }),
+      transactionRepository.getUserReceivingTransactionsCount(userId, {
+        afterTimestamp,
+        beforeTimestamp: this.transaction.timestamp,
+      }),
     ])
     return transactionsCount[0].count + transactionsCount[1].count
   }

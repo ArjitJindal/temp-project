@@ -192,6 +192,51 @@ describe('Core logic', () => {
       ],
       expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
     },
+    {
+      name: 'Out-of-order transactions - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    },
+    {
+      name: 'Duplicated transactions - not hit',
+      transactions: [
+        getTestTransaction({
+          transactionId: '8-1',
+          originUserId: '8-1',
+          destinationUserId: '8-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '8-1',
+          originUserId: '8-1',
+          destinationUserId: '8-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '8-1',
+          originUserId: '8-1',
+          destinationUserId: '8-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    },
   ])('', ({ name, transactions, expectedActions }) => {
     createTransactionRuleTestCase(
       name,

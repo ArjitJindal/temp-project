@@ -59,12 +59,14 @@ export default class AccountAccessEventRule extends UserRule<AccountAccessEventR
     const afterTimestamp = dayjs(userEvent.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
       .valueOf()
-    const accessEvents =
-      await userEventRepository.getAfterTimestampTypeUserEvents(
-        userEvent.userId,
+    const accessEvents = await userEventRepository.getTypeUserEvents(
+      userEvent.userId,
+      {
         afterTimestamp,
-        'LOGGED_IN'
-      )
+        beforeTimestamp: userEvent.timestamp,
+      },
+      'LOGGED_IN'
+    )
 
     const targetAccessEvents = accessEvents.filter((accessEvent) =>
       isIpAddressInList(accessEvent?.metaData, ipAddressesToCheck)

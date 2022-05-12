@@ -47,18 +47,24 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
     let senderTransactions: ThinTransaction[] = []
     if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =
-        await transactionRepository.getAfterTimeUserReceivingThinTransactions(
+        await transactionRepository.getUserReceivingThinTransactions(
           this.transaction.destinationUserId,
-          afterTimestamp
+          {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp,
+          }
         )
     } else if (
       receiverTypes.includes('NON_USER') &&
       this.transaction.destinationPaymentDetails
     ) {
       senderTransactions =
-        await transactionRepository.getAfterTimeNonUserReceivingThinTransactions(
+        await transactionRepository.getNonUserReceivingThinTransactions(
           this.transaction.destinationPaymentDetails,
-          afterTimestamp
+          {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp,
+          }
         )
     }
     const uniqueSenders = new Set(
