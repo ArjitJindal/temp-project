@@ -26,8 +26,6 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 
-let client: MongoClient
-
 function getAggregatedRuleStatus(
   ruleActions: ReadonlyArray<RuleAction>
 ): RuleAction {
@@ -134,14 +132,13 @@ const dashboardTransactionStatsHandler = async (
 
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   try {
-    let tenantId
-    client = await connectToDB()
+    const client = await connectToDB()
     const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     for (const record of event.Records) {
       const payload: KinesisStreamRecordPayload = record.kinesis
       const message: string = Buffer.from(payload.data, 'base64').toString()
       const dynamoDBStreamObject = JSON.parse(message).dynamodb
-      tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
+      const tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
 
       if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(

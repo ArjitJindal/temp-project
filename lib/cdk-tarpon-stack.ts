@@ -97,6 +97,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /*
      * Atlas DB
+     * VPC configuration: https://www.mongodb.com/docs/atlas/security-vpc-peering/
      */
 
     const atlasVpcCidr = '10.0.0.0/21'
@@ -565,7 +566,10 @@ export class CdkTarponStack extends cdk.Stack {
       'dist/tarpon-change-capture-kinesis-consumer',
       undefined,
       undefined,
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        timeout: Duration.minutes(15),
+      }
     )
 
     tarponChangeCaptureKinesisConsumer.addEventSource(
