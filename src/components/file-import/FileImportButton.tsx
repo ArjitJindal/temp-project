@@ -27,7 +27,6 @@ const OPENAPI_REF: Record<ImportRequestTypeEnum, string> = {
 const CUSTOM_FORMAT_TENANTS = ['sh-payment'];
 
 // Limit of .csv file to be uploaded
-const FILE_UPLOAD_LIMIT_SIZE_IN_MB = 10;
 const FILE_UPLOAD_LIMIT_IN_BYTE = 10240000;
 
 interface FileImportButtonProps {
@@ -146,8 +145,12 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               const fsize = file.size;
               const files = Math.round(fsize / 1024);
               // The size of the file.
-              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE / 1000) {
-                message.error('File too Big, please select a file less than 10MB');
+              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE) {
+                message.error(
+                  `File too big, please select a file less than ${filesize(
+                    FILE_UPLOAD_LIMIT_IN_BYTE,
+                  )}`,
+                );
                 return;
               }
               setLoading(true);
