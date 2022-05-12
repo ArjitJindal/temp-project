@@ -1,27 +1,63 @@
-import React, { useState } from 'react';
-import { Button, Form, Input, Modal, Select } from 'antd';
+import React, { useCallback, useState } from 'react';
+import { Button, Form, Input, message, Modal, Select } from 'antd';
+import { useApi } from '@/api';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface Props {}
+interface Props {
+  transactionId: string;
+  onSaved: () => void;
+}
 
-const REASONS = {
-  FALSE_POSITIVE: 'False positive',
-  INVESTIGATION_COMPLETED: 'Investigation completed',
-  DOCUMENTS_COLLECTED: 'Documents collected',
-  OTHER: 'Other',
-};
-type Reason = keyof typeof REASONS;
+// todo: i18n
+const OTHER_REASON = 'Other';
+const COMMON_REASONS = [OTHER_REASON];
+// todo: need to take from tenant storage when we implement it
+const TMP_TENANT_REASONS = ['False positive', 'Investigation completed', 'Documents collected'];
 
 interface FormValues {
-  reasons: Reason[];
-  reason_other: string | null;
+  reasons: string[];
+  reasonOther: string | null;
 }
 
 export default function AllowForm(props: Props) {
+  const { transactionId, onSaved } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
+  const [isSaving, setSaving] = useState(false);
   const [form] = Form.useForm<FormValues>();
+  const api = useApi();
 
+  const handleUpdateTransaction = useCallback(
+    async (values: FormValues) => {
+      const hideMessage = message.loading(`Saving...`, 0);
+      try {
+        setSaving(true);
+        await api.postTransactionsTransactionId({
+          transactionId,
+          TransactionUpdateRequest: {
+            status: 'ALLOW',
+            reason: values.reasons.map((x) => {
+              if (x === OTHER_REASON) {
+                return values.reasonOther ?? '';
+              }
+              return x;
+            }),
+          },
+        });
+        message.success('Saved');
+        setModalVisible(false);
+        onSaved();
+      } catch (e) {
+        message.error('Failed to save');
+      } finally {
+        hideMessage();
+        setSaving(false);
+      }
+    },
+    [onSaved, transactionId, api],
+  );
+
+  const possibleReasons = [...COMMON_REASONS, ...TMP_TENANT_REASONS];
   // todo: i18n
   return (
     <>
@@ -33,16 +69,21 @@ export default function AllowForm(props: Props) {
         Allow
       </Button>
       <Modal
-        title="Basic Modal"
+        title="Allow transaction"
         visible={isModalVisible}
+        okButtonProps={{
+          disabled: isSaving,
+        }}
         onOk={() => {
           form
             .validateFields()
             .then((values) => {
+              return handleUpdateTransaction(values);
+              // onCreate(values);
+            })
+            .then(() => {
               form.resetFields();
               setIsOtherReason(false);
-              console.log('values', values);
-              // onCreate(values);
             })
             .catch((info) => {
               console.log('Validate Failed:', info);
@@ -58,16 +99,16 @@ export default function AllowForm(props: Props) {
           name="form_in_modal"
           initialValues={{
             reasons: [],
-            reason_other: null,
+            reasonOther: null,
           }}
         >
           <Form.Item name="reasons" label="Reason" rules={[{ required: true }]}>
-            <Select<Reason[]>
+            <Select<string[]>
               mode="multiple"
-              onChange={(value) => setIsOtherReason(value.includes('OTHER'))}
+              onChange={(value) => setIsOtherReason(value.includes(OTHER_REASON))}
             >
-              {Object.entries(REASONS).map(([value, label]) => (
-                <Select.Option key={value} value={value}>
+              {possibleReasons.map((label) => (
+                <Select.Option key={label} value={label}>
                   {label}
                 </Select.Option>
               ))}
@@ -75,7 +116,7 @@ export default function AllowForm(props: Props) {
           </Form.Item>
           {isOtherReason && (
             <Form.Item
-              name="reason_other"
+              name="reasonOther"
               label="Describe the reason"
               rules={[{ required: true, max: 50 }]}
             >

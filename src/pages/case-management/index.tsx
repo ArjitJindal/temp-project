@@ -12,6 +12,7 @@ import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import AllowForm from '@/pages/case-management/components/AllowForm';
+import GlobalWrapper from '@/components/GlobalWrapper';
 
 const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -29,6 +30,10 @@ const TableList: React.FC = () => {
     }));
   }, []);
   const api = useApi();
+
+  const reloadTable = useCallback(() => {
+    actionRef.current?.reload();
+  }, []);
 
   // todo: i18n
   const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
@@ -143,7 +148,7 @@ const TableList: React.FC = () => {
         sorter: true,
         width: 120,
         render: (dom, entity) => {
-          return <AllowForm />;
+          return <AllowForm transactionId={entity.transactionId as string} onSaved={reloadTable} />;
         },
       },
       {
@@ -167,57 +172,60 @@ const TableList: React.FC = () => {
         },
       },
     ],
-    [updatedTransactions, users],
+    [reloadTable, updatedTransactions, users],
   );
 
   return (
-    <PageContainer>
-      <ProTable<TransactionCaseManagement>
-        form={{
-          labelWrap: true,
-        }}
-        headerTitle="Transactions"
-        actionRef={actionRef}
-        rowKey="transactionId"
-        search={{
-          labelWidth: 120,
-        }}
-        scroll={{ x: 1300 }}
-        expandable={{ expandedRowRender: ExpandedRulesRowRender }}
-        request={async (params) => {
-          const { pageSize, current, timestamp, transactionId } = params;
-          const response = await api.getTransactionsList({
-            limit: pageSize!,
-            skip: (current! - 1) * pageSize!,
-            filterId: transactionId,
-            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-          });
-          return {
-            data: response.data,
-            success: true,
-            total: response.total,
-          };
-        }}
-        columns={columns}
-      />
-      <Drawer
-        width={700}
-        visible={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={false}
-      >
-        {currentRow?.transactionId && (
-          <TransactionDetails
-            transaction={updatedTransactions[currentRow.transactionId] || currentRow}
-            onTransactionUpdate={handleTransactionUpdate}
-          />
-        )}
-      </Drawer>
-    </PageContainer>
+    <GlobalWrapper>
+      <PageContainer>
+        <ProTable<TransactionCaseManagement>
+          form={{
+            labelWrap: true,
+          }}
+          headerTitle="Transactions"
+          actionRef={actionRef}
+          rowKey="transactionId"
+          search={{
+            labelWidth: 120,
+          }}
+          scroll={{ x: 1300 }}
+          expandable={{ expandedRowRender: ExpandedRulesRowRender }}
+          request={async (params) => {
+            const { pageSize, current, timestamp, transactionId } = params;
+            const response = await api.getTransactionsList({
+              limit: pageSize!,
+              skip: (current! - 1) * pageSize!,
+              filterId: transactionId,
+              filterOutStatus: 'ALLOW',
+              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+            });
+            return {
+              data: response.data,
+              success: true,
+              total: response.total,
+            };
+          }}
+          columns={columns}
+        />
+        <Drawer
+          width={700}
+          visible={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={false}
+        >
+          {currentRow?.transactionId && (
+            <TransactionDetails
+              transaction={updatedTransactions[currentRow.transactionId] || currentRow}
+              onTransactionUpdate={handleTransactionUpdate}
+            />
+          )}
+        </Drawer>
+      </PageContainer>
+    </GlobalWrapper>
   );
 };
 
