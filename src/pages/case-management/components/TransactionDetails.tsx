@@ -276,7 +276,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               <Space>
                 <RuleActionStatus ruleAction={status} />
                 <Popover
-                  content={transaction.statusChanges?.map((statusChange) => (
+                  content={transaction.statusChanges?.filter(Boolean).map((statusChange) => (
                     <Row>
                       {`Changed to ${statusChange.status} by ${
                         users[statusChange.userId]?.name || statusChange.userId
