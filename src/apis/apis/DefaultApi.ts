@@ -18,6 +18,7 @@ import { ImportResponse } from '../models/ImportResponse';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
+import { RuleAction } from '../models/RuleAction';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
@@ -557,6 +558,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    */
   public async getTransactionsList(
     limit: number,
@@ -564,6 +566,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -619,6 +622,14 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Query Params
     if (filterId !== undefined) {
       requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
+    }
+
+    // Query Params
+    if (filterOutStatus !== undefined) {
+      requestContext.setQueryParam(
+        'filterOutStatus',
+        ObjectSerializer.serialize(filterOutStatus, 'RuleAction', ''),
+      );
     }
 
     const defaultAuth: SecurityAuthentication | undefined =

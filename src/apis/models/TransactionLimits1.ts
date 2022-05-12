@@ -18,6 +18,7 @@ export class TransactionLimits1 {
   'maximumWeeklyTransactionLimit'?: Amount;
   'maximumMonthlyTransactionLimit'?: Amount;
   'maximumQuarterlyTransactionLimit'?: Amount;
+  'maximumTransactionLimit'?: Amount;
   'maximumYearlyTransactionLimit'?: Amount;
 
   static readonly discriminator: string | undefined = undefined;
@@ -49,6 +50,12 @@ export class TransactionLimits1 {
     {
       name: 'maximumQuarterlyTransactionLimit',
       baseName: 'maximumQuarterlyTransactionLimit',
+      type: 'Amount',
+      format: '',
+    },
+    {
+      name: 'maximumTransactionLimit',
+      baseName: 'maximumTransactionLimit',
       type: 'Amount',
       format: '',
     },

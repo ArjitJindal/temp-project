@@ -251,6 +251,7 @@ export class PromiseDefaultApi {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    */
   public getTransactionsList(
     limit: number,
@@ -258,6 +259,7 @@ export class PromiseDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(
@@ -266,6 +268,7 @@ export class PromiseDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterOutStatus,
       _options,
     );
     return result.toPromise();
