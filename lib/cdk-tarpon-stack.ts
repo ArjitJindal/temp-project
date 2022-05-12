@@ -205,8 +205,9 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     const atlasFunctionProps = {
-      securityGroups: [atlasSg],
-      vpc: atlasVpc,
+      // TODO: Re-enable VPC https://flagright.atlassian.net/browse/FDT-190
+      // securityGroups: [atlasSg],
+      // vpc: atlasVpc,
       environment: {
         SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
