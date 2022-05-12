@@ -28,6 +28,7 @@ const CUSTOM_FORMAT_TENANTS = ['sh-payment'];
 
 // Limit of .csv file to be uploaded
 const FILE_UPLOAD_LIMIT_IN_BYTE = 10240000;
+const FILE_UPLOAD_LIMIT_IN_KB = 10240;
 
 interface FileImportButtonProps {
   type: ImportRequestTypeEnum;
@@ -145,7 +146,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               const fsize = file.size;
               const files = Math.round(fsize / 1024);
               // The size of the file(in KB)
-              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE / 1000) {
+              if (files >= FILE_UPLOAD_LIMIT_IN_KB) {
                 message.error(
                   `File too big, please select a file less than ${filesize(
                     FILE_UPLOAD_LIMIT_IN_BYTE,
