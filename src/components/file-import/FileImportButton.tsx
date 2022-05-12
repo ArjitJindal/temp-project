@@ -144,8 +144,8 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
               //to check the size of csv file
               const fsize = file.size;
               const files = Math.round(fsize / 1024);
-              // The size of the file.
-              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE) {
+              // The size of the file(in KB)
+              if (files >= FILE_UPLOAD_LIMIT_IN_BYTE / 1000) {
                 message.error(
                   `File too big, please select a file less than ${filesize(
                     FILE_UPLOAD_LIMIT_IN_BYTE,
