@@ -122,7 +122,9 @@ export class TransactionRepository {
           { assignments: updates.assignments, status: updates.status },
           _.isNil
         ),
-        $push: { statusChanges: updates.statusChange },
+        ...(updates.statusChange
+          ? { $push: { statusChanges: updates.statusChange } }
+          : {}),
       }
     )
   }
