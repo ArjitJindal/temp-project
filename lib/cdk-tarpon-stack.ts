@@ -49,7 +49,6 @@ import {
   GetPresignedUrlConfig,
 } from '@/lambdas/file-import/app'
 import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
-import { number } from 'fp-ts'
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
