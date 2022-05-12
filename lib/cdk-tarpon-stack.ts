@@ -49,6 +49,7 @@ import {
   GetPresignedUrlConfig,
 } from '@/lambdas/file-import/app'
 import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
+import { number } from 'fp-ts'
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config
@@ -271,7 +272,8 @@ export class CdkTarponStack extends cdk.Stack {
       'app.transactionHandler',
       'dist/rules-engine',
       config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
-      [fastGeoIpLayer]
+      [fastGeoIpLayer],
+      { memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE }
     )
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
@@ -542,7 +544,9 @@ export class CdkTarponStack extends cdk.Stack {
       TarponStackConstants.USER_FUNCTION_NAME,
       'app.userHandler',
       'dist/user-management',
-      config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY
+      config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+      undefined,
+      { memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE }
     )
     dynamoDbTable.grantReadWriteData(userFunction)
 
