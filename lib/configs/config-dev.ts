@@ -11,6 +11,9 @@ export const config: Config = {
       READ_CAPACITY: 1,
       WRITE_CAPACITY: 1,
     },
+    LAMBDA_DEFAULT: {
+      MEMORY_SIZE: 256,
+    },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },

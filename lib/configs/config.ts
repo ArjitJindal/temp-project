@@ -8,6 +8,9 @@ export type Config = {
       READ_CAPACITY: number
       WRITE_CAPACITY: number
     }
+    LAMBDA_DEFAULT: {
+      MEMORY_SIZE: number
+    }
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
     }
@@ -18,6 +21,10 @@ export type Config = {
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
+    }
+    TRANSACTIONS_VIEW_LAMBDA?: {
+      PROVISIONED_CONCURRENCY: number
+      MEMORY_SIZE: number
     }
   }
   application: {

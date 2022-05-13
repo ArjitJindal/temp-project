@@ -50,6 +50,14 @@ import {
 } from '@/lambdas/file-import/app'
 import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
 
+type InternalFunctionProps = {
+  name: string
+  handler: string
+  codePath: string
+  provisionedConcurrency?: number
+  layers?: Array<ILayerVersion>
+  memorySize?: number
+}
 export class CdkTarponStack extends cdk.Stack {
   config: Config
   cwInsightsLayer: LayerVersion
@@ -215,11 +223,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* API Key Generator */
     const apiKeyGeneratorFunction = this.createFunction(
-      TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
-      'app.apiKeyGeneratorHandler',
-      'dist/api-key-generator',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+        handler: 'app.apiKeyGeneratorHandler',
+        codePath: 'dist/api-key-generator',
+      },
       atlasFunctionProps
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
@@ -244,20 +252,21 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* API Key Authorizer */
-    const apiKeyAuthorizerFunction = this.createFunction(
-      TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
-      'app.apiKeyAuthorizer',
-      'dist/api-key-authorizer',
-      config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY
-    )
+    const apiKeyAuthorizerFunction = this.createFunction({
+      name: TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
+      handler: 'app.apiKeyAuthorizer',
+      codePath: 'dist/api-key-authorizer',
+      provisionedConcurrency:
+        config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
+    })
 
     /* JWT Authorizer */
     const jwtAuthorizerFunction = this.createFunction(
-      TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
-      'app.jwtAuthorizer',
-      'dist/jwt-authorizer',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
+        handler: 'app.jwtAuthorizer',
+        codePath: 'dist/jwt-authorizer',
+      },
       {
         environment: {
           AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
@@ -268,31 +277,32 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Transaction */
-    const transactionFunction = this.createFunction(
-      TarponStackConstants.TRANSACTION_FUNCTION_NAME,
-      'app.transactionHandler',
-      'dist/rules-engine',
-      config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
-      [fastGeoIpLayer],
-      { memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE }
-    )
+    const transactionFunction = this.createFunction({
+      name: TarponStackConstants.TRANSACTION_FUNCTION_NAME,
+      handler: 'app.transactionHandler',
+      codePath: 'dist/rules-engine',
+      provisionedConcurrency:
+        config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+      layers: [fastGeoIpLayer],
+      memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
+    })
     dynamoDbTable.grantReadWriteData(transactionFunction)
 
     /* User Event */
-    const userEventFunction = this.createFunction(
-      TarponStackConstants.USER_EVENT_FUNCTION_NAME,
-      'app.userEventHandler',
-      'dist/rules-engine'
-    )
+    const userEventFunction = this.createFunction({
+      name: TarponStackConstants.USER_EVENT_FUNCTION_NAME,
+      handler: 'app.userEventHandler',
+      codePath: 'dist/rules-engine',
+    })
     dynamoDbTable.grantReadWriteData(userEventFunction)
 
     /* File Import */
     const fileImportFunction = this.createFunction(
-      TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
-      'app.fileImportHandler',
-      'dist/file-import/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+        handler: 'app.fileImportHandler',
+        codePath: 'dist/file-import/',
+      },
       {
         ...atlasFunctionProps,
         environment: {
@@ -324,11 +334,11 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     const getPresignedUrlFunction = this.createFunction(
-      TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
-      'app.getPresignedUrlHandler',
-      'dist/file-import/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
+        handler: 'app.getPresignedUrlHandler',
+        codePath: 'dist/file-import/',
+      },
       {
         environment: {
           TMP_BUCKET: tmpBucketName,
@@ -339,11 +349,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Rule Template */
     const ruleFunction = this.createFunction(
-      TarponStackConstants.RULE_FUNCTION_NAME,
-      'app.ruleHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.RULE_FUNCTION_NAME,
+        handler: 'app.ruleHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     dynamoDbTable.grantWriteData(ruleFunction)
@@ -362,11 +372,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Rule Instance */
     const ruleInstanceFunction = this.createFunction(
-      TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
-      'app.ruleInstanceHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
+        handler: 'app.ruleInstanceHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
@@ -389,11 +399,12 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Transactions view */
     const transactionsViewFunction = this.createFunction(
-      TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-      'app.transactionsViewHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+        handler: 'app.transactionsViewHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        memorySize: config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
+      },
       {
         ...atlasFunctionProps,
         environment: {
@@ -427,21 +438,21 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Accounts */
     this.createFunction(
-      TarponStackConstants.ACCOUNT_FUNCTION_NAME,
-      'app.accountsHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.ACCOUNT_FUNCTION_NAME,
+        handler: 'app.accountsHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
 
     /* Transactions per user view */
     const transactionsPerUserViewFunction = this.createFunction(
-      TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
-      'app.transactionsPerUserViewHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
+        handler: 'app.transactionsPerUserViewHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     dynamoDbTable.grantReadWriteData(transactionsViewFunction)
@@ -464,11 +475,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* business users view */
     const businessUsersViewFunction = this.createFunction(
-      TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
-      'app.businessUsersViewHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+        handler: 'app.businessUsersViewHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     businessUsersViewFunction.role?.attachInlinePolicy(
@@ -490,11 +501,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* consumer users view */
     const consumerUsersViewFunction = this.createFunction(
-      TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
-      'app.consumerUsersViewHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+        handler: 'app.consumerUsersViewHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     consumerUsersViewFunction.role?.attachInlinePolicy(
@@ -516,11 +527,11 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* dashboard stats */
     const dashboardStatsFunction = this.createFunction(
-      TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
-      'app.dashboardStatsHandler',
-      'dist/phytoplankton-internal-api-handlers/',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+        handler: 'app.dashboardStatsHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
       atlasFunctionProps
     )
     dashboardStatsFunction.role?.attachInlinePolicy(
@@ -541,32 +552,32 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* User */
-    const userFunction = this.createFunction(
-      TarponStackConstants.USER_FUNCTION_NAME,
-      'app.userHandler',
-      'dist/user-management',
-      config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
-      undefined,
-      { memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE }
-    )
+    const userFunction = this.createFunction({
+      name: TarponStackConstants.USER_FUNCTION_NAME,
+      handler: 'app.userHandler',
+      codePath: 'dist/user-management',
+      provisionedConcurrency:
+        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
+    })
     dynamoDbTable.grantReadWriteData(userFunction)
 
     /* List Importer */
-    const listImporterFunction = this.createFunction(
-      TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
-      'app.listImporterHandler',
-      'dist/list-importer'
-    )
+    const listImporterFunction = this.createFunction({
+      name: TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
+      handler: 'app.listImporterHandler',
+      codePath: 'dist/list-importer',
+    })
     dynamoDbTable.grantReadWriteData(listImporterFunction)
 
     /* Kinesis Change capture consumer */
 
     const tarponChangeCaptureKinesisConsumer = this.createFunction(
-      TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-      'app.tarponChangeCaptureHandler',
-      'dist/tarpon-change-capture-kinesis-consumer',
-      undefined,
-      undefined,
+      {
+        name: TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+        handler: 'app.tarponChangeCaptureHandler',
+        codePath: 'dist/tarpon-change-capture-kinesis-consumer',
+      },
       {
         ...atlasFunctionProps,
         timeout: Duration.minutes(15),
@@ -746,18 +757,23 @@ export class CdkTarponStack extends cdk.Stack {
   }
 
   createFunction(
-    name: string,
-    handler: string,
-    codePath: string,
-    provisionedConcurrency?: number,
-    layers: Array<ILayerVersion> = [],
+    internalFunctionProps: InternalFunctionProps,
     props: Partial<FunctionProps> = {}
   ): LambdaFunction {
+    const {
+      layers,
+      name,
+      handler,
+      codePath,
+      memorySize,
+      provisionedConcurrency,
+    } = internalFunctionProps
+    const layersArray = layers ? layers : []
     if (
-      !layers.includes(this.cwInsightsLayer) &&
+      !layersArray.includes(this.cwInsightsLayer) &&
       this.config.stage !== 'local'
     ) {
-      layers.push(this.cwInsightsLayer)
+      layersArray.push(this.cwInsightsLayer)
     }
     const func = new LambdaFunction(this, name, {
       functionName: name,
@@ -766,6 +782,9 @@ export class CdkTarponStack extends cdk.Stack {
       code: Code.fromAsset(codePath),
       tracing: Tracing.ACTIVE,
       timeout: Duration.seconds(100),
+      memorySize: memorySize
+        ? memorySize
+        : this.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       layers,
       ...{
         ...props,

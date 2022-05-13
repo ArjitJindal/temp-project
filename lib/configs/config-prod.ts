@@ -11,11 +11,18 @@ export const config: Config = {
       READ_CAPACITY: 10,
       WRITE_CAPACITY: 5,
     },
+    LAMBDA_DEFAULT: {
+      MEMORY_SIZE: 256,
+    },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 8,
     },
     TRANSACTION_LAMBDA: {
       PROVISIONED_CONCURRENCY: 8,
+      MEMORY_SIZE: 512,
+    },
+    TRANSACTIONS_VIEW_LAMBDA: {
+      PROVISIONED_CONCURRENCY: 5,
       MEMORY_SIZE: 512,
     },
     USER_LAMBDA: {
