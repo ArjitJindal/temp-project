@@ -27,7 +27,7 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
     const senderCurrency =
       this.transaction.originAmountDetails?.transactionCurrency
     const receiverCurrency =
-      this.transaction.originAmountDetails?.transactionCurrency
+      this.transaction.destinationAmountDetails?.transactionCurrency
     const [
       senderTransactionCurrencies,
       senderTransactionsCount,
