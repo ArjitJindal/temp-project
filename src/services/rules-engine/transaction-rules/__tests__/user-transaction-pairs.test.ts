@@ -26,6 +26,7 @@ describe('With transaction type', () => {
         userPairsThreshold: 1,
         timeWindowInSeconds: 86400,
         transactionType: 'MATCH_ORDER',
+        excludedUserIds: ['5-1', '5-3'],
       } as UserTransactionPairsRuleParameters,
       defaultAction: 'FLAG',
     },
@@ -41,6 +42,9 @@ describe('With transaction type', () => {
     getTestUser({ userId: '4-1' }),
     getTestUser({ userId: '4-2' }),
     getTestUser({ userId: '4-3' }),
+    getTestUser({ userId: '5-1' }),
+    getTestUser({ userId: '5-2' }),
+    getTestUser({ userId: '5-3' }),
   ])
 
   describe.each<TransactionRuleTestCase>([
@@ -139,6 +143,36 @@ describe('With transaction type', () => {
         }),
       ],
       expectedActions: ['ALLOW', 'ALLOW'],
+    },
+    {
+      name: 'Too many user pairs (excluded users) - not hit',
+      transactions: [
+        getTestTransaction({
+          type: 'MATCH_ORDER',
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'MATCH_ORDER',
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'MATCH_ORDER',
+          originUserId: '5-2',
+          destinationUserId: '5-3',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'MATCH_ORDER',
+          originUserId: '5-2',
+          destinationUserId: '5-3',
+          timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
     },
   ])('', ({ name, transactions, expectedActions }) => {
     createTransactionRuleTestCase(

@@ -8,6 +8,7 @@ export type UserTransactionPairsRuleParameters = {
   userPairsThreshold: number
   timeWindowInSeconds: number
   transactionType?: string
+  excludedUserIds?: string[]
 }
 
 export default class UserTransactionPairsRule extends TransactionRule<UserTransactionPairsRuleParameters> {
@@ -20,6 +21,11 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
         userPairsThreshold: { type: 'integer' },
         timeWindowInSeconds: { type: 'integer' },
         transactionType: { type: 'string', nullable: true },
+        excludedUserIds: {
+          type: 'array',
+          items: { type: 'string' },
+          nullable: true,
+        },
       },
       required: ['userPairsThreshold', 'timeWindowInSeconds'],
       additionalProperties: false,
@@ -27,10 +33,14 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
   }
 
   public getFilters() {
-    const { transactionType } = this.parameters
+    const { transactionType, excludedUserIds } = this.parameters
     return [
       () => !transactionType || this.transaction.type === transactionType,
       () => this.senderUser !== undefined && this.receiverUser !== undefined,
+      () =>
+        excludedUserIds === undefined ||
+        (!excludedUserIds.includes(this.senderUser?.userId as string) &&
+          !excludedUserIds.includes(this.receiverUser?.userId as string)),
     ]
   }
 
