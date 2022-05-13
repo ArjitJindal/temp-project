@@ -222,7 +222,7 @@ async function getRulesResult(
           async (ruleFilter) => ruleFilter()
         )
         const ruleResult = shouldCompute ? await rule.computeRule() : null
-        const ruleHit = ruleResult !== undefined
+        const ruleHit = !_.isNil(ruleResult)
         if (ruleHit) {
           hitRuleInstanceIds.push(ruleInstance.id as string)
         }
