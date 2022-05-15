@@ -58,6 +58,11 @@ const TableList: React.FC = () => {
         },
       },
       {
+        title: 'Transaction Type',
+        dataIndex: 'type',
+        ellipsis: true,
+      },
+      {
         title: 'Timestamp',
         width: 130,
         ellipsis: true,
@@ -78,58 +83,68 @@ const TableList: React.FC = () => {
       },
       {
         title: 'Origin User ID',
+        width: 100,
         dataIndex: 'originUserId',
         hideInTable: true,
       },
       {
         title: 'Origin Method',
+        width: 100,
         render: (dom, entity) => {
           return entity.originPaymentDetails?.method;
         },
       },
       {
         title: 'Origin Amount',
+        width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionAmount;
         },
       },
       {
         title: 'Origin Currency',
+        width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
         },
       },
       {
         title: 'Origin Country',
+        width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
         },
       },
       {
         title: 'Destination User ID',
+        width: 150,
         dataIndex: 'destinationUserId',
         hideInTable: true,
       },
       {
         title: 'Destination Method',
+        width: 100,
         render: (dom, entity) => {
           return entity.destinationPaymentDetails?.method;
         },
       },
       {
         title: 'Destination Amount',
+        width: 80,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionAmount;
         },
       },
       {
         title: 'Destination Currency',
+        width: 80,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
         },
       },
       {
         title: 'Destination Country',
+        width: 80,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
         },
