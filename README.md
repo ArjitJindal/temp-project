@@ -74,6 +74,12 @@ For Mac, you can run:
 open -n -a /usr/bin/google-chrome --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
 ```
 
+or
+
+```
+open -n -a "Google Chrome" --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
+```
+
 For Linux:
 
 ```
