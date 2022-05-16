@@ -250,6 +250,12 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterId?: string;
+  /**
+   *
+   * @type RuleAction
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOutStatus?: RuleAction;
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
@@ -616,6 +622,7 @@ export class ObjectDefaultApi {
         param.beforeTimestamp,
         param.afterTimestamp,
         param.filterId,
+        param.filterOutStatus,
         options,
       )
       .toPromise();

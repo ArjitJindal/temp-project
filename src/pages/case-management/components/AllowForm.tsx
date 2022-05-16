@@ -1,0 +1,130 @@
+import React, { useCallback, useState } from 'react';
+import { Button, Form, Input, message, Modal, Select } from 'antd';
+import { useApi } from '@/api';
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface Props {
+  transactionId: string;
+  onSaved: () => void;
+}
+
+// todo: i18n
+const OTHER_REASON = 'Other';
+const COMMON_REASONS = [OTHER_REASON];
+// todo: need to take from tenant storage when we implement it
+const TMP_TENANT_REASONS = ['False positive', 'Investigation completed', 'Documents collected'];
+
+interface FormValues {
+  reasons: string[];
+  reasonOther: string | null;
+}
+
+export default function AllowForm(props: Props) {
+  const { transactionId, onSaved } = props;
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isOtherReason, setIsOtherReason] = useState(false);
+  const [isSaving, setSaving] = useState(false);
+  const [form] = Form.useForm<FormValues>();
+  const api = useApi();
+
+  const handleUpdateTransaction = useCallback(
+    async (values: FormValues) => {
+      const hideMessage = message.loading(`Saving...`, 0);
+      try {
+        setSaving(true);
+        await api.postTransactionsTransactionId({
+          transactionId,
+          TransactionUpdateRequest: {
+            status: 'ALLOW',
+            reason: values.reasons.map((x) => {
+              if (x === OTHER_REASON) {
+                return values.reasonOther ?? '';
+              }
+              return x;
+            }),
+          },
+        });
+        message.success('Saved');
+        setModalVisible(false);
+        onSaved();
+      } catch (e) {
+        message.error('Failed to save');
+      } finally {
+        hideMessage();
+        setSaving(false);
+      }
+    },
+    [onSaved, transactionId, api],
+  );
+
+  const possibleReasons = [...COMMON_REASONS, ...TMP_TENANT_REASONS];
+  // todo: i18n
+  return (
+    <>
+      <Button
+        onClick={() => {
+          setModalVisible(true);
+        }}
+      >
+        Allow
+      </Button>
+      <Modal
+        title="Allow transaction"
+        visible={isModalVisible}
+        okButtonProps={{
+          disabled: isSaving,
+        }}
+        onOk={() => {
+          form
+            .validateFields()
+            .then((values) => {
+              return handleUpdateTransaction(values);
+              // onCreate(values);
+            })
+            .then(() => {
+              form.resetFields();
+              setIsOtherReason(false);
+            })
+            .catch((info) => {
+              console.log('Validate Failed:', info);
+            });
+        }}
+        onCancel={() => {
+          setModalVisible(false);
+        }}
+      >
+        <Form<FormValues>
+          form={form}
+          layout="vertical"
+          name="form_in_modal"
+          initialValues={{
+            reasons: [],
+            reasonOther: null,
+          }}
+        >
+          <Form.Item name="reasons" label="Reason" rules={[{ required: true }]}>
+            <Select<string[]>
+              mode="multiple"
+              onChange={(value) => setIsOtherReason(value.includes(OTHER_REASON))}
+            >
+              {possibleReasons.map((label) => (
+                <Select.Option key={label} value={label}>
+                  {label}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          {isOtherReason && (
+            <Form.Item
+              name="reasonOther"
+              label="Describe the reason"
+              rules={[{ required: true, max: 50 }]}
+            >
+              <Input />
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
+    </>
+  );
+}

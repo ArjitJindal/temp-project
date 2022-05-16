@@ -572,6 +572,7 @@ export class ObservableDefaultApi {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    */
   public getTransactionsList(
     limit: number,
@@ -579,6 +580,7 @@ export class ObservableDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
@@ -587,6 +589,7 @@ export class ObservableDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterOutStatus,
       _options,
     );
 

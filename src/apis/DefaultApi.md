@@ -722,6 +722,8 @@ let body:.DefaultApiGetTransactionsListRequest = {
   afterTimestamp: 3.14,
   // string (optional)
   filterId: "filterId_example",
+  // RuleAction (optional)
+  filterOutStatus: "FLAG",
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -731,13 +733,14 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 
 ### Parameters
 
-| Name                | Type         | Description | Notes                            |
-| ------------------- | ------------ | ----------- | -------------------------------- |
-| **limit**           | [**number**] |             | defaults to undefined            |
-| **skip**            | [**number**] |             | defaults to undefined            |
-| **beforeTimestamp** | [**number**] |             | defaults to undefined            |
-| **afterTimestamp**  | [**number**] |             | (optional) defaults to undefined |
-| **filterId**        | [**string**] |             | (optional) defaults to undefined |
+| Name                | Type           | Description | Notes                            |
+| ------------------- | -------------- | ----------- | -------------------------------- |
+| **limit**           | [**number**]   |             | defaults to undefined            |
+| **skip**            | [**number**]   |             | defaults to undefined            |
+| **beforeTimestamp** | [**number**]   |             | defaults to undefined            |
+| **afterTimestamp**  | [**number**]   |             | (optional) defaults to undefined |
+| **filterId**        | [**string**]   |             | (optional) defaults to undefined |
+| **filterOutStatus** | **RuleAction** |             | (optional) defaults to undefined |
 
 ### Return type
 
@@ -1383,6 +1386,9 @@ let body:.DefaultApiPostTransactionsTransactionIdRequest = {
         assignedByUserId: "assignedByUserId_example",
         timestamp: 3.14,
       },
+    ],
+    reason: [
+      "reason_example",
     ],
   },
 };
