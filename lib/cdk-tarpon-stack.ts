@@ -103,46 +103,6 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    /*
-     * Atlas DB
-     * VPC configuration: https://www.mongodb.com/docs/atlas/security-vpc-peering/
-     */
-
-    const atlasVpcCidr = '10.0.0.0/21'
-    const port = 27017
-
-    const atlasVpc = new ec2.Vpc(this, 'vpc', {
-      cidr: atlasVpcCidr,
-      subnetConfiguration: [
-        {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-          cidrMask: 24,
-          name: 'PrivateSubnet1',
-        },
-        {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-          cidrMask: 24,
-          name: 'PrivateSubnet2',
-        },
-        {
-          subnetType: ec2.SubnetType.PUBLIC,
-          cidrMask: 28,
-          name: 'PublicSubnet1',
-        },
-      ],
-    })
-
-    const atlasSg = new ec2.SecurityGroup(
-      this,
-      TarponStackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-      {
-        vpc: atlasVpc,
-        securityGroupName: TarponStackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-      }
-    )
-
-    atlasSg.addIngressRule(ec2.Peer.ipv4(atlasVpcCidr), ec2.Port.tcp(port))
-
     /**
      * S3 Buckets
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
