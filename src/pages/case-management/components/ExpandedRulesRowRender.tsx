@@ -8,13 +8,13 @@ export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) 
       columns={[
         { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId' },
         { title: 'Rule Name', dataIndex: 'ruleName', key: 'ruleName', width: 300 },
-        { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
         {
           title: 'Action',
           key: 'ruleAction',
           width: 180,
           render: (v, entity) => <RuleActionStatus ruleAction={entity.ruleAction} />,
         },
+        { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
       ]}
       dataSource={transaction.executedRules}
       pagination={false}
