@@ -15,6 +15,7 @@ import { RuleAction } from './RuleAction'
 export class TransactionUpdateRequest {
   'status'?: RuleAction
   'assignments'?: Array<Assignment>
+  'reason'?: Array<string>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -34,6 +35,12 @@ export class TransactionUpdateRequest {
       name: 'assignments',
       baseName: 'assignments',
       type: 'Array<Assignment>',
+      format: '',
+    },
+    {
+      name: 'reason',
+      baseName: 'reason',
+      type: 'Array<string>',
       format: '',
     },
   ]

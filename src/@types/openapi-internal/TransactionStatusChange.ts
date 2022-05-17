@@ -14,6 +14,7 @@ import { RuleAction } from './RuleAction'
 export class TransactionStatusChange {
   'userId': string
   'status': RuleAction
+  'reason'?: Array<string>
   'timestamp': number
 
   static readonly discriminator: string | undefined = undefined
@@ -34,6 +35,12 @@ export class TransactionStatusChange {
       name: 'status',
       baseName: 'status',
       type: 'RuleAction',
+      format: '',
+    },
+    {
+      name: 'reason',
+      baseName: 'reason',
+      type: 'Array<string>',
       format: '',
     },
     {

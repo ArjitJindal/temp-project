@@ -50,6 +50,7 @@ export class TransactionRepository {
     afterTimestamp?: number
     beforeTimestamp: number
     filterId?: string
+    filterOutStatus?: RuleAction
   }): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
@@ -63,6 +64,9 @@ export class TransactionRepository {
     }
     if (params.filterId != null) {
       query['transactionId'] = { $regex: params.filterId }
+    }
+    if (params.filterOutStatus != null) {
+      query['status'] = { $ne: params.filterOutStatus }
     }
 
     const transactions = await collection

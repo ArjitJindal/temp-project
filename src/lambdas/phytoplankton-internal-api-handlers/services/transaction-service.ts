@@ -5,6 +5,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 import { TransactionsListResponse } from '@/@types/openapi-internal/TransactionsListResponse'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 
 export class TransactionService {
   transactionRepository: TransactionRepository
@@ -46,14 +47,17 @@ export class TransactionService {
     transactionId: string,
     updateRequest: TransactionUpdateRequest
   ) {
-    const updates = {
-      assignments: updateRequest.assignments,
-      status: updateRequest.status,
-      statusChange: updateRequest.status && {
+    const statusChange: TransactionStatusChange | undefined =
+      updateRequest.status && {
         userId,
         status: updateRequest.status,
         timestamp: Date.now(),
-      },
+        reason: updateRequest.reason,
+      }
+    const updates = {
+      assignments: updateRequest.assignments,
+      status: updateRequest.status,
+      statusChange: statusChange,
     }
     await this.transactionRepository.updateTransactionCaseManagement(
       transactionId,

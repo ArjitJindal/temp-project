@@ -243,6 +243,12 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterId?: string
+  /**
+   *
+   * @type RuleAction
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOutStatus?: RuleAction
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
