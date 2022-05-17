@@ -60,6 +60,7 @@ const TableList: React.FC = () => {
       {
         title: 'Transaction Type',
         dataIndex: 'type',
+        width: 100,
         ellipsis: true,
       },
       {
