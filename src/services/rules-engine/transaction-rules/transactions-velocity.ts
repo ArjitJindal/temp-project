@@ -25,7 +25,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     return {
       type: 'object',
       properties: {
-        transactionsPerSecond: { type: 'integer' },
+        transactionsPerSecond: { type: 'number' },
         timeWindowInSeconds: { type: 'integer' },
         userIdsToCheck: {
           type: 'array',
