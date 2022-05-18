@@ -235,7 +235,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedActions: ['ALLOW', undefined, undefined],
     },
   ])('', ({ name, transactions, expectedActions }) => {
     createTransactionRuleTestCase(

@@ -9,7 +9,6 @@ import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 
-const TEST_TENANT_ID = getTestTenantId()
 const dynamoDb = getTestDynamoDbClient()
 
 dynamoDbSetupHook()
@@ -29,6 +28,7 @@ test('Verify Transaction: returns empty executed rules if no rules are configure
 })
 
 describe('Verify Transaction: executed rules', () => {
+  const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-1',
@@ -61,6 +61,7 @@ describe('Verify Transaction: executed rules', () => {
 })
 
 describe('Verify Transaction: failed rules', () => {
+  const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-1',
@@ -95,6 +96,7 @@ describe('Verify Transaction: failed rules', () => {
 })
 
 describe('Verify Transaction: non-existent rules', () => {
+  const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-1',
@@ -129,6 +131,7 @@ describe('Verify Transaction: non-existent rules', () => {
 })
 
 describe('Verify Transaction: executed and failed rules', () => {
+  const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       id: 'R-1',
@@ -178,5 +181,31 @@ describe('Verify Transaction: executed and failed rules', () => {
     expect(
       await transactionRepository.getTransactionById('dummy')
     ).toMatchObject(transaction)
+  })
+})
+
+describe('Verify Transaction: skip already verified transaction', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-1',
+      ruleImplementationName: 'tests/test-success-rule',
+      type: 'TRANSACTION',
+    },
+  ])
+
+  test('returns executed rules', async () => {
+    const transaction = getTestTransaction({ transactionId: 'dummy' })
+    await verifyTransaction(transaction, TEST_TENANT_ID, dynamoDb)
+    const result = await verifyTransaction(
+      transaction,
+      TEST_TENANT_ID,
+      dynamoDb
+    )
+    expect(result).toEqual({
+      transactionId: 'dummy',
+      executedRules: [],
+      failedRules: [],
+    } as TransactionMonitoringResult)
   })
 })

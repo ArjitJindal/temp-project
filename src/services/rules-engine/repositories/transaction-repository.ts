@@ -289,13 +289,18 @@ export class TransactionRepository {
 
   public async getTransactionById(
     transactionId: string
-  ): Promise<TransactionWithRulesResult> {
+  ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
+
+    if (!result.Item) {
+      return null
+    }
+
     const transaction = {
       ...result.Item,
     }

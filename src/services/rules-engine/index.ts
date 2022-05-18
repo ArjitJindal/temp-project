@@ -69,6 +69,20 @@ export async function verifyTransaction(
   const userRepository = new UserRepository(tenantId, {
     dynamoDb,
   })
+
+  if (transaction.transactionId) {
+    const existingTransaction = await transactionRepository.getTransactionById(
+      transaction.transactionId
+    )
+    if (existingTransaction) {
+      return {
+        transactionId: transaction.transactionId,
+        executedRules: [],
+        failedRules: [],
+      }
+    }
+  }
+
   const [senderUser, receiverUser, ruleInstances] = await Promise.all([
     transaction.originUserId
       ? userRepository.getUser<User | Business>(transaction.originUserId)

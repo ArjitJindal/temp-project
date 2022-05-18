@@ -74,10 +74,10 @@ export function getRuleActions(
   results: (TransactionMonitoringResult | UserMonitoringResult)[]
 ): RuleAction[] {
   return results.map((result) => {
-    if (result.executedRules?.length !== 1) {
-      throw new Error('The number of the executed rules is not 1')
+    if (result.executedRules?.length > 1) {
+      throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules[0].ruleAction
+    return result.executedRules[0]?.ruleAction
   })
 }
 
@@ -110,7 +110,7 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
 export interface TransactionRuleTestCase<T = object> {
   name: string
   transactions: Transaction[]
-  expectedActions: RuleAction[]
+  expectedActions: (RuleAction | undefined)[]
   ruleParams?: T
 }
 
@@ -118,7 +118,7 @@ export function createTransactionRuleTestCase(
   testCaseName: string,
   tenantId: string,
   transactions: Transaction[],
-  expectedRuleActions: RuleAction[]
+  expectedRuleActions: (RuleAction | undefined)[]
 ) {
   test(testCaseName, async () => {
     const results = await bulkVerifyTransactions(tenantId, transactions)
