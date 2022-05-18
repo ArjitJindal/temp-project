@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
@@ -60,6 +60,7 @@ const TableList: React.FC = () => {
       {
         title: 'Transaction Type',
         dataIndex: 'type',
+        hideInSearch: true,
         width: 100,
         ellipsis: true,
       },
@@ -86,17 +87,20 @@ const TableList: React.FC = () => {
         title: 'Origin User ID',
         width: 100,
         dataIndex: 'originUserId',
+        hideInSearch: true,
         hideInTable: true,
       },
       {
         title: 'Origin Method',
         width: 100,
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originPaymentDetails?.method;
         },
       },
       {
         title: 'Origin Amount',
+        hideInSearch: true,
         width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionAmount;
@@ -104,6 +108,7 @@ const TableList: React.FC = () => {
       },
       {
         title: 'Origin Currency',
+        hideInSearch: true,
         width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
@@ -111,6 +116,7 @@ const TableList: React.FC = () => {
       },
       {
         title: 'Origin Country',
+        hideInSearch: true,
         width: 80,
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
@@ -121,10 +127,12 @@ const TableList: React.FC = () => {
         width: 150,
         dataIndex: 'destinationUserId',
         hideInTable: true,
+        hideInSearch: true,
       },
       {
         title: 'Destination Method',
         width: 100,
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationPaymentDetails?.method;
         },
@@ -132,6 +140,7 @@ const TableList: React.FC = () => {
       {
         title: 'Destination Amount',
         width: 80,
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionAmount;
         },
@@ -139,6 +148,7 @@ const TableList: React.FC = () => {
       {
         title: 'Destination Currency',
         width: 80,
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
         },
@@ -146,6 +156,7 @@ const TableList: React.FC = () => {
       {
         title: 'Destination Country',
         width: 80,
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
         },
@@ -153,6 +164,7 @@ const TableList: React.FC = () => {
       {
         title: 'Status',
         sorter: true,
+        hideInSearch: true,
         width: 120,
         render: (dom, entity) => {
           const transaction = updatedTransactions[entity.transactionId as string] || entity;
@@ -161,6 +173,7 @@ const TableList: React.FC = () => {
       },
       {
         title: 'Operations',
+        hideInSearch: true,
         sorter: true,
         width: 120,
         render: (dom, entity) => {
@@ -169,6 +182,7 @@ const TableList: React.FC = () => {
       },
       {
         title: 'Assignees',
+        hideInSearch: true,
         width: 100,
         ellipsis: true,
         render: (dom, entity) => {
@@ -187,8 +201,44 @@ const TableList: React.FC = () => {
           );
         },
       },
+      {
+        title: 'Rules Hit',
+        dataIndex: 'rulesHitFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        request: async () => {
+          const rules = await api.getRules();
+          return rules.map((rule) => ({
+            value: rule.id,
+            label: `${rule.name} (${rule.id})`,
+          }));
+        },
+        fieldProps: {
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
+      {
+        title: 'Rules Executed',
+        dataIndex: 'rulesExecutedFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        request: async () => {
+          const rules = await api.getRules();
+          return rules.map((rule) => ({
+            value: rule.id,
+            label: `${rule.name} (${rule.id})`,
+          }));
+        },
+        fieldProps: {
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
     ],
-    [reloadTable, updatedTransactions, users],
+    [api, reloadTable, updatedTransactions, users],
   );
 
   return (
@@ -207,14 +257,23 @@ const TableList: React.FC = () => {
           scroll={{ x: 1300 }}
           expandable={{ expandedRowRender: ExpandedRulesRowRender }}
           request={async (params) => {
-            const { pageSize, current, timestamp, transactionId } = params;
+            const {
+              pageSize,
+              current,
+              timestamp,
+              transactionId,
+              rulesHitFilter,
+              rulesExecutedFilter,
+            } = params;
             const response = await api.getTransactionsList({
               limit: pageSize!,
               skip: (current! - 1) * pageSize!,
-              filterId: transactionId,
-              filterOutStatus: 'ALLOW',
               afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
               beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+              filterId: transactionId,
+              filterRulesHit: rulesHitFilter,
+              filterRulesExecuted: rulesExecutedFilter,
+              filterOutStatus: 'ALLOW',
             });
             return {
               data: response.data,

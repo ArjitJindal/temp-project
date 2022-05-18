@@ -251,6 +251,8 @@ export class PromiseDefaultApi {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterRulesExecuted
+   * @param filterRulesHit
    * @param filterOutStatus
    */
   public getTransactionsList(
@@ -259,6 +261,8 @@ export class PromiseDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterRulesExecuted?: Array<string>,
+    filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
@@ -268,6 +272,8 @@ export class PromiseDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterRulesExecuted,
+      filterRulesHit,
       filterOutStatus,
       _options,
     );

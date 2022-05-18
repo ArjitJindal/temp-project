@@ -252,6 +252,18 @@ export interface DefaultApiGetTransactionsListRequest {
   filterId?: string;
   /**
    *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterRulesExecuted?: Array<string>;
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterRulesHit?: Array<string>;
+  /**
+   *
    * @type RuleAction
    * @memberof DefaultApigetTransactionsList
    */
@@ -622,6 +634,8 @@ export class ObjectDefaultApi {
         param.beforeTimestamp,
         param.afterTimestamp,
         param.filterId,
+        param.filterRulesExecuted,
+        param.filterRulesHit,
         param.filterOutStatus,
         options,
       )

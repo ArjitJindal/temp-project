@@ -722,6 +722,14 @@ let body:.DefaultApiGetTransactionsListRequest = {
   afterTimestamp: 3.14,
   // string (optional)
   filterId: "filterId_example",
+  // Array<string> (optional)
+  filterRulesExecuted: [
+    "filterRulesExecuted_example",
+  ],
+  // Array<string> (optional)
+  filterRulesHit: [
+    "filterRulesHit_example",
+  ],
   // RuleAction (optional)
   filterOutStatus: "FLAG",
 };
@@ -733,14 +741,16 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 
 ### Parameters
 
-| Name                | Type           | Description | Notes                            |
-| ------------------- | -------------- | ----------- | -------------------------------- |
-| **limit**           | [**number**]   |             | defaults to undefined            |
-| **skip**            | [**number**]   |             | defaults to undefined            |
-| **beforeTimestamp** | [**number**]   |             | defaults to undefined            |
-| **afterTimestamp**  | [**number**]   |             | (optional) defaults to undefined |
-| **filterId**        | [**string**]   |             | (optional) defaults to undefined |
-| **filterOutStatus** | **RuleAction** |             | (optional) defaults to undefined |
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **limit** | [**number**] |  | defaults to undefined |
+| **skip** | [**number**] |  | defaults to undefined |
+| **beforeTimestamp** | [**number**] |  | defaults to undefined |
+| **afterTimestamp** | [**number**] |  | (optional) defaults to undefined |
+| **filterId** | [**string**] |  | (optional) defaults to undefined |
+| **filterRulesExecuted** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **filterRulesHit** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
 
 ### Return type
 

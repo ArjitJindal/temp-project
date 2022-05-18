@@ -558,6 +558,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterRulesExecuted
+   * @param filterRulesHit
    * @param filterOutStatus
    */
   public async getTransactionsList(
@@ -566,6 +568,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterRulesExecuted?: Array<string>,
+    filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<RequestContext> {
@@ -622,6 +626,22 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Query Params
     if (filterId !== undefined) {
       requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
+    }
+
+    // Query Params
+    if (filterRulesExecuted !== undefined) {
+      requestContext.setQueryParam(
+        'filterRulesExecuted',
+        ObjectSerializer.serialize(filterRulesExecuted, 'Array<string>', ''),
+      );
+    }
+
+    // Query Params
+    if (filterRulesHit !== undefined) {
+      requestContext.setQueryParam(
+        'filterRulesHit',
+        ObjectSerializer.serialize(filterRulesHit, 'Array<string>', ''),
+      );
     }
 
     // Query Params

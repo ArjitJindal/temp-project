@@ -345,6 +345,18 @@ paths:
           in: query
           name: filterId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus

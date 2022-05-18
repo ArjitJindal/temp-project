@@ -572,6 +572,8 @@ export class ObservableDefaultApi {
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterRulesExecuted
+   * @param filterRulesHit
    * @param filterOutStatus
    */
   public getTransactionsList(
@@ -580,6 +582,8 @@ export class ObservableDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterRulesExecuted?: Array<string>,
+    filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
@@ -589,6 +593,8 @@ export class ObservableDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterRulesExecuted,
+      filterRulesHit,
       filterOutStatus,
       _options,
     );
