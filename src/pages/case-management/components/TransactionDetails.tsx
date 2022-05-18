@@ -26,7 +26,6 @@ import {
   PaperClipOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import filesize from 'filesize';
 import styles from './TransactionDetails.less';
 import { RuleActionStatus } from './RuleActionStatus';
 import Comment from './Comment';

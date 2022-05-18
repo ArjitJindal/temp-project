@@ -41,6 +41,12 @@ const TableList: React.FC = () => {
         },
       },
       {
+        title: 'Transaction Type',
+        dataIndex: 'type',
+        width: 100,
+        ellipsis: true,
+      },
+      {
         title: 'Timestamp',
         width: 130,
         ellipsis: true,
