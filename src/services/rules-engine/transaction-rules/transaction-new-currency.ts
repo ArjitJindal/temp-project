@@ -2,7 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { TransactionRule } from './rule'
 
-type TransactionNewCurrencyRuleParameters = {
+export type TransactionNewCurrencyRuleParameters = {
   initialTransactions: number
 }
 

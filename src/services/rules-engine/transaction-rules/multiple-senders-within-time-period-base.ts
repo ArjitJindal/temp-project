@@ -7,7 +7,7 @@ import {
 import { TransactionRule } from './rule'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 
-type MultipleSendersWithinTimePeriodRuleParameters = {
+export type MultipleSendersWithinTimePeriodRuleParameters = {
   sendersCount: number
   timePeriodDays: number
 }

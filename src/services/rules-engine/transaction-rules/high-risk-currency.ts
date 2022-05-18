@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRule } from './rule'
 
-type HighRiskCurrencyRuleParameters = {
+export type HighRiskCurrencyRuleParameters = {
   highRiskCurrencies: string[]
 }
 
