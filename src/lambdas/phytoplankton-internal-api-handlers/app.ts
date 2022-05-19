@@ -57,14 +57,20 @@ export const transactionsViewHandler = lambdaApi()(
         beforeTimestamp,
         filterId,
         filterOutStatus,
+        filterRulesHit,
+        filterRulesExecuted,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
-        filterOutStatus: filterOutStatus,
         filterId,
+        filterOutStatus,
+        filterRulesExecuted: filterRulesExecuted
+          ? filterRulesExecuted.split(',')
+          : undefined, // todo: need a proper parser for url
+        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
       }
       return transactionService.getTransactions(params)
     } else if (

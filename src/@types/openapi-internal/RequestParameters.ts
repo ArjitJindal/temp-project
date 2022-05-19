@@ -249,6 +249,18 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterOutStatus?: RuleAction
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterRulesExecuted?: Array<string>
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterRulesHit?: Array<string>
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

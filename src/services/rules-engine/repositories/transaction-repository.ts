@@ -18,6 +18,7 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 import { paginateQuery } from '@/utils/dynamodb'
+import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -44,14 +45,9 @@ export class TransactionRepository {
 
   /* MongoDB operations */
 
-  public async getTransactions(params: {
-    limit: number
-    skip: number
-    afterTimestamp?: number
-    beforeTimestamp: number
-    filterId?: string
-    filterOutStatus?: RuleAction
-  }): Promise<{ total: number; data: TransactionCaseManagement[] }> {
+  public async getTransactions(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
@@ -67,6 +63,26 @@ export class TransactionRepository {
     }
     if (params.filterOutStatus != null) {
       query['status'] = { $ne: params.filterOutStatus }
+    }
+
+    const executedRulesFilters = []
+    if (params.filterRulesExecuted != null) {
+      executedRulesFilters.push({
+        $elemMatch: { ruleId: { $in: params.filterRulesExecuted } },
+      })
+    }
+    if (params.filterRulesHit != null) {
+      executedRulesFilters.push({
+        $elemMatch: {
+          ruleHit: true,
+          ruleId: { $in: params.filterRulesExecuted },
+        },
+      })
+    }
+    if (executedRulesFilters.length > 0) {
+      query['executedRules'] = {
+        $all: executedRulesFilters,
+      }
     }
 
     const transactions = await collection
