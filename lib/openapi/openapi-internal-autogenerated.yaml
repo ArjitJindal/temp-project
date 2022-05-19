@@ -2411,6 +2411,8 @@ components:
         timestamp:
           type: number
           minimum: 1262300400000
+        transactionState:
+          $ref: '#/components/schemas/TransactionState'
         originUserId:
           type: string
         destinationUserId:
@@ -3676,11 +3678,11 @@ components:
       x-examples:
         example-1:
           transactionState: CREATED
-          timestamp: 1231231244
-          transactionID: 443dea26147a406b957d9ee3a1247b11
+          timestamp: 1262300441294
+          transactionId: 443dea26147a406b957d9ee3a1247b11
           eventId: aaeeb166147a406b957dd9147a406b957
           eventDescription: Transaction created
-          employeeID: 8cdeb166147a406b957dd9e709907b89
+          employeeId: 8cdeb166147a406b957dd9e709907b89
           metaData:
             batteryLevel: 76.3
             deviceLatitude: 13.009711
@@ -3689,27 +3691,18 @@ components:
             vpnUsed: true
       properties:
         transactionState:
-          type: string
-          minLength: 1
-          enum:
-            - CREATED
-            - REFUNDED
-            - DECLINED
-            - PROCESSING
-            - SUCCESSFUL
-            - SUSPENDED
-            - EXPIRED
-            - SENT
+          $ref: '#/components/schemas/TransactionState'
         timestamp:
           type: number
-        transactionID:
+          minimum: 1262300400000
+        transactionId:
           type: string
           minLength: 1
         eventId:
           type: string
         eventDescription:
           type: string
-        employeeID:
+        employeeId:
           type: string
           minLength: 1
         metaData:
@@ -3717,7 +3710,52 @@ components:
       required:
         - transactionState
         - timestamp
-        - transactionID
+        - transactionId
+    CaseManagementEvent:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          caseStatus: Unsuspended
+          timestamp: 1262300441294
+          transactionId: 443dea26147a406b957d9ee3a1247b11
+          eventId: aaeeb166147a406b957dd9147a406b957
+          eventDescription: Case Unsuspended
+          employeeId: 8cdeb166147a406b957dd9e709907b89
+      title: CaseManagementEvent
+      properties:
+        caseStatus:
+          type: string
+          minLength: 1
+          enum:
+            - CLOSED
+            - HIT
+        timestamp:
+          type: number
+          minimum: 1262300400000
+        caseStatusReason:
+          type: string
+          enum:
+            - FALSE_POSITIVE
+            - INVESTIGATION_COMPLETED
+            - DOCUMENTS_COLLECTED
+            - OTHER
+        transactionId:
+          type: string
+          minLength: 1
+        userId:
+          type: string
+        eventId:
+          type: string
+        caseStatusReasonDescription:
+          type: string
+        employeeId:
+          type: string
+          minLength: 1
+      required:
+        - caseStatus
+        - timestamp
+        - caseStatusReason
     UserEvent:
       description: ''
       type: object
@@ -3757,6 +3795,21 @@ components:
         - day
         - month
         - year
+    TransactionState:
+      type: string
+      title: TransactionState
+      x-stoplight:
+        id: q1lxnw313yrob
+      enum:
+        - CREATED
+        - PROCESSING
+        - SENT
+        - EXPIRED
+        - DECLINED
+        - SUSPENDED
+        - REFUNDED
+        - SUCCESSFUL
+      minLength: 1
   securitySchemes:
     Authorization:
       type: http

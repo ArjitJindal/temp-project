@@ -10,16 +10,15 @@
  * Do not edit the class manually.
  */
 
-import { DeviceData } from './DeviceData'
-import { TransactionState } from './TransactionState'
-export class TransactionEvent {
-  'transactionState': TransactionState
+export class CaseManagementEvent {
+  'caseStatus': CaseManagementEventCaseStatusEnum
   'timestamp': number
-  'transactionId': string
+  'caseStatusReason': CaseManagementEventCaseStatusReasonEnum
+  'transactionId'?: string
+  'userId'?: string
   'eventId'?: string
-  'eventDescription'?: string
+  'caseStatusReasonDescription'?: string
   'employeeId'?: string
-  'metaData'?: DeviceData
 
   static readonly discriminator: string | undefined = undefined
 
@@ -30,9 +29,9 @@ export class TransactionEvent {
     format: string
   }> = [
     {
-      name: 'transactionState',
-      baseName: 'transactionState',
-      type: 'TransactionState',
+      name: 'caseStatus',
+      baseName: 'caseStatus',
+      type: 'CaseManagementEventCaseStatusEnum',
       format: '',
     },
     {
@@ -42,8 +41,20 @@ export class TransactionEvent {
       format: '',
     },
     {
+      name: 'caseStatusReason',
+      baseName: 'caseStatusReason',
+      type: 'CaseManagementEventCaseStatusReasonEnum',
+      format: '',
+    },
+    {
       name: 'transactionId',
       baseName: 'transactionId',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'userId',
+      baseName: 'userId',
       type: 'string',
       format: '',
     },
@@ -54,8 +65,8 @@ export class TransactionEvent {
       format: '',
     },
     {
-      name: 'eventDescription',
-      baseName: 'eventDescription',
+      name: 'caseStatusReasonDescription',
+      baseName: 'caseStatusReasonDescription',
       type: 'string',
       format: '',
     },
@@ -65,17 +76,18 @@ export class TransactionEvent {
       type: 'string',
       format: '',
     },
-    {
-      name: 'metaData',
-      baseName: 'metaData',
-      type: 'DeviceData',
-      format: '',
-    },
   ]
 
   static getAttributeTypeMap() {
-    return TransactionEvent.attributeTypeMap
+    return CaseManagementEvent.attributeTypeMap
   }
 
   public constructor() {}
 }
+
+export type CaseManagementEventCaseStatusEnum = 'CLOSED' | 'HIT'
+export type CaseManagementEventCaseStatusReasonEnum =
+  | 'FALSE_POSITIVE'
+  | 'INVESTIGATION_COMPLETED'
+  | 'DOCUMENTS_COLLECTED'
+  | 'OTHER'

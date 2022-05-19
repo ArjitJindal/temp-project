@@ -4,6 +4,7 @@ import { Amount } from './Amount'
 import { Business } from './Business'
 import { BusinessUsersResponse } from './BusinessUsersResponse'
 import { CardDetails } from './CardDetails'
+import { CaseManagementEvent } from './CaseManagementEvent'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
 import { CompanyRegistrationDetails } from './CompanyRegistrationDetails'
@@ -14,7 +15,6 @@ import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
 import { IBANDetails } from './IBANDetails'
-import { InlineResponse201 } from './InlineResponse201'
 import { InternalUser } from './InternalUser'
 import { LegalDocument } from './LegalDocument'
 import { LegalEntity } from './LegalEntity'
@@ -32,6 +32,7 @@ import { TransactionEvent } from './TransactionEvent'
 import { TransactionLimits } from './TransactionLimits'
 import { TransactionMonitoringResult } from './TransactionMonitoringResult'
 import { TransactionMonitoringResultAllOf } from './TransactionMonitoringResultAllOf'
+import { TransactionState } from './TransactionState'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { UPIDetails } from './UPIDetails'
@@ -71,15 +72,6 @@ export interface DefaultApiGetConsumerUserRequest {
   userId: string
 }
 
-export interface DefaultApiGetInternalUserRequest {
-  /**
-   *
-   * @type string
-   * @memberof DefaultApigetInternalUser
-   */
-  employeeId: string
-}
-
 export interface DefaultApiGetTransactionEventRequest {
   /**
    * Unique Transaction Identifier
@@ -96,6 +88,15 @@ export interface DefaultApiPostBusinessUserRequest {
    * @memberof DefaultApipostBusinessUser
    */
   Business?: Business
+}
+
+export interface DefaultApiPostCaseManagementEventRequest {
+  /**
+   *
+   * @type CaseManagementEvent
+   * @memberof DefaultApipostCaseManagementEvent
+   */
+  CaseManagementEvent?: CaseManagementEvent
 }
 
 export interface DefaultApiPostConsumerTransactionRequest {
@@ -116,15 +117,6 @@ export interface DefaultApiPostConsumerUserRequest {
   User?: User
 }
 
-export interface DefaultApiPostInteralUserRequest {
-  /**
-   *
-   * @type InternalUser
-   * @memberof DefaultApipostInteralUser
-   */
-  InternalUser?: InternalUser
-}
-
 export interface DefaultApiPostTransactionEventRequest {
   /**
    *
@@ -132,13 +124,4 @@ export interface DefaultApiPostTransactionEventRequest {
    * @memberof DefaultApipostTransactionEvent
    */
   TransactionEvent?: TransactionEvent
-}
-
-export interface DefaultApiPostUserEventRequest {
-  /**
-   *
-   * @type UserEvent
-   * @memberof DefaultApipostUserEvent
-   */
-  UserEvent?: UserEvent
 }

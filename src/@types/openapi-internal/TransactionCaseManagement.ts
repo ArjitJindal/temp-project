@@ -23,6 +23,7 @@ import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf'
+import { TransactionState } from './TransactionState'
 import { TransactionStatusChange } from './TransactionStatusChange'
 import { TransactionWithRulesResult } from './TransactionWithRulesResult'
 import { UPIDetails } from './UPIDetails'
@@ -34,6 +35,7 @@ export class TransactionCaseManagement {
    */
   'transactionId'?: string
   'timestamp': number
+  'transactionState'?: TransactionState
   'originUserId'?: string
   'destinationUserId'?: string
   'originAmountDetails'?: TransactionAmountDetails
@@ -100,6 +102,12 @@ export class TransactionCaseManagement {
       name: 'timestamp',
       baseName: 'timestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'transactionState',
+      baseName: 'transactionState',
+      type: 'TransactionState',
       format: '',
     },
     {

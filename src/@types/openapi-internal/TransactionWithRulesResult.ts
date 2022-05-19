@@ -20,6 +20,7 @@ import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
+import { TransactionState } from './TransactionState'
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf'
 import { UPIDetails } from './UPIDetails'
 import { WalletDetails } from './WalletDetails'
@@ -33,6 +34,7 @@ export class TransactionWithRulesResult {
    */
   'transactionId'?: string
   'timestamp': number
+  'transactionState'?: TransactionState
   'originUserId'?: string
   'destinationUserId'?: string
   'originAmountDetails'?: TransactionAmountDetails
@@ -95,6 +97,12 @@ export class TransactionWithRulesResult {
       name: 'timestamp',
       baseName: 'timestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'transactionState',
+      baseName: 'transactionState',
+      type: 'TransactionState',
       format: '',
     },
     {

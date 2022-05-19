@@ -17,6 +17,7 @@ import { IBANDetails } from './IBANDetails'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
+import { TransactionState } from './TransactionState'
 import { UPIDetails } from './UPIDetails'
 import { WalletDetails } from './WalletDetails'
 /**
@@ -29,6 +30,7 @@ export class Transaction {
    */
   'transactionId'?: string
   'timestamp': number
+  'transactionState'?: TransactionState
   'originUserId'?: string
   'destinationUserId'?: string
   'originAmountDetails'?: TransactionAmountDetails
@@ -89,6 +91,12 @@ export class Transaction {
       name: 'timestamp',
       baseName: 'timestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'transactionState',
+      baseName: 'transactionState',
+      type: 'TransactionState',
       format: '',
     },
     {

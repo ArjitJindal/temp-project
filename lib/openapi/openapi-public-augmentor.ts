@@ -19,9 +19,7 @@ const PathToLambda: any = {
   '/business/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
   '/events/transaction/{eventId}': null,
   '/events/transaction': null,
-  '/events/user': null,
-  '/internal/users': null,
-  '/internal/users/{employeeId}': null,
+  '/events/case-management': null,
 }
 function assertValidLambdaMappings(openapi: any) {
   const pathsLocal = Object.keys(PathToLambda)
@@ -33,7 +31,7 @@ function assertValidLambdaMappings(openapi: any) {
     console.log('Local paths: ', pathsLocal)
     console.log('Remote paths: ', pathsRemote)
     throw new Error(
-      'paths in PathToLambda are not in sync with remote public openapi paths. Please update PathToLambda'
+      `paths in PathToLambda are not in sync with remote public openapi paths. Please update PathToLambda. Local: ${pathsLocal}. Remote: ${pathsRemote}`
     )
   }
 }

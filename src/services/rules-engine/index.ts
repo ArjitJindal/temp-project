@@ -22,6 +22,7 @@ import { everyAsync } from '@/core/utils/array'
 import { UserEvent } from '@/@types/openapi-public/UserEvent'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -111,7 +112,7 @@ export async function verifyTransaction(
   )
 
   const transactionId = await transactionRepository.saveTransaction(
-    transaction,
+    { ...transaction, transactionState: 'CREATED' as TransactionState },
     {
       executedRules,
       failedRules,
