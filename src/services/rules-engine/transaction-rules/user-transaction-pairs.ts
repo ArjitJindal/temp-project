@@ -70,14 +70,14 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInSeconds, 'second')
             .valueOf(),
-          beforeTimestamp: this.transaction.timestamp,
+          beforeTimestamp: this.transaction.timestamp!,
         },
         transactionType
       )
     ).concat([
       {
         transactionId: this.transaction.transactionId as string,
-        timestamp: this.transaction.timestamp,
+        timestamp: this.transaction.timestamp!,
         receiverKeyId,
         senderKeyId: undefined,
       },

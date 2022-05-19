@@ -51,7 +51,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
           this.transaction.destinationUserId,
           {
             afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp,
+            beforeTimestamp: this.transaction.timestamp!,
           }
         )
     } else if (
@@ -63,7 +63,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
           this.transaction.destinationPaymentDetails,
           {
             afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp,
+            beforeTimestamp: this.transaction.timestamp!,
           }
         )
     }

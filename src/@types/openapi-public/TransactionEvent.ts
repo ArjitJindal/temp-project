@@ -11,6 +11,7 @@
  */
 
 import { DeviceData } from './DeviceData'
+import { Transaction } from './Transaction'
 import { TransactionState } from './TransactionState'
 export class TransactionEvent {
   'transactionState': TransactionState
@@ -20,6 +21,7 @@ export class TransactionEvent {
   'eventDescription'?: string
   'employeeId'?: string
   'metaData'?: DeviceData
+  'updatedTransactionAttributes'?: Transaction
 
   static readonly discriminator: string | undefined = undefined
 
@@ -69,6 +71,12 @@ export class TransactionEvent {
       name: 'metaData',
       baseName: 'metaData',
       type: 'DeviceData',
+      format: '',
+    },
+    {
+      name: 'updatedTransactionAttributes',
+      baseName: 'updatedTransactionAttributes',
+      type: 'Transaction',
       format: '',
     },
   ]

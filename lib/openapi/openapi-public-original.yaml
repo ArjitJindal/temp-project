@@ -1141,8 +1141,6 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-      required:
-        - timestamp
     TransactionWithRulesResult:
       title: TransactionWithRulesResult
       description: Model for transaction payload with rules result
@@ -2393,6 +2391,8 @@ components:
           minLength: 1
         metaData:
           $ref: '#/components/schemas/DeviceData'
+        updatedTransactionAttributes:
+          $ref: '#/components/schemas/Transaction'
       required:
         - transactionState
         - timestamp

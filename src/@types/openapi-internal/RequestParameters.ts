@@ -289,6 +289,12 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterRulesHit?: Array<string>
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  transactionType?: string
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

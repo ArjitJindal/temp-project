@@ -33,7 +33,7 @@ export class TransactionWithRulesResult {
    * Unique transaction identifier
    */
   'transactionId'?: string
-  'timestamp': number
+  'timestamp'?: number
   'transactionState'?: TransactionState
   'originUserId'?: string
   'destinationUserId'?: string

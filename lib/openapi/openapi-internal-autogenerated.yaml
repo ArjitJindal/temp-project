@@ -838,6 +838,10 @@ paths:
               type: string
           in: query
           name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1110,8 +1114,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
               examples: {}
-        '404':
-          description: Not Found
       operationId: get-consumer-users-item
       description: ''
       parameters: []
@@ -1244,8 +1246,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Business'
               examples: {}
-        '404':
-          description: Not Found
       operationId: get-business-users-item
       description: ''
       parameters: []
@@ -2464,8 +2464,6 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-      required:
-        - timestamp
     TransactionWithRulesResult:
       title: TransactionWithRulesResult
       description: Model for transaction payload with rules result
@@ -3707,6 +3705,8 @@ components:
           minLength: 1
         metaData:
           $ref: '#/components/schemas/DeviceData'
+        updatedTransactionAttributes:
+          $ref: '#/components/schemas/Transaction'
       required:
         - transactionState
         - timestamp

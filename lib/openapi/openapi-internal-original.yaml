@@ -360,6 +360,10 @@ paths:
               type: string
           in: query
           name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
   '/transactions/{transactionId}':
     parameters:
       - schema:
@@ -476,10 +480,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+                $ref: >-
+                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
               examples: {}
-        '404':
-          description: Not Found
       operationId: get-consumer-users-item
       description: ''
       parameters: []
@@ -538,10 +541,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+                $ref: >-
+                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
               examples: {}
-        '404':
-          description: Not Found
       operationId: get-business-users-item
       description: ''
       parameters: []
@@ -627,7 +629,7 @@ paths:
       responses:
         '200':
           description: OK
-  /accounts/{userId}:
+  '/accounts/{userId}':
     parameters:
       - schema:
           type: string
@@ -635,7 +637,7 @@ paths:
         in: path
         required: true
     delete:
-      summary: 'Account - Delete'
+      summary: Account - Delete
       operationId: accounts-delete
       responses:
         '200':
@@ -872,7 +874,8 @@ components:
         data:
           type: array
           items:
-            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+            $ref: >-
+              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
       required:
         - total
         - data

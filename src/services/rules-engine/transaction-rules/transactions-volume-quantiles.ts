@@ -107,14 +107,14 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         this.transaction.originUserId && checkSender !== 'none'
           ? aggregationRepository.getUserTransactionsVolumeQuantile(
               this.transaction.originUserId,
-              this.transaction.timestamp,
+              this.transaction.timestamp!,
               timeGranularity
             )
           : null,
         this.transaction.destinationUserId && checkReceiver !== 'none'
           ? aggregationRepository.getUserTransactionsVolumeQuantile(
               this.transaction.destinationUserId,
-              this.transaction.timestamp,
+              this.transaction.timestamp!,
               timeGranularity
             )
           : null,

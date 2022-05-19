@@ -51,7 +51,7 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInDays, 'day')
             .valueOf(),
-          beforeTimestamp: this.transaction.timestamp,
+          beforeTimestamp: this.transaction.timestamp!,
         }
       )
     const uniqueUsers = new Set(

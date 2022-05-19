@@ -29,7 +29,7 @@ export class Transaction {
    * Unique transaction identifier
    */
   'transactionId'?: string
-  'timestamp': number
+  'timestamp'?: number
   'transactionState'?: TransactionState
   'originUserId'?: string
   'destinationUserId'?: string

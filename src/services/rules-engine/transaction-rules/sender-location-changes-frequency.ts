@@ -49,7 +49,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInDays, 'day')
             .valueOf(),
-          beforeTimestamp: this.transaction.timestamp,
+          beforeTimestamp: this.transaction.timestamp!,
         }
       )
     const transactionsWithIpAddress = [

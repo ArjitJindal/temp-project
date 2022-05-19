@@ -14,7 +14,7 @@ export class UserTransactionsVolumeQuantiles extends Aggregator {
             userId,
             'sending',
             transactionAmount,
-            this.transaction.timestamp,
+            this.transaction.timestamp!,
             granularity
           )
         )
@@ -32,7 +32,7 @@ export class UserTransactionsVolumeQuantiles extends Aggregator {
             userId,
             'receiving',
             transactionAmount,
-            this.transaction.timestamp,
+            this.transaction.timestamp!,
             granularity
           )
         )

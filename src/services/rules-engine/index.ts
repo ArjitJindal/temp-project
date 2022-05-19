@@ -70,6 +70,9 @@ export async function verifyTransaction(
   const userRepository = new UserRepository(tenantId, {
     dynamoDb,
   })
+  if (!transaction.timestamp) {
+    transaction.timestamp = Date.now()
+  }
 
   if (transaction.transactionId) {
     const existingTransaction = await transactionRepository.getTransactionById(
