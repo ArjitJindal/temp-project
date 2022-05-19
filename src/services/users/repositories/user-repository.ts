@@ -94,6 +94,26 @@ export class UserRepository {
     return await this.getUser<User>(userId)
   }
 
+  public async getMongoBusinessUser(userId: string): Promise<Business | null> {
+    const mongoUser = this.getMongoUser(userId)
+    // todo: add 'type' field to users and check
+    return mongoUser as unknown as Business | null
+  }
+
+  public async getMongoConsumerUser(userId: string): Promise<User | null> {
+    const mongoUser = this.getMongoUser(userId)
+    // todo: add 'type' field to users and check
+    return mongoUser as unknown as User | null
+  }
+
+  public async getMongoUser(userId: string): Promise<User | Business | null> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<User | Business>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    return await collection.findOne({ userId })
+  }
+
   public async getUser<T>(userId: string): Promise<T> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,

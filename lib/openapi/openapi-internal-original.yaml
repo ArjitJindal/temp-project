@@ -378,6 +378,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TransactionUpdateRequest'
+    get:
+      summary: Transaction - Get
+      operationId: get-transaction
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCaseManagement'
+        '404':
+          description: Not Found
+      description: ''
   /user/transactions:
     get:
       summary: Transaction Per User - List
@@ -453,6 +466,29 @@ paths:
           in: query
           name: filterId
     parameters: []
+  '/consumer/users/{userId}':
+    get:
+      summary: Consumer Users - Item - Get
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+              examples: {}
+        '404':
+          description: Not Found
+      operationId: get-consumer-users-item
+      description: ''
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
   /business/users:
     get:
       summary: Business Users - List
@@ -492,6 +528,29 @@ paths:
           in: query
           name: filterId
     parameters: []
+  '/business/users/{userId}':
+    get:
+      summary: Business Users - Item - Get
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+              examples: {}
+        '404':
+          description: Not Found
+      operationId: get-business-users-item
+      description: ''
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
   /dashboard_stats/transactions:
     get:
       summary: DashboardStats - Transactions
@@ -813,8 +872,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
       required:
         - total
         - data

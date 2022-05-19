@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address1 } from './Address1'
+import { Address } from './Address'
 export class ContactDetails {
   /**
    * Email addresses of the contacts for a given business customer
@@ -31,7 +31,7 @@ export class ContactDetails {
   /**
    * Address(es) of the company
    */
-  'addresses'?: Array<Address1>
+  'addresses'?: Array<Address>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -68,7 +68,7 @@ export class ContactDetails {
     {
       name: 'addresses',
       baseName: 'addresses',
-      type: 'Array<Address1>',
+      type: 'Array<Address>',
       format: '',
     },
   ]

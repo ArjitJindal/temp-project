@@ -110,6 +110,15 @@ export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdReque
 
 export interface DefaultApiGetAccountsRequest {}
 
+export interface DefaultApiGetBusinessUsersItemRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetBusinessUsersItem
+   */
+  userId: string
+}
+
 export interface DefaultApiGetBusinessUsersListRequest {
   /**
    *
@@ -141,6 +150,15 @@ export interface DefaultApiGetBusinessUsersListRequest {
    * @memberof DefaultApigetBusinessUsersList
    */
   filterId?: string
+}
+
+export interface DefaultApiGetConsumerUsersItemRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetConsumerUsersItem
+   */
+  userId: string
 }
 
 export interface DefaultApiGetConsumerUsersListRequest {
@@ -211,6 +229,15 @@ export interface DefaultApiGetRuleImplementationsRequest {}
 export interface DefaultApiGetRuleInstancesRequest {}
 
 export interface DefaultApiGetRulesRequest {}
+
+export interface DefaultApiGetTransactionRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransaction
+   */
+  transactionId: string
+}
 
 export interface DefaultApiGetTransactionsListRequest {
   /**

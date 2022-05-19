@@ -6,6 +6,7 @@ import { TransactionsListResponse } from '@/@types/openapi-internal/Transactions
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
 export class TransactionService {
   transactionRepository: TransactionRepository
@@ -64,6 +65,14 @@ export class TransactionService {
       updates
     )
     return 'OK'
+  }
+
+  async getTransaction(
+    transactionId: string
+  ): Promise<TransactionCaseManagement | null> {
+    return await this.transactionRepository.getTransactionCaseManagement(
+      transactionId
+    )
   }
 
   async saveTransactionComment(transactionId: string, comment: Comment) {

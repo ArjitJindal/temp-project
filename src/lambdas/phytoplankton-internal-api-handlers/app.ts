@@ -3,14 +3,13 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { ManagementClient } from 'auth0'
+import { NotFound } from 'http-errors'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
 import { timeframeToTimestampConverter } from './utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUsersListResponse'
-import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 
 import { getS3Client } from '@/utils/s3'
@@ -85,6 +84,18 @@ export const transactionsViewHandler = lambdaApi()(
         event.pathParameters.transactionId,
         updateRequest
       )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/transactions/{transactionId}' &&
+      event.pathParameters?.transactionId
+    ) {
+      const transaction = await transactionService.getTransaction(
+        event.pathParameters.transactionId
+      )
+      if (transaction == null) {
+        throw new NotFound(`Unable to find transaction`)
+      }
+      return transaction
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/transactions/{transactionId}/comments' &&
@@ -172,21 +183,35 @@ export const businessUsersViewHandler = lambdaApi()(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
-  ): Promise<BusinessUsersListResponse> => {
+  ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
-      event.queryStringParameters as any
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getBusinessUsers({
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      afterTimestamp: parseInt(afterTimestamp) || undefined,
-      beforeTimestamp: parseInt(beforeTimestamp),
-      filterId,
-    })
+    if (event.httpMethod === 'GET' && event.path.endsWith('/business/users')) {
+      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
+        event.queryStringParameters as any
+      return userRepository.getBusinessUsers({
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+      })
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/business/users/{userId}' &&
+      event.pathParameters?.userId
+    ) {
+      const user = await userRepository.getMongoBusinessUser(
+        event.pathParameters?.userId
+      )
+      if (user == null) {
+        throw new NotFound(`Unable to find user by id`)
+      }
+      return user
+    }
   }
 )
 
@@ -195,21 +220,35 @@ export const consumerUsersViewHandler = lambdaApi()(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
-  ): Promise<ConsumerUsersListResponse> => {
+  ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
-      event.queryStringParameters as any
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
-    return userRepository.getConsumerUsers({
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      afterTimestamp: parseInt(afterTimestamp) || undefined,
-      beforeTimestamp: parseInt(beforeTimestamp),
-      filterId,
-    })
+    if (event.httpMethod === 'GET' && event.path.endsWith('/consumer/users')) {
+      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
+        event.queryStringParameters as any
+      return userRepository.getConsumerUsers({
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+      })
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/consumer/users/{userId}' &&
+      event.pathParameters?.userId
+    ) {
+      const user = await userRepository.getMongoConsumerUser(
+        event.pathParameters?.userId
+      )
+      if (user == null) {
+        throw new NotFound(`Unable to find user by id`)
+      }
+      return user
+    }
   }
 )
 
@@ -384,7 +423,3 @@ export const accountsHandler = lambdaApi()(
     throw new Error('Unhandled request')
   }
 )
-
-type DefaultAppMetadata = {
-  tenantId: string
-}

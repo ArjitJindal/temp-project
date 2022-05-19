@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address } from './Address'
+import { Address2 } from './Address2'
 import { ConsumerName } from './ConsumerName'
 export class SWIFTDetails {
   'method': string
@@ -19,7 +19,7 @@ export class SWIFTDetails {
   'accountType'?: string
   'bankName'?: string
   'name'?: ConsumerName
-  'bankAddress'?: Address
+  'bankAddress'?: Address2
   'specialInstructions'?: string
 
   static readonly discriminator: string | undefined = undefined
@@ -69,7 +69,7 @@ export class SWIFTDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address',
+      type: 'Address2',
       format: '',
     },
     {

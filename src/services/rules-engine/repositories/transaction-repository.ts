@@ -153,6 +153,16 @@ export class TransactionRepository {
     )
   }
 
+  public async getTransactionCaseManagement(
+    transactionId: string
+  ): Promise<TransactionCaseManagement | null> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    return await collection.findOne({ transactionId })
+  }
+
   public async saveTransactionComment(
     transactionId: string,
     comment: Comment
