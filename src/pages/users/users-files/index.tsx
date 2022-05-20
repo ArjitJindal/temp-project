@@ -77,7 +77,10 @@ const TableList: React.FC = () => {
         search={false}
         request={files}
         columns={columns}
-        toolBarRender={() => [<FileImportButton type={'USER'} />]}
+        toolBarRender={() => [
+          <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
+          <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
+        ]}
       />
     </PageContainer>
   );

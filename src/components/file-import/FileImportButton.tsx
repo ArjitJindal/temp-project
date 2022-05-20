@@ -31,8 +31,9 @@ const FILE_UPLOAD_LIMIT_IN_BYTE = 10240000;
 
 interface FileImportButtonProps {
   type: ImportRequestTypeEnum;
+  buttonText?: string;
 }
-export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
+export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, buttonText }) => {
   const [loading, setLoading] = useState(false);
   const [format, setFormat] = useState<ImportRequestFormatEnum>('flagright');
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -93,7 +94,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type }) => {
     <>
       <Button onClick={() => setIsModalVisible(true)}>
         {loading ? <LoadingOutlined /> : <UploadOutlined />}
-        Import
+        {buttonText || 'Import'}
       </Button>
       <Modal
         title={`Import ${type}`}
