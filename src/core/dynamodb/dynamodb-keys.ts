@@ -12,6 +12,7 @@ import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
+import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -97,6 +98,13 @@ export const DynamoDbKeys = {
         const { upiID } = paymentDetails as UPIDetails
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'WALLET': {
+        const { walletType } = paymentDetails as WalletDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${walletType}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
