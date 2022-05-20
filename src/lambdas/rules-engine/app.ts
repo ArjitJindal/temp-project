@@ -5,8 +5,13 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { verifyTransaction, verifyUserEvent } from '@/services/rules-engine'
+import {
+  verifyTransaction,
+  verifyTransactionEvent,
+  verifyUserEvent,
+} from '@/services/rules-engine'
 import { UserEvent } from '@/@types/openapi-public/UserEvent'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 export const transactionHandler = lambdaApi()(
   async (
@@ -30,6 +35,23 @@ export const transactionHandler = lambdaApi()(
         transactionId
       )
       return result
+    }
+    throw new Error('Unhandled request')
+  }
+)
+
+export const transactionEventHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClient(event)
+
+    if (event.httpMethod === 'POST' && event.body) {
+      const transactionEvent = JSON.parse(event.body) as TransactionEvent
+      return await verifyTransactionEvent(transactionEvent, tenantId, dynamoDb)
     }
     throw new Error('Unhandled request')
   }

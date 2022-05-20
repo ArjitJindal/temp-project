@@ -1,3 +1,4 @@
+import { Transaction } from '@/@types/openapi-public/Transaction'
 export const event = {
   resource: '/transactions',
   path: '/transactions',
@@ -55,5 +56,5 @@ export const event = {
         value: 'customValue',
       },
     ],
-  }),
+  } as Transaction),
 }

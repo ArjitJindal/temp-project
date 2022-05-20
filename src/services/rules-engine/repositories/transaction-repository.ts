@@ -224,10 +224,11 @@ export class TransactionRepository {
       executedRules?: ExecutedRulesResult[]
       failedRules?: FailedRulesResult[]
     } = {}
-  ): Promise<string> {
-    const transactionId =
+  ): Promise<Transaction> {
+    transaction.transactionId =
       transaction.transactionId ||
       `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
+    transaction.timestamp = transaction.timestamp || Date.now()
 
     const senderKeys = getSenderKeys(this.tenantId, transaction)
     const receiverKeys = getReceiverKeys(this.tenantId, transaction)
@@ -246,8 +247,10 @@ export class TransactionRepository {
             {
               PutRequest: {
                 Item: {
-                  ...DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
-                  transactionId,
+                  ...DynamoDbKeys.TRANSACTION(
+                    this.tenantId,
+                    transaction.transactionId
+                  ),
                   ...transaction,
                   ...rulesResult,
                 },
@@ -258,7 +261,7 @@ export class TransactionRepository {
                 PutRequest: {
                   Item: {
                     ...senderKeys,
-                    transactionId,
+                    transactionId: transaction.transactionId,
                     receiverKeyId: receiverKeys.PartitionKeyID,
                   },
                 },
@@ -268,7 +271,7 @@ export class TransactionRepository {
                 PutRequest: {
                   Item: {
                     ...receiverKeys,
-                    transactionId,
+                    transactionId: transaction.transactionId,
                     senderKeyId: senderKeys.PartitionKeyID,
                   },
                 },
@@ -277,7 +280,7 @@ export class TransactionRepository {
               PutRequest: {
                 Item: {
                   ...senderKeysOfTransactionType,
-                  transactionId,
+                  transactionId: transaction.transactionId,
                   receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
                 },
               },
@@ -286,7 +289,7 @@ export class TransactionRepository {
               PutRequest: {
                 Item: {
                   ...receiverKeysOfTransactionType,
-                  transactionId,
+                  transactionId: transaction.transactionId,
                   senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
                 },
               },
@@ -300,7 +303,7 @@ export class TransactionRepository {
                       transaction.deviceData.ipAddress,
                       transaction.timestamp
                     ),
-                    transactionId,
+                    transactionId: transaction.transactionId,
                     senderKeyId: senderKeys.PartitionKeyID,
                   },
                 },
@@ -310,7 +313,7 @@ export class TransactionRepository {
         ReturnConsumedCapacity: 'TOTAL',
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
-    return transactionId
+    return transaction
   }
 
   public async getTransactionById(

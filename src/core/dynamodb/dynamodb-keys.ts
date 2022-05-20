@@ -13,6 +13,7 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 
+const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 
@@ -26,6 +27,15 @@ export const DynamoDbKeys = {
   TRANSACTION: (tenantId: string, transactionId: string) => ({
     PartitionKeyID: `${tenantId}#transaction#primary`,
     SortKeyID: transactionId,
+  }),
+  // Attributes: refer to TransactionEvent
+  TRANSACTION_EVENT: (
+    tenantId: string,
+    transactionId: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#transaction-event#${TRANSACTION_ID_PREFIX}${transactionId}`,
+    SortKeyID: `${timestamp}`,
   }),
   ALL_TRANSACTION: (
     tenantId: string,

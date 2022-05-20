@@ -18,7 +18,7 @@ const PathToLambda: any = {
   '/business/users': TarponStackConstants.USER_FUNCTION_NAME,
   '/business/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
   '/events/transaction/{eventId}': null,
-  '/events/transaction': null,
+  '/events/transaction': TarponStackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
   '/events/case-management': null,
 }
 function assertValidLambdaMappings(openapi: any) {

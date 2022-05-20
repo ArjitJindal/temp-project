@@ -148,7 +148,7 @@ export const createAndUploadTestData = async (
     }
     const ddbSaveTransactionResult =
       await transactionRepository.saveTransaction(transactionObject)
-    dynamoDbResults.push(ddbSaveTransactionResult)
+    dynamoDbResults.push(ddbSaveTransactionResult.transactionId)
   }
   return { body: dynamoDbResults }
 }

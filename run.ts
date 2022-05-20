@@ -101,6 +101,10 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
     ),
+  'verify-transaction-event': () =>
+    require('./src/lambdas/rules-engine/app').transactionEventHandler(
+      require('./events/verify-transaction-event').event
+    ),
   'get-transaction': () =>
     require('./src/lambdas/rules-engine/app').transactionHandler(
       require('./events/get-transaction').event

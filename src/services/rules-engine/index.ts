@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as _ from 'lodash'
+import { NotFound } from 'http-errors'
 import { UserRepository } from '../users/repositories/user-repository'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
@@ -10,6 +11,7 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase } from './rule'
 import { USER_RULES } from './user-rules'
 import { UserEventRepository } from './repositories/user-event-repository'
+import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -23,6 +25,8 @@ import { UserEvent } from '@/@types/openapi-public/UserEvent'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
@@ -53,39 +57,23 @@ function getTransactionRuleImplementation(
   )
 }
 
-export async function verifyTransaction(
-  transaction: Transaction,
+export async function verifyTransactionIdempotent(
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient
-): Promise<TransactionMonitoringResult> {
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  transaction: Transaction
+): Promise<{
+  executedRules: ExecutedRulesResult[]
+  failedRules: FailedRulesResult[]
+}> {
   const ruleRepository = new RuleRepository(tenantId, {
     dynamoDb,
   })
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
-  const transactionRepository = new TransactionRepository(tenantId, {
-    dynamoDb,
-  })
   const userRepository = new UserRepository(tenantId, {
     dynamoDb,
   })
-  if (!transaction.timestamp) {
-    transaction.timestamp = Date.now()
-  }
-
-  if (transaction.transactionId) {
-    const existingTransaction = await transactionRepository.getTransactionById(
-      transaction.transactionId
-    )
-    if (existingTransaction) {
-      return {
-        transactionId: transaction.transactionId,
-        executedRules: [],
-        failedRules: [],
-      }
-    }
-  }
 
   const [senderUser, receiverUser, ruleInstances] = await Promise.all([
     transaction.originUserId
@@ -97,7 +85,7 @@ export async function verifyTransaction(
     ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
   ])
 
-  const { executedRules, failedRules } = await getRulesResult(
+  return getRulesResult(
     ruleRepository,
     ruleInstanceRepository,
     ruleInstances,
@@ -113,16 +101,131 @@ export async function verifyTransaction(
         dynamoDb
       )
   )
+}
 
-  const transactionId = await transactionRepository.saveTransaction(
-    { ...transaction, transactionState: 'CREATED' as TransactionState },
+export async function verifyTransaction(
+  transaction: Transaction,
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+): Promise<TransactionMonitoringResult> {
+  const transactionRepository = new TransactionRepository(tenantId, {
+    dynamoDb,
+  })
+  const transactionEventRepository = new TransactionEventRepository(tenantId, {
+    dynamoDb,
+  })
+
+  if (transaction.transactionId) {
+    const existingTransaction = await transactionRepository.getTransactionById(
+      transaction.transactionId
+    )
+    if (existingTransaction) {
+      return {
+        transactionId: transaction.transactionId,
+        executedRules: existingTransaction.executedRules,
+        failedRules: existingTransaction.failedRules,
+      }
+    }
+  }
+
+  const { executedRules, failedRules } = await verifyTransactionIdempotent(
+    tenantId,
+    dynamoDb,
+    transaction
+  )
+  const savedTransaction = await transactionRepository.saveTransaction(
+    { ...transaction, transactionState: 'CREATED' },
     {
       executedRules,
       failedRules,
     }
   )
 
-  // TODO: Refactor the following logic to be event-driven
+  await transactionEventRepository.saveTransactionEvent(
+    {
+      transactionId: savedTransaction.transactionId as string,
+      timestamp: savedTransaction.timestamp as number,
+      transactionState: 'CREATED',
+      updatedTransactionAttributes: savedTransaction,
+    },
+    {
+      executedRules,
+      failedRules,
+    }
+  )
+
+  await updateAggregation(tenantId, savedTransaction, dynamoDb)
+
+  return {
+    transactionId: savedTransaction.transactionId as string,
+    executedRules: executedRules,
+    failedRules: failedRules,
+  }
+}
+
+export async function verifyTransactionEvent(
+  transactionEvent: TransactionEvent,
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+): Promise<TransactionMonitoringResult> {
+  const transactionRepository = new TransactionRepository(tenantId, {
+    dynamoDb,
+  })
+  const transactionEventRepository = new TransactionEventRepository(tenantId, {
+    dynamoDb,
+  })
+  const transaction = await transactionRepository.getTransactionById(
+    transactionEvent.transactionId
+  )
+  if (!transaction) {
+    throw new NotFound(
+      `transaction ${transactionEvent.transactionId} not found`
+    )
+  }
+
+  const hasTransactionUpdates = !_.isNil(
+    transactionEvent.updatedTransactionAttributes
+  )
+  const updatedTransaction: TransactionWithRulesResult = {
+    ...transaction,
+    transactionState: transactionEvent.transactionState,
+    ...(transactionEvent.updatedTransactionAttributes || {}),
+  }
+  const { executedRules, failedRules } = hasTransactionUpdates
+    ? await verifyTransactionIdempotent(tenantId, dynamoDb, updatedTransaction)
+    : { executedRules: [], failedRules: [] }
+
+  await transactionEventRepository.saveTransactionEvent(transactionEvent, {
+    executedRules,
+    failedRules,
+  })
+
+  // Update transaction with the latest payload
+  await transactionRepository.saveTransaction(updatedTransaction, {
+    executedRules: hasTransactionUpdates
+      ? executedRules
+      : transaction.executedRules,
+    failedRules: hasTransactionUpdates ? failedRules : transaction.failedRules,
+  })
+
+  // TODO: Handle updating aggregation multiple times properly. For now, we only allow
+  // updating aggregation data once for a transaction when a transaction is verified
+  // for the first time. Because for now, updating aggregation data for the same transaction
+  // will lead to corrupted aggregated data (e.g double counting)
+  // await updateAggregation(tenantId, updatedTransaction, dynamoDb)
+
+  return {
+    transactionId: transactionEvent.transactionId,
+    executedRules: executedRules,
+    failedRules: failedRules,
+  }
+}
+
+export async function updateAggregation(
+  tenantId: string,
+  transaction: Transaction,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+) {
   await Promise.all(
     Aggregators.map(async (Aggregator) => {
       try {
@@ -135,12 +238,6 @@ export async function verifyTransaction(
       }
     })
   )
-
-  return {
-    transactionId,
-    executedRules: executedRules,
-    failedRules: failedRules,
-  }
 }
 
 function getUserRuleImplementation(
