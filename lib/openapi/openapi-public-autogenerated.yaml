@@ -1261,6 +1261,7 @@ components:
         originPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/GenericBankAccountDetails'
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/SWIFTDetails'
@@ -1269,6 +1270,7 @@ components:
         destinationPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/GenericBankAccountDetails'
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/UPIDetails'
@@ -2411,6 +2413,33 @@ components:
         bankName:
           type: string
           minLength: 1
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+        specialInstructions:
+          type: string
+      required:
+        - method
+    GenericBankAccountDetails:
+      description: Model for any generic bank account
+      type: object
+      x-examples: {}
+      title: GenericBankAccountDetails
+      properties:
+        method:
+          type: string
+          pattern: GENERIC-BANK-ACCOUNT
+        accountNumber:
+          type: string
+          minLength: 1
+        accountType:
+          type: string
+        bankName:
+          type: string
+          minLength: 1
+        bankCode:
+          type: string
         name:
           $ref: '#/components/schemas/ConsumerName'
         bankAddress:

@@ -13,6 +13,7 @@
 import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './CardDetails'
 import { DeviceData } from './DeviceData'
+import { GenericBankAccountDetails } from './GenericBankAccountDetails'
 import { IBANDetails } from './IBANDetails'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
@@ -37,6 +38,7 @@ export class Transaction {
   'destinationAmountDetails'?: TransactionAmountDetails
   'originPaymentDetails'?:
     | CardDetails
+    | GenericBankAccountDetails
     | IBANDetails
     | ACHDetails
     | SWIFTDetails
@@ -44,6 +46,7 @@ export class Transaction {
     | WalletDetails
   'destinationPaymentDetails'?:
     | CardDetails
+    | GenericBankAccountDetails
     | IBANDetails
     | ACHDetails
     | UPIDetails
@@ -126,13 +129,13 @@ export class Transaction {
     {
       name: 'originPaymentDetails',
       baseName: 'originPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
+      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
       format: '',
     },
     {
       name: 'destinationPaymentDetails',
       baseName: 'destinationPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
+      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
       format: '',
     },
     {

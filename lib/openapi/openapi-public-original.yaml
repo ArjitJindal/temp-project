@@ -677,12 +677,13 @@ paths:
             examples:
               example-1:
                 value:
-                  caseStatus: UNSUSPENDED
+                  caseStatus: CLOSED
                   timestamp: 1262300400000
                   transactionId: 091e008cd1e611ec9d640242ac120002
                   eventId: 31e008cd1e904e249e640e42ae120211
                   eventDescription: Case Unsuspended
                   employeeId: 49e640e42ae12021131e008cd1e904e2
+                  caseStatusReason: FALSE_POSITIVE
         required: false
       responses:
         '200':
@@ -1101,6 +1102,7 @@ components:
         originPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/GenericBankAccountDetails'
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/SWIFTDetails'
@@ -1109,6 +1111,7 @@ components:
         destinationPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
+            - $ref: '#/components/schemas/GenericBankAccountDetails'
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/UPIDetails'
@@ -2251,6 +2254,33 @@ components:
         bankName:
           type: string
           minLength: 1
+        name:
+          $ref: '#/components/schemas/ConsumerName'
+        bankAddress:
+          $ref: '#/components/schemas/Address'
+        specialInstructions:
+          type: string
+      required:
+        - method
+    GenericBankAccountDetails:
+      description: Model for any generic bank account
+      type: object
+      x-examples: {}
+      title: GenericBankAccountDetails
+      properties:
+        method:
+          type: string
+          pattern: GENERIC-BANK-ACCOUNT
+        accountNumber:
+          type: string
+          minLength: 1
+        accountType:
+          type: string
+        bankName:
+          type: string
+          minLength: 1
+        bankCode:
+          type: string
         name:
           $ref: '#/components/schemas/ConsumerName'
         bankAddress:

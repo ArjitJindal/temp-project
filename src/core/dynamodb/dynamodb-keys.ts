@@ -13,6 +13,7 @@ import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
+import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -105,6 +106,14 @@ export const DynamoDbKeys = {
         const { walletType } = paymentDetails as WalletDetails
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${walletType}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'GENERIC-BANK-ACCOUNT': {
+        const { accountNumber, accountType } =
+          paymentDetails as GenericBankAccountDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${accountNumber}#${accountType}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
