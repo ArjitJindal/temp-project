@@ -2270,7 +2270,7 @@ components:
       properties:
         method:
           type: string
-          pattern: GENERIC-BANK-ACCOUNT
+          pattern: GENERIC_BANK_ACCOUNT
         accountNumber:
           type: string
           minLength: 1

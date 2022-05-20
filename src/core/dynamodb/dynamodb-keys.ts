@@ -109,7 +109,7 @@ export const DynamoDbKeys = {
           SortKeyID: `${timestamp}`,
         }
       }
-      case 'GENERIC-BANK-ACCOUNT': {
+      case 'GENERIC_BANK_ACCOUNT': {
         const { accountNumber, accountType } =
           paymentDetails as GenericBankAccountDetails
         return {

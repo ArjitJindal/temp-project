@@ -6,7 +6,9 @@ import { config as deployConfig } from '@cdk/configs/config-deployment'
 import { config as localConfig } from '@cdk/configs/config-local'
 import { config as devConfig } from '@cdk/configs/config-dev'
 import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
-import { config as prodConfig } from '@cdk/configs/config-prod'
+import { config as prodConfigBOM } from '@cdk/configs/config-prod-BOM'
+import { config as prodConfigSIN } from '@cdk/configs/config-prod-SIN'
+import { config as prodConfigFRA } from '@cdk/configs/config-prod-FRA'
 
 const app = new cdk.App()
 
@@ -21,15 +23,30 @@ const sandboxTarponStack = new CdkTarponStack(
   `${sandboxConfig.stage}-tarpon`,
   sandboxConfig
 )
-const prodTarponStack = new CdkTarponStack(
+
+const prodTarponStackSIN = new CdkTarponStack(
   app,
-  `${prodConfig.stage}-tarpon`,
-  prodConfig
+  `${prodConfigSIN.stage}-asia-1-tarpon`,
+  prodConfigSIN
+)
+
+const prodTarponStackBOM = new CdkTarponStack(
+  app,
+  `${prodConfigBOM.stage}-asia-2-tarpon`,
+  prodConfigBOM
+)
+
+const prodTarponStackFRA = new CdkTarponStack(
+  app,
+  `${prodConfigFRA.stage}-eu-1-tarpon`,
+  prodConfigFRA
 )
 
 new CdkTarponPipelineStack(app, 'tarpon-pipeline', {
   env: deployConfig.env,
   devTarponStack,
   sandboxTarponStack,
-  prodTarponStack,
+  prodTarponStackSIN,
+  prodTarponStackBOM,
+  prodTarponStackFRA,
 })
