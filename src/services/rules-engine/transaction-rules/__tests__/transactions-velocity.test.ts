@@ -25,6 +25,8 @@ describe('Core logic', () => {
       defaultParameters: {
         transactionsPerSecond: 0.4,
         timeWindowInSeconds: 5,
+        checkSender: 'all',
+        checkReceiver: 'all',
       } as TransactionsVelocityRuleParameters,
     },
   ])
@@ -262,6 +264,8 @@ describe('Optional parameters', () => {
           to: '18:00:00+00:00',
         },
         userIdsToCheck: ['1-1', '3-1'],
+        checkSender: 'all',
+        checkReceiver: 'all',
       } as TransactionsVelocityRuleParameters,
     },
   ])
@@ -322,6 +326,112 @@ describe('Optional parameters', () => {
       expectedActions: ['ALLOW', 'ALLOW'],
     },
   ])('', ({ name, transactions, expectedActions }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedActions
+    )
+  })
+})
+
+describe('checksender/checkreceiver', () => {
+  const TEST_HIT_TRANSACTIONS = [
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-1',
+      destinationUserId: '1-2',
+      timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-4',
+      destinationUserId: '1-3',
+      timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-5',
+      destinationUserId: '1-3',
+      timestamp: dayjs('2022-01-01T00:00:04.000Z').valueOf(),
+    }),
+    getTestTransaction({
+      originUserId: '1-6',
+      destinationUserId: '1-3',
+      timestamp: dayjs('2022-01-01T00:00:05.000Z').valueOf(),
+    }),
+  ]
+
+  describe.each<
+    TransactionRuleTestCase<Partial<TransactionsVelocityRuleParameters>>
+  >([
+    {
+      name: 'Sender: all, Receiver: all',
+      transactions: TEST_HIT_TRANSACTIONS,
+      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
+      ruleParams: {
+        checkSender: 'all',
+        checkReceiver: 'all',
+      },
+    },
+    {
+      name: 'Sender: sending, Receiver: none',
+      transactions: TEST_HIT_TRANSACTIONS,
+      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'ALLOW'],
+      ruleParams: {
+        checkSender: 'sending',
+        checkReceiver: 'none',
+      },
+    },
+    {
+      name: 'Sender: all, Receiver: none',
+      transactions: TEST_HIT_TRANSACTIONS,
+      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'ALLOW'],
+      ruleParams: {
+        checkSender: 'all',
+        checkReceiver: 'none',
+      },
+    },
+    {
+      name: 'Sender: none, Receiver: receiving',
+      transactions: TEST_HIT_TRANSACTIONS,
+      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
+      ruleParams: {
+        checkSender: 'none',
+        checkReceiver: 'receiving',
+      },
+    },
+    {
+      name: 'Sender: none, Receiver: none',
+      transactions: TEST_HIT_TRANSACTIONS,
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      ruleParams: {
+        checkSender: 'none',
+        checkReceiver: 'none',
+      },
+    },
+  ])('', ({ name, transactions, expectedActions, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-velocity',
+        defaultParameters: {
+          transactionsPerSecond: 0.4,
+          timeWindowInSeconds: 5,
+          ...ruleParams,
+        } as TransactionsVelocityRuleParameters,
+      },
+    ])
+
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,

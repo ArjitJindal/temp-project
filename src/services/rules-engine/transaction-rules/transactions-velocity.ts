@@ -10,6 +10,9 @@ export type TransactionsVelocityRuleParameters = {
   transactionsPerSecond: number
   timeWindowInSeconds: number
 
+  checkSender?: 'sending' | 'all' | 'none'
+  checkReceiver?: 'receiving' | 'all' | 'none'
+
   // Optional parameters
   userIdsToCheck?: string[] // If empty, all users will be checked
   checkTimeWindow?: {
@@ -27,6 +30,16 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       properties: {
         transactionsPerSecond: { type: 'number' },
         timeWindowInSeconds: { type: 'integer' },
+        checkSender: {
+          type: 'string',
+          enum: ['sending', 'all', 'none'],
+          nullable: true,
+        },
+        checkReceiver: {
+          type: 'string',
+          enum: ['receiving', 'all', 'none'],
+          nullable: true,
+        },
         userIdsToCheck: {
           type: 'array',
           items: { type: 'string' },
@@ -53,7 +66,12 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
   }
 
   public async computeRule() {
-    const { transactionsPerSecond, timeWindowInSeconds } = this.parameters
+    const {
+      transactionsPerSecond,
+      timeWindowInSeconds,
+      checkSender,
+      checkReceiver,
+    } = this.parameters
     if (
       transactionsPerSecond === undefined ||
       timeWindowInSeconds === undefined
@@ -68,15 +86,23 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     const afterTimestamp = dayjs(this.transaction.timestamp)
       .subtract(timeWindowInSeconds, 'seconds')
       .valueOf()
-    const senderTransactionsCountPromise = this.transaction.originUserId
-      ? this.getTransactionsCount(this.transaction.originUserId, afterTimestamp)
-      : Promise.resolve(0)
-    const receiverTransactionsCountPromise = this.transaction.destinationUserId
-      ? this.getTransactionsCount(
-          this.transaction.destinationUserId,
-          afterTimestamp
-        )
-      : Promise.resolve(0)
+
+    const senderTransactionsCountPromise =
+      this.transaction.originUserId && checkSender
+        ? this.getTransactionsCount(
+            this.transaction.originUserId,
+            afterTimestamp,
+            checkSender
+          )
+        : Promise.resolve(0)
+    const receiverTransactionsCountPromise =
+      this.transaction.destinationUserId && checkReceiver
+        ? this.getTransactionsCount(
+            this.transaction.destinationUserId,
+            afterTimestamp,
+            checkReceiver
+          )
+        : Promise.resolve(0)
     const [senderTransactionsCount, receiverTransactionsCount] =
       await Promise.all([
         senderTransactionsCountPromise,
@@ -95,18 +121,26 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     }
   }
 
-  private async getTransactionsCount(userId: string, afterTimestamp: number) {
+  private async getTransactionsCount(
+    userId: string,
+    afterTimestamp: number,
+    checkType: 'sending' | 'receiving' | 'all' | 'none'
+  ) {
     const transactionRepository = this
       .transactionRepository as TransactionRepository
     const transactionsCount = await Promise.all([
-      transactionRepository.getUserSendingTransactionsCount(userId, {
-        afterTimestamp,
-        beforeTimestamp: this.transaction.timestamp!,
-      }),
-      transactionRepository.getUserReceivingTransactionsCount(userId, {
-        afterTimestamp,
-        beforeTimestamp: this.transaction.timestamp!,
-      }),
+      checkType === 'sending' || checkType === 'all'
+        ? transactionRepository.getUserSendingTransactionsCount(userId, {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp!,
+          })
+        : Promise.resolve({ count: 0 }),
+      checkType === 'receiving' || checkType === 'all'
+        ? transactionRepository.getUserReceivingTransactionsCount(userId, {
+            afterTimestamp,
+            beforeTimestamp: this.transaction.timestamp!,
+          })
+        : Promise.resolve({ count: 0 }),
     ])
     return transactionsCount[0].count + transactionsCount[1].count
   }
