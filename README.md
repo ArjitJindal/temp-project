@@ -180,22 +180,22 @@ npm run create-and-upload-test-data
 
 ### Create a New Tenant
 
-For now, we can use the script `onboard-tarpon-api.sh` to create a new tenant, its usage plan and API key, and it'll create a fixed set of rule instances for the tenant.
+For now, we can use the script `onboard-tarpon-api.sh` to create a new tenant, its usage plan and API key, and it'll create a fixed set of rules if they're not yet created. After this script is run, we need to manually activate the rules for the tenant in the FDT console.
 
 Dev env:
 
 ```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-911899431626 --env dev
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env dev
 ```
 
 Sandbox env:
 
 ```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-293986822825 --env sandbox
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env sandbox
 ```
 
-Prod env:
+Prod env (need to specify region):
 
 ```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --profile AWSAdministratorAccess-870721492449 --env prod
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env prod-asia-1
 ```

@@ -8,7 +8,7 @@
     "node": "^14.0.0"
   },
   "scripts": {
-    "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
+    "aws-sso-login": "aws sso login --profile $npm_config_profile",
     "build": "webpack",
     "build:watch": "webpack --watch --progress",
     "clear": "rm -rf ./dist cdk.out",

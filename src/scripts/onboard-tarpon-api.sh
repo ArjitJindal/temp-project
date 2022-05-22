@@ -44,6 +44,10 @@ else
     exit 1
 fi
 
+echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to ~/.aws/credentials (profile: $profile)"
+echo "TODO: https://flagright.atlassian.net/jira/software/projects/FDT/boards/1?selectedIssue=FDT-216"
+npm run aws-sso-login --profile=$profile
+
 existingTenantId=$(aws apigateway get-usage-plans \
     --profile $profile --region $region \
     | jq -c ".items| .[] | select(.name | contains(\":$tenantName:\")) | .name | match(\".*:$tenantName:(.*)\").captures[0].string")
