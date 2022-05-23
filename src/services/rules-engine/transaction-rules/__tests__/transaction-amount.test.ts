@@ -120,7 +120,7 @@ describe.each<TransactionRuleTestCase>([
     expectedActions: ['ALLOW'],
   },
   {
-    name: 'Missing sender user ID - not hit',
+    name: 'Missing sender user ID - hit',
     transactions: [
       getTestTransaction({
         originUserId: undefined,
@@ -130,7 +130,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedActions: ['FLAG'],
   },
 ])('', ({ name, transactions, expectedActions }) => {
   createTransactionRuleTestCase(

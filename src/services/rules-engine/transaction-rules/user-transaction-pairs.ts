@@ -36,11 +36,15 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     const { transactionType, excludedUserIds } = this.parameters
     return [
       () => !transactionType || this.transaction.type === transactionType,
-      () => this.senderUser !== undefined && this.receiverUser !== undefined,
+      () =>
+        this.transaction.originUserId !== undefined &&
+        this.transaction.destinationUserId !== undefined,
       () =>
         excludedUserIds === undefined ||
-        (!excludedUserIds.includes(this.senderUser?.userId as string) &&
-          !excludedUserIds.includes(this.receiverUser?.userId as string)),
+        (!excludedUserIds.includes(this.transaction.originUserId as string) &&
+          !excludedUserIds.includes(
+            this.transaction.destinationUserId as string
+          )),
     ]
   }
 
@@ -65,7 +69,7 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     })
     const sendingTransactions = (
       await transactionRepository.getUserSendingThinTransactions(
-        this.senderUser!.userId,
+        this.transaction.originUserId as string,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInSeconds, 'second')

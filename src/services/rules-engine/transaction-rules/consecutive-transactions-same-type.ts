@@ -42,7 +42,7 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     const { targetTransactionType } = this.parameters
     return [
       () => this.transaction.type === targetTransactionType,
-      () => this.senderUser !== undefined,
+      () => this.transaction.originUserId !== undefined,
     ]
   }
 
@@ -59,13 +59,13 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
 
     const [targetTransactions, ...otherTransactionsList] = await Promise.all([
       transactionRepository.getLastNUserSendingThinTransactions(
-        this.senderUser!.userId,
+        this.transaction.originUserId as string,
         targetTransactionsThreshold,
         targetTransactionType
       ),
       ...(otherTransactionTypes || []).map((transactionType) =>
         transactionRepository.getLastNUserSendingThinTransactions(
-          this.senderUser!.userId,
+          this.transaction.originUserId as string,
           1,
           transactionType
         )

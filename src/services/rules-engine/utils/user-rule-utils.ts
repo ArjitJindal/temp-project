@@ -8,15 +8,14 @@ export function isUserBetweenAge(
   user: User | Business | undefined,
   ageRange: { minAge: number; maxAge: number } | undefined
 ): boolean {
-  if (!user || !isConsumerUser(user)) {
-    return false
-  }
-  if (!ageRange) {
-    return true
-  }
   const consumerUser = user as User
-  if (!consumerUser.userDetails?.dateOfBirth) {
-    return false
+  if (
+    !user ||
+    !isConsumerUser(user) ||
+    !ageRange ||
+    !consumerUser.userDetails?.dateOfBirth
+  ) {
+    return true
   }
   const age = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'year')
   return _.inRange(age, ageRange.minAge, ageRange.maxAge)
