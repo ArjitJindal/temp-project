@@ -1,4 +1,4 @@
-import { usePrevious } from 'ahooks';
+import { usePrevious } from './hooks';
 import { neverThrow } from './lang';
 
 export interface Init {
