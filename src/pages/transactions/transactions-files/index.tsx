@@ -1,12 +1,11 @@
 import React, { useRef } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
-import { ImportRequestTypeEnum } from '@/apis';
+import PageWrapper from '@/components/PageWrapper';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -67,7 +66,7 @@ const TableList: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
+    <PageWrapper>
       <ProTable<TableListItem, TableListPagination>
         form={{
           labelWrap: true,
@@ -80,7 +79,7 @@ const TableList: React.FC = () => {
         columns={columns}
         toolBarRender={() => [<FileImportButton type={'TRANSACTION'} />]}
       />
-    </PageContainer>
+    </PageWrapper>
   );
 };
 

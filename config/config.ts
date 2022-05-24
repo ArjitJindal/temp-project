@@ -52,7 +52,19 @@ export default defineConfig({
       path: '/case-management',
       name: 'case-management',
       icon: 'FlagOutlined',
-      component: './case-management',
+      hideChildrenInMenu: true,
+      routes: [
+        {
+          path: '/case-management',
+          exact: true,
+          redirect: '/case-management/all',
+        },
+        {
+          path: '/case-management/:id',
+          component: './case-management',
+          name: 'item',
+        },
+      ],
     },
     {
       path: '/users',
@@ -61,13 +73,26 @@ export default defineConfig({
       routes: [
         {
           path: '/users',
-          redirect: '/users/users-list',
+          exact: true,
+          redirect: '/users/list',
         },
         {
-          name: 'users-list',
-          icon: 'smile',
-          path: '/users/users-list',
-          component: './users/users-list',
+          path: '/users/list',
+          name: 'lists',
+          hideChildrenInMenu: true,
+          routes: [
+            {
+              path: '/users/list',
+              exact: true,
+              redirect: '/users/list/consumer/all',
+            },
+            {
+              icon: 'smile',
+              path: '/users/list/:list/:id',
+              name: 'list',
+              component: './users/users-list',
+            },
+          ],
         },
         {
           name: 'users-files',
@@ -90,7 +115,19 @@ export default defineConfig({
           name: 'transactions-list',
           icon: 'smile',
           path: '/transactions/transactions-list',
-          component: './transactions/transactions-list',
+          hideChildrenInMenu: true,
+          routes: [
+            {
+              path: '/transactions/transactions-list',
+              exact: true,
+              redirect: '/transactions/transactions-list/all',
+            },
+            {
+              path: '/transactions/transactions-list/:id',
+              component: './transactions/transactions-list',
+              name: 'item',
+            },
+          ],
         },
         {
           name: 'transactions-files',

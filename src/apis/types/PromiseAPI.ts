@@ -142,6 +142,15 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Business Users - Item - Get
+   * @param userId
+   */
+  public getBusinessUsersItem(userId: string, _options?: Configuration): Promise<Business> {
+    const result = this.api.getBusinessUsersItem(userId, _options);
+    return result.toPromise();
+  }
+
+  /**
    * Business Users - List
    * @param limit
    * @param skip
@@ -165,6 +174,15 @@ export class PromiseDefaultApi {
       filterId,
       _options,
     );
+    return result.toPromise();
+  }
+
+  /**
+   * Consumer Users - Item - Get
+   * @param userId
+   */
+  public getConsumerUsersItem(userId: string, _options?: Configuration): Promise<User> {
+    const result = this.api.getConsumerUsersItem(userId, _options);
     return result.toPromise();
   }
 
@@ -245,15 +263,27 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Transaction - Get
+   * @param transactionId
+   */
+  public getTransaction(
+    transactionId: string,
+    _options?: Configuration,
+  ): Promise<TransactionCaseManagement> {
+    const result = this.api.getTransaction(transactionId, _options);
+    return result.toPromise();
+  }
+
+  /**
    * Transaction - List
    * @param limit
    * @param skip
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    * @param filterRulesExecuted
    * @param filterRulesHit
-   * @param filterOutStatus
    */
   public getTransactionsList(
     limit: number,
@@ -261,9 +291,9 @@ export class PromiseDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
-    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(
@@ -272,9 +302,9 @@ export class PromiseDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterOutStatus,
       filterRulesExecuted,
       filterRulesHit,
-      filterOutStatus,
       _options,
     );
     return result.toPromise();

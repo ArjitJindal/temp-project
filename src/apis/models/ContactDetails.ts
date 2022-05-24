@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address1 } from './Address1';
+import { Address } from './Address';
 import { HttpFile } from '../http/http';
 
 export class ContactDetails {
@@ -33,7 +33,7 @@ export class ContactDetails {
   /**
    * Address(es) of the company
    */
-  'addresses'?: Array<Address1>;
+  'addresses'?: Array<Address>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -70,7 +70,7 @@ export class ContactDetails {
     {
       name: 'addresses',
       baseName: 'addresses',
-      type: 'Array<Address1>',
+      type: 'Array<Address>',
       format: '',
     },
   ];

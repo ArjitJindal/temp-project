@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Button, Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface Props {
   transactionId: string;
   onSaved: () => void;

@@ -117,6 +117,15 @@ export interface DefaultApiDeleteTransactionsTransactionIdCommentsCommentIdReque
 
 export interface DefaultApiGetAccountsRequest {}
 
+export interface DefaultApiGetBusinessUsersItemRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetBusinessUsersItem
+   */
+  userId: string;
+}
+
 export interface DefaultApiGetBusinessUsersListRequest {
   /**
    *
@@ -148,6 +157,15 @@ export interface DefaultApiGetBusinessUsersListRequest {
    * @memberof DefaultApigetBusinessUsersList
    */
   filterId?: string;
+}
+
+export interface DefaultApiGetConsumerUsersItemRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetConsumerUsersItem
+   */
+  userId: string;
 }
 
 export interface DefaultApiGetConsumerUsersListRequest {
@@ -219,6 +237,15 @@ export interface DefaultApiGetRuleInstancesRequest {}
 
 export interface DefaultApiGetRulesRequest {}
 
+export interface DefaultApiGetTransactionRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransaction
+   */
+  transactionId: string;
+}
+
 export interface DefaultApiGetTransactionsListRequest {
   /**
    *
@@ -252,6 +279,12 @@ export interface DefaultApiGetTransactionsListRequest {
   filterId?: string;
   /**
    *
+   * @type RuleAction
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOutStatus?: RuleAction;
+  /**
+   *
    * @type Array&lt;string&gt;
    * @memberof DefaultApigetTransactionsList
    */
@@ -262,12 +295,6 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterRulesHit?: Array<string>;
-  /**
-   *
-   * @type RuleAction
-   * @memberof DefaultApigetTransactionsList
-   */
-  filterOutStatus?: RuleAction;
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
@@ -523,6 +550,17 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Business Users - Item - Get
+   * @param param the request object
+   */
+  public getBusinessUsersItem(
+    param: DefaultApiGetBusinessUsersItemRequest,
+    options?: Configuration,
+  ): Promise<Business> {
+    return this.api.getBusinessUsersItem(param.userId, options).toPromise();
+  }
+
+  /**
    * Business Users - List
    * @param param the request object
    */
@@ -540,6 +578,17 @@ export class ObjectDefaultApi {
         options,
       )
       .toPromise();
+  }
+
+  /**
+   * Consumer Users - Item - Get
+   * @param param the request object
+   */
+  public getConsumerUsersItem(
+    param: DefaultApiGetConsumerUsersItemRequest,
+    options?: Configuration,
+  ): Promise<User> {
+    return this.api.getConsumerUsersItem(param.userId, options).toPromise();
   }
 
   /**
@@ -620,6 +669,17 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Transaction - Get
+   * @param param the request object
+   */
+  public getTransaction(
+    param: DefaultApiGetTransactionRequest,
+    options?: Configuration,
+  ): Promise<TransactionCaseManagement> {
+    return this.api.getTransaction(param.transactionId, options).toPromise();
+  }
+
+  /**
    * Transaction - List
    * @param param the request object
    */
@@ -634,9 +694,9 @@ export class ObjectDefaultApi {
         param.beforeTimestamp,
         param.afterTimestamp,
         param.filterId,
+        param.filterOutStatus,
         param.filterRulesExecuted,
         param.filterRulesHit,
-        param.filterOutStatus,
         options,
       )
       .toPromise();

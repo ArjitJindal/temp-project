@@ -6,6 +6,7 @@ import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
+import PageWrapper from '@/components/PageWrapper';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -66,7 +67,7 @@ const TableList: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
+    <PageWrapper>
       <ProTable<TableListItem, TableListPagination>
         form={{
           labelWrap: true,
@@ -82,7 +83,7 @@ const TableList: React.FC = () => {
           <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
         ]}
       />
-    </PageContainer>
+    </PageWrapper>
   );
 };
 

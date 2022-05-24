@@ -1,12 +1,12 @@
+import type { ReactNode } from 'react';
 import React from 'react';
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
-import { RunTimeLayoutConfig, setLocale, history, Link } from 'umi';
+import { Link, RunTimeLayoutConfig, setLocale } from 'umi';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
-import type { ReactNode } from 'react';
-import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
+import AppWrapper from '@/components/AppWrapper';
 
 setLocale('en-US', false);
 
@@ -54,27 +54,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
   };
 };
 
-const AuthWrapperProvider: React.FC = ({ children }) => {
-  const onRedirectCallback = (appState: any) => {
-    history.push(appState && appState.returnTo ? appState.returnTo : window.location.pathname);
-  };
-  const providerConfig = {
-    domain: AUTH0_DOMAIN,
-    clientId: AUTH0_CLIENT_ID,
-    redirectUri: window.location.origin,
-    onRedirectCallback,
-  };
-  const AuthenticationRequiredWrapper = withAuthenticationRequired(
-    (({ children: innerChildren }) => innerChildren) as React.FC,
-    { onRedirecting: () => <PageLoading /> },
-  );
-  return (
-    <Auth0Provider {...providerConfig}>
-      <AuthenticationRequiredWrapper>{children}</AuthenticationRequiredWrapper>
-    </Auth0Provider>
-  );
-};
-
 export function rootContainer(container: ReactNode) {
-  return <AuthWrapperProvider>{container}</AuthWrapperProvider>;
+  return <AppWrapper>{container}</AppWrapper>;
 }

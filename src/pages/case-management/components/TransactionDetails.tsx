@@ -1,21 +1,20 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import ProDescriptions from '@ant-design/pro-descriptions';
 import {
-  Divider,
-  List,
-  Tag,
-  Comment as AntComment,
   Avatar,
   Button,
-  Input,
-  Upload,
-  message,
-  Row,
-  Space,
   Col,
-  Tooltip,
-  Select,
+  Comment as AntComment,
+  Divider,
+  Input,
+  List,
+  message,
   Popover,
+  Row,
+  Select,
+  Space,
+  Tag,
+  Upload,
 } from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -30,10 +29,10 @@ import styles from './TransactionDetails.less';
 import { RuleActionStatus } from './RuleActionStatus';
 import Comment from './Comment';
 import {
-  Tag as TransactionTag,
-  TransactionCaseManagement,
   Comment as TransactionComment,
   FileInfo,
+  Tag as TransactionTag,
+  TransactionCaseManagement,
 } from '@/apis';
 import { useApi } from '@/api';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';

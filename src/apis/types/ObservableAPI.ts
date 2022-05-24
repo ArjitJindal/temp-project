@@ -295,6 +295,38 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * Business Users - Item - Get
+   * @param userId
+   */
+  public getBusinessUsersItem(userId: string, _options?: Configuration): Observable<Business> {
+    const requestContextPromise = this.requestFactory.getBusinessUsersItem(userId, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getBusinessUsersItem(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
    * Business Users - List
    * @param limit
    * @param skip
@@ -339,6 +371,38 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getBusinessUsersList(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Consumer Users - Item - Get
+   * @param userId
+   */
+  public getConsumerUsersItem(userId: string, _options?: Configuration): Observable<User> {
+    const requestContextPromise = this.requestFactory.getConsumerUsersItem(userId, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getConsumerUsersItem(rsp)),
           );
         }),
       );
@@ -566,15 +630,50 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * Transaction - Get
+   * @param transactionId
+   */
+  public getTransaction(
+    transactionId: string,
+    _options?: Configuration,
+  ): Observable<TransactionCaseManagement> {
+    const requestContextPromise = this.requestFactory.getTransaction(transactionId, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getTransaction(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
    * Transaction - List
    * @param limit
    * @param skip
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    * @param filterRulesExecuted
    * @param filterRulesHit
-   * @param filterOutStatus
    */
   public getTransactionsList(
     limit: number,
@@ -582,9 +681,9 @@ export class ObservableDefaultApi {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
-    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
@@ -593,9 +692,9 @@ export class ObservableDefaultApi {
       beforeTimestamp,
       afterTimestamp,
       filterId,
+      filterOutStatus,
       filterRulesExecuted,
       filterRulesHit,
-      filterOutStatus,
       _options,
     );
 

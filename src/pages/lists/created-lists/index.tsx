@@ -3,6 +3,7 @@ import { PageContainer } from '@ant-design/pro-layout';
 import { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProFormInstance } from '@ant-design/pro-form';
 import type { CreateListsTableListItem } from './data.d';
+import PageWrapper from '@/components/PageWrapper';
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const actionRef = useRef<ActionType>();
@@ -59,7 +60,13 @@ const StepForm: React.FC<Record<string, any>> = () => {
     },
   ];
 
-  return <PageContainer content="Custom lists you have created"></PageContainer>;
+  return (
+    <PageWrapper
+      pageContainerProps={{
+        content: 'Custom lists you have created',
+      }}
+    ></PageWrapper>
+  );
 };
 
 export default StepForm;

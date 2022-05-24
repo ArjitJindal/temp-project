@@ -1,24 +1,37 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
+import { IRouteComponentProps, Link } from 'umi';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
-import { TransactionCaseManagement } from '@/apis';
+import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import AllowForm from '@/pages/case-management/components/AllowForm';
-import GlobalWrapper from '@/components/GlobalWrapper';
+import {
+  AsyncResource,
+  failed,
+  init,
+  isInit,
+  isSuccess,
+  loading,
+  success,
+} from '@/utils/asyncResource';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import PageWrapper from '@/components/PageWrapper';
 
-const TableList: React.FC = () => {
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+const TableList = (
+  props: IRouteComponentProps<{
+    id?: string;
+  }>,
+) => {
   const [users] = useUsers();
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TransactionCaseManagement>();
+  const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
   }>({});
@@ -30,6 +43,46 @@ const TableList: React.FC = () => {
     }));
   }, []);
   const api = useApi();
+
+  const transactionId = props.match.params.id;
+  const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
+  useEffect(() => {
+    if (transactionId == null || transactionId === 'all') {
+      setCurrentItem(init());
+      return function () {};
+    }
+    if (currentTransactionId === transactionId) {
+      return function () {};
+    }
+    setCurrentItem(loading());
+    let isCanceled = false;
+    api
+      .getTransaction({
+        transactionId,
+      })
+      .then((transaction) => {
+        if (isCanceled) {
+          return;
+        }
+        setCurrentItem(success(transaction));
+      })
+      .catch((e) => {
+        if (isCanceled) {
+          return;
+        }
+        // todo: i18n
+        let message = 'Unknown error';
+        if (e instanceof ApiException && e.code === 404) {
+          message = `Unable to find сфыу by id "${transactionId}"`;
+        } else if (e instanceof Error && e.message) {
+          message = e.message;
+        }
+        setCurrentItem(failed(message));
+      });
+    return () => {
+      isCanceled = true;
+    };
+  }, [currentTransactionId, transactionId, api]);
 
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -45,15 +98,17 @@ const TableList: React.FC = () => {
         copyable: true,
         ellipsis: true,
         render: (dom, entity) => {
+          // todo: fix style
           return (
-            <a
+            <Link
+              to={`/case-management/${entity.transactionId}`}
               onClick={() => {
-                setCurrentRow(entity);
-                setShowDetail(true);
+                setCurrentItem(success(entity));
               }}
+              replace
             >
               {dom}
-            </a>
+            </Link>
           );
         },
       },
@@ -242,64 +297,67 @@ const TableList: React.FC = () => {
   );
 
   return (
-    <GlobalWrapper>
-      <PageContainer>
-        <ProTable<TransactionCaseManagement>
-          form={{
-            labelWrap: true,
-          }}
-          actionRef={actionRef}
-          rowKey="transactionId"
-          search={{
-            labelWidth: 120,
-          }}
-          scroll={{ x: 1300 }}
-          expandable={{ expandedRowRender: ExpandedRulesRowRender }}
-          request={async (params) => {
-            const {
-              pageSize,
-              current,
-              timestamp,
-              transactionId,
-              rulesHitFilter,
-              rulesExecutedFilter,
-            } = params;
-            const response = await api.getTransactionsList({
-              limit: pageSize!,
-              skip: (current! - 1) * pageSize!,
-              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-              filterId: transactionId,
-              filterRulesHit: rulesHitFilter,
-              filterRulesExecuted: rulesExecutedFilter,
-              filterOutStatus: 'ALLOW',
-            });
-            return {
-              data: response.data,
-              success: true,
-              total: response.total,
-            };
-          }}
-          columns={columns}
-        />
-        <Drawer
-          width={700}
-          visible={showDetail}
-          onClose={() => {
-            setCurrentRow(undefined);
-            setShowDetail(false);
-          }}
-          closable={false}
-        >
-          {currentRow?.transactionId && (
+    <PageWrapper>
+      <ProTable<TransactionCaseManagement>
+        form={{
+          labelWrap: true,
+        }}
+        actionRef={actionRef}
+        rowKey="transactionId"
+        search={{
+          labelWidth: 120,
+        }}
+        scroll={{ x: 1300 }}
+        expandable={{ expandedRowRender: ExpandedRulesRowRender }}
+        request={async (params) => {
+          const {
+            pageSize,
+            current,
+            timestamp,
+            transactionId,
+            rulesHitFilter,
+            rulesExecutedFilter,
+          } = params;
+          const response = await api.getTransactionsList({
+            limit: pageSize!,
+            skip: (current! - 1) * pageSize!,
+            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+            filterId: transactionId,
+            filterRulesHit: rulesHitFilter,
+            filterRulesExecuted: rulesExecutedFilter,
+            filterOutStatus: 'ALLOW',
+          });
+          return {
+            data: response.data,
+            success: true,
+            total: response.total,
+          };
+        }}
+        columns={columns}
+      />
+      <Drawer
+        width={700}
+        visible={!isInit(currentItem)}
+        onClose={() => {
+          props.history.replace('/case-management/all');
+        }}
+        closable={false}
+      >
+        <AsyncResourceRenderer resource={currentItem}>
+          {(transaction) => (
             <TransactionDetails
-              transaction={updatedTransactions[currentRow.transactionId] || currentRow}
+              transaction={
+                (transaction.transactionId
+                  ? updatedTransactions[transaction.transactionId]
+                  : null) ?? transaction
+              }
               onTransactionUpdate={handleTransactionUpdate}
             />
           )}
-        </Drawer>
-      </PageContainer>
-    </GlobalWrapper>
+        </AsyncResourceRenderer>
+      </Drawer>
+    </PageWrapper>
   );
 };
 

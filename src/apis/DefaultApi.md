@@ -10,13 +10,16 @@ All URIs are relative to _http://localhost:3000_
 | [**deleteRulesRuleId**](DefaultApi.md#deleteRulesRuleId) | **DELETE** /rules/{ruleId} | Rule - Delete |
 | [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} |
 | [**getAccounts**](DefaultApi.md#getAccounts) | **GET** /accounts | Account - List |
+| [**getBusinessUsersItem**](DefaultApi.md#getBusinessUsersItem) | **GET** /business/users/{userId} | Business Users - Item - Get |
 | [**getBusinessUsersList**](DefaultApi.md#getBusinessUsersList) | **GET** /business/users | Business Users - List |
+| [**getConsumerUsersItem**](DefaultApi.md#getConsumerUsersItem) | **GET** /consumer/users/{userId} | Consumer Users - Item - Get |
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
 | [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
+| [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
 | [**getTransactionsPerUserList**](DefaultApi.md#getTransactionsPerUserList) | **GET** /user/transactions | Transaction Per User - List |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
@@ -333,6 +336,56 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getBusinessUsersItem**
+
+> Business getBusinessUsersItem()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetBusinessUsersItemRequest = {
+  // string
+  userId: "userId_example",
+};
+
+apiInstance.getBusinessUsersItem(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name       | Type         | Description | Notes                 |
+| ---------- | ------------ | ----------- | --------------------- |
+| **userId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**Business**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getBusinessUsersList**
 
 > BusinessUsersListResponse getBusinessUsersList()
@@ -377,6 +430,56 @@ apiInstance.getBusinessUsersList(body).then((data:any) => {
 ### Return type
 
 **BusinessUsersListResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getConsumerUsersItem**
+
+> User getConsumerUsersItem()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetConsumerUsersItemRequest = {
+  // string
+  userId: "userId_example",
+};
+
+apiInstance.getConsumerUsersItem(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name       | Type         | Description | Notes                 |
+| ---------- | ------------ | ----------- | --------------------- |
+| **userId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**User**
 
 ### Authorization
 
@@ -698,6 +801,57 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getTransaction**
+
+> TransactionCaseManagement getTransaction()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetTransactionRequest = {
+  // string
+  transactionId: "transactionId_example",
+};
+
+apiInstance.getTransaction(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name              | Type         | Description | Notes                 |
+| ----------------- | ------------ | ----------- | --------------------- |
+| **transactionId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**TransactionCaseManagement**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+| **404**     | Not Found   | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getTransactionsList**
 
 > TransactionsListResponse getTransactionsList()
@@ -722,6 +876,8 @@ let body:.DefaultApiGetTransactionsListRequest = {
   afterTimestamp: 3.14,
   // string (optional)
   filterId: "filterId_example",
+  // RuleAction (optional)
+  filterOutStatus: "FLAG",
   // Array<string> (optional)
   filterRulesExecuted: [
     "filterRulesExecuted_example",
@@ -730,8 +886,6 @@ let body:.DefaultApiGetTransactionsListRequest = {
   filterRulesHit: [
     "filterRulesHit_example",
   ],
-  // RuleAction (optional)
-  filterOutStatus: "FLAG",
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -748,9 +902,9 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **beforeTimestamp** | [**number**] |  | defaults to undefined |
 | **afterTimestamp** | [**number**] |  | (optional) defaults to undefined |
 | **filterId** | [**string**] |  | (optional) defaults to undefined |
+| **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
 | **filterRulesExecuted** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **filterRulesHit** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
-| **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
 
 ### Return type
 

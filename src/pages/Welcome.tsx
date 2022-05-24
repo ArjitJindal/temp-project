@@ -1,8 +1,8 @@
 import React from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import { Card, Alert, Typography } from 'antd';
-import { useIntl, FormattedMessage } from 'umi';
+import { Alert, Card, Typography } from 'antd';
+import { FormattedMessage, useIntl } from 'umi';
 import styles from './Welcome.less';
+import PageWrapper from '@/components/PageWrapper';
 
 const CodePreview: React.FC = ({ children }) => (
   <pre className={styles.pre}>
@@ -15,7 +15,7 @@ const CodePreview: React.FC = ({ children }) => (
 export default (): React.ReactNode => {
   const intl = useIntl();
   return (
-    <PageContainer>
+    <PageWrapper>
       <Card>
         <Alert
           message={intl.formatMessage({
@@ -58,6 +58,6 @@ export default (): React.ReactNode => {
         </Typography.Text>
         <CodePreview>yarn add @ant-design/pro-layout</CodePreview>
       </Card>
-    </PageContainer>
+    </PageWrapper>
   );
 };

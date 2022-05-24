@@ -9,6 +9,7 @@ import AccountInviteForm from './components/AccountInviteForm';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
 import { isAtLeastAdmin } from '@/utils/user-utils';
+import PageWrapper from '@/components/PageWrapper';
 
 export default function () {
   const api = useApi();
@@ -89,7 +90,7 @@ export default function () {
 
   // todo: i18n
   return (
-    <PageContainer>
+    <PageWrapper>
       <ProTable<Account>
         actionRef={actionRef}
         form={{
@@ -111,6 +112,6 @@ export default function () {
         }}
         columns={columns}
       />
-    </PageContainer>
+    </PageWrapper>
   );
 }

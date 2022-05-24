@@ -8,6 +8,7 @@ import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
 import { Rule } from '@/apis';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import { useApi } from '@/api';
+import PageWrapper from '@/components/PageWrapper';
 
 const STEPS = [
   {
@@ -44,9 +45,11 @@ const StepForm: React.FC<Record<string, any>> = () => {
   }, [api]);
 
   return (
-    <PageContainer
-      content="Create a transaction monitoring rule with a straight-forward 3 step process"
-      loading={!ruleImplementations}
+    <PageWrapper
+      pageContainerProps={{
+        content: 'Create a transaction monitoring rule with a straight-forward 3 step process',
+        loading: !ruleImplementations,
+      }}
     >
       <Card bordered={false}>
         <Row justify="center">
@@ -87,7 +90,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
           </p>
         </div>
       </Card>
-    </PageContainer>
+    </PageWrapper>
   );
 };
 

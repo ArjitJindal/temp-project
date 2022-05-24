@@ -9,6 +9,7 @@ import { SecurityAuthentication } from '../auth/auth';
 
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
+import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { Comment } from '../models/Comment';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
@@ -21,8 +22,10 @@ import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
+import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
+import { User } from '../models/User';
 
 /**
  * no description
@@ -232,6 +235,40 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Business Users - Item - Get
+   * @param userId
+   */
+  public async getBusinessUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'getBusinessUsersItem', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/business/users/{userId}'.replace(
+      '{' + 'userId' + '}',
+      encodeURIComponent(String(userId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
    * Business Users - List
    * @param limit
    * @param skip
@@ -301,6 +338,40 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     if (filterId !== undefined) {
       requestContext.setQueryParam('filterId', ObjectSerializer.serialize(filterId, 'string', ''));
     }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
+   * Consumer Users - Item - Get
+   * @param userId
+   */
+  public async getConsumerUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'getConsumerUsersItem', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/consumer/users/{userId}'.replace(
+      '{' + 'userId' + '}',
+      encodeURIComponent(String(userId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
@@ -552,15 +623,49 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Transaction - Get
+   * @param transactionId
+   */
+  public async getTransaction(
+    transactionId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'transactionId' is not null or undefined
+    if (transactionId === null || transactionId === undefined) {
+      throw new RequiredError('DefaultApi', 'getTransaction', 'transactionId');
+    }
+
+    // Path Params
+    const localVarPath = '/transactions/{transactionId}'.replace(
+      '{' + 'transactionId' + '}',
+      encodeURIComponent(String(transactionId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
    * Transaction - List
    * @param limit
    * @param skip
    * @param beforeTimestamp
    * @param afterTimestamp
    * @param filterId
+   * @param filterOutStatus
    * @param filterRulesExecuted
    * @param filterRulesHit
-   * @param filterOutStatus
    */
   public async getTransactionsList(
     limit: number,
@@ -568,9 +673,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     beforeTimestamp: number,
     afterTimestamp?: number,
     filterId?: string,
+    filterOutStatus?: RuleAction,
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
-    filterOutStatus?: RuleAction,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -629,6 +734,14 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     }
 
     // Query Params
+    if (filterOutStatus !== undefined) {
+      requestContext.setQueryParam(
+        'filterOutStatus',
+        ObjectSerializer.serialize(filterOutStatus, 'RuleAction', ''),
+      );
+    }
+
+    // Query Params
     if (filterRulesExecuted !== undefined) {
       requestContext.setQueryParam(
         'filterRulesExecuted',
@@ -641,14 +754,6 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam(
         'filterRulesHit',
         ObjectSerializer.serialize(filterRulesHit, 'Array<string>', ''),
-      );
-    }
-
-    // Query Params
-    if (filterOutStatus !== undefined) {
-      requestContext.setQueryParam(
-        'filterOutStatus',
-        ObjectSerializer.serialize(filterOutStatus, 'RuleAction', ''),
       );
     }
 
@@ -1406,6 +1511,42 @@ export class DefaultApiResponseProcessor {
    * Unwraps the actual response sent by the server from the response context and deserializes the response content
    * to the expected objects
    *
+   * @params response Response returned by the server for a request to getBusinessUsersItem
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getBusinessUsersItem(response: ResponseContext): Promise<Business> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: Business = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'Business',
+        '',
+      ) as Business;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: Business = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'Business',
+        '',
+      ) as Business;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
    * @params response Response returned by the server for a request to getBusinessUsersList
    * @throws ApiException if the response code was not in [200, 299]
    */
@@ -1427,6 +1568,42 @@ export class DefaultApiResponseProcessor {
         'BusinessUsersListResponse',
         '',
       ) as BusinessUsersListResponse;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getConsumerUsersItem
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getConsumerUsersItem(response: ResponseContext): Promise<User> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: User = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'User',
+        '',
+      ) as User;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: User = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'User',
+        '',
+      ) as User;
       return body;
     }
 
@@ -1645,6 +1822,50 @@ export class DefaultApiResponseProcessor {
         'Array<Rule>',
         '',
       ) as Array<Rule>;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to getTransaction
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getTransaction(response: ResponseContext): Promise<TransactionCaseManagement> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: TransactionCaseManagement = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionCaseManagement',
+        '',
+      ) as TransactionCaseManagement;
+      return body;
+    }
+    if (isCodeInRange('404', response.httpStatusCode)) {
+      throw new ApiException<undefined>(
+        response.httpStatusCode,
+        'Not Found',
+        undefined,
+        response.headers,
+      );
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: TransactionCaseManagement = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'TransactionCaseManagement',
+        '',
+      ) as TransactionCaseManagement;
       return body;
     }
 
