@@ -17,12 +17,12 @@ fi
 if [ "$env" == "sandbox" ]; then
     apiPrefix="sandbox."
     apiId=i5deptp279
-    profile="AWSAdministratorAccess-911899431626"
+    profile="AWSAdministratorAccess-293986822825"
     region="eu-central-1"
 elif [ "$env" == "dev" ]; then
     apiPrefix="dev."
     apiId=lujzovzbk3
-    profile="AWSAdministratorAccess-293986822825"
+    profile="AWSAdministratorAccess-911899431626"
     region="eu-central-1"
 elif [ "$env" == "prod-asia-1" ]; then
     apiPrefix="asia-1."
