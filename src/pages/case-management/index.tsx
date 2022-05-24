@@ -248,7 +248,6 @@ const TableList: React.FC = () => {
           form={{
             labelWrap: true,
           }}
-          headerTitle="Transactions"
           actionRef={actionRef}
           rowKey="transactionId"
           search={{
