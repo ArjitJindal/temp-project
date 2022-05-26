@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Filter, MongoClient } from 'mongodb'
+import { Filter, FindCursor, MongoClient } from 'mongodb'
 import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
@@ -45,13 +45,9 @@ export class TransactionRepository {
 
   /* MongoDB operations */
 
-  public async getTransactions(
+  public getTransactionsMongoQuery(
     params: DefaultApiGetTransactionsListRequest
-  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
+  ): Filter<TransactionCaseManagement> {
     const query: Filter<TransactionCaseManagement> = {
       timestamp: {
         $gte: params.afterTimestamp || 0,
@@ -85,13 +81,40 @@ export class TransactionRepository {
       }
     }
 
-    const transactions = await collection
-      .find(query)
-      .sort({ timestamp: -1 })
+    return query
+  }
+
+  public async getTransactionsCursor(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<FindCursor<TransactionCaseManagement>> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const query = this.getTransactionsMongoQuery(params)
+    return collection.find(query).sort({ timestamp: -1 })
+  }
+
+  public async getTransactionsCount(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<number> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const query = this.getTransactionsMongoQuery(params)
+    return collection.countDocuments(query)
+  }
+
+  public async getTransactions(
+    params: DefaultApiGetTransactionsListRequest
+  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
+    const cursor = await this.getTransactionsCursor(params)
+    const total = await this.getTransactionsCount(params)
+    const transactions = await cursor
       .limit(params.limit)
       .skip(params.skip)
       .toArray()
-    const total = await collection.count(query)
     return { total, data: transactions }
   }
 

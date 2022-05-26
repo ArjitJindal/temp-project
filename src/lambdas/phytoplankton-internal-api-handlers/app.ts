@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { ManagementClient } from 'auth0'
-import { NotFound } from 'http-errors'
+import { BadRequest, NotFound, InternalServerError } from 'http-errors'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
@@ -23,10 +23,14 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { ExportService } from '@/lambdas/phytoplankton-internal-api-handlers/services/export-service'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { TRANSACTION_EXPORT_HEADERS_SETTINGS } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
   DOCUMENT_BUCKET: string
+  MAXIMUM_ALLOWED_EXPORT_SIZE: string
 }
 
 export const transactionsViewHandler = lambdaApi()(
@@ -36,7 +40,8 @@ export const transactionsViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId, userId } = event.requestContext.authorizer
-    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as TransactionViewConfig
+    const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
+      process.env as TransactionViewConfig
     const s3 = getS3Client(event)
     const client = await connectToDB()
     const transactionRepository = new TransactionRepository(tenantId, {
@@ -72,6 +77,68 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
       }
       return transactionService.getTransactions(params)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/transactions/export')
+    ) {
+      const exportService = new ExportService<TransactionCaseManagement>(
+        'case',
+        s3,
+        TMP_BUCKET
+      )
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterOutStatus,
+        filterRulesHit,
+        filterRulesExecuted,
+      } = event.queryStringParameters as any
+      const params: DefaultApiGetTransactionsListRequest = {
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterOutStatus,
+        filterRulesExecuted: filterRulesExecuted
+          ? filterRulesExecuted.split(',')
+          : undefined, // todo: need a proper parser for url
+        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+      }
+
+      const transactionsCount =
+        await transactionRepository.getTransactionsCount(params)
+      const maximumExportSize = parseInt(MAXIMUM_ALLOWED_EXPORT_SIZE)
+      if (Number.isNaN(maximumExportSize)) {
+        throw new InternalServerError(
+          `Wrong environment configuration, cannot get MAXIMUM_ALLOWED_EXPORT_SIZE`
+        )
+      }
+      if (transactionsCount > maximumExportSize) {
+        // todo: i18n
+        throw new BadRequest(
+          `File size is too large, it should not have more than ${maximumExportSize} rows! Please add more filters to make it smaller`
+        )
+      }
+      let transactionsCursor =
+        await transactionRepository.getTransactionsCursor(params)
+
+      transactionsCursor = transactionsCursor.map((transaction) => {
+        return {
+          ...transaction,
+          executedRules: transaction.executedRules.filter(
+            ({ ruleHit }) => ruleHit
+          ),
+        }
+      })
+
+      return await exportService.export(
+        transactionsCursor,
+        TRANSACTION_EXPORT_HEADERS_SETTINGS
+      )
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/transactions/{transactionId}' &&

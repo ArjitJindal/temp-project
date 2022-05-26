@@ -27,6 +27,8 @@ import { GenericBankAccountDetails } from './GenericBankAccountDetails'
 import { IBANDetails } from './IBANDetails'
 import { ImportRequest } from './ImportRequest'
 import { ImportResponse } from './ImportResponse'
+import { InlineResponse200 } from './InlineResponse200'
+import { InlineResponse400 } from './InlineResponse400'
 import { LegalDocument } from './LegalDocument'
 import { LegalDocument1 } from './LegalDocument1'
 import { LegalEntity } from './LegalEntity'
@@ -294,6 +296,63 @@ export interface DefaultApiGetTransactionsListRequest {
    *
    * @type string
    * @memberof DefaultApigetTransactionsList
+   */
+  transactionType?: string
+}
+
+export interface DefaultApiGetTransactionsListExportRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  limit: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  skip: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  beforeTimestamp: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  afterTimestamp?: number
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterId?: string
+  /**
+   *
+   * @type RuleAction
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterOutStatus?: RuleAction
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterRulesExecuted?: Array<string>
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterRulesHit?: Array<string>
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
    */
   transactionType?: string
 }

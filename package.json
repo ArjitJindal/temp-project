@@ -3,10 +3,6 @@
   "version": "1.0.0",
   "description": "![tarpons](https://github.com/flagright/tarpon/blob/main/tarpons.png)",
   "main": "index.js",
-  "engines": {
-    "npm": "^8.6.0",
-    "node": "^14.0.0"
-  },
   "scripts": {
     "aws-sso-login": "aws sso login --profile $npm_config_profile",
     "build": "webpack",
@@ -127,7 +123,7 @@
     "jwks-rsa": "^2.0.5",
     "lodash": "^4.17.21",
     "mongodb": "^4.4.0",
-    "nanoid": "^3.2.0",
+    "nanoid": "^3.3.4",
     "node-fetch": "^2.6.7",
     "superagent-proxy": "^3.0.0",
     "unique-names-generator": "^4.6.0",

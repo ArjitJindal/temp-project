@@ -26,6 +26,7 @@ const PathToLambda: any = {
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
   '/transactions': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/export': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/user/transactions':
