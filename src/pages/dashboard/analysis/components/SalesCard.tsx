@@ -204,29 +204,6 @@ const SalesCard = ({
                   />
                 </div>
               </Col>
-              <Col xl={8} lg={12} md={12} sm={24} xs={24}>
-                <div className={styles.salesRank}>
-                  <h4 className={styles.rankingTitle}>Top Rules Hit</h4>
-                  <ul className={styles.rankingList}>
-                    {rankingListData.map((item, i) => (
-                      <li key={item.title}>
-                        <span
-                          className={`${styles.rankingItemNumber} ${i < 3 ? styles.active : ''}`}
-                        >
-                          {i + 1}
-                        </span>
-                        <span className={styles.rankingItemTitle} title={item.title}>
-                          {item.title}
-                        </span>
-                        <span className={styles.rankingItemValue}>
-                          {numeral(item.total).format('0,0')}{' '}
-                        </span>
-                        Hits
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Col>
             </Row>
           </TabPane>
           <TabPane tab="Flagged Transactions" key="flagged">
@@ -257,29 +234,6 @@ const SalesCard = ({
                       },
                     }}
                   />
-                </div>
-              </Col>
-              <Col xl={8} lg={12} md={12} sm={24} xs={24}>
-                <div className={styles.salesRank}>
-                  <h4 className={styles.rankingTitle}>Top Rules Hit</h4>
-                  <ul className={styles.rankingList}>
-                    {rankingListData.map((item, i) => (
-                      <li key={item.title}>
-                        <span
-                          className={`${styles.rankingItemNumber} ${i < 3 ? styles.active : ''}`}
-                        >
-                          {i + 1}
-                        </span>
-                        <span className={styles.rankingItemTitle} title={item.title}>
-                          {item.title}
-                        </span>
-                        <span className={styles.rankingItemValue}>
-                          {numeral(item.total).format('0,0')}
-                        </span>{' '}
-                        Hits
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </Col>
             </Row>
