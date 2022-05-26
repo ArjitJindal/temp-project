@@ -2514,8 +2514,6 @@ components:
     TransactionState:
       type: string
       title: TransactionState
-      x-stoplight:
-        id: q1lxnw313yrob
       enum:
         - CREATED
         - PROCESSING

@@ -24,7 +24,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
     const schemas = openapi['components']['schemas']
 
     if (!schemas[this.schemaName]) {
-      throw Error(`${this.schemaName} is not a valida schema name`)
+      throw Error(`${this.schemaName} is not a valid schema name`)
     }
 
     for (const key in schemas) {
@@ -35,7 +35,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
     schema['$defs'] = schemas
     schema['additionalProperties'] = false
     const ajv = new Ajv({
-      keywords: ['example', 'x-examples'],
+      keywords: ['example', 'x-examples', 'x-stoplight'],
       coerceTypes: true,
     })
     this.schemaValidate = ajv.compile(schema)
