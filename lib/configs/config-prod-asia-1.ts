@@ -1,7 +1,12 @@
+/**
+ * Asia Pacific (Singapore)
+ * (Full list of regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
+ */
+
 import { Config } from './config'
 
 const account = '870721492449'
-const region = 'ap-south-1'
+const region = 'ap-southeast-1'
 
 export const config: Config = {
   stage: 'prod',
@@ -32,12 +37,12 @@ export const config: Config = {
   },
   application: {
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
-    AUTH0_AUDIENCE: 'https://asia-2.api.flagright.com/',
+    AUTH0_AUDIENCE: 'https://asia-1.api.flagright.com/',
     AUTH0_TOKEN_ISSUER: 'https://flagright.eu.auth0.com/',
     AUTH0_JWKS_URI: 'https://flagright.eu.auth0.com/.well-known/jwks.json',
     AUTH0_MANAGEMENT_CLIENT_ID: 'gVL7LOtgnFfPMsRgZYRWWhpDk9SjAFZV',
     AUTH0_MANAGEMENT_CLIENT_SECRET:
       'aJD1Dxa3cw9ZOrzbMPqbTzr-1lcyUGjQzrtSj1UpV1FDk7Qillpcr_l_h-R6PA0X',
-    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-ZcHWor`,
+    ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-PHBcYt`,
   },
 }

@@ -206,5 +206,71 @@ awscurl --service execute-api \
     -d '{"id":"R-113","name":"User city changes too many times based on IP address","description":"User''s IP address show > x different cities within t days","defaultParameters":{"uniqueCitiesCountThreshold":1,"timeWindowInDays":1},"defaultAction":"FLAG","ruleImplementationName":"sender-location-changes-frequency","labels":["AML", "Fraud"],"type":"TRANSACTION"}' \
     https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
 
+# R-24
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-24","name":"Reference field keyword","description":"Payment reference field includes a keyword in blacklist","defaultParameters":{"transactionVolumeThresholds":{"MONTHLY":{"PHP":50000000}},"checkSender":"sending","checkReceiver":"none"},"defaultAction":"BLOCK","ruleImplementationName":"transaction-reference-keyword","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-69
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-69","name":"Customer outbound money flow is above expected monthly volume x","description":"Customer is spending much more money than expected","defaultParameters":{"transactionVolumeThresholds":{"MONTHLY":{"PHP":50000000}},"checkSender":"sending","checkReceiver":"none"},"defaultAction":"FLAG","ruleImplementationName":"transactions-volume-quantiles","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-75
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-75","name":"Currency transaction report needed","description":"If a transaction amount is more than x - a \"CTR\" is required by law. x depends on jurisdiction. EU is 10,000 euro; US is 10,000 USD","defaultParameters":{"transactionAmountThreshold":{"PHP":50000}},"defaultAction":"FLAG","ruleImplementationName":"transaction-amount","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-1
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-2","name":"Transaction amount too high","description":"Transaction amount is >= x in USD or equivalent","defaultParameters":{"transactionAmountThreshold":{"PHP":5000000}},"defaultAction":"FLAG","ruleImplementationName":"transaction-amount","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-99
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-99","name":"Transaction value exceeds customer declared limit x","description":"For a given user, user-declared transaction amount is <= x. Customers define an expected transaction amount when they are onboarding - this will compare that variable on their profile","defaultParameters":{},"defaultAction":"FLAG","ruleImplementationName":"transaction-amount-user-limit","labels":["AML", "Fraud"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-95
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-95","name":"High velocity receiver in hours","description":"Receiver is receiving >= x transactions in total within time t hours","defaultParameters":{"transactionsPerSecond":0.0694,"timeWindowInSeconds":7200,"checkSender":"none","checkReceiver":"receiving"},"defaultAction":"FLAG","ruleImplementationName":"transactions-velocity","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
+
+# R-109
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-109","name":"High volume receiver in hours","description":"Receiver is receiving >= USD x or equivalent amount in total within time t hours","defaultParameters":{"transactionVolumeThreshold":{"PHP":500000},"timeWindowInSeconds":3600,"checkSender":"none","checkReceiver":"receiving"},"defaultAction":"FLAG","ruleImplementationName":"transactions-volume","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId  
+
+# R-110
+awscurl --service execute-api \
+    -X POST \
+    --region "$region" \
+    --profile "$profile" \
+    -d '{"id":"R-110","name":"High volume receiver in days","description":"Receiver is receiving >= USD x or equivalent amount in total within time t days","defaultParameters":{"transactionVolumeThreshold":{"PHP":5000000},"timeWindowInSeconds":172800,"checkSender":"none","checkReceiver":"receiving"},"defaultAction":"FLAG","ruleImplementationName":"transactions-volume","labels":["AML"],"type":"TRANSACTION"}' \
+    https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId  
+
+
+
 
 echo "Rules and rule instances created."

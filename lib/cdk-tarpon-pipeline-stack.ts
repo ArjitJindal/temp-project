@@ -16,11 +16,11 @@ import { CdkTarponStack } from './cdk-tarpon-stack'
 const PIPELINE_NAME = 'tarpon-pipeline'
 
 export interface CdkTarponPipelineStackProps extends cdk.StackProps {
-  readonly devTarponStack: CdkTarponStack
-  readonly sandboxTarponStack: CdkTarponStack
-  readonly prodTarponStackSIN: CdkTarponStack
-  readonly prodTarponStackBOM: CdkTarponStack
-  readonly prodTarponStackFRA: CdkTarponStack
+  readonly devTarponStack: CdkTarponStack | null
+  readonly sandboxTarponStack: CdkTarponStack | null
+  readonly prodTarponStackSIN: CdkTarponStack | null
+  readonly prodTarponStackBOM: CdkTarponStack | null
+  readonly prodTarponStackFRA: CdkTarponStack | null
 }
 
 export class CdkTarponPipelineStack extends cdk.Stack {
