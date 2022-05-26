@@ -11,15 +11,17 @@ import { Construct } from 'constructs';
 import { config as deployConfig } from './configs/config-deployment';
 import { config as devConfig } from './configs/config-dev';
 import { config as sandboxConfig } from './configs/config-sandbox';
-import { config as prodConfig } from './configs/config-prod';
+import { config as prodConfig } from './configs/config-prod-asia-1';
 import { CdkPhytoplanktonStack } from './cdk-phytoplankton-stack';
 
 const PIPELINE_NAME = 'phytoplankton-pipeline';
 
 export interface CdkPhytoplanktonPipelineStackProps extends cdk.StackProps {
-  readonly devStack: CdkPhytoplanktonStack;
-  readonly sandboxStack: CdkPhytoplanktonStack;
-  readonly prodStack: CdkPhytoplanktonStack;
+  readonly devStack: CdkPhytoplanktonStack | null;
+  readonly sandboxStack: CdkPhytoplanktonStack | null;
+  readonly prodStackSIN: CdkPhytoplanktonStack | null;
+  readonly prodStackBOM: CdkPhytoplanktonStack | null;
+  readonly prodStackFRA: CdkPhytoplanktonStack | null;
 }
 
 export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
