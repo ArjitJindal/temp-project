@@ -86,6 +86,7 @@
     "aws-sdk": "^2.1062.0",
     "chai": "^4.3.4",
     "command-line-args": "^5.2.0",
+    "commander": "^9.2.0",
     "constructs": "^10.0.72",
     "copy-webpack-plugin": "^10.2.4",
     "eslint": "^8.6.0",

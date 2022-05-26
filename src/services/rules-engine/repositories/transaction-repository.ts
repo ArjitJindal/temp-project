@@ -240,6 +240,8 @@ export class TransactionRepository {
       transaction.type === undefined
         ? undefined
         : getReceiverKeys(this.tenantId, transaction, transaction.type)
+
+    // Important: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {

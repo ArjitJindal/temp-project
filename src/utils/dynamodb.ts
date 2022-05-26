@@ -57,3 +57,23 @@ async function paginateQueryInternal(
   }
   return result
 }
+
+export async function* paginateQueryGenerator(
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  pagesLimit = Infinity
+): AsyncGenerator<AWS.DynamoDB.DocumentClient.QueryOutput> {
+  let lastEvaluateKey = undefined
+  let currentPage = 0
+
+  while (lastEvaluateKey !== null && currentPage <= pagesLimit) {
+    const paginatedQuery: AWS.DynamoDB.DocumentClient.QueryInput = {
+      ...query,
+      ExclusiveStartKey: lastEvaluateKey,
+    }
+    const result = await dynamoDb.query(paginatedQuery).promise()
+    yield result
+    lastEvaluateKey = result.LastEvaluatedKey || null
+    currentPage += 1
+  }
+}

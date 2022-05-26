@@ -22,11 +22,8 @@ const TYPE_PREFIX = 'type:'
 export type TimeGranularity = 'day' | 'month' | 'year'
 
 export const DynamoDbKeys = {
-  TENANT: (tenantId: string) => ({
-    PartitionKeyID: `${tenantId}#transaction#primary`,
-  }),
   // Attributes: refer to Transaction
-  TRANSACTION: (tenantId: string, transactionId: string) => ({
+  TRANSACTION: (tenantId: string, transactionId?: string) => ({
     PartitionKeyID: `${tenantId}#transaction#primary`,
     SortKeyID: transactionId,
   }),
@@ -163,13 +160,13 @@ export const DynamoDbKeys = {
     tenantId: string,
     userId: string,
     // e.g 2022-01-01, 2022-01, 2022
-    timeLabel: string
+    timeLabel?: string
   ) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time`,
     SortKeyID: timeLabel,
   }),
   // Attributes: refer to User / Business
-  USER: (tenantId: string, userId: string) => ({
+  USER: (tenantId: string, userId?: string) => ({
     PartitionKeyID: `${tenantId}#user#primary`,
     SortKeyID: userId,
   }),
