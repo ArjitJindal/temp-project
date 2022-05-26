@@ -565,6 +565,7 @@ paths:
         - schema:
             type: string
             enum:
+              - WEEK
               - MONTH
               - DAY
               - YEAR
@@ -573,9 +574,9 @@ paths:
           required: true
           description: 'MONTH, DAY or YEAR'
         - schema:
-            type: string
+            type: number
           in: query
-          name: fromTimestamp
+          name: endTimestamp
       requestBody:
         content:
           application/json:
@@ -888,32 +889,33 @@ components:
         - total
         - data
     DashboardStatsTransactionsCount:
-      type: array
-      description: ''
-      minItems: 1
-      uniqueItems: true
+      type: object
       x-examples:
         example-1:
-          - date: '2020-01-04'
-            totalTransactions: 2344
-            flaggedTransactions: 121
-            stoppedTransactions: 33
-      items:
-        type: object
-        properties:
-          date:
-            type: string
-            minLength: 1
-          totalTransactions:
-            type: number
-          flaggedTransactions:
-            type: number
-          stoppedTransactions:
-            type: number
-        required:
-          - date
-          - totalTransactions
+          data:
+            - _id: '2020-01-04'
+              totalTransactions: 2344
+              flaggedTransactions: 121
+              stoppedTransactions: 33
       title: DashboardStatsTransactionsCount
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              totalTransactions:
+                type: number
+              flaggedTransactions:
+                type: number
+              stoppedTransactions:
+                type: number
+            required:
+              - _id
+      required:
+        - data
     Comment:
       title: Comment
       type: object

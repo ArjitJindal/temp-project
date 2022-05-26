@@ -13,6 +13,7 @@ import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { Comment } from '../models/Comment';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
+import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { FileImport } from '../models/FileImport';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -465,12 +466,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   /**
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
-   * @param fromTimestamp
+   * @param endTimestamp
    * @param body
    */
   public async getDashboardStatsTransactions(
-    timeframe: 'MONTH' | 'DAY' | 'YEAR',
-    fromTimestamp?: string,
+    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    endTimestamp?: number,
     body?: any,
     _options?: Configuration,
   ): Promise<RequestContext> {
@@ -492,15 +493,15 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     if (timeframe !== undefined) {
       requestContext.setQueryParam(
         'timeframe',
-        ObjectSerializer.serialize(timeframe, "'MONTH' | 'DAY' | 'YEAR'", ''),
+        ObjectSerializer.serialize(timeframe, "'WEEK' | 'MONTH' | 'DAY' | 'YEAR'", ''),
       );
     }
 
     // Query Params
-    if (fromTimestamp !== undefined) {
+    if (endTimestamp !== undefined) {
       requestContext.setQueryParam(
-        'fromTimestamp',
-        ObjectSerializer.serialize(fromTimestamp, 'string', ''),
+        'endTimestamp',
+        ObjectSerializer.serialize(endTimestamp, 'number', ''),
       );
     }
 
@@ -666,6 +667,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param filterOutStatus
    * @param filterRulesExecuted
    * @param filterRulesHit
+   * @param transactionType
+   * @param filterOriginCurrencies
+   * @param filterDestinationCurrencies
    */
   public async getTransactionsList(
     limit: number,
@@ -676,6 +680,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     filterOutStatus?: RuleAction,
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
+    transactionType?: string,
+    filterOriginCurrencies?: Array<string>,
+    filterDestinationCurrencies?: Array<string>,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -754,6 +761,30 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam(
         'filterRulesHit',
         ObjectSerializer.serialize(filterRulesHit, 'Array<string>', ''),
+      );
+    }
+
+    // Query Params
+    if (transactionType !== undefined) {
+      requestContext.setQueryParam(
+        'transactionType',
+        ObjectSerializer.serialize(transactionType, 'string', ''),
+      );
+    }
+
+    // Query Params
+    if (filterOriginCurrencies !== undefined) {
+      requestContext.setQueryParam(
+        'filterOriginCurrencies',
+        ObjectSerializer.serialize(filterOriginCurrencies, 'Array<string>', ''),
+      );
+    }
+
+    // Query Params
+    if (filterDestinationCurrencies !== undefined) {
+      requestContext.setQueryParam(
+        'filterDestinationCurrencies',
+        ObjectSerializer.serialize(filterDestinationCurrencies, 'Array<string>', ''),
       );
     }
 
@@ -1658,24 +1689,26 @@ export class DefaultApiResponseProcessor {
    * @params response Response returned by the server for a request to getDashboardStatsTransactions
    * @throws ApiException if the response code was not in [200, 299]
    */
-  public async getDashboardStatsTransactions(response: ResponseContext): Promise<Set<any>> {
+  public async getDashboardStatsTransactions(
+    response: ResponseContext,
+  ): Promise<DashboardStatsTransactionsCount> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Set<any> = ObjectSerializer.deserialize(
+      const body: DashboardStatsTransactionsCount = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Set<any>',
+        'DashboardStatsTransactionsCount',
         '',
-      ) as Set<any>;
+      ) as DashboardStatsTransactionsCount;
       return body;
     }
 
     // Work around for missing responses in specification, e.g. for petstore.yaml
     if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Set<any> = ObjectSerializer.deserialize(
+      const body: DashboardStatsTransactionsCount = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Set<any>',
+        'DashboardStatsTransactionsCount',
         '',
-      ) as Set<any>;
+      ) as DashboardStatsTransactionsCount;
       return body;
     }
 

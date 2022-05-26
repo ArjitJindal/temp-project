@@ -17,12 +17,15 @@ export * from './ConsumerName';
 export * from './ConsumerUsersListResponse';
 export * from './ContactDetails';
 export * from './ContactDetails1';
+export * from './DashboardStatsTransactionsCount';
+export * from './DashboardStatsTransactionsCountData';
 export * from './DeviceData';
 export * from './ExecutedRulesResult';
 export * from './FailedRulesResult';
 export * from './FileImport';
 export * from './FileImportStatusChange';
 export * from './FileInfo';
+export * from './GenericBankAccountDetails';
 export * from './IBANDetails';
 export * from './ImportRequest';
 export * from './ImportResponse';
@@ -46,6 +49,7 @@ export * from './TransactionCaseManagement';
 export * from './TransactionCaseManagementAllOf';
 export * from './TransactionLimits';
 export * from './TransactionLimits1';
+export * from './TransactionState';
 export * from './TransactionStatusChange';
 export * from './TransactionUpdateRequest';
 export * from './TransactionWithRulesResult';
@@ -76,12 +80,15 @@ import { ConsumerName } from './ConsumerName';
 import { ConsumerUsersListResponse } from './ConsumerUsersListResponse';
 import { ContactDetails } from './ContactDetails';
 import { ContactDetails1 } from './ContactDetails1';
+import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount';
+import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData';
 import { DeviceData } from './DeviceData';
 import { ExecutedRulesResult } from './ExecutedRulesResult';
 import { FailedRulesResult } from './FailedRulesResult';
 import { FileImport, FileImportTypeEnum } from './FileImport';
 import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './FileImportStatusChange';
 import { FileInfo } from './FileInfo';
+import { GenericBankAccountDetails } from './GenericBankAccountDetails';
 import { IBANDetails } from './IBANDetails';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
 import { ImportResponse } from './ImportResponse';
@@ -105,6 +112,7 @@ import { TransactionCaseManagement } from './TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf';
 import { TransactionLimits } from './TransactionLimits';
 import { TransactionLimits1 } from './TransactionLimits1';
+import { TransactionState } from './TransactionState';
 import { TransactionStatusChange } from './TransactionStatusChange';
 import { TransactionUpdateRequest } from './TransactionUpdateRequest';
 import { TransactionWithRulesResult } from './TransactionWithRulesResult';
@@ -135,6 +143,7 @@ let enumsMap: Set<string> = new Set<string>([
   'RuleAction1',
   'RuleInstanceTypeEnum',
   'RuleInstanceStatusEnum',
+  'TransactionState',
 ]);
 
 let typeMap: { [index: string]: any } = {
@@ -157,12 +166,15 @@ let typeMap: { [index: string]: any } = {
   ConsumerUsersListResponse: ConsumerUsersListResponse,
   ContactDetails: ContactDetails,
   ContactDetails1: ContactDetails1,
+  DashboardStatsTransactionsCount: DashboardStatsTransactionsCount,
+  DashboardStatsTransactionsCountData: DashboardStatsTransactionsCountData,
   DeviceData: DeviceData,
   ExecutedRulesResult: ExecutedRulesResult,
   FailedRulesResult: FailedRulesResult,
   FileImport: FileImport,
   FileImportStatusChange: FileImportStatusChange,
   FileInfo: FileInfo,
+  GenericBankAccountDetails: GenericBankAccountDetails,
   IBANDetails: IBANDetails,
   ImportRequest: ImportRequest,
   ImportResponse: ImportResponse,

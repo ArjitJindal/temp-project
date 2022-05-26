@@ -31,12 +31,15 @@ models/ConsumerName.ts
 models/ConsumerUsersListResponse.ts
 models/ContactDetails.ts
 models/ContactDetails1.ts
+models/DashboardStatsTransactionsCount.ts
+models/DashboardStatsTransactionsCountData.ts
 models/DeviceData.ts
 models/ExecutedRulesResult.ts
 models/FailedRulesResult.ts
 models/FileImport.ts
 models/FileImportStatusChange.ts
 models/FileInfo.ts
+models/GenericBankAccountDetails.ts
 models/IBANDetails.ts
 models/ImportRequest.ts
 models/ImportResponse.ts
@@ -61,6 +64,7 @@ models/TransactionCaseManagement.ts
 models/TransactionCaseManagementAllOf.ts
 models/TransactionLimits.ts
 models/TransactionLimits1.ts
+models/TransactionState.ts
 models/TransactionStatusChange.ts
 models/TransactionUpdateRequest.ts
 models/TransactionWithRulesResult.ts

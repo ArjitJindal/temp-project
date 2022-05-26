@@ -21,12 +21,15 @@ import { ConsumerName } from '../models/ConsumerName';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
+import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
+import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FailedRulesResult } from '../models/FailedRulesResult';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
+import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -50,6 +53,7 @@ import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
 import { TransactionLimits1 } from '../models/TransactionLimits1';
+import { TransactionState } from '../models/TransactionState';
 import { TransactionStatusChange } from '../models/TransactionStatusChange';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
@@ -204,16 +208,16 @@ export interface DefaultApiGetConsumerUsersListRequest {
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
    * MONTH, DAY or YEAR
-   * @type &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  timeframe: 'MONTH' | 'DAY' | 'YEAR';
+  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
   /**
    *
-   * @type string
+   * @type number
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  fromTimestamp?: string;
+  endTimestamp?: number;
   /**
    *
    * @type any
@@ -295,6 +299,24 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterRulesHit?: Array<string>;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  transactionType?: string;
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOriginCurrencies?: Array<string>;
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterDestinationCurrencies?: Array<string>;
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
@@ -618,9 +640,9 @@ export class ObjectDefaultApi {
   public getDashboardStatsTransactions(
     param: DefaultApiGetDashboardStatsTransactionsRequest,
     options?: Configuration,
-  ): Promise<Set<any>> {
+  ): Promise<DashboardStatsTransactionsCount> {
     return this.api
-      .getDashboardStatsTransactions(param.timeframe, param.fromTimestamp, param.body, options)
+      .getDashboardStatsTransactions(param.timeframe, param.endTimestamp, param.body, options)
       .toPromise();
   }
 
@@ -697,6 +719,9 @@ export class ObjectDefaultApi {
         param.filterOutStatus,
         param.filterRulesExecuted,
         param.filterRulesHit,
+        param.transactionType,
+        param.filterOriginCurrencies,
+        param.filterDestinationCurrencies,
         options,
       )
       .toPromise();

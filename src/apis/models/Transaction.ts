@@ -13,10 +13,12 @@
 import { ACHDetails } from './ACHDetails';
 import { CardDetails } from './CardDetails';
 import { DeviceData } from './DeviceData';
+import { GenericBankAccountDetails } from './GenericBankAccountDetails';
 import { IBANDetails } from './IBANDetails';
 import { SWIFTDetails } from './SWIFTDetails';
 import { Tag } from './Tag';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
+import { TransactionState } from './TransactionState';
 import { UPIDetails } from './UPIDetails';
 import { WalletDetails } from './WalletDetails';
 import { HttpFile } from '../http/http';
@@ -30,13 +32,15 @@ export class Transaction {
    * Unique transaction identifier
    */
   'transactionId'?: string;
-  'timestamp': number;
+  'timestamp'?: number;
+  'transactionState'?: TransactionState;
   'originUserId'?: string;
   'destinationUserId'?: string;
   'originAmountDetails'?: TransactionAmountDetails;
   'destinationAmountDetails'?: TransactionAmountDetails;
   'originPaymentDetails'?:
     | CardDetails
+    | GenericBankAccountDetails
     | IBANDetails
     | ACHDetails
     | SWIFTDetails
@@ -44,6 +48,7 @@ export class Transaction {
     | WalletDetails;
   'destinationPaymentDetails'?:
     | CardDetails
+    | GenericBankAccountDetails
     | IBANDetails
     | ACHDetails
     | UPIDetails
@@ -94,6 +99,12 @@ export class Transaction {
       format: '',
     },
     {
+      name: 'transactionState',
+      baseName: 'transactionState',
+      type: 'TransactionState',
+      format: '',
+    },
+    {
       name: 'originUserId',
       baseName: 'originUserId',
       type: 'string',
@@ -120,13 +131,13 @@ export class Transaction {
     {
       name: 'originPaymentDetails',
       baseName: 'originPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
+      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
       format: '',
     },
     {
       name: 'destinationPaymentDetails',
       baseName: 'destinationPaymentDetails',
-      type: 'CardDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
+      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
       format: '',
     },
     {

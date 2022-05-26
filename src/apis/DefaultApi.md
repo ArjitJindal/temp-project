@@ -562,7 +562,7 @@ No authorization required
 
 # **getDashboardStatsTransactions**
 
-> Set<any> getDashboardStatsTransactions()
+> DashboardStatsTransactionsCount getDashboardStatsTransactions()
 
 ### Example
 
@@ -574,10 +574,10 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiGetDashboardStatsTransactionsRequest = {
-  // 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
-  timeframe: "MONTH",
-  // string (optional)
-  fromTimestamp: "fromTimestamp_example",
+  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
+  timeframe: "WEEK",
+  // number (optional)
+  endTimestamp: 3.14,
   // any (optional)
   body: {},
 };
@@ -589,15 +589,15 @@ apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
 
 ### Parameters
 
-| Name | Type | Description | Notes |
-| --- | --- | --- | --- | --- | --- |
-| **body** | **any** |  |
-| **timeframe** | [\*\*&#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;**]**Array<&#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
-| **fromTimestamp** | [**string**] |  | (optional) defaults to undefined |
+| Name             | Type                | Description     | Notes                            |
+| ---------------- | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
+| **body**         | **any**             |                 |
+| **timeframe**    | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
+| **endTimestamp** | [**number**]        |                 | (optional) defaults to undefined |
 
 ### Return type
 
-**Set<any>**
+**DashboardStatsTransactionsCount**
 
 ### Authorization
 
@@ -886,6 +886,16 @@ let body:.DefaultApiGetTransactionsListRequest = {
   filterRulesHit: [
     "filterRulesHit_example",
   ],
+  // string (optional)
+  transactionType: "transactionType_example",
+  // Array<string> (optional)
+  filterOriginCurrencies: [
+    "filterOriginCurrencies_example",
+  ],
+  // Array<string> (optional)
+  filterDestinationCurrencies: [
+    "filterDestinationCurrencies_example",
+  ],
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -905,6 +915,9 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
 | **filterRulesExecuted** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **filterRulesHit** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **transactionType** | [**string**] |  | (optional) defaults to undefined |
+| **filterOriginCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **filterDestinationCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 
 ### Return type
 

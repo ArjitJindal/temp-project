@@ -22,12 +22,15 @@ import { ConsumerName } from '../models/ConsumerName';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
+import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
+import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FailedRulesResult } from '../models/FailedRulesResult';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
+import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -51,6 +54,7 @@ import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
 import { TransactionLimits } from '../models/TransactionLimits';
 import { TransactionLimits1 } from '../models/TransactionLimits1';
+import { TransactionState } from '../models/TransactionState';
 import { TransactionStatusChange } from '../models/TransactionStatusChange';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult';
@@ -461,18 +465,18 @@ export class ObservableDefaultApi {
   /**
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
-   * @param fromTimestamp
+   * @param endTimestamp
    * @param body
    */
   public getDashboardStatsTransactions(
-    timeframe: 'MONTH' | 'DAY' | 'YEAR',
-    fromTimestamp?: string,
+    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    endTimestamp?: number,
     body?: any,
     _options?: Configuration,
-  ): Observable<Set<any>> {
+  ): Observable<DashboardStatsTransactionsCount> {
     const requestContextPromise = this.requestFactory.getDashboardStatsTransactions(
       timeframe,
-      fromTimestamp,
+      endTimestamp,
       body,
       _options,
     );
@@ -674,6 +678,9 @@ export class ObservableDefaultApi {
    * @param filterOutStatus
    * @param filterRulesExecuted
    * @param filterRulesHit
+   * @param transactionType
+   * @param filterOriginCurrencies
+   * @param filterDestinationCurrencies
    */
   public getTransactionsList(
     limit: number,
@@ -684,6 +691,9 @@ export class ObservableDefaultApi {
     filterOutStatus?: RuleAction,
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
+    transactionType?: string,
+    filterOriginCurrencies?: Array<string>,
+    filterDestinationCurrencies?: Array<string>,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
@@ -695,6 +705,9 @@ export class ObservableDefaultApi {
       filterOutStatus,
       filterRulesExecuted,
       filterRulesHit,
+      transactionType,
+      filterOriginCurrencies,
+      filterDestinationCurrencies,
       _options,
     );
 

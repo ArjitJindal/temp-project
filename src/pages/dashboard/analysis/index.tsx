@@ -1,24 +1,24 @@
 import type { FC } from 'react';
-import { Suspense, useState } from 'react';
-import { EllipsisOutlined } from '@ant-design/icons';
-import { Card, Col, Dropdown, Menu, Row } from 'antd';
+import { useEffect, useState } from 'react';
 import { GridContent } from '@ant-design/pro-layout';
-import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
-import type moment from 'moment';
-import { useRequest } from 'umi';
-import IntroduceRow from './components/IntroduceRow';
-import SalesCard from './components/SalesCard';
-import ProportionSales from './components/ProportionSales';
-import Map from './components/Map';
-
-import { fakeChartData } from './service';
-import PageLoading from './components/PageLoading';
-import type { TimeType } from './components/SalesCard';
-import { getTimeDistance } from './utils/utils';
-import type { AnalysisData } from './data.d';
-import styles from './style.less';
-
-type RangePickerValue = RangePickerProps<moment.Moment>['value'];
+import moment from 'moment';
+import TransactionsChartCard, {
+  TimeWindowType,
+  TransactionsStats,
+} from './components/TransactionsChartCard';
+import { AnalysisData } from './data.d';
+import { useApi } from '@/api';
+import {
+  AsyncResource,
+  failed,
+  getOr,
+  init,
+  isLoading,
+  loading,
+  map,
+  success,
+} from '@/utils/asyncResource';
+import { DashboardStatsTransactionsCountData } from '@/apis';
 
 type AnalysisProps = {
   dashboardAndanalysis: AnalysisData;
@@ -26,71 +26,56 @@ type AnalysisProps = {
 };
 
 const Analysis: FC<AnalysisProps> = () => {
-  const [rangePickerValue, setRangePickerValue] = useState<RangePickerValue>(
-    getTimeDistance('year'),
-  );
+  const [endDate, setEndDate] = useState<moment.Moment | null>(null);
+  const [timeWindowType, setTimeWindowType] = useState<TimeWindowType>('YEAR');
 
-  const { loading, data } = useRequest(fakeChartData);
-
-  const selectDate = (type: TimeType) => {
-    setRangePickerValue(getTimeDistance(type));
-  };
-
-  const handleRangePickerChange = (value: RangePickerValue) => {
-    setRangePickerValue(value);
-  };
-
-  const isActive = (type: TimeType) => {
-    if (!rangePickerValue) {
-      return '';
+  const api = useApi();
+  const [data, setData] = useState<AsyncResource<DashboardStatsTransactionsCountData[]>>(init());
+  useEffect(() => {
+    let isCanceled = false;
+    async function fetch() {
+      setData((state) => loading(getOr(state, null)));
+      try {
+        const result = await api.getDashboardStatsTransactions({
+          timeframe: timeWindowType,
+          endTimestamp: endDate ? endDate.valueOf() : Date.now(),
+        });
+        if (isCanceled) {
+          return;
+        }
+        setData(success(result.data));
+      } catch (e) {
+        setData(failed('Unknown error')); // todo: get actual error message
+      }
     }
-    const value = getTimeDistance(type);
-    if (!value) {
-      return '';
-    }
-    if (!rangePickerValue[0] || !rangePickerValue[1]) {
-      return '';
-    }
-    if (
-      rangePickerValue[0].isSame(value[0] as moment.Moment, 'day') &&
-      rangePickerValue[1].isSame(value[1] as moment.Moment, 'day')
-    ) {
-      return styles.currentDate;
-    }
-    return '';
-  };
 
-  const salesPieData = data?.salesTypeData;
+    fetch().catch((e) => {
+      console.error(e);
+    });
 
-  const menu = (
-    <Menu>
-      <Menu.Item>操作一</Menu.Item>
-      <Menu.Item>操作二</Menu.Item>
-    </Menu>
-  );
+    return () => {
+      isCanceled = true;
+    };
+  }, [endDate, timeWindowType, api]);
 
-  const dropdownGroup = (
-    <span className={styles.iconGroup}>
-      <Dropdown overlay={menu} placement="bottomRight">
-        <EllipsisOutlined />
-      </Dropdown>
-    </span>
-  );
+  const salesDataResource: AsyncResource<TransactionsStats> = map(data, (value) => ({
+    data: value.map((item, i) => ({
+      id: item._id,
+      flaggedTransactions: item.flaggedTransactions ?? 0,
+      stoppedTransactions: item.stoppedTransactions ?? 0,
+    })),
+  }));
 
   return (
     <GridContent>
-      <>
-        <Suspense fallback={null}>
-          <SalesCard
-            rangePickerValue={rangePickerValue}
-            salesData={data?.salesData || []}
-            isActive={isActive}
-            handleRangePickerChange={handleRangePickerChange}
-            loading={loading}
-            selectDate={selectDate}
-          />
-        </Suspense>
-      </>
+      <TransactionsChartCard
+        salesData={getOr(salesDataResource, { data: [] })}
+        endDate={endDate}
+        timeWindowType={timeWindowType}
+        loading={isLoading(data)}
+        onChangeEndDate={setEndDate}
+        onSelectTimeWindow={setTimeWindowType}
+      />
     </GridContent>
   );
 };

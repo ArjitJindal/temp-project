@@ -115,6 +115,18 @@ export function map<T, R>(
   return asyncResource;
 }
 
+export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
+  switch (asyncResource.kind) {
+    case 'SUCCESS':
+      return asyncResource.value;
+    case 'LOADING':
+      if (asyncResource.lastValue != null) {
+        return asyncResource.lastValue;
+      }
+  }
+  return defaultValue;
+}
+
 /* Helpers */
 export function useFinishedLoading<T>(resource: AsyncResource<T>): boolean {
   const wasLoading = usePrevious(isLoading(resource)) || false;

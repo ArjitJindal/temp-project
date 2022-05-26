@@ -1,0 +1,186 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+import { Button, Card, Col, DatePicker, Dropdown, Menu, Row, Tabs } from 'antd';
+import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
+import type moment from 'moment';
+import { EllipsisOutlined } from '@ant-design/icons';
+import { Column } from '@ant-design/charts';
+import styles from '../style.less';
+import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
+
+// FIXME: import doesn't work
+const toPng = require('html-to-image').toPng;
+const autoTable = require('jspdf-autotable').default;
+const jsPDF = require('jspdf');
+
+type RangePickerValue = RangePickerProps<moment.Moment>['value'];
+export type TimeWindowType = DefaultApiGetDashboardStatsTransactionsRequest['timeframe'];
+
+const { TabPane } = Tabs;
+
+export interface TransactionsStats {
+  data: {
+    id: string;
+    flaggedTransactions: number;
+    stoppedTransactions: number;
+  }[];
+}
+
+function saveToFile(blob: Blob, filename: string) {
+  const a = document.createElement('a');
+  const url = window.URL.createObjectURL(blob);
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function getDateRange(rangePickerValue: RangePickerValue) {
+  if (!rangePickerValue) {
+    return null;
+  }
+  const fromDate = rangePickerValue[0] as moment.Moment;
+  const toDate = rangePickerValue[1] as moment.Moment;
+  return `${fromDate.format('YYYYMMDD')}-${toDate.format('YYYYMMDD')}`;
+}
+
+function exportToCsv(header: string[], exportData: any[], rangePickerValue: RangePickerValue) {
+  const data = [[header, ...exportData].map((row) => row.join(',')).join('\n')];
+  saveToFile(
+    new Blob(data, { type: 'octet/stream' }),
+    `flagright-stopped-transactions-${getDateRange(rangePickerValue)}.csv`,
+  );
+}
+
+async function exportToPdf(header: any[], exportData: any[], rangePickerValue: RangePickerValue) {
+  const doc = new jsPDF.jsPDF();
+  const chart = document.getElementById('sales-card')!;
+  const ratio = chart.clientHeight / chart.clientWidth;
+  const chartImage = await toPng(chart);
+  const chartImageX = 10;
+  const chartImageY = 10;
+  const chartWidth = doc.internal.pageSize.getWidth() - 2 * chartImageX;
+  const chartHeight = chartWidth * ratio;
+  doc.addImage(chartImage, 'PNG', chartImageX, chartImageY, chartWidth, chartHeight);
+  autoTable(doc, {
+    startY: chartImageY + chartHeight + 10,
+    headStyles: { fillColor: '#6294FA' },
+    styles: { cellPadding: 1 },
+    head: [header],
+    body: exportData,
+  });
+
+  doc.save(`flagright-stopped-transactions-${getDateRange(rangePickerValue)}.pdf`);
+}
+
+const TransactionsChartCard = (props: {
+  endDate: moment.Moment | null;
+  timeWindowType: TimeWindowType;
+  salesData: TransactionsStats;
+  loading: boolean;
+  onChangeEndDate: (date: moment.Moment | null) => void;
+  onSelectTimeWindow: (timeWindow: TimeWindowType) => void;
+}) => {
+  const { endDate, timeWindowType, salesData, onChangeEndDate, loading, onSelectTimeWindow } =
+    props;
+  // const onActionsMenuClick = useCallback((event: MenuInfo) => {
+  //   const { key } = event;
+  //   const exportData = salesData.flatMap((data1) => {
+  //     return rankingListData.map((data2, index) => [
+  //       index === 0 ? data1.xValue : '',
+  //       data2.title,
+  //       Math.floor(Math.random() * 1000),
+  //     ]);
+  //   });
+  //   if (key === 'csv') {
+  //     exportToCsv(['Month', 'Rule', 'Hits'], exportData, endDate);
+  //   } else if (key === 'pdf') {
+  //     exportToPdf(['Month', 'Rule', 'Hits'], exportData, endDate);
+  //   }
+  // }, []);
+  return (
+    <Card bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">
+      <div className={styles.salesCard}>
+        <Tabs
+          tabBarExtraContent={
+            <div className={styles.salesExtraWrap}>
+              <div className={styles.salesExtra}>
+                {[
+                  { type: 'DAY' as const, title: 'Day' },
+                  { type: 'WEEK' as const, title: 'Week' },
+                  { type: 'MONTH' as const, title: 'Month' },
+                  { type: 'YEAR' as const, title: 'Year' },
+                ].map(({ type, title }) => (
+                  <a
+                    key={type}
+                    className={type === timeWindowType ? styles.currentDate : ''}
+                    onClick={() => onSelectTimeWindow(type)}
+                  >
+                    {title}
+                  </a>
+                ))}
+              </div>
+              <DatePicker
+                placeholder="Select the period end date"
+                value={endDate}
+                onChange={onChangeEndDate}
+                style={{ width: 256 }}
+              />
+              {/*<Dropdown*/}
+              {/*  overlay={*/}
+              {/*    <Menu onClick={() => {}}>*/}
+              {/*      <Menu.Item key="csv">Export to CSV</Menu.Item>*/}
+              {/*      <Menu.Item key="pdf">Export to PDF</Menu.Item>*/}
+              {/*    </Menu>*/}
+              {/*  }*/}
+              {/*  trigger={['hover']}*/}
+              {/*>*/}
+              {/*  <Button icon={<EllipsisOutlined />} />*/}
+              {/*</Dropdown>*/}
+            </div>
+          }
+          size="large"
+          tabBarStyle={{ marginBottom: 24 }}
+        >
+          {[
+            { title: 'Stopped Transactions', key: 'stoppedTransactions' },
+            { title: 'Flagged Transactions', key: 'flaggedTransactions' },
+          ].map(({ title, key }) => (
+            <TabPane tab={title} key={key}>
+              <div className={styles.salesBar} style={{ opacity: loading ? 0.5 : 1 }}>
+                <Column
+                  height={400}
+                  forceFit
+                  data={salesData.data.map((item) => ({
+                    x: item.id,
+                    y: item[key],
+                  }))}
+                  xField="x"
+                  yField="y"
+                  xAxis={{
+                    visible: true,
+                    title: {
+                      visible: false,
+                    },
+                  }}
+                  yAxis={{
+                    visible: true,
+                    title: {
+                      visible: false,
+                    },
+                  }}
+                  meta={{
+                    y: {
+                      alias: 'Transaction Count',
+                    },
+                  }}
+                />
+              </div>
+            </TabPane>
+          ))}
+        </Tabs>
+      </div>
+    </Card>
+  );
+};
+
+export default TransactionsChartCard;
