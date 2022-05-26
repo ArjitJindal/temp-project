@@ -173,6 +173,10 @@ export default () => {
         }}
         search={false}
         rowKey="id"
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'created-rules-table',
+        }}
       />
 
       <Drawer

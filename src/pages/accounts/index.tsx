@@ -111,6 +111,10 @@ export default function () {
           };
         }}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'accounts-list',
+        }}
       />
     </PageWrapper>
   );

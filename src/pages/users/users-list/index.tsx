@@ -209,6 +209,10 @@ const BusinessUsersTab = (
           };
         }}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'users-list-table',
+        }}
       />
       <Drawer
         width={800}
@@ -464,6 +468,10 @@ const ConsumerUsersTab = (
           };
         }}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'users-list',
+        }}
       />
       <Drawer
         width={600}

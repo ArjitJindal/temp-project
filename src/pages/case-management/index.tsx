@@ -335,6 +335,10 @@ const TableList = (
           };
         }}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'case-management-list',
+        }}
       />
       <Drawer
         width={700}

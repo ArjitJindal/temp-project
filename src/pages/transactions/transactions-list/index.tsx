@@ -216,6 +216,10 @@ const TableList = (
           };
         }}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'transaction-list-table',
+        }}
       />
       <Drawer
         width={700}

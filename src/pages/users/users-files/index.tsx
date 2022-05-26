@@ -78,6 +78,10 @@ const TableList: React.FC = () => {
         search={false}
         request={files}
         columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'users-files-list',
+        }}
         toolBarRender={() => [
           <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
           <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
