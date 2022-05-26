@@ -3,6 +3,7 @@ import { defineConfig } from 'umi';
 
 export default defineConfig({
   define: {
+    EXPORT_ENTRIES_LIMIT: 10000,
     API_BASE_PATH: 'https://eu-1.api.flagright.com/console',
     AUTH0_AUDIENCE: 'https://eu-1.api.flagright.com/',
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',

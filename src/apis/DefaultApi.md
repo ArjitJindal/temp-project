@@ -21,6 +21,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
 | [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
+| [**getTransactionsListExport**](DefaultApi.md#getTransactionsListExport) | **GET** /transactions/export | Transaction - Export |
 | [**getTransactionsPerUserList**](DefaultApi.md#getTransactionsPerUserList) | **GET** /user/transactions | Transaction Per User - List |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
 | [**postGetPresignedUrl**](DefaultApi.md#postGetPresignedUrl) | **POST** /files/getPresignedUrl | Files - Get Presigned URL |
@@ -937,6 +938,82 @@ No authorization required
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getTransactionsListExport**
+
+> InlineResponse200 getTransactionsListExport()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetTransactionsListExportRequest = {
+  // number
+  limit: 3.14,
+  // number
+  skip: 3.14,
+  // number
+  beforeTimestamp: 3.14,
+  // number (optional)
+  afterTimestamp: 3.14,
+  // string (optional)
+  filterId: "filterId_example",
+  // Array<string> (optional)
+  filterRulesExecuted: [
+    "filterRulesExecuted_example",
+  ],
+  // Array<string> (optional)
+  filterRulesHit: [
+    "filterRulesHit_example",
+  ],
+  // RuleAction (optional)
+  filterOutStatus: "FLAG",
+};
+
+apiInstance.getTransactionsListExport(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **limit** | [**number**] |  | defaults to undefined |
+| **skip** | [**number**] |  | defaults to undefined |
+| **beforeTimestamp** | [**number**] |  | defaults to undefined |
+| **afterTimestamp** | [**number**] |  | (optional) defaults to undefined |
+| **filterId** | [**string**] |  | (optional) defaults to undefined |
+| **filterRulesExecuted** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **filterRulesHit** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
+
+### Return type
+
+**InlineResponse200**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json, text/plain
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+| **400**     | Bad Request | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 

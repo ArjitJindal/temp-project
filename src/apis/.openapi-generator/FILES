@@ -43,6 +43,8 @@ models/GenericBankAccountDetails.ts
 models/IBANDetails.ts
 models/ImportRequest.ts
 models/ImportResponse.ts
+models/InlineResponse200.ts
+models/InlineResponse400.ts
 models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts

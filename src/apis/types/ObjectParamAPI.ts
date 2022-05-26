@@ -33,6 +33,8 @@ import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
+import { InlineResponse200 } from '../models/InlineResponse200';
+import { InlineResponse400 } from '../models/InlineResponse400';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -317,6 +319,57 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterDestinationCurrencies?: Array<string>;
+}
+
+export interface DefaultApiGetTransactionsListExportRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  limit: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  skip: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  beforeTimestamp: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  afterTimestamp?: number;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterId?: string;
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterRulesExecuted?: Array<string>;
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterRulesHit?: Array<string>;
+  /**
+   *
+   * @type RuleAction
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  filterOutStatus?: RuleAction;
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {
@@ -722,6 +775,29 @@ export class ObjectDefaultApi {
         param.transactionType,
         param.filterOriginCurrencies,
         param.filterDestinationCurrencies,
+        options,
+      )
+      .toPromise();
+  }
+
+  /**
+   * Transaction - Export
+   * @param param the request object
+   */
+  public getTransactionsListExport(
+    param: DefaultApiGetTransactionsListExportRequest,
+    options?: Configuration,
+  ): Promise<InlineResponse200> {
+    return this.api
+      .getTransactionsListExport(
+        param.limit,
+        param.skip,
+        param.beforeTimestamp,
+        param.afterTimestamp,
+        param.filterId,
+        param.filterRulesExecuted,
+        param.filterRulesHit,
+        param.filterOutStatus,
         options,
       )
       .toPromise();

@@ -29,6 +29,8 @@ export * from './GenericBankAccountDetails';
 export * from './IBANDetails';
 export * from './ImportRequest';
 export * from './ImportResponse';
+export * from './InlineResponse200';
+export * from './InlineResponse400';
 export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';

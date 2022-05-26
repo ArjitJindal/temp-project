@@ -3,10 +3,12 @@ import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
+import { ProFormInstance } from '@ant-design/pro-form';
 import { IRouteComponentProps, Link } from 'umi';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
+import { FormValues } from './types';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { useUsers } from '@/utils/user-utils';
@@ -23,6 +25,7 @@ import {
 } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
+import ExportButton from '@/pages/case-management/components/ExportButton';
 
 const TableList = (
   props: IRouteComponentProps<{
@@ -31,6 +34,7 @@ const TableList = (
 ) => {
   const [users] = useUsers();
   const actionRef = useRef<ActionType>();
+  const formRef = useRef<ProFormInstance<FormValues>>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
@@ -295,14 +299,38 @@ const TableList = (
     ],
     [api, reloadTable, updatedTransactions, users],
   );
-
+  const [isLoading, setLoading] = useState(false);
   return (
     <PageWrapper>
       <ProTable<TransactionCaseManagement>
         form={{
           labelWrap: true,
         }}
+        onLoadingChange={(isLoading) => {
+          setLoading(isLoading === true);
+        }}
+        toolBarRender={(info) => {
+          const isTooMuchDataToExport = (info?.pageInfo?.total ?? 0) > EXPORT_ENTRIES_LIMIT;
+          let reason: string | null = null;
+          if (!isLoading) {
+            if (isTooMuchDataToExport) {
+              reason = `Data-set for export should not be larger than ${EXPORT_ENTRIES_LIMIT} entries. Please, change filter parameters to fit into this limitation`;
+            }
+          }
+          return [
+            <ExportButton
+              disabled={{
+                state: isLoading || isTooMuchDataToExport,
+                reason: reason,
+              }}
+              onGetFormValues={() => {
+                return formRef.current?.getFieldsValue() ?? {};
+              }}
+            />,
+          ];
+        }}
         actionRef={actionRef}
+        formRef={formRef}
         rowKey="transactionId"
         search={{
           labelWidth: 120,

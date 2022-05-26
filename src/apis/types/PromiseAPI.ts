@@ -33,6 +33,8 @@ import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
+import { InlineResponse200 } from '../models/InlineResponse200';
+import { InlineResponse400 } from '../models/InlineResponse400';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -318,6 +320,42 @@ export class PromiseDefaultApi {
       transactionType,
       filterOriginCurrencies,
       filterDestinationCurrencies,
+      _options,
+    );
+    return result.toPromise();
+  }
+
+  /**
+   * Transaction - Export
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
+   * @param filterRulesExecuted
+   * @param filterRulesHit
+   * @param filterOutStatus
+   */
+  public getTransactionsListExport(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
+    filterRulesExecuted?: Array<string>,
+    filterRulesHit?: Array<string>,
+    filterOutStatus?: RuleAction,
+    _options?: Configuration,
+  ): Promise<InlineResponse200> {
+    const result = this.api.getTransactionsListExport(
+      limit,
+      skip,
+      beforeTimestamp,
+      afterTimestamp,
+      filterId,
+      filterRulesExecuted,
+      filterRulesHit,
+      filterOutStatus,
       _options,
     );
     return result.toPromise();

@@ -345,6 +345,77 @@ paths:
           in: query
           name: filterId
         - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+  /transactions/export:
+    get:
+      summary: Transaction - Export
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloadUrl:
+                    type: string
+                required:
+                  - downloadUrl
+              examples: {}
+        '400':
+          description: Bad Request
+          content:
+            text/plain:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              examples:
+                example-1:
+                  value: Too larget dataset
+      operationId: get-transactions-list-export
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
             type: array
             items:
               type: string
@@ -360,6 +431,8 @@ paths:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
+      x-internal: false
+    parameters: []
   '/transactions/{transactionId}':
     parameters:
       - schema:

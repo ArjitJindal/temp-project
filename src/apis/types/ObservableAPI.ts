@@ -34,6 +34,8 @@ import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
+import { InlineResponse200 } from '../models/InlineResponse200';
+import { InlineResponse400 } from '../models/InlineResponse400';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -731,6 +733,65 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getTransactionsList(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Transaction - Export
+   * @param limit
+   * @param skip
+   * @param beforeTimestamp
+   * @param afterTimestamp
+   * @param filterId
+   * @param filterRulesExecuted
+   * @param filterRulesHit
+   * @param filterOutStatus
+   */
+  public getTransactionsListExport(
+    limit: number,
+    skip: number,
+    beforeTimestamp: number,
+    afterTimestamp?: number,
+    filterId?: string,
+    filterRulesExecuted?: Array<string>,
+    filterRulesHit?: Array<string>,
+    filterOutStatus?: RuleAction,
+    _options?: Configuration,
+  ): Observable<InlineResponse200> {
+    const requestContextPromise = this.requestFactory.getTransactionsListExport(
+      limit,
+      skip,
+      beforeTimestamp,
+      afterTimestamp,
+      filterId,
+      filterRulesExecuted,
+      filterRulesHit,
+      filterOutStatus,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getTransactionsListExport(rsp)),
           );
         }),
       );

@@ -29,6 +29,8 @@ export * from './GenericBankAccountDetails';
 export * from './IBANDetails';
 export * from './ImportRequest';
 export * from './ImportResponse';
+export * from './InlineResponse200';
+export * from './InlineResponse400';
 export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
@@ -92,6 +94,8 @@ import { GenericBankAccountDetails } from './GenericBankAccountDetails';
 import { IBANDetails } from './IBANDetails';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
 import { ImportResponse } from './ImportResponse';
+import { InlineResponse200 } from './InlineResponse200';
+import { InlineResponse400 } from './InlineResponse400';
 import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
@@ -178,6 +182,8 @@ let typeMap: { [index: string]: any } = {
   IBANDetails: IBANDetails,
   ImportRequest: ImportRequest,
   ImportResponse: ImportResponse,
+  InlineResponse200: InlineResponse200,
+  InlineResponse400: InlineResponse400,
   LegalDocument: LegalDocument,
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
