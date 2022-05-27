@@ -17,6 +17,8 @@ import { ConsumerName } from './ConsumerName'
 import { ConsumerUsersListResponse } from './ConsumerUsersListResponse'
 import { ContactDetails } from './ContactDetails'
 import { ContactDetails1 } from './ContactDetails1'
+import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount'
+import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { FailedRulesResult } from './FailedRulesResult'
@@ -201,16 +203,16 @@ export interface DefaultApiGetConsumerUsersListRequest {
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
    * MONTH, DAY or YEAR
-   * @type &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  timeframe: 'MONTH' | 'DAY' | 'YEAR'
+  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
   /**
    *
-   * @type string
+   * @type number
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  fromTimestamp?: string
+  endTimestamp?: number
   /**
    *
    * @type any

@@ -1,7 +1,7 @@
 import { CsvHeaderSettings } from '@/lambdas/phytoplankton-internal-api-handlers/services/export-service'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
-export type DashboardTimeFrameType = 'YEAR' | 'MONTH' | 'DAY'
+export type DashboardTimeFrameType = 'YEAR' | 'WEEK' | 'MONTH' | 'DAY'
 export const timeFrameValues = {
   YEAR: 'YEAR',
   MONTH: 'MONTH',
@@ -10,10 +10,10 @@ export const timeFrameValues = {
 
 export type TransactionDashboardStats = {
   _id: string
-  transactionCount: number
+  totalTransactions: number
+  flaggedTransactions: number
+  stoppedTransactions: number
 }
-
-export const MAXIMUM_ALLOWED_EXPORT_SIZE = 10000 // todo: move to config
 
 export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionCaseManagement> =
   {

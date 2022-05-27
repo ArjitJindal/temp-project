@@ -25,6 +25,7 @@ import { User } from '@/@types/openapi-public/User'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
+import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
 
 function getAggregatedRuleStatus(
   ruleActions: ReadonlyArray<RuleAction>
@@ -93,43 +94,6 @@ async function userEventHandler(
   )
 }
 
-const dashboardTransactionStatsHandler = async (
-  db: Db,
-  tenantId: string,
-  aggregatedCollectionName: string,
-  dateIdFormat: string
-) => {
-  const transactionsCollection = db.collection<TransactionCaseManagement>(
-    TRANSACTIONS_COLLECTION(tenantId)
-  )
-  try {
-    await transactionsCollection
-      .aggregate([
-        { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-        {
-          $group: {
-            _id: {
-              $dateToString: {
-                format: dateIdFormat,
-                date: { $toDate: { $toLong: '$timestamp' } },
-              },
-            },
-            transactionsCount: { $sum: 1 },
-          },
-        },
-        {
-          $merge: {
-            into: aggregatedCollectionName,
-            whenMatched: 'replace',
-          },
-        },
-      ])
-      .next()
-  } catch (e) {
-    console.error(`ERROR ${e}`)
-  }
-}
-
 export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
   try {
     const client = await connectToDB()
@@ -139,7 +103,9 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
       const message: string = Buffer.from(payload.data, 'base64').toString()
       const dynamoDBStreamObject = JSON.parse(message).dynamodb
       const tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
       if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           TRANSACTION_PRIMARY_KEY_IDENTIFIER
@@ -150,24 +116,7 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         ) as TransactionWithRulesResult
         console.info(`Processing transaction ${transaction.transactionId}`)
         await transactionHandler(db, tenantId, transaction)
-        await dashboardTransactionStatsHandler(
-          db,
-          tenantId,
-          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
-          MONTH_DATE_FORMAT
-        )
-        await dashboardTransactionStatsHandler(
-          db,
-          tenantId,
-          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
-          DAY_DATE_FORMAT
-        )
-        await dashboardTransactionStatsHandler(
-          db,
-          tenantId,
-          DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
-          HOUR_DATE_FORMAT
-        )
+        await dashboardStatsRepository.refreshStats(tenantId)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
           USER_PRIMARY_KEY_IDENTIFIER
