@@ -16,7 +16,7 @@ export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) 
         },
         { title: 'Rule Description', dataIndex: 'ruleDescription', key: 'ruleDescription' },
       ]}
-      dataSource={transaction.executedRules}
+      dataSource={transaction.executedRules.filter((executedRule) => executedRule.ruleHit)}
       pagination={false}
     />
   );
