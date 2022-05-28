@@ -1,3 +1,4 @@
+import CardIssuedCountryRule from './card-issued-country'
 import ConsecutiveTransactionsameTypeRule from './consecutive-transactions-same-type'
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentRule from './first-payment'
@@ -23,6 +24,7 @@ import UserTransactionPairsRule from './user-transaction-pairs'
 import UserTransactionPairsIcrypexRule from './user-transaction-pairs-icrypex'
 
 export const TRANSACTION_RULES = {
+  'card-issued-country': CardIssuedCountryRule,
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
   'first-payment': FirstPaymentRule,
