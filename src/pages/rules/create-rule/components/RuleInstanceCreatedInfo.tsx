@@ -19,7 +19,7 @@ export const RuleInstanceCreatedInfo: React.FC<{
           </Button>
 
           <Button>
-            <Link to="/rules/created-rules">View the created rules</Link>
+            <Link to="/rules/my-rules">View my rules</Link>
           </Button>
         </>
       }

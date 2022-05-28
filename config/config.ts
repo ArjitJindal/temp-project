@@ -153,10 +153,10 @@ export default defineConfig({
           component: './rules/create-rule',
         },
         {
-          name: 'created-rules',
+          name: 'my-rules',
           icon: 'smile',
-          path: '/rules/created-rules',
-          component: './rules/created-rules',
+          path: '/rules/my-rules',
+          component: './rules/my-rules',
         },
         {
           name: 'request-new',

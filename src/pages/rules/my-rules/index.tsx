@@ -148,7 +148,7 @@ export default () => {
   return (
     <PageWrapper
       pageContainerProps={{
-        content: 'List of all created rules. Activate/deactivate them in one click',
+        content: 'List of all your rules. Activate/deactivate them in one click',
       }}
     >
       <ProTable<RuleInstance>
@@ -175,7 +175,7 @@ export default () => {
         rowKey="id"
         columnsState={{
           persistenceType: 'localStorage',
-          persistenceKey: 'created-rules-table',
+          persistenceKey: 'my-rules-table',
         }}
       />
 

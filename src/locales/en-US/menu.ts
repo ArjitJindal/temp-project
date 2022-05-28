@@ -25,7 +25,7 @@ export default {
   'menu.users.users-files': 'Import Users',
   'menu.rules': 'Rules',
   'menu.rules.create-rule': 'Rules Library',
-  'menu.rules.created-rules': 'Created Rules',
+  'menu.rules.my-rules': 'My Rules',
   'menu.rules.request-new': 'Request New Rule',
   'menu.account': 'Account',
   'menu.account.center': 'Account Center',
