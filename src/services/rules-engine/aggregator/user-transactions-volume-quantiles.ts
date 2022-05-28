@@ -2,6 +2,10 @@ import { Aggregator } from './aggregator'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 
 export class UserTransactionsVolumeQuantiles extends Aggregator {
+  public shouldAggregate(): boolean {
+    return this.transaction.transactionState === 'SUCCESSFUL'
+  }
+
   public async aggregate(): Promise<void> {
     const granularities: TimeGranularity[] = ['day', 'month', 'year']
 

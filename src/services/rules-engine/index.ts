@@ -134,7 +134,10 @@ export async function verifyTransaction(
     transaction
   )
   const savedTransaction = await transactionRepository.saveTransaction(
-    { ...transaction, transactionState: 'CREATED' },
+    {
+      ...transaction,
+      transactionState: transaction.transactionState || 'CREATED',
+    },
     {
       executedRules,
       failedRules,
@@ -208,11 +211,11 @@ export async function verifyTransactionEvent(
     failedRules: hasTransactionUpdates ? failedRules : transaction.failedRules,
   })
 
-  // TODO: Handle updating aggregation multiple times properly. For now, we only allow
-  // updating aggregation data once for a transaction when a transaction is verified
-  // for the first time. Because for now, updating aggregation data for the same transaction
-  // will lead to corrupted aggregated data (e.g double counting)
-  // await updateAggregation(tenantId, updatedTransaction, dynamoDb)
+  // For duplicated transaction events with the same state, we don't re-aggregated
+  // but this won't prevent re-aggregation if we have the states like [CREATED, APPROVED, CREATED]
+  if (transaction.transactionState !== updatedTransaction.transactionState) {
+    await updateAggregation(tenantId, updatedTransaction, dynamoDb)
+  }
 
   return {
     transactionId: transactionEvent.transactionId,
@@ -229,7 +232,10 @@ export async function updateAggregation(
   await Promise.all(
     Aggregators.map(async (Aggregator) => {
       try {
-        await new Aggregator(tenantId, transaction, dynamoDb).aggregate()
+        const aggregator = new Aggregator(tenantId, transaction, dynamoDb)
+        if (aggregator.shouldAggregate()) {
+          await aggregator.aggregate()
+        }
       } catch (e) {
         console.error(
           `Aggregator ${Aggregator.name} failed: ${(e as Error)?.message}`

@@ -16,5 +16,7 @@ export abstract class Aggregator {
     this.aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
   }
 
+  public abstract shouldAggregate(): boolean
+
   public abstract aggregate(): Promise<void>
 }

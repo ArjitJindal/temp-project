@@ -1,26 +1,40 @@
 import { Aggregator } from './aggregator'
 
 export class UserTransactionCountries extends Aggregator {
+  public shouldAggregate(): boolean {
+    return this.transaction.transactionState === 'SUCCESSFUL'
+  }
+
   public async aggregate(): Promise<void> {
-    if (
+    await Promise.all([
       this.transaction.originUserId &&
-      this.transaction.destinationAmountDetails?.country
-    ) {
-      await this.aggregationRepository.addUserTransactionCountry(
-        this.transaction.originUserId,
-        this.transaction.destinationAmountDetails.country,
-        'sending'
-      )
-    }
-    if (
+        this.transaction.originAmountDetails?.country &&
+        this.aggregationRepository.addUserTransactionCountry(
+          this.transaction.originUserId,
+          this.transaction.originAmountDetails.country,
+          'sendingFrom'
+        ),
+      this.transaction.originUserId &&
+        this.transaction.destinationAmountDetails?.country &&
+        this.aggregationRepository.addUserTransactionCountry(
+          this.transaction.originUserId,
+          this.transaction.destinationAmountDetails.country,
+          'sendingTo'
+        ),
       this.transaction.destinationUserId &&
-      this.transaction.originAmountDetails?.country
-    ) {
-      await this.aggregationRepository.addUserTransactionCountry(
-        this.transaction.destinationUserId,
-        this.transaction.originAmountDetails.country,
-        'receiving'
-      )
-    }
+        this.transaction.originAmountDetails?.country &&
+        this.aggregationRepository.addUserTransactionCountry(
+          this.transaction.destinationUserId,
+          this.transaction.originAmountDetails.country,
+          'receivingFrom'
+        ),
+      this.transaction.destinationUserId &&
+        this.transaction.destinationAmountDetails?.country &&
+        this.aggregationRepository.addUserTransactionCountry(
+          this.transaction.destinationUserId,
+          this.transaction.destinationAmountDetails.country,
+          'receivingTo'
+        ),
+    ])
   }
 }

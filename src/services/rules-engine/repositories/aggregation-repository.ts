@@ -9,8 +9,10 @@ import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 dayjs.extend(utc)
 
 type UserAggregationAttributes = {
-  sendingCountries: Set<string>
-  receivingCountries: Set<string>
+  sendingFromCountries: Set<string>
+  sendingToCountries: Set<string>
+  receivingFromCountries: Set<string>
+  receivingToCountries: Set<string>
   sendingCurrencies: Set<string>
   receivingCurrencies: Set<string>
   sendingTransactionsCount: number
@@ -38,7 +40,7 @@ export class AggregationRepository {
   public async addUserTransactionCountry(
     userId: string,
     country: string,
-    direction: PaymentDirection
+    direction: 'sendingFrom' | 'sendingTo' | 'receivingFrom' | 'receivingTo'
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Countries`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
@@ -57,11 +59,19 @@ export class AggregationRepository {
   public async getUserTransactionCountries(
     userId: string
   ): Promise<
-    Pick<UserAggregationAttributes, 'receivingCountries' | 'sendingCountries'>
+    Pick<
+      UserAggregationAttributes,
+      | 'receivingFromCountries'
+      | 'receivingToCountries'
+      | 'sendingFromCountries'
+      | 'sendingToCountries'
+    >
   > {
     const attributes: Array<keyof UserAggregationAttributes> = [
-      'receivingCountries',
-      'sendingCountries',
+      'receivingFromCountries',
+      'receivingToCountries',
+      'sendingFromCountries',
+      'sendingToCountries',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
@@ -71,10 +81,18 @@ export class AggregationRepository {
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
     return {
-      receivingCountries: new Set(
-        result.Item?.receivingCountries?.values || []
+      receivingFromCountries: new Set(
+        result.Item?.receivingFromCountries?.values || []
       ),
-      sendingCountries: new Set(result.Item?.sendingCountries?.values || []),
+      receivingToCountries: new Set(
+        result.Item?.receivingToCountries?.values || []
+      ),
+      sendingFromCountries: new Set(
+        result.Item?.sendingFromCountries?.values || []
+      ),
+      sendingToCountries: new Set(
+        result.Item?.sendingToCountries?.values || []
+      ),
     }
   }
 

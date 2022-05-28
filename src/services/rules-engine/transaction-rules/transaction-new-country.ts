@@ -49,13 +49,13 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
         senderTransactionsCount.sendingTransactionsCount >=
           this.parameters.initialTransactions &&
         senderTransactionCountries &&
-        !senderTransactionCountries.sendingCountries.has(receiverCountry)) ||
+        !senderTransactionCountries.sendingToCountries.has(receiverCountry)) ||
       (senderCountry &&
         receiverTransactionsCount &&
         receiverTransactionsCount.receivingTransactionsCount >=
           this.parameters.initialTransactions &&
         receiverTransactionCountries &&
-        !receiverTransactionCountries.receivingCountries.has(senderCountry))
+        !receiverTransactionCountries.receivingFromCountries.has(senderCountry))
     ) {
       return {
         action: this.action,

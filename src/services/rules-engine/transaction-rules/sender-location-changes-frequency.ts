@@ -58,8 +58,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
       )),
       this.transaction,
     ].filter((transaction) => transaction.deviceData?.ipAddress)
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const geoIp = require('fast-geoip')
+    const geoIp = await import('fast-geoip')
     const ipInfos = await Promise.all(
       transactionsWithIpAddress.map((transaction) =>
         geoIp.lookup(transaction.deviceData?.ipAddress as string)

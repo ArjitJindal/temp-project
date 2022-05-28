@@ -4,6 +4,7 @@ import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentRule from './first-payment'
 import HighRiskCurrencyRule from './high-risk-currency'
 import IpAddressMultipleUsersRule from './ip-address-multiple-users'
+import IpAddressUnexpectedLocationRule from './ip-address-unexpected-location'
 import LowValueIncomingTransactionsRule from './low-value-incoming-transactions'
 import LowValueOutgoingTransactionsRule from './low-value-outgoing-transactions'
 import MultipleCounterpartySendersWithinTimePeriodRule from './multiple-counterparty-senders-within-time-period'
@@ -30,6 +31,7 @@ export const TRANSACTION_RULES = {
   'first-payment': FirstPaymentRule,
   'high-risk-currency': HighRiskCurrencyRule,
   'ip-address-multiple-users': IpAddressMultipleUsersRule,
+  'ip-address-unexpected-location': IpAddressUnexpectedLocationRule,
   'low-value-incoming-transactions': LowValueIncomingTransactionsRule,
   'low-value-outgoing-transactions': LowValueOutgoingTransactionsRule,
   'multiple-counterparty-senders-within-time-period':

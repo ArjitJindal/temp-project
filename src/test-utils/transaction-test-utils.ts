@@ -6,6 +6,7 @@ export function getTestTransaction(
   transaction: Partial<Transaction> = {}
 ): Transaction {
   return {
+    transactionState: 'SUCCESSFUL',
     originUserId: '8650a2611d0771cba03310f74bf6',
     destinationUserId: '9350a2611e0771cba03310f74bf6',
     originAmountDetails: {
