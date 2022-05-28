@@ -144,10 +144,11 @@ const TableList = (
       },
       {
         title: 'Origin User ID',
-        width: 100,
         dataIndex: 'originUserId',
         hideInSearch: true,
-        hideInTable: true,
+        render: (dom, entity) => {
+          return entity.originUserId;
+        },
       },
       {
         title: 'Origin Method',
@@ -183,10 +184,11 @@ const TableList = (
       },
       {
         title: 'Destination User ID',
-        width: 150,
-        dataIndex: 'destinationUserId',
-        hideInTable: true,
+        dataIndex: 'deatinationUserId',
         hideInSearch: true,
+        render: (dom, entity) => {
+          return entity.destinationUserId;
+        },
       },
       {
         title: 'Destination Method',
