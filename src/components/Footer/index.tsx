@@ -10,17 +10,5 @@ export default () => {
 
   const currentYear = new Date().getFullYear();
 
-  return (
-    <DefaultFooter
-      copyright={`${currentYear} ${defaultMessage}`}
-      links={[
-        {
-          key: 'github',
-          title: <img src="/flagright-logo-gray.png" style={{ width: '120px' }} />,
-          href: 'https://flagright.com',
-          blankTarget: true,
-        },
-      ]}
-    />
-  );
+  return <DefaultFooter copyright={`${currentYear} ${defaultMessage}`} />;
 };
