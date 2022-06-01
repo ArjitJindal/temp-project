@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Button, Card, Col, DatePicker, Dropdown, Menu, Row, Tabs } from 'antd';
+import { Button, Card, Col, DatePicker, Dropdown, Empty, Menu, Row, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
 import { EllipsisOutlined } from '@ant-design/icons';
@@ -17,13 +17,11 @@ export type TimeWindowType = DefaultApiGetDashboardStatsTransactionsRequest['tim
 
 const { TabPane } = Tabs;
 
-export interface TransactionsStats {
-  data: {
-    id: string;
-    flaggedTransactions: number;
-    stoppedTransactions: number;
-  }[];
-}
+export type TransactionsStats = {
+  id: string;
+  flaggedTransactions: number;
+  stoppedTransactions: number;
+}[];
 
 function saveToFile(blob: Blob, filename: string) {
   const a = document.createElement('a');
@@ -146,35 +144,44 @@ const TransactionsChartCard = (props: {
             { title: 'Flagged Transactions', key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
-              <div className={styles.salesBar} style={{ opacity: loading ? 0.5 : 1 }}>
-                <Column
-                  height={400}
-                  forceFit
-                  data={salesData.data.map((item) => ({
-                    x: item.id,
-                    y: item[key],
-                  }))}
-                  xField="x"
-                  yField="y"
-                  xAxis={{
-                    visible: true,
-                    title: {
-                      visible: false,
-                    },
-                  }}
-                  yAxis={{
-                    visible: true,
-                    title: {
-                      visible: false,
-                    },
-                  }}
-                  meta={{
-                    y: {
-                      alias: 'Transaction Count',
-                    },
-                  }}
-                />
-              </div>
+              <Spin spinning={loading}>
+                <div className={styles.salesBar}>
+                  {salesData.length === 0 ? (
+                    <Empty
+                      className={styles.empty}
+                      description="No data available for selected period"
+                    />
+                  ) : (
+                    <Column
+                      height={400}
+                      forceFit
+                      data={salesData.map((item) => ({
+                        x: item.id,
+                        y: item[key],
+                      }))}
+                      xField="x"
+                      yField="y"
+                      xAxis={{
+                        visible: true,
+                        title: {
+                          visible: false,
+                        },
+                      }}
+                      yAxis={{
+                        visible: true,
+                        title: {
+                          visible: false,
+                        },
+                      }}
+                      meta={{
+                        y: {
+                          alias: 'Transaction Count',
+                        },
+                      }}
+                    />
+                  )}
+                </div>
+              </Spin>
             </TabPane>
           ))}
         </Tabs>

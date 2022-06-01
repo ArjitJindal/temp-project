@@ -58,18 +58,18 @@ const Analysis: FC<AnalysisProps> = () => {
     };
   }, [endDate, timeWindowType, api]);
 
-  const salesDataResource: AsyncResource<TransactionsStats> = map(data, (value) => ({
-    data: value.map((item, i) => ({
+  const salesDataResource: AsyncResource<TransactionsStats> = map(data, (value) =>
+    value.map((item, i) => ({
       id: item._id,
       flaggedTransactions: item.flaggedTransactions ?? 0,
       stoppedTransactions: item.stoppedTransactions ?? 0,
     })),
-  }));
+  );
 
   return (
     <GridContent>
       <TransactionsChartCard
-        salesData={getOr(salesDataResource, { data: [] })}
+        salesData={getOr(salesDataResource, [])}
         endDate={endDate}
         timeWindowType={timeWindowType}
         loading={isLoading(data)}
