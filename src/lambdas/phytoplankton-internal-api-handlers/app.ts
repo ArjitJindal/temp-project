@@ -24,7 +24,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { ExportService } from '@/lambdas/phytoplankton-internal-api-handlers/services/export-service'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { DashboardTimeFrameType, TRANSACTION_EXPORT_HEADERS_SETTINGS } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
+import { TRANSACTION_EXPORT_HEADERS_SETTINGS } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -62,6 +62,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterRulesHit,
         filterRulesExecuted,
+        transactionType,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -74,6 +75,7 @@ export const transactionsViewHandler = lambdaApi()(
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        transactionType,
       }
       return transactionService.getTransactions(params)
     } else if (

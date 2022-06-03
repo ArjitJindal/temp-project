@@ -364,6 +364,32 @@ paths:
             type: string
           in: query
           name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -390,6 +416,9 @@ paths:
                 properties:
                   message:
                     type: string
+              examples:
+                example-1:
+                  value: Too larget dataset
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -417,10 +446,6 @@ paths:
           in: query
           name: filterId
         - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
-        - schema:
             type: array
             items:
               type: string
@@ -433,9 +458,9 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
-            type: string
+            $ref: '#/components/schemas/RuleAction'
           in: query
-          name: transactionType
+          name: filterOutStatus
       x-internal: false
     parameters: []
   '/transactions/{transactionId}':
@@ -1160,6 +1185,8 @@ components:
           type: string
         nickname:
           type: string
+        picture:
+          type: string
       required:
         - user_id
         - created_at
@@ -1181,3 +1208,4 @@ components:
     Authorization:
       type: http
       scheme: bearer
+  responses: {}

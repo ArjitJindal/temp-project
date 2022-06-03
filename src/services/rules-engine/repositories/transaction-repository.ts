@@ -57,6 +57,9 @@ export class TransactionRepository {
     if (params.filterId != null) {
       query['transactionId'] = { $regex: params.filterId }
     }
+    if (params.transactionType != null) {
+      query['type'] = { $regex: params.transactionType }
+    }
     if (params.filterOutStatus != null) {
       query['status'] = { $ne: params.filterOutStatus }
     }

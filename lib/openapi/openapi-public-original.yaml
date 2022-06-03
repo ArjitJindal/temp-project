@@ -1547,7 +1547,7 @@ components:
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              ruleAction: block
+              ruleAction: BLOCK
               ruleHit: true
           failedRules:
             - ruleId: R-1b
@@ -2357,6 +2357,8 @@ components:
         - FLAG
         - BLOCK
         - SUSPEND
+      x-examples:
+        example-1: ALLOW
     InternalUser:
       description: Internal user- employees
       type: object
@@ -2514,6 +2516,8 @@ components:
     TransactionState:
       type: string
       title: TransactionState
+      x-stoplight:
+        id: q1lxnw313yrob
       enum:
         - CREATED
         - PROCESSING

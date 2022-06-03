@@ -842,6 +842,32 @@ paths:
             type: string
           in: query
           name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -904,6 +930,9 @@ paths:
                 properties:
                   message:
                     type: string
+              examples:
+                example-1:
+                  value: Too larget dataset
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -931,10 +960,6 @@ paths:
           in: query
           name: filterId
         - schema:
-            $ref: '#/components/schemas/RuleAction'
-          in: query
-          name: filterOutStatus
-        - schema:
             type: array
             items:
               type: string
@@ -947,9 +972,9 @@ paths:
           in: query
           name: filterRulesHit
         - schema:
-            type: string
+            $ref: '#/components/schemas/RuleAction'
           in: query
-          name: transactionType
+          name: filterOutStatus
       x-internal: false
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
@@ -1809,6 +1834,8 @@ components:
         - FLAG
         - BLOCK
         - SUSPEND
+      x-examples:
+        example-1: ALLOW
     ImportRequest:
       title: ImportRequest
       type: object
@@ -2120,6 +2147,8 @@ components:
         name:
           type: string
         nickname:
+          type: string
+        picture:
           type: string
       required:
         - user_id
@@ -2981,7 +3010,7 @@ components:
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              ruleAction: block
+              ruleAction: BLOCK
               ruleHit: true
           failedRules:
             - ruleId: R-1b
@@ -3939,6 +3968,8 @@ components:
     TransactionState:
       type: string
       title: TransactionState
+      x-stoplight:
+        id: q1lxnw313yrob
       enum:
         - CREATED
         - PROCESSING
@@ -3971,6 +4002,7 @@ components:
         authorizerResultTtlInSeconds: 600
         enableSimpleResponses: false
       x-amazon-apigateway-authtype: Custom scheme with tenant claims
+  responses: {}
 x-amazon-apigateway-request-validators:
   all:
     validateRequestBody: true

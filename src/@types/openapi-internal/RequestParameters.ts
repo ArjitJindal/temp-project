@@ -300,6 +300,36 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   transactionType?: string
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOriginCurrencies?: Array<string>
+  /**
+   *
+   * @type Array&lt;string&gt;
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterDestinationCurrencies?: Array<string>
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  sortField?: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  sortOrder?: string
+  /**
+   *
+   * @type any
+   * @memberof DefaultApigetTransactionsList
+   */
+  body?: any
 }
 
 export interface DefaultApiGetTransactionsListExportRequest {
@@ -335,12 +365,6 @@ export interface DefaultApiGetTransactionsListExportRequest {
   filterId?: string
   /**
    *
-   * @type RuleAction
-   * @memberof DefaultApigetTransactionsListExport
-   */
-  filterOutStatus?: RuleAction
-  /**
-   *
    * @type Array&lt;string&gt;
    * @memberof DefaultApigetTransactionsListExport
    */
@@ -353,10 +377,10 @@ export interface DefaultApiGetTransactionsListExportRequest {
   filterRulesHit?: Array<string>
   /**
    *
-   * @type string
+   * @type RuleAction
    * @memberof DefaultApigetTransactionsListExport
    */
-  transactionType?: string
+  filterOutStatus?: RuleAction
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

@@ -54,10 +54,16 @@ function assertValidLambdaMappings(openapi: any) {
   ) {
     throw new Error(
       `
+      Paths in PathToLambda are not in sync with remote internal openapi paths. Please update PathToLambda
+
       Local paths: ${pathsLocal}
+
       Remote paths: ${pathsRemote}
 
-      paths in PathToLambda are not in sync with remote internal openapi paths. Please update PathToLambda`
+
+      Diff: ${pathsLocal
+        .filter((path) => !pathsRemote.includes(path))
+        .concat(pathsRemote.filter((path) => !pathsLocal.includes(path)))}\n`
     )
   }
 }
