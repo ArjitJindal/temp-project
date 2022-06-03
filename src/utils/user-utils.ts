@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import _ from 'lodash';
 import type { User } from 'auth0';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from '@/api';
 
 // todo: rename file and utils to use "account" instead of "user" in names
@@ -10,21 +11,42 @@ export enum UserRole {
   USER,
 }
 
-let cachedUsers: { [userId: string]: User } | null = null;
-
-export function isFlagrightUser(user: User): boolean {
-  return user['https://flagright.com/tenantId'] === 'flagright';
+export interface FlagrightAuth0User {
+  name: string | null;
+  picture: string | null;
+  role: string | null;
+  tenantId: string;
+  tenantName: string;
+  userId: string | null;
+  tenantConsoleHost: string | null;
 }
 
-export function getUserTenant(user: User): { tenantId: string; tenantName: string } {
+let cachedUsers: { [userId: string]: User } | null = null;
+
+const NAMESPACE = 'https://flagright.com';
+
+export function useAuth0User(): FlagrightAuth0User | null {
+  const { user } = useAuth0();
+  if (user == null) {
+    return null;
+  }
   return {
-    tenantId: user['https://flagright.com/tenantId'],
-    tenantName: user['https://flagright.com/tenantName'],
+    name: user.name ?? null,
+    picture: user.picture ?? null,
+    role: user[`${NAMESPACE}/role`] ?? null,
+    tenantId: user[`${NAMESPACE}/tenantId`],
+    tenantName: user[`${NAMESPACE}/tenantName`],
+    userId: user[`${NAMESPACE}/userId`] ?? null,
+    tenantConsoleHost: user[`${NAMESPACE}/tenantConsoleHost`] ?? null,
   };
 }
 
-export function getUserRole(user: User | undefined): UserRole {
-  const role = user?.['https://flagright.com/role'];
+export function isFlagrightTenantUser(user: FlagrightAuth0User): boolean {
+  return user.tenantId === 'flagright';
+}
+
+export function getUserRole(user: FlagrightAuth0User | null): UserRole {
+  const role = user?.role;
   switch (role) {
     case 'root':
       return UserRole.ROOT;
@@ -36,7 +58,7 @@ export function getUserRole(user: User | undefined): UserRole {
   }
 }
 
-export function isAtLeastAdmin(user: User | undefined) {
+export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return getUserRole(user).valueOf() <= UserRole.ADMIN.valueOf();
 }
 

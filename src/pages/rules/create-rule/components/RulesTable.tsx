@@ -1,21 +1,19 @@
-import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { useMemo, useRef } from 'react';
 import { Button, Tag } from 'antd';
-
-import { useAuth0 } from '@auth0/auth0-react';
 import { getRuleActionColor } from '../../utils';
 import { RuleCreationForm } from './RuleCreationForm';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
-import { isFlagrightUser } from '@/utils/user-utils';
+import { isFlagrightTenantUser, useAuth0User } from '@/utils/user-utils';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
 }
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
-  const { user } = useAuth0();
+  const user = useAuth0User();
   const api = useApi();
   const actionRef = useRef<ActionType>();
   const columns: ProColumns<Rule>[] = useMemo(
@@ -25,7 +23,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         width: 100,
         sorter: true,
         render: (_, entity) => {
-          return user && isFlagrightUser(user) ? (
+          return user && isFlagrightTenantUser(user) ? (
             <RuleCreationForm rule={entity}>
               <a>{entity.id}</a>
             </RuleCreationForm>
@@ -93,7 +91,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       search={{
         labelWidth: 30,
       }}
-      toolBarRender={() => (user && isFlagrightUser(user) ? [<RuleCreationForm />] : [])}
+      toolBarRender={() => (user && isFlagrightTenantUser(user) ? [<RuleCreationForm />] : [])}
       request={async () => {
         const rules = await api.getRules({});
         return {

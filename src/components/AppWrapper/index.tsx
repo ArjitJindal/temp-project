@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { PageContainerProps } from '@ant-design/pro-layout/lib/components/PageContainer';
 import AuthProvider from './AuthProvider';
+import ZoneRedirect from './ZoneRedirect';
 
 interface Props {
   pageContainerProps?: PageContainerProps;
@@ -8,5 +9,9 @@ interface Props {
 }
 
 export default function AppWrapper(props: Props) {
-  return <AuthProvider>{props.children}</AuthProvider>;
+  return (
+    <AuthProvider>
+      <ZoneRedirect>{props.children}</ZoneRedirect>
+    </AuthProvider>
+  );
 }

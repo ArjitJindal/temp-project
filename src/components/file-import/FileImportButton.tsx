@@ -1,5 +1,4 @@
-import { UploadOutlined, LoadingOutlined, InboxOutlined } from '@ant-design/icons';
-import { useAuth0 } from '@auth0/auth0-react';
+import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icons';
 import { Alert, Button, Divider, message, Modal, Select } from 'antd';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
@@ -9,7 +8,7 @@ import _ from 'lodash';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
-import { getUserTenant } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:
@@ -39,10 +38,9 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [file, setFile] = useState<FileInfo>();
   const [errorText, setErrorText] = useState<string>();
-  const { user } = useAuth0();
+  const user = useAuth0User();
   const api = useApi();
-  const isCustomFormatSupported =
-    user && CUSTOM_FORMAT_TENANTS.includes(getUserTenant(user).tenantName);
+  const isCustomFormatSupported = user && CUSTOM_FORMAT_TENANTS.includes(user.tenantName);
   const handleClose = useCallback(() => {
     setIsModalVisible(false);
     setFile(undefined);

@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Divider, Tag, Button, Input, Upload, message, Row, Col } from 'antd';
-import { useAuth0 } from '@auth0/auth0-react';
+import { Button, Col, Divider, Input, message, Row, Tag, Upload } from 'antd';
 import { useCallback, useState } from 'react';
 import { PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import styles from './TransactionDetails.less';
 import {
-  Tag as TransactionTag,
-  TransactionCaseManagement,
   Comment as TransactionComment,
   FileInfo,
+  Tag as TransactionTag,
+  TransactionCaseManagement,
 } from '@/apis';
 import { useApi } from '@/api';
 
@@ -125,7 +124,6 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
 };
 
 export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
-  const { user } = useAuth0();
   return (
     <>
       <ProDescriptions size="small" column={1} colon={false}>

@@ -1,19 +1,17 @@
 import React, { useRef } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
 import { green, red } from '@ant-design/colors';
 import ProTable, { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Button, message, Popconfirm } from 'antd';
-import { useAuth0 } from '@auth0/auth0-react';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
-import { isAtLeastAdmin } from '@/utils/user-utils';
+import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 import PageWrapper from '@/components/PageWrapper';
 
 export default function () {
   const api = useApi();
-  const { user } = useAuth0();
+  const user = useAuth0User();
   const actionRef = useRef<ActionType>();
 
   function refreshTable() {
@@ -62,7 +60,7 @@ export default function () {
       sorter: false,
       fixed: 'right',
       render: (_, item) => {
-        if (user?.sub === item.user_id) {
+        if (user?.userId === item.user_id) {
           return null;
         }
 

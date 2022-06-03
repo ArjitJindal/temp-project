@@ -16,7 +16,6 @@ import {
   Tag,
   Upload,
 } from 'antd';
-import { useAuth0 } from '@auth0/auth0-react';
 import { useCallback, useMemo, useState } from 'react';
 import {
   EditOutlined,
@@ -36,7 +35,7 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
-import { useUsers } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 
 const equal = require('fast-deep-equal');
 
@@ -152,10 +151,10 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
 };
 
 export const TransactionDetails: React.FC<Props> = ({ transaction, onTransactionUpdate }) => {
-  const { user } = useAuth0();
+  const user = useAuth0User();
   const api = useApi();
   const [users, loadingUsers] = useUsers();
-  const currentUserId = user?.sub;
+  const currentUserId = user?.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);

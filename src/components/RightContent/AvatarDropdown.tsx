@@ -6,14 +6,15 @@ import { useAuth0 } from '@auth0/auth0-react';
 import type { MenuInfo } from 'rc-menu/lib/interface';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
-import { isAtLeastAdmin } from '@/utils/user-utils';
+import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
 };
 
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
-  const { user, logout } = useAuth0();
+  const { logout } = useAuth0();
+  const user = useAuth0User();
   const isAdmin = user && isAtLeastAdmin(user);
 
   const onMenuClick = useCallback(
