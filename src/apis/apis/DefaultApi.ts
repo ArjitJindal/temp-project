@@ -672,6 +672,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param transactionType
    * @param filterOriginCurrencies
    * @param filterDestinationCurrencies
+   * @param sortField
+   * @param sortOrder
+   * @param body
    */
   public async getTransactionsList(
     limit: number,
@@ -685,6 +688,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     transactionType?: string,
     filterOriginCurrencies?: Array<string>,
     filterDestinationCurrencies?: Array<string>,
+    sortField?: string,
+    sortOrder?: string,
+    body?: any,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -789,6 +795,31 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
         ObjectSerializer.serialize(filterDestinationCurrencies, 'Array<string>', ''),
       );
     }
+
+    // Query Params
+    if (sortField !== undefined) {
+      requestContext.setQueryParam(
+        'sortField',
+        ObjectSerializer.serialize(sortField, 'string', ''),
+      );
+    }
+
+    // Query Params
+    if (sortOrder !== undefined) {
+      requestContext.setQueryParam(
+        'sortOrder',
+        ObjectSerializer.serialize(sortOrder, 'string', ''),
+      );
+    }
+
+    // Body Params
+    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
+    requestContext.setHeaderParam('Content-Type', contentType);
+    const serializedBody = ObjectSerializer.stringify(
+      ObjectSerializer.serialize(body, 'any', ''),
+      contentType,
+    );
+    requestContext.setBody(serializedBody);
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;

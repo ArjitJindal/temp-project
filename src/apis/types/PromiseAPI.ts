@@ -293,6 +293,9 @@ export class PromiseDefaultApi {
    * @param transactionType
    * @param filterOriginCurrencies
    * @param filterDestinationCurrencies
+   * @param sortField
+   * @param sortOrder
+   * @param body
    */
   public getTransactionsList(
     limit: number,
@@ -306,6 +309,9 @@ export class PromiseDefaultApi {
     transactionType?: string,
     filterOriginCurrencies?: Array<string>,
     filterDestinationCurrencies?: Array<string>,
+    sortField?: string,
+    sortOrder?: string,
+    body?: any,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(
@@ -320,6 +326,9 @@ export class PromiseDefaultApi {
       transactionType,
       filterOriginCurrencies,
       filterDestinationCurrencies,
+      sortField,
+      sortOrder,
+      body,
       _options,
     );
     return result.toPromise();

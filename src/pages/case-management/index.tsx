@@ -119,8 +119,7 @@ const TableList = (
       {
         title: 'Transaction Type',
         dataIndex: 'type',
-        hideInSearch: true,
-        width: 100,
+        width: 150,
         ellipsis: true,
       },
       {
@@ -347,7 +346,9 @@ const TableList = (
             transactionId,
             rulesHitFilter,
             rulesExecutedFilter,
+            type,
           } = params;
+
           const response = await api.getTransactionsList({
             limit: pageSize!,
             skip: (current! - 1) * pageSize!,
@@ -357,6 +358,7 @@ const TableList = (
             filterRulesHit: rulesHitFilter,
             filterRulesExecuted: rulesExecutedFilter,
             filterOutStatus: 'ALLOW',
+            transactionType: type,
           });
           return {
             data: response.data,

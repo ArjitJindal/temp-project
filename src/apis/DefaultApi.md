@@ -897,6 +897,12 @@ let body:.DefaultApiGetTransactionsListRequest = {
   filterDestinationCurrencies: [
     "filterDestinationCurrencies_example",
   ],
+  // string (optional)
+  sortField: "sortField_example",
+  // string (optional)
+  sortOrder: "sortOrder_example",
+  // any (optional)
+  body: {},
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -908,6 +914,7 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 
 | Name | Type | Description | Notes |
 | --- | --- | --- | --- |
+| **body** | **any** |  |
 | **limit** | [**number**] |  | defaults to undefined |
 | **skip** | [**number**] |  | defaults to undefined |
 | **beforeTimestamp** | [**number**] |  | defaults to undefined |
@@ -919,6 +926,8 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **transactionType** | [**string**] |  | (optional) defaults to undefined |
 | **filterOriginCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **filterDestinationCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
+| **sortField** | [**string**] |  | (optional) defaults to undefined |
+| **sortOrder** | [**string**] |  | (optional) defaults to undefined |
 
 ### Return type
 
@@ -930,7 +939,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 ### HTTP response details

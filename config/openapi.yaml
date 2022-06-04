@@ -360,6 +360,36 @@ paths:
               type: string
           in: query
           name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -549,7 +579,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+                $ref: >-
+                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+
               examples: {}
       operationId: get-consumer-users-item
       description: ''
@@ -609,7 +641,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+                $ref: >-
+                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+
               examples: {}
       operationId: get-business-users-item
       description: ''
@@ -697,7 +731,7 @@ paths:
       responses:
         '200':
           description: OK
-  /accounts/{userId}:
+  '/accounts/{userId}':
     parameters:
       - schema:
           type: string
@@ -705,7 +739,7 @@ paths:
         in: path
         required: true
     delete:
-      summary: 'Account - Delete'
+      summary: Account - Delete
       operationId: accounts-delete
       responses:
         '200':
@@ -914,6 +948,7 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+
         - type: object
           properties:
             comments:
@@ -944,6 +979,7 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+
       required:
         - total
         - data
@@ -958,6 +994,7 @@ components:
           items:
             $ref: >-
               https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+
       required:
         - total
         - data
@@ -1153,6 +1190,8 @@ components:
           type: string
         nickname:
           type: string
+        picture:
+          type: string
       required:
         - user_id
         - created_at
@@ -1174,3 +1213,4 @@ components:
     Authorization:
       type: http
       scheme: bearer
+  responses: {}

@@ -319,6 +319,24 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   filterDestinationCurrencies?: Array<string>;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  sortField?: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  sortOrder?: string;
+  /**
+   *
+   * @type any
+   * @memberof DefaultApigetTransactionsList
+   */
+  body?: any;
 }
 
 export interface DefaultApiGetTransactionsListExportRequest {
@@ -775,6 +793,9 @@ export class ObjectDefaultApi {
         param.transactionType,
         param.filterOriginCurrencies,
         param.filterDestinationCurrencies,
+        param.sortField,
+        param.sortOrder,
+        param.body,
         options,
       )
       .toPromise();

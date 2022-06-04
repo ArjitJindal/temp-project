@@ -20,6 +20,7 @@ export class Account {
   'email_verified': boolean;
   'name'?: string;
   'nickname'?: string;
+  'picture'?: string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -68,6 +69,12 @@ export class Account {
     {
       name: 'nickname',
       baseName: 'nickname',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'picture',
+      baseName: 'picture',
       type: 'string',
       format: '',
     },

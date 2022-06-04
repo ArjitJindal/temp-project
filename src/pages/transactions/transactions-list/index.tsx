@@ -99,7 +99,7 @@ const TableList = (
       {
         title: 'Transaction Type',
         dataIndex: 'type',
-        width: 100,
+        width: 150,
         ellipsis: true,
       },
       {
@@ -205,13 +205,14 @@ const TableList = (
         }}
         scroll={{ x: 1300 }}
         request={async (params) => {
-          const { pageSize, current, timestamp, transactionId } = params;
+          const { pageSize, current, timestamp, transactionId, type } = params;
           const response = await api.getTransactionsList({
             limit: pageSize!,
             skip: (current! - 1) * pageSize!,
             afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
             beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
             filterId: transactionId,
+            transactionType: type,
           });
           return {
             data: response.data,

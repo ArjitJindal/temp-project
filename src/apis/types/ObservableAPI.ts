@@ -683,6 +683,9 @@ export class ObservableDefaultApi {
    * @param transactionType
    * @param filterOriginCurrencies
    * @param filterDestinationCurrencies
+   * @param sortField
+   * @param sortOrder
+   * @param body
    */
   public getTransactionsList(
     limit: number,
@@ -696,6 +699,9 @@ export class ObservableDefaultApi {
     transactionType?: string,
     filterOriginCurrencies?: Array<string>,
     filterDestinationCurrencies?: Array<string>,
+    sortField?: string,
+    sortOrder?: string,
+    body?: any,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
@@ -710,6 +716,9 @@ export class ObservableDefaultApi {
       transactionType,
       filterOriginCurrencies,
       filterDestinationCurrencies,
+      sortField,
+      sortOrder,
+      body,
       _options,
     );
 
