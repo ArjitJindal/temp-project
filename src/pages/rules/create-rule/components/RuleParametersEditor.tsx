@@ -1,4 +1,4 @@
-import { Alert, Button, Descriptions, Divider, message, Radio, Row, Space } from 'antd';
+import { Alert, Descriptions, Divider, message, Radio, Row, Space } from 'antd';
 import React, { Fragment, useCallback, useState } from 'react';
 
 import { Theme } from '@rjsf/antd';
@@ -8,6 +8,7 @@ import styles from './RuleParametersEditor.less';
 import { Rule } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
+import Button from '@/components/ui/Button';
 
 const JSONSchemaForm = withTheme(Theme);
 
@@ -107,8 +108,11 @@ export const RuleParametersEditor: React.FC<Props> = ({
 
       <Row justify="end">
         <Space>
-          <Button onClick={onBack}>Back</Button>
+          <Button analyticsName="Back" onClick={onBack}>
+            Back
+          </Button>
           <Button
+            analyticsName="Activate"
             type="primary"
             danger
             onClick={() => handleActivateRule(rule, ruleAction, parameters)}

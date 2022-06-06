@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Button, Col, Divider, Input, message, Row, Tag, Upload } from 'antd';
+import { Col, Divider, Input, message, Row, Tag, Upload } from 'antd';
 import { useCallback, useState } from 'react';
 import { PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -12,6 +12,7 @@ import {
   TransactionCaseManagement,
 } from '@/apis';
 import { useApi } from '@/api';
+import Button from '@/components/ui/Button';
 
 interface Props {
   transaction: TransactionCaseManagement;
@@ -103,13 +104,14 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
             }
           }}
         >
-          <Button size="small" icon={<PaperClipOutlined />}>
+          <Button analyticsName="Attach files" size="small" icon={<PaperClipOutlined />}>
             Attach files
           </Button>
         </Upload>
       </Col>
       <Col span={24}>
         <Button
+          analyticsName="Add Comment"
           htmlType="submit"
           loading={loading}
           onClick={submitComment}

@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
-import { Button, message } from 'antd';
+import { message } from 'antd';
 import { DrawerForm, ProFormInstance, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
+import Button from '@/components/ui/Button';
 import { useApi } from '@/api';
 
 interface Props {
@@ -19,7 +20,7 @@ export default function AccountInviteForm(props: Props) {
       width={400}
       formRef={formRef}
       trigger={
-        <Button type="primary">
+        <Button type="primary" name="Invite button">
           <PlusOutlined />
           Invite
         </Button>

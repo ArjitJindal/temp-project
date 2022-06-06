@@ -1,10 +1,11 @@
 import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icons';
-import { Alert, Button, Divider, message, Modal, Select } from 'antd';
+import { Alert, Divider, message, Modal, Select } from 'antd';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 import Dragger from 'antd/lib/upload/Dragger';
 import filesize from 'filesize';
 import _ from 'lodash';
+import Button from '@/components/ui/Button';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum } from '@/apis';
 import { useApi } from '@/api';
 import { sleep } from '@/utils/time-utils';
@@ -90,7 +91,7 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
 
   return (
     <>
-      <Button onClick={() => setIsModalVisible(true)}>
+      <Button analyticsName="Import" onClick={() => setIsModalVisible(true)}>
         {loading ? <LoadingOutlined /> : <UploadOutlined />}
         {buttonText || 'Import'}
       </Button>

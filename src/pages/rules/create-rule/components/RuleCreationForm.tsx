@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, message } from 'antd';
+import { message } from 'antd';
 import {
   ProFormText,
   ProFormTextArea,
@@ -13,6 +13,7 @@ import { RULE_ACTION_OPTIONS } from '../../utils';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import { Rule } from '@/apis';
+import Button from '@/components/ui/Button';
 
 interface RuleCreationFormProps {
   rule?: Rule;
@@ -35,7 +36,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         children ? (
           <div>{children}</div>
         ) : (
-          <Button type="primary">
+          <Button analyticsName="Create" type="primary">
             <PlusOutlined />
             Create
           </Button>
@@ -51,6 +52,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
             ...defaultDoms,
             rule && (
               <Button
+                analyticsName="Delete"
                 key="delete"
                 onClick={async () => {
                   await api.deleteRulesRuleId({ ruleId: rule.id });

@@ -1,5 +1,5 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Button, message, Radio, Row, Space, Tag } from 'antd';
+import { message, Radio, Row, Space, Tag } from 'antd';
 import { withTheme, AjvError, IChangeEvent } from '@rjsf/core';
 import { Theme } from '@rjsf/antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
@@ -8,6 +8,7 @@ import { getRuleActionColor, RULE_ACTION_OPTIONS } from '../../utils';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
+import Button from '@/components/ui/Button';
 
 const JSONSchemaForm = withTheme(Theme);
 
@@ -72,10 +73,11 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       <Row justify="end">
         {editing ? (
           <Space>
-            <Button onClick={handleCancelEditing} size="small">
+            <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
               Cancel
             </Button>
             <Button
+              analyticsName="Save"
               type="primary"
               danger
               size="small"
@@ -88,10 +90,16 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           </Space>
         ) : (
           <Space>
-            <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
+            <Button
+              analyticsName="Edit"
+              icon={<EditOutlined />}
+              onClick={() => setEditing(true)}
+              size="small"
+            >
               Edit
             </Button>
             <Button
+              analyticsName="Delete"
               icon={<DeleteOutlined />}
               onClick={handleDeleteRuleInstance}
               size="small"

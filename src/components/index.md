@@ -31,7 +31,7 @@ HeaderDropdown 是 antd Dropdown 的封装，但是增加了移动端的特殊�
 /**
  * background: '#f0f2f5'
  */
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 import React from 'react';
 import HeaderDropdown from '@/components/HeaderDropdown';
 
@@ -59,7 +59,7 @@ export default () => {
 /**
  * background: '#f0f2f5'
  */
-import { Button, Menu } from 'antd';
+import { Menu } from 'antd';
 import React from 'react';
 import HeaderSearch from '@/components/HeaderSearch';
 

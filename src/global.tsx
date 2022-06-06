@@ -1,6 +1,7 @@
-import { Button, message, notification } from 'antd';
+import { message, notification } from 'antd';
 import { useIntl } from 'umi';
 import defaultSettings from '../config/defaultSettings';
+import Button from '@/components/ui/Button';
 
 const { pwa } = defaultSettings;
 const isHttps = document.location.protocol === 'https:';
@@ -56,6 +57,7 @@ if (pwa) {
     const key = `open${Date.now()}`;
     const btn = (
       <Button
+        analyticsName="Refresh"
         type="primary"
         onClick={() => {
           notification.close(key);

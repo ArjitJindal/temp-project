@@ -26,6 +26,8 @@ import {
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import ExportButton from '@/pages/case-management/components/ExportButton';
+import { useAnalytics } from '@/utils/segment/context';
+import { measure } from '@/utils/time-utils';
 
 const TableList = (
   props: IRouteComponentProps<{
@@ -91,6 +93,8 @@ const TableList = (
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
+
+  const analytics = useAnalytics();
 
   // todo: i18n
   const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
@@ -348,17 +352,22 @@ const TableList = (
             rulesExecutedFilter,
             type,
           } = params;
-
-          const response = await api.getTransactionsList({
-            limit: pageSize!,
-            skip: (current! - 1) * pageSize!,
-            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-            filterId: transactionId,
-            filterRulesHit: rulesHitFilter,
-            filterRulesExecuted: rulesExecutedFilter,
-            filterOutStatus: 'ALLOW',
-            transactionType: type,
+          const [response, time] = await measure(() =>
+            api.getTransactionsList({
+              limit: pageSize!,
+              skip: (current! - 1) * pageSize!,
+              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+              filterId: transactionId,
+              filterRulesHit: rulesHitFilter,
+              filterRulesExecuted: rulesExecutedFilter,
+              filterOutStatus: 'ALLOW',
+              transactionType: type,
+            }),
+          );
+          analytics.event({
+            title: 'Table Loaded',
+            time,
           });
           return {
             data: response.data,

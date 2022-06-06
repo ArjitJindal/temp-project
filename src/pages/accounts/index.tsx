@@ -1,13 +1,16 @@
 import React, { useRef } from 'react';
 import { green, red } from '@ant-design/colors';
 import ProTable, { ActionType, ProColumns } from '@ant-design/pro-table';
-import { Button, message, Popconfirm } from 'antd';
+import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
 import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 import PageWrapper from '@/components/PageWrapper';
+import { measure } from '@/utils/time-utils';
+import { useAnalytics } from '@/utils/segment/context';
+import Button from '@/components/ui/Button';
 
 export default function () {
   const api = useApi();
@@ -79,12 +82,16 @@ export default function () {
               }
             }}
           >
-            <Button danger>Delete</Button>
+            <Button analyticsName="Delete account" danger>
+              Delete
+            </Button>
           </Popconfirm>
         );
       },
     });
   }
+
+  const analytics = useAnalytics();
 
   // todo: i18n
   return (
@@ -101,7 +108,11 @@ export default function () {
           return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];
         }}
         request={async () => {
-          const accounts: Array<Account> = await api.getAccounts();
+          const [accounts, time] = await measure(() => api.getAccounts());
+          analytics.event({
+            title: 'Table Loaded',
+            time,
+          });
           return {
             data: accounts,
             success: true,

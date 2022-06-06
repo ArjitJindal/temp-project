@@ -1,7 +1,8 @@
-import { Button, Card } from 'antd';
+import { Card } from 'antd';
 import type { FC } from 'react';
 import { PageContainer } from '@ant-design/pro-layout';
 import PageWrapper from '@/components/PageWrapper';
+import Button from '@/components/ui/Button';
 
 const BasicForm: FC<Record<string, any>> = () => {
   return (
@@ -12,7 +13,7 @@ const BasicForm: FC<Record<string, any>> = () => {
     >
       <Card bordered={false}>
         <>
-          <Button>Upload CSV</Button>
+          <Button analyticsName="Upload CSV">Upload CSV</Button>
         </>
       </Card>
     </PageWrapper>

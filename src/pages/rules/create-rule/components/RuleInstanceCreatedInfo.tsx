@@ -1,7 +1,8 @@
-import { Button, Descriptions, Result } from 'antd';
+import { Descriptions, Result } from 'antd';
 import { Link } from 'umi';
 import styles from './RuleInstanceCreatedInfo.less';
 import { Rule } from '@/apis';
+import Button from '@/components/ui/Button';
 
 export const RuleInstanceCreatedInfo: React.FC<{
   rule: Rule;
@@ -14,11 +15,11 @@ export const RuleInstanceCreatedInfo: React.FC<{
       subTitle="All new transactions will go through this rule"
       extra={
         <>
-          <Button type="primary" onClick={onFinish}>
+          <Button analyticsName="Create another rule" type="primary" onClick={onFinish}>
             Create another rule
           </Button>
 
-          <Button>
+          <Button analyticsName="View my rules">
             <Link to="/rules/my-rules">View my rules</Link>
           </Button>
         </>

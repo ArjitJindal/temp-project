@@ -2,7 +2,6 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import {
   Avatar,
-  Button,
   Col,
   Comment as AntComment,
   Divider,
@@ -36,6 +35,7 @@ import {
 import { useApi } from '@/api';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
+import Button from '@/components/ui/Button';
 
 const equal = require('fast-deep-equal');
 
@@ -130,13 +130,14 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
             }
           }}
         >
-          <Button size="small" icon={<PaperClipOutlined />}>
+          <Button analyticsName="Attach files" size="small" icon={<PaperClipOutlined />}>
             Attach files
           </Button>
         </Upload>
       </Col>
       <Col span={24}>
         <Button
+          analyticsName="Add Comment"
           htmlType="submit"
           loading={loading}
           onClick={submitComment}
@@ -232,10 +233,11 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
       <Row justify="end">
         {editing ? (
           <Space>
-            <Button onClick={handleCancelEditing} size="small">
+            <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
               Cancel
             </Button>
             <Button
+              analyticsName="Save"
               type="primary"
               danger
               size="small"
@@ -247,7 +249,12 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
             </Button>
           </Space>
         ) : (
-          <Button icon={<EditOutlined />} onClick={() => setEditing(true)} size="small">
+          <Button
+            analyticsName="Edit"
+            icon={<EditOutlined />}
+            onClick={() => setEditing(true)}
+            size="small"
+          >
             Edit
           </Button>
         )}

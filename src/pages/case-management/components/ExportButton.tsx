@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Button, message, Tooltip } from 'antd';
+import { message, Tooltip } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useApi } from '@/api';
 import { FormValues } from '@/pages/case-management/types';
 import { ApiException } from '@/apis';
+import Button from '@/components/ui/Button';
 
 interface Props {
   disabled: {
@@ -21,6 +22,7 @@ export default function ExportButton(props: Props) {
   return (
     <Tooltip title={disabled.reason}>
       <Button
+        analyticsName="Export to CSV"
         icon={<DownloadOutlined />}
         type="default"
         disabled={isBusy || disabled.state}

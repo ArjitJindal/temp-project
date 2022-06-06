@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { Button, Form, Input, message, Modal, Select } from 'antd';
+import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
+import Button from '@/components/ui/Button';
 
 interface Props {
   transactionId: string;
@@ -61,6 +62,7 @@ export default function AllowForm(props: Props) {
   return (
     <>
       <Button
+        analyticsName="Allow"
         onClick={() => {
           setModalVisible(true);
         }}

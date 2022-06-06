@@ -20,6 +20,8 @@ import {
   success,
 } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { measure } from '@/utils/time-utils';
+import { useAnalytics } from '@/utils/segment/context';
 
 // todo: move to config
 export const DATE_TIME_FORMAT = 'L LTS';
@@ -118,7 +120,7 @@ const TableList = (
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originUserId;
-        }
+        },
       },
       {
         title: 'Origin Method',
@@ -154,7 +156,7 @@ const TableList = (
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationUserId;
-        }
+        },
       },
       {
         title: 'Destination Method',
@@ -188,6 +190,8 @@ const TableList = (
     [],
   );
 
+  const analytics = useAnalytics();
+
   return (
     <PageWrapper>
       <ProTable<TransactionCaseManagement>
@@ -206,13 +210,19 @@ const TableList = (
         scroll={{ x: 1300 }}
         request={async (params) => {
           const { pageSize, current, timestamp, transactionId, type } = params;
-          const response = await api.getTransactionsList({
-            limit: pageSize!,
-            skip: (current! - 1) * pageSize!,
-            afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-            beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-            filterId: transactionId,
-            transactionType: type,
+          const [response, time] = await measure(() =>
+            api.getTransactionsList({
+              limit: pageSize!,
+              skip: (current! - 1) * pageSize!,
+              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+              filterId: transactionId,
+              transactionType: type,
+            }),
+          );
+          analytics.event({
+            title: 'Table Loaded',
+            time,
           });
           return {
             data: response.data,

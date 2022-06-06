@@ -31,6 +31,8 @@ import {
   success,
 } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { measure } from '@/utils/time-utils';
+import { useAnalytics } from '@/utils/segment/context';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -180,6 +182,8 @@ const BusinessUsersTab = (
     },
   ];
 
+  const analytics = useAnalytics();
+
   return (
     <>
       <ProTable<Business, TableListPagination>
@@ -194,13 +198,22 @@ const BusinessUsersTab = (
         rowKey="key"
         search={false}
         request={async (params) => {
+          console.log('request!');
           const { pageSize, current, userId, createdTimestamp } = params;
-          const response = await api.getBusinessUsersList({
-            limit: pageSize!,
-            skip: (current! - 1) * pageSize!,
-            afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-            beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
-            filterId: userId,
+          const [response, time] = await measure(() =>
+            api.getBusinessUsersList({
+              limit: pageSize!,
+              skip: (current! - 1) * pageSize!,
+              afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+              beforeTimestamp: createdTimestamp
+                ? moment(createdTimestamp[1]).valueOf()
+                : Date.now(),
+              filterId: userId,
+            }),
+          );
+          analytics.event({
+            title: 'Table Loaded',
+            time,
           });
           return {
             data: response.data,
@@ -439,6 +452,9 @@ const ConsumerUsersTab = (
       },
     },
   ];
+
+  const analytics = useAnalytics();
+
   return (
     <>
       <ProTable<User, TableListPagination>
@@ -453,14 +469,21 @@ const ConsumerUsersTab = (
         }}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
-          const response = await api.getConsumerUsersList({
-            limit: pageSize!,
-            skip: (current! - 1) * pageSize!,
-            afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-            beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
-            filterId: userId,
+          const [response, time] = await measure(() =>
+            api.getConsumerUsersList({
+              limit: pageSize!,
+              skip: (current! - 1) * pageSize!,
+              afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+              beforeTimestamp: createdTimestamp
+                ? moment(createdTimestamp[1]).valueOf()
+                : Date.now(),
+              filterId: userId,
+            }),
+          );
+          analytics.event({
+            title: 'Table Loaded',
+            time,
           });
-
           return {
             data: response.data,
             success: true,
@@ -574,6 +597,7 @@ const TableList = (
       <Tabs
         type="line"
         activeKey={list}
+        destroyInactiveTabPane={true}
         onChange={(key) => {
           props.history.push(`/users/list/${key}/all`);
         }}

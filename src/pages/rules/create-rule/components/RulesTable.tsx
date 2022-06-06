@@ -1,12 +1,13 @@
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { useMemo, useRef } from 'react';
-import { Button, Tag } from 'antd';
+import { Tag } from 'antd';
 import { getRuleActionColor } from '../../utils';
 import { RuleCreationForm } from './RuleCreationForm';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
 import { isFlagrightTenantUser, useAuth0User } from '@/utils/user-utils';
+import Button from '@/components/ui/Button';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -65,6 +66,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
           return (
             <span>
               <Button
+                analyticsName="Select"
                 shape="round"
                 size="small"
                 style={{ borderColor: '#1890ff', color: '#1890ff' }}
