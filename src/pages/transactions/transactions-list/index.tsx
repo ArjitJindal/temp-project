@@ -132,7 +132,9 @@ const TableList = (
       },
       {
         title: 'Origin Amount',
+        dataIndex: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
+        sorter: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionAmount;
         },
@@ -168,7 +170,9 @@ const TableList = (
       },
       {
         title: 'Destination Amount',
+        dataIndex: 'destnationAmountDetails.transactionAmount',
         hideInSearch: true,
+        sorter: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionAmount;
         },
