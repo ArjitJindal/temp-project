@@ -1,4 +1,5 @@
-import { MongoClient, ServerApiVersion } from 'mongodb'
+import os from 'os'
+import { MongoClient } from 'mongodb'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AWS = require('aws-sdk')
@@ -20,7 +21,10 @@ export async function connectToDB() {
   }
   if (process.env.ENV === 'local') {
     return await MongoClient.connect(
-      process.env.MONGO_URI || 'mongodb://host.docker.internal:27017'
+      process.env.MONGO_URI ||
+        `mongodb://${
+          os.type() === 'Linux' ? '172.17.0.1' : 'host.docker.internal'
+        }:27017`
     )
   }
 
