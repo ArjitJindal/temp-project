@@ -4,13 +4,15 @@ import { useMemo, useRef } from 'react';
 import { Tag } from 'antd';
 import { getRuleActionColor } from '../../utils';
 import { RuleCreationForm } from './RuleCreationForm';
-import { Rule } from '@/apis';
+import { RuleParametersTable } from './RuleParametersTable';
+import { Rule, RuleImplementation } from '@/apis';
 import { useApi } from '@/api';
 import { isFlagrightTenantUser, useAuth0User } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
+  ruleImplementations: { [ruleImplementationName: string]: RuleImplementation } | undefined;
 }
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
@@ -45,9 +47,18 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         dataIndex: 'description',
       },
       {
+        title: 'Default Parameters',
+        width: 250,
+        render: (_, rule) => (
+          <RuleParametersTable
+            parameters={rule.defaultParameters}
+            schema={ruleImplementations?.[rule.ruleImplementationName].parametersSchema}
+          />
+        ),
+      },
+      {
         title: 'Default Action',
         width: 150,
-        dataIndex: 'defaultAction',
         render: (_, rule) => {
           return (
             <span>
@@ -58,9 +69,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       },
       {
         width: 140,
-        dataIndex: 'status',
         search: false,
-        key: 'status',
         fixed: 'right',
         render: (_, entity) => {
           return (
@@ -79,7 +88,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         },
       },
     ],
-    [onSelectRule, user],
+    [onSelectRule, ruleImplementations, user],
   );
 
   return (

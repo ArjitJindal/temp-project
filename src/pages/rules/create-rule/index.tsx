@@ -63,7 +63,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
         <Divider />
 
         {current === 0 ? (
-          <RulesTable onSelectRule={handleSelectRule} />
+          <RulesTable onSelectRule={handleSelectRule} ruleImplementations={ruleImplementations} />
         ) : current === 1 && selectedRule ? (
           <RuleParametersEditor
             rule={selectedRule}

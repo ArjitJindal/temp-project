@@ -4,6 +4,7 @@ import ProTable from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { getRuleActionColor } from '../utils';
+import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -108,6 +109,21 @@ export default () => {
         },
       },
       {
+        title: 'Parameters',
+        width: 250,
+        render: (_, ruleInstance) => {
+          return (
+            <RuleParametersTable
+              parameters={ruleInstance.parameters}
+              schema={
+                ruleImplementations?.[rules[ruleInstance.ruleId].ruleImplementationName]
+                  .parametersSchema
+              }
+            />
+          );
+        },
+      },
+      {
         title: 'Action',
         align: 'center',
         width: 30,
@@ -143,7 +159,7 @@ export default () => {
         },
       },
     ],
-    [handleActivationChange, rules, updatedRuleInstances],
+    [handleActivationChange, ruleImplementations, rules, updatedRuleInstances],
   );
   return (
     <PageWrapper
