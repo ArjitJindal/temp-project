@@ -110,6 +110,7 @@ const TableList = (
         ellipsis: true,
         dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
+        sorter: true,
         render: (_, transaction) => {
           return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
         },
@@ -208,8 +209,9 @@ const TableList = (
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
-        request={async (params) => {
+        request={async (params,sorter) => {
           const { pageSize, current, timestamp, transactionId, type } = params;
+          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
             api.getTransactionsList({
               limit: pageSize!,
@@ -218,6 +220,8 @@ const TableList = (
               beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
               filterId: transactionId,
               transactionType: type,
+              sortField: sortField ?? undefined,
+              sortOrder: sortOrder ?? undefined,
             }),
           );
           analytics.event({

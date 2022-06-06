@@ -132,6 +132,7 @@ const TableList = (
         ellipsis: true,
         dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
+        sorter: true,
         render: (_, transaction) => {
           return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
         },
@@ -342,7 +343,7 @@ const TableList = (
         }}
         scroll={{ x: 1300 }}
         expandable={{ expandedRowRender: ExpandedRulesRowRender }}
-        request={async (params) => {
+        request={async (params, sorter) => {
           const {
             pageSize,
             current,
@@ -352,6 +353,7 @@ const TableList = (
             rulesExecutedFilter,
             type,
           } = params;
+          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
             api.getTransactionsList({
               limit: pageSize!,
@@ -363,6 +365,8 @@ const TableList = (
               filterRulesExecuted: rulesExecutedFilter,
               filterOutStatus: 'ALLOW',
               transactionType: type,
+              sortField: sortField ?? undefined,
+              sortOrder: sortOrder ?? undefined,
             }),
           );
           analytics.event({
