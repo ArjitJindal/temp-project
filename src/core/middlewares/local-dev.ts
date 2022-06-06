@@ -48,6 +48,7 @@ export const localDev =
           principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
+          tenantConsoleHost: userInfo[`${CUSTOM_CLAIMS_NS}/tenantConsoleHost`],
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
           role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
           ...authorizer,

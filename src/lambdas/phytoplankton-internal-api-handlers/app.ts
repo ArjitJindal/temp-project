@@ -453,6 +453,7 @@ export const accountsHandler = lambdaApi()(
     const {
       principalId: tenantId,
       tenantName,
+      tenantConsoleHost,
       role,
     } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
@@ -481,6 +482,7 @@ export const accountsHandler = lambdaApi()(
         app_metadata: {
           tenantName: tenantName,
           tenantId: tenantId,
+          tenantConsoleHost: tenantConsoleHost,
           role: 'user',
         },
       })

@@ -20,4 +20,5 @@ export interface JWTAuthorizerResult extends AWS.STS.Credentials {
   userId: string
   role: JwtRole
   tenantName: string
+  tenantConsoleHost: string
 }
