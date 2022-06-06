@@ -22,8 +22,8 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
     return {
       type: 'object',
       properties: {
-        sendersCount: { type: 'integer' },
-        timePeriodDays: { type: 'integer' },
+        sendersCount: { type: 'integer', title: 'Senders Count Threshold' },
+        timePeriodDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['sendersCount', 'timePeriodDays'],
       additionalProperties: false,

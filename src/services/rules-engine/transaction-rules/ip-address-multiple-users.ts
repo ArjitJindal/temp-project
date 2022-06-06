@@ -15,8 +15,11 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
     return {
       type: 'object',
       properties: {
-        uniqueUsersCountThreshold: { type: 'integer' },
-        timeWindowInDays: { type: 'integer' },
+        uniqueUsersCountThreshold: {
+          type: 'integer',
+          title: 'Users Count Threshold',
+        },
+        timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
       additionalProperties: false,

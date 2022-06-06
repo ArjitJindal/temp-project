@@ -30,18 +30,24 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       properties: {
         transactionVolumeThreshold: {
           type: 'object',
+          title: 'Transactions Volume Threshold',
           additionalProperties: {
             type: 'integer',
           },
           required: [],
         },
-        timeWindowInSeconds: { type: 'integer' },
+        timeWindowInSeconds: {
+          type: 'integer',
+          title: 'Time Window (Seconds)',
+        },
         checkSender: {
           type: 'string',
+          title: 'Origin User Transaction Direction',
           enum: ['sending', 'all', 'none'],
         },
         checkReceiver: {
           type: 'string',
+          title: 'Destination User Transaction Direction',
           enum: ['receiving', 'all', 'none'],
         },
       },

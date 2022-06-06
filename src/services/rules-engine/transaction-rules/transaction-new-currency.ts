@@ -11,7 +11,10 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
     return {
       type: 'object',
       properties: {
-        initialTransactions: { type: 'integer' },
+        initialTransactions: {
+          type: 'integer',
+          title: 'Initial Transactions Count Threshold',
+        },
       },
       required: ['initialTransactions'],
       additionalProperties: false,

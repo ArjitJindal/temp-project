@@ -31,6 +31,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
           properties: {
             DAILY: {
               type: 'object',
+              title: 'Daily Transactions Volume Threshold',
               additionalProperties: {
                 type: 'integer',
               },
@@ -39,6 +40,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
             },
             MONTHLY: {
               type: 'object',
+              title: 'Monthly Transactions Volume Threshold',
               additionalProperties: {
                 type: 'integer',
               },
@@ -47,6 +49,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
             },
             YEARLY: {
               type: 'object',
+              title: 'Yearly Transactions Volume Threshold',
               additionalProperties: {
                 type: 'integer',
               },
@@ -57,10 +60,12 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         },
         checkSender: {
           type: 'string',
+          title: 'Origin User Transaction Direction',
           enum: ['sending', 'all', 'none'],
         },
         checkReceiver: {
           type: 'string',
+          title: 'Destination User Transaction Direction',
           enum: ['receiving', 'all', 'none'],
         },
       },

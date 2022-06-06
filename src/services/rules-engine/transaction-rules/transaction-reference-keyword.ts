@@ -10,7 +10,11 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
     return {
       type: 'object',
       properties: {
-        keywords: { type: 'array', items: { type: 'string' } },
+        keywords: {
+          type: 'array',
+          title: 'Keywords',
+          items: { type: 'string' },
+        },
       },
       required: ['keywords'],
       additionalProperties: false,

@@ -18,15 +18,22 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     return {
       type: 'object',
       properties: {
-        targetTransactionsThreshold: { type: 'integer' },
-        targetTransactionType: { type: 'string' },
+        targetTransactionsThreshold: {
+          type: 'integer',
+          title: 'Transactions Count Threshold',
+        },
+        targetTransactionType: {
+          type: 'string',
+          title: 'Target Transaction Type',
+        },
         otherTransactionTypes: {
           type: 'array',
+          title: 'Other Transaction Types',
           items: {
             type: 'string',
           },
         },
-        timeWindowInDays: { type: 'integer' },
+        timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: [
         'targetTransactionsThreshold',

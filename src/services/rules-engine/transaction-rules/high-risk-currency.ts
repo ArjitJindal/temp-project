@@ -10,7 +10,11 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
     return {
       type: 'object',
       properties: {
-        highRiskCurrencies: { type: 'array', items: { type: 'string' } },
+        highRiskCurrencies: {
+          type: 'array',
+          title: 'High Risk Currencies',
+          items: { type: 'string' },
+        },
       },
       required: ['highRiskCurrencies'],
       additionalProperties: false,

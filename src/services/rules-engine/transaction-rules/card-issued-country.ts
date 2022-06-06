@@ -11,7 +11,11 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
     return {
       type: 'object',
       properties: {
-        allowedCountries: { type: 'array', items: { type: 'string' } },
+        allowedCountries: {
+          type: 'array',
+          title: 'Whitelist Countries (ISO 3166-1 alpha-2)',
+          items: { type: 'string' },
+        },
       },
       required: ['allowedCountries'],
       additionalProperties: false,

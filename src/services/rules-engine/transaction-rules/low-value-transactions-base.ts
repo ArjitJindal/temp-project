@@ -24,6 +24,7 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
       properties: {
         lowTransactionValues: {
           type: 'object',
+          title: 'Low Transaction Value',
           additionalProperties: {
             type: 'object',
             properties: {
@@ -34,7 +35,10 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
           },
           required: [],
         },
-        lowTransactionCount: { type: 'integer' },
+        lowTransactionCount: {
+          type: 'integer',
+          title: 'Low-value Transactions Count Threshold',
+        },
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],
       additionalProperties: false,

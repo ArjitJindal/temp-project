@@ -20,6 +20,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
       properties: {
         transactionAmountThreshold: {
           type: 'object',
+          title: 'Transaction Amount Threshold',
           additionalProperties: {
             type: 'integer',
           },
@@ -27,9 +28,10 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         },
         ageRange: {
           type: 'object',
+          title: 'Target Age Range',
           properties: {
-            minAge: { type: 'integer' },
-            maxAge: { type: 'integer' },
+            minAge: { type: 'integer', title: 'Min Age' },
+            maxAge: { type: 'integer', title: 'Max Age' },
           },
           required: ['minAge', 'maxAge'],
           nullable: true,

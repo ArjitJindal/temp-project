@@ -28,26 +28,39 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     return {
       type: 'object',
       properties: {
-        transactionsPerSecond: { type: 'number' },
-        timeWindowInSeconds: { type: 'integer' },
+        transactionsPerSecond: {
+          type: 'number',
+          title: 'Transactions/sec Threshold',
+        },
+        timeWindowInSeconds: {
+          type: 'integer',
+          title: 'Time Window (Seconds)',
+        },
         checkSender: {
           type: 'string',
+          title: 'Origin User Transaction Direction',
           enum: ['sending', 'all', 'none'],
           nullable: true,
         },
         checkReceiver: {
           type: 'string',
+          title: 'Destination User Transaction Direction',
           enum: ['receiving', 'all', 'none'],
           nullable: true,
         },
         userIdsToCheck: {
           type: 'array',
+          title: 'Target User IDs',
           items: { type: 'string' },
           nullable: true,
         },
         checkTimeWindow: {
           type: 'object',
-          properties: { from: { type: 'string' }, to: { type: 'string' } },
+          title: 'Time Window',
+          properties: {
+            from: { type: 'string', title: 'From (format: 00:00:00+00:00)' },
+            to: { type: 'string', title: 'To (format: 00:00:00+00:00)' },
+          },
           required: ['from', 'to'],
           nullable: true,
         },

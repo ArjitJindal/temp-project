@@ -12,7 +12,10 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
     return {
       type: 'object',
       properties: {
-        dormancyPeriodDays: { type: 'integer' },
+        dormancyPeriodDays: {
+          type: 'integer',
+          title: 'Dormancy Period Threshold (Days)',
+        },
       },
       required: ['dormancyPeriodDays'],
       additionalProperties: false,

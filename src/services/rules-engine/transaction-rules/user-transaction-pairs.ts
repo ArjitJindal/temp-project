@@ -18,11 +18,22 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     return {
       type: 'object',
       properties: {
-        userPairsThreshold: { type: 'integer' },
-        timeWindowInSeconds: { type: 'integer' },
-        transactionType: { type: 'string', nullable: true },
+        userPairsThreshold: {
+          type: 'integer',
+          title: 'User Pairs Count Threshold',
+        },
+        timeWindowInSeconds: {
+          type: 'integer',
+          title: 'Time Window (Seconds)',
+        },
+        transactionType: {
+          type: 'string',
+          title: 'Target Transaction Type',
+          nullable: true,
+        },
         excludedUserIds: {
           type: 'array',
+          title: 'Excluded User IDs',
           items: { type: 'string' },
           nullable: true,
         },
