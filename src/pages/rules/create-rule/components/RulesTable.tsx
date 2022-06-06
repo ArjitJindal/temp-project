@@ -15,7 +15,7 @@ interface Props {
   ruleImplementations: { [ruleImplementationName: string]: RuleImplementation } | undefined;
 }
 
-export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
+export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule }) => {
   const user = useAuth0User();
   const api = useApi();
   const actionRef = useRef<ActionType>();
