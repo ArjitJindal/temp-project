@@ -384,12 +384,6 @@ paths:
             type: string
           in: query
           name: sortOrder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -682,12 +676,6 @@ paths:
             type: number
           in: query
           name: endTimestamp
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
     parameters: []
   '/transactions/{transactionId}/comments':
     post:

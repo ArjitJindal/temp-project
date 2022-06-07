@@ -862,12 +862,6 @@ paths:
             type: string
           in: query
           name: sortOrder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1456,12 +1450,6 @@ paths:
             type: number
           in: query
           name: endTimestamp
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:

@@ -213,12 +213,6 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    * @memberof DefaultApigetDashboardStatsTransactions
    */
   endTimestamp?: number
-  /**
-   *
-   * @type any
-   * @memberof DefaultApigetDashboardStatsTransactions
-   */
-  body?: any
 }
 
 export interface DefaultApiGetImportImportIdRequest {
@@ -324,12 +318,6 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   sortOrder?: string
-  /**
-   *
-   * @type any
-   * @memberof DefaultApigetTransactionsList
-   */
-  body?: any
 }
 
 export interface DefaultApiGetTransactionsListExportRequest {
