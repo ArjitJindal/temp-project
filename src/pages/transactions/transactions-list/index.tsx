@@ -213,7 +213,7 @@ const TableList = (
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
-        request={async (params,sorter) => {
+        request={async (params, sorter) => {
           const { pageSize, current, timestamp, transactionId, type } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
