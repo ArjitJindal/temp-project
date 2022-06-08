@@ -10,6 +10,9 @@ import {
   HOUR_DATE_FORMAT,
   MONTH_DATE_FORMAT,
   TRANSACTIONS_COLLECTION,
+  DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
+  DASHBOARD_RULE_HIT_STATS_COLLECTION_MONTHLY,
+  DASHBOARD_RULE_HIT_STATS_COLLECTION_DAILY,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { neverThrow } from '@/utils/lang'
@@ -128,6 +131,81 @@ export class DashboardStatsRepository {
       }
     }
 
+    const dashboardRuleHitStatsHandler = async (
+      tenantId: string,
+      aggregatedCollectionName: string,
+      dateIdFormat: string
+    ) => {
+      const transactionsCollection = db.collection<TransactionCaseManagement>(
+        TRANSACTIONS_COLLECTION(tenantId)
+      )
+      try {
+        await transactionsCollection
+          .aggregate([
+            {
+              $project: {
+                timestamp: '$timestamp',
+                executedRules: {
+                  $filter: {
+                    input: '$executedRules',
+                    as: 'rule',
+                    cond: {
+                      $eq: ['$$rule.ruleHit', true],
+                    },
+                  },
+                },
+              },
+            },
+            {
+              $unwind: {
+                path: '$executedRules',
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  time: {
+                    $dateToString: {
+                      format: dateIdFormat,
+                      date: {
+                        $toDate: {
+                          $toLong: '$timestamp',
+                        },
+                      },
+                    },
+                  },
+                  ruleId: '$executedRules.ruleId',
+                },
+                hitCount: {
+                  $sum: 1,
+                },
+              },
+            },
+            {
+              $group: {
+                _id: '$_id.time',
+                rulesStats: {
+                  $push: {
+                    ruleId: '$_id.ruleId',
+                    hitCount: '$hitCount',
+                  },
+                },
+              },
+            },
+            {
+              $merge: {
+                into: aggregatedCollectionName,
+                whenMatched: 'replace',
+              },
+            },
+          ])
+          .next()
+      } catch (e) {
+        console.error(`ERROR ${e}`)
+      }
+    }
+
     await Promise.all([
       dashboardTransactionStatsHandler(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
@@ -140,6 +218,21 @@ export class DashboardStatsRepository {
       dashboardTransactionStatsHandler(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
         HOUR_DATE_FORMAT
+      ),
+      await dashboardRuleHitStatsHandler(
+        tenantId,
+        DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId),
+        HOUR_DATE_FORMAT
+      ),
+      await dashboardRuleHitStatsHandler(
+        tenantId,
+        DASHBOARD_RULE_HIT_STATS_COLLECTION_MONTHLY(tenantId),
+        MONTH_DATE_FORMAT
+      ),
+      await dashboardRuleHitStatsHandler(
+        tenantId,
+        DASHBOARD_RULE_HIT_STATS_COLLECTION_DAILY(tenantId),
+        DAY_DATE_FORMAT
       ),
     ])
   }

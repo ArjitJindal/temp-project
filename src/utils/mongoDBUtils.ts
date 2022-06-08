@@ -99,6 +99,22 @@ export const DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-transaction-stats-hourly`
 }
 
+export const DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-rule-stats-hourly`
+}
+
+export const DASHBOARD_RULE_HIT_STATS_COLLECTION_MONTHLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-rule-stats-monthly`
+}
+
+export const DASHBOARD_RULE_HIT_STATS_COLLECTION_DAILY = (tenantId: string) => {
+  return `${tenantId}-dashboard-rule-stats-daily`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }

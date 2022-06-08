@@ -10,7 +10,6 @@
 
 - How were the changes tested
 
-
 ### Screenshots
 
 - Screenshots if any
