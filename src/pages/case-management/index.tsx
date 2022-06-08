@@ -150,6 +150,7 @@ const TableList = (
         title: 'Origin User ID',
         dataIndex: 'originUserId',
         hideInSearch: true,
+        width: 100,
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -192,13 +193,14 @@ const TableList = (
         title: 'Destination User ID',
         dataIndex: 'deatinationUserId',
         hideInSearch: true,
+        width: 120,
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
       },
       {
         title: 'Destination Method',
-        width: 100,
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationPaymentDetails?.method;
@@ -206,7 +208,7 @@ const TableList = (
       },
       {
         title: 'Destination Amount',
-        width: 80,
+        width: 120,
         dataIndex: 'destnationAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
@@ -216,7 +218,7 @@ const TableList = (
       },
       {
         title: 'Destination Currency',
-        width: 80,
+        width: 100,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
@@ -224,7 +226,7 @@ const TableList = (
       },
       {
         title: 'Destination Country',
-        width: 80,
+        width: 100,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
@@ -319,26 +321,6 @@ const TableList = (
         onLoadingChange={(isLoading) => {
           setLoading(isLoading === true);
         }}
-        toolBarRender={(info) => {
-          const isTooMuchDataToExport = (info?.pageInfo?.total ?? 0) > EXPORT_ENTRIES_LIMIT;
-          let reason: string | null = null;
-          if (!isLoading) {
-            if (isTooMuchDataToExport) {
-              reason = `Data-set for export should not be larger than ${EXPORT_ENTRIES_LIMIT} entries. Please, change filter parameters to fit into this limitation`;
-            }
-          }
-          return [
-            <ExportButton
-              disabled={{
-                state: isLoading || isTooMuchDataToExport,
-                reason: reason,
-              }}
-              onGetFormValues={() => {
-                return formRef.current?.getFieldsValue() ?? {};
-              }}
-            />,
-          ];
-        }}
         actionRef={actionRef}
         formRef={formRef}
         rowKey="transactionId"
@@ -377,6 +359,11 @@ const TableList = (
             title: 'Table Loaded',
             time,
           });
+          // // @ts-ignore
+          // window.analytics.track('Case Management / Data loaded', {
+          //   entriesCount: response.data.length,
+          //   entriesCountTotal: response.total,
+          // });
           return {
             data: response.data,
             success: true,
