@@ -2,19 +2,37 @@ import { JSONSchemaType } from 'ajv'
 import dayjs = require('dayjs')
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { MissingRuleParameter } from './errors'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
-export type SenderLocationChangesFrequencyRuleParameters = {
-  uniqueCitiesCountThreshold: number
-  // We could add more granularities like region, timezone and country
-  timeWindowInDays: number
-}
+export type SenderLocationChangesFrequencyRuleParameters =
+  DefaultTransactionRuleParameters & {
+    uniqueCitiesCountThreshold: number
+    // We could add more granularities like region, timezone and country
+    timeWindowInDays: number
+  }
 
 export default class SenderLocationChangesFrequencyRule extends TransactionRule<SenderLocationChangesFrequencyRuleParameters> {
   public static getSchema(): JSONSchemaType<SenderLocationChangesFrequencyRuleParameters> {
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         uniqueCitiesCountThreshold: {
           type: 'integer',
           title: 'Cities Count Threshold',
@@ -27,7 +45,8 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
   }
 
   public async computeRule() {
-    const { uniqueCitiesCountThreshold, timeWindowInDays } = this.parameters
+    const { uniqueCitiesCountThreshold, timeWindowInDays, transactionState } =
+      this.parameters
     if (
       uniqueCitiesCountThreshold === undefined ||
       timeWindowInDays === undefined
@@ -53,7 +72,8 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
             .subtract(timeWindowInDays, 'day')
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
-        }
+        },
+        { transactionState }
       )
     const transactionsWithIpAddress = [
       ...(await transactionRepository.getTransactionsByIds(

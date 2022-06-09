@@ -440,3 +440,61 @@ describe('checksender/checkreceiver', () => {
     )
   })
 })
+
+describe('Transaction State', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsPerSecond: 2,
+        timeWindowInSeconds: 1,
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionState: 'SUCCESSFUL',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Skip transactions with non-target state',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T10:00:00.000Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T10:00:00.100Z').valueOf(),
+          transactionState: 'DECLINED',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T10:00:00.200Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T10:00:00.300Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+      ],
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+    },
+  ])('', ({ name, transactions, expectedActions }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedActions
+    )
+  })
+})

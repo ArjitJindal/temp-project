@@ -19,6 +19,7 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -294,6 +295,7 @@ export class TransactionRepository {
                     ...senderKeys,
                     transactionId: transaction.transactionId,
                     receiverKeyId: receiverKeys.PartitionKeyID,
+                    transactionState: transaction.transactionState,
                   },
                 },
               },
@@ -304,6 +306,7 @@ export class TransactionRepository {
                     ...receiverKeys,
                     transactionId: transaction.transactionId,
                     senderKeyId: senderKeys.PartitionKeyID,
+                    transactionState: transaction.transactionState,
                   },
                 },
               },
@@ -313,6 +316,7 @@ export class TransactionRepository {
                   ...senderKeysOfTransactionType,
                   transactionId: transaction.transactionId,
                   receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+                  transactionState: transaction.transactionState,
                 },
               },
             },
@@ -322,6 +326,7 @@ export class TransactionRepository {
                   ...receiverKeysOfTransactionType,
                   transactionId: transaction.transactionId,
                   senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
+                  transactionState: transaction.transactionState,
                 },
               },
             },
@@ -336,6 +341,7 @@ export class TransactionRepository {
                     ),
                     transactionId: transaction.transactionId,
                     senderKeyId: senderKeys.PartitionKeyID,
+                    transactionState: transaction.transactionState,
                   },
                 },
               },
@@ -421,18 +427,26 @@ export class TransactionRepository {
 
   public async hasAnySendingTransaction(
     userId: string,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<boolean> {
+    const transactionStateQuery = this.getTransactionStateQueryInput(
+      filterOptions?.transactionState
+    )
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression: transactionStateQuery.FilterExpression,
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.USER_TRANSACTION(
           this.tenantId,
           userId,
           'sending',
-          transactionType
+          filterOptions?.transactionType
         ).PartitionKeyID,
+        ...transactionStateQuery.ExpressionAttributeValues,
       },
       Limit: 1,
       ReturnConsumedCapacity: 'TOTAL',
@@ -444,44 +458,57 @@ export class TransactionRepository {
   public async getLastNUserSendingThinTransactions(
     userId: string,
     n: number,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getLastNThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'sending',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      n
+      n,
+      filterOptions?.transactionState
     )
   }
 
   public getLastNUserReceivingThinTransactions(
     userId: string,
     n: number,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getLastNThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'receiving',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      n
+      n,
+      filterOptions?.transactionState
     )
   }
 
   private async getLastNThinTransactions(
     partitionKeyId: string,
-    n: number
+    n: number,
+    transactionState?: TransactionState
   ): Promise<Array<ThinTransaction>> {
+    const transactionStateQuery =
+      this.getTransactionStateQueryInput(transactionState)
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression: transactionStateQuery.FilterExpression,
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
+        ...transactionStateQuery.ExpressionAttributeValues,
       },
       Limit: n,
       ScanIndexForward: false,
@@ -501,96 +528,120 @@ export class TransactionRepository {
   public async getUserSendingThinTransactions(
     userId: string,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'sending',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
   public async getUserReceivingThinTransactions(
     userId: string,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getThinTransactions(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'receiving',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
   public async getUserSendingTransactionsCount(
     userId: string,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<QueryCountResult> {
     return this.getUserThinTransactionsCount(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'sending',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
   public async getUserReceivingTransactionsCount(
     userId: string,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<QueryCountResult> {
     return this.getUserThinTransactionsCount(
       DynamoDbKeys.USER_TRANSACTION(
         this.tenantId,
         userId,
         'receiving',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
   public async getNonUserSendingThinTransactions(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
         'sending',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
   public async getNonUserReceivingThinTransactions(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    transactionType?: string
+    filterOptions?: {
+      transactionType?: string
+      transactionState?: TransactionState
+    }
   ): Promise<Array<ThinTransaction>> {
     return this.getThinTransactions(
       DynamoDbKeys.NON_USER_TRANSACTION(
         this.tenantId,
         paymentDetails,
         'receiving',
-        transactionType
+        filterOptions?.transactionType
       ).PartitionKeyID,
-      timeRange
+      timeRange,
+      filterOptions?.transactionState
     )
   }
 
@@ -607,16 +658,21 @@ export class TransactionRepository {
 
   private getTransactionsQuery(
     partitionKeyId: string,
-    timeRange: TimeRange
+    timeRange: TimeRange,
+    transactionState?: TransactionState
   ): AWS.DynamoDB.DocumentClient.QueryInput {
+    const transactionStateQuery =
+      this.getTransactionStateQueryInput(transactionState)
     return {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression:
         'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
+      FilterExpression: transactionStateQuery.FilterExpression,
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
         ':skfrom': `${timeRange.afterTimestamp}`,
         ':skto': `${timeRange.beforeTimestamp}`,
+        ...transactionStateQuery.ExpressionAttributeValues,
       },
       ScanIndexForward: false,
       ReturnConsumedCapacity: 'TOTAL',
@@ -625,11 +681,12 @@ export class TransactionRepository {
 
   private async getThinTransactions(
     partitionKeyId: string,
-    timeRange: TimeRange
+    timeRange: TimeRange,
+    transactionState?: TransactionState
   ): Promise<Array<ThinTransaction>> {
     const result = await paginateQuery(
       this.dynamoDb,
-      this.getTransactionsQuery(partitionKeyId, timeRange)
+      this.getTransactionsQuery(partitionKeyId, timeRange, transactionState)
     )
     return (
       result.Items?.map((item) => ({
@@ -643,16 +700,32 @@ export class TransactionRepository {
 
   private async getUserThinTransactionsCount(
     partitionKeyId: string,
-    timeRange: TimeRange
+    timeRange: TimeRange,
+    transactionState?: TransactionState
   ): Promise<QueryCountResult> {
     const result = await paginateQuery(this.dynamoDb, {
-      ...this.getTransactionsQuery(partitionKeyId, timeRange),
+      ...this.getTransactionsQuery(partitionKeyId, timeRange, transactionState),
       Select: 'COUNT',
     })
     return {
       count: result.Count as number,
       scannedCount: result.ScannedCount as number,
     }
+  }
+
+  private getTransactionStateQueryInput(
+    transactionState?: TransactionState
+  ): Partial<AWS.DynamoDB.DocumentClient.QueryInput> {
+    return _.omitBy(
+      {
+        FilterExpression:
+          transactionState && 'transactionState = :transactionState',
+        ExpressionAttributeValues: {
+          ':transactionState': transactionState,
+        },
+      },
+      _.isNil
+    )
   }
 }
 

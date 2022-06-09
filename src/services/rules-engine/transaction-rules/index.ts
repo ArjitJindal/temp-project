@@ -22,7 +22,6 @@ import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
 import TransactionsVolumeQuantilesRule from './transactions-volume-quantiles'
 import UserTransactionPairsRule from './user-transaction-pairs'
-import UserTransactionPairsIcrypexRule from './user-transaction-pairs-icrypex'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -48,7 +47,6 @@ export const TRANSACTION_RULES = {
   'transactions-volume': TransactionsVolumeRule,
   'transactions-volume-quantiles': TransactionsVolumeQuantilesRule,
   'user-transaction-pairs': UserTransactionPairsRule,
-  'user-transaction-pairs-icrypex': UserTransactionPairsIcrypexRule,
 
   // For testing only
   'tests/test-success-rule': TestSuccessRule,

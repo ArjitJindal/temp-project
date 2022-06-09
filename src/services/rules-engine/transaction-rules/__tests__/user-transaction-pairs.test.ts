@@ -263,3 +263,60 @@ describe('Without transaction type', () => {
     )
   })
 })
+
+describe('Transaction State', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'user-transaction-pairs',
+      defaultParameters: {
+        userPairsThreshold: 2,
+        timeWindowInSeconds: 86400,
+        transactionState: 'SUCCESSFUL',
+      } as UserTransactionPairsRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Too many user pairs - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+          transactionState: 'DECLINED',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
+      ],
+      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+    },
+  ])('', ({ name, transactions, expectedActions }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedActions
+    )
+  })
+})

@@ -1,13 +1,13 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
 
-type LowValueTransactionsRuleParameters = {
+type LowValueTransactionsRuleParameters = DefaultTransactionRuleParameters & {
   lowTransactionValues: {
     [currency: string]: {
       max: number
@@ -22,6 +22,23 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         lowTransactionValues: {
           type: 'object',
           title: 'Low Transaction Value',
@@ -71,6 +88,7 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
   }
 
   public async computeRule() {
+    const { lowTransactionValues, transactionState } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -81,11 +99,13 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
         await (this.getDirection() === 'receiving'
           ? transactionRepository.getLastNUserReceivingThinTransactions(
               userId,
-              lastNTransactionsToCheck
+              lastNTransactionsToCheck,
+              { transactionState }
             )
           : transactionRepository.getLastNUserSendingThinTransactions(
               userId,
-              lastNTransactionsToCheck
+              lastNTransactionsToCheck,
+              { transactionState }
             ))
       ).map((transaction) => transaction.transactionId)
       if (thinTransactionIds.length < lastNTransactionsToCheck) {
@@ -108,7 +128,7 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
           }
           return await isTransactionAmountBetweenThreshold(
             transactionAmountDetails,
-            this.parameters.lowTransactionValues
+            lowTransactionValues
           )
         }
       )

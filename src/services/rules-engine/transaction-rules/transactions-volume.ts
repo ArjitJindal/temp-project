@@ -10,16 +10,17 @@ import {
   isTransactionAmountAboveThreshold,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
-export type TransactionsVolumeRuleParameters = {
-  transactionVolumeThreshold: {
-    [currency: string]: number
+export type TransactionsVolumeRuleParameters =
+  DefaultTransactionRuleParameters & {
+    transactionVolumeThreshold: {
+      [currency: string]: number
+    }
+    timeWindowInSeconds: number
+    checkSender: 'sending' | 'all' | 'none'
+    checkReceiver: 'receiving' | 'all' | 'none'
   }
-  timeWindowInSeconds: number
-  checkSender: 'sending' | 'all' | 'none'
-  checkReceiver: 'receiving' | 'all' | 'none'
-}
 
 export default class TransactionsVolumeRule extends TransactionRule<TransactionsVolumeRuleParameters> {
   transactionRepository?: TransactionRepository
@@ -28,6 +29,23 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         transactionVolumeThreshold: {
           type: 'object',
           title: 'Transactions Volume Threshold',
@@ -198,16 +216,24 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       .transactionRepository as TransactionRepository
     const [sendingTransactions, receivingTransactions] = await Promise.all([
       checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getUserSendingThinTransactions(userId, {
-            afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp!,
-          })
+        ? transactionRepository.getUserSendingThinTransactions(
+            userId,
+            {
+              afterTimestamp,
+              beforeTimestamp: this.transaction.timestamp!,
+            },
+            { transactionState: this.parameters.transactionState }
+          )
         : Promise.resolve([]),
       checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getUserReceivingThinTransactions(userId, {
-            afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp!,
-          })
+        ? transactionRepository.getUserReceivingThinTransactions(
+            userId,
+            {
+              afterTimestamp,
+              beforeTimestamp: this.transaction.timestamp!,
+            },
+            { transactionState: this.parameters.transactionState }
+          )
         : Promise.resolve([]),
     ])
     return {

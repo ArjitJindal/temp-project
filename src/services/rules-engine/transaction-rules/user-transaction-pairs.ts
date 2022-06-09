@@ -2,14 +2,15 @@ import { JSONSchemaType } from 'ajv'
 import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
-export type UserTransactionPairsRuleParameters = {
-  userPairsThreshold: number
-  timeWindowInSeconds: number
-  transactionType?: string
-  excludedUserIds?: string[]
-}
+export type UserTransactionPairsRuleParameters =
+  DefaultTransactionRuleParameters & {
+    userPairsThreshold: number
+    timeWindowInSeconds: number
+    transactionType?: string
+    excludedUserIds?: string[]
+  }
 
 export default class UserTransactionPairsRule extends TransactionRule<UserTransactionPairsRuleParameters> {
   transactionRepository?: TransactionRepository
@@ -18,6 +19,23 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         userPairsThreshold: {
           type: 'integer',
           title: 'User Pairs Count Threshold',
@@ -45,18 +63,20 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
 
   public getFilters() {
     const { transactionType, excludedUserIds } = this.parameters
-    return [
-      () => !transactionType || this.transaction.type === transactionType,
-      () =>
-        this.transaction.originUserId !== undefined &&
-        this.transaction.destinationUserId !== undefined,
-      () =>
-        excludedUserIds === undefined ||
-        (!excludedUserIds.includes(this.transaction.originUserId as string) &&
-          !excludedUserIds.includes(
-            this.transaction.destinationUserId as string
-          )),
-    ]
+    return super
+      .getFilters()
+      .concat([
+        () => !transactionType || this.transaction.type === transactionType,
+        () =>
+          this.transaction.originUserId !== undefined &&
+          this.transaction.destinationUserId !== undefined,
+        () =>
+          excludedUserIds === undefined ||
+          (!excludedUserIds.includes(this.transaction.originUserId as string) &&
+            !excludedUserIds.includes(
+              this.transaction.destinationUserId as string
+            )),
+      ])
   }
 
   public async computeRule() {
@@ -69,7 +89,8 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
   }
 
   protected async getSenderSendingTransactions() {
-    const { timeWindowInSeconds, transactionType } = this.parameters
+    const { timeWindowInSeconds, transactionType, transactionState } =
+      this.parameters
     const receiverKeyId = getReceiverKeys(
       this.tenantId,
       this.transaction,
@@ -87,7 +108,7 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        transactionType
+        { transactionType, transactionState }
       )
     ).concat([
       {

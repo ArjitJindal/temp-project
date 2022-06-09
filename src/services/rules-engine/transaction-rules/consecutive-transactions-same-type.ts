@@ -2,14 +2,15 @@ import _ from 'lodash'
 import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
-export type ConsecutiveTransactionSameTypeRuleParameters = {
-  targetTransactionsThreshold: number
-  targetTransactionType: string
-  otherTransactionTypes: string[]
-  timeWindowInDays: number
-}
+export type ConsecutiveTransactionSameTypeRuleParameters =
+  DefaultTransactionRuleParameters & {
+    targetTransactionsThreshold: number
+    targetTransactionType: string
+    otherTransactionTypes: string[]
+    timeWindowInDays: number
+  }
 
 export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<ConsecutiveTransactionSameTypeRuleParameters> {
   transactionRepository?: TransactionRepository
@@ -18,6 +19,23 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         targetTransactionsThreshold: {
           type: 'integer',
           title: 'Transactions Count Threshold',
@@ -47,10 +65,12 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
 
   public getFilters() {
     const { targetTransactionType } = this.parameters
-    return [
-      () => this.transaction.type === targetTransactionType,
-      () => this.transaction.originUserId !== undefined,
-    ]
+    return super
+      .getFilters()
+      .concat([
+        () => this.transaction.type === targetTransactionType,
+        () => this.transaction.originUserId !== undefined,
+      ])
   }
 
   public async computeRule() {
@@ -59,6 +79,7 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       otherTransactionTypes,
       targetTransactionsThreshold,
       timeWindowInDays,
+      transactionState,
     } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -68,13 +89,13 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       transactionRepository.getLastNUserSendingThinTransactions(
         this.transaction.originUserId as string,
         targetTransactionsThreshold,
-        targetTransactionType
+        { transactionType: targetTransactionType, transactionState }
       ),
       ...(otherTransactionTypes || []).map((transactionType) =>
         transactionRepository.getLastNUserSendingThinTransactions(
           this.transaction.originUserId as string,
           1,
-          transactionType
+          { transactionType, transactionState }
         )
       ),
     ])

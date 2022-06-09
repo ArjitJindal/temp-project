@@ -3,23 +3,24 @@ import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isUserInList } from '../utils/user-rule-utils'
 import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 
-export type TransactionsVelocityRuleParameters = {
-  transactionsPerSecond: number
-  timeWindowInSeconds: number
+export type TransactionsVelocityRuleParameters =
+  DefaultTransactionRuleParameters & {
+    transactionsPerSecond: number
+    timeWindowInSeconds: number
 
-  checkSender?: 'sending' | 'all' | 'none'
-  checkReceiver?: 'receiving' | 'all' | 'none'
+    checkSender?: 'sending' | 'all' | 'none'
+    checkReceiver?: 'receiving' | 'all' | 'none'
 
-  // Optional parameters
-  userIdsToCheck?: string[] // If empty, all users will be checked
-  checkTimeWindow?: {
-    from: string // e.g 20:20:39+03:00
-    to: string
+    // Optional parameters
+    userIdsToCheck?: string[] // If empty, all users will be checked
+    checkTimeWindow?: {
+      from: string // e.g 20:20:39+03:00
+      to: string
+    }
   }
-}
 
 export default class TransactionsVelocityRule extends TransactionRule<TransactionsVelocityRuleParameters> {
   transactionRepository?: TransactionRepository
@@ -28,6 +29,23 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         transactionsPerSecond: {
           type: 'number',
           title: 'Transactions/sec Threshold',
@@ -72,10 +90,12 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
 
   public getFilters() {
     const { userIdsToCheck, checkTimeWindow } = this.parameters
-    return [
-      () => isUserInList(this.senderUser, userIdsToCheck),
-      () => isTransactionWithinTimeWindow(this.transaction, checkTimeWindow),
-    ]
+    return super
+      .getFilters()
+      .concat([
+        () => isUserInList(this.senderUser, userIdsToCheck),
+        () => isTransactionWithinTimeWindow(this.transaction, checkTimeWindow),
+      ])
   }
 
   public async computeRule() {
@@ -143,16 +163,24 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       .transactionRepository as TransactionRepository
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getUserSendingTransactionsCount(userId, {
-            afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp!,
-          })
+        ? transactionRepository.getUserSendingTransactionsCount(
+            userId,
+            {
+              afterTimestamp,
+              beforeTimestamp: this.transaction.timestamp!,
+            },
+            { transactionState: this.parameters.transactionState }
+          )
         : Promise.resolve({ count: 0 }),
       checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getUserReceivingTransactionsCount(userId, {
-            afterTimestamp,
-            beforeTimestamp: this.transaction.timestamp!,
-          })
+        ? transactionRepository.getUserReceivingTransactionsCount(
+            userId,
+            {
+              afterTimestamp,
+              beforeTimestamp: this.transaction.timestamp!,
+            },
+            { transactionState: this.parameters.transactionState }
+          )
         : Promise.resolve({ count: 0 }),
     ])
     return transactionsCount[0].count + transactionsCount[1].count

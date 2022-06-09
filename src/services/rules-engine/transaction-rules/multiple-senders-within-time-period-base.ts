@@ -4,13 +4,14 @@ import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { TransactionRule } from './rule'
+import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 
-export type MultipleSendersWithinTimePeriodRuleParameters = {
-  sendersCount: number
-  timePeriodDays: number
-}
+export type MultipleSendersWithinTimePeriodRuleParameters =
+  DefaultTransactionRuleParameters & {
+    sendersCount: number
+    timePeriodDays: number
+  }
 
 export type SenderReceiverTypes = {
   senderTypes: Array<'USER' | 'NON_USER'>
@@ -22,6 +23,23 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
     return {
       type: 'object',
       properties: {
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
         sendersCount: { type: 'integer', title: 'Senders Count Threshold' },
         timePeriodDays: { type: 'integer', title: 'Time Window (Days)' },
       },
@@ -35,7 +53,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
   }
 
   public async computeRule() {
-    const { timePeriodDays, sendersCount } = this.parameters
+    const { timePeriodDays, sendersCount, transactionState } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -52,7 +70,8 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
           {
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
-          }
+          },
+          { transactionState }
         )
     } else if (
       receiverTypes.includes('NON_USER') &&
@@ -64,7 +83,8 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
           {
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
-          }
+          },
+          { transactionState }
         )
     }
     const uniqueSenders = new Set(

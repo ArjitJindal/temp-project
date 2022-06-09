@@ -3,12 +3,17 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 export type RuleResult = {
   action: RuleAction
 }
 
 export type RuleFilter = () => Promise<boolean> | boolean
+
+export type DefaultTransactionRuleParameters = {
+  transactionState?: TransactionState
+}
 
 export class TransactionRule<P> extends Rule {
   tenantId: string
@@ -40,5 +45,14 @@ export class TransactionRule<P> extends Rule {
     this.parameters = params.parameters
     this.action = params.action
     this.dynamoDb = dynamoDb
+  }
+
+  public getFilters() {
+    const parameters = this.parameters as DefaultTransactionRuleParameters
+    return [
+      () =>
+        !parameters.transactionState ||
+        this.transaction.transactionState === parameters.transactionState,
+    ]
   }
 }

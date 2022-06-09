@@ -1,7 +1,7 @@
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { TransactionRule } from './rule'
 
-export default class FirstPaymentRule extends TransactionRule<unknown> {
+export default class FirstPaymentRule extends TransactionRule<any> {
   public static getSchema(): any {
     return {}
   }
