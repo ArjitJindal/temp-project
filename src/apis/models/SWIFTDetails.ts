@@ -11,17 +11,40 @@
  */
 
 import { Address2 } from './Address2';
-import { ConsumerName } from './ConsumerName';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for SWIFT payment method
+ */
 export class SWIFTDetails {
+  /**
+   * Classify the method of payment as \"SWIFT\" for SWIFTDetails
+   */
   'method': string;
+  /**
+   * SWIFT code of the financial institution
+   */
   'swiftCode'?: string;
+  /**
+   * Account number
+   */
   'accountNumber'?: string;
+  /**
+   * Account type. E.g. Checking, Savings etc.
+   */
   'accountType'?: string;
+  /**
+   * Name of the bank
+   */
   'bankName'?: string;
-  'name'?: ConsumerName;
+  /**
+   * Name of the account holder
+   */
+  'name'?: string;
   'bankAddress'?: Address2;
+  /**
+   * Special instructions if any
+   */
   'specialInstructions'?: string;
 
   static readonly discriminator: string | undefined = undefined;
@@ -65,7 +88,7 @@ export class SWIFTDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

@@ -691,6 +691,36 @@ paths:
               type: object
               properties: {}
     parameters: []
+  /dashboard_stats/hits_per_user:
+    get:
+      summary: DashboardStats - Hits per user
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsHitsPerUser'
+              examples: {}
+      operationId: get-dashboard-stats-hits-per-user
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+    parameters: []
   '/transactions/{transactionId}/comments':
     post:
       summary: Create a Transaction Comment
@@ -1024,6 +1054,53 @@ components:
                 type: number
             required:
               - _id
+      required:
+        - data
+    InternalConsumerUser:
+      allOf:
+        - $ref: https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+        - type: object
+          properties:
+            type:
+              enum: ['CONSUMER']
+              type: 'string'
+          required:
+            - type
+    InternalBusinessUser:
+      allOf:
+        - $ref: https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+        - type: object
+          properties:
+            type:
+              enum: ['BUSINESS']
+              type: 'string'
+          required:
+            - type
+    DashboardStatsHitsPerUser:
+      type: object
+      title: DashboardStatsHitsPerUser
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              originUserId:
+                type: string
+              rulesHit:
+                type: number
+              user:
+                discriminator:
+                  propertyName: 'type'
+                  mapping:
+                    CONSUMER: '#/components/schemas/InternalConsumerUser'
+                    BUSINESS: '#/components/schemas/InternalBusinessUser'
+                oneOf:
+                  - $ref: '#/components/schemas/InternalConsumerUser'
+                  - $ref: '#/components/schemas/InternalBusinessUser'
+            required:
+              - originUserId
+              - rulesHit
       required:
         - data
     Comment:

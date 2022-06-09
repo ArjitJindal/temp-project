@@ -10,7 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { ConsumerName } from './ConsumerName';
 import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
@@ -22,6 +21,9 @@ export class WalletDetails {
    * Type: WALLET
    */
   'method': string;
+  /**
+   * Wallet type if there are various types of wallets belonging to the same user. E.g. Checking, savings, vault, different currency wallets etc.
+   */
   'walletType': string;
   /**
    * Unique ID of the wallet
@@ -31,10 +33,15 @@ export class WalletDetails {
    * Payment Channel used through wallet
    */
   'paymentChannel'?: string;
-  'name'?: ConsumerName;
+  /**
+   * Name of the account holder for a specific wallet
+   */
+  'name'?: string;
   'tags'?: Tag;
+  /**
+   * Phone number associated with the wallet, if any
+   */
   'walletPhoneNumber'?: string;
-  ''?: string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -71,7 +78,7 @@ export class WalletDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {
@@ -83,12 +90,6 @@ export class WalletDetails {
     {
       name: 'walletPhoneNumber',
       baseName: 'walletPhoneNumber',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: '',
-      baseName: '',
       type: 'string',
       format: '',
     },

@@ -22,6 +22,8 @@ import { ConsumerName } from '../models/ConsumerName';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
+import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
+import { DashboardStatsHitsPerUserData } from '../models/DashboardStatsHitsPerUserData';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
@@ -36,6 +38,10 @@ import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { InlineResponse200 } from '../models/InlineResponse200';
 import { InlineResponse400 } from '../models/InlineResponse400';
+import { InternalBusinessUser } from '../models/InternalBusinessUser';
+import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
+import { InternalConsumerUser } from '../models/InternalConsumerUser';
+import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -459,6 +465,50 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getConsumerUsersList(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * DashboardStats - Hits per user
+   * @param startTimestamp
+   * @param endTimestamp
+   * @param body
+   */
+  public getDashboardStatsHitsPerUser(
+    startTimestamp?: number,
+    endTimestamp?: number,
+    body?: any,
+    _options?: Configuration,
+  ): Observable<DashboardStatsHitsPerUser> {
+    const requestContextPromise = this.requestFactory.getDashboardStatsHitsPerUser(
+      startTimestamp,
+      endTimestamp,
+      body,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getDashboardStatsHitsPerUser(rsp)),
           );
         }),
       );

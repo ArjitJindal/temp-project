@@ -13,6 +13,9 @@
 import { RuleFailureException } from './RuleFailureException';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for list of rules failed execution. It means rules could not be run
+ */
 export class FailedRulesResult {
   /**
    * Unique rule identifier

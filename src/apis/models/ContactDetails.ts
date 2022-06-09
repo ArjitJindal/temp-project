@@ -13,6 +13,9 @@
 import { Address } from './Address';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for business user contact information details
+ */
 export class ContactDetails {
   /**
    * Email addresses of the contacts for a given business customer

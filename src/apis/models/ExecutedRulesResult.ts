@@ -13,6 +13,9 @@
 import { RuleAction1 } from './RuleAction1';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for list of executed rules
+ */
 export class ExecutedRulesResult {
   /**
    * Unique rule identifier

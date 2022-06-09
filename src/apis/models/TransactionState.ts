@@ -12,6 +12,9 @@
 
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for transaction states. E.g. Processing, Refunded, Successful etc.
+ */
 export type TransactionState =
   | 'CREATED'
   | 'PROCESSING'

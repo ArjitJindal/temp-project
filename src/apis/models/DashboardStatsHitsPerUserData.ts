@@ -10,20 +10,14 @@
  * Do not edit the class manually.
  */
 
-import { Amount } from './Amount';
-import { Tag } from './Tag';
+import { InternalBusinessUser } from './InternalBusinessUser';
+import { InternalConsumerUser } from './InternalConsumerUser';
 import { HttpFile } from '../http/http';
 
-/**
- * Model for business user company financial details
- */
-export class CompanyFinancialDetails {
-  'expectedTransactionAmountPerMonth'?: Amount;
-  'expectedTurnoverPerMonth'?: Amount;
-  /**
-   * Additional information that can be added via tags
-   */
-  'tags'?: Array<Tag>;
+export class DashboardStatsHitsPerUserData {
+  'originUserId': string;
+  'rulesHit': number;
+  'user'?: InternalConsumerUser | InternalBusinessUser;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -34,27 +28,27 @@ export class CompanyFinancialDetails {
     format: string;
   }> = [
     {
-      name: 'expectedTransactionAmountPerMonth',
-      baseName: 'expectedTransactionAmountPerMonth',
-      type: 'Amount',
+      name: 'originUserId',
+      baseName: 'originUserId',
+      type: 'string',
       format: '',
     },
     {
-      name: 'expectedTurnoverPerMonth',
-      baseName: 'expectedTurnoverPerMonth',
-      type: 'Amount',
+      name: 'rulesHit',
+      baseName: 'rulesHit',
+      type: 'number',
       format: '',
     },
     {
-      name: 'tags',
-      baseName: 'tags',
-      type: 'Array<Tag>',
+      name: 'user',
+      baseName: 'user',
+      type: 'InternalConsumerUser | InternalBusinessUser',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return CompanyFinancialDetails.attributeTypeMap;
+    return DashboardStatsHitsPerUserData.attributeTypeMap;
   }
 
   public constructor() {}

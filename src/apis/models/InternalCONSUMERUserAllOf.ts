@@ -12,18 +12,8 @@
 
 import { HttpFile } from '../http/http';
 
-/**
- * Model for amount
- */
-export class Amount {
-  /**
-   * Numerical value of the transaction
-   */
-  'amountValue': number;
-  /**
-   * Currency of the transaction
-   */
-  'amountCurrency': string;
+export class InternalConsumerUserAllOf {
+  'type': InternalConsumerUserAllOfTypeEnum;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -34,22 +24,18 @@ export class Amount {
     format: string;
   }> = [
     {
-      name: 'amountValue',
-      baseName: 'amountValue',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'amountCurrency',
-      baseName: 'amountCurrency',
-      type: 'string',
+      name: 'type',
+      baseName: 'type',
+      type: 'InternalConsumerUserAllOfTypeEnum',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return Amount.attributeTypeMap;
+    return InternalConsumerUserAllOf.attributeTypeMap;
   }
 
   public constructor() {}
 }
+
+export type InternalConsumerUserAllOfTypeEnum = 'CONSUMER';

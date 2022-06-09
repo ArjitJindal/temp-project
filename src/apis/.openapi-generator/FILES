@@ -31,6 +31,8 @@ models/ConsumerName.ts
 models/ConsumerUsersListResponse.ts
 models/ContactDetails.ts
 models/ContactDetails1.ts
+models/DashboardStatsHitsPerUser.ts
+models/DashboardStatsHitsPerUserData.ts
 models/DashboardStatsTransactionsCount.ts
 models/DashboardStatsTransactionsCountData.ts
 models/DeviceData.ts
@@ -45,6 +47,10 @@ models/ImportRequest.ts
 models/ImportResponse.ts
 models/InlineResponse200.ts
 models/InlineResponse400.ts
+models/InternalBusinessUser.ts
+models/InternalBusinessUserAllOf.ts
+models/InternalConsumerUser.ts
+models/InternalConsumerUserAllOf.ts
 models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts

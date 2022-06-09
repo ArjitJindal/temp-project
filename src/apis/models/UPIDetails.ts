@@ -12,11 +12,30 @@
 
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for UPI payment method
+ */
 export class UPIDetails {
+  /**
+   * Classify the method of payment as \"UPI\" for UPIDetails
+   */
   'method': string;
+  /**
+   * UPI Id number
+   */
   'upiID': string;
+  /**
+   * Bank provider name
+   */
   'bankProvider'?: string;
+  /**
+   * Interface provider name
+   */
   'interfaceProvider'?: string;
+  /**
+   * Name of the account holder
+   */
+  'name'?: string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -47,6 +66,12 @@ export class UPIDetails {
     {
       name: 'interfaceProvider',
       baseName: 'interfaceProvider',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'name',
+      baseName: 'name',
       type: 'string',
       format: '',
     },

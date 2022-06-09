@@ -21,6 +21,8 @@ import { ConsumerName } from '../models/ConsumerName';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
+import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
+import { DashboardStatsHitsPerUserData } from '../models/DashboardStatsHitsPerUserData';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
@@ -35,6 +37,10 @@ import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { InlineResponse200 } from '../models/InlineResponse200';
 import { InlineResponse400 } from '../models/InlineResponse400';
+import { InternalBusinessUser } from '../models/InternalBusinessUser';
+import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
+import { InternalConsumerUser } from '../models/InternalConsumerUser';
+import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -205,6 +211,27 @@ export interface DefaultApiGetConsumerUsersListRequest {
    * @memberof DefaultApigetConsumerUsersList
    */
   filterId?: string;
+}
+
+export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsHitsPerUser
+   */
+  startTimestamp?: number;
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsHitsPerUser
+   */
+  endTimestamp?: number;
+  /**
+   *
+   * @type any
+   * @memberof DefaultApigetDashboardStatsHitsPerUser
+   */
+  body?: any;
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
@@ -701,6 +728,19 @@ export class ObjectDefaultApi {
         param.filterId,
         options,
       )
+      .toPromise();
+  }
+
+  /**
+   * DashboardStats - Hits per user
+   * @param param the request object
+   */
+  public getDashboardStatsHitsPerUser(
+    param: DefaultApiGetDashboardStatsHitsPerUserRequest = {},
+    options?: Configuration,
+  ): Promise<DashboardStatsHitsPerUser> {
+    return this.api
+      .getDashboardStatsHitsPerUser(param.startTimestamp, param.endTimestamp, param.body, options)
       .toPromise();
   }
 

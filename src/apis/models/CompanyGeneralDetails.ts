@@ -13,6 +13,9 @@
 import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for business user company general details
+ */
 export class CompanyGeneralDetails {
   /**
    * Legal name of the company

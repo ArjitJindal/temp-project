@@ -1,4 +1,4 @@
-import { UserDetails } from '@/apis';
+import { InternalBusinessUser, UserDetails } from '@/apis';
 
 export function getFullName(userDetails: UserDetails | undefined): string {
   const result = [
@@ -13,4 +13,8 @@ export function getFullName(userDetails: UserDetails | undefined): string {
     return '(No name)';
   }
   return result;
+}
+
+export function businessName(user: InternalBusinessUser): string {
+  return user.legalEntity.companyGeneralDetails.legalName;
 }

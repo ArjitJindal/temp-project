@@ -26,6 +26,9 @@ export class User {
    */
   'userId': string;
   'userDetails': UserDetails;
+  /**
+   * Timestamp when userId is created
+   */
   'createdTimestamp': number;
   /**
    * User's legal identity documents - See Document Model for details

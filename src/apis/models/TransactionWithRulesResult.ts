@@ -31,17 +31,32 @@ import { HttpFile } from '../http/http';
  * Model for transaction payload with rules result
  */
 export class TransactionWithRulesResult {
+  /**
+   * Type of transaction depending on your use case. It can be withdrawal, deposit, payment link, wallet-to-wallet, trading etc.
+   */
   'type'?: string;
   /**
    * Unique transaction identifier
    */
   'transactionId'?: string;
+  /**
+   * Timestamp of when transaction took place
+   */
   'timestamp'?: number;
   'transactionState'?: TransactionState;
+  /**
+   * UserId for where the transaction originates from
+   */
   'originUserId'?: string;
+  /**
+   * UserId for transaction's destination. In other words, where the value is being transferred to.
+   */
   'destinationUserId'?: string;
   'originAmountDetails'?: TransactionAmountDetails;
   'destinationAmountDetails'?: TransactionAmountDetails;
+  /**
+   * Payment details of the origin. It can be a bank account number, wallet ID, card fingerprint etc.
+   */
   'originPaymentDetails'?:
     | CardDetails
     | GenericBankAccountDetails
@@ -50,6 +65,9 @@ export class TransactionWithRulesResult {
     | SWIFTDetails
     | UPIDetails
     | WalletDetails;
+  /**
+   * Payment details of the destination. It can be a bank account number, wallet ID, card fingerprint etc.
+   */
   'destinationPaymentDetails'?:
     | CardDetails
     | GenericBankAccountDetails

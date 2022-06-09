@@ -13,6 +13,9 @@
 import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for business user company registration details
+ */
 export class CompanyRegistrationDetails {
   /**
    * Commercial registry registration number for the company in its registration country

@@ -16,6 +16,9 @@ import { CompanyRegistrationDetails } from './CompanyRegistrationDetails';
 import { ContactDetails1 } from './ContactDetails1';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for business user legal entity details
+ */
 export class LegalEntity {
   'companyGeneralDetails': CompanyGeneralDetails;
   'companyFinancialDetails'?: CompanyFinancialDetails;

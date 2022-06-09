@@ -1,11 +1,23 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, Col, DatePicker, Dropdown, Empty, Menu, Row, Spin, Tabs } from 'antd';
+import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
-import { EllipsisOutlined } from '@ant-design/icons';
 import { Column } from '@ant-design/charts';
+import { useEffect, useState } from 'react';
 import styles from '../style.less';
 import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
+import { useApi } from '@/api';
+import {
+  AsyncResource,
+  failed,
+  getOr,
+  init,
+  isLoading,
+  loading,
+  map,
+  success,
+} from '@/utils/asyncResource';
+import { DashboardStatsTransactionsCountData } from '@/apis';
 
 // FIXME: import doesn't work
 const toPng = require('html-to-image').toPng;
@@ -70,16 +82,54 @@ async function exportToPdf(header: any[], exportData: any[], rangePickerValue: R
   doc.save(`flagright-stopped-transactions-${getDateRange(rangePickerValue)}.pdf`);
 }
 
-const TransactionsChartCard = (props: {
-  endDate: moment.Moment | null;
-  timeWindowType: TimeWindowType;
-  salesData: TransactionsStats;
-  loading: boolean;
-  onChangeEndDate: (date: moment.Moment | null) => void;
-  onSelectTimeWindow: (timeWindow: TimeWindowType) => void;
-}) => {
-  const { endDate, timeWindowType, salesData, onChangeEndDate, loading, onSelectTimeWindow } =
-    props;
+const TransactionsChartCard = () => {
+  const [endDate, setEndDate] = useState<moment.Moment | null>(null);
+  const [timeWindowType, setTimeWindowType] = useState<TimeWindowType>('YEAR');
+
+  const onChangeEndDate = setEndDate;
+  const onSelectTimeWindow = setTimeWindowType;
+
+  const api = useApi();
+  const [transactionsCountData, setTransactionsCountData] = useState<
+    AsyncResource<DashboardStatsTransactionsCountData[]>
+  >(init());
+  useEffect(() => {
+    let isCanceled = false;
+    async function fetch() {
+      setTransactionsCountData((state) => loading(getOr(state, null)));
+      try {
+        const transactionsCountResult = await api.getDashboardStatsTransactions({
+          timeframe: timeWindowType,
+          endTimestamp: endDate ? endDate.valueOf() : Date.now(),
+        });
+        if (isCanceled) {
+          return;
+        }
+        setTransactionsCountData(success(transactionsCountResult.data));
+      } catch (e) {
+        setTransactionsCountData(failed('Unknown error')); // todo: get actual error message
+      }
+    }
+
+    fetch().catch((e) => {
+      console.error(e);
+    });
+
+    return () => {
+      isCanceled = true;
+    };
+  }, [endDate, timeWindowType, api]);
+
+  const dataResource: AsyncResource<TransactionsStats> = map(transactionsCountData, (value) =>
+    value.map((item, i) => ({
+      id: item._id,
+      flaggedTransactions: item.flaggedTransactions ?? 0,
+      stoppedTransactions: item.stoppedTransactions ?? 0,
+    })),
+  );
+
+  const data = getOr(dataResource, []);
+
   // const onActionsMenuClick = useCallback((event: MenuInfo) => {
   //   const { key } = event;
   //   const exportData = salesData.flatMap((data1) => {
@@ -144,9 +194,9 @@ const TransactionsChartCard = (props: {
             { title: 'Flagged Transactions', key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
-              <Spin spinning={loading}>
+              <Spin spinning={isLoading(dataResource)}>
                 <div className={styles.salesBar}>
-                  {salesData.length === 0 ? (
+                  {data.length === 0 ? (
                     <Empty
                       className={styles.empty}
                       description="No data available for selected period"
@@ -155,7 +205,7 @@ const TransactionsChartCard = (props: {
                     <Column
                       height={400}
                       forceFit
-                      data={salesData.map((item) => ({
+                      data={data.map((item) => ({
                         x: item.id,
                         y: item[key],
                       }))}

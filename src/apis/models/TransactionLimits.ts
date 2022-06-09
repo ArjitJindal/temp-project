@@ -13,6 +13,9 @@
 import { Amount } from './Amount';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for transaction limits for a given user
+ */
 export class TransactionLimits {
   'maximumDailyTransactionLimit'?: Amount;
   'maximumWeeklyTransactionLimit'?: Amount;

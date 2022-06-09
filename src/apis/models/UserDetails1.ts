@@ -13,8 +13,14 @@
 import { ConsumerName } from './ConsumerName';
 import { HttpFile } from '../http/http';
 
+/**
+ * Model for consumer user personal details
+ */
 export class UserDetails1 {
   'name': ConsumerName;
+  /**
+   * Date of birth of the user
+   */
   'dateOfBirth'?: string;
   /**
    * Country of residence of the user

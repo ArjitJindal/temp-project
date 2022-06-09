@@ -17,6 +17,8 @@ export * from './ConsumerName';
 export * from './ConsumerUsersListResponse';
 export * from './ContactDetails';
 export * from './ContactDetails1';
+export * from './DashboardStatsHitsPerUser';
+export * from './DashboardStatsHitsPerUserData';
 export * from './DashboardStatsTransactionsCount';
 export * from './DashboardStatsTransactionsCountData';
 export * from './DeviceData';
@@ -31,6 +33,10 @@ export * from './ImportRequest';
 export * from './ImportResponse';
 export * from './InlineResponse200';
 export * from './InlineResponse400';
+export * from './InternalBusinessUser';
+export * from './InternalBusinessUserAllOf';
+export * from './InternalConsumerUser';
+export * from './InternalConsumerUserAllOf';
 export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
@@ -82,6 +88,8 @@ import { ConsumerName } from './ConsumerName';
 import { ConsumerUsersListResponse } from './ConsumerUsersListResponse';
 import { ContactDetails } from './ContactDetails';
 import { ContactDetails1 } from './ContactDetails1';
+import { DashboardStatsHitsPerUser } from './DashboardStatsHitsPerUser';
+import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData';
 import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData';
 import { DeviceData } from './DeviceData';
@@ -96,6 +104,16 @@ import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from '.
 import { ImportResponse } from './ImportResponse';
 import { InlineResponse200 } from './InlineResponse200';
 import { InlineResponse400 } from './InlineResponse400';
+import { InternalBusinessUser, InternalBusinessUserTypeEnum } from './InternalBusinessUser';
+import {
+  InternalBusinessUserAllOf,
+  InternalBusinessUserAllOfTypeEnum,
+} from './InternalBusinessUserAllOf';
+import { InternalConsumerUser, InternalConsumerUserTypeEnum } from './InternalConsumerUser';
+import {
+  InternalConsumerUserAllOf,
+  InternalConsumerUserAllOfTypeEnum,
+} from './InternalConsumerUserAllOf';
 import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
@@ -142,6 +160,10 @@ let enumsMap: Set<string> = new Set<string>([
   'FileImportStatusChangeStatusEnum',
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
+  'InternalBusinessUserTypeEnum',
+  'InternalBusinessUserAllOfTypeEnum',
+  'InternalConsumerUserTypeEnum',
+  'InternalConsumerUserAllOfTypeEnum',
   'RuleTypeEnum',
   'RuleAction',
   'RuleAction1',
@@ -170,6 +192,8 @@ let typeMap: { [index: string]: any } = {
   ConsumerUsersListResponse: ConsumerUsersListResponse,
   ContactDetails: ContactDetails,
   ContactDetails1: ContactDetails1,
+  DashboardStatsHitsPerUser: DashboardStatsHitsPerUser,
+  DashboardStatsHitsPerUserData: DashboardStatsHitsPerUserData,
   DashboardStatsTransactionsCount: DashboardStatsTransactionsCount,
   DashboardStatsTransactionsCountData: DashboardStatsTransactionsCountData,
   DeviceData: DeviceData,
@@ -184,6 +208,10 @@ let typeMap: { [index: string]: any } = {
   ImportResponse: ImportResponse,
   InlineResponse200: InlineResponse200,
   InlineResponse400: InlineResponse400,
+  InternalBusinessUser: InternalBusinessUser,
+  InternalBusinessUserAllOf: InternalBusinessUserAllOf,
+  InternalConsumerUser: InternalConsumerUser,
+  InternalConsumerUserAllOf: InternalConsumerUserAllOf,
   LegalDocument: LegalDocument,
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
