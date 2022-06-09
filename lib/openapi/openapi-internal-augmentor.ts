@@ -39,6 +39,8 @@ const PathToLambda: any = {
     TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+  '/dashboard_stats/hits_per_user':
+    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
   '/transactions/{transactionId}/comments':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}/comments/{commentId}':

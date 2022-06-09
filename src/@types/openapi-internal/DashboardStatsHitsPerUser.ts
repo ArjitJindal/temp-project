@@ -10,18 +10,9 @@
  * Do not edit the class manually.
  */
 
-/**
- * Model for amount
- */
-export class Amount {
-  /**
-   * Numerical value of the transaction
-   */
-  'amountValue': number
-  /**
-   * Currency of the transaction
-   */
-  'amountCurrency': string
+import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData'
+export class DashboardStatsHitsPerUser {
+  'data': Array<DashboardStatsHitsPerUserData>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -32,21 +23,15 @@ export class Amount {
     format: string
   }> = [
     {
-      name: 'amountValue',
-      baseName: 'amountValue',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'amountCurrency',
-      baseName: 'amountCurrency',
-      type: 'string',
+      name: 'data',
+      baseName: 'data',
+      type: 'Array<DashboardStatsHitsPerUserData>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return Amount.attributeTypeMap
+    return DashboardStatsHitsPerUser.attributeTypeMap
   }
 
   public constructor() {}

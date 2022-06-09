@@ -11,6 +11,9 @@
  */
 
 import { Amount } from './Amount'
+/**
+ * Model for transaction limits for a given user
+ */
 export class TransactionLimits {
   'maximumDailyTransactionLimit'?: Amount
   'maximumWeeklyTransactionLimit'?: Amount

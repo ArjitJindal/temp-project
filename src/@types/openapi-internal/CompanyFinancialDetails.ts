@@ -12,6 +12,9 @@
 
 import { Amount } from './Amount'
 import { Tag } from './Tag'
+/**
+ * Model for business user company financial details
+ */
 export class CompanyFinancialDetails {
   'expectedTransactionAmountPerMonth'?: Amount
   'expectedTurnoverPerMonth'?: Amount

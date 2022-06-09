@@ -48,7 +48,6 @@ async function transactionHandler(
   const transactionsCollection = db.collection<TransactionCaseManagement>(
     TRANSACTIONS_COLLECTION(tenantId)
   )
-  transaction.executedRules
   await transactionsCollection.replaceOne(
     { transactionId: transaction.transactionId },
     {
@@ -116,6 +115,11 @@ export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
         ) as TransactionWithRulesResult
         console.info(`Processing transaction ${transaction.transactionId}`)
         await transactionHandler(db, tenantId, transaction)
+        /*
+         todo: this is not very efficient, because we recalculate all the
+           statistics for each transaction. Need to implement updating
+           a single record in DB using transaction date
+         */
         await dashboardStatsRepository.refreshStats(tenantId)
       } else if (
         dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(

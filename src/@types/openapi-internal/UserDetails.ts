@@ -11,8 +11,14 @@
  */
 
 import { ConsumerName } from './ConsumerName'
+/**
+ * Model for consumer user personal details
+ */
 export class UserDetails {
   'name': ConsumerName
+  /**
+   * Date of birth of the user
+   */
   'dateOfBirth'?: string
   /**
    * Country of residence of the user

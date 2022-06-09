@@ -10,36 +10,34 @@
  * Do not edit the class manually.
  */
 
-import { LegalEntity } from './LegalEntity'
-import { Person } from './Person'
+import { ContactDetails } from './ContactDetails'
+import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf'
+import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
-import { TransactionLimits1 } from './TransactionLimits1'
-/**
- * Model for a business user
- */
-export class Business {
+import { TransactionLimits } from './TransactionLimits'
+import { User } from './User'
+import { UserDetails } from './UserDetails'
+export class InternalConsumerUser {
   /**
-   * Unique user ID for the user
+   * Unique user ID
    */
   'userId': string
-  'legalEntity': LegalEntity
+  'userDetails': UserDetails
   /**
-   * Timestamp when the user was created
+   * Timestamp when userId is created
    */
   'createdTimestamp': number
   /**
-   * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
+   * User's legal identity documents - See Document Model for details
    */
-  'shareHolders'?: Array<Person>
-  /**
-   * Director(s) of the company. Must be at least one
-   */
-  'directors'?: Array<Person>
+  'legalDocuments'?: Array<LegalDocument>
+  'contactDetails'?: ContactDetails
   /**
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>
-  'transactionLimits'?: TransactionLimits1
+  'transactionLimits'?: TransactionLimits
+  'type': InternalConsumerUserTypeEnum
 
   static readonly discriminator: string | undefined = undefined
 
@@ -56,9 +54,9 @@ export class Business {
       format: '',
     },
     {
-      name: 'legalEntity',
-      baseName: 'legalEntity',
-      type: 'LegalEntity',
+      name: 'userDetails',
+      baseName: 'userDetails',
+      type: 'UserDetails',
       format: '',
     },
     {
@@ -68,15 +66,15 @@ export class Business {
       format: '',
     },
     {
-      name: 'shareHolders',
-      baseName: 'shareHolders',
-      type: 'Array<Person>',
+      name: 'legalDocuments',
+      baseName: 'legalDocuments',
+      type: 'Array<LegalDocument>',
       format: '',
     },
     {
-      name: 'directors',
-      baseName: 'directors',
-      type: 'Array<Person>',
+      name: 'contactDetails',
+      baseName: 'contactDetails',
+      type: 'ContactDetails',
       format: '',
     },
     {
@@ -88,14 +86,22 @@ export class Business {
     {
       name: 'transactionLimits',
       baseName: 'transactionLimits',
-      type: 'TransactionLimits1',
+      type: 'TransactionLimits',
+      format: '',
+    },
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'InternalConsumerUserTypeEnum',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return Business.attributeTypeMap
+    return InternalConsumerUser.attributeTypeMap
   }
 
   public constructor() {}
 }
+
+export type InternalConsumerUserTypeEnum = 'CONSUMER'

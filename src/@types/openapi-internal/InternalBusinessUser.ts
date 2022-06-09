@@ -10,14 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { Business } from './Business'
+import { InternalBusinessUserAllOf } from './InternalBusinessUserAllOf'
 import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
 import { Tag } from './Tag'
 import { TransactionLimits1 } from './TransactionLimits1'
-/**
- * Model for a business user
- */
-export class Business {
+export class InternalBusinessUser {
   /**
    * Unique user ID for the user
    */
@@ -40,6 +39,7 @@ export class Business {
    */
   'tags'?: Array<Tag>
   'transactionLimits'?: TransactionLimits1
+  'type': InternalBusinessUserTypeEnum
 
   static readonly discriminator: string | undefined = undefined
 
@@ -91,11 +91,19 @@ export class Business {
       type: 'TransactionLimits1',
       format: '',
     },
+    {
+      name: 'type',
+      baseName: 'type',
+      type: 'InternalBusinessUserTypeEnum',
+      format: '',
+    },
   ]
 
   static getAttributeTypeMap() {
-    return Business.attributeTypeMap
+    return InternalBusinessUser.attributeTypeMap
   }
 
   public constructor() {}
 }
+
+export type InternalBusinessUserTypeEnum = 'BUSINESS'

@@ -10,6 +10,9 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model for transaction states. E.g. Processing, Refunded, Successful etc.
+ */
 export type TransactionState =
   | 'CREATED'
   | 'PROCESSING'

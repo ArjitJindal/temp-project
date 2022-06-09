@@ -11,14 +11,38 @@
  */
 
 import { Address2 } from './Address2'
+/**
+ * Model for SWIFT payment method
+ */
 export class SWIFTDetails {
+  /**
+   * Classify the method of payment as \"SWIFT\" for SWIFTDetails
+   */
   'method': string
+  /**
+   * SWIFT code of the financial institution
+   */
   'swiftCode'?: string
+  /**
+   * Account number
+   */
   'accountNumber'?: string
+  /**
+   * Account type. E.g. Checking, Savings etc.
+   */
   'accountType'?: string
+  /**
+   * Name of the bank
+   */
   'bankName'?: string
+  /**
+   * Name of the account holder
+   */
   'name'?: string
   'bankAddress'?: Address2
+  /**
+   * Special instructions if any
+   */
   'specialInstructions'?: string
 
   static readonly discriminator: string | undefined = undefined

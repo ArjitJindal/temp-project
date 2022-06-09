@@ -11,13 +11,34 @@
  */
 
 import { Address2 } from './Address2'
+/**
+ * Model for ACH payment method
+ */
 export class ACHDetails {
+  /**
+   * Classify the method of payment as \"ACH\" for ACHDetails
+   */
   'method': string
+  /**
+   * Routing number of the bank
+   */
   'routingNumber': string
+  /**
+   * Bank account number of the individual
+   */
   'accountNumber': string
+  /**
+   * Name of the bank
+   */
   'bankName'?: string
+  /**
+   * Name of the account holder
+   */
   'name'?: string
   'bankAddress'?: Address2
+  /**
+   * Beneficiary name of the account
+   */
   'beneficiaryName'?: string
 
   static readonly discriminator: string | undefined = undefined

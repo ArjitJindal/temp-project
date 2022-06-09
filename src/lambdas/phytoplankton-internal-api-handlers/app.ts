@@ -24,7 +24,10 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { ExportService } from '@/lambdas/phytoplankton-internal-api-handlers/services/export-service'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { TRANSACTION_EXPORT_HEADERS_SETTINGS } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
+import {
+  DashboardTimeFrameType,
+  TRANSACTION_EXPORT_HEADERS_SETTINGS,
+} from '@/lambdas/phytoplankton-internal-api-handlers/constants'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -237,39 +240,75 @@ export const dashboardStatsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-    const client = await connectToDB()
-    const { timeframe, endTimestamp } = event.queryStringParameters as {
-      timeframe?: string
-      endTimestamp?: string
-    }
-    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-      mongoDb: client,
-    })
     if (
-      timeframe !== 'YEAR' &&
-      timeframe !== 'WEEK' &&
-      timeframe !== 'MONTH' &&
-      timeframe !== 'DAY'
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/dashboard_stats/transactions')
     ) {
-      throw new BadRequest(`Unsupported timeframe: ${timeframe}`)
-    }
-    const endTimestampNumber = endTimestamp
-      ? parseInt(endTimestamp)
-      : Number.NaN
-    if (Number.isNaN(endTimestampNumber)) {
-      throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
-    }
+      const client = await connectToDB()
+      const { principalId: tenantId } = event.requestContext.authorizer
+      const { timeframe, endTimestamp } = event.queryStringParameters as {
+        timeframe?: DashboardTimeFrameType
+        endTimestamp?: string
+      }
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      // await dashboardStatsRepository.refreshStats(tenantId)
 
-    // await dashboardStatsRepository.refreshStats(tenantId)
+      if (timeframe == null) {
+        throw new BadRequest(`Missing required parameter: ${timeframe}`)
+      }
+      const endTimestampNumber = endTimestamp
+        ? parseInt(endTimestamp)
+        : Number.NaN
+      if (Number.isNaN(endTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+      }
 
-    const data = await dashboardStatsRepository.getTransactionCountStats(
-      timeframe,
-      endTimestampNumber
-    )
-    return {
-      data,
+      const data = await dashboardStatsRepository.getTransactionCountStats(
+        timeframe,
+        endTimestampNumber
+      )
+      return {
+        data,
+      }
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/dashboard_stats/hits_per_user')
+    ) {
+      const client = await connectToDB()
+      const { principalId: tenantId } = event.requestContext.authorizer
+      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
+        startTimestamp?: string
+        endTimestamp?: string
+      }
+      const endTimestampNumber = endTimestamp
+        ? parseInt(endTimestamp)
+        : Number.NaN
+      if (Number.isNaN(endTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+      }
+      const startTimestampNumber = startTimestamp
+        ? parseInt(startTimestamp)
+        : Number.NaN
+      if (Number.isNaN(startTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+      }
+
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      // await dashboardStatsRepository.refreshStats(tenantId)
+
+      return {
+        data: await dashboardStatsRepository.getHitsByUserStats(
+          tenantId,
+          startTimestampNumber,
+          endTimestampNumber
+        ),
+      }
     }
+    throw new BadRequest('Unsupported path')
   }
 )
 

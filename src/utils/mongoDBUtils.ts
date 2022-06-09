@@ -115,6 +115,12 @@ export const DASHBOARD_RULE_HIT_STATS_COLLECTION_DAILY = (tenantId: string) => {
   return `${tenantId}-dashboard-rule-stats-daily`
 }
 
+export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
+  tenantId: string
+) => {
+  return `${tenantId}-dashboard-hits-by-user-stats-hourly`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }
@@ -122,3 +128,7 @@ export const IMPORT_COLLECTION = (tenantId: string) => {
 export const MONTH_DATE_FORMAT = '%Y-%m'
 export const DAY_DATE_FORMAT = '%Y-%m-%d'
 export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
+
+export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
+export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
+export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'

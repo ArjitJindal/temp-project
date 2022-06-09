@@ -14,6 +14,9 @@ import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
 import { CompanyRegistrationDetails } from './CompanyRegistrationDetails'
 import { ContactDetails1 } from './ContactDetails1'
+/**
+ * Model for business user legal entity details
+ */
 export class LegalEntity {
   'companyGeneralDetails': CompanyGeneralDetails
   'companyFinancialDetails'?: CompanyFinancialDetails

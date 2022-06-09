@@ -11,6 +11,9 @@
  */
 
 import { RuleAction1 } from './RuleAction1'
+/**
+ * Model for list of executed rules
+ */
 export class ExecutedRulesResult {
   /**
    * Unique rule identifier

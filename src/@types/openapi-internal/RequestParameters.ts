@@ -17,6 +17,8 @@ import { ConsumerName } from './ConsumerName'
 import { ConsumerUsersListResponse } from './ConsumerUsersListResponse'
 import { ContactDetails } from './ContactDetails'
 import { ContactDetails1 } from './ContactDetails1'
+import { DashboardStatsHitsPerUser } from './DashboardStatsHitsPerUser'
+import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData'
 import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount'
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData'
 import { DeviceData } from './DeviceData'
@@ -31,6 +33,10 @@ import { ImportRequest } from './ImportRequest'
 import { ImportResponse } from './ImportResponse'
 import { InlineResponse200 } from './InlineResponse200'
 import { InlineResponse400 } from './InlineResponse400'
+import { InternalBusinessUser } from './InternalBusinessUser'
+import { InternalBusinessUserAllOf } from './InternalBusinessUserAllOf'
+import { InternalConsumerUser } from './InternalConsumerUser'
+import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf'
 import { LegalDocument } from './LegalDocument'
 import { LegalDocument1 } from './LegalDocument1'
 import { LegalEntity } from './LegalEntity'
@@ -198,6 +204,21 @@ export interface DefaultApiGetConsumerUsersListRequest {
    * @memberof DefaultApigetConsumerUsersList
    */
   filterId?: string
+}
+
+export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsHitsPerUser
+   */
+  startTimestamp?: number
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsHitsPerUser
+   */
+  endTimestamp?: number
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
