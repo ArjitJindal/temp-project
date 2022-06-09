@@ -11,7 +11,6 @@
  */
 
 import { Address2 } from './Address2'
-import { ConsumerName } from './ConsumerName'
 /**
  * Model for any generic bank account
  */
@@ -21,7 +20,7 @@ export class GenericBankAccountDetails {
   'accountType'?: string
   'bankName'?: string
   'bankCode'?: string
-  'name'?: ConsumerName
+  'name'?: string
   'bankAddress'?: Address2
   'specialInstructions'?: string
 
@@ -66,7 +65,7 @@ export class GenericBankAccountDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

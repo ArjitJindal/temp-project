@@ -969,6 +969,14 @@ paths:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
       x-internal: false
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:

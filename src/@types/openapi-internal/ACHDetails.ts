@@ -11,13 +11,12 @@
  */
 
 import { Address2 } from './Address2'
-import { ConsumerName } from './ConsumerName'
 export class ACHDetails {
   'method': string
   'routingNumber': string
   'accountNumber': string
   'bankName'?: string
-  'name'?: ConsumerName
+  'name'?: string
   'bankAddress'?: Address2
   'beneficiaryName'?: string
 
@@ -56,7 +55,7 @@ export class ACHDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

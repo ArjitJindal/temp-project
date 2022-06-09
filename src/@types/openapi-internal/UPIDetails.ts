@@ -15,6 +15,7 @@ export class UPIDetails {
   'upiID': string
   'bankProvider'?: string
   'interfaceProvider'?: string
+  'name'?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -45,6 +46,12 @@ export class UPIDetails {
     {
       name: 'interfaceProvider',
       baseName: 'interfaceProvider',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'name',
+      baseName: 'name',
       type: 'string',
       format: '',
     },

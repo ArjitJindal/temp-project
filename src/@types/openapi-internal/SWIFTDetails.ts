@@ -11,14 +11,13 @@
  */
 
 import { Address2 } from './Address2'
-import { ConsumerName } from './ConsumerName'
 export class SWIFTDetails {
   'method': string
   'swiftCode'?: string
   'accountNumber'?: string
   'accountType'?: string
   'bankName'?: string
-  'name'?: ConsumerName
+  'name'?: string
   'bankAddress'?: Address2
   'specialInstructions'?: string
 
@@ -63,7 +62,7 @@ export class SWIFTDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

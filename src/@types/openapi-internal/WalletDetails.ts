@@ -10,7 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { ConsumerName } from './ConsumerName'
 import { Tag } from './Tag'
 /**
  * Standardized model for a Generic wallet transaction
@@ -29,10 +28,9 @@ export class WalletDetails {
    * Payment Channel used through wallet
    */
   'paymentChannel'?: string
-  'name'?: ConsumerName
+  'name'?: string
   'tags'?: Tag
   'walletPhoneNumber'?: string
-  ''?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -69,7 +67,7 @@ export class WalletDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {
@@ -81,12 +79,6 @@ export class WalletDetails {
     {
       name: 'walletPhoneNumber',
       baseName: 'walletPhoneNumber',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: '',
-      baseName: '',
       type: 'string',
       format: '',
     },

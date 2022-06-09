@@ -95,7 +95,10 @@ export class TransactionRepository {
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const query = this.getTransactionsMongoQuery(params)
-    return collection.find(query).sort({ timestamp: -1 })
+    const field =
+      params.sortField !== undefined ? params.sortField : 'timestamp'
+    const order = params.sortOrder === 'ascend' ? 1 : -1
+    return collection.find(query).sort(field, order)
   }
 
   public async getTransactionsCount(

@@ -369,6 +369,18 @@ export interface DefaultApiGetTransactionsListExportRequest {
    * @memberof DefaultApigetTransactionsListExport
    */
   filterOutStatus?: RuleAction
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  sortField?: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  sortOrder?: string
 }
 
 export interface DefaultApiGetTransactionsPerUserListRequest {

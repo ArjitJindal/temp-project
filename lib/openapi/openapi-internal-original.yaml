@@ -455,6 +455,14 @@ paths:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
       x-internal: false
     parameters: []
   '/transactions/{transactionId}':
@@ -573,8 +581,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
               examples: {}
       operationId: get-consumer-users-item
       description: ''
@@ -634,8 +641,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
               examples: {}
       operationId: get-business-users-item
       description: ''
@@ -932,8 +938,7 @@ components:
         - data
     TransactionCaseManagement:
       allOf:
-        - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult'
         - type: object
           properties:
             comments:
@@ -962,8 +967,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
       required:
         - total
         - data
@@ -976,8 +980,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
       required:
         - total
         - data

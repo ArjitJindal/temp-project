@@ -63,6 +63,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesHit,
         filterRulesExecuted,
         transactionType,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -76,6 +78,8 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
         transactionType,
+        sortField: sortField,
+        sortOrder: sortOrder,
       }
       return transactionService.getTransactions(params)
     } else if (
@@ -96,6 +100,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterRulesHit,
         filterRulesExecuted,
+        sortField,
+        sortOrder,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -108,6 +114,8 @@ export const transactionsViewHandler = lambdaApi()(
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        sortField: sortField,
+        sortOrder: sortOrder,
       }
 
       const transactionsCount =

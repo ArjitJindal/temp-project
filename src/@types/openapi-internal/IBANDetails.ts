@@ -11,7 +11,6 @@
  */
 
 import { Address2 } from './Address2'
-import { ConsumerName } from './ConsumerName'
 import { Tag } from './Tag'
 /**
  * Standardized model for Bank Details
@@ -21,7 +20,7 @@ export class IBANDetails {
   /**
    * Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc.
    */
-  'BIC': string
+  'BIC'?: string
   /**
    * Name of the bank
    */
@@ -30,8 +29,8 @@ export class IBANDetails {
   /**
    * Account number of the user. Can be account number, IBAN number etc.
    */
-  'IBAN': string
-  'name'?: ConsumerName
+  'IBAN'?: string
+  'name'?: string
   'tags'?: Tag
   'bankBranchCode'?: string
 
@@ -76,7 +75,7 @@ export class IBANDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {
