@@ -65,6 +65,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterRulesHit,
         filterRulesExecuted,
+        filterOriginCurrencies,
+        filterDestinationCurrencies,
         transactionType,
         sortField,
         sortOrder,
@@ -83,6 +85,12 @@ export const transactionsViewHandler = lambdaApi()(
         transactionType,
         sortField: sortField,
         sortOrder: sortOrder,
+        filterOriginCurrencies: filterOriginCurrencies
+          ? filterOriginCurrencies.split(',')
+          : undefined,
+        filterDestinationCurrencies: filterDestinationCurrencies
+          ? filterDestinationCurrencies.split(',')
+          : undefined,
       }
       return transactionService.getTransactions(params)
     } else if (
@@ -103,6 +111,9 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterRulesHit,
         filterRulesExecuted,
+        filterOriginCurrencies,
+        filterDestinationCurrencies,
+        transactionType,
         sortField,
         sortOrder,
       } = event.queryStringParameters as any
@@ -117,6 +128,12 @@ export const transactionsViewHandler = lambdaApi()(
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        filterOriginCurrencies: filterOriginCurrencies
+          ? filterOriginCurrencies.split(',')
+          : undefined,
+        filterDestinationCurrencies: filterDestinationCurrencies
+          ? filterDestinationCurrencies.split(',')
+          : undefined,
         sortField: sortField,
         sortOrder: sortOrder,
       }

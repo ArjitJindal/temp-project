@@ -85,6 +85,17 @@ export class TransactionRepository {
       }
     }
 
+    if (params.filterOriginCurrencies != null) {
+      query['originAmountDetails.transactionCurrency'] = {
+        $in: params.filterOriginCurrencies,
+      }
+    }
+    if (params.filterDestinationCurrencies != null) {
+      query['destinationAmountDetails.transactionCurrency'] = {
+        $in: params.filterDestinationCurrencies,
+      }
+    }
+
     return query
   }
 
