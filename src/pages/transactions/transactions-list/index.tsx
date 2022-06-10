@@ -4,6 +4,7 @@ import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { IRouteComponentProps, Link } from 'umi';
+import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
 import styles from './components/TransactionDetails.less';
 
@@ -191,6 +192,30 @@ const TableList = (
           return entity.destinationAmountDetails?.country;
         },
       },
+      {
+        title: 'Origin Currencies',
+        dataIndex: 'originCurrenciesFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        fieldProps: {
+          options: currencies,
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
+      {
+        title: 'Destination Currencies',
+        dataIndex: 'destinationCurrenciesFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        fieldProps: {
+          options: currencies,
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
     ],
     [],
   );
@@ -214,7 +239,15 @@ const TableList = (
         }}
         scroll={{ x: 1300 }}
         request={async (params, sorter) => {
-          const { pageSize, current, timestamp, transactionId, type } = params;
+          const {
+            pageSize,
+            current,
+            timestamp,
+            transactionId,
+            type,
+            originCurrenciesFilter,
+            destinationCurrenciesFilter,
+          } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
             api.getTransactionsList({
@@ -223,6 +256,8 @@ const TableList = (
               afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
               beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
               filterId: transactionId,
+              filterOriginCurrencies: originCurrenciesFilter,
+              filterDestinationCurrencies: destinationCurrenciesFilter,
               transactionType: type,
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,

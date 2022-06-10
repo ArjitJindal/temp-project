@@ -5,6 +5,7 @@ import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { IRouteComponentProps, Link } from 'umi';
+import { currencies } from '../../utils/currencies';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
@@ -150,7 +151,6 @@ const TableList = (
         title: 'Origin User ID',
         dataIndex: 'originUserId',
         hideInSearch: true,
-        width: 100,
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -193,7 +193,7 @@ const TableList = (
         title: 'Destination User ID',
         dataIndex: 'deatinationUserId',
         hideInSearch: true,
-        width: 120,
+        width: 150,
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
@@ -308,6 +308,30 @@ const TableList = (
           mode: 'multiple',
         },
       },
+      {
+        title: 'Origin Currencies',
+        dataIndex: 'originCurrenciesFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        fieldProps: {
+          options: currencies,
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
+      {
+        title: 'Destination Currencies',
+        dataIndex: 'destinationCurrenciesFilter',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        fieldProps: {
+          options: currencies,
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
     ],
     [api, reloadTable, updatedTransactions, users],
   );
@@ -337,6 +361,8 @@ const TableList = (
             transactionId,
             rulesHitFilter,
             rulesExecutedFilter,
+            originCurrenciesFilter,
+            destinationCurrenciesFilter,
             type,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
@@ -350,6 +376,8 @@ const TableList = (
               filterRulesHit: rulesHitFilter,
               filterRulesExecuted: rulesExecutedFilter,
               filterOutStatus: 'ALLOW',
+              filterOriginCurrencies: originCurrenciesFilter,
+              filterDestinationCurrencies: destinationCurrenciesFilter,
               transactionType: type,
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,
@@ -359,11 +387,6 @@ const TableList = (
             title: 'Table Loaded',
             time,
           });
-          // // @ts-ignore
-          // window.analytics.track('Case Management / Data loaded', {
-          //   entriesCount: response.data.length,
-          //   entriesCountTotal: response.total,
-          // });
           return {
             data: response.data,
             success: true,
