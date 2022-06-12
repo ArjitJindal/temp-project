@@ -58,4 +58,6 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
     assignments: 'JSON',
     status: 'INCLUDE',
     statusChanges: 'JSON',
+    originUser: 'SKIP',
+    destinationUser: 'SKIP',
   }

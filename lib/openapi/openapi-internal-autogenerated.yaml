@@ -862,6 +862,14 @@ paths:
             type: string
           in: query
           name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -1066,78 +1074,6 @@ paths:
         passthroughBehavior: never
       security:
         - lambda-authorizer: []
-    options:
-      parameters: []
-      responses:
-        '200':
-          description: Default response
-          headers:
-            Access-Control-Allow-Headers:
-              schema:
-                type: string
-            Access-Control-Allow-Methods:
-              schema:
-                type: string
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: '{"statusCode":200}'
-        responses:
-          default:
-            statusCode: 200
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'*'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-  /user/transactions:
-    get:
-      summary: Transaction Per User - List
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionsListResponse'
-              examples: {}
-      operationId: get-transactions-per-user-list
-      description: ''
-      parameters:
-        - schema:
-            type: number
-          in: query
-          name: limit
-          required: true
-        - schema:
-            type: number
-          in: query
-          name: skip
-          required: true
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-          required: true
-        - schema:
-            type: string
-          in: query
-          name: userId
-          required: true
-      x-amazon-apigateway-request-validator: all
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsPerUserViewFunction.Arn}/invocations
-        httpMethod: POST
-        type: aws_proxy
-        passthroughBehavior: never
-      security:
-        - lambda-authorizer: []
-    parameters: []
     options:
       parameters: []
       responses:
@@ -1982,6 +1918,14 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TransactionStatusChange'
+            originUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+            destinationUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
           required:
             - status
       title: TransactionCaseManagement
@@ -2075,11 +2019,6 @@ components:
               rulesHit:
                 type: number
               user:
-                discriminator:
-                  propertyName: type
-                  mapping:
-                    CONSUMER: '#/components/schemas/InternalConsumerUser'
-                    BUSINESS: '#/components/schemas/InternalBusinessUser'
                 oneOf:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'

@@ -1,6 +1,6 @@
 import * as csvFormat from '@fast-csv/format'
-import { nanoid, customAlphabet } from 'nanoid'
-import { FindCursor } from 'mongodb'
+import { customAlphabet } from 'nanoid'
+import { AggregationCursor } from 'mongodb'
 import dayjs from 'dayjs'
 
 type CsvAction<T> = T extends string | number | boolean
@@ -82,7 +82,7 @@ export class ExportService<T> {
   }
 
   async export(
-    cursor: FindCursor<T>,
+    cursor: AggregationCursor<T>,
     headerSettings: CsvHeaderSettings<T>
   ): Promise<ExportInfo> {
     const date = dayjs().format('YYYYMMDD-HHmmss')

@@ -339,6 +339,18 @@ export interface DefaultApiGetTransactionsListRequest {
    * @memberof DefaultApigetTransactionsList
    */
   sortOrder?: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterOriginUserId?: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterDestinationUserId?: string
 }
 
 export interface DefaultApiGetTransactionsListExportRequest {
@@ -402,33 +414,6 @@ export interface DefaultApiGetTransactionsListExportRequest {
    * @memberof DefaultApigetTransactionsListExport
    */
   sortOrder?: string
-}
-
-export interface DefaultApiGetTransactionsPerUserListRequest {
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  limit: number
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  skip: number
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  beforeTimestamp: number
-  /**
-   *
-   * @type string
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  userId: string
 }
 
 export interface DefaultApiPostApikeyRequest {

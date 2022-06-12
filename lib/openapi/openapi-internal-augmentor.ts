@@ -29,8 +29,6 @@ const PathToLambda: any = {
   '/transactions/export': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/user/transactions':
-    TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
   '/consumer/users': TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
     TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,

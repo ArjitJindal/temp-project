@@ -35,9 +35,6 @@ export const TarponStackConstants = {
   RULE_FUNCTION_NAME: getResourceName('RuleTemplateFunction'),
   RULE_INSTANCE_FUNCTION_NAME: getResourceName('RuleInstanceFunction'),
   TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceName('TransactionsViewFunction'),
-  TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME: getResourceName(
-    'TransactionsPerUserViewFunction'
-  ),
   DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME: getResourceName(
     'DashboardStatsTransactionsFunction'
   ),

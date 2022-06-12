@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { Filter, FindCursor, MongoClient } from 'mongodb'
+import { AggregationCursor, Filter, MongoClient, Sort } from 'mongodb'
 import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
@@ -11,7 +11,7 @@ import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
+import { TRANSACTIONS_COLLECTION, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
@@ -64,6 +64,12 @@ export class TransactionRepository {
     if (params.filterOutStatus != null) {
       query['status'] = { $ne: params.filterOutStatus }
     }
+    if (params.filterOriginUserId != null) {
+      query['originUserId'] = { $eq: params.filterOriginUserId }
+    }
+    if (params.filterDestinationUserId != null) {
+      query['destinationUserId'] = { $eq: params.filterDestinationUserId }
+    }
 
     const executedRulesFilters = []
     if (params.filterRulesExecuted != null) {
@@ -101,16 +107,48 @@ export class TransactionRepository {
 
   public async getTransactionsCursor(
     params: DefaultApiGetTransactionsListRequest
-  ): Promise<FindCursor<TransactionCaseManagement>> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
+  ): Promise<AggregationCursor<TransactionCaseManagement>> {
     const query = this.getTransactionsMongoQuery(params)
     const field =
       params.sortField !== undefined ? params.sortField : 'timestamp'
     const order = params.sortOrder === 'ascend' ? 1 : -1
-    return collection.find(query).sort(field, order)
+    return this.getDenormalizedTransactions(query, { [field]: order })
+  }
+
+  private getDenormalizedTransactions(
+    query: Filter<TransactionCaseManagement>,
+    sort?: Sort
+  ) {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const cursor = collection.aggregate<TransactionCaseManagement>([
+      { $match: query },
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId),
+          localField: 'originUserId',
+          foreignField: 'userId',
+          as: 'originUser',
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId),
+          localField: 'destinationUserId',
+          foreignField: 'userId',
+          as: 'destinationUser',
+        },
+      },
+      {
+        $set: {
+          originUser: { $first: '$originUser' },
+          destinationUser: { $first: '$destinationUser' },
+        },
+      },
+    ])
+    return sort ? cursor.sort(sort) : cursor
   }
 
   public async getTransactionsCount(
@@ -133,38 +171,6 @@ export class TransactionRepository {
       .limit(params.limit)
       .skip(params.skip)
       .toArray()
-    return { total, data: transactions }
-  }
-
-  public async getTransactionsPerUser(
-    pagination: {
-      limit: number
-      skip: number
-      afterTimestamp?: number
-      beforeTimestamp: number
-    },
-    userId: string
-  ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-
-    const query = {
-      timestamp: {
-        $gte: pagination.afterTimestamp || 0,
-        $lte: pagination.beforeTimestamp,
-      },
-      originUserId: userId,
-    }
-
-    const transactions = await collection
-      .find(query)
-      .sort({ timestamp: -1 })
-      .limit(pagination.limit)
-      .skip(pagination.skip)
-      .toArray()
-    const total = await collection.count(query)
     return { total, data: transactions }
   }
 
@@ -197,11 +203,9 @@ export class TransactionRepository {
   public async getTransactionCaseManagement(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    return await collection.findOne({ transactionId })
+    return await this.getDenormalizedTransactions({
+      transactionId,
+    }).next()
   }
 
   public async saveTransactionComment(

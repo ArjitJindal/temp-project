@@ -414,33 +414,6 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
 
-    /* Transactions per user view */
-    const transactionsPerUserViewFunction = this.createFunction(
-      {
-        name: TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME,
-        handler: 'app.transactionsPerUserViewHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
-      },
-      atlasFunctionProps
-    )
-    dynamoDbTable.grantReadWriteData(transactionsViewFunction)
-    transactionsPerUserViewFunction.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.TRANSACTIONS_PER_USER_VIEW_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
-
     /* business users view */
     const businessUsersViewFunction = this.createFunction(
       {

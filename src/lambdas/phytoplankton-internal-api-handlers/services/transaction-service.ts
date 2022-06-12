@@ -30,16 +30,7 @@ export class TransactionService {
     params: DefaultApiGetTransactionsListRequest
   ): Promise<TransactionsListResponse> {
     const result = await this.transactionRepository.getTransactions(params)
-    result.data = result.data.map((transaction) => {
-      const commentsWithUrl = transaction.comments?.map((comment) => ({
-        ...comment,
-        files: comment.files?.map((file) => ({
-          ...file,
-          downloadLink: this.getDownloadLink(file),
-        })),
-      }))
-      return { ...transaction, comments: commentsWithUrl }
-    })
+    result.data = result.data.map(this.getAugmentedTransactionCaseManagement)
     return result
   }
 
@@ -70,8 +61,12 @@ export class TransactionService {
   async getTransaction(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
-    return await this.transactionRepository.getTransactionCaseManagement(
-      transactionId
+    const transaction =
+      await this.transactionRepository.getTransactionCaseManagement(
+        transactionId
+      )
+    return (
+      transaction && this.getAugmentedTransactionCaseManagement(transaction)
     )
   }
 
@@ -130,6 +125,19 @@ export class TransactionService {
       transactionId,
       commentId
     )
+  }
+
+  private getAugmentedTransactionCaseManagement(
+    transaction: TransactionCaseManagement
+  ) {
+    const commentsWithUrl = transaction.comments?.map((comment) => ({
+      ...comment,
+      files: comment.files?.map((file) => ({
+        ...file,
+        downloadLink: this.getDownloadLink(file),
+      })),
+    }))
+    return { ...transaction, comments: commentsWithUrl }
   }
 
   private getDownloadLink(file: FileInfo): string {

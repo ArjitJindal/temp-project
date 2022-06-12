@@ -67,6 +67,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesExecuted,
         filterOriginCurrencies,
         filterDestinationCurrencies,
+        filterOriginUserId,
+        filterDestinationUserId,
         transactionType,
         sortField,
         sortOrder,
@@ -82,6 +84,8 @@ export const transactionsViewHandler = lambdaApi()(
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        filterOriginUserId,
+        filterDestinationUserId,
         transactionType,
         sortField: sortField,
         sortOrder: sortOrder,
@@ -215,39 +219,6 @@ export const transactionsViewHandler = lambdaApi()(
     }
 
     throw new Error('Unhandled request')
-  }
-)
-
-export const transactionsPerUserViewHandler = lambdaApi()(
-  async (
-    event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
-    >
-  ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-    const client = await connectToDB()
-    const transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb: client,
-    })
-    const {
-      limit,
-      skip,
-      afterTimestamp,
-      beforeTimestamp,
-      userId,
-      filterId,
-      filterOutStatus,
-    } = event.queryStringParameters as any
-    const params: DefaultApiGetTransactionsListRequest = {
-      limit: parseInt(limit),
-      skip: parseInt(skip),
-      afterTimestamp: parseInt(afterTimestamp) || undefined,
-      beforeTimestamp: parseInt(beforeTimestamp),
-      filterId,
-      filterOutStatus,
-    }
-
-    return transactionRepository.getTransactionsPerUser(params, userId)
   }
 )
 

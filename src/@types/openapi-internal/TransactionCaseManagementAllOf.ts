@@ -12,6 +12,8 @@
 
 import { Assignment } from './Assignment'
 import { Comment } from './Comment'
+import { InternalBusinessUser } from './InternalBusinessUser'
+import { InternalConsumerUser } from './InternalConsumerUser'
 import { RuleAction } from './RuleAction'
 import { TransactionStatusChange } from './TransactionStatusChange'
 export class TransactionCaseManagementAllOf {
@@ -19,6 +21,8 @@ export class TransactionCaseManagementAllOf {
   'assignments'?: Array<Assignment>
   'status': RuleAction
   'statusChanges'?: Array<TransactionStatusChange>
+  'originUser'?: InternalConsumerUser | InternalBusinessUser
+  'destinationUser'?: InternalConsumerUser | InternalBusinessUser
 
   static readonly discriminator: string | undefined = undefined
 
@@ -50,6 +54,18 @@ export class TransactionCaseManagementAllOf {
       name: 'statusChanges',
       baseName: 'statusChanges',
       type: 'Array<TransactionStatusChange>',
+      format: '',
+    },
+    {
+      name: 'originUser',
+      baseName: 'originUser',
+      type: 'InternalConsumerUser | InternalBusinessUser',
+      format: '',
+    },
+    {
+      name: 'destinationUser',
+      baseName: 'destinationUser',
+      type: 'InternalConsumerUser | InternalBusinessUser',
       format: '',
     },
   ]
