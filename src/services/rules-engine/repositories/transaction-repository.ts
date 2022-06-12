@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
-import { AggregationCursor, Filter, MongoClient, Sort } from 'mongodb'
+import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
@@ -109,21 +109,21 @@ export class TransactionRepository {
     params: DefaultApiGetTransactionsListRequest
   ): Promise<AggregationCursor<TransactionCaseManagement>> {
     const query = this.getTransactionsMongoQuery(params)
-    const field =
-      params.sortField !== undefined ? params.sortField : 'timestamp'
-    const order = params.sortOrder === 'ascend' ? 1 : -1
-    return this.getDenormalizedTransactions(query, { [field]: order })
+    return this.getDenormalizedTransactions(query, params)
   }
 
   private getDenormalizedTransactions(
     query: Filter<TransactionCaseManagement>,
-    sort?: Sort
+    params?: DefaultApiGetTransactionsListRequest
   ) {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const cursor = collection.aggregate<TransactionCaseManagement>([
+    const sortField =
+      params?.sortField !== undefined ? params?.sortField : 'timestamp'
+    const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
+    const pipeline: Document[] = [
       { $match: query },
       {
         $lookup: {
@@ -147,8 +147,15 @@ export class TransactionRepository {
           destinationUser: { $first: '$destinationUser' },
         },
       },
-    ])
-    return sort ? cursor.sort(sort) : cursor
+      { $sort: { [sortField]: sortOrder } },
+    ]
+    if (params?.skip) {
+      pipeline.push({ $skip: params.skip })
+    }
+    if (params?.limit) {
+      pipeline.push({ $limit: params.limit })
+    }
+    return collection.aggregate<TransactionCaseManagement>(pipeline)
   }
 
   public async getTransactionsCount(
@@ -167,11 +174,7 @@ export class TransactionRepository {
   ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const cursor = await this.getTransactionsCursor(params)
     const total = await this.getTransactionsCount(params)
-    const transactions = await cursor
-      .limit(params.limit)
-      .skip(params.skip)
-      .toArray()
-    return { total, data: transactions }
+    return { total, data: await cursor.toArray() }
   }
 
   public async updateTransactionCaseManagement(
