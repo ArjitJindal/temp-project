@@ -36,6 +36,8 @@ import { useApi } from '@/api';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
+import { getUserName } from '@/utils/api/users';
+import UserLink from '@/components/UserLink';
 
 const equal = require('fast-deep-equal');
 
@@ -340,7 +342,16 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.originUserId}
+              {transaction.originUser !== undefined ? (
+                <UserLink user={transaction.originUser}>
+                  {String(transaction.originUserId)}
+                </UserLink>
+              ) : (
+                String(transaction.originUserId)
+              )}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="User Name" valueType="text">
+              {getUserName(transaction.originUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
               {transaction.originAmountDetails?.transactionAmount}
@@ -370,7 +381,16 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.destinationUserId}
+              {transaction.destinationUser !== undefined ? (
+                <UserLink user={transaction.destinationUser}>
+                  {String(transaction.destinationUserId)}
+                </UserLink>
+              ) : (
+                String(transaction.destinationUserId)
+              )}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="User Name" valueType="text">
+              {getUserName(transaction.destinationUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
               {transaction.destinationAmountDetails?.transactionAmount}

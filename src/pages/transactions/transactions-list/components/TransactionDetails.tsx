@@ -13,6 +13,8 @@ import {
 } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
+import { getUserName } from '@/utils/api/users';
+import UserLink from '@/components/UserLink';
 
 interface Props {
   transaction: TransactionCaseManagement;
@@ -145,7 +147,16 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.originUserId}
+              {transaction.originUser !== undefined ? (
+                <UserLink user={transaction.originUser}>
+                  {String(transaction.originUserId)}
+                </UserLink>
+              ) : (
+                String(transaction.originUserId)
+              )}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="User Name" valueType="text">
+              {getUserName(transaction.originUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
               {transaction.originAmountDetails?.transactionAmount}
@@ -175,7 +186,16 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
         >
           <ProDescriptions size="small" column={1}>
             <ProDescriptions.Item label="User ID" valueType="text">
-              {transaction.destinationUserId}
+              {transaction.destinationUser !== undefined ? (
+                <UserLink user={transaction.destinationUser}>
+                  {String(transaction.destinationUserId)}
+                </UserLink>
+              ) : (
+                String(transaction.destinationUserId)
+              )}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item label="User Name" valueType="text">
+              {getUserName(transaction.destinationUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
               {transaction.destinationAmountDetails?.transactionAmount}

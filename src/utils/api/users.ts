@@ -1,4 +1,5 @@
-import { InternalBusinessUser, UserDetails } from '@/apis';
+import { neverReturn } from '../lang';
+import { InternalBusinessUser, InternalConsumerUser, UserDetails } from '@/apis';
 
 export function getFullName(userDetails: UserDetails | undefined): string {
   const result = [
@@ -17,4 +18,17 @@ export function getFullName(userDetails: UserDetails | undefined): string {
 
 export function businessName(user: InternalBusinessUser): string {
   return user.legalEntity.companyGeneralDetails.legalName;
+}
+
+export function getUserName(user?: InternalConsumerUser | InternalBusinessUser) {
+  if (user == null) {
+    return 'N/A';
+  }
+  if (user.type === 'CONSUMER') {
+    return getFullName(user.userDetails);
+  }
+  if (user.type === 'BUSINESS') {
+    return businessName(user);
+  }
+  return neverReturn(user, 'N/A');
 }
