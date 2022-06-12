@@ -474,18 +474,15 @@ export class ObservableDefaultApi {
    * DashboardStats - Hits per user
    * @param startTimestamp
    * @param endTimestamp
-   * @param body
    */
   public getDashboardStatsHitsPerUser(
     startTimestamp?: number,
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Observable<DashboardStatsHitsPerUser> {
     const requestContextPromise = this.requestFactory.getDashboardStatsHitsPerUser(
       startTimestamp,
       endTimestamp,
-      body,
       _options,
     );
 
@@ -518,18 +515,15 @@ export class ObservableDefaultApi {
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
-   * @param body
    */
   public getDashboardStatsTransactions(
     timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Observable<DashboardStatsTransactionsCount> {
     const requestContextPromise = this.requestFactory.getDashboardStatsTransactions(
       timeframe,
       endTimestamp,
-      body,
       _options,
     );
 
@@ -735,7 +729,8 @@ export class ObservableDefaultApi {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
-   * @param body
+   * @param filterOriginUserId
+   * @param filterDestinationUserId
    */
   public getTransactionsList(
     limit: number,
@@ -751,7 +746,8 @@ export class ObservableDefaultApi {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
-    body?: any,
+    filterOriginUserId?: string,
+    filterDestinationUserId?: string,
     _options?: Configuration,
   ): Observable<TransactionsListResponse> {
     const requestContextPromise = this.requestFactory.getTransactionsList(
@@ -768,7 +764,8 @@ export class ObservableDefaultApi {
       filterDestinationCurrencies,
       sortField,
       sortOrder,
-      body,
+      filterOriginUserId,
+      filterDestinationUserId,
       _options,
     );
 
@@ -807,6 +804,8 @@ export class ObservableDefaultApi {
    * @param filterRulesExecuted
    * @param filterRulesHit
    * @param filterOutStatus
+   * @param sortField
+   * @param sortOrder
    */
   public getTransactionsListExport(
     limit: number,
@@ -817,6 +816,8 @@ export class ObservableDefaultApi {
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
+    sortField?: string,
+    sortOrder?: string,
     _options?: Configuration,
   ): Observable<InlineResponse200> {
     const requestContextPromise = this.requestFactory.getTransactionsListExport(
@@ -828,6 +829,8 @@ export class ObservableDefaultApi {
       filterRulesExecuted,
       filterRulesHit,
       filterOutStatus,
+      sortField,
+      sortOrder,
       _options,
     );
 
@@ -851,53 +854,6 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getTransactionsListExport(rsp)),
-          );
-        }),
-      );
-  }
-
-  /**
-   * Transaction Per User - List
-   * @param limit
-   * @param skip
-   * @param beforeTimestamp
-   * @param userId
-   */
-  public getTransactionsPerUserList(
-    limit: number,
-    skip: number,
-    beforeTimestamp: number,
-    userId: string,
-    _options?: Configuration,
-  ): Observable<TransactionsListResponse> {
-    const requestContextPromise = this.requestFactory.getTransactionsPerUserList(
-      limit,
-      skip,
-      beforeTimestamp,
-      userId,
-      _options,
-    );
-
-    // build promise chain
-    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
-    for (let middleware of this.configuration.middleware) {
-      middlewarePreObservable = middlewarePreObservable.pipe(
-        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
-      );
-    }
-
-    return middlewarePreObservable
-      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
-      .pipe(
-        mergeMap((response: ResponseContext) => {
-          let middlewarePostObservable = of(response);
-          for (let middleware of this.configuration.middleware) {
-            middlewarePostObservable = middlewarePostObservable.pipe(
-              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
-            );
-          }
-          return middlewarePostObservable.pipe(
-            map((rsp: ResponseContext) => this.responseProcessor.getTransactionsPerUserList(rsp)),
           );
         }),
       );

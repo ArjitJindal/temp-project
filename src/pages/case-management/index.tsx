@@ -150,7 +150,6 @@ const TableList = (
       {
         title: 'Origin User ID',
         dataIndex: 'originUserId',
-        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -192,7 +191,6 @@ const TableList = (
       {
         title: 'Destination User ID',
         dataIndex: 'deatinationUserId',
-        hideInSearch: true,
         width: 150,
         render: (dom, entity) => {
           return entity.destinationUserId;
@@ -363,6 +361,8 @@ const TableList = (
             rulesExecutedFilter,
             originCurrenciesFilter,
             destinationCurrenciesFilter,
+            originUserId,
+            destinationUserId,
             type,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
@@ -378,6 +378,8 @@ const TableList = (
               filterOutStatus: 'ALLOW',
               filterOriginCurrencies: originCurrenciesFilter,
               filterDestinationCurrencies: destinationCurrenciesFilter,
+              filterOriginUserId: originUserId,
+              filterDestinationUserId: destinationUserId,
               transactionType: type,
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,

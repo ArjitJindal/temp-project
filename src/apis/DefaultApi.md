@@ -23,7 +23,6 @@ All URIs are relative to _http://localhost:3000_
 | [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
 | [**getTransactionsListExport**](DefaultApi.md#getTransactionsListExport) | **GET** /transactions/export | Transaction - Export |
-| [**getTransactionsPerUserList**](DefaultApi.md#getTransactionsPerUserList) | **GET** /user/transactions | Transaction Per User - List |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
 | [**postGetPresignedUrl**](DefaultApi.md#postGetPresignedUrl) | **POST** /files/getPresignedUrl | Files - Get Presigned URL |
 | [**postIamRuleInstances**](DefaultApi.md#postIamRuleInstances) | **POST** /iam/rule_instances | Rule Instance - Create |
@@ -580,8 +579,6 @@ let body:.DefaultApiGetDashboardStatsHitsPerUserRequest = {
   startTimestamp: 3.14,
   // number (optional)
   endTimestamp: 3.14,
-  // any (optional)
-  body: {},
 };
 
 apiInstance.getDashboardStatsHitsPerUser(body).then((data:any) => {
@@ -593,7 +590,6 @@ apiInstance.getDashboardStatsHitsPerUser(body).then((data:any) => {
 
 | Name               | Type         | Description | Notes                            |
 | ------------------ | ------------ | ----------- | -------------------------------- |
-| **body**           | **any**      |             |
 | **startTimestamp** | [**number**] |             | (optional) defaults to undefined |
 | **endTimestamp**   | [**number**] |             | (optional) defaults to undefined |
 
@@ -607,7 +603,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 ### HTTP response details
@@ -636,8 +632,6 @@ let body:.DefaultApiGetDashboardStatsTransactionsRequest = {
   timeframe: "WEEK",
   // number (optional)
   endTimestamp: 3.14,
-  // any (optional)
-  body: {},
 };
 
 apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
@@ -649,7 +643,6 @@ apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
 
 | Name             | Type                | Description     | Notes                            |
 | ---------------- | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
-| **body**         | **any**             |                 |
 | **timeframe**    | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
 | **endTimestamp** | [**number**]        |                 | (optional) defaults to undefined |
 
@@ -663,7 +656,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 ### HTTP response details
@@ -958,8 +951,10 @@ let body:.DefaultApiGetTransactionsListRequest = {
   sortField: "sortField_example",
   // string (optional)
   sortOrder: "sortOrder_example",
-  // any (optional)
-  body: {},
+  // string (optional)
+  filterOriginUserId: "filterOriginUserId_example",
+  // string (optional)
+  filterDestinationUserId: "filterDestinationUserId_example",
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -971,7 +966,6 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 
 | Name | Type | Description | Notes |
 | --- | --- | --- | --- |
-| **body** | **any** |  |
 | **limit** | [**number**] |  | defaults to undefined |
 | **skip** | [**number**] |  | defaults to undefined |
 | **beforeTimestamp** | [**number**] |  | defaults to undefined |
@@ -985,6 +979,8 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **filterDestinationCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **sortField** | [**string**] |  | (optional) defaults to undefined |
 | **sortOrder** | [**string**] |  | (optional) defaults to undefined |
+| **filterOriginUserId** | [**string**] |  | (optional) defaults to undefined |
+| **filterDestinationUserId** | [**string**] |  | (optional) defaults to undefined |
 
 ### Return type
 
@@ -996,7 +992,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 ### HTTP response details
@@ -1041,6 +1037,10 @@ let body:.DefaultApiGetTransactionsListExportRequest = {
   ],
   // RuleAction (optional)
   filterOutStatus: "FLAG",
+  // string (optional)
+  sortField: "sortField_example",
+  // string (optional)
+  sortOrder: "sortOrder_example",
 };
 
 apiInstance.getTransactionsListExport(body).then((data:any) => {
@@ -1060,6 +1060,8 @@ apiInstance.getTransactionsListExport(body).then((data:any) => {
 | **filterRulesExecuted** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **filterRulesHit** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **filterOutStatus** | **RuleAction** |  | (optional) defaults to undefined |
+| **sortField** | [**string**] |  | (optional) defaults to undefined |
+| **sortOrder** | [**string**] |  | (optional) defaults to undefined |
 
 ### Return type
 
@@ -1080,65 +1082,6 @@ No authorization required
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
 | **400**     | Bad Request | -                |
-
-[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
-
-# **getTransactionsPerUserList**
-
-> TransactionsListResponse getTransactionsPerUserList()
-
-### Example
-
-```typescript
-import {  } from '';
-import * as fs from 'fs';
-
-const configuration = .createConfiguration();
-const apiInstance = new .DefaultApi(configuration);
-
-let body:.DefaultApiGetTransactionsPerUserListRequest = {
-  // number
-  limit: 3.14,
-  // number
-  skip: 3.14,
-  // number
-  beforeTimestamp: 3.14,
-  // string
-  userId: "userId_example",
-};
-
-apiInstance.getTransactionsPerUserList(body).then((data:any) => {
-  console.log('API called successfully. Returned data: ' + data);
-}).catch((error:any) => console.error(error));
-```
-
-### Parameters
-
-| Name                | Type         | Description | Notes                 |
-| ------------------- | ------------ | ----------- | --------------------- |
-| **limit**           | [**number**] |             | defaults to undefined |
-| **skip**            | [**number**] |             | defaults to undefined |
-| **beforeTimestamp** | [**number**] |             | defaults to undefined |
-| **userId**          | [**string**] |             | defaults to undefined |
-
-### Return type
-
-**TransactionsListResponse**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-| ----------- | ----------- | ---------------- |
-| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 

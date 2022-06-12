@@ -229,20 +229,13 @@ export class PromiseDefaultApi {
    * DashboardStats - Hits per user
    * @param startTimestamp
    * @param endTimestamp
-   * @param body
    */
   public getDashboardStatsHitsPerUser(
     startTimestamp?: number,
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Promise<DashboardStatsHitsPerUser> {
-    const result = this.api.getDashboardStatsHitsPerUser(
-      startTimestamp,
-      endTimestamp,
-      body,
-      _options,
-    );
+    const result = this.api.getDashboardStatsHitsPerUser(startTimestamp, endTimestamp, _options);
     return result.toPromise();
   }
 
@@ -250,15 +243,13 @@ export class PromiseDefaultApi {
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
-   * @param body
    */
   public getDashboardStatsTransactions(
     timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Promise<DashboardStatsTransactionsCount> {
-    const result = this.api.getDashboardStatsTransactions(timeframe, endTimestamp, body, _options);
+    const result = this.api.getDashboardStatsTransactions(timeframe, endTimestamp, _options);
     return result.toPromise();
   }
 
@@ -322,7 +313,8 @@ export class PromiseDefaultApi {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
-   * @param body
+   * @param filterOriginUserId
+   * @param filterDestinationUserId
    */
   public getTransactionsList(
     limit: number,
@@ -338,7 +330,8 @@ export class PromiseDefaultApi {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
-    body?: any,
+    filterOriginUserId?: string,
+    filterDestinationUserId?: string,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(
@@ -355,7 +348,8 @@ export class PromiseDefaultApi {
       filterDestinationCurrencies,
       sortField,
       sortOrder,
-      body,
+      filterOriginUserId,
+      filterDestinationUserId,
       _options,
     );
     return result.toPromise();
@@ -371,6 +365,8 @@ export class PromiseDefaultApi {
    * @param filterRulesExecuted
    * @param filterRulesHit
    * @param filterOutStatus
+   * @param sortField
+   * @param sortOrder
    */
   public getTransactionsListExport(
     limit: number,
@@ -381,6 +377,8 @@ export class PromiseDefaultApi {
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
+    sortField?: string,
+    sortOrder?: string,
     _options?: Configuration,
   ): Promise<InlineResponse200> {
     const result = this.api.getTransactionsListExport(
@@ -392,30 +390,8 @@ export class PromiseDefaultApi {
       filterRulesExecuted,
       filterRulesHit,
       filterOutStatus,
-      _options,
-    );
-    return result.toPromise();
-  }
-
-  /**
-   * Transaction Per User - List
-   * @param limit
-   * @param skip
-   * @param beforeTimestamp
-   * @param userId
-   */
-  public getTransactionsPerUserList(
-    limit: number,
-    skip: number,
-    beforeTimestamp: number,
-    userId: string,
-    _options?: Configuration,
-  ): Promise<TransactionsListResponse> {
-    const result = this.api.getTransactionsPerUserList(
-      limit,
-      skip,
-      beforeTimestamp,
-      userId,
+      sortField,
+      sortOrder,
       _options,
     );
     return result.toPromise();

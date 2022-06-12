@@ -256,11 +256,11 @@ const BusinessUsersTab = (
                     labelWrap: true,
                   }}
                   request={async (params) => {
-                    const response = await api.getTransactionsPerUserList({
+                    const response = await api.getTransactionsList({
                       limit: params.pageSize!,
                       skip: (params.current! - 1) * params.pageSize!,
                       beforeTimestamp: Date.now(),
-                      userId: currentRow?.userId,
+                      filterOriginUserId: currentRow?.userId,
                     });
 
                     return {
@@ -527,11 +527,11 @@ const ConsumerUsersTab = (
                   if (user?.userId == null) {
                     throw new Error(`User id is null, unable to fetch transaction history`);
                   }
-                  const response = await api.getTransactionsPerUserList({
+                  const response = await api.getTransactionsList({
                     limit: params.pageSize!,
                     skip: (params.current! - 1) * params.pageSize!,
                     beforeTimestamp: Date.now(),
-                    userId: user?.userId,
+                    filterOriginUserId: user?.userId,
                   });
                   return {
                     data: response.data,

@@ -384,12 +384,14 @@ paths:
             type: string
           in: query
           name: sortOrder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -461,6 +463,14 @@ paths:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
       x-internal: false
     parameters: []
   '/transactions/{transactionId}':
@@ -494,42 +504,6 @@ paths:
         '404':
           description: Not Found
       description: ''
-  /user/transactions:
-    get:
-      summary: Transaction Per User - List
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionsListResponse'
-              examples: {}
-      operationId: get-transactions-per-user-list
-      description: ''
-      parameters:
-        - schema:
-            type: number
-          in: query
-          name: limit
-          required: true
-        - schema:
-            type: number
-          in: query
-          name: skip
-          required: true
-        - schema:
-            type: number
-          in: query
-          name: beforeTimestamp
-          required: true
-        - schema:
-            type: string
-          in: query
-          name: userId
-          required: true
-    parameters: []
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -579,9 +553,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
-
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
               examples: {}
       operationId: get-consumer-users-item
       description: ''
@@ -641,9 +613,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: >-
-                  https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
               examples: {}
       operationId: get-business-users-item
       description: ''
@@ -684,12 +654,6 @@ paths:
             type: number
           in: query
           name: endTimestamp
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
     parameters: []
   /dashboard_stats/hits_per_user:
     get:
@@ -714,13 +678,6 @@ paths:
             type: number
           in: query
           name: endTimestamp
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-    parameters: []
   '/transactions/{transactionId}/comments':
     post:
       summary: Create a Transaction Comment
@@ -976,9 +933,7 @@ components:
         - data
     TransactionCaseManagement:
       allOf:
-        - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
-
+        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult'
         - type: object
           properties:
             comments:
@@ -995,6 +950,14 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/TransactionStatusChange'
+            originUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+            destinationUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
           required:
             - status
       title: TransactionCaseManagement
@@ -1007,9 +970,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
-
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
       required:
         - total
         - data
@@ -1022,9 +983,7 @@ components:
         data:
           type: array
           items:
-            $ref: >-
-              https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
+            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
       required:
         - total
         - data
@@ -1058,22 +1017,24 @@ components:
         - data
     InternalConsumerUser:
       allOf:
-        - $ref: https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
         - type: object
           properties:
             type:
-              enum: ['CONSUMER']
-              type: 'string'
+              enum:
+                - CONSUMER
+              type: string
           required:
             - type
     InternalBusinessUser:
       allOf:
-        - $ref: https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
         - type: object
           properties:
             type:
-              enum: ['BUSINESS']
-              type: 'string'
+              enum:
+                - BUSINESS
+              type: string
           required:
             - type
     DashboardStatsHitsPerUser:
@@ -1091,7 +1052,7 @@ components:
                 type: number
               user:
                 discriminator:
-                  propertyName: 'type'
+                  propertyName: type
                   mapping:
                     CONSUMER: '#/components/schemas/InternalConsumerUser'
                     BUSINESS: '#/components/schemas/InternalBusinessUser'

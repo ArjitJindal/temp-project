@@ -19,6 +19,8 @@ import { ExecutedRulesResult } from './ExecutedRulesResult';
 import { FailedRulesResult } from './FailedRulesResult';
 import { GenericBankAccountDetails } from './GenericBankAccountDetails';
 import { IBANDetails } from './IBANDetails';
+import { InternalBusinessUser } from './InternalBusinessUser';
+import { InternalConsumerUser } from './InternalConsumerUser';
 import { RuleAction } from './RuleAction';
 import { SWIFTDetails } from './SWIFTDetails';
 import { Tag } from './Tag';
@@ -100,6 +102,8 @@ export class TransactionCaseManagement {
   'assignments'?: Array<Assignment>;
   'status': RuleAction;
   'statusChanges'?: Array<TransactionStatusChange>;
+  'originUser'?: InternalConsumerUser | InternalBusinessUser;
+  'destinationUser'?: InternalConsumerUser | InternalBusinessUser;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -233,6 +237,18 @@ export class TransactionCaseManagement {
       name: 'statusChanges',
       baseName: 'statusChanges',
       type: 'Array<TransactionStatusChange>',
+      format: '',
+    },
+    {
+      name: 'originUser',
+      baseName: 'originUser',
+      type: 'InternalConsumerUser | InternalBusinessUser',
+      format: '',
+    },
+    {
+      name: 'destinationUser',
+      baseName: 'destinationUser',
+      type: 'InternalConsumerUser | InternalBusinessUser',
       format: '',
     },
   ];

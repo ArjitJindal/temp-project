@@ -119,7 +119,6 @@ const TableList = (
       {
         title: 'Origin User ID',
         dataIndex: 'originUserId',
-        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -157,7 +156,6 @@ const TableList = (
       {
         title: 'Destination User ID',
         dataIndex: 'deatinationUserId',
-        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
@@ -247,6 +245,8 @@ const TableList = (
             type,
             originCurrenciesFilter,
             destinationCurrenciesFilter,
+            originUserId,
+            destinationUserId,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
@@ -256,6 +256,8 @@ const TableList = (
               afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
               beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
               filterId: transactionId,
+              filterOriginUserId: originUserId,
+              filterDestinationUserId: destinationUserId,
               filterOriginCurrencies: originCurrenciesFilter,
               filterDestinationCurrencies: destinationCurrenciesFilter,
               transactionType: type,

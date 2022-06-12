@@ -226,12 +226,6 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
    * @memberof DefaultApigetDashboardStatsHitsPerUser
    */
   endTimestamp?: number;
-  /**
-   *
-   * @type any
-   * @memberof DefaultApigetDashboardStatsHitsPerUser
-   */
-  body?: any;
 }
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
@@ -247,12 +241,6 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    * @memberof DefaultApigetDashboardStatsTransactions
    */
   endTimestamp?: number;
-  /**
-   *
-   * @type any
-   * @memberof DefaultApigetDashboardStatsTransactions
-   */
-  body?: any;
 }
 
 export interface DefaultApiGetImportImportIdRequest {
@@ -360,10 +348,16 @@ export interface DefaultApiGetTransactionsListRequest {
   sortOrder?: string;
   /**
    *
-   * @type any
+   * @type string
    * @memberof DefaultApigetTransactionsList
    */
-  body?: any;
+  filterOriginUserId?: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
+  filterDestinationUserId?: string;
 }
 
 export interface DefaultApiGetTransactionsListExportRequest {
@@ -415,33 +409,18 @@ export interface DefaultApiGetTransactionsListExportRequest {
    * @memberof DefaultApigetTransactionsListExport
    */
   filterOutStatus?: RuleAction;
-}
-
-export interface DefaultApiGetTransactionsPerUserListRequest {
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  limit: number;
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  skip: number;
-  /**
-   *
-   * @type number
-   * @memberof DefaultApigetTransactionsPerUserList
-   */
-  beforeTimestamp: number;
   /**
    *
    * @type string
-   * @memberof DefaultApigetTransactionsPerUserList
+   * @memberof DefaultApigetTransactionsListExport
    */
-  userId: string;
+  sortField?: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsListExport
+   */
+  sortOrder?: string;
 }
 
 export interface DefaultApiPostApikeyRequest {
@@ -740,7 +719,7 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<DashboardStatsHitsPerUser> {
     return this.api
-      .getDashboardStatsHitsPerUser(param.startTimestamp, param.endTimestamp, param.body, options)
+      .getDashboardStatsHitsPerUser(param.startTimestamp, param.endTimestamp, options)
       .toPromise();
   }
 
@@ -753,7 +732,7 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<DashboardStatsTransactionsCount> {
     return this.api
-      .getDashboardStatsTransactions(param.timeframe, param.endTimestamp, param.body, options)
+      .getDashboardStatsTransactions(param.timeframe, param.endTimestamp, options)
       .toPromise();
   }
 
@@ -835,7 +814,8 @@ export class ObjectDefaultApi {
         param.filterDestinationCurrencies,
         param.sortField,
         param.sortOrder,
-        param.body,
+        param.filterOriginUserId,
+        param.filterDestinationUserId,
         options,
       )
       .toPromise();
@@ -859,25 +839,8 @@ export class ObjectDefaultApi {
         param.filterRulesExecuted,
         param.filterRulesHit,
         param.filterOutStatus,
-        options,
-      )
-      .toPromise();
-  }
-
-  /**
-   * Transaction Per User - List
-   * @param param the request object
-   */
-  public getTransactionsPerUserList(
-    param: DefaultApiGetTransactionsPerUserListRequest,
-    options?: Configuration,
-  ): Promise<TransactionsListResponse> {
-    return this.api
-      .getTransactionsPerUserList(
-        param.limit,
-        param.skip,
-        param.beforeTimestamp,
-        param.userId,
+        param.sortField,
+        param.sortOrder,
         options,
       )
       .toPromise();

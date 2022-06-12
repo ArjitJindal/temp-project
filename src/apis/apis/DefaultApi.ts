@@ -470,12 +470,10 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * DashboardStats - Hits per user
    * @param startTimestamp
    * @param endTimestamp
-   * @param body
    */
   public async getDashboardStatsHitsPerUser(
     startTimestamp?: number,
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -503,15 +501,6 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
-    // Body Params
-    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
-    requestContext.setHeaderParam('Content-Type', contentType);
-    const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(body, 'any', ''),
-      contentType,
-    );
-    requestContext.setBody(serializedBody);
-
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
     if (defaultAuth?.applySecurityAuthentication) {
@@ -525,12 +514,10 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
-   * @param body
    */
   public async getDashboardStatsTransactions(
     timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
     endTimestamp?: number,
-    body?: any,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -562,15 +549,6 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
         ObjectSerializer.serialize(endTimestamp, 'number', ''),
       );
     }
-
-    // Body Params
-    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
-    requestContext.setHeaderParam('Content-Type', contentType);
-    const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(body, 'any', ''),
-      contentType,
-    );
-    requestContext.setBody(serializedBody);
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
@@ -730,7 +708,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
-   * @param body
+   * @param filterOriginUserId
+   * @param filterDestinationUserId
    */
   public async getTransactionsList(
     limit: number,
@@ -746,7 +725,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
-    body?: any,
+    filterOriginUserId?: string,
+    filterDestinationUserId?: string,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -868,14 +848,21 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
-    // Body Params
-    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
-    requestContext.setHeaderParam('Content-Type', contentType);
-    const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(body, 'any', ''),
-      contentType,
-    );
-    requestContext.setBody(serializedBody);
+    // Query Params
+    if (filterOriginUserId !== undefined) {
+      requestContext.setQueryParam(
+        'filterOriginUserId',
+        ObjectSerializer.serialize(filterOriginUserId, 'string', ''),
+      );
+    }
+
+    // Query Params
+    if (filterDestinationUserId !== undefined) {
+      requestContext.setQueryParam(
+        'filterDestinationUserId',
+        ObjectSerializer.serialize(filterDestinationUserId, 'string', ''),
+      );
+    }
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
@@ -896,6 +883,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param filterRulesExecuted
    * @param filterRulesHit
    * @param filterOutStatus
+   * @param sortField
+   * @param sortOrder
    */
   public async getTransactionsListExport(
     limit: number,
@@ -906,6 +895,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     filterRulesExecuted?: Array<string>,
     filterRulesHit?: Array<string>,
     filterOutStatus?: RuleAction,
+    sortField?: string,
+    sortOrder?: string,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -987,79 +978,20 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       );
     }
 
-    const defaultAuth: SecurityAuthentication | undefined =
-      _options?.authMethods?.default || this.configuration?.authMethods?.default;
-    if (defaultAuth?.applySecurityAuthentication) {
-      await defaultAuth?.applySecurityAuthentication(requestContext);
-    }
-
-    return requestContext;
-  }
-
-  /**
-   * Transaction Per User - List
-   * @param limit
-   * @param skip
-   * @param beforeTimestamp
-   * @param userId
-   */
-  public async getTransactionsPerUserList(
-    limit: number,
-    skip: number,
-    beforeTimestamp: number,
-    userId: string,
-    _options?: Configuration,
-  ): Promise<RequestContext> {
-    let _config = _options || this.configuration;
-
-    // verify required parameter 'limit' is not null or undefined
-    if (limit === null || limit === undefined) {
-      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'limit');
-    }
-
-    // verify required parameter 'skip' is not null or undefined
-    if (skip === null || skip === undefined) {
-      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'skip');
-    }
-
-    // verify required parameter 'beforeTimestamp' is not null or undefined
-    if (beforeTimestamp === null || beforeTimestamp === undefined) {
-      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'beforeTimestamp');
-    }
-
-    // verify required parameter 'userId' is not null or undefined
-    if (userId === null || userId === undefined) {
-      throw new RequiredError('DefaultApi', 'getTransactionsPerUserList', 'userId');
-    }
-
-    // Path Params
-    const localVarPath = '/user/transactions';
-
-    // Make Request Context
-    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
-    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
-
     // Query Params
-    if (limit !== undefined) {
-      requestContext.setQueryParam('limit', ObjectSerializer.serialize(limit, 'number', ''));
-    }
-
-    // Query Params
-    if (skip !== undefined) {
-      requestContext.setQueryParam('skip', ObjectSerializer.serialize(skip, 'number', ''));
-    }
-
-    // Query Params
-    if (beforeTimestamp !== undefined) {
+    if (sortField !== undefined) {
       requestContext.setQueryParam(
-        'beforeTimestamp',
-        ObjectSerializer.serialize(beforeTimestamp, 'number', ''),
+        'sortField',
+        ObjectSerializer.serialize(sortField, 'string', ''),
       );
     }
 
     // Query Params
-    if (userId !== undefined) {
-      requestContext.setQueryParam('userId', ObjectSerializer.serialize(userId, 'string', ''));
+    if (sortOrder !== undefined) {
+      requestContext.setQueryParam(
+        'sortOrder',
+        ObjectSerializer.serialize(sortOrder, 'string', ''),
+      );
     }
 
     const defaultAuth: SecurityAuthentication | undefined =
@@ -2216,44 +2148,6 @@ export class DefaultApiResponseProcessor {
         'InlineResponse200',
         '',
       ) as InlineResponse200;
-      return body;
-    }
-
-    throw new ApiException<string | Blob | undefined>(
-      response.httpStatusCode,
-      'Unknown API Status Code!',
-      await response.getBodyAsAny(),
-      response.headers,
-    );
-  }
-
-  /**
-   * Unwraps the actual response sent by the server from the response context and deserializes the response content
-   * to the expected objects
-   *
-   * @params response Response returned by the server for a request to getTransactionsPerUserList
-   * @throws ApiException if the response code was not in [200, 299]
-   */
-  public async getTransactionsPerUserList(
-    response: ResponseContext,
-  ): Promise<TransactionsListResponse> {
-    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
-    if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: TransactionsListResponse = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'TransactionsListResponse',
-        '',
-      ) as TransactionsListResponse;
-      return body;
-    }
-
-    // Work around for missing responses in specification, e.g. for petstore.yaml
-    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: TransactionsListResponse = ObjectSerializer.deserialize(
-        ObjectSerializer.parse(await response.body.text(), contentType),
-        'TransactionsListResponse',
-        '',
-      ) as TransactionsListResponse;
       return body;
     }
 
