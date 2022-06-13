@@ -12,7 +12,7 @@
 
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
+import { HitRulesResult } from './HitRulesResult'
 import { RuleAction } from './RuleAction'
 import { UserEvent } from './UserEvent'
 import { UserEventWithRulesResultAllOf } from './UserEventWithRulesResultAllOf'
@@ -20,15 +20,30 @@ import { UserEventWithRulesResultAllOf } from './UserEventWithRulesResultAllOf'
  * Model for user event payload with rules result
  */
 export class UserEventWithRulesResult {
+  /**
+   * Type of events. E.g. Onboarding, Checkout etc.
+   */
   'type': UserEventWithRulesResultTypeEnum
+  /**
+   * Timestamp of the event
+   */
   'timestamp': number
+  /**
+   * User ID the event pertains to
+   */
   'userId': string
+  /**
+   * Unique event ID
+   */
   'eventId'?: string
+  /**
+   * Event description
+   */
   'eventDescription'?: string
   'metaData'?: DeviceData
   'status'?: RuleAction
   'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -87,9 +102,9 @@ export class UserEventWithRulesResult {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ]

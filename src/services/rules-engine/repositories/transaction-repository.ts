@@ -20,6 +20,7 @@ import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionSt
 import { paginateQuery } from '@/utils/dynamodb'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -270,7 +271,7 @@ export class TransactionRepository {
     transaction: Transaction,
     rulesResult: {
       executedRules?: ExecutedRulesResult[]
-      failedRules?: FailedRulesResult[]
+      hitRules?: HitRulesResult[]
     } = {}
   ): Promise<Transaction> {
     transaction.transactionId =

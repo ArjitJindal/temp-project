@@ -10,10 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResultAllOf } from './ExecutedRulesResultAllOf'
-import { HitRulesResult } from './HitRulesResult'
 import { RuleAction } from './RuleAction'
-export class ExecutedRulesResult {
+/**
+ * Model for list of executed rules
+ */
+export class HitRulesResult {
   /**
    * Unique rule identifier
    */
@@ -27,7 +28,6 @@ export class ExecutedRulesResult {
    */
   'ruleDescription': string
   'ruleAction': RuleAction
-  'ruleHit': boolean
 
   static readonly discriminator: string | undefined = undefined
 
@@ -61,16 +61,10 @@ export class ExecutedRulesResult {
       type: 'RuleAction',
       format: '',
     },
-    {
-      name: 'ruleHit',
-      baseName: 'ruleHit',
-      type: 'boolean',
-      format: '',
-    },
   ]
 
   static getAttributeTypeMap() {
-    return ExecutedRulesResult.attributeTypeMap
+    return HitRulesResult.attributeTypeMap
   }
 
   public constructor() {}

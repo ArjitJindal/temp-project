@@ -10,17 +10,8 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { HitRulesResult } from './HitRulesResult'
-export class RulesResults {
-  /**
-   * Unique transaction identifier
-   */
-  'executedRules': Array<ExecutedRulesResult>
-  /**
-   * Unique transaction identifier
-   */
-  'hitRules': Array<HitRulesResult>
+export class ExecutedRulesResultAllOf {
+  'ruleHit': boolean
 
   static readonly discriminator: string | undefined = undefined
 
@@ -31,21 +22,15 @@ export class RulesResults {
     format: string
   }> = [
     {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
-      format: '',
-    },
-    {
-      name: 'hitRules',
-      baseName: 'hitRules',
-      type: 'Array<HitRulesResult>',
+      name: 'ruleHit',
+      baseName: 'ruleHit',
+      type: 'boolean',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return RulesResults.attributeTypeMap
+    return ExecutedRulesResultAllOf.attributeTypeMap
   }
 
   public constructor() {}

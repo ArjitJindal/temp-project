@@ -11,10 +11,13 @@
  */
 
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
+import { HitRulesResult } from './HitRulesResult'
 import { RulesResults } from './RulesResults'
 import { UserMonitoringResultAllOf } from './UserMonitoringResultAllOf'
 export class UserMonitoringResult {
+  /**
+   * User ID that the results pertain to
+   */
   'userId': string
   /**
    * Unique transaction identifier
@@ -23,7 +26,7 @@ export class UserMonitoringResult {
   /**
    * Unique transaction identifier
    */
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -46,9 +49,9 @@ export class UserMonitoringResult {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ]

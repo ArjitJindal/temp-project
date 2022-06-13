@@ -14,10 +14,25 @@
  * Internal user- employees
  */
 export class InternalUser {
+  /**
+   * Employee ID number
+   */
   'employeeID': string
+  /**
+   * Employee seniority level
+   */
   'employeeLevel'?: string
+  /**
+   * Employee designation or title
+   */
   'employeeDesignation'?: string
+  /**
+   * Employee name
+   */
   'employeeName'?: string
+  /**
+   * Employee nationality
+   */
   'employeeNationality'?: string
 
   static readonly discriminator: string | undefined = undefined

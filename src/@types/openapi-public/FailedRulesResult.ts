@@ -11,6 +11,9 @@
  */
 
 import { RuleFailureException } from './RuleFailureException'
+/**
+ * Model for list of rules failed execution. It means rules could not be run
+ */
 export class FailedRulesResult {
   /**
    * Unique rule identifier

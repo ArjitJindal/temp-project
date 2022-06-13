@@ -53,7 +53,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
     },
     tags: 'JSON',
     executedRules: 'JSON',
-    failedRules: 'JSON',
+    hitRules: 'JSON',
     comments: 'JSON',
     assignments: 'JSON',
     status: 'INCLUDE',

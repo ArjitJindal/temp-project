@@ -11,11 +11,29 @@
  */
 
 import { DeviceData } from './DeviceData'
+/**
+ * Model for user-related events
+ */
 export class UserEvent {
+  /**
+   * Type of events. E.g. Onboarding, Checkout etc.
+   */
   'type': UserEventTypeEnum
+  /**
+   * Timestamp of the event
+   */
   'timestamp': number
+  /**
+   * User ID the event pertains to
+   */
   'userId': string
+  /**
+   * Unique event ID
+   */
   'eventId'?: string
+  /**
+   * Event description
+   */
   'eventDescription'?: string
   'metaData'?: DeviceData
 

@@ -10,13 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { HitRulesResult } from '../openapi-public/HitRulesResult'
 import { ACHDetails } from './ACHDetails'
 import { Assignment } from './Assignment'
 import { CardDetails } from './CardDetails'
 import { Comment } from './Comment'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
 import { GenericBankAccountDetails } from './GenericBankAccountDetails'
 import { IBANDetails } from './IBANDetails'
 import { InternalBusinessUser } from './InternalBusinessUser'
@@ -95,7 +95,7 @@ export class TransactionCaseManagement {
    */
   'tags'?: Array<Tag>
   'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
   'comments'?: Array<Comment>
   'assignments'?: Array<Assignment>
   'status': RuleAction
@@ -208,9 +208,9 @@ export class TransactionCaseManagement {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
     {

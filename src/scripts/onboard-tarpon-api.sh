@@ -211,7 +211,7 @@ awscurl --service execute-api \
     -X POST \
     --region "$region" \
     --profile "$profile" \
-    -d '{"id":"R-24","name":"Reference field keyword","description":"Payment reference field includes a keyword in blacklist","defaultParameters":{"transactionVolumeThresholds":{"MONTHLY":{"PHP":50000000}},"checkSender":"sending","checkReceiver":"none"},"defaultAction":"BLOCK","ruleImplementationName":"transaction-reference-keyword","labels":["AML"],"type":"TRANSACTION"}' \
+    -d '{"id":"R-24","name":"Reference field keyword","description":"Payment reference field includes a keyword in blacklist","defaultParameters":{"keywords": []},"defaultAction":"BLOCK","ruleImplementationName":"transaction-reference-keyword","labels":["AML"],"type":"TRANSACTION"}' \
     https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
 
 # R-69

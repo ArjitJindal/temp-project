@@ -10,6 +10,9 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model for amount
+ */
 export class Amount {
   /**
    * Numerical value of the transaction

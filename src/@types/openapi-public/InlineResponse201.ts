@@ -10,17 +10,8 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { HitRulesResult } from './HitRulesResult'
-export class RulesResults {
-  /**
-   * Unique transaction identifier
-   */
-  'executedRules': Array<ExecutedRulesResult>
-  /**
-   * Unique transaction identifier
-   */
-  'hitRules': Array<HitRulesResult>
+export class InlineResponse201 {
+  'employeeId'?: string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -31,21 +22,15 @@ export class RulesResults {
     format: string
   }> = [
     {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
-      format: '',
-    },
-    {
-      name: 'hitRules',
-      baseName: 'hitRules',
-      type: 'Array<HitRulesResult>',
+      name: 'employeeId',
+      baseName: 'employeeId',
+      type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return RulesResults.attributeTypeMap
+    return InlineResponse201.attributeTypeMap
   }
 
   public constructor() {}

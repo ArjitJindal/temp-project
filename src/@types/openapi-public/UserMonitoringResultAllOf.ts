@@ -10,7 +10,13 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model to convey the results of user monitoring
+ */
 export class UserMonitoringResultAllOf {
+  /**
+   * User ID that the results pertain to
+   */
   'userId': string
 
   static readonly discriminator: string | undefined = undefined

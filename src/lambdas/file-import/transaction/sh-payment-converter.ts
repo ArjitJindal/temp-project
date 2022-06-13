@@ -81,19 +81,13 @@ export class ShPaymentTransactionConverter
       },
       originPaymentDetails: {
         method: 'IBAN',
-        name: {
-          firstName: senderFirstName,
-          lastName: senderLastName,
-        },
+        name: `${senderFirstName} ${senderLastName}`,
         IBAN: rawTransaction['Debtor account'],
         BIC: rawTransaction['Debtor institution BIC'],
       },
       destinationPaymentDetails: {
         method: 'IBAN',
-        name: {
-          firstName: receiverFirstName,
-          lastName: receiverLastName,
-        },
+        name: `${receiverFirstName} ${receiverLastName}`,
         IBAN: rawTransaction['Creditor account'],
         BIC: rawTransaction['Creditor institution BIC / code'],
       },

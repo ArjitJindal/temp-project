@@ -5,8 +5,8 @@ import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 export class TransactionEventRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -29,7 +29,7 @@ export class TransactionEventRepository {
     transactionEvent: TransactionEvent,
     rulesResult: {
       executedRules?: ExecutedRulesResult[]
-      failedRules?: FailedRulesResult[]
+      hitRules?: HitRulesResult[]
     } = {}
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()

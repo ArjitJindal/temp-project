@@ -10,9 +10,21 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model for date
+ */
 export class ModelDate {
+  /**
+   * Day of date
+   */
   'day': number
+  /**
+   * Month of date
+   */
   'month': number
+  /**
+   * Year of date
+   */
   'year': number
 
   static readonly discriminator: string | undefined = undefined

@@ -10,11 +10,11 @@
  * Do not edit the class manually.
  */
 
+import { HitRulesResult } from '../openapi-public/HitRulesResult'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
 export class TransactionWithRulesResultAllOf {
   'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -31,9 +31,9 @@ export class TransactionWithRulesResultAllOf {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ]

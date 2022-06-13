@@ -14,12 +14,18 @@ import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
 import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
+/**
+ * Model for a business user
+ */
 export class Business {
   /**
    * Unique user ID for the user
    */
   'userId': string
   'legalEntity': LegalEntity
+  /**
+   * Timestamp when the user was created
+   */
   'createdTimestamp': number
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual

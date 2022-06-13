@@ -25,7 +25,7 @@ describe('Verify Transaction', () => {
     expect(result).toEqual({
       transactionId: 'dummy',
       executedRules: [],
-      failedRules: [],
+      hitRules: [],
     })
   })
 
@@ -57,7 +57,14 @@ describe('Verify Transaction', () => {
             ruleHit: true,
           },
         ],
-        failedRules: [],
+        hitRules: [
+          {
+            ruleId: 'R-1',
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description',
+            ruleAction: 'FLAG',
+          },
+        ],
       } as TransactionMonitoringResult)
     })
   })
@@ -90,132 +97,8 @@ describe('Verify Transaction', () => {
             ruleHit: false,
           },
         ],
-        failedRules: [],
+        hitRules: [],
       } as TransactionMonitoringResult)
-    })
-  })
-
-  describe('Verify Transaction: failed rules', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        id: 'R-1',
-        ruleImplementationName: 'tests/test-failure-rule',
-        type: 'TRANSACTION',
-      },
-    ])
-
-    test('returns failed rules', async () => {
-      const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
-      expect(result).toEqual({
-        transactionId: 'dummy',
-        executedRules: [],
-        failedRules: [
-          {
-            ruleId: 'R-1',
-            ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
-            failureException: {
-              exceptionName: 'NO_DATA',
-              exceptionDescription: 'Failed when executing the rule',
-            },
-          },
-        ],
-      } as TransactionMonitoringResult)
-    })
-  })
-
-  describe('Verify Transaction: non-existent rules', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        id: 'R-1',
-        ruleImplementationName: 'tests/test-ghost-rule',
-        type: 'TRANSACTION',
-      },
-    ])
-
-    test('returns failed rules', async () => {
-      const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
-      expect(result).toEqual({
-        transactionId: 'dummy',
-        executedRules: [],
-        failedRules: [
-          {
-            ruleId: 'R-1',
-            ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
-            failureException: {
-              exceptionName: 'Unknown',
-              exceptionDescription: 'Unknown',
-            },
-          },
-        ],
-      } as TransactionMonitoringResult)
-    })
-  })
-
-  describe('Verify Transaction: executed and failed rules', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        id: 'R-1',
-        ruleImplementationName: 'tests/test-success-rule',
-        type: 'TRANSACTION',
-      },
-      {
-        id: 'R-2',
-        ruleImplementationName: 'tests/test-failure-rule',
-        type: 'TRANSACTION',
-      },
-    ])
-
-    test('returns both executed and failed rules and the transaction is persisted', async () => {
-      const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
-        dynamoDb,
-      })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
-      expect(result).toEqual({
-        transactionId: 'dummy',
-        executedRules: [
-          {
-            ruleId: 'R-1',
-            ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
-            ruleAction: 'FLAG',
-            ruleHit: true,
-          },
-        ],
-        failedRules: [
-          {
-            ruleId: 'R-2',
-            ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
-            failureException: {
-              exceptionName: 'NO_DATA',
-              exceptionDescription: 'Failed when executing the rule',
-            },
-          },
-        ],
-      } as TransactionMonitoringResult)
-      expect(
-        await transactionRepository.getTransactionById('dummy')
-      ).toMatchObject(transaction)
     })
   })
 

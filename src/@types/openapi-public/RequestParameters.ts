@@ -13,9 +13,12 @@ import { ConsumerUsersResponse } from './ConsumerUsersResponse'
 import { ContactDetails } from './ContactDetails'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
+import { ExecutedRulesResultAllOf } from './ExecutedRulesResultAllOf'
 import { FailedRulesResult } from './FailedRulesResult'
 import { GenericBankAccountDetails } from './GenericBankAccountDetails'
+import { HitRulesResult } from './HitRulesResult'
 import { IBANDetails } from './IBANDetails'
+import { InlineResponse201 } from './InlineResponse201'
 import { InternalUser } from './InternalUser'
 import { LegalDocument } from './LegalDocument'
 import { LegalEntity } from './LegalEntity'
@@ -73,6 +76,15 @@ export interface DefaultApiGetConsumerUserRequest {
   userId: string
 }
 
+export interface DefaultApiGetInternalUserRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetInternalUser
+   */
+  employeeId: string
+}
+
 export interface DefaultApiGetTransactionEventRequest {
   /**
    * Unique Transaction Identifier
@@ -118,6 +130,15 @@ export interface DefaultApiPostConsumerUserRequest {
   User?: User
 }
 
+export interface DefaultApiPostInteralUserRequest {
+  /**
+   *
+   * @type InternalUser
+   * @memberof DefaultApipostInteralUser
+   */
+  InternalUser?: InternalUser
+}
+
 export interface DefaultApiPostTransactionEventRequest {
   /**
    *
@@ -125,4 +146,13 @@ export interface DefaultApiPostTransactionEventRequest {
    * @memberof DefaultApipostTransactionEvent
    */
   TransactionEvent?: TransactionEvent
+}
+
+export interface DefaultApiPostUserEventRequest {
+  /**
+   *
+   * @type UserEvent
+   * @memberof DefaultApipostUserEvent
+   */
+  UserEvent?: UserEvent
 }

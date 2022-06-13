@@ -11,18 +11,38 @@
  */
 
 import { Address } from './Address'
-import { ConsumerName } from './ConsumerName'
 /**
  * Model for any generic bank account
  */
 export class GenericBankAccountDetails {
+  /**
+   * Classify the method of payment as \"GENERIC_BANK_ACCOUNT\" for GenericBankAccountDetails
+   */
   'method': string
+  /**
+   * Bank account number
+   */
   'accountNumber'?: string
+  /**
+   * Bank account type. E.g. Checking, Savings etc.
+   */
   'accountType'?: string
+  /**
+   * Name of the bank
+   */
   'bankName'?: string
+  /**
+   * Unique identifier of the bank. In some countries, this can be the same as the bank's SWIFT code
+   */
   'bankCode'?: string
-  'name'?: ConsumerName
+  /**
+   * Name of the account holder
+   */
+  'name'?: string
   'bankAddress'?: Address
+  /**
+   * Special instructions to be specified if any
+   */
   'specialInstructions'?: string
 
   static readonly discriminator: string | undefined = undefined
@@ -66,7 +86,7 @@ export class GenericBankAccountDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

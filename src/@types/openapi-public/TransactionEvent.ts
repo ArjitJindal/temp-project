@@ -13,12 +13,30 @@
 import { DeviceData } from './DeviceData'
 import { Transaction } from './Transaction'
 import { TransactionState } from './TransactionState'
+/**
+ * Model for transaction-related events
+ */
 export class TransactionEvent {
   'transactionState': TransactionState
+  /**
+   * Timestamp of the event
+   */
   'timestamp': number
+  /**
+   * Transaction ID the event pertains to
+   */
   'transactionId': string
+  /**
+   * Unique event ID
+   */
   'eventId'?: string
+  /**
+   * Event description
+   */
   'eventDescription'?: string
+  /**
+   * Employee ID the event pertains to. E.g. Employee login event on behalf of an end user
+   */
   'employeeId'?: string
   'metaData'?: DeviceData
   'updatedTransactionAttributes'?: Transaction

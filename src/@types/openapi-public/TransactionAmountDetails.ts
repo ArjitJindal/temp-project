@@ -10,6 +10,9 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model for transaction amount details
+ */
 export class TransactionAmountDetails {
   /**
    * Amount of the transaction
@@ -19,6 +22,9 @@ export class TransactionAmountDetails {
    * Currency of the transaction
    */
   'transactionCurrency': string
+  /**
+   * Country where the transaction occurred
+   */
   'country'?: string
 
   static readonly discriminator: string | undefined = undefined

@@ -10,7 +10,13 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model to convey the results of transaction monitoring
+ */
 export class TransactionMonitoringResultAllOf {
+  /**
+   * Transaction ID that the results pertain to
+   */
   'transactionId': string
 
   static readonly discriminator: string | undefined = undefined

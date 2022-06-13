@@ -14,8 +14,8 @@ import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './CardDetails'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
 import { GenericBankAccountDetails } from './GenericBankAccountDetails'
+import { HitRulesResult } from './HitRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
@@ -29,17 +29,32 @@ import { WalletDetails } from './WalletDetails'
  * Model for transaction payload with rules result
  */
 export class TransactionWithRulesResult {
+  /**
+   * Type of transaction depending on your use case. It can be withdrawal, deposit, payment link, wallet-to-wallet, trading etc.
+   */
   'type'?: string
   /**
    * Unique transaction identifier
    */
   'transactionId'?: string
+  /**
+   * Timestamp of when transaction took place
+   */
   'timestamp'?: number
   'transactionState'?: TransactionState
+  /**
+   * UserId for where the transaction originates from
+   */
   'originUserId'?: string
+  /**
+   * UserId for transaction's destination. In other words, where the value is being transferred to.
+   */
   'destinationUserId'?: string
   'originAmountDetails'?: TransactionAmountDetails
   'destinationAmountDetails'?: TransactionAmountDetails
+  /**
+   * Payment details of the origin. It can be a bank account number, wallet ID, card fingerprint etc.
+   */
   'originPaymentDetails'?:
     | CardDetails
     | GenericBankAccountDetails
@@ -48,6 +63,9 @@ export class TransactionWithRulesResult {
     | SWIFTDetails
     | UPIDetails
     | WalletDetails
+  /**
+   * Payment details of the destination. It can be a bank account number, wallet ID, card fingerprint etc.
+   */
   'destinationPaymentDetails'?:
     | CardDetails
     | GenericBankAccountDetails
@@ -74,7 +92,7 @@ export class TransactionWithRulesResult {
    */
   'tags'?: Array<Tag>
   'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -181,9 +199,9 @@ export class TransactionWithRulesResult {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ]

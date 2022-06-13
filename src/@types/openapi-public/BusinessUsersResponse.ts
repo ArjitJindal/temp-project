@@ -11,7 +11,13 @@
  */
 
 import { RiskScoringResult } from './RiskScoringResult'
+/**
+ * Model for business user risk score response
+ */
 export class BusinessUsersResponse {
+  /**
+   * user ID the risk score pertains to
+   */
   'userId': string
   'userRiskScoreDetails'?: RiskScoringResult
 

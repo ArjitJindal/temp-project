@@ -14,7 +14,19 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Verify a Transaction
-      description: Verify a Transaction
+      description: >
+        ### POST Transactions
+
+
+        `/transactions` endpoint allows you to operate on the [Transaction
+        entity.](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#transaction)
+
+
+        In order to pass the payload of a transaction to Flagright and verify
+        the transaciton, you will need to call this endpoint with the
+        transaction payload. Not all fields are mandatory, you will only need to
+        pass in the fields that you have and are relevant for your compliance
+        setup.
       operationId: post-consumer-transaction
       parameters: []
       requestBody:
@@ -88,15 +100,13 @@ paths:
                           EUR - ask for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
-                    failedRules:
-                      - ruleId: R-1b
+                    hitRules:
+                      - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
                         ruleDescription: >-
                           If a user makes a remittance transaction >= 1800 in
                           EUR - ask for proof of funds
-                        failureException:
-                          exceptionName: MISSING_DATA
-                          exceptionDescription: Some data is missing
+                        ruleAction: BLOCK
         '401':
           description: Unauthorized
           headers: {}
@@ -147,7 +157,17 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Retrieve a Transaction
-      description: Retrieve a Transaction
+      description: >-
+        ### GET Transactions
+
+
+        `/transactions` endpoint allows you to operate on the [Transaction
+        entity](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#transaction).
+
+
+        Calling `GET /transactions/{transactionId}` will return the entire
+        transaction payload and rule execution results for the transaction with
+        the corresponding `transactionId`
       operationId: get-consumer-transaction
       parameters:
         - name: transactionId
@@ -217,15 +237,13 @@ paths:
                           EUR - ask for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
-                    failedRules:
-                      - ruleId: R-1b
+                    hitRules:
+                      - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
                         ruleDescription: >-
                           If a user makes a remittance transaction >= 1800 in
                           EUR - ask for proof of funds
-                        failureException:
-                          exceptionName: MISSING_DATA
-                          exceptionDescription: Some data is missing
+                        ruleAction: BLOCK
         '401':
           description: Unauthorized
           headers: {}
@@ -276,7 +294,46 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Create a Transaction Event
-      description: Create a Transaction Event
+      description: >
+        ### POST Transaction Events
+
+
+        `/events/transaction` endpoint allows you to operate on the [Transaction
+        Events
+        entity.](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#transaction-event)
+
+
+        Transaction events are created after the initial `POST /transactions`
+        call (which creates a transaction) and are used to:
+
+
+        * Update the STATE of the transaction, using the `transactionState`
+        field and manage the [Transaction
+        Lifecycle](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#transaction-lifecycle-through-transaction-events)
+
+        * Update the transaction details, using the
+        `updatedTransactionAttributes` field.
+
+
+        > If you have neither of the above two use cases, you do not need to use
+        transaction events. 
+
+
+        Each transaction event needs three mandatory fields:
+
+
+        * `transactionState` - STATE of the transaction -> value is set to
+        `CREATED` after `POST /transactions` call
+
+        * `timestamp`- the timestamp of when the event was created or occured in
+        your system
+
+        * `transactionId` - The ID of the transaction for which this event is
+        generated. 
+
+
+        In order to make individual events retrievable, you also need to pass in
+        a unique `eventId` to the request body.
       operationId: post-transaction-event
       parameters: []
       requestBody:
@@ -289,8 +346,9 @@ paths:
               example-2:
                 value:
                   eventType: CREATED
-                  timestamp: 1231231244
+                  timestamp: 1431231244001
                   transactionId: 443dea26147a406b957d9ee3a1247b11
+                  transactionState: SUCCESSFUL
                   eventId: aaeeb166147a406b957dd9147a406b957
                   eventDescription: Transaction created
                   employeeId: 8cdeb166147a406b957dd9e709907b89
@@ -321,15 +379,13 @@ paths:
                           EUR - ask for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
-                    failedRules:
-                      - ruleId: R-1b
+                    hitRules:
+                      - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
                         ruleDescription: >-
                           If a user makes a remittance transaction >= 1800 in
                           EUR - ask for proof of funds
-                        failureException:
-                          exceptionName: MISSING_DATA
-                          exceptionDescription: Some data is missing
+                        ruleAction: BLOCK
         '401':
           description: Unauthorized
           headers: {}
@@ -381,7 +437,18 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Create a Consumer User
-      description: Create a Consumer User
+      description: >
+        ### POST Consumer User
+
+
+        `/consumer/user` endpoint allows you to operate on the [Consumer user
+        entity.](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#user)
+
+
+        In order to pass the payload of a User to Flagright and verify the User,
+        you will need to call this endpoint with the User payload. Not all
+        fields are mandatory, you will only need to pass in the fields that you
+        have and are relevant for your compliance setup.
       operationId: post-consumer-user
       parameters: []
       requestBody:
@@ -499,7 +566,17 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Retrieve a Consumer User
-      description: Retrieve a Consumer User
+      description: >-
+        ### GET Consumer User
+
+
+        `/consumer/user` endpoint allows you to operate on the [Consumer User
+        entity](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#user).
+
+
+        Calling `GET /consumer/user/{userId}` will return the entire user
+        payload and rule execution results for the user with the corresponding
+        `userId`
       operationId: get-consumer-user
       parameters:
         - name: userId
@@ -609,7 +686,18 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Create a Business User
-      description: Create a Business User
+      description: >
+        ### POST Business User
+
+
+        `/business/user` endpoint allows you to operate on the [Business user
+        entity.](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#user)
+
+
+        In order to pass the payload of a User to Flagright and verify the User,
+        you will need to call this endpoint with the User payload. Not all
+        fields are mandatory, you will only need to pass in the fields that you
+        have and are relevant for your compliance setup.
       operationId: post-business-user
       parameters: []
       requestBody:
@@ -685,7 +773,17 @@ paths:
         - x-api-key: []
         - lambda-authorizer: []
       summary: Retrieve a Business User
-      description: Retrieve a Business User
+      description: >-
+        ### GET Business User
+
+
+        `/business/user` endpoint allows you to operate on the [Business User
+        entity](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#user).
+
+
+        Calling `GET /business/user/{userId}` will return the entire User
+        payload and rule execution results for the User with the corresponding
+        `userId`
       operationId: get-business-user-userId
       parameters:
         - name: userId
@@ -1005,6 +1103,7 @@ components:
         createdTimestamp:
           type: number
           minimum: 1262300400000
+          description: Timestamp when userId is created
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -1241,6 +1340,9 @@ components:
       properties:
         type:
           type: string
+          description: >-
+            Type of transaction depending on your use case. It can be
+            withdrawal, deposit, payment link, wallet-to-wallet, trading etc.
         transactionId:
           minLength: 1
           type: string
@@ -1248,12 +1350,17 @@ components:
         timestamp:
           type: number
           minimum: 1262300400000
+          description: Timestamp of when transaction took place
         transactionState:
           $ref: '#/components/schemas/TransactionState'
         originUserId:
           type: string
+          description: UserId for where the transaction originates from
         destinationUserId:
           type: string
+          description: >-
+            UserId for transaction's destination. In other words, where the
+            value is being transferred to.
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
         destinationAmountDetails:
@@ -1267,6 +1374,9 @@ components:
             - $ref: '#/components/schemas/SWIFTDetails'
             - $ref: '#/components/schemas/UPIDetails'
             - $ref: '#/components/schemas/WalletDetails'
+          description: >-
+            Payment details of the origin. It can be a bank account number,
+            wallet ID, card fingerprint etc.
         destinationPaymentDetails:
           oneOf:
             - $ref: '#/components/schemas/CardDetails'
@@ -1282,6 +1392,9 @@ components:
             cardIssuedCountry: TR
             transactionReferenceField: Deposit
             3dsDone: true
+          description: >-
+            Payment details of the destination. It can be a bank account number,
+            wallet ID, card fingerprint etc.
         productType:
           type: string
           description: >-
@@ -1356,13 +1469,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/ExecutedRulesResult'
-            failedRules:
+            hitRules:
               type: array
               items:
-                $ref: '#/components/schemas/FailedRulesResult'
+                $ref: '#/components/schemas/HitRulesResult'
           required:
             - executedRules
-            - failedRules
+            - hitRules
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
@@ -1414,15 +1527,13 @@ components:
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
-          failedRules:
+          hitRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              failureException:
-                exceptionName: MISSING_DATA
-                exceptionDescription: Some data is missing
+              ruleAction: BLOCK
     UserEventWithRulesResult:
       title: UserEventWithRulesResult
       description: Model for user event payload with rules result
@@ -1436,13 +1547,13 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/ExecutedRulesResult'
-            failedRules:
+            hitRules:
               type: array
               items:
-                $ref: '#/components/schemas/FailedRulesResult'
+                $ref: '#/components/schemas/HitRulesResult'
           required:
             - executedRules
-            - failedRules
+            - hitRules
       x-examples: {}
     CardDetails:
       title: CardDetails
@@ -1458,6 +1569,7 @@ components:
         method:
           type: string
           pattern: CARD
+          description: Classify the method of payment as "Card" for CardDetails
         cardFingerprint:
           minLength: 1
           type: string
@@ -1520,6 +1632,7 @@ components:
         method:
           type: string
           pattern: IBAN
+          description: Classify the method of payment as "IBAN" for IBANDetails
         BIC:
           minLength: 1
           type: string
@@ -1536,15 +1649,17 @@ components:
           type: string
           description: Account number of the user. Can be account number, IBAN number etc.
         name:
-          $ref: '#/components/schemas/ConsumerName'
+          type: string
+          description: Name of the bank account holder
         tags:
           $ref: '#/components/schemas/Tag'
         bankBranchCode:
           type: string
+          description: >-
+            Branch code of the bank. In some countries, this can be the same as
+            the bank's SWIFT code
       required:
         - method
-        - BIC
-        - IBAN
     WalletDetails:
       title: WalletDetails
       type: object
@@ -1558,6 +1673,10 @@ components:
           pattern: WALLET
         walletType:
           type: string
+          description: >-
+            Wallet type if there are various types of wallets belonging to the
+            same user. E.g. Checking, savings, vault, different currency wallets
+            etc.
         walletId:
           minLength: 1
           type: string
@@ -1566,13 +1685,13 @@ components:
           type: string
           description: Payment Channel used through wallet
         name:
-          $ref: '#/components/schemas/ConsumerName'
+          type: string
+          description: Name of the account holder for a specific wallet
         tags:
           $ref: '#/components/schemas/Tag'
         walletPhoneNumber:
           type: string
-        '':
-          type: string
+          description: Phone number associated with the wallet, if any
       required:
         - method
         - walletType
@@ -1640,9 +1759,11 @@ components:
     TransactionMonitoringResult:
       allOf:
         - type: object
+          description: Model to convey the results of transaction monitoring
           properties:
             transactionId:
               type: string
+              description: Transaction ID that the results pertain to
           required:
             - transactionId
         - $ref: '#/components/schemas/RulesResults'
@@ -1657,21 +1778,21 @@ components:
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
-          failedRules:
-            - ruleId: R-1b
+          hitRules:
+            - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              failureException:
-                exceptionName: MISSING_DATA
-                exceptionDescription: Some data is missing
+              ruleAction: BLOCK
     UserMonitoringResult:
       allOf:
         - type: object
+          description: Model to convey the results of user monitoring
           properties:
             userId:
               type: string
+              description: User ID that the results pertain to
           required:
             - userId
         - $ref: '#/components/schemas/RulesResults'
@@ -1688,15 +1809,13 @@ components:
               proof of funds
             ruleAction: BLOCK
             ruleHit: true
-        failedRules:
-          - ruleId: R-1b
+        hitRules:
+          - ruleId: R-1a
             ruleName: Proof of funds for high value transactions
             ruleDescription: >-
               If a user makes a remittance transaction >= 1800 in EUR - ask for
               proof of funds
-            failureException:
-              exceptionName: MISSING_DATA
-              exceptionDescription: Some data is missing
+            ruleAction: BLOCK
       x-examples:
         example-1:
           transactionId: 7b80a539eea6e78acbd6d458e5971482
@@ -1708,31 +1827,38 @@ components:
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
-          failedRules:
-            - ruleId: R-1b
+          hitRules:
+            - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
               ruleDescription: >-
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
-              failureException:
-                exceptionName: MISSING_DATA
-                exceptionDescription: Some data is missing
+              ruleAction: BLOCK
       properties:
         executedRules:
           type: array
           description: Unique transaction identifier
           items:
             $ref: '#/components/schemas/ExecutedRulesResult'
-        failedRules:
+        hitRules:
           type: array
           description: Unique transaction identifier
           items:
-            $ref: '#/components/schemas/FailedRulesResult'
+            $ref: '#/components/schemas/HitRulesResult'
       required:
         - executedRules
-        - failedRules
+        - hitRules
     ExecutedRulesResult:
-      title: ExecutedRulesResult
+      allOf:
+        - $ref: '#/components/schemas/HitRulesResult'
+        - type: object
+          properties:
+            ruleHit:
+              type: boolean
+          required:
+            - ruleHit
+    HitRulesResult:
+      title: HitRulesResult
       type: object
       example:
         ruleId: R-1a
@@ -1742,6 +1868,7 @@ components:
           proof of funds
         ruleAction: BLOCK
         ruleHit: true
+      description: Model for list of executed rules
       properties:
         ruleId:
           minLength: 1
@@ -1757,25 +1884,26 @@ components:
           description: Description of the rule
         ruleAction:
           $ref: '#/components/schemas/RuleAction'
-        ruleHit:
-          type: boolean
-          description: >-
-            Whether a rule was hit or not. When a rule is hit, it takes the
-            pre-configured action on a transaction and/or user.
       required:
         - ruleId
         - ruleName
         - ruleDescription
         - ruleAction
-        - ruleHit
     FailedRulesResult:
       title: FailedRulesResult
-      required:
-        - ruleId
-        - ruleName
-        - ruleDescription
-        - failureException
       type: object
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        failureException:
+          exceptionName: MISSING_DATA
+          exceptionDescription: Some data is missing
+      description: >-
+        Model for list of rules failed execution. It means rules could not be
+        run
       properties:
         ruleId:
           minLength: 1
@@ -1791,15 +1919,11 @@ components:
           description: Description of the rule
         failureException:
           $ref: '#/components/schemas/RuleFailureException'
-      example:
-        ruleId: R-1a
-        ruleName: Proof of funds for high value transactions
-        ruleDescription: >-
-          If a user makes a remittance transaction >= 1800 in EUR - ask for
-          proof of funds
-        failureException:
-          exceptionName: MISSING_DATA
-          exceptionDescription: Some data is missing
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - failureException
     RuleFailureException:
       title: RuleFailureException
       required:
@@ -1864,10 +1988,12 @@ components:
         lastName: Ozkan
     TransactionAmountDetails:
       title: TransactionAmountDetails
-      required:
-        - transactionAmount
-        - transactionCurrency
       type: object
+      example:
+        country: DE
+        transactionAmount: 800
+        transactionCurrency: EUR
+      description: Model for transaction amount details
       properties:
         transactionAmount:
           type: number
@@ -1879,16 +2005,17 @@ components:
         country:
           minLength: 1
           type: string
-      example:
-        country: DE
-        transactionAmount: 800
-        transactionCurrency: EUR
+          description: Country where the transaction occurred
+      required:
+        - transactionAmount
+        - transactionCurrency
     Amount:
       title: Amount
-      required:
-        - amountValue
-        - amountCurrency
       type: object
+      example:
+        amountValue: 800
+        amountCurrency: GBP
+      description: Model for amount
       properties:
         amountValue:
           type: number
@@ -1897,14 +2024,13 @@ components:
           minLength: 1
           type: string
           description: Currency of the transaction
-      example:
-        amountValue: 800
-        amountCurrency: GBP
+      required:
+        - amountValue
+        - amountCurrency
     LegalEntity:
       title: LegalEntity
-      required:
-        - companyGeneralDetails
       type: object
+      description: Model for business user legal entity details
       properties:
         companyGeneralDetails:
           $ref: '#/components/schemas/CompanyGeneralDetails'
@@ -1914,53 +2040,46 @@ components:
           $ref: '#/components/schemas/CompanyRegistrationDetails'
         reasonForAccountOpening:
           type: array
+          description: Reason for opening the account at financial institution
           items:
             type: string
-          description: Reason for opening the account at financial institution
         contactDetails:
           $ref: '#/components/schemas/ContactDetails'
+      required:
+        - companyGeneralDetails
     ContactDetails:
       title: ContactDetails
       type: object
+      description: Model for business user contact information details
       properties:
         emailIds:
           type: array
+          description: Email addresses of the contacts for a given business customer
           items:
             type: string
-          description: Email addresses of the contacts for a given business customer
         contactNumbers:
           type: array
+          description: Phone numbers to contact a given business customer
           items:
             type: string
-          description: Phone numbers to contact a given business customer
         faxNumbers:
           type: array
+          description: Fax numbers to contact a business customer
           items:
             type: string
-          description: Fax numbers to contact a business customer
         websites:
           type: array
+          description: Website of the company
           items:
             type: string
-          description: Website of the company
         addresses:
           type: array
+          description: Address(es) of the company
           items:
             $ref: '#/components/schemas/Address'
-          description: Address(es) of the company
     CompanyFinancialDetails:
       title: CompanyFinancialDetails
       type: object
-      properties:
-        expectedTransactionAmountPerMonth:
-          $ref: '#/components/schemas/Amount'
-        expectedTurnoverPerMonth:
-          $ref: '#/components/schemas/Amount'
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
-          description: Additional information that can be added via tags
       example:
         expectedTransactionAmountPerMonth:
           amountValue: 800
@@ -1968,6 +2087,17 @@ components:
         expectedTurnoverPerMonth:
           amountValue: 8000
           amountCurrency: USD
+      description: Model for business user company financial details
+      properties:
+        expectedTransactionAmountPerMonth:
+          $ref: '#/components/schemas/Amount'
+        expectedTurnoverPerMonth:
+          $ref: '#/components/schemas/Amount'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     UserDetails:
       title: UserDetails
       type: object
@@ -1979,12 +2109,14 @@ components:
         dateOfBirth: '1991-01-01'
         countryOfResidence: US
         countryOfNationality: DE
+      description: Model for consumer user personal details
       properties:
         name:
           $ref: '#/components/schemas/ConsumerName'
         dateOfBirth:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
+          description: Date of birth of the user
         countryOfResidence:
           minLength: 1
           type: string
@@ -1997,9 +2129,14 @@ components:
         - name
     CompanyGeneralDetails:
       title: CompanyGeneralDetails
-      required:
-        - legalName
       type: object
+      example:
+        legalName: Ozkan Hazelnut Export JSC
+        businessIndustry:
+          - Farming
+        mainProductsServicesSold:
+          - Hazelnut
+      description: Model for business user company general details
       properties:
         legalName:
           minLength: 1
@@ -2007,31 +2144,28 @@ components:
           description: Legal name of the company
         businessIndustry:
           type: array
+          description: The industry the business operates in for a business customer
           items:
             type: string
-          description: The industry the business operates in for a business customer
         mainProductsServicesSold:
           type: array
+          description: The key products and services provided by the company
           items:
             type: string
-          description: The key products and services provided by the company
         tags:
           type: array
+          description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-          description: Additional information that can be added via tags
-      example:
-        legalName: Ozkan Hazelnut Export JSC
-        businessIndustry:
-          - Farming
-        mainProductsServicesSold:
-          - Hazelnut
+      required:
+        - legalName
     CompanyRegistrationDetails:
       title: CompanyRegistrationDetails
-      required:
-        - registrationIdentifier
-        - registrationCountry
       type: object
+      example:
+        registrationIdentifier: PSJ554342
+        registrationCountry: DE
+      description: Model for business user company registration details
       properties:
         registrationIdentifier:
           minLength: 1
@@ -2045,12 +2179,12 @@ components:
           description: Country of registration for the company
         tag:
           type: array
+          description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-          description: Additional information that can be added via tags
-      example:
-        registrationIdentifier: PSJ554342
-        registrationCountry: DE
+      required:
+        - registrationIdentifier
+        - registrationCountry
     Business:
       title: Business
       type: object
@@ -2284,6 +2418,7 @@ components:
           tags:
             - key: customKey
               value: customValue
+      description: Model for a business user
       properties:
         userId:
           minLength: 1
@@ -2294,6 +2429,7 @@ components:
         createdTimestamp:
           type: number
           minimum: 1262300400000
+          description: Timestamp when the user was created
         shareHolders:
           type: array
           description: >-
@@ -2319,26 +2455,20 @@ components:
         - createdTimestamp
     BusinessUsersResponse:
       title: BusinessUsersResponse
-      required:
-        - userId
       type: object
+      description: Model for business user risk score response
       properties:
         userId:
           minLength: 1
           type: string
+          description: user ID the risk score pertains to
         userRiskScoreDetails:
           $ref: '#/components/schemas/RiskScoringResult'
+      required:
+        - userId
     ConsumerUsersResponse:
       title: ConsumerUsersResponse
-      required:
-        - userId
       type: object
-      properties:
-        userId:
-          minLength: 1
-          type: string
-        userRiskScoreDetails:
-          $ref: '#/components/schemas/RiskScoringResult'
       x-examples:
         example-1:
           userId: string
@@ -2346,8 +2476,18 @@ components:
             kycRiskScore: 87.5
             actionRiskScore: 58.33
             dynamicRiskScore: 73.92
+      description: Model for consumer user risk score response
+      properties:
+        userId:
+          minLength: 1
+          type: string
+          description: user ID the risk score pertains to
+        userRiskScoreDetails:
+          $ref: '#/components/schemas/RiskScoringResult'
+      required:
+        - userId
     ACHDetails:
-      description: ''
+      description: Model for ACH payment method
       type: object
       x-examples:
         example-2:
@@ -2374,27 +2514,33 @@ components:
         method:
           type: string
           pattern: ACH
+          description: Classify the method of payment as "ACH" for ACHDetails
         routingNumber:
           type: string
           minLength: 1
+          description: Routing number of the bank
         accountNumber:
           type: string
           minLength: 1
+          description: Bank account number of the individual
         bankName:
           type: string
           minLength: 1
+          description: Name of the bank
         name:
-          $ref: '#/components/schemas/ConsumerName'
+          type: string
+          description: Name of the account holder
         bankAddress:
           $ref: '#/components/schemas/Address'
         beneficiaryName:
           type: string
+          description: Beneficiary name of the account
       required:
         - method
         - routingNumber
         - accountNumber
     SWIFTDetails:
-      description: ''
+      description: Model for SWIFT payment method
       type: object
       x-examples: {}
       title: SWIFTDetails
@@ -2402,23 +2548,30 @@ components:
         method:
           type: string
           pattern: SWIFT
+          description: Classify the method of payment as "SWIFT" for SWIFTDetails
         swiftCode:
           type: string
           minLength: 1
+          description: SWIFT code of the financial institution
         accountNumber:
           type: string
           minLength: 1
+          description: Account number
         accountType:
           type: string
+          description: Account type. E.g. Checking, Savings etc.
         bankName:
           type: string
           minLength: 1
+          description: Name of the bank
         name:
-          $ref: '#/components/schemas/ConsumerName'
+          type: string
+          description: Name of the account holder
         bankAddress:
           $ref: '#/components/schemas/Address'
         specialInstructions:
           type: string
+          description: Special instructions if any
       required:
         - method
     GenericBankAccountDetails:
@@ -2430,26 +2583,37 @@ components:
         method:
           type: string
           pattern: GENERIC_BANK_ACCOUNT
+          description: >-
+            Classify the method of payment as "GENERIC_BANK_ACCOUNT" for
+            GenericBankAccountDetails
         accountNumber:
           type: string
           minLength: 1
+          description: Bank account number
         accountType:
           type: string
+          description: Bank account type. E.g. Checking, Savings etc.
         bankName:
           type: string
           minLength: 1
+          description: Name of the bank
         bankCode:
           type: string
+          description: >-
+            Unique identifier of the bank. In some countries, this can be the
+            same as the bank's SWIFT code
         name:
-          $ref: '#/components/schemas/ConsumerName'
+          type: string
+          description: Name of the account holder
         bankAddress:
           $ref: '#/components/schemas/Address'
         specialInstructions:
           type: string
+          description: Special instructions to be specified if any
       required:
         - method
     UPIDetails:
-      description: ''
+      description: Model for UPI payment method
       type: object
       x-examples:
         example-1:
@@ -2462,15 +2626,22 @@ components:
         method:
           type: string
           pattern: UPI
+          description: Classify the method of payment as "UPI" for UPIDetails
         upiID:
           type: string
           minLength: 1
+          description: UPI Id number
         bankProvider:
           type: string
           minLength: 1
+          description: Bank provider name
         interfaceProvider:
           type: string
           minLength: 1
+          description: Interface provider name
+        name:
+          type: string
+          description: Name of the account holder
       required:
         - method
         - upiID
@@ -2494,6 +2665,7 @@ components:
           maximumYearlyTransactionLimit:
             amountValue: 800
             amountCurrency: GBP
+      description: Model for transaction limits for a given user
       properties:
         maximumDailyTransactionLimit:
           $ref: '#/components/schemas/Amount'
@@ -2518,6 +2690,10 @@ components:
         - SUSPEND
       x-examples:
         example-1: ALLOW
+      description: >-
+        Model for rule action if a rule is hit. This is returned in the API
+        response and can be configured on Console by operational accounts like a
+        Compliance Analyst
     InternalUser:
       description: Internal user- employees
       type: object
@@ -2533,22 +2709,27 @@ components:
         employeeID:
           type: string
           minLength: 1
+          description: Employee ID number
         employeeLevel:
           type: string
           minLength: 1
+          description: Employee seniority level
         employeeDesignation:
           type: string
           minLength: 1
+          description: Employee designation or title
         employeeName:
           type: string
           minLength: 1
+          description: Employee name
         employeeNationality:
           type: string
           minLength: 1
+          description: Employee nationality
       required:
         - employeeID
     TransactionEvent:
-      description: ''
+      description: Model for transaction-related events
       type: object
       x-examples:
         example-1:
@@ -2570,16 +2751,23 @@ components:
         timestamp:
           type: number
           minimum: 1262300400000
+          description: Timestamp of the event
         transactionId:
           type: string
           minLength: 1
+          description: Transaction ID the event pertains to
         eventId:
           type: string
+          description: Unique event ID
         eventDescription:
           type: string
+          description: Event description
         employeeId:
           type: string
           minLength: 1
+          description: >-
+            Employee ID the event pertains to. E.g. Employee login event on
+            behalf of an end user
         metaData:
           $ref: '#/components/schemas/DeviceData'
         updatedTransactionAttributes:
@@ -2589,7 +2777,6 @@ components:
         - timestamp
         - transactionId
     CaseManagementEvent:
-      description: ''
       type: object
       x-examples:
         example-1:
@@ -2600,6 +2787,7 @@ components:
           eventDescription: Case Unsuspended
           employeeId: 8cdeb166147a406b957dd9e709907b89
       title: CaseManagementEvent
+      description: Model for case management events
       properties:
         caseStatus:
           type: string
@@ -2607,9 +2795,11 @@ components:
           enum:
             - CLOSED
             - HIT
+          description: Status of a case. E.g. Open, Closed etc.
         timestamp:
           type: number
           minimum: 1262300400000
+          description: Timestamp of the event
         caseStatusReason:
           type: string
           enum:
@@ -2617,24 +2807,32 @@ components:
             - INVESTIGATION_COMPLETED
             - DOCUMENTS_COLLECTED
             - OTHER
+          description: >-
+            Case status reason. E.g. Closed & False Positive, Closed &
+            Investigation Completed etc.
         transactionId:
           type: string
           minLength: 1
+          description: Transaction ID the case pertains to
         userId:
           type: string
+          description: User ID the case pertains to
         eventId:
           type: string
+          description: Event ID the case pertains to
         caseStatusReasonDescription:
           type: string
+          description: Case status reason description
         employeeId:
           type: string
           minLength: 1
+          description: Employee ID the case pertains to
       required:
         - caseStatus
         - timestamp
         - caseStatusReason
     UserEvent:
-      description: ''
+      description: Model for user-related events
       type: object
       x-examples: {}
       properties:
@@ -2643,15 +2841,20 @@ components:
           minLength: 1
           enum:
             - LOGGED_IN
+          description: Type of events. E.g. Onboarding, Checkout etc.
         timestamp:
           type: number
+          description: Timestamp of the event
         userId:
           type: string
           minLength: 1
+          description: User ID the event pertains to
         eventId:
           type: string
+          description: Unique event ID
         eventDescription:
           type: string
+          description: Event description
         metaData:
           $ref: '#/components/schemas/DeviceData'
       required:
@@ -2661,13 +2864,17 @@ components:
     Date:
       title: Date
       type: object
+      description: Model for date
       properties:
         day:
           type: number
+          description: Day of date
         month:
           type: number
+          description: Month of date
         year:
           type: number
+          description: Year of date
       required:
         - day
         - month
@@ -2675,8 +2882,6 @@ components:
     TransactionState:
       type: string
       title: TransactionState
-      x-stoplight:
-        id: q1lxnw313yrob
       enum:
         - CREATED
         - PROCESSING
@@ -2687,6 +2892,7 @@ components:
         - REFUNDED
         - SUCCESSFUL
       minLength: 1
+      description: Model for transaction states. E.g. Processing, Refunded, Successful etc.
   securitySchemes:
     x-api-key:
       name: x-api-key

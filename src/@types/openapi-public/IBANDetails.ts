@@ -11,17 +11,19 @@
  */
 
 import { Address } from './Address'
-import { ConsumerName } from './ConsumerName'
 import { Tag } from './Tag'
 /**
  * Standardized model for Bank Details
  */
 export class IBANDetails {
+  /**
+   * Classify the method of payment as \"IBAN\" for IBANDetails
+   */
   'method': string
   /**
    * Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc.
    */
-  'BIC': string
+  'BIC'?: string
   /**
    * Name of the bank
    */
@@ -30,9 +32,15 @@ export class IBANDetails {
   /**
    * Account number of the user. Can be account number, IBAN number etc.
    */
-  'IBAN': string
-  'name'?: ConsumerName
+  'IBAN'?: string
+  /**
+   * Name of the bank account holder
+   */
+  'name'?: string
   'tags'?: Tag
+  /**
+   * Branch code of the bank. In some countries, this can be the same as the bank's SWIFT code
+   */
   'bankBranchCode'?: string
 
   static readonly discriminator: string | undefined = undefined
@@ -76,7 +84,7 @@ export class IBANDetails {
     {
       name: 'name',
       baseName: 'name',
-      type: 'ConsumerName',
+      type: 'string',
       format: '',
     },
     {

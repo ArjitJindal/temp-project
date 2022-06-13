@@ -5,9 +5,9 @@ import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { UserEvent, UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
+import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 type TimeRange = {
   beforeTimestamp: number
@@ -35,7 +35,7 @@ export class UserEventRepository {
     userEvent: UserEvent,
     rulesResult: {
       executedRules?: ExecutedRulesResult[]
-      failedRules?: FailedRulesResult[]
+      hitRules?: HitRulesResult[]
     } = {}
   ): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()

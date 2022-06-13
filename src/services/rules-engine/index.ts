@@ -6,7 +6,6 @@ import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
-import { RuleError } from './transaction-rules/errors'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase } from './rule'
 import { USER_RULES } from './user-rules'
@@ -24,15 +23,15 @@ import { everyAsync } from '@/core/utils/array'
 import { UserEvent } from '@/@types/openapi-public/UserEvent'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
 
 const ruleAscendingComparator = (
-  rule1: ExecutedRulesResult | FailedRulesResult,
-  rule2: ExecutedRulesResult | FailedRulesResult
+  rule1: HitRulesResult,
+  rule2: HitRulesResult
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
 function getTransactionRuleImplementation(
@@ -63,7 +62,7 @@ export async function verifyTransactionIdempotent(
   transaction: Transaction
 ): Promise<{
   executedRules: ExecutedRulesResult[]
-  failedRules: FailedRulesResult[]
+  hitRules: HitRulesResult[]
 }> {
   const ruleRepository = new RuleRepository(tenantId, {
     dynamoDb,
@@ -123,12 +122,12 @@ export async function verifyTransaction(
       return {
         transactionId: transaction.transactionId,
         executedRules: existingTransaction.executedRules,
-        failedRules: existingTransaction.failedRules,
+        hitRules: existingTransaction.hitRules,
       }
     }
   }
 
-  const { executedRules, failedRules } = await verifyTransactionIdempotent(
+  const { executedRules, hitRules } = await verifyTransactionIdempotent(
     tenantId,
     dynamoDb,
     transaction
@@ -140,7 +139,7 @@ export async function verifyTransaction(
     },
     {
       executedRules,
-      failedRules,
+      hitRules,
     }
   )
 
@@ -153,7 +152,7 @@ export async function verifyTransaction(
     },
     {
       executedRules,
-      failedRules,
+      hitRules,
     }
   )
 
@@ -161,8 +160,8 @@ export async function verifyTransaction(
 
   return {
     transactionId: savedTransaction.transactionId as string,
-    executedRules: executedRules,
-    failedRules: failedRules,
+    executedRules,
+    hitRules,
   }
 }
 
@@ -194,13 +193,13 @@ export async function verifyTransactionEvent(
     transactionState: transactionEvent.transactionState,
     ...(transactionEvent.updatedTransactionAttributes || {}),
   }
-  const { executedRules, failedRules } = hasTransactionUpdates
+  const { executedRules, hitRules } = hasTransactionUpdates
     ? await verifyTransactionIdempotent(tenantId, dynamoDb, updatedTransaction)
-    : { executedRules: [], failedRules: [] }
+    : { executedRules: [], hitRules: [] }
 
   await transactionEventRepository.saveTransactionEvent(transactionEvent, {
     executedRules,
-    failedRules,
+    hitRules,
   })
 
   // Update transaction with the latest payload
@@ -208,7 +207,7 @@ export async function verifyTransactionEvent(
     executedRules: hasTransactionUpdates
       ? executedRules
       : transaction.executedRules,
-    failedRules: hasTransactionUpdates ? failedRules : transaction.failedRules,
+    hitRules: hasTransactionUpdates ? hitRules : transaction.hitRules,
   })
 
   // For duplicated transaction events with the same state, we don't re-aggregated
@@ -219,8 +218,8 @@ export async function verifyTransactionEvent(
 
   return {
     transactionId: transactionEvent.transactionId,
-    executedRules: executedRules,
-    failedRules: failedRules,
+    executedRules,
+    hitRules,
   }
 }
 
@@ -287,7 +286,7 @@ export async function verifyUserEvent(
     userRepository.getUser<User | Business>(userEvent.userId),
     ruleInstanceRepository.getActiveRuleInstances('USER'),
   ])
-  const { executedRules, failedRules } = await getRulesResult(
+  const { executedRules, hitRules } = await getRulesResult(
     ruleRepository,
     ruleInstanceRepository,
     ruleInstances,
@@ -304,13 +303,13 @@ export async function verifyUserEvent(
   )
   await userEventRepository.saveUserEvent(userEvent, {
     executedRules,
-    failedRules,
+    hitRules,
   })
 
   return {
     userId: userEvent.userId,
     executedRules,
-    failedRules,
+    hitRules,
   }
 }
 
@@ -330,45 +329,38 @@ async function getRulesResult(
     'id'
   )
   const hitRuleInstanceIds: string[] = []
-  const ruleResults = await Promise.all(
-    ruleInstances.map(async (ruleInstance) => {
-      const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
-      try {
-        const rule = getRuleImplementationCallback(
-          rulesById[ruleInstance.ruleId].ruleImplementationName,
-          ruleInstance
-        )
-        const shouldCompute = await everyAsync(
-          rule.getFilters(),
-          async (ruleFilter) => ruleFilter()
-        )
-        const ruleResult = shouldCompute ? await rule.computeRule() : null
-        const ruleHit = !_.isNil(ruleResult)
-        if (ruleHit) {
-          hitRuleInstanceIds.push(ruleInstance.id as string)
-        }
+  const ruleResults = (
+    await Promise.all(
+      ruleInstances.map(async (ruleInstance) => {
+        const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
+        try {
+          const rule = getRuleImplementationCallback(
+            rulesById[ruleInstance.ruleId].ruleImplementationName,
+            ruleInstance
+          )
+          const shouldCompute = await everyAsync(
+            rule.getFilters(),
+            async (ruleFilter) => ruleFilter()
+          )
+          const ruleResult = shouldCompute ? await rule.computeRule() : null
+          const ruleHit = !_.isNil(ruleResult)
+          if (ruleHit) {
+            hitRuleInstanceIds.push(ruleInstance.id as string)
+          }
 
-        return {
-          ruleId: ruleInstance.ruleId,
-          ruleName: ruleInfo.name,
-          ruleDescription: ruleInfo.description,
-          ruleAction: ruleInstance.action,
-          ruleHit,
+          return {
+            ruleId: ruleInstance.ruleId,
+            ruleName: ruleInfo.name,
+            ruleDescription: ruleInfo.description,
+            ruleAction: ruleInstance.action,
+            ruleHit,
+          }
+        } catch (e) {
+          console.error(e)
         }
-      } catch (e) {
-        console.error(e)
-        return {
-          ruleId: ruleInstance.ruleId,
-          ruleName: ruleInfo.name,
-          ruleDescription: ruleInfo.description,
-          failureException:
-            e instanceof RuleError
-              ? { exceptionName: e.name, exceptionDescription: e.message }
-              : { exceptionName: 'Unknown', exceptionDescription: 'Unknown' },
-        }
-      }
-    })
-  )
+      })
+    )
+  ).filter(Boolean) as ExecutedRulesResult[]
 
   await ruleInstanceRepository.incrementRuleInstanceStatsCount(
     ruleInstances.map((ruleInstance) => ruleInstance.id as string),
@@ -378,12 +370,13 @@ async function getRulesResult(
   const executedRules = ruleResults
     .filter((result) => result.ruleAction)
     .sort(ruleAscendingComparator) as ExecutedRulesResult[]
-  const failedRules = ruleResults
-    .filter((result) => !result.ruleAction)
-    .sort(ruleAscendingComparator) as FailedRulesResult[]
+  const hitRules = ruleResults
+    .filter((result) => result.ruleAction && result.ruleHit)
+    .map((result) => ({ ...result, ruleHit: undefined }))
+    .sort(ruleAscendingComparator) as HitRulesResult[]
 
   return {
     executedRules,
-    failedRules,
+    hitRules,
   }
 }

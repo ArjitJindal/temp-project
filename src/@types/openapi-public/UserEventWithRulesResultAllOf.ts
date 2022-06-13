@@ -11,12 +11,12 @@
  */
 
 import { ExecutedRulesResult } from './ExecutedRulesResult'
-import { FailedRulesResult } from './FailedRulesResult'
+import { HitRulesResult } from './HitRulesResult'
 import { RuleAction } from './RuleAction'
 export class UserEventWithRulesResultAllOf {
   'status'?: RuleAction
   'executedRules': Array<ExecutedRulesResult>
-  'failedRules': Array<FailedRulesResult>
+  'hitRules': Array<HitRulesResult>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -39,9 +39,9 @@ export class UserEventWithRulesResultAllOf {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ]

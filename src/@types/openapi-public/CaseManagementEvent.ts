@@ -10,14 +10,41 @@
  * Do not edit the class manually.
  */
 
+/**
+ * Model for case management events
+ */
 export class CaseManagementEvent {
+  /**
+   * Status of a case. E.g. Open, Closed etc.
+   */
   'caseStatus': CaseManagementEventCaseStatusEnum
+  /**
+   * Timestamp of the event
+   */
   'timestamp': number
+  /**
+   * Case status reason. E.g. Closed & False Positive, Closed & Investigation Completed etc.
+   */
   'caseStatusReason': CaseManagementEventCaseStatusReasonEnum
+  /**
+   * Transaction ID the case pertains to
+   */
   'transactionId'?: string
+  /**
+   * User ID the case pertains to
+   */
   'userId'?: string
+  /**
+   * Event ID the case pertains to
+   */
   'eventId'?: string
+  /**
+   * Case status reason description
+   */
   'caseStatusReasonDescription'?: string
+  /**
+   * Employee ID the case pertains to
+   */
   'employeeId'?: string
 
   static readonly discriminator: string | undefined = undefined
