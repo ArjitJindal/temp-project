@@ -10,8 +10,8 @@
  * Do not edit the class manually.
  */
 
-import { HitRulesResult } from '../openapi-public/HitRulesResult'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
+import { HitRulesResult } from './HitRulesResult'
 export class TransactionWithRulesResultAllOf {
   'executedRules': Array<ExecutedRulesResult>
   'hitRules': Array<HitRulesResult>

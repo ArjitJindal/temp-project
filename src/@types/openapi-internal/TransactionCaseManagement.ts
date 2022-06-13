@@ -10,7 +10,6 @@
  * Do not edit the class manually.
  */
 
-import { HitRulesResult } from '../openapi-public/HitRulesResult'
 import { ACHDetails } from './ACHDetails'
 import { Assignment } from './Assignment'
 import { CardDetails } from './CardDetails'
@@ -18,6 +17,7 @@ import { Comment } from './Comment'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { GenericBankAccountDetails } from './GenericBankAccountDetails'
+import { HitRulesResult } from './HitRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { InternalBusinessUser } from './InternalBusinessUser'
 import { InternalConsumerUser } from './InternalConsumerUser'

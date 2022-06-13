@@ -10,12 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { HitRulesResult } from '../openapi-public/HitRulesResult'
 import { ACHDetails } from './ACHDetails'
 import { CardDetails } from './CardDetails'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
 import { GenericBankAccountDetails } from './GenericBankAccountDetails'
+import { HitRulesResult } from './HitRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'

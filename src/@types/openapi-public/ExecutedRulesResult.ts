@@ -10,9 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResultAllOf } from './ExecutedRulesResultAllOf'
-import { HitRulesResult } from './HitRulesResult'
 import { RuleAction } from './RuleAction'
+/**
+ * Model for list of executed rules
+ */
 export class ExecutedRulesResult {
   /**
    * Unique rule identifier

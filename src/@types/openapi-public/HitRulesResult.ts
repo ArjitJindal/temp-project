@@ -12,7 +12,7 @@
 
 import { RuleAction } from './RuleAction'
 /**
- * Model for list of executed rules
+ * Model for list of hit rules
  */
 export class HitRulesResult {
   /**

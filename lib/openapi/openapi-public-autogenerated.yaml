@@ -1849,14 +1849,40 @@ components:
         - executedRules
         - hitRules
     ExecutedRulesResult:
-      allOf:
-        - $ref: '#/components/schemas/HitRulesResult'
-        - type: object
-          properties:
-            ruleHit:
-              type: boolean
-          required:
-            - ruleHit
+      title: ExecutedRulesResult
+      type: object
+      example:
+        ruleId: R-1a
+        ruleName: Proof of funds for high value transactions
+        ruleDescription: >-
+          If a user makes a remittance transaction >= 1800 in EUR - ask for
+          proof of funds
+        ruleAction: BLOCK
+        ruleHit: true
+      description: Model for list of executed rules
+      properties:
+        ruleId:
+          minLength: 1
+          type: string
+          description: Unique rule identifier
+        ruleName:
+          minLength: 1
+          type: string
+          description: Name of the rule
+        ruleDescription:
+          minLength: 1
+          type: string
+          description: Description of the rule
+        ruleAction:
+          $ref: '#/components/schemas/RuleAction'
+        ruleHit:
+          type: boolean
+      required:
+        - ruleId
+        - ruleName
+        - ruleDescription
+        - ruleAction
+        - ruleHit
     HitRulesResult:
       title: HitRulesResult
       type: object
@@ -1868,7 +1894,7 @@ components:
           proof of funds
         ruleAction: BLOCK
         ruleHit: true
-      description: Model for list of executed rules
+      description: Model for list of hit rules
       properties:
         ruleId:
           minLength: 1
