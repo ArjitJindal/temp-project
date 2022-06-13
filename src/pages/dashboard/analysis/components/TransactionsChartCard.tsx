@@ -31,6 +31,7 @@ const { TabPane } = Tabs;
 
 export type TransactionsStats = {
   id: string;
+  totalTransactions: number;
   flaggedTransactions: number;
   stoppedTransactions: number;
 }[];
@@ -123,6 +124,7 @@ const TransactionsChartCard = () => {
   const dataResource: AsyncResource<TransactionsStats> = map(transactionsCountData, (value) =>
     value.map((item, i) => ({
       id: item._id,
+      totalTransactions: item.totalTransactions ?? 0,
       flaggedTransactions: item.flaggedTransactions ?? 0,
       stoppedTransactions: item.stoppedTransactions ?? 0,
     })),
@@ -190,7 +192,8 @@ const TransactionsChartCard = () => {
           tabBarStyle={{ marginBottom: 24 }}
         >
           {[
-            { title: 'Stopped Transactions', key: 'stoppedTransactions' },
+            { title: 'Total Transactions', key: 'totalTransactions' },
+            { title: 'Blocked Transactions', key: 'stoppedTransactions' },
             { title: 'Flagged Transactions', key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
