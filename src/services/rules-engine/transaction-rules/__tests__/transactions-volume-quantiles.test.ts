@@ -69,7 +69,7 @@ describe('Sender/Receiver Parameters', () => {
     {
       name: 'Sender: all, Receiver: all',
       transactions: TEST_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'FLAG', 'FLAG'],
+      expectedHits: [false, false, true, true, true, true],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'all',
@@ -83,7 +83,7 @@ describe('Sender/Receiver Parameters', () => {
     {
       name: 'Sender: sending, Receiver: none',
       transactions: TEST_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, true, false, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -97,7 +97,7 @@ describe('Sender/Receiver Parameters', () => {
     {
       name: 'Sender: all, Receiver: none',
       transactions: TEST_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'FLAG', 'ALLOW'],
+      expectedHits: [false, false, true, true, true, false],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'none',
@@ -111,7 +111,7 @@ describe('Sender/Receiver Parameters', () => {
     {
       name: 'Sender: none, Receiver: receiving',
       transactions: TEST_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, false, false, true],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'receiving',
@@ -125,7 +125,7 @@ describe('Sender/Receiver Parameters', () => {
     {
       name: 'Sender: none, Receiver: all',
       transactions: TEST_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'FLAG', 'FLAG'],
+      expectedHits: [false, false, true, false, true, true],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'all',
@@ -136,7 +136,7 @@ describe('Sender/Receiver Parameters', () => {
         },
       },
     },
-  ])('', ({ name, transactions, expectedActions, ruleParams }) => {
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -154,7 +154,7 @@ describe('Sender/Receiver Parameters', () => {
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -188,7 +188,7 @@ describe('Time Granularities', () => {
           timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -224,7 +224,7 @@ describe('Time Granularities', () => {
           timestamp: dayjs('2022-02-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -260,7 +260,7 @@ describe('Time Granularities', () => {
           timestamp: dayjs('2023-01-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -271,7 +271,7 @@ describe('Time Granularities', () => {
         },
       },
     },
-  ])('', ({ name, transactions, expectedActions, ruleParams }) => {
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -289,7 +289,7 @@ describe('Time Granularities', () => {
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

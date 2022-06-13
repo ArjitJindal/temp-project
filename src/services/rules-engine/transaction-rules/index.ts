@@ -12,6 +12,7 @@ import MultipleUserSendersWithinTimePeriodRule from './multiple-user-senders-wit
 import { TransactionRule } from './rule'
 import SenderLocationChangesFrequencyRule from './sender-location-changes-frequency'
 import TestFailureRule from './tests/test-failure-rule'
+import TestNonHitRule from './tests/test-non-hit-rule'
 import TestSuccessRule from './tests/test-success-rule'
 import TransactionAmountRule from './transaction-amount'
 import TransactionAmountUserLimitRule from './transaction-amount-user-limit'
@@ -51,4 +52,5 @@ export const TRANSACTION_RULES = {
   // For testing only
   'tests/test-success-rule': TestSuccessRule,
   'tests/test-failure-rule': TestFailureRule,
+  'tests/test-non-hit-rule': TestNonHitRule,
 } as unknown as { [key: string]: typeof TransactionRule }

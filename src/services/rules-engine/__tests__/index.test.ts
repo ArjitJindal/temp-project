@@ -62,6 +62,39 @@ describe('Verify Transaction', () => {
     })
   })
 
+  describe('Verify Transaction: executed rules (non-hit)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'R-1',
+        ruleImplementationName: 'tests/test-non-hit-rule',
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('returns executed rules', async () => {
+      const transaction = getTestTransaction({ transactionId: 'dummy' })
+      const result = await verifyTransaction(
+        transaction,
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      expect(result).toEqual({
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'R-1',
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description',
+            ruleAction: 'FLAG',
+            ruleHit: false,
+          },
+        ],
+        failedRules: [],
+      } as TransactionMonitoringResult)
+    })
+  })
+
   describe('Verify Transaction: failed rules', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

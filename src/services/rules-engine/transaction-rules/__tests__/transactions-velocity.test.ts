@@ -51,7 +51,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true],
     },
     {
       name: 'Too frequent receiving transactions - hit',
@@ -72,7 +72,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true],
     },
     {
       name: 'Too frequent sending and receiving transactions - hit',
@@ -93,7 +93,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true],
     },
     {
       name: 'Frequent transactions by different users - not hit',
@@ -114,7 +114,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Frequent transactions without user IDs - not hit',
@@ -135,7 +135,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Normal transactions - not hit',
@@ -156,7 +156,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:20.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Too frequent transactions - hit twice',
@@ -192,7 +192,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true, false, false, true],
     },
     {
       name: 'Out-of-order transactions - not hit',
@@ -213,7 +213,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Duplicated transactions - not hit',
@@ -237,14 +237,14 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -291,7 +291,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T10:00:00.100Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG'],
+      expectedHits: [false, true],
     },
     {
       name: 'User not in the list - not hit',
@@ -307,7 +307,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T10:00:00.100Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
     {
       name: 'Transaction time not within the window - not hit',
@@ -323,14 +323,14 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:00:00.100Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -375,7 +375,7 @@ describe('checksender/checkreceiver', () => {
     {
       name: 'Sender: all, Receiver: all',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true, false, false, true],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'all',
@@ -384,7 +384,7 @@ describe('checksender/checkreceiver', () => {
     {
       name: 'Sender: sending, Receiver: none',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, true, false, false, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -393,7 +393,7 @@ describe('checksender/checkreceiver', () => {
     {
       name: 'Sender: all, Receiver: none',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, true, false, false, false],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'none',
@@ -402,7 +402,7 @@ describe('checksender/checkreceiver', () => {
     {
       name: 'Sender: none, Receiver: receiving',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true, false, false, true],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'receiving',
@@ -411,13 +411,13 @@ describe('checksender/checkreceiver', () => {
     {
       name: 'Sender: none, Receiver: none',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false, false, false],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'none',
       },
     },
-  ])('', ({ name, transactions, expectedActions, ruleParams }) => {
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -436,7 +436,7 @@ describe('checksender/checkreceiver', () => {
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -487,14 +487,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

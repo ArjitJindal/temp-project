@@ -65,7 +65,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'ALLOW'],
+    expectedHits: [false, false, true, true, false],
   },
   {
     name: 'Different users using the same IP address not in a short time - not hit',
@@ -85,7 +85,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW'],
+    expectedHits: [false, false],
   },
   {
     name: 'Same user using the same IP address - not hit',
@@ -105,7 +105,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW'],
+    expectedHits: [false, false],
   },
   {
     name: 'Different users using different IP addresses - not hit',
@@ -125,13 +125,13 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW'],
+    expectedHits: [false, false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

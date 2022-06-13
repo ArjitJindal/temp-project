@@ -58,7 +58,7 @@ describe('Core logic', () => {
           metaData: { ipAddress: '1.1.1.1' },
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, false],
     },
     {
       name: 'Too frequent account access (not target user) - not hit',
@@ -76,7 +76,7 @@ describe('Core logic', () => {
           metaData: { ipAddress: '1.1.1.1' },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
     {
       name: 'Too frequent account access (not target ip) - not hit',
@@ -94,7 +94,7 @@ describe('Core logic', () => {
           metaData: { ipAddress: '2.2.2.2' },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
     {
       name: 'Too frequent account access (mixed IPs) - not hit',
@@ -124,7 +124,7 @@ describe('Core logic', () => {
           metaData: { ipAddress: '1.1.1.1' },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false],
     },
     {
       name: 'Normal account access - not hit',
@@ -142,9 +142,9 @@ describe('Core logic', () => {
           metaData: { ipAddress: '1.1.1.1' },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
-  ])('', ({ name, userEvents, expectedActions }) => {
-    createUserRuleTestCase(name, TEST_TENANT_ID, userEvents, expectedActions)
+  ])('', ({ name, userEvents, expectedHits }) => {
+    createUserRuleTestCase(name, TEST_TENANT_ID, userEvents, expectedHits)
   })
 })

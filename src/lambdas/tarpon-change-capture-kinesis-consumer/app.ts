@@ -53,7 +53,9 @@ async function transactionHandler(
     {
       ...transaction,
       status: getAggregatedRuleStatus(
-        transaction.executedRules.map((rule) => rule.ruleAction)
+        transaction.executedRules
+          .filter((rule) => rule.ruleHit)
+          .map((rule) => rule.ruleAction)
       ),
     },
     { upsert: true }

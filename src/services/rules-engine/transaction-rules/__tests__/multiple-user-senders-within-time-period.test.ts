@@ -45,7 +45,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-25T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Different sender user transacting with same originUserID (within time period) - hit',
@@ -66,7 +66,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true],
     },
     {
       name: 'Different sender user transacting with same originUserID (not within time period) - not hit',
@@ -87,7 +87,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-02-29T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Same sender user transacting with same originUserID (within time period) - not hit',
@@ -108,14 +108,14 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -164,14 +164,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

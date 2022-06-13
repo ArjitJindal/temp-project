@@ -57,7 +57,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: "User's ip country is in the countries of the user's previous approved transactions  - hit",
@@ -89,7 +89,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG', 'FLAG', 'ALLOW'],
+    expectedHits: [true, true, false],
   },
   {
     name: "User's ip country is in the user's residence country - not hit",
@@ -103,7 +103,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: "User's ip country is in the user's nationality country - not hit",
@@ -117,7 +117,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'Invalid ip address - not hit',
@@ -130,7 +130,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'No ip address - not hit',
@@ -141,13 +141,13 @@ describe.each<TransactionRuleTestCase>([
         deviceData: undefined,
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

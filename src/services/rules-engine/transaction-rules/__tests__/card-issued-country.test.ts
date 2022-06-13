@@ -34,7 +34,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'card issued country not in the whitelist - hit',
@@ -46,7 +46,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: 'non-card origin payment - not hit',
@@ -58,7 +58,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'missing origin payment details - not hit',
@@ -67,13 +67,13 @@ describe.each<TransactionRuleTestCase>([
         originPaymentDetails: undefined,
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

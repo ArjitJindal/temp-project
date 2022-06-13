@@ -62,7 +62,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW'],
+      expectedHits: [false, false, true, false],
     },
     {
       name: 'Sender user in the same city - not hit',
@@ -89,7 +89,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Sender user changes cities not too frequently - not hit',
@@ -116,7 +116,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Different sender users in different cities - not hit',
@@ -143,14 +143,14 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -211,14 +211,14 @@ describe('Transaction State', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

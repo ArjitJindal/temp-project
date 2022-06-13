@@ -64,7 +64,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG'],
+      expectedHits: [false, false, true, true],
     },
     {
       name: 'Consecutive transactions of the target type (with other types) - hit',
@@ -90,7 +90,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
     {
       name: 'Non-consecutive transactions of the target type - not hit',
@@ -126,7 +126,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false, false, false],
     },
     {
       name: 'Consecutive transactions of the non-target type - not hit',
@@ -152,14 +152,14 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -212,14 +212,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

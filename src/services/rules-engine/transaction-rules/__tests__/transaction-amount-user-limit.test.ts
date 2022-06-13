@@ -47,7 +47,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: 'Transaction amount exceeds user specific limit (different currency) - hit',
@@ -60,7 +60,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: "Transaction amount doesn't exceed user specific limit - not hit",
@@ -73,7 +73,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'User has no transaction limit - not hit',
@@ -86,13 +86,13 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

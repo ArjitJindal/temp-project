@@ -40,7 +40,7 @@ describe.each<TransactionRuleTestCase>([
         reference: 'case    insensitive  keYworD4',
       }),
     ],
-    expectedActions: ['FLAG', 'FLAG', 'FLAG', 'FLAG'],
+    expectedHits: [true, true, true, true],
   },
   {
     name: "reference doesn't contain a target keyword - not hit",
@@ -58,7 +58,7 @@ describe.each<TransactionRuleTestCase>([
         reference: undefined,
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false, false],
   },
   {
     name: 'reference contains a target keyword (substring) - not hit',
@@ -73,13 +73,13 @@ describe.each<TransactionRuleTestCase>([
         reference: 'keyword3aaa',
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

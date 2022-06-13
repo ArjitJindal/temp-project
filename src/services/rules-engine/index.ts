@@ -352,7 +352,7 @@ async function getRulesResult(
           ruleId: ruleInstance.ruleId,
           ruleName: ruleInfo.name,
           ruleDescription: ruleInfo.description,
-          ruleAction: ruleResult?.action || DEFAULT_RULE_ACTION,
+          ruleAction: ruleInstance.action,
           ruleHit,
         }
       } catch (e) {

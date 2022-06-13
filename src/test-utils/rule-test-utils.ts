@@ -70,14 +70,14 @@ export async function bulkVerifyUserEvents(
   return results
 }
 
-export function getRuleActions(
+export function getRuleHits(
   results: (TransactionMonitoringResult | UserMonitoringResult)[]
-): RuleAction[] {
+): boolean[] {
   return results.map((result) => {
     if (result.executedRules?.length > 1) {
       throw new Error('The number of the executed rules should be <= 1')
     }
-    return result.executedRules[0]?.ruleAction
+    return result.executedRules[0]?.ruleHit
   })
 }
 
@@ -110,7 +110,7 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
 export interface TransactionRuleTestCase<T = object> {
   name: string
   transactions: Transaction[]
-  expectedActions: (RuleAction | undefined)[]
+  expectedHits: boolean[]
   ruleParams?: T
 }
 
@@ -118,30 +118,30 @@ export function createTransactionRuleTestCase(
   testCaseName: string,
   tenantId: string,
   transactions: Transaction[],
-  expectedRuleActions: (RuleAction | undefined)[]
+  expectedHits: boolean[]
 ) {
   test(testCaseName, async () => {
     const results = await bulkVerifyTransactions(tenantId, transactions)
-    const ruleActions = getRuleActions(results)
-    expect(ruleActions).toEqual(expectedRuleActions)
+    const ruleHits = getRuleHits(results)
+    expect(ruleHits).toEqual(expectedHits)
   })
 }
 
 export interface UserRuleTestCase {
   name: string
   userEvents: UserEvent[]
-  expectedActions: RuleAction[]
+  expectedHits: boolean[]
 }
 
 export function createUserRuleTestCase(
   testCaseName: string,
   tenantId: string,
   userEvents: UserEvent[],
-  expectedRuleActions: RuleAction[]
+  expectedRuleHits: boolean[]
 ) {
   test(testCaseName, async () => {
     const results = await bulkVerifyUserEvents(tenantId, userEvents)
-    const ruleActions = getRuleActions(results)
-    expect(ruleActions).toEqual(expectedRuleActions)
+    const ruleHits = getRuleHits(results)
+    expect(ruleHits).toEqual(expectedRuleHits)
   })
 }

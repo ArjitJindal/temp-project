@@ -28,7 +28,7 @@ describe.each<TransactionRuleTestCase>([
         destinationUserId: '1-2',
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: 'Second transaction of a customer - hit',
@@ -42,7 +42,7 @@ describe.each<TransactionRuleTestCase>([
         destinationUserId: '2-3',
       }),
     ],
-    expectedActions: ['FLAG', 'ALLOW'],
+    expectedHits: [true, false],
   },
   {
     name: 'Transaction of different customers - hit',
@@ -60,13 +60,13 @@ describe.each<TransactionRuleTestCase>([
         destinationUserId: '3-3',
       }),
     ],
-    expectedActions: ['FLAG', 'FLAG', 'ALLOW'],
+    expectedHits: [true, true, false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

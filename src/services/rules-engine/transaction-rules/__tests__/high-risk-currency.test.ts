@@ -51,7 +51,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['FLAG'],
+      expectedHits: [true],
     },
     {
       name: 'Sender low/medium risk and receiver high/very high risk currency',
@@ -69,7 +69,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['FLAG'],
+      expectedHits: [true],
     },
     {
       name: 'Both sender and receiver, low/medium risk currency',
@@ -87,7 +87,7 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['ALLOW'],
+      expectedHits: [false],
     },
     {
       name: 'Both sender and receiver, high/very high risk currency',
@@ -105,14 +105,14 @@ describe('Core logic', () => {
           },
         }),
       ],
-      expectedActions: ['FLAG'],
+      expectedHits: [true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

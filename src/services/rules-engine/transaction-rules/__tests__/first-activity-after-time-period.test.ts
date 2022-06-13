@@ -38,7 +38,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
     {
       name: 'exceeded dormacy period with different receiver - hit',
@@ -64,7 +64,7 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false],
     },
     {
       name: 'exceeded dormacy period with same receiver - hit',
@@ -80,14 +80,14 @@ describe('Core logic', () => {
           timestamp: dayjs('2022-01-02T00:00:01.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG'],
+      expectedHits: [false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -129,14 +129,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

@@ -76,7 +76,7 @@ describe('With transaction type', () => {
           timestamp: dayjs('2022-01-10T13:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, true, false],
     },
     {
       name: 'Too many user pairs: different transaction type - not hit',
@@ -100,7 +100,7 @@ describe('With transaction type', () => {
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'Normal user pairs: same transaction type - no hit',
@@ -124,7 +124,7 @@ describe('With transaction type', () => {
           timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
     {
       name: 'No user pairs: same transaction type - no hit',
@@ -142,7 +142,7 @@ describe('With transaction type', () => {
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW'],
+      expectedHits: [false, false],
     },
     {
       name: 'Too many user pairs (excluded users) - not hit',
@@ -172,14 +172,14 @@ describe('With transaction type', () => {
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -231,7 +231,7 @@ describe('Without transaction type', () => {
           timestamp: dayjs('2022-01-10T13:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'FLAG', 'FLAG', 'ALLOW'],
+      expectedHits: [false, true, true, false],
     },
     {
       name: 'Normal user pairs - not hit',
@@ -252,14 +252,14 @@ describe('Without transaction type', () => {
           timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -309,14 +309,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

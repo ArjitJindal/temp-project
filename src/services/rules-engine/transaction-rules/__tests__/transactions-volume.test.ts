@@ -68,7 +68,7 @@ describe('Core logic', () => {
     {
       name: 'Sender: all, Receiver: all',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'FLAG', 'FLAG'],
+      expectedHits: [false, false, true, true, true, true],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'all',
@@ -80,7 +80,7 @@ describe('Core logic', () => {
     {
       name: 'Sender: sending, Receiver: none',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'ALLOW'],
+      expectedHits: [false, false, false, true, false, false],
       ruleParams: {
         checkSender: 'sending',
         checkReceiver: 'none',
@@ -92,7 +92,7 @@ describe('Core logic', () => {
     {
       name: 'Sender: all, Receiver: none',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'FLAG', 'FLAG', 'ALLOW'],
+      expectedHits: [false, false, true, true, true, false],
       ruleParams: {
         checkSender: 'all',
         checkReceiver: 'none',
@@ -104,7 +104,7 @@ describe('Core logic', () => {
     {
       name: 'Sender: none, Receiver: receiving',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, false, false, true],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'receiving',
@@ -116,7 +116,7 @@ describe('Core logic', () => {
     {
       name: 'Sender: none, Receiver: all',
       transactions: TEST_HIT_TRANSACTIONS,
-      expectedActions: ['ALLOW', 'ALLOW', 'FLAG', 'ALLOW', 'FLAG', 'FLAG'],
+      expectedHits: [false, false, true, false, true, true],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'all',
@@ -125,7 +125,7 @@ describe('Core logic', () => {
         },
       },
     },
-  ])('', ({ name, transactions, expectedActions, ruleParams }) => {
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -143,7 +143,7 @@ describe('Core logic', () => {
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })
@@ -204,14 +204,14 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedActions: ['ALLOW', 'ALLOW', 'ALLOW', 'FLAG'],
+      expectedHits: [false, false, false, true],
     },
-  ])('', ({ name, transactions, expectedActions }) => {
+  ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
-      expectedActions
+      expectedHits
     )
   })
 })

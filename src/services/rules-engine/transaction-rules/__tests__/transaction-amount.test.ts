@@ -65,7 +65,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: 'User in the target age range AND too big transaction amount (currency not in the rule params) - hit',
@@ -78,7 +78,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
   {
     name: 'User in the target age range AND normal transaction amount - not hit',
@@ -91,7 +91,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'User not in the target range AND too big transaction amount - not hit',
@@ -104,7 +104,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'User not in the target range AND normal transaction amount - not hit',
@@ -117,7 +117,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW'],
+    expectedHits: [false],
   },
   {
     name: 'Missing sender user ID - hit',
@@ -130,13 +130,13 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['FLAG'],
+    expectedHits: [true],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

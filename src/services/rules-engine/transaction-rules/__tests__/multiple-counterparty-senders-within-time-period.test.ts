@@ -65,7 +65,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false],
   },
   {
     name: 'Transacting with different originUserID (not within time period) - not hit',
@@ -107,7 +107,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false],
   },
   {
     name: 'Transacting with same originUserID (not within time period) - not hit',
@@ -149,7 +149,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false],
   },
   {
     name: 'Transacting with same originUserID (within time period) - hit',
@@ -191,13 +191,13 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+    expectedHits: [false, false, true],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })

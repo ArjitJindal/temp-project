@@ -64,7 +64,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+    expectedHits: [false, false, true],
   },
   {
     name: 'Currency transaction with same sender, different receiver - hit',
@@ -106,7 +106,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+    expectedHits: [false, false, true],
   },
   {
     name: 'Currency transaction with different sender, same receiver - hit',
@@ -148,7 +148,7 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'FLAG'],
+    expectedHits: [false, false, true],
   },
   {
     name: 'Transaction with same currency - not hit',
@@ -190,13 +190,13 @@ describe.each<TransactionRuleTestCase>([
         },
       }),
     ],
-    expectedActions: ['ALLOW', 'ALLOW', 'ALLOW'],
+    expectedHits: [false, false, false],
   },
-])('', ({ name, transactions, expectedActions }) => {
+])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
     TEST_TENANT_ID,
     transactions,
-    expectedActions
+    expectedHits
   )
 })
