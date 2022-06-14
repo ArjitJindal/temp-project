@@ -12,6 +12,7 @@ import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
+import { getUserName } from '@/utils/api/users';
 import { useUsers } from '@/utils/user-utils';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import AllowForm from '@/pages/case-management/components/AllowForm';
@@ -155,6 +156,12 @@ const TableList = (
         },
       },
       {
+        title: 'Origin User Name',
+        render: (dom, entity) => {
+          return getUserName(entity.originUser);
+        },
+      },
+      {
         title: 'Origin Method',
         width: 100,
         hideInSearch: true,
@@ -194,6 +201,12 @@ const TableList = (
         width: 150,
         render: (dom, entity) => {
           return entity.destinationUserId;
+        },
+      },
+      {
+        title: 'Destination User Name',
+        render: (dom, entity) => {
+          return getUserName(entity.destinationUser);
         },
       },
       {

@@ -7,6 +7,7 @@ import { IRouteComponentProps, Link } from 'umi';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
 import styles from './components/TransactionDetails.less';
+import { getUserName } from '@/utils/api/users';
 
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
@@ -124,6 +125,12 @@ const TableList = (
         },
       },
       {
+        title: 'Origin User Name',
+        render: (dom, entity) => {
+          return getUserName(entity.originUser);
+        },
+      },
+      {
         title: 'Origin Method',
         hideInSearch: true,
         render: (dom, entity) => {
@@ -158,6 +165,12 @@ const TableList = (
         dataIndex: 'deatinationUserId',
         render: (dom, entity) => {
           return entity.destinationUserId;
+        },
+      },
+      {
+        title: 'Destination User Name',
+        render: (dom, entity) => {
+          return getUserName(entity.destinationUser);
         },
       },
       {
