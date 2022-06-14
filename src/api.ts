@@ -39,12 +39,12 @@ export function useAuth(): SecurityAuthentication {
       getToken: async () => {
         try {
           return await getAccessTokenSilently({
-            scope: 'openid profile email write:tenant',
+            scope: 'openid profile email',
             audience,
           });
         } catch (e) {
           return await getAccessTokenWithPopup({
-            scope: 'openid profile email write:tenant',
+            scope: 'openid profile email',
             audience,
           });
         }

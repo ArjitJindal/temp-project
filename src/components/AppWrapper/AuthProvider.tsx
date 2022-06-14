@@ -15,6 +15,8 @@ const onRedirectCallback = (appState: any) => {
 const providerConfig = {
   domain: AUTH0_DOMAIN,
   clientId: AUTH0_CLIENT_ID,
+  scope: 'openid profile email',
+  audience: AUTH0_AUDIENCE ?? undefined,
   redirectUri: window.location.origin,
   onRedirectCallback,
 };
