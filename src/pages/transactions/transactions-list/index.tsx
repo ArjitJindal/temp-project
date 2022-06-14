@@ -126,6 +126,7 @@ const TableList = (
       },
       {
         title: 'Origin User Name',
+        width: 120,
         render: (dom, entity) => {
           return getUserName(entity.originUser);
         },
@@ -169,6 +170,7 @@ const TableList = (
       },
       {
         title: 'Destination User Name',
+        width: 120,
         render: (dom, entity) => {
           return getUserName(entity.destinationUser);
         },
