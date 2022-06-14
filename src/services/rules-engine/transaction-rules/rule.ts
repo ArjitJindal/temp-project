@@ -4,6 +4,8 @@ import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 export type RuleResult = {
   action: RuleAction
@@ -18,8 +20,8 @@ export type DefaultTransactionRuleParameters = {
 export class TransactionRule<P> extends Rule {
   tenantId: string
   transaction: Transaction
-  senderUser?: User | Business
-  receiverUser?: User | Business
+  senderUser?: InternalConsumerUser | InternalBusinessUser
+  receiverUser?: InternalConsumerUser | InternalBusinessUser
   parameters: P
   action: RuleAction
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -28,8 +30,8 @@ export class TransactionRule<P> extends Rule {
     tenantId: string,
     data: {
       transaction: Transaction
-      senderUser?: User | Business
-      receiverUser?: User | Business
+      senderUser?: InternalConsumerUser | InternalBusinessUser
+      receiverUser?: InternalConsumerUser | InternalBusinessUser
     },
     params: {
       parameters: P
