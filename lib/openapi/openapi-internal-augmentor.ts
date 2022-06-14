@@ -169,11 +169,11 @@ for (const path in openapi.paths) {
             'method.response.header.Access-Control-Allow-Headers': "'*'",
             'method.response.header.Access-Control-Allow-Methods': "'*'",
             'method.response.header.Access-Control-Allow-Origin':
-              process.env.ENV === 'prod'
-                ? "'https://console.flagright.com'"
-                : process.env.ENV === 'dev'
+              process.env.ENV === 'dev'
                 ? "'*'"
-                : `'https://${process.env.ENV}.console.flagright.com'`,
+                : process.env.ENV === 'sandbox'
+                ? "'https://sandbox.console.flagright.com'"
+                : "'https://console.flagright.com'",
           },
         },
       },
