@@ -6,6 +6,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
+import { PriceClass } from 'aws-cdk-lib/aws-cloudfront';
 import type { Config } from './configs/config';
 
 export class CdkPhytoplanktonStack extends cdk.Stack {
@@ -47,6 +48,7 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
 
     // CloudFront distribution
     const distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
+      priceClass: config.CLOUDFRONT_PRICE_CLASS,
       viewerCertificate,
       errorConfigurations: [
         {
