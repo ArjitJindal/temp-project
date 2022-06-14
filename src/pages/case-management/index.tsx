@@ -150,6 +150,7 @@ const TableList = (
       },
       {
         title: 'Origin User ID',
+        width: 120,
         dataIndex: 'originUserId',
         render: (dom, entity) => {
           return entity.originUserId;

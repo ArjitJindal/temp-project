@@ -103,12 +103,12 @@ const TableList = (
       {
         title: 'Transaction Type',
         dataIndex: 'type',
-        width: 150,
+        width: 100,
         ellipsis: true,
       },
       {
         title: 'Timestamp',
-        width: 130,
+        width: 180,
         ellipsis: true,
         dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
@@ -119,6 +119,7 @@ const TableList = (
       },
       {
         title: 'Origin User ID',
+        width: 120,
         dataIndex: 'originUserId',
         render: (dom, entity) => {
           return entity.originUserId;
@@ -133,6 +134,7 @@ const TableList = (
       },
       {
         title: 'Origin Method',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originPaymentDetails?.method;
@@ -140,6 +142,7 @@ const TableList = (
       },
       {
         title: 'Origin Amount',
+        width: 120,
         dataIndex: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
@@ -149,6 +152,7 @@ const TableList = (
       },
       {
         title: 'Origin Currency',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
@@ -156,6 +160,7 @@ const TableList = (
       },
       {
         title: 'Origin Country',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
@@ -163,6 +168,7 @@ const TableList = (
       },
       {
         title: 'Destination User ID',
+        width: 120,
         dataIndex: 'deatinationUserId',
         render: (dom, entity) => {
           return entity.destinationUserId;
@@ -177,6 +183,7 @@ const TableList = (
       },
       {
         title: 'Destination Method',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationPaymentDetails?.method;
@@ -185,6 +192,7 @@ const TableList = (
       {
         title: 'Destination Amount',
         dataIndex: 'destnationAmountDetails.transactionAmount',
+        width: 120,
         hideInSearch: true,
         sorter: true,
         render: (dom, entity) => {
@@ -193,6 +201,7 @@ const TableList = (
       },
       {
         title: 'Destination Currency',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
@@ -200,6 +209,7 @@ const TableList = (
       },
       {
         title: 'Destination Country',
+        width: 120,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
