@@ -37,5 +37,6 @@ export type Config = {
     AUTH0_MANAGEMENT_CLIENT_SECRET: string
     ATLAS_CREDENTIALS_SECRET_ARN: string
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
+    BETTERUPTIME_HOOK_URL?: string
   }
 }

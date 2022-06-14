@@ -40,5 +40,7 @@ export const config: Config = {
       'z3U6yCyd08ge8Yk2VkQA8_H5u0-Q_xRyjVASOGoTh7axJB6z2jFIKDteTwA_J52f',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
+    BETTERUPTIME_HOOK_URL:
+      'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/N4Cd5cADBCU4WfihkQnvoYsq',
   },
 }

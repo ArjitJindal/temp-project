@@ -1,6 +1,6 @@
 ### Tickets
 
-- Link to JIRA ticket
+- Link to Notion ticket
 
 ### Notes
 
