@@ -15,7 +15,7 @@ export type GlobalHeaderRightProps = {
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
   const { logout } = useAuth0();
   const user = useAuth0User();
-  const isAdmin = user && isAtLeastAdmin(user);
+  const isAdmin = isAtLeastAdmin(user);
 
   const onMenuClick = useCallback(
     (event: MenuInfo) => {

@@ -11,7 +11,7 @@ import { Construct } from 'constructs';
 import { config as deployConfig } from './configs/config-deployment';
 import { config as devConfig } from './configs/config-dev';
 import { config as sandboxConfig } from './configs/config-sandbox';
-import { config as prodConfig } from './configs/config-prod-asia-1';
+import { config as prodConfig } from './configs/config-prod';
 import { CdkPhytoplanktonStack } from './cdk-phytoplankton-stack';
 
 const PIPELINE_NAME = 'phytoplankton-pipeline';

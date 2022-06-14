@@ -26,7 +26,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         width: 100,
         sorter: true,
         render: (_, entity) => {
-          return user && isFlagrightTenantUser(user) ? (
+          return isFlagrightTenantUser(user) ? (
             <RuleCreationForm rule={entity}>
               <a>{entity.id}</a>
             </RuleCreationForm>
@@ -102,7 +102,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       search={{
         labelWidth: 30,
       }}
-      toolBarRender={() => (user && isFlagrightTenantUser(user) ? [<RuleCreationForm />] : [])}
+      toolBarRender={() => (isFlagrightTenantUser(user) ? [<RuleCreationForm />] : [])}
       request={async () => {
         const rules = await api.getRules({});
         return {

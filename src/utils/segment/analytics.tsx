@@ -6,8 +6,8 @@ export function makeSegmentAnalytics(segmentAnalytics: AnalyticsBrowser): Analyt
     identify(userId: string) {
       segmentAnalytics.identify(userId);
     },
-    group(groupId: string) {
-      segmentAnalytics.group(groupId);
+    tenant(groupId: string, traits) {
+      segmentAnalytics.group(groupId, traits);
     },
     page: () => {
       segmentAnalytics.page(undefined);

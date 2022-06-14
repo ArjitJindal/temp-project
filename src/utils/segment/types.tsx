@@ -10,7 +10,7 @@ export type Event =
 
 export interface Analytics {
   identify(userId: string): void;
-  group(groupId: string): void;
+  tenant(tenantId: string, traits: { apiHost: string }): void;
   page(properties: { url: string }): void;
   event(event: Event): void;
 }

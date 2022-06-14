@@ -12,6 +12,7 @@ import {
 } from './apis';
 import { PromiseMiddlewareWrapper } from './apis/middleware';
 import { ObjectDefaultApi as FlagrightApi } from './apis/types/ObjectParamAPI';
+import { useAuth0User } from '@/utils/user-utils';
 
 class AuthorizationMiddleware implements Middleware {
   auth: SecurityAuthentication;
@@ -29,32 +30,41 @@ class AuthorizationMiddleware implements Middleware {
     return context;
   }
 }
-
-export function useApi(): FlagrightApi {
+export function useAuth(): SecurityAuthentication {
+  const user = useAuth0User();
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
-  const api = useMemo(() => {
-    const auth = new AuthorizationAuthentication({
+  return useMemo(() => {
+    const audience = AUTH0_AUDIENCE ?? user.tenantApiAudience;
+    return new AuthorizationAuthentication({
       getToken: async () => {
         try {
           return await getAccessTokenSilently({
             scope: 'openid profile email write:tenant',
-            audience: `${AUTH0_AUDIENCE}`,
+            audience,
           });
         } catch (e) {
           return await getAccessTokenWithPopup({
             scope: 'openid profile email write:tenant',
-            audience: `${AUTH0_AUDIENCE}`,
+            audience,
           });
         }
       },
     });
+  }, [user, getAccessTokenSilently, getAccessTokenWithPopup]);
+}
+
+export function useApi(): FlagrightApi {
+  const auth = useAuth();
+  const user = useAuth0User();
+  const api = useMemo(() => {
+    const apiUrl = API_BASE_PATH ?? user.tenantConsoleApiUrl;
     const apiConfig: Configuration = {
-      baseServer: new ServerConfiguration(API_BASE_PATH, {}),
+      baseServer: new ServerConfiguration(apiUrl, {}),
       httpApi: new IsomorphicFetchHttpLibrary(),
       middleware: [new PromiseMiddlewareWrapper(new AuthorizationMiddleware(auth))],
       authMethods: { Authorization: auth },
     };
     return new FlagrightApi(apiConfig);
-  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
+  }, [user, auth]);
   return api;
 }

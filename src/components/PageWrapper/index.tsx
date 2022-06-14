@@ -16,24 +16,14 @@ export default function PageWrapper(props: Props) {
   const analytics = useAnalytics();
   const location = useRouteMatch();
 
-  const userId = user?.userId;
-  const tenantId = user?.tenantId;
+  const userId = user.userId;
+  const tenantId = user.tenantId;
 
-  useEffect(() => {
-    if (userId != null) {
-      analytics.identify(userId);
-    }
-  }, [analytics, userId]);
-  useEffect(() => {
-    if (tenantId != null) {
-      analytics.group(tenantId);
-    }
-  }, [analytics, tenantId]);
   useEffect(() => {
     analytics.page({
       url: location.url,
     });
-  }, [analytics, location.url]);
+  }, [analytics, tenantId, location.url]);
 
   return (
     <AntConfigProvider>

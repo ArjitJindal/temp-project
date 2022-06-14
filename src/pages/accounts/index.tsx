@@ -63,7 +63,7 @@ export default function () {
       sorter: false,
       fixed: 'right',
       render: (_, item) => {
-        if (user?.userId === item.user_id) {
+        if (user.userId === item.user_id) {
           return null;
         }
 

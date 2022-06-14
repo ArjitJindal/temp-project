@@ -8,17 +8,18 @@ interface ExtraProps {
 }
 
 export default function Button(props: ButtonProps & ExtraProps) {
+  const { analyticsName, ...rest } = props;
   const analytics = useAnalytics();
   const handleClick = function (this: unknown, ...args: any) {
     if (props.onClick) {
       props.onClick.apply(this, args);
     }
-    if (props.analyticsName) {
+    if (analyticsName) {
       analytics.event({
         title: 'Button Clicked',
-        name: props.analyticsName,
+        name: analyticsName,
       });
     }
   };
-  return <AntButton {...props} onClick={handleClick} />;
+  return <AntButton {...rest} onClick={handleClick} />;
 }
