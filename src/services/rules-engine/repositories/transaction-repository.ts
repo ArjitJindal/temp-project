@@ -82,7 +82,7 @@ export class TransactionRepository {
       executedRulesFilters.push({
         $elemMatch: {
           ruleHit: true,
-          ruleId: { $in: params.filterRulesExecuted },
+          ruleId: { $in: params.filterRulesHit },
         },
       })
     }
