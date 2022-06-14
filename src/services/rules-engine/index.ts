@@ -14,7 +14,6 @@ import { TransactionEventRepository } from './repositories/transaction-event-rep
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
-import { FailedRulesResult } from '@/@types/openapi-public/FailedRulesResult'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { User } from '@/@types/openapi-public/User'
@@ -26,8 +25,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
-
-const DEFAULT_RULE_ACTION: RuleAction = 'ALLOW'
+import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
@@ -169,7 +167,7 @@ export async function verifyTransactionEvent(
   transactionEvent: TransactionEvent,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
-): Promise<TransactionMonitoringResult> {
+): Promise<TransactionEventMonitoringResult> {
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
   })
@@ -197,10 +195,13 @@ export async function verifyTransactionEvent(
     ? await verifyTransactionIdempotent(tenantId, dynamoDb, updatedTransaction)
     : { executedRules: [], hitRules: [] }
 
-  await transactionEventRepository.saveTransactionEvent(transactionEvent, {
-    executedRules,
-    hitRules,
-  })
+  const eventId = await transactionEventRepository.saveTransactionEvent(
+    transactionEvent,
+    {
+      executedRules,
+      hitRules,
+    }
+  )
 
   // Update transaction with the latest payload
   await transactionRepository.saveTransaction(updatedTransaction, {
@@ -215,9 +216,15 @@ export async function verifyTransactionEvent(
   if (transaction.transactionState !== updatedTransaction.transactionState) {
     await updateAggregation(tenantId, updatedTransaction, dynamoDb)
   }
+  const updatedTransactionWithoutRulesResult = {
+    ...updatedTransaction,
+    executedRules: undefined,
+    hitRules: undefined,
+  }
 
   return {
-    transactionId: transactionEvent.transactionId,
+    eventId,
+    transaction: updatedTransactionWithoutRulesResult,
     executedRules,
     hitRules,
   }

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { verifyTransaction, verifyTransactionEvent } from '..'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import {
@@ -163,6 +164,7 @@ describe('Verify Transaction Event', () => {
       ).toEqual('old reference')
 
       const transactionEvent = getTestTransactionEvent({
+        eventId: '123',
         transactionId: transaction.transactionId,
         transactionState: 'SUCCESSFUL',
         updatedTransactionAttributes: { reference: 'new reference' },
@@ -172,14 +174,16 @@ describe('Verify Transaction Event', () => {
         TEST_TENANT_ID,
         dynamoDb
       )
-      expect(result1).toEqual(result2)
-      expect(
-        (
-          await transactionRepository.getTransactionById(
-            transaction.transactionId as string
-          )
-        )?.reference
-      ).toEqual('new reference')
+      const latestTransaction = await transactionRepository.getTransactionById(
+        transaction.transactionId as string
+      )
+      expect(result2).toEqual({
+        eventId: transactionEvent.eventId,
+        transaction: _.omit(latestTransaction, ['executedRules', 'hitRules']),
+        executedRules: result1.executedRules,
+        hitRules: result1.hitRules,
+      })
+      expect(latestTransaction?.reference).toEqual('new reference')
     })
   })
 })

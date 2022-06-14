@@ -3038,6 +3038,80 @@ components:
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
+    TransactionEventMonitoringResult:
+      allOf:
+        - type: object
+          description: Model to convey the results of transaction monitoring
+          properties:
+            eventId:
+              type: string
+            transaction:
+              $ref: '#/components/schemas/Transaction'
+          required:
+            - eventId
+            - transaction
+        - $ref: '#/components/schemas/RulesResults'
+      x-examples:
+        example-1:
+          eventId: 7b80a539eea6e78acbd6d458e5971482
+          transaction:
+            transactionId: 7b80a539eea6e78acbd6d458e5971482
+            originUserId: 8650a2611d0771cba03310f74bf6
+            destinationUserId: 9350a2611e0771cba03310f74bf6
+            originAmountDetails:
+              country: DE
+              transactionAmount: 800
+              transactionCurrency: EUR
+            destinationAmountDetails:
+              country: IN
+              transactionAmount: 68351.34
+              transactionCurrency: INR
+            promotionCodeUsed: true
+            timestamp: 1641654664
+            originPaymentDetails:
+              method: CARD
+              cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+              cardIssuedCountry: US
+              transactionReferenceField: Deposit
+              3dsDone: true
+            destinationPaymentDetails:
+              method: CARD
+              cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
+              cardIssuedCountry: IN
+              transactionReferenceField: Deposit
+              3dsDone: true
+            reference: loan repayment
+            deviceData:
+              batteryLevel: 95
+              deviceLatitude: 13.0033
+              deviceLongitude: 76.1004
+              ipAddress: 10.23.191.2
+              deviceIdentifier: 3c49f915d04485e34caba
+              vpnUsed: false
+              operatingSystem: Android 11.2
+              deviceMaker: ASUS
+              deviceModel: Zenphone M2 Pro Max
+              deviceYear: '2018'
+              appVersion: 1.1.0
+            tags:
+              - key: customKey
+                value: customValue
+          executedRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: BLOCK
+              ruleHit: true
+          hitRules:
+            - ruleId: R-1a
+              ruleName: Proof of funds for high value transactions
+              ruleDescription: >-
+                If a user makes a remittance transaction >= 1800 in EUR - ask
+                for proof of funds
+              ruleAction: BLOCK
+      title: ''
     UserMonitoringResult:
       allOf:
         - type: object
