@@ -2,8 +2,13 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { ManagementClient } from 'auth0'
-import { BadRequest, NotFound, InternalServerError } from 'http-errors'
+import { ManagementClient, Organization } from 'auth0'
+import {
+  BadRequest,
+  NotFound,
+  InternalServerError,
+  Conflict,
+} from 'http-errors'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
@@ -28,6 +33,7 @@ import {
   DashboardTimeFrameType,
   TRANSACTION_EXPORT_HEADERS_SETTINGS,
 } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
+import { AccountsService } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -476,32 +482,22 @@ export type AccountsConfig = {
   AUTH0_MANAGEMENT_CLIENT_SECRET: string
 }
 
-// todo: move to config
-const CONNECTION_NAME = 'Username-Password-Authentication'
-
 export const accountsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const {
-      principalId: tenantId,
-      tenantName,
-      tenantConsoleHost,
-      role,
-    } = event.requestContext.authorizer
+    const { userId, role } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
-    const managementClient = new ManagementClient({
-      domain: config.AUTH0_DOMAIN,
-      clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
-      clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
-    })
+
+    const accountsService = new AccountsService(config)
+
     if (event.httpMethod === 'GET') {
-      // TODO: Switch to Auth0 organizations to have clear tenants separation
-      return managementClient.getUsers({
-        q: `app_metadata.tenantId:"${tenantId}"`,
-      })
+      const organization = await accountsService.getUserOrganization(userId)
+
+      // todo: this call can only return up to 1000 users, need to handle this
+      return await accountsService.getOrganizationAccounts(organization)
     }
     if (event.httpMethod === 'POST') {
       assertRole(role, 'admin')
@@ -510,37 +506,31 @@ export const accountsHandler = lambdaApi()(
       }
       // todo: validate
       const { email, password } = JSON.parse(event.body)
-      return await managementClient.createUser({
-        connection: CONNECTION_NAME,
-        email,
-        password,
-        app_metadata: {
-          tenantName: tenantName,
-          tenantId: tenantId,
-          tenantConsoleHost: tenantConsoleHost,
+
+      const organization = await accountsService.getUserOrganization(userId)
+      const user = await accountsService.createUserInOrganization(
+        organization,
+        {
+          email,
+          password,
           role: 'user',
-        },
-      })
+        }
+      )
+
+      return user
     } else if (event.httpMethod === 'DELETE') {
       const { pathParameters } = event
-      const userId = pathParameters?.userId
+      assertRole(role, 'admin')
+
+      const idToDelete = pathParameters?.userId
         ? decodeURIComponent(pathParameters?.userId)
         : null
-      if (!userId) {
+      if (!idToDelete) {
         throw new Error(`userId is not provided`)
       }
-      assertRole(role, 'admin')
-      // todo: do proper input sanitize to prevent injections
-      const users = await managementClient.getUsers({
-        q: `app_metadata.tenantId:${tenantId} AND user_id:${userId}`,
-      })
-      if (users.length === 0) {
-        throw new Error(
-          `Unable to find user "${userId}" in the tenant |${tenantId}|`
-        )
-      }
-      const [user] = users
-      await managementClient.deleteUser({ id: user.user_id! })
+
+      const organization = await accountsService.getUserOrganization(userId)
+      await accountsService.deleteUser(organization, idToDelete)
       return true
     }
 
