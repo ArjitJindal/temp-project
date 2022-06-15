@@ -1602,6 +1602,117 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /tenants:
+    get:
+      summary: Tenant - List
+      operationId: get-tenants-list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /accounts/{userId}/change_tenant:
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    post:
+      summary: Account - Change Tenant
+      operationId: accounts-change-tenant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: ChangeTenantPayload
+              properties:
+                newTenantId:
+                  type: string
+              required:
+                - newTenantId
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts/{userId}:
     parameters:
       - schema:
@@ -2181,28 +2292,21 @@ components:
       title: Account
       type: object
       properties:
-        user_id:
+        id:
           type: string
-        created_at:
-          type: string
-        updated_at:
+        role:
           type: string
         email:
           type: string
-        email_verified:
+        emailVerified:
           type: boolean
-        name:
-          type: string
-        nickname:
-          type: string
         picture:
           type: string
       required:
-        - user_id
-        - created_at
-        - updated_at
+        - id
+        - role
         - email
-        - email_verified
+        - emailVerified
     AccountInvitePayload:
       title: AccountInvitePayload
       type: object
@@ -2214,6 +2318,17 @@ components:
       required:
         - email
         - password
+    Tenant:
+      title: Tenant
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
     Address:
       title: Address
       required:

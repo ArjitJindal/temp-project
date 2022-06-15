@@ -2,13 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { ManagementClient, Organization } from 'auth0'
-import {
-  BadRequest,
-  NotFound,
-  InternalServerError,
-  Conflict,
-} from 'http-errors'
+import { BadRequest, InternalServerError, NotFound } from 'http-errors'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
@@ -33,7 +27,13 @@ import {
   DashboardTimeFrameType,
   TRANSACTION_EXPORT_HEADERS_SETTINGS,
 } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
-import { AccountsService } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
+import {
+  AccountsService,
+  Tenant,
+} from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
+import { Tenant as ApiTenant } from '@/@types/openapi-internal/Tenant'
+import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -493,13 +493,15 @@ export const accountsHandler = lambdaApi()(
 
     const accountsService = new AccountsService(config)
 
-    if (event.httpMethod === 'GET') {
-      const organization = await accountsService.getUserOrganization(userId)
+    if (event.httpMethod === 'GET' && event.resource === '/accounts') {
+      const tenant = await accountsService.getAccountTenant(userId)
 
       // todo: this call can only return up to 1000 users, need to handle this
-      return await accountsService.getOrganizationAccounts(organization)
-    }
-    if (event.httpMethod === 'POST') {
+      const accounts: Account[] = await accountsService.getTenantAccounts(
+        tenant
+      )
+      return accounts
+    } else if (event.httpMethod === 'POST' && event.resource === '/accounts') {
       assertRole(role, 'admin')
       if (event.body == null) {
         throw new Error(`Body should not be empty`)
@@ -507,8 +509,8 @@ export const accountsHandler = lambdaApi()(
       // todo: validate
       const { email, password } = JSON.parse(event.body)
 
-      const organization = await accountsService.getUserOrganization(userId)
-      const user = await accountsService.createUserInOrganization(
+      const organization = await accountsService.getAccountTenant(userId)
+      const user = await accountsService.createAccountInOrganization(
         organization,
         {
           email,
@@ -518,7 +520,35 @@ export const accountsHandler = lambdaApi()(
       )
 
       return user
-    } else if (event.httpMethod === 'DELETE') {
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/accounts/{userId}/change_tenant'
+    ) {
+      assertRole(role, 'root')
+      const { pathParameters } = event
+      const idToChange = pathParameters?.userId
+        ? decodeURIComponent(pathParameters?.userId)
+        : null
+      if (!idToChange) {
+        throw new Error(`userId is not provided`)
+      }
+      if (event.body == null) {
+        throw new Error(`Body should not be empty`)
+      }
+      const { newTenantId } = JSON.parse(event.body) as ChangeTenantPayload
+      const oldTenant = await accountsService.getAccountTenant(idToChange)
+      console.log('oldTenant', JSON.stringify(oldTenant))
+      const newTenant = await accountsService.getTenantById(newTenantId)
+      if (newTenant == null) {
+        throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
+      }
+      console.log('newTenant', JSON.stringify(newTenant))
+      await accountsService.changeUserTenant(oldTenant, newTenant, userId)
+      return true
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.resource === '/accounts/{userId}'
+    ) {
       const { pathParameters } = event
       assertRole(role, 'admin')
 
@@ -529,11 +559,36 @@ export const accountsHandler = lambdaApi()(
         throw new Error(`userId is not provided`)
       }
 
-      const organization = await accountsService.getUserOrganization(userId)
+      const organization = await accountsService.getAccountTenant(userId)
       await accountsService.deleteUser(organization, idToDelete)
       return true
     }
 
-    throw new Error('Unhandled request')
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+export const tenantsHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId, role } = event.requestContext.authorizer
+    assertRole(role, 'root')
+
+    const config = process.env as AccountsConfig
+    const accountsService = new AccountsService(config)
+
+    if (event.httpMethod === 'GET' && event.resource === '/tenants') {
+      const tenants: ApiTenant[] = (await accountsService.getTenants()).map(
+        (tenant: Tenant): ApiTenant => ({
+          id: tenant.id,
+          name: tenant.name,
+        })
+      )
+      return tenants
+    }
+    throw new BadRequest('Unhandled request')
   }
 )

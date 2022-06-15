@@ -25,6 +25,7 @@ export const TarponStackConstants = {
 
   // Lambda names
   ACCOUNT_FUNCTION_NAME: getResourceName('AccountFunction'),
+  TENANT_FUNCTION_NAME: getResourceName('TenantFunction'),
   API_KEY_AUTHORIZER_FUNCTION_NAME: getResourceName('ApiKeyAuthorizerFunction'),
   JWT_AUTHORIZER_FUNCTION_NAME: getResourceName('JWTAuthorizerFunction'),
   TRANSACTION_FUNCTION_NAME: getResourceName('TransactionFunction'),

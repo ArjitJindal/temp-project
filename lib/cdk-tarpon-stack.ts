@@ -444,6 +444,16 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
 
+    /* Accounts */
+    this.createFunction(
+      {
+        name: TarponStackConstants.TENANT_FUNCTION_NAME,
+        handler: 'app.tenantsHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
+      atlasFunctionProps
+    )
+
     /* business users view */
     const businessUsersViewFunction = this.createFunction(
       {

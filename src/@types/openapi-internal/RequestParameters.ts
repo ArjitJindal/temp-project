@@ -9,6 +9,7 @@ import { Assignment } from './Assignment'
 import { Business } from './Business'
 import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
+import { ChangeTenantPayload } from './ChangeTenantPayload'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
@@ -50,6 +51,7 @@ import { RuleImplementation } from './RuleImplementation'
 import { RuleInstance } from './RuleInstance'
 import { SWIFTDetails } from './SWIFTDetails'
 import { Tag } from './Tag'
+import { Tenant } from './Tenant'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagement } from './TransactionCaseManagement'
@@ -67,6 +69,21 @@ import { User } from './User'
 import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
 import { WalletDetails } from './WalletDetails'
+
+export interface DefaultApiAccountsChangeTenantRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiaccountsChangeTenant
+   */
+  userId: string
+  /**
+   *
+   * @type ChangeTenantPayload
+   * @memberof DefaultApiaccountsChangeTenant
+   */
+  ChangeTenantPayload?: ChangeTenantPayload
+}
 
 export interface DefaultApiAccountsDeleteRequest {
   /**
@@ -249,6 +266,8 @@ export interface DefaultApiGetRuleImplementationsRequest {}
 export interface DefaultApiGetRuleInstancesRequest {}
 
 export interface DefaultApiGetRulesRequest {}
+
+export interface DefaultApiGetTenantsListRequest {}
 
 export interface DefaultApiGetTransactionRequest {
   /**

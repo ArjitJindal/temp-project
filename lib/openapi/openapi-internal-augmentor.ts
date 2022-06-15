@@ -9,7 +9,10 @@ import * as yaml from 'js-yaml'
 import { TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
+  '/tenants': TarponStackConstants.TENANT_FUNCTION_NAME,
   '/accounts': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
+  '/accounts/{userId}/change_tenant':
+    TarponStackConstants.ACCOUNT_FUNCTION_NAME,
   '/accounts/{userId}': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
   '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/rule_implementations': TarponStackConstants.RULE_FUNCTION_NAME,

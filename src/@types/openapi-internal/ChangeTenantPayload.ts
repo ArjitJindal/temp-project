@@ -10,12 +10,8 @@
  * Do not edit the class manually.
  */
 
-export class Account {
-  'id': string
-  'role': string
-  'email': string
-  'emailVerified': boolean
-  'picture'?: string
+export class ChangeTenantPayload {
+  'newTenantId': string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -26,39 +22,15 @@ export class Account {
     format: string
   }> = [
     {
-      name: 'id',
-      baseName: 'id',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'role',
-      baseName: 'role',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'email',
-      baseName: 'email',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'emailVerified',
-      baseName: 'emailVerified',
-      type: 'boolean',
-      format: '',
-    },
-    {
-      name: 'picture',
-      baseName: 'picture',
+      name: 'newTenantId',
+      baseName: 'newTenantId',
       type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return Account.attributeTypeMap
+    return ChangeTenantPayload.attributeTypeMap
   }
 
   public constructor() {}
