@@ -13,6 +13,7 @@ import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
+import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
 import { CompanyFinancialDetails } from '../models/CompanyFinancialDetails';
 import { CompanyGeneralDetails } from '../models/CompanyGeneralDetails';
@@ -27,11 +28,11 @@ import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransac
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
-import { FailedRulesResult } from '../models/FailedRulesResult';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
+import { HitRulesResult } from '../models/HitRulesResult';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -50,11 +51,11 @@ import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
-import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { SWIFTDetails } from '../models/SWIFTDetails';
 import { Tag } from '../models/Tag';
+import { Tenant } from '../models/Tenant';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
@@ -84,6 +85,20 @@ export class PromiseDefaultApi {
     responseProcessor?: DefaultApiResponseProcessor,
   ) {
     this.api = new ObservableDefaultApi(configuration, requestFactory, responseProcessor);
+  }
+
+  /**
+   * Account - Change Tenant
+   * @param userId
+   * @param ChangeTenantPayload
+   */
+  public accountsChangeTenant(
+    userId: string,
+    ChangeTenantPayload?: ChangeTenantPayload,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.accountsChangeTenant(userId, ChangeTenantPayload, _options);
+    return result.toPromise();
   }
 
   /**
@@ -283,6 +298,14 @@ export class PromiseDefaultApi {
    */
   public getRules(_options?: Configuration): Promise<Array<Rule>> {
     const result = this.api.getRules(_options);
+    return result.toPromise();
+  }
+
+  /**
+   * Tenant - List
+   */
+  public getTenantsList(_options?: Configuration): Promise<Array<Tenant>> {
+    const result = this.api.getTenantsList(_options);
     return result.toPromise();
   }
 

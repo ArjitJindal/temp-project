@@ -9,6 +9,7 @@ export * from './Assignment';
 export * from './Business';
 export * from './BusinessUsersListResponse';
 export * from './CardDetails';
+export * from './ChangeTenantPayload';
 export * from './Comment';
 export * from './CompanyFinancialDetails';
 export * from './CompanyGeneralDetails';
@@ -23,11 +24,11 @@ export * from './DashboardStatsTransactionsCount';
 export * from './DashboardStatsTransactionsCountData';
 export * from './DeviceData';
 export * from './ExecutedRulesResult';
-export * from './FailedRulesResult';
 export * from './FileImport';
 export * from './FileImportStatusChange';
 export * from './FileInfo';
 export * from './GenericBankAccountDetails';
+export * from './HitRulesResult';
 export * from './IBANDetails';
 export * from './ImportRequest';
 export * from './ImportResponse';
@@ -46,11 +47,11 @@ export * from './PresignedUrlResponse';
 export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
-export * from './RuleFailureException';
 export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './SWIFTDetails';
 export * from './Tag';
+export * from './Tenant';
 export * from './Transaction';
 export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
@@ -80,6 +81,7 @@ import { Assignment } from './Assignment';
 import { Business } from './Business';
 import { BusinessUsersListResponse } from './BusinessUsersListResponse';
 import { CardDetails } from './CardDetails';
+import { ChangeTenantPayload } from './ChangeTenantPayload';
 import { Comment } from './Comment';
 import { CompanyFinancialDetails } from './CompanyFinancialDetails';
 import { CompanyGeneralDetails } from './CompanyGeneralDetails';
@@ -94,11 +96,11 @@ import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCou
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData';
 import { DeviceData } from './DeviceData';
 import { ExecutedRulesResult } from './ExecutedRulesResult';
-import { FailedRulesResult } from './FailedRulesResult';
 import { FileImport, FileImportTypeEnum } from './FileImport';
 import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './FileImportStatusChange';
 import { FileInfo } from './FileInfo';
 import { GenericBankAccountDetails } from './GenericBankAccountDetails';
+import { HitRulesResult } from './HitRulesResult';
 import { IBANDetails } from './IBANDetails';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
 import { ImportResponse } from './ImportResponse';
@@ -123,11 +125,11 @@ import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { Rule, RuleTypeEnum } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
-import { RuleFailureException } from './RuleFailureException';
 import { RuleImplementation } from './RuleImplementation';
 import { RuleInstance, RuleInstanceTypeEnum, RuleInstanceStatusEnum } from './RuleInstance';
 import { SWIFTDetails } from './SWIFTDetails';
 import { Tag } from './Tag';
+import { Tenant } from './Tenant';
 import { Transaction } from './Transaction';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
 import { TransactionCaseManagement } from './TransactionCaseManagement';
@@ -184,6 +186,7 @@ let typeMap: { [index: string]: any } = {
   Business: Business,
   BusinessUsersListResponse: BusinessUsersListResponse,
   CardDetails: CardDetails,
+  ChangeTenantPayload: ChangeTenantPayload,
   Comment: Comment,
   CompanyFinancialDetails: CompanyFinancialDetails,
   CompanyGeneralDetails: CompanyGeneralDetails,
@@ -198,11 +201,11 @@ let typeMap: { [index: string]: any } = {
   DashboardStatsTransactionsCountData: DashboardStatsTransactionsCountData,
   DeviceData: DeviceData,
   ExecutedRulesResult: ExecutedRulesResult,
-  FailedRulesResult: FailedRulesResult,
   FileImport: FileImport,
   FileImportStatusChange: FileImportStatusChange,
   FileInfo: FileInfo,
   GenericBankAccountDetails: GenericBankAccountDetails,
+  HitRulesResult: HitRulesResult,
   IBANDetails: IBANDetails,
   ImportRequest: ImportRequest,
   ImportResponse: ImportResponse,
@@ -219,11 +222,11 @@ let typeMap: { [index: string]: any } = {
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
   Rule: Rule,
-  RuleFailureException: RuleFailureException,
   RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,
   SWIFTDetails: SWIFTDetails,
   Tag: Tag,
+  Tenant: Tenant,
   Transaction: Transaction,
   TransactionAmountDetails: TransactionAmountDetails,
   TransactionCaseManagement: TransactionCaseManagement,

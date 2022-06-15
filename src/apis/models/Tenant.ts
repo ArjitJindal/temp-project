@@ -12,15 +12,9 @@
 
 import { HttpFile } from '../http/http';
 
-export class RuleFailureException {
-  /**
-   * Unique rule identifier
-   */
-  'exceptionName': string;
-  /**
-   * Name of the rule
-   */
-  'exceptionDescription': string;
+export class Tenant {
+  'id': string;
+  'name': string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -31,21 +25,21 @@ export class RuleFailureException {
     format: string;
   }> = [
     {
-      name: 'exceptionName',
-      baseName: 'exceptionName',
+      name: 'id',
+      baseName: 'id',
       type: 'string',
       format: '',
     },
     {
-      name: 'exceptionDescription',
-      baseName: 'exceptionDescription',
+      name: 'name',
+      baseName: 'name',
       type: 'string',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return RuleFailureException.attributeTypeMap;
+    return Tenant.attributeTypeMap;
   }
 
   public constructor() {}

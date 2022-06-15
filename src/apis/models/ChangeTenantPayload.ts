@@ -10,13 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { ExecutedRulesResult } from './ExecutedRulesResult';
-import { HitRulesResult } from './HitRulesResult';
 import { HttpFile } from '../http/http';
 
-export class TransactionWithRulesResultAllOf {
-  'executedRules': Array<ExecutedRulesResult>;
-  'hitRules': Array<HitRulesResult>;
+export class ChangeTenantPayload {
+  'newTenantId': string;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -27,21 +24,15 @@ export class TransactionWithRulesResultAllOf {
     format: string;
   }> = [
     {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
-      format: '',
-    },
-    {
-      name: 'hitRules',
-      baseName: 'hitRules',
-      type: 'Array<HitRulesResult>',
+      name: 'newTenantId',
+      baseName: 'newTenantId',
+      type: 'string',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return TransactionWithRulesResultAllOf.attributeTypeMap;
+    return ChangeTenantPayload.attributeTypeMap;
   }
 
   public constructor() {}

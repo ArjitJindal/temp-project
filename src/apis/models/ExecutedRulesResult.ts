@@ -30,9 +30,6 @@ export class ExecutedRulesResult {
    */
   'ruleDescription': string;
   'ruleAction': RuleAction1;
-  /**
-   * Whether a rule was hit or not. When a rule is hit, it takes the pre-configured action on a transaction and/or user.
-   */
   'ruleHit': boolean;
 
   static readonly discriminator: string | undefined = undefined;

@@ -4,6 +4,7 @@ All URIs are relative to _http://localhost:3000_
 
 | Method | HTTP request | Description |
 | --- | --- | --- |
+| [**accountsChangeTenant**](DefaultApi.md#accountsChangeTenant) | **POST** /accounts/{userId}/change_tenant | Account - Change Tenant |
 | [**accountsDelete**](DefaultApi.md#accountsDelete) | **DELETE** /accounts/{userId} | Account - Delete |
 | [**accountsInvite**](DefaultApi.md#accountsInvite) | **POST** /accounts | Account - Invite |
 | [**deleteRuleInstancesRuleInstanceId**](DefaultApi.md#deleteRuleInstancesRuleInstanceId) | **DELETE** /rule_instances/{ruleInstanceId} | Rule Instance - Delete |
@@ -20,6 +21,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
+| [**getTenantsList**](DefaultApi.md#getTenantsList) | **GET** /tenants | Tenant - List |
 | [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
 | [**getTransactionsListExport**](DefaultApi.md#getTransactionsListExport) | **GET** /transactions/export | Transaction - Export |
@@ -35,6 +37,62 @@ All URIs are relative to _http://localhost:3000_
 | [**postTransactionsTransactionId**](DefaultApi.md#postTransactionsTransactionId) | **POST** /transactions/{transactionId} | Transaction - Update |
 | [**putRuleInstancesRuleInstanceId**](DefaultApi.md#putRuleInstancesRuleInstanceId) | **PUT** /rule_instances/{ruleInstanceId} | Rule Instance - Update |
 | [**putRuleRuleId**](DefaultApi.md#putRuleRuleId) | **PUT** /rules/{ruleId} | Rule - Update |
+
+# **accountsChangeTenant**
+
+> void accountsChangeTenant()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiAccountsChangeTenantRequest = {
+  // string
+  userId: "userId_example",
+  // ChangeTenantPayload (optional)
+  ChangeTenantPayload: {
+    newTenantId: "newTenantId_example",
+  },
+};
+
+apiInstance.accountsChangeTenant(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name                    | Type                    | Description | Notes                 |
+| ----------------------- | ----------------------- | ----------- | --------------------- |
+| **ChangeTenantPayload** | **ChangeTenantPayload** |             |
+| **userId**              | [**string**]            |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description           | Response headers |
+| ----------- | --------------------- | ---------------- |
+| **200**     | OK                    | -                |
+| **403**     | Not enough privileges | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
 # **accountsDelete**
 
@@ -834,6 +892,51 @@ This endpoint does not need any parameter.
 ### Return type
 
 **Array<Rule>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getTenantsList**
+
+> Array<Tenant> getTenantsList()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getTenantsList(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Array<Tenant>**
 
 ### Authorization
 

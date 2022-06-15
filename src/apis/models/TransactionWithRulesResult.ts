@@ -14,8 +14,8 @@ import { ACHDetails } from './ACHDetails';
 import { CardDetails } from './CardDetails';
 import { DeviceData } from './DeviceData';
 import { ExecutedRulesResult } from './ExecutedRulesResult';
-import { FailedRulesResult } from './FailedRulesResult';
 import { GenericBankAccountDetails } from './GenericBankAccountDetails';
+import { HitRulesResult } from './HitRulesResult';
 import { IBANDetails } from './IBANDetails';
 import { SWIFTDetails } from './SWIFTDetails';
 import { Tag } from './Tag';
@@ -94,7 +94,7 @@ export class TransactionWithRulesResult {
    */
   'tags'?: Array<Tag>;
   'executedRules': Array<ExecutedRulesResult>;
-  'failedRules': Array<FailedRulesResult>;
+  'hitRules': Array<HitRulesResult>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -201,9 +201,9 @@ export class TransactionWithRulesResult {
       format: '',
     },
     {
-      name: 'failedRules',
-      baseName: 'failedRules',
-      type: 'Array<FailedRulesResult>',
+      name: 'hitRules',
+      baseName: 'hitRules',
+      type: 'Array<HitRulesResult>',
       format: '',
     },
   ];

@@ -1,13 +1,16 @@
 import { Space } from 'antd';
 import React from 'react';
-import { useModel, SelectLang } from 'umi';
+import { useModel } from 'umi';
 import Avatar from './AvatarDropdown';
 import styles from './index.less';
+import SuperAdminPanel from '@/components/SuperAdminPanel';
+import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 
 export type SiderTheme = 'light' | 'dark';
 
 const GlobalHeaderRight: React.FC = () => {
   const { initialState } = useModel('@@initialState');
+  const user = useAuth0User();
 
   if (!initialState || !initialState.settings) {
     return null;
@@ -22,6 +25,7 @@ const GlobalHeaderRight: React.FC = () => {
 
   return (
     <Space className={className}>
+      {isAtLeast(user, UserRole.ROOT) && <SuperAdminPanel />}
       <Avatar menu />
     </Space>
   );

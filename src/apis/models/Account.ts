@@ -13,13 +13,10 @@
 import { HttpFile } from '../http/http';
 
 export class Account {
-  'user_id': string;
-  'created_at': string;
-  'updated_at': string;
+  'id': string;
+  'role': string;
   'email': string;
-  'email_verified': boolean;
-  'name'?: string;
-  'nickname'?: string;
+  'emailVerified': boolean;
   'picture'?: string;
 
   static readonly discriminator: string | undefined = undefined;
@@ -31,20 +28,14 @@ export class Account {
     format: string;
   }> = [
     {
-      name: 'user_id',
-      baseName: 'user_id',
+      name: 'id',
+      baseName: 'id',
       type: 'string',
       format: '',
     },
     {
-      name: 'created_at',
-      baseName: 'created_at',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'updated_at',
-      baseName: 'updated_at',
+      name: 'role',
+      baseName: 'role',
       type: 'string',
       format: '',
     },
@@ -55,21 +46,9 @@ export class Account {
       format: '',
     },
     {
-      name: 'email_verified',
-      baseName: 'email_verified',
+      name: 'emailVerified',
+      baseName: 'emailVerified',
       type: 'boolean',
-      format: '',
-    },
-    {
-      name: 'name',
-      baseName: 'name',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'nickname',
-      baseName: 'nickname',
-      type: 'string',
       format: '',
     },
     {

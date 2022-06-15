@@ -23,6 +23,7 @@ models/Assignment.ts
 models/Business.ts
 models/BusinessUsersListResponse.ts
 models/CardDetails.ts
+models/ChangeTenantPayload.ts
 models/Comment.ts
 models/CompanyFinancialDetails.ts
 models/CompanyGeneralDetails.ts
@@ -37,11 +38,11 @@ models/DashboardStatsTransactionsCount.ts
 models/DashboardStatsTransactionsCountData.ts
 models/DeviceData.ts
 models/ExecutedRulesResult.ts
-models/FailedRulesResult.ts
 models/FileImport.ts
 models/FileImportStatusChange.ts
 models/FileInfo.ts
 models/GenericBankAccountDetails.ts
+models/HitRulesResult.ts
 models/IBANDetails.ts
 models/ImportRequest.ts
 models/ImportResponse.ts
@@ -61,11 +62,11 @@ models/PresignedUrlResponse.ts
 models/Rule.ts
 models/RuleAction.ts
 models/RuleAction1.ts
-models/RuleFailureException.ts
 models/RuleImplementation.ts
 models/RuleInstance.ts
 models/SWIFTDetails.ts
 models/Tag.ts
+models/Tenant.ts
 models/Transaction.ts
 models/TransactionAmountDetails.ts
 models/TransactionCaseManagement.ts

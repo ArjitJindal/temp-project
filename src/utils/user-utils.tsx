@@ -40,8 +40,7 @@ export function isFlagrightTenantUser(user: FlagrightAuth0User): boolean {
   return user.tenantId === 'flagright';
 }
 
-export function getUserRole(user: FlagrightAuth0User | null): UserRole {
-  const role = user?.role;
+export function parseUserRole(role: string | null): UserRole {
   switch (role) {
     case 'root':
       return UserRole.ROOT;
@@ -52,9 +51,16 @@ export function getUserRole(user: FlagrightAuth0User | null): UserRole {
       return UserRole.USER;
   }
 }
+export function getUserRole(user: FlagrightAuth0User | null): UserRole {
+  return parseUserRole(user?.role ?? null);
+}
+
+export function isAtLeast(user: FlagrightAuth0User | null, role: UserRole) {
+  return getUserRole(user).valueOf() <= role.valueOf();
+}
 
 export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
-  return getUserRole(user).valueOf() <= UserRole.ADMIN.valueOf();
+  return isAtLeast(user, UserRole.ADMIN);
 }
 
 export function useUsers(): [{ [userId: string]: User }, boolean] {

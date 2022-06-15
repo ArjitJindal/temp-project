@@ -718,6 +718,45 @@ paths:
       responses:
         '200':
           description: OK
+  '/tenants':
+    get:
+      summary: Tenant - List
+      operationId: get-tenants-list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
+  '/accounts/{userId}/change_tenant':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    post:
+      summary: Account - Change Tenant
+      operationId: accounts-change-tenant
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: ChangeTenantPayload
+              properties:
+                newTenantId:
+                  type: string
+              required:
+                - newTenantId
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   '/accounts/{userId}':
     parameters:
       - schema:
@@ -1214,28 +1253,21 @@ components:
       title: Account
       type: object
       properties:
-        user_id:
+        id:
           type: string
-        created_at:
-          type: string
-        updated_at:
+        role:
           type: string
         email:
           type: string
-        email_verified:
+        emailVerified:
           type: boolean
-        name:
-          type: string
-        nickname:
-          type: string
         picture:
           type: string
       required:
-        - user_id
-        - created_at
-        - updated_at
+        - id
+        - role
         - email
-        - email_verified
+        - emailVerified
     AccountInvitePayload:
       title: AccountInvitePayload
       type: object
@@ -1247,6 +1279,17 @@ components:
       required:
         - email
         - password
+    Tenant:
+      title: Tenant
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
   securitySchemes:
     Authorization:
       type: http

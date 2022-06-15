@@ -6,7 +6,7 @@ import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
-import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
+import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
 import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -28,7 +28,7 @@ export default function () {
     {
       title: 'ID',
       width: 10,
-      dataIndex: 'user_id',
+      dataIndex: 'id',
       sorter: true,
     },
     {
@@ -40,12 +40,12 @@ export default function () {
     {
       title: 'Verified',
       width: 10,
-      dataIndex: 'email_verified',
+      dataIndex: 'emailVerified',
       sorter: true,
-      render: (_, { email_verified }) => {
+      render: (_, { emailVerified }) => {
         return (
           <span>
-            {email_verified ? (
+            {emailVerified ? (
               <CheckCircleTwoTone twoToneColor={green.primary} />
             ) : (
               <MinusCircleTwoTone twoToneColor={red.primary} />
@@ -63,7 +63,7 @@ export default function () {
       sorter: false,
       fixed: 'right',
       render: (_, item) => {
-        if (user.userId === item.user_id) {
+        if (user.userId === item.id) {
           return null;
         }
 
@@ -73,7 +73,7 @@ export default function () {
             title="Are you sure that you want to delete this user?"
             onConfirm={async () => {
               try {
-                await api.accountsDelete({ userId: item.user_id });
+                await api.accountsDelete({ userId: item.id });
                 message.success('User deleted!');
                 refreshTable();
               } catch (e) {
@@ -103,7 +103,7 @@ export default function () {
         }}
         search={false}
         headerTitle="Tenant accounts"
-        rowKey="user_id"
+        rowKey="id"
         toolBarRender={() => {
           return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];
         }}
@@ -113,10 +113,13 @@ export default function () {
             title: 'Table Loaded',
             time,
           });
+          const filteredAccounts = accounts.filter(
+            (account) => parseUserRole(account.role) !== UserRole.ROOT,
+          );
           return {
-            data: accounts,
+            data: filteredAccounts,
             success: true,
-            total: accounts.length,
+            total: filteredAccounts.length,
           };
         }}
         columns={columns}

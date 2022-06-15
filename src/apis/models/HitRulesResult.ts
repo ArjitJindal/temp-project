@@ -10,13 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { RuleFailureException } from './RuleFailureException';
+import { RuleAction1 } from './RuleAction1';
 import { HttpFile } from '../http/http';
 
 /**
- * Model for list of rules failed execution. It means rules could not be run
+ * Model for list of hit rules
  */
-export class FailedRulesResult {
+export class HitRulesResult {
   /**
    * Unique rule identifier
    */
@@ -29,7 +29,7 @@ export class FailedRulesResult {
    * Description of the rule
    */
   'ruleDescription': string;
-  'failureException': RuleFailureException;
+  'ruleAction': RuleAction1;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -58,15 +58,15 @@ export class FailedRulesResult {
       format: '',
     },
     {
-      name: 'failureException',
-      baseName: 'failureException',
-      type: 'RuleFailureException',
+      name: 'ruleAction',
+      baseName: 'ruleAction',
+      type: 'RuleAction1',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return FailedRulesResult.attributeTypeMap;
+    return HitRulesResult.attributeTypeMap;
   }
 
   public constructor() {}

@@ -13,6 +13,7 @@ import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
+import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
 import { CompanyFinancialDetails } from '../models/CompanyFinancialDetails';
 import { CompanyGeneralDetails } from '../models/CompanyGeneralDetails';
@@ -27,11 +28,11 @@ import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransac
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
-import { FailedRulesResult } from '../models/FailedRulesResult';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
+import { HitRulesResult } from '../models/HitRulesResult';
 import { IBANDetails } from '../models/IBANDetails';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -50,11 +51,11 @@ import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
-import { RuleFailureException } from '../models/RuleFailureException';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { SWIFTDetails } from '../models/SWIFTDetails';
 import { Tag } from '../models/Tag';
+import { Tenant } from '../models/Tenant';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
@@ -75,6 +76,21 @@ import { WalletDetails } from '../models/WalletDetails';
 
 import { ObservableDefaultApi } from './ObservableAPI';
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
+
+export interface DefaultApiAccountsChangeTenantRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApiaccountsChangeTenant
+   */
+  userId: string;
+  /**
+   *
+   * @type ChangeTenantPayload
+   * @memberof DefaultApiaccountsChangeTenant
+   */
+  ChangeTenantPayload?: ChangeTenantPayload;
+}
 
 export interface DefaultApiAccountsDeleteRequest {
   /**
@@ -257,6 +273,8 @@ export interface DefaultApiGetRuleImplementationsRequest {}
 export interface DefaultApiGetRuleInstancesRequest {}
 
 export interface DefaultApiGetRulesRequest {}
+
+export interface DefaultApiGetTenantsListRequest {}
 
 export interface DefaultApiGetTransactionRequest {
   /**
@@ -578,6 +596,19 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Account - Change Tenant
+   * @param param the request object
+   */
+  public accountsChangeTenant(
+    param: DefaultApiAccountsChangeTenantRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api
+      .accountsChangeTenant(param.userId, param.ChangeTenantPayload, options)
+      .toPromise();
+  }
+
+  /**
    * Account - Delete
    * @param param the request object
    */
@@ -778,6 +809,17 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<Array<Rule>> {
     return this.api.getRules(options).toPromise();
+  }
+
+  /**
+   * Tenant - List
+   * @param param the request object
+   */
+  public getTenantsList(
+    param: DefaultApiGetTenantsListRequest = {},
+    options?: Configuration,
+  ): Promise<Array<Tenant>> {
+    return this.api.getTenantsList(options).toPromise();
   }
 
   /**
