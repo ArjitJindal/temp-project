@@ -10,6 +10,7 @@ import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
+import styles from './components/TransactionDetails.less';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
@@ -353,6 +354,9 @@ const TableList = (
   return (
     <PageWrapper>
       <ProTable<TransactionCaseManagement>
+        rowClassName={(record, index) =>
+          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
+        }
         form={{
           labelWrap: true,
         }}
