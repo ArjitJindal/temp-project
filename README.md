@@ -105,6 +105,10 @@ Then you can deploy to dev like so:
 npm run deploy:dev
 ```
 
+### Fixing common deploy errors by clean deploy
+
+You can run `npm run deploy:dev:clean` to cleanup stuff and create a deployment afresh.
+
 ## Add a resource to your application
 
 The application template uses AWS Serverless Application Model (AWS SAM) to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources such as functions, triggers, and APIs. For resources not included in [the SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use standard [AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html) resource types.
@@ -199,3 +203,11 @@ Prod env (need to specify region):
 ```bash
 bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env prod-asia-1
 ```
+
+### Creating a new rule
+
+- Create a new function in `rules` folder
+- Create a unit test for the rule that covers all cases in `__test__` folder
+- Add it to requisite rule list (currently `transaction` or `user` rule types)
+- Merge PR and deploy to all environments (Dev, Sandbox and prod regions)
+- Launch the rule on console - [Instructions](https://www.notion.so/flagright/Launching-new-Rule-on-Console-51803611658047d79a5a3757fcc8b755)

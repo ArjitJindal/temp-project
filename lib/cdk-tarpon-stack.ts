@@ -47,6 +47,9 @@ import {
   createTarponOverallLambdaAlarm,
   createKinesisAlarm,
   createAPIGatewayAlarm,
+  dynamoTableOperations,
+  createDynamoDBAlarm,
+  dynamoTableOperationMetrics,
 } from './cdk-cw-alarms'
 import {
   FileImportConfig,
@@ -132,6 +135,21 @@ export class CdkTarponStack extends cdk.Stack {
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
+    /*
+     * tarpon Alarms
+     */
+    dynamoTableOperationMetrics.map((metric) => {
+      dynamoTableOperations.map((operation) => {
+        createDynamoDBAlarm(
+          this,
+          BetterUptimeCloudWatchTopic,
+          `DynamoTarpon${operation}${metric}`,
+          dynamoDbTable.tableName,
+          operation,
+          metric
+        )
+      })
+    })
 
     /**
      * S3 Buckets

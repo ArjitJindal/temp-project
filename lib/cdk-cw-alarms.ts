@@ -127,3 +127,49 @@ export const createAPIGatewayAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+
+export const dynamoTableOperationMetrics = [
+  'ThrottledRequests',
+  'SystemErrors',
+  'UserErrors',
+]
+
+export const dynamoTableOperations = [
+  'BatchWriteItem',
+  'BatchGetItem',
+  'GetItem',
+  'PutItem',
+  'Query',
+]
+
+export const createDynamoDBAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  dynamoDBTableAlarmName: string,
+  dynamoDBTableName: string,
+  operation: string,
+  metric: string
+) => {
+  return new Alarm(context, dynamoDBTableAlarmName, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: 1,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: dynamoDBTableAlarmName,
+    alarmDescription: `Covers throttled requests for Write Item in ${dynamoDBTableName} in the AWS account. 
+    Alarm triggers when there is more than 1 throttled request for 3 consecutive data points in 15 mins 
+    (Checked every 5 minutes).`,
+    metric: new Metric({
+      label: `${dynamoDBTableName}${metric}`,
+      namespace: 'AWS/DynamoDB',
+      metricName: metric,
+      dimensionsMap: {
+        TableName: dynamoDBTableName,
+        Operation: operation,
+      },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Average',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
