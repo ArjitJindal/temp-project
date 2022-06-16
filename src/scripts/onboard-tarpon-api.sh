@@ -62,15 +62,27 @@ else
     tenantId=`node -e "console.log(require('nanoid').customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10)())"`
 fi
 usagePlanName="tarpon:$tenantName:$tenantId"
-usagePlanId=$(aws apigateway create-usage-plan \
-  --name $usagePlanName \
-  --description $tenantWebsite \
-  --api-stages apiId=$apiId,stage=prod \
-  --throttle burstLimit=6,rateLimit=3 \
-  --quota limit=1000,offset=0,period=MONTH \
-  --profile $profile \
-  --region $region \
-| jq -r '.id')
+
+if [ "$env" == "dev" ] || [ "$env" == "sandbox" ]; then
+    usagePlanId=$(aws apigateway create-usage-plan \
+    --name $usagePlanName \
+    --description $tenantWebsite \
+    --api-stages apiId=$apiId,stage=prod \
+    --throttle burstLimit=6,rateLimit=3 \
+    --quota limit=1000,offset=0,period=MONTH \
+    --profile $profile \
+    --region $region \
+    | jq -r '.id')
+else
+    usagePlanId=$(aws apigateway create-usage-plan \
+    --name $usagePlanName \
+    --description $tenantWebsite \
+    --api-stages apiId=$apiId,stage=prod \
+    --throttle burstLimit=200,rateLimit=100 \
+    --profile $profile \
+    --region $region \
+    | jq -r '.id')
+fi
 
 
 echo "Tenant ID: $tenantId";
