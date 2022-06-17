@@ -14,6 +14,7 @@ import {
   ApiDefinition,
   AssetApiDefinition,
   MethodLoggingLevel,
+  ResponseType,
   SpecRestApi,
 } from 'aws-cdk-lib/aws-apigateway'
 
@@ -638,6 +639,20 @@ export class CdkTarponStack extends cdk.Stack {
       restApiName: 'TarponAPI',
       apiDefinition,
       deployOptions: apiDeployOptions,
+    })
+    const apiValidationErrorTemplate = {
+      'application/json':
+        '{ "errors": "$context.error.validationErrorString" }',
+    }
+    publicApi.addGatewayResponse('BadRequestBodyValidationResponse', {
+      type: ResponseType.BAD_REQUEST_BODY,
+      statusCode: '400',
+      templates: apiValidationErrorTemplate,
+    })
+    publicApi.addGatewayResponse('BadRequestParametersValidationResponse', {
+      type: ResponseType.BAD_REQUEST_PARAMETERS,
+      statusCode: '400',
+      templates: apiValidationErrorTemplate,
     })
 
     /**
