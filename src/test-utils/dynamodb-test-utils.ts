@@ -1,6 +1,4 @@
-import { execSync } from 'child_process'
-import { exit } from 'process'
-import AWS from 'aws-sdk'
+import AWS, { DynamoDB } from 'aws-sdk'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
 // We use a separate table for each jest worker. Then different test files running in parallel
@@ -9,29 +7,83 @@ export const TEST_DYNAMODB_TABLE_NAME = `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${pro
 
 export function getTestDynamoDbClient(): AWS.DynamoDB.DocumentClient {
   return new AWS.DynamoDB.DocumentClient({
-    credentials: undefined,
+    credentials: {
+      accessKeyId: 'fake',
+      secretAccessKey: 'fake',
+    },
     endpoint: 'http://localhost:8000',
-    region: 'us-east-2',
+    region: 'local',
   })
 }
 
 export function getTestDynamoDb(): AWS.DynamoDB {
   return new AWS.DynamoDB({
-    credentials: undefined,
+    credentials: {
+      accessKeyId: 'fake',
+      secretAccessKey: 'fake',
+    },
     endpoint: 'http://localhost:8000',
-    region: 'us-east-2',
+    region: 'local',
   })
 }
 
 export function dynamoDbSetupHook() {
-  beforeAll(() => {
-    try {
-      execSync(`npm run recreate-local-ddb --table=${TEST_DYNAMODB_TABLE_NAME}`)
-    } catch (e) {
-      console.error(
-        `Please start local dynamodb first by running 'npm run start-local-ddb'`
-      )
-      exit(1)
-    }
+  beforeAll(async () => {
+    await deleteTable(TEST_DYNAMODB_TABLE_NAME, true)
+    await createTable(TEST_DYNAMODB_TABLE_NAME)
   })
+}
+
+async function createTable(tableName: string) {
+  const dynamo = getTestDynamoDb()
+  try {
+    await dynamo.createTable(createSchema(tableName)).promise()
+  } catch (e: any) {
+    throw new Error(
+      `Unable to create table "${tableName}"; ${e.message ?? 'Unknown error'}`
+    )
+  }
+}
+
+async function deleteTable(tableName: string, silent = false) {
+  const dynamo = getTestDynamoDb()
+  try {
+    await dynamo.deleteTable({ TableName: tableName }).promise()
+  } catch (e: any) {
+    if (!silent) {
+      throw new Error(
+        `Unable to delete table "${tableName}"; ${e.message ?? 'Unknown error'}`
+      )
+    }
+  }
+}
+
+function createSchema(tableName: string): DynamoDB.Types.CreateTableInput {
+  return {
+    TableName: tableName,
+    AttributeDefinitions: [
+      {
+        AttributeName: 'PartitionKeyID',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'SortKeyID',
+        AttributeType: 'S',
+      },
+    ],
+    KeySchema: [
+      {
+        AttributeName: 'PartitionKeyID',
+        KeyType: 'HASH',
+      },
+      {
+        AttributeName: 'SortKeyID',
+        KeyType: 'RANGE',
+      },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 1,
+      WriteCapacityUnits: 1,
+    },
+  }
 }

@@ -1,4 +1,5 @@
 module.exports = {
+  testTimeout: 15000,
   preset: 'ts-jest',
   moduleNameMapper: {
     '@/(.*)': '<rootDir>/src/$1',
