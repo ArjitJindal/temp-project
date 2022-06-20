@@ -103,6 +103,7 @@ export default () => {
                 }
                 format={(percent) => `${percent?.toFixed(2)}%`}
                 status={ruleInstance.status === 'ACTIVE' ? 'active' : 'normal'}
+                style={{ paddingRight: 20 }}
               />
             </Tooltip>
           );
