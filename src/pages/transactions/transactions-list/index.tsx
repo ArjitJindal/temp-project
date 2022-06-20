@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import ProTable from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { IRouteComponentProps, Link } from 'umi';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
-import styles from './components/TransactionDetails.less';
 import { getUserName } from '@/utils/api/users';
-
+import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
@@ -247,10 +245,7 @@ const TableList = (
 
   return (
     <PageWrapper>
-      <ProTable<TransactionCaseManagement>
-        rowClassName={(record, index) =>
-          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
-        }
+      <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
         }}

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import ProTable from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
@@ -10,7 +9,7 @@ import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
-import styles from './components/TransactionDetails.less';
+import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
@@ -353,10 +352,7 @@ const TableList = (
   const [isLoading, setLoading] = useState(false);
   return (
     <PageWrapper>
-      <ProTable<TransactionCaseManagement>
-        rowClassName={(record, index) =>
-          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
-        }
+      <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
         }}
