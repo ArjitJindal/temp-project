@@ -10,7 +10,20 @@ interface Props {
 }
 
 export function SegmentContextProvider(props: Props): JSX.Element {
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [analytics, setAnalytics] = useState<Analytics>({
+    identify: () => {
+      console.warn('[identify] This is a stub analytics function, analytics can be blocked');
+    },
+    tenant: () => {
+      console.warn('[tenant] This is a stub analytics function, analytics can be blocked');
+    },
+    page: () => {
+      console.warn('[page] This is a stub analytics function, analytics can be blocked');
+    },
+    event: () => {
+      console.warn('[event] This is a stub analytics function, analytics can be blocked');
+    },
+  });
   /*
     This is a temporal solution, we should remove it after we get rid of UmiJS.
     We should be able to use AnalyticsBrowser from '@segment/analytics-next' module directly,
@@ -36,9 +49,6 @@ export function SegmentContextProvider(props: Props): JSX.Element {
   //    });
   //   return makeSegmentAnalytics(analyticsBrowser);
   // }, [props.writeKey]);
-  if (analytics == null) {
-    return <></>;
-  }
   return <Context.Provider value={{ analytics }}> {props.children}</Context.Provider>;
 }
 
