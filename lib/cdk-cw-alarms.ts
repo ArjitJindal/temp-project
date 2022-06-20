@@ -8,6 +8,9 @@ import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 import { Construct } from 'constructs'
 import { Duration } from 'aws-cdk-lib'
 import { Topic } from 'aws-cdk-lib/aws-sns'
+import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
+
+export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
 
 export const createTarponOverallLambdaAlarm = (
   context: Construct,
@@ -156,8 +159,8 @@ export const createDynamoDBAlarm = (
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: dynamoDBTableAlarmName,
-    alarmDescription: `Covers throttled requests for Write Item in ${dynamoDBTableName} in the AWS account. 
-    Alarm triggers when there is more than 1 throttled request for 3 consecutive data points in 15 mins 
+    alarmDescription: `Covers ${metric} for ${operation} in ${dynamoDBTableName} in the AWS account. 
+    Alarm triggers when there is more than 1 ${metric} for 3 consecutive data points in 15 mins 
     (Checked every 5 minutes).`,
     metric: new Metric({
       label: `${dynamoDBTableName}${metric}`,
@@ -167,6 +170,47 @@ export const createDynamoDBAlarm = (
         TableName: dynamoDBTableName,
         Operation: operation,
       },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Average',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
+
+const createApiGatewayThrottlingMetricFilter = (
+  context: Construct,
+  logGroup: ILogGroup,
+  restApiName: string
+) => {
+  new MetricFilter(context, `${restApiName}ThrottlingMetricFilter`, {
+    logGroup,
+    metricNamespace: TARPON_CUSTOM_METRIC_NAMESPACE,
+    metricName: `${restApiName}Throttling`,
+    filterPattern: FilterPattern.stringValue('$.status', '=', '429'),
+    metricValue: '1',
+  })
+}
+
+export const createAPIGatewayThrottlingAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  logGroup: ILogGroup,
+  restApiAlarmName: string,
+  restApiName: string
+) => {
+  createApiGatewayThrottlingMetricFilter(context, logGroup, restApiName)
+  return new Alarm(context, restApiAlarmName, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: 15,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: restApiAlarmName,
+    alarmDescription: `Covers throttling count in ${restApiName} in the AWS account. 
+    Alarm triggers when 15 requests get throttled for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: `${restApiAlarmName} Throttling Count`,
+      namespace: TARPON_CUSTOM_METRIC_NAMESPACE,
+      metricName: `${restApiName}Throttling`,
     }).with({
       period: Duration.seconds(300),
       statistic: 'Average',
