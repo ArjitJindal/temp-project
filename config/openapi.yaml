@@ -553,7 +553,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+                $ref: '#/components/schemas/InternalConsumerUser'
               examples: {}
       operationId: get-consumer-users-item
       description: ''
@@ -564,6 +564,42 @@ paths:
         name: userId
         in: path
         required: true
+  '/consumer/users/{userId}/files':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    post:
+      summary: Consumer User Files - Create
+      operationId: post-consumer-users-userId-files
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileInfo'
+  '/consumer/users/{userId}/files/{fileId}':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: fileId
+        in: path
+        required: true
+    delete:
+      summary: Consumer User Files - Delete
+      operationId: delete-consumer-users-userId-files-fileId
+      responses:
+        '200':
+          description: OK
   /business/users:
     get:
       summary: Business Users - List
@@ -613,7 +649,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+                $ref: '#/components/schemas/InternalBusinessUser'
               examples: {}
       operationId: get-business-users-item
       description: ''
@@ -624,6 +660,42 @@ paths:
         name: userId
         in: path
         required: true
+  '/business/users/{userId}/files':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    post:
+      summary: Business User Files - Create
+      operationId: post-business-users-userId-files
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileInfo'
+  '/business/users/{userId}/files/{fileId}':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: fileId
+        in: path
+        required: true
+    delete:
+      summary: Business User Files - Delete
+      operationId: delete-business-users-userId-files-fileId
+      responses:
+        '200':
+          description: OK
   /dashboard_stats/transactions:
     get:
       summary: DashboardStats - Transactions
@@ -713,12 +785,12 @@ paths:
         in: path
         required: true
     delete:
-      summary: ''
+      summary: Delete a Transaction Comment
       operationId: delete-transactions-transactionId-comments-commentId
       responses:
         '200':
           description: OK
-  '/tenants':
+  /tenants:
     get:
       summary: Tenant - List
       operationId: get-tenants-list
@@ -1009,7 +1081,7 @@ components:
         data:
           type: array
           items:
-            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+            $ref: '#/components/schemas/InternalConsumerUser'
       required:
         - total
         - data
@@ -1022,7 +1094,7 @@ components:
         data:
           type: array
           items:
-            $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+            $ref: '#/components/schemas/InternalBusinessUser'
       required:
         - total
         - data
@@ -1063,6 +1135,10 @@ components:
               enum:
                 - CONSUMER
               type: string
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileInfo'
           required:
             - type
     InternalBusinessUser:
@@ -1074,6 +1150,10 @@ components:
               enum:
                 - BUSINESS
               type: string
+            files:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileInfo'
           required:
             - type
     DashboardStatsHitsPerUser:
@@ -1090,11 +1170,6 @@ components:
               rulesHit:
                 type: number
               user:
-                discriminator:
-                  propertyName: type
-                  mapping:
-                    CONSUMER: '#/components/schemas/InternalConsumerUser'
-                    BUSINESS: '#/components/schemas/InternalBusinessUser'
                 oneOf:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'

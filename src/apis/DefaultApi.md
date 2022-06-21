@@ -7,9 +7,11 @@ All URIs are relative to _http://localhost:3000_
 | [**accountsChangeTenant**](DefaultApi.md#accountsChangeTenant) | **POST** /accounts/{userId}/change_tenant | Account - Change Tenant |
 | [**accountsDelete**](DefaultApi.md#accountsDelete) | **DELETE** /accounts/{userId} | Account - Delete |
 | [**accountsInvite**](DefaultApi.md#accountsInvite) | **POST** /accounts | Account - Invite |
+| [**deleteBusinessUsersUserIdFilesFileId**](DefaultApi.md#deleteBusinessUsersUserIdFilesFileId) | **DELETE** /business/users/{userId}/files/{fileId} | Business User Files - Delete |
+| [**deleteConsumerUsersUserIdFilesFileId**](DefaultApi.md#deleteConsumerUsersUserIdFilesFileId) | **DELETE** /consumer/users/{userId}/files/{fileId} | Consumer User Files - Delete |
 | [**deleteRuleInstancesRuleInstanceId**](DefaultApi.md#deleteRuleInstancesRuleInstanceId) | **DELETE** /rule_instances/{ruleInstanceId} | Rule Instance - Delete |
 | [**deleteRulesRuleId**](DefaultApi.md#deleteRulesRuleId) | **DELETE** /rules/{ruleId} | Rule - Delete |
-| [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} |
+| [**deleteTransactionsTransactionIdCommentsCommentId**](DefaultApi.md#deleteTransactionsTransactionIdCommentsCommentId) | **DELETE** /transactions/{transactionId}/comments/{commentId} | Delete a Transaction Comment |
 | [**getAccounts**](DefaultApi.md#getAccounts) | **GET** /accounts | Account - List |
 | [**getBusinessUsersItem**](DefaultApi.md#getBusinessUsersItem) | **GET** /business/users/{userId} | Business Users - Item - Get |
 | [**getBusinessUsersList**](DefaultApi.md#getBusinessUsersList) | **GET** /business/users | Business Users - List |
@@ -26,6 +28,8 @@ All URIs are relative to _http://localhost:3000_
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
 | [**getTransactionsListExport**](DefaultApi.md#getTransactionsListExport) | **GET** /transactions/export | Transaction - Export |
 | [**postApikey**](DefaultApi.md#postApikey) | **POST** /apikey | Tarpon API Key - Create |
+| [**postBusinessUsersUserIdFiles**](DefaultApi.md#postBusinessUsersUserIdFiles) | **POST** /business/users/{userId}/files | Business User Files - Create |
+| [**postConsumerUsersUserIdFiles**](DefaultApi.md#postConsumerUsersUserIdFiles) | **POST** /consumer/users/{userId}/files | Consumer User Files - Create |
 | [**postGetPresignedUrl**](DefaultApi.md#postGetPresignedUrl) | **POST** /files/getPresignedUrl | Files - Get Presigned URL |
 | [**postIamRuleInstances**](DefaultApi.md#postIamRuleInstances) | **POST** /iam/rule_instances | Rule Instance - Create |
 | [**postIamRules**](DefaultApi.md#postIamRules) | **POST** /iam/rules | Rules - Create |
@@ -188,6 +192,112 @@ No authorization required
 
 - **Content-Type**: application/json
 - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **deleteBusinessUsersUserIdFilesFileId**
+
+> void deleteBusinessUsersUserIdFilesFileId()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiDeleteBusinessUsersUserIdFilesFileIdRequest = {
+  // string
+  userId: "userId_example",
+  // string
+  fileId: "fileId_example",
+};
+
+apiInstance.deleteBusinessUsersUserIdFilesFileId(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name       | Type         | Description | Notes                 |
+| ---------- | ------------ | ----------- | --------------------- |
+| **userId** | [**string**] |             | defaults to undefined |
+| **fileId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **deleteConsumerUsersUserIdFilesFileId**
+
+> void deleteConsumerUsersUserIdFilesFileId()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiDeleteConsumerUsersUserIdFilesFileIdRequest = {
+  // string
+  userId: "userId_example",
+  // string
+  fileId: "fileId_example",
+};
+
+apiInstance.deleteConsumerUsersUserIdFilesFileId(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name       | Type         | Description | Notes                 |
+| ---------- | ------------ | ----------- | --------------------- |
+| **userId** | [**string**] |             | defaults to undefined |
+| **fileId** | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 ### HTTP response details
 
@@ -397,7 +507,7 @@ No authorization required
 
 # **getBusinessUsersItem**
 
-> Business getBusinessUsersItem()
+> InternalBusinessUser getBusinessUsersItem()
 
 ### Example
 
@@ -426,7 +536,7 @@ apiInstance.getBusinessUsersItem(body).then((data:any) => {
 
 ### Return type
 
-**Business**
+**InternalBusinessUser**
 
 ### Authorization
 
@@ -509,7 +619,7 @@ No authorization required
 
 # **getConsumerUsersItem**
 
-> User getConsumerUsersItem()
+> InternalConsumerUser getConsumerUsersItem()
 
 ### Example
 
@@ -538,7 +648,7 @@ apiInstance.getConsumerUsersItem(body).then((data:any) => {
 
 ### Return type
 
-**User**
+**InternalConsumerUser**
 
 ### Authorization
 
@@ -1240,6 +1350,124 @@ No authorization required
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     | New API Key | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postBusinessUsersUserIdFiles**
+
+> void postBusinessUsersUserIdFiles()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostBusinessUsersUserIdFilesRequest = {
+  // string
+  userId: "userId_example",
+  // FileInfo (optional)
+  FileInfo: {
+    s3Key: "s3Key_example",
+    bucket: "bucket_example",
+    filename: "filename_example",
+    size: 3.14,
+    downloadLink: "downloadLink_example",
+  },
+};
+
+apiInstance.postBusinessUsersUserIdFiles(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name         | Type         | Description | Notes                 |
+| ------------ | ------------ | ----------- | --------------------- |
+| **FileInfo** | **FileInfo** |             |
+| **userId**   | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postConsumerUsersUserIdFiles**
+
+> void postConsumerUsersUserIdFiles()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostConsumerUsersUserIdFilesRequest = {
+  // string
+  userId: "userId_example",
+  // FileInfo (optional)
+  FileInfo: {
+    s3Key: "s3Key_example",
+    bucket: "bucket_example",
+    filename: "filename_example",
+    size: 3.14,
+    downloadLink: "downloadLink_example",
+  },
+};
+
+apiInstance.postConsumerUsersUserIdFiles(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name         | Type         | Description | Notes                 |
+| ------------ | ------------ | ----------- | --------------------- |
+| **FileInfo** | **FileInfo** |             |
+| **userId**   | [**string**] |             | defaults to undefined |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 

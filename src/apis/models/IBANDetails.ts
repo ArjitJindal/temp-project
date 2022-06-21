@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address2 } from './Address2';
+import { Address } from './Address';
 import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
@@ -30,7 +30,7 @@ export class IBANDetails {
    * Name of the bank
    */
   'bankName'?: string;
-  'bankAddress'?: Address2;
+  'bankAddress'?: Address;
   /**
    * Account number of the user. Can be account number, IBAN number etc.
    */
@@ -74,7 +74,7 @@ export class IBANDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address2',
+      type: 'Address',
       format: '',
     },
     {

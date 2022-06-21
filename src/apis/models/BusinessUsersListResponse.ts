@@ -10,12 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { Business } from './Business';
+import { InternalBusinessUser } from './InternalBusinessUser';
 import { HttpFile } from '../http/http';
 
 export class BusinessUsersListResponse {
   'total': number;
-  'data': Array<Business>;
+  'data': Array<InternalBusinessUser>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -34,7 +34,7 @@ export class BusinessUsersListResponse {
     {
       name: 'data',
       baseName: 'data',
-      type: 'Array<Business>',
+      type: 'Array<InternalBusinessUser>',
       format: '',
     },
   ];

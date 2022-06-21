@@ -1,9 +1,8 @@
 import * as Ant from 'antd';
-import * as Icons from '@ant-design/icons';
-import filesize from 'filesize';
 import styles from './TransactionDetails.less';
 import { Comment as ApiComment } from '@/apis';
 import { useUserName } from '@/utils/user-utils';
+import { FilesList } from '@/components/files/FilesList';
 
 interface Props {
   deletingCommentIds: string[];
@@ -34,19 +33,7 @@ export default function Comment(props: Props) {
       content={
         <>
           <div className={styles.commentBody}>{comment.body}</div>
-          {comment.files && (
-            <>
-              {comment.files.map((file) => (
-                <Ant.Row align="middle" key={file.s3Key}>
-                  <Ant.Space>
-                    <Icons.PaperClipOutlined />
-                    <a href={file.downloadLink}>{file.filename}</a>
-                    {`(${filesize(file.size)})`}
-                  </Ant.Space>
-                </Ant.Row>
-              ))}
-            </>
-          )}
+          {comment.files && <FilesList files={comment.files} />}
         </>
       }
       datetime={comment.createdAt && new Date(comment.createdAt).toDateString()}

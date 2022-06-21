@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address2 } from './Address2';
+import { Address } from './Address';
 import { HttpFile } from '../http/http';
 
 /**
@@ -37,7 +37,7 @@ export class ACHDetails {
    * Name of the account holder
    */
   'name'?: string;
-  'bankAddress'?: Address2;
+  'bankAddress'?: Address;
   /**
    * Beneficiary name of the account
    */
@@ -84,7 +84,7 @@ export class ACHDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address2',
+      type: 'Address',
       format: '',
     },
     {

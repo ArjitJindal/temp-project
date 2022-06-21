@@ -123,6 +123,34 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Business User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public deleteBusinessUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.deleteBusinessUsersUserIdFilesFileId(userId, fileId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Consumer User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public deleteConsumerUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.deleteConsumerUsersUserIdFilesFileId(userId, fileId, _options);
+    return result.toPromise();
+  }
+
+  /**
    * Rule Instance - Delete
    * @param ruleInstanceId
    */
@@ -144,6 +172,7 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Delete a Transaction Comment
    * @param transactionId
    * @param commentId
    */
@@ -172,7 +201,10 @@ export class PromiseDefaultApi {
    * Business Users - Item - Get
    * @param userId
    */
-  public getBusinessUsersItem(userId: string, _options?: Configuration): Promise<Business> {
+  public getBusinessUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Promise<InternalBusinessUser> {
     const result = this.api.getBusinessUsersItem(userId, _options);
     return result.toPromise();
   }
@@ -208,7 +240,10 @@ export class PromiseDefaultApi {
    * Consumer Users - Item - Get
    * @param userId
    */
-  public getConsumerUsersItem(userId: string, _options?: Configuration): Promise<User> {
+  public getConsumerUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Promise<InternalConsumerUser> {
     const result = this.api.getConsumerUsersItem(userId, _options);
     return result.toPromise();
   }
@@ -432,6 +467,34 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<void> {
     const result = this.api.postApikey(tenantId, usagePlanId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Business User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public postBusinessUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.postBusinessUsersUserIdFiles(userId, FileInfo, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Consumer User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public postConsumerUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.postConsumerUsersUserIdFiles(userId, FileInfo, _options);
     return result.toPromise();
   }
 

@@ -110,6 +110,36 @@ export interface DefaultApiAccountsInviteRequest {
   AccountInvitePayload?: AccountInvitePayload;
 }
 
+export interface DefaultApiDeleteBusinessUsersUserIdFilesFileIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteBusinessUsersUserIdFilesFileId
+   */
+  userId: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteBusinessUsersUserIdFilesFileId
+   */
+  fileId: string;
+}
+
+export interface DefaultApiDeleteConsumerUsersUserIdFilesFileIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteConsumerUsersUserIdFilesFileId
+   */
+  userId: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteConsumerUsersUserIdFilesFileId
+   */
+  fileId: string;
+}
+
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
    *
@@ -456,6 +486,36 @@ export interface DefaultApiPostApikeyRequest {
   usagePlanId?: string;
 }
 
+export interface DefaultApiPostBusinessUsersUserIdFilesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostBusinessUsersUserIdFiles
+   */
+  userId: string;
+  /**
+   *
+   * @type FileInfo
+   * @memberof DefaultApipostBusinessUsersUserIdFiles
+   */
+  FileInfo?: FileInfo;
+}
+
+export interface DefaultApiPostConsumerUsersUserIdFilesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostConsumerUsersUserIdFiles
+   */
+  userId: string;
+  /**
+   *
+   * @type FileInfo
+   * @memberof DefaultApipostConsumerUsersUserIdFiles
+   */
+  FileInfo?: FileInfo;
+}
+
 export interface DefaultApiPostGetPresignedUrlRequest {}
 
 export interface DefaultApiPostIamRuleInstancesRequest {
@@ -631,6 +691,32 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Business User Files - Delete
+   * @param param the request object
+   */
+  public deleteBusinessUsersUserIdFilesFileId(
+    param: DefaultApiDeleteBusinessUsersUserIdFilesFileIdRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api
+      .deleteBusinessUsersUserIdFilesFileId(param.userId, param.fileId, options)
+      .toPromise();
+  }
+
+  /**
+   * Consumer User Files - Delete
+   * @param param the request object
+   */
+  public deleteConsumerUsersUserIdFilesFileId(
+    param: DefaultApiDeleteConsumerUsersUserIdFilesFileIdRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api
+      .deleteConsumerUsersUserIdFilesFileId(param.userId, param.fileId, options)
+      .toPromise();
+  }
+
+  /**
    * Rule Instance - Delete
    * @param param the request object
    */
@@ -653,6 +739,7 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Delete a Transaction Comment
    * @param param the request object
    */
   public deleteTransactionsTransactionIdCommentsCommentId(
@@ -686,7 +773,7 @@ export class ObjectDefaultApi {
   public getBusinessUsersItem(
     param: DefaultApiGetBusinessUsersItemRequest,
     options?: Configuration,
-  ): Promise<Business> {
+  ): Promise<InternalBusinessUser> {
     return this.api.getBusinessUsersItem(param.userId, options).toPromise();
   }
 
@@ -717,7 +804,7 @@ export class ObjectDefaultApi {
   public getConsumerUsersItem(
     param: DefaultApiGetConsumerUsersItemRequest,
     options?: Configuration,
-  ): Promise<User> {
+  ): Promise<InternalConsumerUser> {
     return this.api.getConsumerUsersItem(param.userId, options).toPromise();
   }
 
@@ -898,6 +985,28 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<void> {
     return this.api.postApikey(param.tenantId, param.usagePlanId, options).toPromise();
+  }
+
+  /**
+   * Business User Files - Create
+   * @param param the request object
+   */
+  public postBusinessUsersUserIdFiles(
+    param: DefaultApiPostBusinessUsersUserIdFilesRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api.postBusinessUsersUserIdFiles(param.userId, param.FileInfo, options).toPromise();
+  }
+
+  /**
+   * Consumer User Files - Create
+   * @param param the request object
+   */
+  public postConsumerUsersUserIdFiles(
+    param: DefaultApiPostConsumerUsersUserIdFilesRequest,
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api.postConsumerUsersUserIdFiles(param.userId, param.FileInfo, options).toPromise();
   }
 
   /**

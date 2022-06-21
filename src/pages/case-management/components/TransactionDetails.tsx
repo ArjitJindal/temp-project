@@ -57,7 +57,7 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const removeFile = useCallback(
-    (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file !== s3Key)),
+    (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file.s3Key !== s3Key)),
     [],
   );
   const submitComment = useCallback(async () => {

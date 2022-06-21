@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address2 } from './Address2';
+import { Address } from './Address';
 import { HttpFile } from '../http/http';
 
 /**
@@ -41,7 +41,7 @@ export class SWIFTDetails {
    * Name of the account holder
    */
   'name'?: string;
-  'bankAddress'?: Address2;
+  'bankAddress'?: Address;
   /**
    * Special instructions if any
    */
@@ -94,7 +94,7 @@ export class SWIFTDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address2',
+      type: 'Address',
       format: '',
     },
     {

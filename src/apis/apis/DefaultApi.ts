@@ -9,7 +9,6 @@ import { SecurityAuthentication } from '../auth/auth';
 
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
-import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
@@ -17,10 +16,13 @@ import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { FileImport } from '../models/FileImport';
+import { FileInfo } from '../models/FileInfo';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { InlineResponse200 } from '../models/InlineResponse200';
 import { InlineResponse400 } from '../models/InlineResponse400';
+import { InternalBusinessUser } from '../models/InternalBusinessUser';
+import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { Rule } from '../models/Rule';
@@ -31,7 +33,6 @@ import { Tenant } from '../models/Tenant';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionUpdateRequest } from '../models/TransactionUpdateRequest';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
-import { User } from '../models/User';
 
 /**
  * no description
@@ -149,6 +150,86 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Business User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public async deleteBusinessUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'deleteBusinessUsersUserIdFilesFileId', 'userId');
+    }
+
+    // verify required parameter 'fileId' is not null or undefined
+    if (fileId === null || fileId === undefined) {
+      throw new RequiredError('DefaultApi', 'deleteBusinessUsersUserIdFilesFileId', 'fileId');
+    }
+
+    // Path Params
+    const localVarPath = '/business/users/{userId}/files/{fileId}'
+      .replace('{' + 'userId' + '}', encodeURIComponent(String(userId)))
+      .replace('{' + 'fileId' + '}', encodeURIComponent(String(fileId)));
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
+   * Consumer User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public async deleteConsumerUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'deleteConsumerUsersUserIdFilesFileId', 'userId');
+    }
+
+    // verify required parameter 'fileId' is not null or undefined
+    if (fileId === null || fileId === undefined) {
+      throw new RequiredError('DefaultApi', 'deleteConsumerUsersUserIdFilesFileId', 'fileId');
+    }
+
+    // Path Params
+    const localVarPath = '/consumer/users/{userId}/files/{fileId}'
+      .replace('{' + 'userId' + '}', encodeURIComponent(String(userId)))
+      .replace('{' + 'fileId' + '}', encodeURIComponent(String(fileId)));
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.DELETE);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
    * Rule Instance - Delete
    * @param ruleInstanceId
    */
@@ -217,6 +298,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Delete a Transaction Comment
    * @param transactionId
    * @param commentId
    */
@@ -1115,6 +1197,96 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * Business User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public async postBusinessUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'postBusinessUsersUserIdFiles', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/business/users/{userId}/files'.replace(
+      '{' + 'userId' + '}',
+      encodeURIComponent(String(userId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Body Params
+    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
+    requestContext.setHeaderParam('Content-Type', contentType);
+    const serializedBody = ObjectSerializer.stringify(
+      ObjectSerializer.serialize(FileInfo, 'FileInfo', ''),
+      contentType,
+    );
+    requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
+   * Consumer User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public async postConsumerUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'userId' is not null or undefined
+    if (userId === null || userId === undefined) {
+      throw new RequiredError('DefaultApi', 'postConsumerUsersUserIdFiles', 'userId');
+    }
+
+    // Path Params
+    const localVarPath = '/consumer/users/{userId}/files'.replace(
+      '{' + 'userId' + '}',
+      encodeURIComponent(String(userId)),
+    );
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.POST);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Body Params
+    const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
+    requestContext.setHeaderParam('Content-Type', contentType);
+    const serializedBody = ObjectSerializer.stringify(
+      ObjectSerializer.serialize(FileInfo, 'FileInfo', ''),
+      contentType,
+    );
+    requestContext.setBody(serializedBody);
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
    * Get a presigned URL for uploading a file
    * Files - Get Presigned URL
    */
@@ -1650,6 +1822,68 @@ export class DefaultApiResponseProcessor {
    * Unwraps the actual response sent by the server from the response context and deserializes the response content
    * to the expected objects
    *
+   * @params response Response returned by the server for a request to deleteBusinessUsersUserIdFilesFileId
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async deleteBusinessUsersUserIdFilesFileId(response: ResponseContext): Promise<void> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      return;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: void = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'void',
+        '',
+      ) as void;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to deleteConsumerUsersUserIdFilesFileId
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async deleteConsumerUsersUserIdFilesFileId(response: ResponseContext): Promise<void> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      return;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: void = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'void',
+        '',
+      ) as void;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
    * @params response Response returned by the server for a request to deleteRuleInstancesRuleInstanceId
    * @throws ApiException if the response code was not in [200, 299]
    */
@@ -1784,24 +2018,24 @@ export class DefaultApiResponseProcessor {
    * @params response Response returned by the server for a request to getBusinessUsersItem
    * @throws ApiException if the response code was not in [200, 299]
    */
-  public async getBusinessUsersItem(response: ResponseContext): Promise<Business> {
+  public async getBusinessUsersItem(response: ResponseContext): Promise<InternalBusinessUser> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Business = ObjectSerializer.deserialize(
+      const body: InternalBusinessUser = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Business',
+        'InternalBusinessUser',
         '',
-      ) as Business;
+      ) as InternalBusinessUser;
       return body;
     }
 
     // Work around for missing responses in specification, e.g. for petstore.yaml
     if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Business = ObjectSerializer.deserialize(
+      const body: InternalBusinessUser = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Business',
+        'InternalBusinessUser',
         '',
-      ) as Business;
+      ) as InternalBusinessUser;
       return body;
     }
 
@@ -1856,24 +2090,24 @@ export class DefaultApiResponseProcessor {
    * @params response Response returned by the server for a request to getConsumerUsersItem
    * @throws ApiException if the response code was not in [200, 299]
    */
-  public async getConsumerUsersItem(response: ResponseContext): Promise<User> {
+  public async getConsumerUsersItem(response: ResponseContext): Promise<InternalConsumerUser> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: User = ObjectSerializer.deserialize(
+      const body: InternalConsumerUser = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'User',
+        'InternalConsumerUser',
         '',
-      ) as User;
+      ) as InternalConsumerUser;
       return body;
     }
 
     // Work around for missing responses in specification, e.g. for petstore.yaml
     if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: User = ObjectSerializer.deserialize(
+      const body: InternalConsumerUser = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'User',
+        'InternalConsumerUser',
         '',
-      ) as User;
+      ) as InternalConsumerUser;
       return body;
     }
 
@@ -2311,6 +2545,68 @@ export class DefaultApiResponseProcessor {
    * @throws ApiException if the response code was not in [200, 299]
    */
   public async postApikey(response: ResponseContext): Promise<void> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      return;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: void = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'void',
+        '',
+      ) as void;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to postBusinessUsersUserIdFiles
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async postBusinessUsersUserIdFiles(response: ResponseContext): Promise<void> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      return;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: void = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'void',
+        '',
+      ) as void;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
+   * @params response Response returned by the server for a request to postConsumerUsersUserIdFiles
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async postConsumerUsersUserIdFiles(response: ResponseContext): Promise<void> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
       return;

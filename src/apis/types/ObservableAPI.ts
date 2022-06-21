@@ -203,6 +203,92 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * Business User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public deleteBusinessUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Observable<void> {
+    const requestContextPromise = this.requestFactory.deleteBusinessUsersUserIdFilesFileId(
+      userId,
+      fileId,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) =>
+              this.responseProcessor.deleteBusinessUsersUserIdFilesFileId(rsp),
+            ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Consumer User Files - Delete
+   * @param userId
+   * @param fileId
+   */
+  public deleteConsumerUsersUserIdFilesFileId(
+    userId: string,
+    fileId: string,
+    _options?: Configuration,
+  ): Observable<void> {
+    const requestContextPromise = this.requestFactory.deleteConsumerUsersUserIdFilesFileId(
+      userId,
+      fileId,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) =>
+              this.responseProcessor.deleteConsumerUsersUserIdFilesFileId(rsp),
+            ),
+          );
+        }),
+      );
+  }
+
+  /**
    * Rule Instance - Delete
    * @param ruleInstanceId
    */
@@ -275,6 +361,7 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * Delete a Transaction Comment
    * @param transactionId
    * @param commentId
    */
@@ -352,7 +439,10 @@ export class ObservableDefaultApi {
    * Business Users - Item - Get
    * @param userId
    */
-  public getBusinessUsersItem(userId: string, _options?: Configuration): Observable<Business> {
+  public getBusinessUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Observable<InternalBusinessUser> {
     const requestContextPromise = this.requestFactory.getBusinessUsersItem(userId, _options);
 
     // build promise chain
@@ -434,7 +524,10 @@ export class ObservableDefaultApi {
    * Consumer Users - Item - Get
    * @param userId
    */
-  public getConsumerUsersItem(userId: string, _options?: Configuration): Observable<User> {
+  public getConsumerUsersItem(
+    userId: string,
+    _options?: Configuration,
+  ): Observable<InternalConsumerUser> {
     const requestContextPromise = this.requestFactory.getConsumerUsersItem(userId, _options);
 
     // build promise chain
@@ -965,6 +1058,88 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.postApikey(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Business User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public postBusinessUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Observable<void> {
+    const requestContextPromise = this.requestFactory.postBusinessUsersUserIdFiles(
+      userId,
+      FileInfo,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postBusinessUsersUserIdFiles(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Consumer User Files - Create
+   * @param userId
+   * @param FileInfo
+   */
+  public postConsumerUsersUserIdFiles(
+    userId: string,
+    FileInfo?: FileInfo,
+    _options?: Configuration,
+  ): Observable<void> {
+    const requestContextPromise = this.requestFactory.postConsumerUsersUserIdFiles(
+      userId,
+      FileInfo,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postConsumerUsersUserIdFiles(rsp)),
           );
         }),
       );

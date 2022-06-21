@@ -1,23 +1,16 @@
 import { Drawer, Tabs, Tag } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
-import ProDescriptions from '@ant-design/pro-descriptions';
 import { IRouteComponentProps, Link } from 'umi';
 import moment from 'moment';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.less';
 
+import { ConsumerUserDetails } from './components/ConsumerUserDetails';
+import { BusinessUserDetails } from './components/BusinessUserDetails';
 import { useApi } from '@/api';
-import {
-  Amount,
-  ApiException,
-  Business,
-  TransactionAmountDetails,
-  TransactionCaseManagement,
-  User,
-} from '@/apis';
+import { Amount, ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import { getFullName } from '@/utils/api/users';
 import PageWrapper from '@/components/PageWrapper';
@@ -38,19 +31,13 @@ const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
 };
 
-const createCurrencyStringFromTransactionAmount = (
-  amount: TransactionAmountDetails | undefined,
-) => {
-  return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
-};
-
 const BusinessUsersTab = (
   props: IRouteComponentProps<{
     id?: string;
   }>,
 ) => {
   const actionRef = useRef<ActionType>();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<Business>>(init());
+  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalBusinessUser>>(init());
   const api = useApi();
 
   const userId = props.match.params.id;
@@ -93,7 +80,7 @@ const BusinessUsersTab = (
     };
   }, [currentUserId, userId, api]);
 
-  const columns: ProColumns<Business>[] = [
+  const columns: ProColumns<InternalBusinessUser>[] = [
     {
       title: 'User ID',
       dataIndex: 'userId',
@@ -186,7 +173,7 @@ const BusinessUsersTab = (
 
   return (
     <>
-      <ProTable<Business, TableListPagination>
+      <ProTable<InternalBusinessUser, TableListPagination>
         rowClassName={(record, index) =>
           index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
         }
@@ -198,7 +185,6 @@ const BusinessUsersTab = (
         rowKey="key"
         search={false}
         request={async (params) => {
-          console.log('request!');
           const { pageSize, current, userId, createdTimestamp } = params;
           const [response, time] = await measure(() =>
             api.getBusinessUsersList({
@@ -236,81 +222,7 @@ const BusinessUsersTab = (
         closable={false}
       >
         <AsyncResourceRenderer resource={currentItem}>
-          {(currentRow) =>
-            currentRow?.legalEntity && (
-              <>
-                <ProDescriptions<Business>
-                  column={2}
-                  title={currentRow?.legalEntity.companyGeneralDetails.legalName}
-                  request={async () => ({
-                    data: currentRow || {},
-                  })}
-                  params={{
-                    id: currentRow?.legalEntity.companyGeneralDetails.legalName,
-                  }}
-                  columns={columns as ProDescriptionsItemProps<Business>[]}
-                />
-                Transaction History:
-                <ProTable<TransactionCaseManagement>
-                  form={{
-                    labelWrap: true,
-                  }}
-                  request={async (params) => {
-                    const response = await api.getTransactionsList({
-                      limit: params.pageSize!,
-                      skip: (params.current! - 1) * params.pageSize!,
-                      beforeTimestamp: Date.now(),
-                      filterOriginUserId: currentRow?.userId,
-                    });
-
-                    return {
-                      data: response.data,
-                      success: true,
-                      total: response.total,
-                    };
-                  }}
-                  columns={[
-                    {
-                      title: 'Transaction ID',
-                      dataIndex: 'transactionId',
-                      key: 'transactionId',
-                      render: (dom, entity) => {
-                        return (
-                          <Link to={`/transactions/transactions-list/${entity.transactionId}`}>
-                            {dom}
-                          </Link>
-                        );
-                      },
-                    },
-                    {
-                      title: 'Transaction time',
-                      dataIndex: 'timestamp',
-                      key: 'transactionTime',
-                    },
-                    {
-                      title: 'Origin Amount',
-                      render: (dom, entity) => {
-                        return `${createCurrencyStringFromTransactionAmount(
-                          entity.originAmountDetails,
-                        )}`;
-                      },
-                      key: 'amount',
-                    },
-
-                    {
-                      title: 'Destination Amount',
-                      render: (dom, entity) => {
-                        return `${createCurrencyStringFromTransactionAmount(
-                          entity.destinationAmountDetails,
-                        )}`;
-                      },
-                      key: 'amount',
-                    },
-                  ]}
-                />
-              </>
-            )
-          }
+          {(user) => user?.legalEntity && <BusinessUserDetails user={user} columns={columns} />}
         </AsyncResourceRenderer>
       </Drawer>
     </>
@@ -323,7 +235,7 @@ const ConsumerUsersTab = (
   }>,
 ) => {
   const actionRef = useRef<ActionType>();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<User>>(init());
+  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
 
   const api = useApi();
   const userId = props.match.params.id;
@@ -366,7 +278,7 @@ const ConsumerUsersTab = (
     };
   }, [currentUserId, userId, api]);
 
-  const columns: ProColumns<User>[] = [
+  const columns: ProColumns<InternalConsumerUser>[] = [
     {
       title: 'User ID',
       dataIndex: 'userId',
@@ -457,7 +369,7 @@ const ConsumerUsersTab = (
 
   return (
     <>
-      <ProTable<User, TableListPagination>
+      <ProTable<InternalConsumerUser, TableListPagination>
         form={{
           labelWrap: true,
         }}
@@ -505,80 +417,7 @@ const ConsumerUsersTab = (
         closable={false}
       >
         <AsyncResourceRenderer resource={currentItem}>
-          {(user) => (
-            <>
-              <ProDescriptions<User>
-                column={2}
-                title={getFullName(user?.userDetails)}
-                request={async () => ({
-                  data: user || {},
-                })}
-                params={{
-                  id: getFullName(user?.userDetails),
-                }}
-                columns={columns as ProDescriptionsItemProps<User>[]}
-              />
-              Transaction History:
-              <ProTable<TransactionCaseManagement>
-                form={{
-                  labelWrap: true,
-                }}
-                request={async (params) => {
-                  if (user?.userId == null) {
-                    throw new Error(`User id is null, unable to fetch transaction history`);
-                  }
-                  const response = await api.getTransactionsList({
-                    limit: params.pageSize!,
-                    skip: (params.current! - 1) * params.pageSize!,
-                    beforeTimestamp: Date.now(),
-                    filterOriginUserId: user?.userId,
-                  });
-                  return {
-                    data: response.data,
-                    success: true,
-                    total: response.total,
-                  };
-                }}
-                columns={[
-                  {
-                    title: 'Transaction ID',
-                    dataIndex: 'transactionId',
-                    key: 'transactionId',
-                    render: (dom, entity) => {
-                      return (
-                        <Link to={`/transactions/transactions-list/${entity.transactionId}`}>
-                          {dom}
-                        </Link>
-                      );
-                    },
-                  },
-                  {
-                    title: 'Transaction time',
-                    dataIndex: 'timestamp',
-                    key: 'transactionTime',
-                  },
-                  {
-                    title: 'Origin Amount',
-                    render: (dom, entity) => {
-                      return `${createCurrencyStringFromTransactionAmount(
-                        entity.originAmountDetails,
-                      )}`;
-                    },
-                    key: 'amount',
-                  },
-                  {
-                    title: 'Destination Amount',
-                    render: (dom, entity) => {
-                      return `${createCurrencyStringFromTransactionAmount(
-                        entity.destinationAmountDetails,
-                      )}`;
-                    },
-                    key: 'amount',
-                  },
-                ]}
-              />
-            </>
-          )}
+          {(user) => <ConsumerUserDetails user={user} columns={columns} />}
         </AsyncResourceRenderer>
       </Drawer>
     </>

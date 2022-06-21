@@ -10,12 +10,12 @@
  * Do not edit the class manually.
  */
 
-import { User } from './User';
+import { InternalConsumerUser } from './InternalConsumerUser';
 import { HttpFile } from '../http/http';
 
 export class ConsumerUsersListResponse {
   'total': number;
-  'data': Array<User>;
+  'data': Array<InternalConsumerUser>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -34,7 +34,7 @@ export class ConsumerUsersListResponse {
     {
       name: 'data',
       baseName: 'data',
-      type: 'Array<User>',
+      type: 'Array<InternalConsumerUser>',
       format: '',
     },
   ];
