@@ -26,8 +26,6 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
-import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
-import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
@@ -38,8 +36,8 @@ function getTransactionRuleImplementation(
   ruleImplementationName: string,
   tenantId: string,
   transaction: Transaction,
-  senderUser: InternalConsumerUser | InternalBusinessUser | undefined,
-  receiverUser: InternalConsumerUser | InternalBusinessUser | undefined,
+  senderUser: User | Business | undefined,
+  receiverUser: User | Business | undefined,
   ruleParameters: object,
   ruleAction: RuleAction,
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -76,14 +74,10 @@ export async function verifyTransactionIdempotent(
 
   const [senderUser, receiverUser, ruleInstances] = await Promise.all([
     transaction.originUserId
-      ? userRepository.getUser<InternalConsumerUser | InternalBusinessUser>(
-          transaction.originUserId
-        )
+      ? userRepository.getUser<User | Business>(transaction.originUserId)
       : undefined,
     transaction.destinationUserId
-      ? userRepository.getUser<InternalConsumerUser | InternalBusinessUser>(
-          transaction.destinationUserId
-        )
+      ? userRepository.getUser<User | Business>(transaction.destinationUserId)
       : undefined,
     ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
   ])

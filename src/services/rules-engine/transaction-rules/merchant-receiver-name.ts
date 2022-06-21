@@ -1,7 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { businessName, getFullName } from '../utils/users'
 import { TransactionRule } from './rule'
-import { Business } from '@/@types/openapi-public/Business'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 
 export type MerchantReceiverNameRuleParameters = {
