@@ -11,6 +11,7 @@
  */
 
 import { Business } from './Business'
+import { FileInfo } from './FileInfo'
 import { InternalBusinessUserAllOf } from './InternalBusinessUserAllOf'
 import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
@@ -40,6 +41,7 @@ export class InternalBusinessUser {
   'tags'?: Array<Tag>
   'transactionLimits'?: TransactionLimits1
   'type': InternalBusinessUserTypeEnum
+  'files'?: Array<FileInfo>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -95,6 +97,12 @@ export class InternalBusinessUser {
       name: 'type',
       baseName: 'type',
       type: 'InternalBusinessUserTypeEnum',
+      format: '',
+    },
+    {
+      name: 'files',
+      baseName: 'files',
+      type: 'Array<FileInfo>',
       format: '',
     },
   ]

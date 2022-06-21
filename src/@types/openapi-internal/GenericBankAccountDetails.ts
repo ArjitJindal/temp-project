@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address2 } from './Address2'
+import { Address } from './Address'
 /**
  * Model for any generic bank account
  */
@@ -39,7 +39,7 @@ export class GenericBankAccountDetails {
    * Name of the account holder
    */
   'name'?: string
-  'bankAddress'?: Address2
+  'bankAddress'?: Address
   /**
    * Special instructions to be specified if any
    */
@@ -92,7 +92,7 @@ export class GenericBankAccountDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address2',
+      type: 'Address',
       format: '',
     },
     {

@@ -103,6 +103,36 @@ export interface DefaultApiAccountsInviteRequest {
   AccountInvitePayload?: AccountInvitePayload
 }
 
+export interface DefaultApiDeleteBusinessUsersUserIdFilesFileIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteBusinessUsersUserIdFilesFileId
+   */
+  userId: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteBusinessUsersUserIdFilesFileId
+   */
+  fileId: string
+}
+
+export interface DefaultApiDeleteConsumerUsersUserIdFilesFileIdRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteConsumerUsersUserIdFilesFileId
+   */
+  userId: string
+  /**
+   *
+   * @type string
+   * @memberof DefaultApideleteConsumerUsersUserIdFilesFileId
+   */
+  fileId: string
+}
+
 export interface DefaultApiDeleteRuleInstancesRuleInstanceIdRequest {
   /**
    *
@@ -447,6 +477,36 @@ export interface DefaultApiPostApikeyRequest {
    * @memberof DefaultApipostApikey
    */
   usagePlanId?: string
+}
+
+export interface DefaultApiPostBusinessUsersUserIdFilesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostBusinessUsersUserIdFiles
+   */
+  userId: string
+  /**
+   *
+   * @type FileInfo
+   * @memberof DefaultApipostBusinessUsersUserIdFiles
+   */
+  FileInfo?: FileInfo
+}
+
+export interface DefaultApiPostConsumerUsersUserIdFilesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApipostConsumerUsersUserIdFiles
+   */
+  userId: string
+  /**
+   *
+   * @type FileInfo
+   * @memberof DefaultApipostConsumerUsersUserIdFiles
+   */
+  FileInfo?: FileInfo
 }
 
 export interface DefaultApiPostGetPresignedUrlRequest {}

@@ -59,7 +59,10 @@ import {
   FileImportConfig,
   GetPresignedUrlConfig,
 } from '@/lambdas/file-import/app'
-import { TransactionViewConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
+import {
+  TransactionViewConfig,
+  UserViewConfig,
+} from '@/lambdas/phytoplankton-internal-api-handlers/app'
 
 type InternalFunctionProps = {
   name: string
@@ -476,14 +479,23 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
 
-    /* business users view */
+    /* Business users view */
     const businessUsersViewFunction = this.createFunction(
       {
         name: TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.businessUsersViewHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          ...({
+            TMP_BUCKET: tmpBucketName,
+            DOCUMENT_BUCKET: documentBucketName,
+          } as UserViewConfig),
+        },
+      }
     )
     businessUsersViewFunction.role?.attachInlinePolicy(
       new Policy(
@@ -502,14 +514,23 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
 
-    /* consumer users view */
+    /* Consumer users view */
     const consumerUsersViewFunction = this.createFunction(
       {
         name: TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.consumerUsersViewHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          ...({
+            TMP_BUCKET: tmpBucketName,
+            DOCUMENT_BUCKET: documentBucketName,
+          } as UserViewConfig),
+        },
+      }
     )
     consumerUsersViewFunction.role?.attachInlinePolicy(
       new Policy(

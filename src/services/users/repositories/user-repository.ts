@@ -5,6 +5,9 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { USERS_COLLECTION } from '@/utils/mongoDBUtils'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 
 export type UserType = 'BUSINESS' | 'CONSUMER'
 
@@ -25,33 +28,67 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public async getBusinessUsers(pagination: {
+  public async getMongoBusinessUsers(pagination: {
     limit: number
     skip: number
     afterTimestamp?: number
     beforeTimestamp: number
     filterId?: string
-  }): Promise<{ total: number; data: Array<Business> }> {
-    return (await this.getUsers(pagination, 'BUSINESS')) as {
+  }): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
+    return (await this.getMongoUsers(pagination, 'BUSINESS')) as {
       total: number
-      data: Array<Business>
+      data: Array<InternalBusinessUser>
     }
   }
 
-  public async getConsumerUsers(pagination: {
+  public async getMongoConsumerUsers(pagination: {
     limit: number
     skip: number
     afterTimestamp?: number
     beforeTimestamp: number
     filterId?: string
-  }): Promise<{ total: number; data: Array<User> }> {
-    return (await this.getUsers(pagination, 'CONSUMER')) as {
+  }): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
+    return (await this.getMongoUsers(pagination, 'CONSUMER')) as {
       total: number
-      data: Array<User>
+      data: Array<InternalConsumerUser>
     }
   }
 
-  private async getUsers(
+  public async saveMongoUserFile(
+    userId: string,
+    file: FileInfo
+  ): Promise<FileInfo> {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<
+      InternalBusinessUser | InternalConsumerUser
+    >(USERS_COLLECTION(this.tenantId))
+    await collection.updateOne(
+      {
+        userId,
+      },
+      {
+        $push: { files: file },
+      }
+    )
+    return file
+  }
+
+  public async deleteMongoUserFile(userId: string, fileId: string) {
+    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const collection = db.collection<
+      InternalBusinessUser | InternalConsumerUser
+    >(USERS_COLLECTION(this.tenantId))
+    await collection.updateOne(
+      {
+        userId,
+      },
+      {
+        $pull: { files: { s3Key: fileId } },
+      }
+    )
+  }
+
+  private async getMongoUsers(
     params: {
       limit: number
       skip: number
@@ -60,12 +97,15 @@ export class UserRepository {
       filterId?: string
     },
     userType: UserType
-  ): Promise<{ total: number; data: Array<Business | User> }> {
+  ): Promise<{
+    total: number
+    data: Array<InternalBusinessUser | InternalConsumerUser>
+  }> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<Business | User>(
-      USERS_COLLECTION(this.tenantId)
-    )
-    const query: Filter<Business | User> = {
+    const collection = db.collection<
+      InternalBusinessUser | InternalConsumerUser
+    >(USERS_COLLECTION(this.tenantId))
+    const query: Filter<InternalBusinessUser | InternalConsumerUser> = {
       createdTimestamp: {
         $gte: params.afterTimestamp || 0,
         $lte: params.beforeTimestamp,
@@ -94,23 +134,29 @@ export class UserRepository {
     return await this.getUser<User>(userId)
   }
 
-  public async getMongoBusinessUser(userId: string): Promise<Business | null> {
+  public async getMongoBusinessUser(
+    userId: string
+  ): Promise<InternalBusinessUser | null> {
     const mongoUser = this.getMongoUser(userId)
     // todo: add 'type' field to users and check
-    return mongoUser as unknown as Business | null
+    return mongoUser as unknown as InternalBusinessUser | null
   }
 
-  public async getMongoConsumerUser(userId: string): Promise<User | null> {
+  public async getMongoConsumerUser(
+    userId: string
+  ): Promise<InternalConsumerUser | null> {
     const mongoUser = this.getMongoUser(userId)
     // todo: add 'type' field to users and check
-    return mongoUser as unknown as User | null
+    return mongoUser as unknown as InternalConsumerUser | null
   }
 
-  public async getMongoUser(userId: string): Promise<User | Business | null> {
+  public async getMongoUser(
+    userId: string
+  ): Promise<InternalConsumerUser | InternalBusinessUser | null> {
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    const collection = db.collection<User | Business>(
-      USERS_COLLECTION(this.tenantId)
-    )
+    const collection = db.collection<
+      InternalConsumerUser | InternalBusinessUser
+    >(USERS_COLLECTION(this.tenantId))
     return await collection.findOne({ userId })
   }
 

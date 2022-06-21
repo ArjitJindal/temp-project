@@ -10,8 +10,10 @@
  * Do not edit the class manually.
  */
 
+import { FileInfo } from './FileInfo'
 export class InternalBusinessUserAllOf {
   'type': InternalBusinessUserAllOfTypeEnum
+  'files'?: Array<FileInfo>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -25,6 +27,12 @@ export class InternalBusinessUserAllOf {
       name: 'type',
       baseName: 'type',
       type: 'InternalBusinessUserAllOfTypeEnum',
+      format: '',
+    },
+    {
+      name: 'files',
+      baseName: 'files',
+      type: 'Array<FileInfo>',
       format: '',
     },
   ]

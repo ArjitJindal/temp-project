@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address2 } from './Address2'
+import { Address } from './Address'
 /**
  * Model for ACH payment method
  */
@@ -35,7 +35,7 @@ export class ACHDetails {
    * Name of the account holder
    */
   'name'?: string
-  'bankAddress'?: Address2
+  'bankAddress'?: Address
   /**
    * Beneficiary name of the account
    */
@@ -82,7 +82,7 @@ export class ACHDetails {
     {
       name: 'bankAddress',
       baseName: 'bankAddress',
-      type: 'Address2',
+      type: 'Address',
       format: '',
     },
     {

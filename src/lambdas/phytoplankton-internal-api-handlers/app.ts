@@ -6,6 +6,7 @@ import { BadRequest, InternalServerError, NotFound } from 'http-errors'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
+import { UserService } from './services/user-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -34,6 +35,7 @@ import {
 import { Tenant as ApiTenant } from '@/@types/openapi-internal/Tenant'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { Account } from '@/@types/openapi-internal/Account'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -123,7 +125,6 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesExecuted,
         filterOriginCurrencies,
         filterDestinationCurrencies,
-        transactionType,
         sortField,
         sortOrder,
       } = event.queryStringParameters as any
@@ -306,6 +307,11 @@ export const dashboardStatsHandler = lambdaApi()(
   }
 )
 
+export type UserViewConfig = {
+  TMP_BUCKET: string
+  DOCUMENT_BUCKET: string
+}
+
 export const businessUsersViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -313,14 +319,23 @@ export const businessUsersViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
+    const s3 = getS3Client(event)
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
+    const userService = new UserService(
+      userRepository,
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
+
     if (event.httpMethod === 'GET' && event.path.endsWith('/business/users')) {
       const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
         event.queryStringParameters as any
-      return userRepository.getBusinessUsers({
+      return userService.getBusinessUsers({
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
@@ -332,13 +347,33 @@ export const businessUsersViewHandler = lambdaApi()(
       event.resource === '/business/users/{userId}' &&
       event.pathParameters?.userId
     ) {
-      const user = await userRepository.getMongoBusinessUser(
+      const user = await userService.getBusinessUser(
         event.pathParameters?.userId
       )
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
       return user
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/business/users/{userId}/files' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const fileInfo = JSON.parse(event.body) as FileInfo
+      await userService.saveUserFile(event.pathParameters.userId, fileInfo)
+      return 'OK'
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.resource === '/business/users/{userId}/files/{fileId}' &&
+      event.pathParameters?.userId &&
+      event.pathParameters?.fileId
+    ) {
+      await userService.deleteUserFile(
+        event.pathParameters.userId,
+        event.pathParameters.fileId
+      )
+      return 'OK'
     }
   }
 )
@@ -350,14 +385,22 @@ export const consumerUsersViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
+    const s3 = getS3Client(event)
     const client = await connectToDB()
     const userRepository = new UserRepository(tenantId, {
       mongoDb: client,
     })
+    const userService = new UserService(
+      userRepository,
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
     if (event.httpMethod === 'GET' && event.path.endsWith('/consumer/users')) {
       const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
         event.queryStringParameters as any
-      return userRepository.getConsumerUsers({
+      return userService.getConsumerUsers({
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
@@ -369,13 +412,33 @@ export const consumerUsersViewHandler = lambdaApi()(
       event.resource === '/consumer/users/{userId}' &&
       event.pathParameters?.userId
     ) {
-      const user = await userRepository.getMongoConsumerUser(
+      const user = await userService.getConsumerUser(
         event.pathParameters?.userId
       )
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
       return user
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/consumer/users/{userId}/files' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const fileInfo = JSON.parse(event.body) as FileInfo
+      await userService.saveUserFile(event.pathParameters.userId, fileInfo)
+      return 'OK'
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.resource === '/consumer/users/{userId}/files/{fileId}' &&
+      event.pathParameters?.userId &&
+      event.pathParameters?.fileId
+    ) {
+      await userService.deleteUserFile(
+        event.pathParameters.userId,
+        event.pathParameters.fileId
+      )
+      return 'OK'
     }
   }
 )

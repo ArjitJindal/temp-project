@@ -35,8 +35,16 @@ const PathToLambda: any = {
   '/consumer/users': TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
     TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/consumer/users/{userId}/files':
+    TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/consumer/users/{userId}/files/{fileId}':
+    TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/business/users': TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}':
+    TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+  '/business/users/{userId}/files':
+    TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+  '/business/users/{userId}/files/{fileId}':
     TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,

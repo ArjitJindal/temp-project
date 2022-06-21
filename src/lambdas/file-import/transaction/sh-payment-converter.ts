@@ -35,7 +35,7 @@ export class ShPaymentTransactionConverter
     const userRepository = new UserRepository(tenantId, {
       mongoDb: connections.mongoDb,
     })
-    const allBusinessUsers = await userRepository.getBusinessUsers({
+    const allBusinessUsers = await userRepository.getMongoBusinessUsers({
       limit: Infinity,
       skip: 0,
       beforeTimestamp: Infinity,

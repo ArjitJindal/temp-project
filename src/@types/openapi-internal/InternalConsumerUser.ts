@@ -11,6 +11,7 @@
  */
 
 import { ContactDetails } from './ContactDetails'
+import { FileInfo } from './FileInfo'
 import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf'
 import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
@@ -38,6 +39,7 @@ export class InternalConsumerUser {
   'tags'?: Array<Tag>
   'transactionLimits'?: TransactionLimits
   'type': InternalConsumerUserTypeEnum
+  'files'?: Array<FileInfo>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -93,6 +95,12 @@ export class InternalConsumerUser {
       name: 'type',
       baseName: 'type',
       type: 'InternalConsumerUserTypeEnum',
+      format: '',
+    },
+    {
+      name: 'files',
+      baseName: 'files',
+      type: 'Array<FileInfo>',
       format: '',
     },
   ]

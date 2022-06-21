@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-import { Address1 } from './Address1'
+import { Address2 } from './Address2'
 /**
  * Model for business user contact information details
  */
@@ -34,7 +34,7 @@ export class ContactDetails1 {
   /**
    * Address(es) of the company
    */
-  'addresses'?: Array<Address1>
+  'addresses'?: Array<Address2>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -71,7 +71,7 @@ export class ContactDetails1 {
     {
       name: 'addresses',
       baseName: 'addresses',
-      type: 'Array<Address1>',
+      type: 'Array<Address2>',
       format: '',
     },
   ]
