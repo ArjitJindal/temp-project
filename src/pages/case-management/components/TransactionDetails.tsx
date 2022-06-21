@@ -241,7 +241,6 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
             <Button
               analyticsName="Save"
               type="primary"
-              danger
               size="small"
               onClick={handleUpdateTransaction}
               loading={saving}

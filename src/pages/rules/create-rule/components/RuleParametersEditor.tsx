@@ -114,7 +114,6 @@ export const RuleParametersEditor: React.FC<Props> = ({
           <Button
             analyticsName="Activate"
             type="primary"
-            danger
             onClick={() => handleActivateRule(rule, ruleAction, parameters)}
             disabled={validationErrors.length > 0}
             loading={activating}
