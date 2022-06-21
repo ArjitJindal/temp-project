@@ -197,9 +197,11 @@ export async function verifyTransactionEvent(
     transactionState: transactionEvent.transactionState,
     ...(transactionEvent.updatedTransactionAttributes || {}),
   }
-  const { executedRules, hitRules } = hasTransactionUpdates
-    ? await verifyTransactionIdempotent(tenantId, dynamoDb, updatedTransaction)
-    : { executedRules: [], hitRules: [] }
+  const { executedRules, hitRules } = await verifyTransactionIdempotent(
+    tenantId,
+    dynamoDb,
+    updatedTransaction
+  )
 
   const eventId = await transactionEventRepository.saveTransactionEvent(
     transactionEvent,
@@ -211,10 +213,8 @@ export async function verifyTransactionEvent(
 
   // Update transaction with the latest payload
   await transactionRepository.saveTransaction(updatedTransaction, {
-    executedRules: hasTransactionUpdates
-      ? executedRules
-      : transaction.executedRules,
-    hitRules: hasTransactionUpdates ? hitRules : transaction.hitRules,
+    executedRules,
+    hitRules,
   })
 
   // For duplicated transaction events with the same state, we don't re-aggregated

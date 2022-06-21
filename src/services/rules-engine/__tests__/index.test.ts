@@ -164,7 +164,7 @@ describe('Verify Transaction Event', () => {
       ).toEqual('old reference')
 
       const transactionEvent = getTestTransactionEvent({
-        eventId: '123',
+        eventId: '1',
         transactionId: transaction.transactionId,
         transactionState: 'SUCCESSFUL',
         updatedTransactionAttributes: { reference: 'new reference' },
@@ -184,6 +184,41 @@ describe('Verify Transaction Event', () => {
         hitRules: result1.hitRules,
       })
       expect(latestTransaction?.reference).toEqual('new reference')
+    })
+
+    test("run rules even if the transaction doesn't have updates", async () => {
+      const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
+        dynamoDb,
+      })
+      const transaction = getTestTransaction({
+        transactionId: 'dummy-2',
+      })
+      const result1 = await verifyTransaction(
+        transaction,
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+
+      const transactionEvent = getTestTransactionEvent({
+        eventId: '2',
+        transactionId: transaction.transactionId,
+        transactionState: 'SUCCESSFUL',
+        updatedTransactionAttributes: undefined,
+      })
+      const result2 = await verifyTransactionEvent(
+        transactionEvent,
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      const latestTransaction = await transactionRepository.getTransactionById(
+        transaction.transactionId as string
+      )
+      expect(result2).toEqual({
+        eventId: transactionEvent.eventId,
+        transaction: _.omit(latestTransaction, ['executedRules', 'hitRules']),
+        executedRules: result1.executedRules,
+        hitRules: result1.hitRules,
+      })
     })
   })
 })
