@@ -54,6 +54,8 @@ import {
   createDynamoDBAlarm,
   dynamoTableOperationMetrics,
   createAPIGatewayThrottlingAlarm,
+  createLambdaErrorPercentageAlarm,
+  createLambdaThrottlingAlarm,
 } from './cdk-cw-alarms'
 import {
   FileImportConfig,
@@ -75,6 +77,7 @@ type InternalFunctionProps = {
 export class CdkTarponStack extends cdk.Stack {
   config: Config
   cwInsightsLayer: LayerVersion
+  betterUptimeCloudWatchTopic: Topic
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, { env: config.env })
     this.config = config
@@ -97,9 +100,10 @@ export class CdkTarponStack extends cdk.Stack {
         topicName: 'BetterUptimeCloudWatchTopic',
       }
     )
+    this.betterUptimeCloudWatchTopic = BetterUptimeCloudWatchTopic
 
     new Subscription(this, 'Subscription', {
-      topic: BetterUptimeCloudWatchTopic,
+      topic: this.betterUptimeCloudWatchTopic,
       endpoint: config.application.BETTERUPTIME_HOOK_URL
         ? config.application.BETTERUPTIME_HOOK_URL
         : '',
@@ -120,7 +124,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     createKinesisAlarm(
       this,
-      BetterUptimeCloudWatchTopic,
+      this.betterUptimeCloudWatchTopic,
       `TarponChangeCaptureKinesisPutRecordErrorRate`,
       tarponStream.streamName
     )
@@ -149,7 +153,7 @@ export class CdkTarponStack extends cdk.Stack {
       dynamoTableOperations.map((operation) => {
         createDynamoDBAlarm(
           this,
-          BetterUptimeCloudWatchTopic,
+          this.betterUptimeCloudWatchTopic,
           `DynamoTarpon${operation}${metric}`,
           dynamoDbTable.tableName,
           operation,
@@ -690,14 +694,14 @@ export class CdkTarponStack extends cdk.Stack {
      */
     createAPIGatewayAlarm(
       this,
-      BetterUptimeCloudWatchTopic,
+      this.betterUptimeCloudWatchTopic,
       `TarponApiErrorPercentage`,
       publicApi.restApiName
     )
 
     createAPIGatewayThrottlingAlarm(
       this,
-      BetterUptimeCloudWatchTopic,
+      this.betterUptimeCloudWatchTopic,
       publicApiLogGroup,
       `TarponApiThrottlingCount`,
       publicApi.restApiName
@@ -737,14 +741,14 @@ export class CdkTarponStack extends cdk.Stack {
 
     createAPIGatewayAlarm(
       this,
-      BetterUptimeCloudWatchTopic,
+      this.betterUptimeCloudWatchTopic,
       `ConsoleTarponApiErrorPercentage`,
       consoleApi.restApiName
     )
 
     createAPIGatewayThrottlingAlarm(
       this,
-      BetterUptimeCloudWatchTopic,
+      this.betterUptimeCloudWatchTopic,
       publicApiLogGroup,
       `ConsoleApiThrottlingCount`,
       consoleApi.restApiName
@@ -817,7 +821,7 @@ export class CdkTarponStack extends cdk.Stack {
       jwtAuthorizerBaseRole.roleArn
     )
 
-    createTarponOverallLambdaAlarm(this, BetterUptimeCloudWatchTopic)
+    createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
 
     /**
      * Outputs
@@ -904,6 +908,14 @@ export class CdkTarponStack extends cdk.Stack {
         'CloudWatchLambdaInsightsExecutionRolePolicy'
       )
     )
+
+    /* Alarms */
+    createLambdaErrorPercentageAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      name
+    )
+    createLambdaThrottlingAlarm(this, this.betterUptimeCloudWatchTopic, name)
 
     // Provisioned concurrency settings
     if (provisionedConcurrency) {
