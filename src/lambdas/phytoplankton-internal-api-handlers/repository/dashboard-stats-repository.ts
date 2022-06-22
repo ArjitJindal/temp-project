@@ -234,7 +234,7 @@ export class DashboardStatsRepository {
             {
               $match: {
                 timestamp: { $gte: 0 },
-                executedRules: {
+                hitRules: {
                   $elemMatch: {
                     ruleAction: 'FLAG',
                   },
@@ -265,7 +265,7 @@ export class DashboardStatsRepository {
             {
               $match: {
                 timestamp: { $gte: 0 },
-                executedRules: {
+                hitRules: {
                   $elemMatch: {
                     ruleAction: 'BLOCK',
                   },
