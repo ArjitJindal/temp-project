@@ -26,7 +26,7 @@ export class TransactionService {
     this.documentBucketName = documentBucketName
   }
 
-  async getTransactions(
+  public async getTransactions(
     params: DefaultApiGetTransactionsListRequest
   ): Promise<TransactionsListResponse> {
     const result = await this.transactionRepository.getTransactions(params)
@@ -34,7 +34,7 @@ export class TransactionService {
     return result
   }
 
-  async updateTransaction(
+  public async updateTransaction(
     userId: string,
     transactionId: string,
     updateRequest: TransactionUpdateRequest
@@ -58,7 +58,7 @@ export class TransactionService {
     return 'OK'
   }
 
-  async getTransaction(
+  public async getTransaction(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
     const transaction =
@@ -70,7 +70,7 @@ export class TransactionService {
     )
   }
 
-  async saveTransactionComment(transactionId: string, comment: Comment) {
+  public async saveTransactionComment(transactionId: string, comment: Comment) {
     // Copy the files from tmp bucket to document bucket
     for (const file of comment.files || []) {
       await this.s3
@@ -99,7 +99,10 @@ export class TransactionService {
     }
   }
 
-  async deleteTransactionComment(transactionId: string, commentId: string) {
+  public async deleteTransactionComment(
+    transactionId: string,
+    commentId: string
+  ) {
     const tranasction =
       await this.transactionRepository.getTransactionCaseManagementById(
         transactionId

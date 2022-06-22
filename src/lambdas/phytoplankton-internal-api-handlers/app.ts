@@ -590,8 +590,6 @@ export const accountsHandler = lambdaApi()(
       assertRole(role, 'root')
       const { pathParameters } = event
       const idToChange = pathParameters?.userId
-        ? decodeURIComponent(pathParameters?.userId)
-        : null
       if (!idToChange) {
         throw new Error(`userId is not provided`)
       }
@@ -616,8 +614,6 @@ export const accountsHandler = lambdaApi()(
       assertRole(role, 'admin')
 
       const idToDelete = pathParameters?.userId
-        ? decodeURIComponent(pathParameters?.userId)
-        : null
       if (!idToDelete) {
         throw new Error(`userId is not provided`)
       }

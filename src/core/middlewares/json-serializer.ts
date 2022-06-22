@@ -17,6 +17,16 @@ export const jsonSerializer =
     context: any,
     callback: any
   ): Promise<APIGatewayProxyResult> => {
+    // Decode URI for all path parameters
+    if (event.pathParameters) {
+      for (const pathKey in event.pathParameters) {
+        if (event.pathParameters[pathKey]) {
+          event.pathParameters[pathKey] = decodeURIComponent(
+            event.pathParameters[pathKey]
+          )
+        }
+      }
+    }
     const response = await handler(event, context, callback)
     if (!response) {
       return {

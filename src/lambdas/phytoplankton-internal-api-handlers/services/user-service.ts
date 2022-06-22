@@ -28,7 +28,7 @@ export class UserService {
     this.documentBucketName = documentBucketName
   }
 
-  async getBusinessUsers(
+  public async getBusinessUsers(
     params: DefaultApiGetBusinessUsersListRequest
   ): Promise<BusinessUsersListResponse> {
     const result = await this.userRepository.getMongoBusinessUsers(params)
@@ -40,7 +40,7 @@ export class UserService {
     }
   }
 
-  async getConsumerUsers(
+  public async getConsumerUsers(
     params: DefaultApiGetConsumerUsersListRequest
   ): Promise<ConsumerUsersListResponse> {
     const result = await this.userRepository.getMongoConsumerUsers(params)
@@ -52,12 +52,16 @@ export class UserService {
     }
   }
 
-  async getBusinessUser(userId: string): Promise<InternalBusinessUser | null> {
+  public async getBusinessUser(
+    userId: string
+  ): Promise<InternalBusinessUser | null> {
     const user = await this.userRepository.getMongoBusinessUser(userId)
     return user && this.getAugmentedUser<InternalBusinessUser>(user)
   }
 
-  async getConsumerUser(userId: string): Promise<InternalConsumerUser | null> {
+  public async getConsumerUser(
+    userId: string
+  ): Promise<InternalConsumerUser | null> {
     const user = await this.userRepository.getMongoConsumerUser(userId)
     return user && this.getAugmentedUser<InternalConsumerUser>(user)
   }
@@ -74,7 +78,7 @@ export class UserService {
     } as T
   }
 
-  async saveUserFile(userId: string, file: FileInfo): Promise<FileInfo> {
+  public async saveUserFile(userId: string, file: FileInfo): Promise<FileInfo> {
     // Copy the files from tmp bucket to document bucket
     await this.s3
       .copyObject({
@@ -89,7 +93,7 @@ export class UserService {
     })
   }
 
-  async deleteUserFile(userId: string, fileId: string) {
+  public async deleteUserFile(userId: string, fileId: string) {
     const user = await this.userRepository.getMongoUser(userId)
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
@@ -99,10 +103,7 @@ export class UserService {
       Bucket: this.documentBucketName,
       Delete: { Objects: [{ Key: fileId }] },
     })
-    await this.userRepository.deleteMongoUserFile(
-      userId,
-      decodeURIComponent(fileId)
-    )
+    await this.userRepository.deleteMongoUserFile(userId, fileId)
   }
 
   private getDownloadLink(file: FileInfo): string {
