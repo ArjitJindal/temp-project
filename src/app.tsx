@@ -4,9 +4,19 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
 import { Link, RunTimeLayoutConfig, setLocale } from 'umi';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
+import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
+
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
 import AppWrapper from '@/components/AppWrapper';
+
+Sentry.init({
+  dsn: 'https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175',
+  integrations: [new BrowserTracing()],
+  tracesSampleRate: 0.05,
+  environment: process.env.NODE_ENV ? process.env.NODE_ENV : 'development',
+});
 
 setLocale('en-US', false);
 

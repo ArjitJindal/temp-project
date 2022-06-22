@@ -73,6 +73,8 @@
     "@rjsf/antd": "^4.1.0",
     "@rjsf/core": "^4.1.0",
     "@segment/analytics-next": "^1.38.0",
+    "@sentry/react": "^7.2.0",
+    "@sentry/tracing": "^7.2.0",
     "@umijs/route-utils": "^1.0.36",
     "ahooks": "^2.0.0",
     "antd": "^4.14.0",
