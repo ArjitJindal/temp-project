@@ -8,8 +8,7 @@ import { USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-
-export type UserType = 'BUSINESS' | 'CONSUMER'
+import { UserType } from '@/@types/user/user-type'
 
 export class UserRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient

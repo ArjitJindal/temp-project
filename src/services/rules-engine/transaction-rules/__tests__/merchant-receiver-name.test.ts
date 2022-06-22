@@ -31,6 +31,7 @@ describe.each<TransactionRuleTestCase>([
         destinationPaymentDetails: {
           method: 'WALLET',
           name: 'GooglePay',
+          walletType: 'wallet',
         },
       }),
     ],
@@ -43,6 +44,7 @@ describe.each<TransactionRuleTestCase>([
         destinationPaymentDetails: {
           method: 'WALLET',
           name: 'Mobikwik',
+          walletType: 'wallet',
         },
       }),
     ],
@@ -55,6 +57,7 @@ describe.each<TransactionRuleTestCase>([
         destinationPaymentDetails: {
           method: 'WALLET',
           name: 'Mobikwik-BNPL',
+          walletType: 'wallet',
         },
       }),
     ],
@@ -66,7 +69,8 @@ describe.each<TransactionRuleTestCase>([
       getTestTransaction({
         destinationPaymentDetails: {
           method: 'WALLET',
-          name: undefined,
+          name: 'test',
+          walletType: 'wallet',
         },
       }),
     ],
@@ -78,7 +82,7 @@ describe.each<TransactionRuleTestCase>([
       getTestTransaction({
         destinationPaymentDetails: {
           method: 'CARD',
-          name: 'Mobikwik',
+          cardFingerprint: 'Mobikwik',
         },
       }),
     ],

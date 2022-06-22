@@ -14,6 +14,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
+import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -111,6 +112,13 @@ export const DynamoDbKeys = {
           paymentDetails as GenericBankAccountDetails
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${accountNumber}#${accountType}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'SWIFT': {
+        const { accountNumber, swiftCode } = paymentDetails as SWIFTDetails
+        return {
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#swiftCode:${swiftCode}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }

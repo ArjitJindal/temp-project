@@ -11,14 +11,12 @@
  */
 
 import { Address } from './Address'
+import { GeneralBankAccountPaymentMethod } from './GeneralBankAccountPaymentMethod'
 /**
  * Model for any generic bank account
  */
 export class GenericBankAccountDetails {
-  /**
-   * Classify the method of payment as \"GENERIC_BANK_ACCOUNT\" for GenericBankAccountDetails
-   */
-  'method': string
+  'method': GeneralBankAccountPaymentMethod
   /**
    * Bank account number
    */
@@ -56,7 +54,7 @@ export class GenericBankAccountDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'GeneralBankAccountPaymentMethod',
       format: '',
     },
     {

@@ -12,6 +12,8 @@ import { createLegalEntity, createShareHolders } from './businessUserHelpers'
 import { countries, currencies, ruleInstances } from './constants'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { CardPaymentMethod } from '@/@types/openapi-public/CardPaymentMethod'
+import { IBANPaymentMethod } from '@/@types/openapi-public/IBANPaymentMethod'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
@@ -61,7 +63,7 @@ const productTypes = ['WALLET', 'REMITTANCE', 'BNPL']
 const createBankPaymentDetails = (name: any) => {
   const ibanInfo = IBAN.random()
   return {
-    method: 'IBAN',
+    method: 'IBAN' as IBANPaymentMethod,
     BIC: 'DEUTDEFF',
     bankName: `${getNameString()} Bank`,
     IBAN: (ibanInfo.getAccountNumber() !== null
@@ -76,13 +78,13 @@ const createBankPaymentDetails = (name: any) => {
 
 const createPaymentDetails = (sendingCountry: string, name: any) => {
   const paymentMethod = paymentMethods[getRandomIntInclusive(0, 1)]
-  const paymentDeets =
-    paymentMethod == 'CARD'
-      ? createCardPaymentDetails(sendingCountry, name)
-      : createBankPaymentDetails(name)
-  return {
-    method: paymentMethod,
-    ...paymentDeets,
+  if (paymentMethod == 'CARD') {
+    return {
+      method: 'CARD' as CardPaymentMethod,
+      ...createCardPaymentDetails(sendingCountry, name),
+    }
+  } else {
+    return createBankPaymentDetails(name)
   }
 }
 

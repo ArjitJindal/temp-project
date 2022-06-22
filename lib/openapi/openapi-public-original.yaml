@@ -1529,9 +1529,7 @@ components:
         3dsDone: true
       properties:
         method:
-          type: string
-          pattern: CARD
-          description: Classify the method of payment as "Card" for CardDetails
+          $ref: '#/components/schemas/CardPaymentMethod'
         cardFingerprint:
           minLength: 1
           type: string
@@ -1589,9 +1587,7 @@ components:
                 value: customValue
       properties:
         method:
-          type: string
-          pattern: IBAN
-          description: Classify the method of payment as "IBAN" for IBANDetails
+          $ref: '#/components/schemas/IBANPaymentMethod'
         BIC:
           minLength: 1
           type: string
@@ -1622,10 +1618,7 @@ components:
       x-examples: {}
       properties:
         method:
-          type: string
-          minLength: 1
-          description: 'Type: WALLET'
-          pattern: WALLET
+          $ref: '#/components/schemas/WalletPaymentMethod'
         walletType:
           type: string
           description: 'Wallet type if there are various types of wallets belonging to the same user. E.g. Checking, savings, vault, different currency wallets etc.'
@@ -2520,9 +2513,7 @@ components:
       title: ACHDetails
       properties:
         method:
-          type: string
-          pattern: ACH
-          description: Classify the method of payment as "ACH" for ACHDetails
+          $ref: '#/components/schemas/ACHPaymentMethod'
         routingNumber:
           type: string
           minLength: 1
@@ -2554,9 +2545,7 @@ components:
       title: SWIFTDetails
       properties:
         method:
-          type: string
-          pattern: SWIFT
-          description: Classify the method of payment as "SWIFT" for SWIFTDetails
+          $ref: '#/components/schemas/SWIFTPaymentMethod'
         swiftCode:
           type: string
           minLength: 1
@@ -2589,9 +2578,7 @@ components:
       title: GenericBankAccountDetails
       properties:
         method:
-          type: string
-          pattern: GENERIC_BANK_ACCOUNT
-          description: Classify the method of payment as "GENERIC_BANK_ACCOUNT" for GenericBankAccountDetails
+          $ref: '#/components/schemas/GeneralBankAccountPaymentMethod'
         accountNumber:
           type: string
           minLength: 1
@@ -2628,9 +2615,7 @@ components:
       title: UPIDetails
       properties:
         method:
-          type: string
-          pattern: UPI
-          description: Classify the method of payment as "UPI" for UPIDetails
+          $ref: '#/components/schemas/UPIPaymentMethod'
         upiID:
           type: string
           minLength: 1
@@ -2890,6 +2875,64 @@ components:
         - SUCCESSFUL
       minLength: 1
       description: 'Model for transaction states. E.g. Processing, Refunded, Successful etc.'
+    UPIPaymentMethod:
+      type: string
+      title: UPIPaymentMethod
+      x-stoplight:
+        id: ey7wghj9d55m1
+      enum:
+        - UPI
+      description: Classify the method of payment as "UPI" for UPIDetails
+    IBANPaymentMethod:
+      type: string
+      title: IBANPaymentMethod
+      x-stoplight:
+        id: 88rsygg2982ga
+      enum:
+        - IBAN
+      description: |
+        Classify the method of payment as "IBAN" for IBANDetails
+    CardPaymentMethod:
+      type: string
+      title: CardPaymentMethod
+      x-stoplight:
+        id: fcy1vejkjakna
+      enum:
+        - CARD
+      description: |
+        Classify the method of payment as "Card" for CardDetails
+    WalletPaymentMethod:
+      type: string
+      title: WalletPaymentMethod
+      x-stoplight:
+        id: 2aj6flqakvxse
+      enum:
+        - WALLET
+      description: Classify the method of payment as "Wallet" for WalletDetails
+    ACHPaymentMethod:
+      type: string
+      title: ACHPaymentMethod
+      x-stoplight:
+        id: 6wplfpsuprljy
+      enum:
+        - ACH
+      description: Classify the method of payment as "ACH" for ACHDetails
+    SWIFTPaymentMethod:
+      type: string
+      title: SWIFTPaymentMethod
+      x-stoplight:
+        id: 3eh7tx9dnissq
+      enum:
+        - SWIFT
+      description: Classify the method of payment as "SWIFT" for SWIFTDetails
+    GeneralBankAccountPaymentMethod:
+      type: string
+      title: GeneralBankAccountPaymentMethod
+      x-stoplight:
+        id: jvi90ofl0kzfe
+      enum:
+        - GENERIC_BANK_ACCOUNT
+      description: Classify the method of payment as "GENERIC_BANK_ACCOUNT" for GenericBankAccountDetails
   securitySchemes:
     x-api-key:
       name: x-api-key
