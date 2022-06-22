@@ -58,6 +58,11 @@ export class DashboardStatsRepository {
     await transactionsCollection
       .aggregate([
         {
+          $match: {
+            originUserId: { $exists: true },
+          },
+        },
+        {
           $project: {
             originUserId: true,
             date: {
