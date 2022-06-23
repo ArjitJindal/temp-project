@@ -150,6 +150,27 @@ export class TransactionRepository {
       },
       { $sort: { [sortField]: sortOrder } },
     ]
+    if (sortField === 'ruleHitCount') {
+      pipeline.push(
+        {
+          $addFields: {
+            ruleCount: {
+              $filter: {
+                input: '$executedRules',
+                as: 'rule',
+                cond: { $eq: ['$$rule.ruleHit', true] },
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            Hit: { $sum: { $size: '$ruleCount' } },
+          },
+        },
+        { $sort: { Hit: sortOrder } }
+      )
+    }
     if (params?.skip) {
       pipeline.push({ $skip: params.skip })
     }
