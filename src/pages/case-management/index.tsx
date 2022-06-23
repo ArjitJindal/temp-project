@@ -144,6 +144,8 @@ const TableList = (
         width: 100,
         ellipsis: true,
         hideInSearch: true,
+        dataIndex: 'ruleHitCount',
+        sorter: true,
         render: (_, transaction) => {
           return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
         },
