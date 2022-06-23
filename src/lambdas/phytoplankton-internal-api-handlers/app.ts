@@ -654,7 +654,7 @@ export const tenantsHandler = lambdaApi()(
   }
 )
 
-export const riskQuantificationHandler = lambdaApi()(
+export const riskClassificationHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -667,45 +667,45 @@ export const riskQuantificationHandler = lambdaApi()(
 
     if (
       event.httpMethod === 'GET' &&
-      event.resource === '/pulse/risk-quantification'
+      event.resource === '/pulse/risk-classification'
     ) {
       try {
-        return riskRepository.getRiskQuantification()
+        return riskRepository.getRiskClassification()
       } catch (e) {
         console.error(e)
         return e
       }
     } else if (
       event.httpMethod === 'POST' &&
-      event.resource === '/pulse/risk-quantification'
+      event.resource === '/pulse/risk-classification'
     ) {
       if (!event.body) {
         throw new BadRequest('Empty body')
       }
-      let quantificationsValues
+      let classificationValues
       try {
-        quantificationsValues = JSON.parse(event.body)
-        validateQuantificationRequest(quantificationsValues)
+        classificationValues = JSON.parse(event.body)
+        validateClassificationRequest(classificationValues)
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return riskRepository.createOrUpdateRiskQuantification(
-        quantificationsValues
+      return riskRepository.createOrUpdateRiskClassification(
+        classificationValues
       )
     }
     throw new BadRequest('Unhandled request')
   }
 )
 
-const validateQuantificationRequest = (quantificationsValues: Array<any>) => {
+const validateClassificationRequest = (classificationValues: Array<any>) => {
   if (
-    quantificationsValues.length !=
+    classificationValues.length !=
     HammerheadStackConstants.NUMBER_OF_RISK_LEVELS
   ) {
     throw new BadRequest('Invalid Request - Please provide 5 risk levels')
   }
   const unique = new Set()
-  const hasDuplicate = quantificationsValues.some(
+  const hasDuplicate = classificationValues.some(
     (element) => unique.size === unique.add(element.riskLevel).size
   )
   if (hasDuplicate) {

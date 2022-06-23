@@ -10,10 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { DashboardStatsRulesCountRulesStats } from './DashboardStatsRulesCountRulesStats'
 export class DashboardStatsRulesCountData {
-  '_id': string
-  'rulesStats'?: Array<DashboardStatsRulesCountRulesStats>
+  'ruleId': string
+  'hitCount': number
 
   static readonly discriminator: string | undefined = undefined
 
@@ -24,15 +23,15 @@ export class DashboardStatsRulesCountData {
     format: string
   }> = [
     {
-      name: '_id',
-      baseName: '_id',
+      name: 'ruleId',
+      baseName: 'ruleId',
       type: 'string',
       format: '',
     },
     {
-      name: 'rulesStats',
-      baseName: 'rulesStats',
-      type: 'Array<DashboardStatsRulesCountRulesStats>',
+      name: 'hitCount',
+      baseName: 'hitCount',
+      type: 'number',
       format: '',
     },
   ]

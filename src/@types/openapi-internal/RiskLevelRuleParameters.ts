@@ -10,9 +10,12 @@
  * Do not edit the class manually.
  */
 
-export class DashboardStatsRulesCountRulesStats {
-  'ruleId'?: string
-  'hitCount'?: number
+export class RiskLevelRuleParameters {
+  'VERY_HIGH': any
+  'HIGH': any
+  'MEDIUM': any
+  'LOW': any
+  'VERY_LOW': any
 
   static readonly discriminator: string | undefined = undefined
 
@@ -23,21 +26,39 @@ export class DashboardStatsRulesCountRulesStats {
     format: string
   }> = [
     {
-      name: 'ruleId',
-      baseName: 'ruleId',
-      type: 'string',
+      name: 'VERY_HIGH',
+      baseName: 'VERY_HIGH',
+      type: 'any',
       format: '',
     },
     {
-      name: 'hitCount',
-      baseName: 'hitCount',
-      type: 'number',
+      name: 'HIGH',
+      baseName: 'HIGH',
+      type: 'any',
+      format: '',
+    },
+    {
+      name: 'MEDIUM',
+      baseName: 'MEDIUM',
+      type: 'any',
+      format: '',
+    },
+    {
+      name: 'LOW',
+      baseName: 'LOW',
+      type: 'any',
+      format: '',
+    },
+    {
+      name: 'VERY_LOW',
+      baseName: 'VERY_LOW',
+      type: 'any',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return DashboardStatsRulesCountRulesStats.attributeTypeMap
+    return RiskLevelRuleParameters.attributeTypeMap
   }
 
   public constructor() {}

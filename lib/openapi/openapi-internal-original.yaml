@@ -908,9 +908,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
       operationId: get-accounts
-  /pulse/risk-quantification:
+  /pulse/risk-classification:
     get:
-      summary: Risk quantification - GET
+      summary: Risk classification - GET
       tags: []
       responses:
         '200':
@@ -918,18 +918,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskQuantificationScore'
+                $ref: '#/components/schemas/RiskClassificationScore'
               examples:
                 example-1:
                   value:
                     - riskLevel: VERY_LOW
                       lowerBoundRiskScore: 0
                       upperBoundRiskScore: 25
-      operationId: get-pulse-risk-quantification
+      operationId: get-pulse-risk-classification
       description: ''
     post:
-      summary: Risk quantification - POST
-      operationId: post-pulse-risk-quantification
+      summary: Risk classification - POST
+      operationId: post-pulse-risk-classification
       responses:
         '200':
           description: OK
@@ -939,7 +939,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RiskQuantificationScore'
+              $ref: '#/components/schemas/RiskClassificationScore'
+    parameters: []
 components:
   schemas:
     Rule:
@@ -970,8 +971,12 @@ components:
           type: string
         defaultParameters:
           type: object
+        defaultRiskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
         defaultAction:
           $ref: '#/components/schemas/RuleAction'
+        defaultRiskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
         ruleImplementationName:
           type: string
         labels:
@@ -1010,8 +1015,12 @@ components:
           type: string
         parameters:
           type: object
+        riskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
         action:
           $ref: '#/components/schemas/RuleAction'
+        riskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
         status:
           type: string
           enum:
@@ -1197,13 +1206,7 @@ components:
         - data
     DashboardStatsRulesCount:
       type: object
-      x-examples:
-        example-1:
-          data:
-            - _id: '2020-01-04'
-              totalTransactions: 2344
-              flaggedTransactions: 121
-              stoppedTransactions: 33
+      x-examples: {}
       title: DashboardStatsRulesCount
       properties:
         data:
@@ -1211,19 +1214,13 @@ components:
           items:
             type: object
             properties:
-              _id:
+              ruleId:
                 type: string
-              rulesStats:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    ruleId:
-                      type: string
-                    hitCount:
-                      type: number
+              hitCount:
+                type: number
             required:
-              - _id
+              - ruleId
+              - hitCount
       required:
         - data
     InternalConsumerUser:
@@ -1467,7 +1464,7 @@ components:
       required:
         - id
         - name
-    RiskQuantificationScore:
+    RiskClassificationScore:
       type: array
       x-examples:
         example-1:
@@ -1475,20 +1472,12 @@ components:
             lowerBoundRiskScore: 0
             upperBoundRiskScore: 25
       description: ''
-      title: RiskQuantificationScore
+      title: RiskClassificationScore
       items:
         type: object
         properties:
           riskLevel:
-            type: string
-            enum:
-              - VERY_LOW
-              - LOW
-              - MEDIUM
-              - HIGH
-              - VERY_HIGH
-            minLength: 3
-            maxLength: 9
+            $ref: '#/components/schemas/RiskLevel'
           lowerBoundRiskScore:
             type: number
             minimum: 0
@@ -1501,6 +1490,61 @@ components:
             exclusiveMaximum: false
             minimum: 0
             maximum: 100
+    RiskLevelRuleParameters:
+      title: RiskLevelRuleParameters
+      x-stoplight:
+        id: xpbk3cprby4j6
+      type: object
+      properties:
+        VERY_HIGH:
+          type: object
+        HIGH:
+          type: object
+        MEDIUM:
+          type: object
+        LOW:
+          type: object
+        VERY_LOW:
+          type: object
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RiskLevel:
+      type: string
+      title: RiskLevel
+      x-stoplight:
+        id: lrybcomxmbf4h
+      enum:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RiskLevelRuleActions:
+      title: RiskLevelRuleActions
+      x-stoplight:
+        id: 9sj5fz98k6tlb
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        MEDIUM:
+          $ref: '#/components/schemas/RuleAction'
+        LOW:
+          $ref: '#/components/schemas/RuleAction'
+        VERY_LOW:
+          $ref: '#/components/schemas/RuleAction'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
   securitySchemes:
     Authorization:
       type: http

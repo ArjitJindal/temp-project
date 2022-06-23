@@ -10,6 +10,8 @@
  * Do not edit the class manually.
  */
 
+import { RiskLevelRuleActions } from './RiskLevelRuleActions'
+import { RiskLevelRuleParameters } from './RiskLevelRuleParameters'
 import { RuleAction } from './RuleAction'
 export class Rule {
   'id': string
@@ -17,7 +19,9 @@ export class Rule {
   'name': string
   'description': string
   'defaultParameters': any
+  'defaultRiskLevelParameters'?: RiskLevelRuleParameters
   'defaultAction': RuleAction
+  'defaultRiskLevelActions'?: RiskLevelRuleActions
   'ruleImplementationName': string
   'labels': Array<string>
   'createdAt'?: number
@@ -63,9 +67,21 @@ export class Rule {
       format: '',
     },
     {
+      name: 'defaultRiskLevelParameters',
+      baseName: 'defaultRiskLevelParameters',
+      type: 'RiskLevelRuleParameters',
+      format: '',
+    },
+    {
       name: 'defaultAction',
       baseName: 'defaultAction',
       type: 'RuleAction',
+      format: '',
+    },
+    {
+      name: 'defaultRiskLevelActions',
+      baseName: 'defaultRiskLevelActions',
+      type: 'RiskLevelRuleActions',
       format: '',
     },
     {

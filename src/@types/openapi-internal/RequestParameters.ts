@@ -24,7 +24,6 @@ import { DashboardStatsHitsPerUser } from './DashboardStatsHitsPerUser'
 import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData'
 import { DashboardStatsRulesCount } from './DashboardStatsRulesCount'
 import { DashboardStatsRulesCountData } from './DashboardStatsRulesCountData'
-import { DashboardStatsRulesCountRulesStats } from './DashboardStatsRulesCountRulesStats'
 import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount'
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData'
 import { DeviceData } from './DeviceData'
@@ -51,6 +50,9 @@ import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
+import { RiskLevel } from './RiskLevel'
+import { RiskLevelRuleActions } from './RiskLevelRuleActions'
+import { RiskLevelRuleParameters } from './RiskLevelRuleParameters'
 import { Rule } from './Rule'
 import { RuleAction } from './RuleAction'
 import { RuleAction1 } from './RuleAction1'
@@ -316,7 +318,7 @@ export interface DefaultApiGetImportImportIdRequest {
   importId: string
 }
 
-export interface DefaultApiGetPulseRiskQuantificationRequest {}
+export interface DefaultApiGetPulseRiskClassificationRequest {}
 
 export interface DefaultApiGetRuleImplementationsRequest {}
 
@@ -593,11 +595,11 @@ export interface DefaultApiPostListsRequest {
   ListImportRequest?: ListImportRequest
 }
 
-export interface DefaultApiPostPulseRiskQuantificationRequest {
+export interface DefaultApiPostPulseRiskClassificationRequest {
   /**
    *
    * @type Array&lt;any&gt;
-   * @memberof DefaultApipostPulseRiskQuantification
+   * @memberof DefaultApipostPulseRiskClassification
    */
   request_body?: Array<any>
 }

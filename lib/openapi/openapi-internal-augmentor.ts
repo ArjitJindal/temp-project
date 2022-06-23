@@ -57,8 +57,8 @@ const PathToLambda: any = {
   '/dashboard_stats/rule_hit':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME, // hack for now
 
-  '/pulse/risk-quantification':
-    HammerheadStackConstants.RISK_QUANTIFICATION_FUNCTION_NAME,
+  '/pulse/risk-classification':
+    HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {

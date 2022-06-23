@@ -80,8 +80,8 @@ export const HammerheadStackConstants = {
   DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
-  RISK_QUANTIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
-    'RiskQuantificationFunction'
+  RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
+    'RiskClassificationFunction'
   ),
   NUMBER_OF_RISK_LEVELS: 5,
 }

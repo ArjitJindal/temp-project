@@ -21,13 +21,13 @@ export class RiskRepository {
     this.tenantId = tenantId
   }
 
-  async getRiskQuantification(): Promise<Array<any>> {
+  async getRiskClassification(): Promise<Array<any>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.RISK_QUANTIFICATION(this.tenantId).PartitionKeyID,
+        ':pk': DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId).PartitionKeyID,
       },
     }
     try {
@@ -39,24 +39,24 @@ export class RiskRepository {
     }
   }
 
-  async createOrUpdateRiskQuantification(
-    riskQuantificationValues: any
+  async createOrUpdateRiskClassification(
+    riskClassificationValues: any
   ): Promise<any> {
     const now = Date.now()
-    const newRiskQuantificationValues: any = {
-      quantificationValues: riskQuantificationValues,
-      createdAt: riskQuantificationValues.createdAt || now,
+    const newRiskClassificationValues: any = {
+      classificationValues: riskClassificationValues,
+      createdAt: riskClassificationValues.createdAt || now,
       updatedAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.RISK_QUANTIFICATION(this.tenantId, 'LATEST'), // Version it later
-        ...newRiskQuantificationValues,
+        ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
+        ...newRiskClassificationValues,
       },
       ReturnConsumedCapacity: 'TOTAL',
     }
     await this.dynamoDb.put(putItemInput).promise()
-    return newRiskQuantificationValues
+    return newRiskClassificationValues
   }
 }
