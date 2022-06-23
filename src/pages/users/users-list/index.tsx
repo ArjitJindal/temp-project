@@ -1,14 +1,13 @@
 import { Drawer, Tabs, Tag } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import ProTable from '@ant-design/pro-table';
 import { IRouteComponentProps, Link } from 'umi';
 import moment from 'moment';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.less';
-
 import { ConsumerUserDetails } from './components/ConsumerUserDetails';
 import { BusinessUserDetails } from './components/BusinessUserDetails';
+import Table from '@/components/ui/Table';
 import { useApi } from '@/api';
 import { Amount, ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
@@ -173,7 +172,7 @@ const BusinessUsersTab = (
 
   return (
     <>
-      <ProTable<InternalBusinessUser, TableListPagination>
+      <Table<InternalBusinessUser, TableListPagination>
         rowClassName={(record, index) =>
           index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
         }
@@ -369,7 +368,7 @@ const ConsumerUsersTab = (
 
   return (
     <>
-      <ProTable<InternalConsumerUser, TableListPagination>
+      <Table<InternalConsumerUser, TableListPagination>
         form={{
           labelWrap: true,
         }}

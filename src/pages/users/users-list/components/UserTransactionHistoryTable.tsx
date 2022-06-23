@@ -1,8 +1,8 @@
-import ProTable from '@ant-design/pro-table';
 import { Link } from 'umi';
 import { Divider } from 'antd';
 import { TransactionAmountDetails, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
+import Table from '@/components/ui/Table';
 
 interface Props {
   userId?: string;
@@ -22,7 +22,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
       <Divider orientation="left" orientationMargin="0">
         Transaction History
       </Divider>
-      <ProTable<TransactionCaseManagement>
+      <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
         }}

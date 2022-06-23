@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import ProTable from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
+import Table from '@/components/ui/Table';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -67,7 +67,7 @@ const TableList: React.FC = () => {
 
   return (
     <PageWrapper>
-      <ProTable<TableListItem, TableListPagination>
+      <Table<TableListItem, TableListPagination>
         form={{
           labelWrap: true,
         }}

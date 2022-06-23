@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { green, red } from '@ant-design/colors';
-import ProTable, { ActionType, ProColumns } from '@ant-design/pro-table';
+import { ActionType, ProColumns } from '@ant-design/pro-table';
 import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
@@ -11,6 +11,7 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
+import Table from '@/components/ui/Table';
 
 export default function () {
   const api = useApi();
@@ -96,7 +97,7 @@ export default function () {
   // todo: i18n
   return (
     <PageWrapper>
-      <ProTable<Account>
+      <Table<Account>
         actionRef={actionRef}
         form={{
           labelWrap: true,

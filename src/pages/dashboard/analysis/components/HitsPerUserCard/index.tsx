@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker } from 'antd';
-import ProTable, { ActionType } from '@ant-design/pro-table';
+import { ActionType } from '@ant-design/pro-table';
 import React, { useEffect, useRef, useState } from 'react';
 import { RequestData } from '@ant-design/pro-table/lib/typing';
 import { RangeValue } from 'rc-picker/lib/interface';
@@ -8,7 +8,7 @@ import moment, { Moment } from 'moment';
 import { columns } from './consts';
 import { TableItem } from './types';
 import { useApi } from '@/api';
-
+import Table from '@/components/ui/Table';
 export default function HitsPerUserCard() {
   const api = useApi();
 
@@ -23,7 +23,7 @@ export default function HitsPerUserCard() {
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
-      <ProTable<TableItem>
+      <Table<TableItem>
         actionRef={actionRef}
         form={{
           labelWrap: true,

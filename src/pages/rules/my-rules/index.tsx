@@ -1,6 +1,5 @@
 import { Drawer, message, Popover, Progress, Switch, Tag, Tooltip } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
-import ProTable from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { getRuleActionColor } from '../utils';
@@ -10,6 +9,7 @@ import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
+import Table from '@/components/ui/Table';
 
 export default () => {
   const api = useApi();
@@ -168,7 +168,7 @@ export default () => {
         content: 'List of all your rules. Activate/deactivate them in one click',
       }}
     >
-      <ProTable<RuleInstance>
+      <Table<RuleInstance>
         form={{
           labelWrap: true,
         }}
