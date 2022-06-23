@@ -154,18 +154,7 @@ export class TransactionRepository {
       pipeline.push(
         {
           $addFields: {
-            ruleCount: {
-              $filter: {
-                input: '$executedRules',
-                as: 'rule',
-                cond: { $eq: ['$$rule.ruleHit', true] },
-              },
-            },
-          },
-        },
-        {
-          $addFields: {
-            Hit: { $sum: { $size: '$ruleCount' } },
+            Hit: { $size: '$hitRules' },
           },
         },
         { $sort: { Hit: sortOrder } }
