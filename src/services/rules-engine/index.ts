@@ -26,6 +26,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
+import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
@@ -86,15 +87,16 @@ export async function verifyTransactionIdempotent(
     ruleRepository,
     ruleInstanceRepository,
     ruleInstances,
-    (ruleImplementationName, ruleInstance) =>
+    senderUser,
+    (ruleImplementationName, parameters, action) =>
       getTransactionRuleImplementation(
         ruleImplementationName,
         tenantId,
         transaction,
         senderUser,
         receiverUser,
-        ruleInstance.parameters,
-        ruleInstance.action,
+        parameters,
+        action,
         dynamoDb
       )
   )
@@ -297,14 +299,15 @@ export async function verifyUserEvent(
     ruleRepository,
     ruleInstanceRepository,
     ruleInstances,
-    (ruleImplementationName, ruleInstance) =>
+    user,
+    (ruleImplementationName, parameters, action) =>
       getUserRuleImplementation(
         ruleImplementationName,
         tenantId,
         user,
         userEvent,
-        ruleInstance.parameters,
-        ruleInstance.action,
+        parameters,
+        action,
         dynamoDb
       )
   )
@@ -324,9 +327,11 @@ async function getRulesResult(
   ruleRepository: RuleRepository,
   ruleInstanceRepository: RuleInstanceRepository,
   ruleInstances: ReadonlyArray<RuleInstance>,
+  user: User | Business | undefined,
   getRuleImplementationCallback: (
     ruleImplementationName: string,
-    ruleInstance: RuleInstance
+    ruleParameters: object,
+    ruleAction: RuleAction
   ) => RuleBase
 ) {
   const rulesById = _.keyBy(
@@ -341,9 +346,14 @@ async function getRulesResult(
       ruleInstances.map(async (ruleInstance) => {
         const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
         try {
+          const { parameters, action } = getUserSpecificParameters(
+            user,
+            ruleInstance
+          )
           const rule = getRuleImplementationCallback(
             rulesById[ruleInstance.ruleId].ruleImplementationName,
-            ruleInstance
+            parameters,
+            action
           )
           const shouldCompute = await everyAsync(
             rule.getFilters(),
@@ -359,7 +369,7 @@ async function getRulesResult(
             ruleId: ruleInstance.ruleId,
             ruleName: ruleInfo.name,
             ruleDescription: ruleInfo.description,
-            ruleAction: ruleInstance.action,
+            ruleAction: action,
             ruleHit,
           }
         } catch (e) {
@@ -379,11 +389,40 @@ async function getRulesResult(
     .sort(ruleAscendingComparator) as ExecutedRulesResult[]
   const hitRules = ruleResults
     .filter((result) => result.ruleAction && result.ruleHit)
-    .map((result) => ({ ...result, ruleHit: undefined }))
+    .map((result) => ({
+      ruleId: result.ruleId,
+      ruleName: result.ruleName,
+      ruleDescription: result.ruleDescription,
+      ruleAction: result.ruleAction,
+    }))
     .sort(ruleAscendingComparator) as HitRulesResult[]
 
   return {
     executedRules,
     hitRules,
+  }
+}
+
+function getUserSpecificParameters(
+  user: User | Business | undefined,
+  ruleInstance: RuleInstance
+): {
+  parameters: object
+  action: RuleAction
+} {
+  if (ruleInstance.riskLevelParameters) {
+    // TODO: Get user risk level
+    const userRiskLevel: RiskLevel = 'LOW'
+
+    if (userRiskLevel) {
+      return {
+        parameters: ruleInstance.riskLevelParameters[userRiskLevel],
+        action: ruleInstance.riskLevelActions?.[userRiskLevel] as RuleAction,
+      }
+    }
+  }
+  return {
+    parameters: ruleInstance.parameters,
+    action: ruleInstance.action,
   }
 }

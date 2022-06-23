@@ -221,4 +221,58 @@ describe('Verify Transaction Event', () => {
       })
     })
   })
+
+  describe('Verify Transaction: risk-level parameters', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'R-1',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        defaultRiskLevelParameters: {
+          VERY_HIGH: {},
+          HIGH: {},
+          MEDIUM: {},
+          LOW: {},
+          VERY_LOW: {},
+        },
+        defaultRiskLevelActions: {
+          VERY_HIGH: 'BLOCK',
+          HIGH: 'BLOCK',
+          MEDIUM: 'BLOCK',
+          LOW: 'BLOCK',
+          VERY_LOW: 'BLOCK',
+        },
+      },
+    ])
+
+    test('returns risk-level action', async () => {
+      const transaction = getTestTransaction({ transactionId: 'dummy' })
+      const result = await verifyTransaction(
+        transaction,
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      expect(result).toEqual({
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'R-1',
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description',
+            ruleAction: 'BLOCK',
+            ruleHit: true,
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'R-1',
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description',
+            ruleAction: 'BLOCK',
+          },
+        ],
+      } as TransactionMonitoringResult)
+    })
+  })
 })

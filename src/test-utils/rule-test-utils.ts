@@ -6,7 +6,6 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { verifyTransaction, verifyUserEvent } from '@/services/rules-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { UserEvent } from '@/@types/openapi-public/UserEvent'
 
@@ -34,7 +33,9 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
       type: rule.type,
       ruleId: createdRule.id as string,
       parameters: createdRule.defaultParameters,
+      riskLevelParameters: createdRule.defaultRiskLevelParameters,
       action: createdRule.defaultAction,
+      riskLevelActions: createdRule.defaultRiskLevelActions,
       status: 'ACTIVE',
     })
 

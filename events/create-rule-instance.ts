@@ -9,7 +9,21 @@ export const event = {
     type: 'TRANSACTION',
     ruleId: 'R-1',
     status: 'ACTIVE',
-    parameters: {},
+    parameters: { dormancyPeriodDays: 1 },
+    riskLevelParameters: {
+      VERY_HIGH: { dormancyPeriodDays: 1 },
+      HIGH: { dormancyPeriodDays: 1 },
+      MEDIUM: { dormancyPeriodDays: 1 },
+      VERY_LOW: { dormancyPeriodDays: 1 },
+      LOW: { dormancyPeriodDays: 1 },
+    },
     action: 'FLAG',
+    riskLevelActions: {
+      VERY_HIGH: 'FLAG',
+      HIGH: 'FLAG',
+      MEDIUM: 'FLAG',
+      VERY_LOW: 'FLAG',
+      LOW: 'FLAG',
+    },
   } as RuleInstance),
 }
