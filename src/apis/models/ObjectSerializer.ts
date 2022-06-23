@@ -1,4 +1,5 @@
 export * from './ACHDetails';
+export * from './ACHPaymentMethod';
 export * from './Account';
 export * from './AccountInvitePayload';
 export * from './Address';
@@ -9,6 +10,7 @@ export * from './Assignment';
 export * from './Business';
 export * from './BusinessUsersListResponse';
 export * from './CardDetails';
+export * from './CardPaymentMethod';
 export * from './ChangeTenantPayload';
 export * from './Comment';
 export * from './CompanyFinancialDetails';
@@ -27,9 +29,11 @@ export * from './ExecutedRulesResult';
 export * from './FileImport';
 export * from './FileImportStatusChange';
 export * from './FileInfo';
+export * from './GeneralBankAccountPaymentMethod';
 export * from './GenericBankAccountDetails';
 export * from './HitRulesResult';
 export * from './IBANDetails';
+export * from './IBANPaymentMethod';
 export * from './ImportRequest';
 export * from './ImportResponse';
 export * from './InlineResponse200';
@@ -44,12 +48,16 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
+export * from './RiskLevel';
+export * from './RiskLevelRuleActions';
+export * from './RiskLevelRuleParameters';
 export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
 export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './SWIFTDetails';
+export * from './SWIFTPaymentMethod';
 export * from './Tag';
 export * from './Tenant';
 export * from './Transaction';
@@ -65,12 +73,15 @@ export * from './TransactionWithRulesResult';
 export * from './TransactionWithRulesResultAllOf';
 export * from './TransactionsListResponse';
 export * from './UPIDetails';
+export * from './UPIPaymentMethod';
 export * from './User';
 export * from './UserDetails';
 export * from './UserDetails1';
 export * from './WalletDetails';
+export * from './WalletPaymentMethod';
 
 import { ACHDetails } from './ACHDetails';
+import { ACHPaymentMethod } from './ACHPaymentMethod';
 import { Account } from './Account';
 import { AccountInvitePayload } from './AccountInvitePayload';
 import { Address } from './Address';
@@ -81,6 +92,7 @@ import { Assignment } from './Assignment';
 import { Business } from './Business';
 import { BusinessUsersListResponse } from './BusinessUsersListResponse';
 import { CardDetails } from './CardDetails';
+import { CardPaymentMethod } from './CardPaymentMethod';
 import { ChangeTenantPayload } from './ChangeTenantPayload';
 import { Comment } from './Comment';
 import { CompanyFinancialDetails } from './CompanyFinancialDetails';
@@ -99,9 +111,11 @@ import { ExecutedRulesResult } from './ExecutedRulesResult';
 import { FileImport, FileImportTypeEnum } from './FileImport';
 import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './FileImportStatusChange';
 import { FileInfo } from './FileInfo';
+import { GeneralBankAccountPaymentMethod } from './GeneralBankAccountPaymentMethod';
 import { GenericBankAccountDetails } from './GenericBankAccountDetails';
 import { HitRulesResult } from './HitRulesResult';
 import { IBANDetails } from './IBANDetails';
+import { IBANPaymentMethod } from './IBANPaymentMethod';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
 import { ImportResponse } from './ImportResponse';
 import { InlineResponse200 } from './InlineResponse200';
@@ -122,12 +136,16 @@ import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
+import { RiskLevel } from './RiskLevel';
+import { RiskLevelRuleActions } from './RiskLevelRuleActions';
+import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
 import { Rule, RuleTypeEnum } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
 import { RuleImplementation } from './RuleImplementation';
 import { RuleInstance, RuleInstanceTypeEnum, RuleInstanceStatusEnum } from './RuleInstance';
 import { SWIFTDetails } from './SWIFTDetails';
+import { SWIFTPaymentMethod } from './SWIFTPaymentMethod';
 import { Tag } from './Tag';
 import { Tenant } from './Tenant';
 import { Transaction } from './Transaction';
@@ -143,10 +161,12 @@ import { TransactionWithRulesResult } from './TransactionWithRulesResult';
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from './TransactionsListResponse';
 import { UPIDetails } from './UPIDetails';
+import { UPIPaymentMethod } from './UPIPaymentMethod';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
 import { UserDetails1 } from './UserDetails1';
 import { WalletDetails } from './WalletDetails';
+import { WalletPaymentMethod } from './WalletPaymentMethod';
 
 /* tslint:disable:no-unused-variable */
 let primitives = ['string', 'boolean', 'double', 'integer', 'long', 'float', 'number', 'any'];
@@ -158,20 +178,28 @@ const supportedMediaTypes: { [mediaType: string]: number } = {
 };
 
 let enumsMap: Set<string> = new Set<string>([
+  'ACHPaymentMethod',
+  'CardPaymentMethod',
   'FileImportTypeEnum',
   'FileImportStatusChangeStatusEnum',
+  'GeneralBankAccountPaymentMethod',
+  'IBANPaymentMethod',
   'ImportRequestTypeEnum',
   'ImportRequestFormatEnum',
   'InternalBusinessUserTypeEnum',
   'InternalBusinessUserAllOfTypeEnum',
   'InternalConsumerUserTypeEnum',
   'InternalConsumerUserAllOfTypeEnum',
+  'RiskLevel',
   'RuleTypeEnum',
   'RuleAction',
   'RuleAction1',
   'RuleInstanceTypeEnum',
   'RuleInstanceStatusEnum',
+  'SWIFTPaymentMethod',
   'TransactionState',
+  'UPIPaymentMethod',
+  'WalletPaymentMethod',
 ]);
 
 let typeMap: { [index: string]: any } = {
@@ -221,6 +249,8 @@ let typeMap: { [index: string]: any } = {
   ListImportRequest: ListImportRequest,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
+  RiskLevelRuleActions: RiskLevelRuleActions,
+  RiskLevelRuleParameters: RiskLevelRuleParameters,
   Rule: Rule,
   RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,

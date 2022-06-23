@@ -13,6 +13,7 @@ http/isomorphic-fetch.ts
 index.ts
 middleware.ts
 models/ACHDetails.ts
+models/ACHPaymentMethod.ts
 models/Account.ts
 models/AccountInvitePayload.ts
 models/Address.ts
@@ -23,6 +24,7 @@ models/Assignment.ts
 models/Business.ts
 models/BusinessUsersListResponse.ts
 models/CardDetails.ts
+models/CardPaymentMethod.ts
 models/ChangeTenantPayload.ts
 models/Comment.ts
 models/CompanyFinancialDetails.ts
@@ -41,9 +43,11 @@ models/ExecutedRulesResult.ts
 models/FileImport.ts
 models/FileImportStatusChange.ts
 models/FileInfo.ts
+models/GeneralBankAccountPaymentMethod.ts
 models/GenericBankAccountDetails.ts
 models/HitRulesResult.ts
 models/IBANDetails.ts
+models/IBANPaymentMethod.ts
 models/ImportRequest.ts
 models/ImportResponse.ts
 models/InlineResponse200.ts
@@ -59,12 +63,16 @@ models/ListImportRequest.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
+models/RiskLevel.ts
+models/RiskLevelRuleActions.ts
+models/RiskLevelRuleParameters.ts
 models/Rule.ts
 models/RuleAction.ts
 models/RuleAction1.ts
 models/RuleImplementation.ts
 models/RuleInstance.ts
 models/SWIFTDetails.ts
+models/SWIFTPaymentMethod.ts
 models/Tag.ts
 models/Tenant.ts
 models/Transaction.ts
@@ -80,10 +88,12 @@ models/TransactionWithRulesResult.ts
 models/TransactionWithRulesResultAllOf.ts
 models/TransactionsListResponse.ts
 models/UPIDetails.ts
+models/UPIPaymentMethod.ts
 models/User.ts
 models/UserDetails.ts
 models/UserDetails1.ts
 models/WalletDetails.ts
+models/WalletPaymentMethod.ts
 models/all.ts
 package.json
 rxjsStub.ts

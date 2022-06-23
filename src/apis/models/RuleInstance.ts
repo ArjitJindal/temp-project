@@ -10,6 +10,8 @@
  * Do not edit the class manually.
  */
 
+import { RiskLevelRuleActions } from './RiskLevelRuleActions';
+import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
 import { RuleAction } from './RuleAction';
 import { HttpFile } from '../http/http';
 
@@ -18,7 +20,9 @@ export class RuleInstance {
   'type'?: RuleInstanceTypeEnum;
   'ruleId': string;
   'parameters': any;
+  'riskLevelParameters'?: RiskLevelRuleParameters;
   'action': RuleAction;
+  'riskLevelActions'?: RiskLevelRuleActions;
   'status'?: RuleInstanceStatusEnum;
   'createdAt'?: number;
   'updatedAt'?: number;
@@ -58,9 +62,21 @@ export class RuleInstance {
       format: '',
     },
     {
+      name: 'riskLevelParameters',
+      baseName: 'riskLevelParameters',
+      type: 'RiskLevelRuleParameters',
+      format: '',
+    },
+    {
       name: 'action',
       baseName: 'action',
       type: 'RuleAction',
+      format: '',
+    },
+    {
+      name: 'riskLevelActions',
+      baseName: 'riskLevelActions',
+      type: 'RiskLevelRuleActions',
       format: '',
     },
     {

@@ -11,16 +11,14 @@
  */
 
 import { Tag } from './Tag';
+import { WalletPaymentMethod } from './WalletPaymentMethod';
 import { HttpFile } from '../http/http';
 
 /**
  * Standardized model for a Generic wallet transaction
  */
 export class WalletDetails {
-  /**
-   * Type: WALLET
-   */
-  'method': string;
+  'method': WalletPaymentMethod;
   /**
    * Wallet type if there are various types of wallets belonging to the same user. E.g. Checking, savings, vault, different currency wallets etc.
    */
@@ -54,7 +52,7 @@ export class WalletDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'WalletPaymentMethod',
       format: '',
     },
     {

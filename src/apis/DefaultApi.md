@@ -20,6 +20,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getDashboardStatsHitsPerUser**](DefaultApi.md#getDashboardStatsHitsPerUser) | **GET** /dashboard_stats/hits_per_user | DashboardStats - Hits per user |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
+| [**getPulseRiskClassification**](DefaultApi.md#getPulseRiskClassification) | **GET** /pulse/risk-classification | Risk classification - GET |
 | [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
@@ -35,6 +36,7 @@ All URIs are relative to _http://localhost:3000_
 | [**postIamRules**](DefaultApi.md#postIamRules) | **POST** /iam/rules | Rules - Create |
 | [**postImport**](DefaultApi.md#postImport) | **POST** /import | Import - Start to Import |
 | [**postLists**](DefaultApi.md#postLists) | **POST** /lists | List Import |
+| [**postPulseRiskClassification**](DefaultApi.md#postPulseRiskClassification) | **POST** /pulse/risk-classification | Risk classification - POST |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
 | [**postRules**](DefaultApi.md#postRules) | **POST** /rules | Rules - Create |
 | [**postTransactionsComments**](DefaultApi.md#postTransactionsComments) | **POST** /transactions/{transactionId}/comments | Create a Transaction Comment |
@@ -885,6 +887,51 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getPulseRiskClassification**
+
+> Array<any> getPulseRiskClassification()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getPulseRiskClassification(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Array<any>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getRuleImplementations**
 
 > Array<RuleImplementation> getRuleImplementations()
@@ -1540,7 +1587,21 @@ let body:.DefaultApiPostIamRuleInstancesRequest = {
     type: "TRANSACTION",
     ruleId: "ruleId_example",
     parameters: {},
+    riskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     action: "FLAG",
+    riskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     status: "ACTIVE",
     createdAt: 3.14,
     updatedAt: 3.14,
@@ -1605,7 +1666,21 @@ let body:.DefaultApiPostIamRulesRequest = {
     name: "name_example",
     description: "description_example",
     defaultParameters: {},
+    defaultRiskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     defaultAction: "FLAG",
+    defaultRiskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     ruleImplementationName: "ruleImplementationName_example",
     labels: [
       "labels_example",
@@ -1760,6 +1835,63 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **postPulseRiskClassification**
+
+> void postPulseRiskClassification()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostPulseRiskClassificationRequest = {
+  // Array<any> (optional)
+  request_body: [
+    {
+      riskLevel: "VERY_HIGH",
+      lowerBoundRiskScore: 0,
+      upperBoundRiskScore: 0,
+    },
+  ],
+};
+
+apiInstance.postPulseRiskClassification(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name             | Type           | Description | Notes |
+| ---------------- | -------------- | ----------- | ----- |
+| **request_body** | **Array<any>** |             |
+
+### Return type
+
+**void**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+| **400**     | Bad Request | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **postRuleInstances**
 
 > RuleInstance postRuleInstances()
@@ -1780,7 +1912,21 @@ let body:.DefaultApiPostRuleInstancesRequest = {
     type: "TRANSACTION",
     ruleId: "ruleId_example",
     parameters: {},
+    riskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     action: "FLAG",
+    riskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     status: "ACTIVE",
     createdAt: 3.14,
     updatedAt: 3.14,
@@ -1842,7 +1988,21 @@ let body:.DefaultApiPostRulesRequest = {
     name: "name_example",
     description: "description_example",
     defaultParameters: {},
+    defaultRiskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     defaultAction: "FLAG",
+    defaultRiskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     ruleImplementationName: "ruleImplementationName_example",
     labels: [
       "labels_example",
@@ -2042,7 +2202,21 @@ let body:.DefaultApiPutRuleInstancesRuleInstanceIdRequest = {
     type: "TRANSACTION",
     ruleId: "ruleId_example",
     parameters: {},
+    riskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     action: "FLAG",
+    riskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     status: "ACTIVE",
     createdAt: 3.14,
     updatedAt: 3.14,
@@ -2108,7 +2282,21 @@ let body:.DefaultApiPutRuleRuleIdRequest = {
     name: "name_example",
     description: "description_example",
     defaultParameters: {},
+    defaultRiskLevelParameters: {
+      VERY_HIGH: {},
+      HIGH: {},
+      MEDIUM: {},
+      LOW: {},
+      VERY_LOW: {},
+    },
     defaultAction: "FLAG",
+    defaultRiskLevelActions: {
+      VERY_HIGH: "FLAG",
+      HIGH: "FLAG",
+      MEDIUM: "FLAG",
+      LOW: "FLAG",
+      VERY_LOW: "FLAG",
+    },
     ruleImplementationName: "ruleImplementationName_example",
     labels: [
       "labels_example",

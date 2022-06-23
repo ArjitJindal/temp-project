@@ -10,16 +10,14 @@
  * Do not edit the class manually.
  */
 
+import { UPIPaymentMethod } from './UPIPaymentMethod';
 import { HttpFile } from '../http/http';
 
 /**
  * Model for UPI payment method
  */
 export class UPIDetails {
-  /**
-   * Classify the method of payment as \"UPI\" for UPIDetails
-   */
-  'method': string;
+  'method': UPIPaymentMethod;
   /**
    * UPI Id number
    */
@@ -48,7 +46,7 @@ export class UPIDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'UPIPaymentMethod',
       format: '',
     },
     {

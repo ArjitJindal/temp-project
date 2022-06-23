@@ -11,6 +11,7 @@
  */
 
 import { Address } from './Address';
+import { IBANPaymentMethod } from './IBANPaymentMethod';
 import { Tag } from './Tag';
 import { HttpFile } from '../http/http';
 
@@ -18,10 +19,7 @@ import { HttpFile } from '../http/http';
  * Standardized model for Bank Details
  */
 export class IBANDetails {
-  /**
-   * Classify the method of payment as \"IBAN\" for IBANDetails
-   */
-  'method': string;
+  'method': IBANPaymentMethod;
   /**
    * Identifier for the bank. Can be routing number, BIK number, SWIFT code, BIC number etc.
    */
@@ -56,7 +54,7 @@ export class IBANDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'IBANPaymentMethod',
       format: '',
     },
     {

@@ -3,6 +3,7 @@ import * as models from '../models/all';
 import { Configuration } from '../configuration';
 
 import { ACHDetails } from '../models/ACHDetails';
+import { ACHPaymentMethod } from '../models/ACHPaymentMethod';
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
 import { Address } from '../models/Address';
@@ -13,6 +14,7 @@ import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
+import { CardPaymentMethod } from '../models/CardPaymentMethod';
 import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
 import { CompanyFinancialDetails } from '../models/CompanyFinancialDetails';
@@ -31,9 +33,11 @@ import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
+import { GeneralBankAccountPaymentMethod } from '../models/GeneralBankAccountPaymentMethod';
 import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
 import { HitRulesResult } from '../models/HitRulesResult';
 import { IBANDetails } from '../models/IBANDetails';
+import { IBANPaymentMethod } from '../models/IBANPaymentMethod';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
 import { InlineResponse200 } from '../models/InlineResponse200';
@@ -48,12 +52,16 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
+import { RiskLevel } from '../models/RiskLevel';
+import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
+import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { SWIFTDetails } from '../models/SWIFTDetails';
+import { SWIFTPaymentMethod } from '../models/SWIFTPaymentMethod';
 import { Tag } from '../models/Tag';
 import { Tenant } from '../models/Tenant';
 import { Transaction } from '../models/Transaction';
@@ -69,10 +77,12 @@ import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult
 import { TransactionWithRulesResultAllOf } from '../models/TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
 import { UPIDetails } from '../models/UPIDetails';
+import { UPIPaymentMethod } from '../models/UPIPaymentMethod';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
 import { UserDetails1 } from '../models/UserDetails1';
 import { WalletDetails } from '../models/WalletDetails';
+import { WalletPaymentMethod } from '../models/WalletPaymentMethod';
 import { ObservableDefaultApi } from './ObservableAPI';
 
 import { DefaultApiRequestFactory, DefaultApiResponseProcessor } from '../apis/DefaultApi';
@@ -313,6 +323,14 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Risk classification - GET
+   */
+  public getPulseRiskClassification(_options?: Configuration): Promise<Array<any>> {
+    const result = this.api.getPulseRiskClassification(_options);
+    return result.toPromise();
+  }
+
+  /**
    * Rule Implementations - List
    */
   public getRuleImplementations(_options?: Configuration): Promise<Array<RuleImplementation>> {
@@ -549,6 +567,18 @@ export class PromiseDefaultApi {
    */
   public postLists(ListImportRequest?: ListImportRequest, _options?: Configuration): Promise<void> {
     const result = this.api.postLists(ListImportRequest, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Risk classification - POST
+   * @param request_body
+   */
+  public postPulseRiskClassification(
+    request_body?: Array<any>,
+    _options?: Configuration,
+  ): Promise<void> {
+    const result = this.api.postPulseRiskClassification(request_body, _options);
     return result.toPromise();
   }
 

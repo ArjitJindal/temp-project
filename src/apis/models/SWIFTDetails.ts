@@ -11,16 +11,14 @@
  */
 
 import { Address } from './Address';
+import { SWIFTPaymentMethod } from './SWIFTPaymentMethod';
 import { HttpFile } from '../http/http';
 
 /**
  * Model for SWIFT payment method
  */
 export class SWIFTDetails {
-  /**
-   * Classify the method of payment as \"SWIFT\" for SWIFTDetails
-   */
-  'method': string;
+  'method': SWIFTPaymentMethod;
   /**
    * SWIFT code of the financial institution
    */
@@ -58,7 +56,7 @@ export class SWIFTDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'SWIFTPaymentMethod',
       format: '',
     },
     {
