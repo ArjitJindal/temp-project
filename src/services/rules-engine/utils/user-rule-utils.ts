@@ -39,6 +39,15 @@ export function isUserInList(
   return !user || userIds.includes(user.userId)
 }
 
+export function isUserType(
+  user: User | Business | undefined,
+  userType: string | undefined
+) {
+  if (!userType || !user) return true
+  if (userType === 'CONSUMER') return isConsumerUser(user)
+  return isBusinessUser(user)
+}
+
 export function isIpAddressInList(
   deviceData: DeviceData | undefined,
   ipAddresses: string[] | undefined

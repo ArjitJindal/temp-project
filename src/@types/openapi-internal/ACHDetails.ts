@@ -10,15 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { ACHPaymentMethod } from './ACHPaymentMethod'
 import { Address } from './Address'
 /**
  * Model for ACH payment method
  */
 export class ACHDetails {
-  /**
-   * Classify the method of payment as \"ACH\" for ACHDetails
-   */
-  'method': string
+  'method': ACHPaymentMethod
   /**
    * Routing number of the bank
    */
@@ -52,7 +50,7 @@ export class ACHDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'ACHPaymentMethod',
       format: '',
     },
     {

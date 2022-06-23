@@ -10,15 +10,13 @@
  * Do not edit the class manually.
  */
 
+import { CardPaymentMethod } from './CardPaymentMethod'
 import { ConsumerName } from './ConsumerName'
 /**
  * Model for credit or debit card details
  */
 export class CardDetails {
-  /**
-   * Classify the method of payment as \"Card\" for CardDetails
-   */
-  'method': string
+  'method': CardPaymentMethod
   /**
    * Unique card fingerprint that helps identify a specific card without having to use explicit card number. This is likely available at your card payment scheme provider
    */
@@ -48,7 +46,7 @@ export class CardDetails {
     {
       name: 'method',
       baseName: 'method',
-      type: 'string',
+      type: 'CardPaymentMethod',
       format: '',
     },
     {
