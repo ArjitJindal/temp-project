@@ -21,7 +21,6 @@ import { GenericBankAccountDetails } from './GenericBankAccountDetails'
 import { HitRulesResult } from './HitRulesResult'
 import { IBANDetails } from './IBANDetails'
 import { IBANPaymentMethod } from './IBANPaymentMethod'
-import { InlineResponse201 } from './InlineResponse201'
 import { InternalUser } from './InternalUser'
 import { LegalDocument } from './LegalDocument'
 import { LegalEntity } from './LegalEntity'
@@ -84,15 +83,6 @@ export interface DefaultApiGetConsumerUserRequest {
   userId: string
 }
 
-export interface DefaultApiGetInternalUserRequest {
-  /**
-   *
-   * @type string
-   * @memberof DefaultApigetInternalUser
-   */
-  employeeId: string
-}
-
 export interface DefaultApiGetTransactionEventRequest {
   /**
    * Unique Transaction Identifier
@@ -109,15 +99,6 @@ export interface DefaultApiPostBusinessUserRequest {
    * @memberof DefaultApipostBusinessUser
    */
   Business?: Business
-}
-
-export interface DefaultApiPostCaseManagementEventRequest {
-  /**
-   *
-   * @type CaseManagementEvent
-   * @memberof DefaultApipostCaseManagementEvent
-   */
-  CaseManagementEvent?: CaseManagementEvent
 }
 
 export interface DefaultApiPostConsumerTransactionRequest {
@@ -138,15 +119,6 @@ export interface DefaultApiPostConsumerUserRequest {
   User?: User
 }
 
-export interface DefaultApiPostInteralUserRequest {
-  /**
-   *
-   * @type InternalUser
-   * @memberof DefaultApipostInteralUser
-   */
-  InternalUser?: InternalUser
-}
-
 export interface DefaultApiPostTransactionEventRequest {
   /**
    *
@@ -154,13 +126,4 @@ export interface DefaultApiPostTransactionEventRequest {
    * @memberof DefaultApipostTransactionEvent
    */
   TransactionEvent?: TransactionEvent
-}
-
-export interface DefaultApiPostUserEventRequest {
-  /**
-   *
-   * @type UserEvent
-   * @memberof DefaultApipostUserEvent
-   */
-  UserEvent?: UserEvent
 }

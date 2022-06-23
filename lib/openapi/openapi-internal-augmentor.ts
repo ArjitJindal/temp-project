@@ -6,7 +6,7 @@
 
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import { TarponStackConstants } from '../constants'
+import { HammerheadStackConstants, TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
   '/tenants': TarponStackConstants.TENANT_FUNCTION_NAME,
@@ -54,6 +54,11 @@ const PathToLambda: any = {
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}/comments/{commentId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/dashboard_stats/rule_hit':
+    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME, // hack for now
+
+  '/pulse/risk-quantification':
+    HammerheadStackConstants.RISK_QUANTIFICATION_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {

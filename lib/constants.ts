@@ -1,7 +1,14 @@
 import { Config } from './configs/config'
 
-export function getResourceName(resourceName: string, dash = false) {
+export function getResourceNameForTarpon(resourceName: string, dash = false) {
   return `tarpon${dash ? '-' : ''}${resourceName}`
+}
+
+export function getResourceNameForHammerhead(
+  resourceName: string,
+  dash = false
+) {
+  return `hammerhead${dash ? '-' : ''}${resourceName}`
 }
 
 export function getNameForGlobalResource(name: string, config: Config) {
@@ -15,43 +22,66 @@ export const TarponStackConstants = {
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
   MONGO_DB_SECURITY_GROUP_NAME: 'atlas-lambda-sg',
-  API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceName(
+  API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
     'ApiKeyAuthorizerBaseRole'
   ),
-  JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceName('JwtAuthorizerBaseRole'),
-  S3_IMPORT_BUCKET_PREFIX: getResourceName('import', true),
-  S3_DOCUMENT_BUCKET_PREFIX: getResourceName('document', true),
-  S3_TMP_BUCKET_PREFIX: getResourceName('tmp', true),
+  JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
+    'JwtAuthorizerBaseRole'
+  ),
+  S3_IMPORT_BUCKET_PREFIX: getResourceNameForTarpon('import', true),
+  S3_DOCUMENT_BUCKET_PREFIX: getResourceNameForTarpon('document', true),
+  S3_TMP_BUCKET_PREFIX: getResourceNameForTarpon('tmp', true),
 
   // Lambda names
-  ACCOUNT_FUNCTION_NAME: getResourceName('AccountFunction'),
-  TENANT_FUNCTION_NAME: getResourceName('TenantFunction'),
-  API_KEY_AUTHORIZER_FUNCTION_NAME: getResourceName('ApiKeyAuthorizerFunction'),
-  JWT_AUTHORIZER_FUNCTION_NAME: getResourceName('JWTAuthorizerFunction'),
-  TRANSACTION_FUNCTION_NAME: getResourceName('TransactionFunction'),
-  TRANSACTION_EVENT_FUNCTION_NAME: getResourceName('TransactionEventFunction'),
-  USER_FUNCTION_NAME: getResourceName('UserFunction'),
-  USER_EVENT_FUNCTION_NAME: getResourceName('UserEventFunction'),
-  API_KEY_GENERATOR_FUNCTION_NAME: getResourceName('ApiKeyGeneratorFunction'),
-  RULE_FUNCTION_NAME: getResourceName('RuleTemplateFunction'),
-  RULE_INSTANCE_FUNCTION_NAME: getResourceName('RuleInstanceFunction'),
-  TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceName('TransactionsViewFunction'),
-  DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME: getResourceName(
+  ACCOUNT_FUNCTION_NAME: getResourceNameForTarpon('AccountFunction'),
+  TENANT_FUNCTION_NAME: getResourceNameForTarpon('TenantFunction'),
+  API_KEY_AUTHORIZER_FUNCTION_NAME: getResourceNameForTarpon(
+    'ApiKeyAuthorizerFunction'
+  ),
+  JWT_AUTHORIZER_FUNCTION_NAME: getResourceNameForTarpon(
+    'JWTAuthorizerFunction'
+  ),
+  TRANSACTION_FUNCTION_NAME: getResourceNameForTarpon('TransactionFunction'),
+  TRANSACTION_EVENT_FUNCTION_NAME: getResourceNameForTarpon(
+    'TransactionEventFunction'
+  ),
+  USER_FUNCTION_NAME: getResourceNameForTarpon('UserFunction'),
+  USER_EVENT_FUNCTION_NAME: getResourceNameForTarpon('UserEventFunction'),
+  API_KEY_GENERATOR_FUNCTION_NAME: getResourceNameForTarpon(
+    'ApiKeyGeneratorFunction'
+  ),
+  RULE_FUNCTION_NAME: getResourceNameForTarpon('RuleTemplateFunction'),
+  RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon('RuleInstanceFunction'),
+  TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
+    'TransactionsViewFunction'
+  ),
+  DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME: getResourceNameForTarpon(
     'DashboardStatsTransactionsFunction'
   ),
-  TRANSACTION_COMMENTS_FUNCTION_NAME: getResourceName(
+  TRANSACTION_COMMENTS_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionsCommentsFunction'
   ),
-  BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceName(
+  BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'BusinessUsersViewFunction'
   ),
-  CONSUMER_USERS_VIEW_FUNCTION_NAME: getResourceName(
+  CONSUMER_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsumersUsersViewFunction'
   ),
-  FILE_IMPORT_FUNCTION_NAME: getResourceName('FileImportFunction'),
-  GET_PRESIGNED_URL_FUNCTION_NAME: getResourceName('GetPresignedUrlFunction'),
-  LIST_IMPORTER_FUNCTION_NAME: getResourceName('ListImporterFunction'),
-  TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME: getResourceName(
-    'TarponChangeCaptureKinesisConsumer'
+  FILE_IMPORT_FUNCTION_NAME: getResourceNameForTarpon('FileImportFunction'),
+  GET_PRESIGNED_URL_FUNCTION_NAME: getResourceNameForTarpon(
+    'GetPresignedUrlFunction'
   ),
+  LIST_IMPORTER_FUNCTION_NAME: getResourceNameForTarpon('ListImporterFunction'),
+  TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
+    getResourceNameForTarpon('TarponChangeCaptureKinesisConsumer'),
+}
+
+export const HammerheadStackConstants = {
+  DYNAMODB_TABLE_NAME: 'Hammerhead',
+  HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
+    getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
+  RISK_QUANTIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
+    'RiskQuantificationFunction'
+  ),
+  NUMBER_OF_RISK_LEVELS: 5,
 }

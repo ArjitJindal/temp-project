@@ -1,5 +1,5 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { Db, MongoClient } from 'mongodb'
+import { Db } from 'mongodb'
 import { TarponStackConstants } from '@cdk/constants'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
@@ -8,14 +8,8 @@ import {
 } from './constants'
 import {
   connectToDB,
-  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  MONTH_DATE_FORMAT,
-  DAY_DATE_FORMAT,
-  HOUR_DATE_FORMAT,
-  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   USER_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'

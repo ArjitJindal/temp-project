@@ -192,6 +192,12 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,
   }),
+  /** Hammerhead keys */
+  // Attributes: refer to Rule
+  RISK_QUANTIFICATION: (tenantId: string, riskLevel?: string) => ({
+    PartitionKeyID: `${tenantId}#risk-quantification-values`,
+    SortKeyID: riskLevel,
+  }),
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {

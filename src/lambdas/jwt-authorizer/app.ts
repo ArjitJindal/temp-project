@@ -8,7 +8,7 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
-import { TarponStackConstants } from '@cdk/constants'
+import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { isJwtRole, JWTAuthorizerResult } from '@/@types/jwt'
 
@@ -40,6 +40,7 @@ async function getTenantScopeCredentials(
         new PolicyBuilder(tenantId)
           .s3()
           .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
+          .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
           .build()
       ),
     })

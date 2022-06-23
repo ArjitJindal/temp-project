@@ -41,6 +41,11 @@ paths:
               examples: {}
       operationId: get-rules
       description: ''
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: ruleId
     parameters: []
     post:
       summary: Rules - Create
@@ -727,6 +732,37 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/rule_hit:
+    get:
+      summary: DashboardStats - Rule hit
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsRulesCount'
+              examples: {}
+      operationId: get-dashboard-stats-rule-hit
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - WEEK
+              - MONTH
+              - DAY
+              - YEAR
+          in: query
+          name: timeframe
+          required: true
+          description: 'MONTH, DAY or YEAR'
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
   /dashboard_stats/hits_per_user:
     get:
       summary: DashboardStats - Hits per user
@@ -872,6 +908,38 @@ paths:
                 items:
                   $ref: '#/components/schemas/Account'
       operationId: get-accounts
+  /pulse/risk-quantification:
+    get:
+      summary: Risk quantification - GET
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskQuantificationScore'
+              examples:
+                example-1:
+                  value:
+                    - riskLevel: VERY_LOW
+                      lowerBoundRiskScore: 0
+                      upperBoundRiskScore: 25
+      operationId: get-pulse-risk-quantification
+      description: ''
+    post:
+      summary: Risk quantification - POST
+      operationId: post-pulse-risk-quantification
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskQuantificationScore'
 components:
   schemas:
     Rule:
@@ -1044,7 +1112,8 @@ components:
         - data
     TransactionCaseManagement:
       allOf:
-        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult'
+        - $ref: >-
+            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
         - type: object
           properties:
             comments:
@@ -1126,9 +1195,41 @@ components:
               - _id
       required:
         - data
+    DashboardStatsRulesCount:
+      type: object
+      x-examples:
+        example-1:
+          data:
+            - _id: '2020-01-04'
+              totalTransactions: 2344
+              flaggedTransactions: 121
+              stoppedTransactions: 33
+      title: DashboardStatsRulesCount
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              rulesStats:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ruleId:
+                      type: string
+                    hitCount:
+                      type: number
+            required:
+              - _id
+      required:
+        - data
     InternalConsumerUser:
       allOf:
-        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User'
+        - $ref: >-
+            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
         - type: object
           properties:
             type:
@@ -1143,7 +1244,8 @@ components:
             - type
     InternalBusinessUser:
       allOf:
-        - $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business'
+        - $ref: >-
+            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
         - type: object
           properties:
             type:
@@ -1365,6 +1467,40 @@ components:
       required:
         - id
         - name
+    RiskQuantificationScore:
+      type: array
+      x-examples:
+        example-1:
+          - riskLevel: VERY_LOW
+            lowerBoundRiskScore: 0
+            upperBoundRiskScore: 25
+      description: ''
+      title: RiskQuantificationScore
+      items:
+        type: object
+        properties:
+          riskLevel:
+            type: string
+            enum:
+              - VERY_LOW
+              - LOW
+              - MEDIUM
+              - HIGH
+              - VERY_HIGH
+            minLength: 3
+            maxLength: 9
+          lowerBoundRiskScore:
+            type: number
+            minimum: 0
+            maximum: 100
+            exclusiveMinimum: false
+            exclusiveMaximum: false
+          upperBoundRiskScore:
+            type: number
+            exclusiveMinimum: false
+            exclusiveMaximum: false
+            minimum: 0
+            maximum: 100
   securitySchemes:
     Authorization:
       type: http

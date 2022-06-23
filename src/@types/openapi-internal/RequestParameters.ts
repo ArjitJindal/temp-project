@@ -22,6 +22,9 @@ import { ContactDetails } from './ContactDetails'
 import { ContactDetails1 } from './ContactDetails1'
 import { DashboardStatsHitsPerUser } from './DashboardStatsHitsPerUser'
 import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData'
+import { DashboardStatsRulesCount } from './DashboardStatsRulesCount'
+import { DashboardStatsRulesCountData } from './DashboardStatsRulesCountData'
+import { DashboardStatsRulesCountRulesStats } from './DashboardStatsRulesCountRulesStats'
 import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount'
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData'
 import { DeviceData } from './DeviceData'
@@ -274,6 +277,21 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
   endTimestamp?: number
 }
 
+export interface DefaultApiGetDashboardStatsRuleHitRequest {
+  /**
+   * MONTH, DAY or YEAR
+   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @memberof DefaultApigetDashboardStatsRuleHit
+   */
+  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsRuleHit
+   */
+  endTimestamp?: number
+}
+
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
    * MONTH, DAY or YEAR
@@ -298,11 +316,20 @@ export interface DefaultApiGetImportImportIdRequest {
   importId: string
 }
 
+export interface DefaultApiGetPulseRiskQuantificationRequest {}
+
 export interface DefaultApiGetRuleImplementationsRequest {}
 
 export interface DefaultApiGetRuleInstancesRequest {}
 
-export interface DefaultApiGetRulesRequest {}
+export interface DefaultApiGetRulesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetRules
+   */
+  ruleId?: string
+}
 
 export interface DefaultApiGetTenantsListRequest {}
 
@@ -564,6 +591,15 @@ export interface DefaultApiPostListsRequest {
    * @memberof DefaultApipostLists
    */
   ListImportRequest?: ListImportRequest
+}
+
+export interface DefaultApiPostPulseRiskQuantificationRequest {
+  /**
+   *
+   * @type Array&lt;any&gt;
+   * @memberof DefaultApipostPulseRiskQuantification
+   */
+  request_body?: Array<any>
 }
 
 export interface DefaultApiPostRuleInstancesRequest {

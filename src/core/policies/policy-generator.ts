@@ -16,7 +16,7 @@ export default class PolicyBuilder {
 
   dynamoDb(table: string) {
     this.statements.push({
-      Sid: 'AllowAllActionsOfTenantData',
+      Sid: `${table}AllowAllActionsOfTenantData`,
       Effect: 'Allow',
       Action: ['dynamodb:*'],
       Resource: [`arn:aws:dynamodb:*:*:table/${table}`],
@@ -27,7 +27,7 @@ export default class PolicyBuilder {
       },
     })
     this.statements.push({
-      Sid: 'ReadOnlyAPIActionsOnFlagrightItems',
+      Sid: `${table}ReadOnlyAPIActionsOnFlagrightItems`,
       Effect: 'Allow',
       Action: [
         'dynamodb:GetItem',

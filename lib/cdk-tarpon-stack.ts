@@ -42,7 +42,9 @@ import { LogGroup } from 'aws-cdk-lib/aws-logs'
 
 import {
   getNameForGlobalResource,
-  getResourceName,
+  getResourceNameForHammerhead,
+  getResourceNameForTarpon,
+  HammerheadStackConstants,
   TarponStackConstants,
 } from './constants'
 import { Config } from './configs/config'
@@ -129,10 +131,25 @@ export class CdkTarponStack extends cdk.Stack {
       tarponStream.streamName
     )
 
+    const hammerheadStream = new Stream(this, 'hammerheadStream', {
+      streamName: 'hammerheadDynamoChangeCaptureStream',
+      shardCount: 1,
+    })
+    if (config.stage === 'dev') {
+      hammerheadStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+    }
+
+    createKinesisAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      `HammerheadChangeCaptureKinesisPutRecordErrorRate`,
+      hammerheadStream.streamName
+    )
+
     /**
      * DynamoDB
      */
-    const dynamoDbTable = new Table(
+    const tarponDynamoDbTable = new Table(
       this,
       TarponStackConstants.DYNAMODB_TABLE_NAME,
       {
@@ -155,7 +172,38 @@ export class CdkTarponStack extends cdk.Stack {
           this,
           this.betterUptimeCloudWatchTopic,
           `DynamoTarpon${operation}${metric}`,
-          dynamoDbTable.tableName,
+          tarponDynamoDbTable.tableName,
+          operation,
+          metric
+        )
+      })
+    })
+
+    const hammerheadDynamoDbTable = new Table(
+      this,
+      HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      {
+        tableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+        partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
+        sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
+        readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
+        writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
+        kinesisStream: hammerheadStream,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+      }
+    )
+
+    /*
+     * hammerhead Alarms
+     */
+    dynamoTableOperationMetrics.map((metric) => {
+      dynamoTableOperations.map((operation) => {
+        createDynamoDBAlarm(
+          this,
+          this.betterUptimeCloudWatchTopic,
+          `DynamoHammerhead${operation}${metric}`,
+          hammerheadDynamoDbTable.tableName,
           operation,
           metric
         )
@@ -250,8 +298,8 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     apiKeyGeneratorFunction.role?.attachInlinePolicy(
-      new Policy(this, getResourceName('ApiKeyGeneratorPolicy'), {
-        policyName: getResourceName('ApiKeyGeneratorPolicy'),
+      new Policy(this, getResourceNameForTarpon('ApiKeyGeneratorPolicy'), {
+        policyName: getResourceNameForTarpon('ApiKeyGeneratorPolicy'),
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -305,7 +353,7 @@ export class CdkTarponStack extends cdk.Stack {
       layers: [fastGeoIpLayer],
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     })
-    dynamoDbTable.grantReadWriteData(transactionFunction)
+    tarponDynamoDbTable.grantReadWriteData(transactionFunction)
 
     /* Transaction Event */
     const transactionEventFunction = this.createFunction({
@@ -313,7 +361,7 @@ export class CdkTarponStack extends cdk.Stack {
       handler: 'app.transactionEventHandler',
       codePath: 'dist/rules-engine',
     })
-    dynamoDbTable.grantReadWriteData(transactionEventFunction)
+    tarponDynamoDbTable.grantReadWriteData(transactionEventFunction)
 
     /* User Event */
     const userEventFunction = this.createFunction({
@@ -321,7 +369,7 @@ export class CdkTarponStack extends cdk.Stack {
       handler: 'app.userEventHandler',
       codePath: 'dist/rules-engine',
     })
-    dynamoDbTable.grantReadWriteData(userEventFunction)
+    tarponDynamoDbTable.grantReadWriteData(userEventFunction)
 
     /* File Import */
     const fileImportFunction = this.createFunction(
@@ -340,7 +388,7 @@ export class CdkTarponStack extends cdk.Stack {
         timeout: Duration.minutes(15),
       }
     )
-    dynamoDbTable.grantReadWriteData(fileImportFunction)
+    tarponDynamoDbTable.grantReadWriteData(fileImportFunction)
     s3TmpBucket.grantRead(fileImportFunction)
     s3ImportBucket.grantWrite(fileImportFunction)
     fileImportFunction.role?.attachInlinePolicy(
@@ -383,7 +431,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    dynamoDbTable.grantWriteData(ruleFunction)
+    tarponDynamoDbTable.grantWriteData(ruleFunction)
     ruleFunction.role?.attachInlinePolicy(
       new Policy(this, `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`, {
         policyName: `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`,
@@ -406,7 +454,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    dynamoDbTable.grantReadWriteData(ruleInstanceFunction)
+    tarponDynamoDbTable.grantReadWriteData(ruleInstanceFunction)
     ruleInstanceFunction.role?.attachInlinePolicy(
       new Policy(
         this,
@@ -443,7 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    dynamoDbTable.grantReadWriteData(transactionsViewFunction)
+    tarponDynamoDbTable.grantReadWriteData(transactionsViewFunction)
     s3TmpBucket.grantRead(transactionsViewFunction)
     s3DocumentBucket.grantWrite(transactionsViewFunction)
     transactionsViewFunction.role?.attachInlinePolicy(
@@ -588,7 +636,7 @@ export class CdkTarponStack extends cdk.Stack {
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
     })
-    dynamoDbTable.grantReadWriteData(userFunction)
+    tarponDynamoDbTable.grantReadWriteData(userFunction)
 
     /* List Importer */
     const listImporterFunction = this.createFunction({
@@ -596,9 +644,22 @@ export class CdkTarponStack extends cdk.Stack {
       handler: 'app.listImporterHandler',
       codePath: 'dist/list-importer',
     })
-    dynamoDbTable.grantReadWriteData(listImporterFunction)
+    tarponDynamoDbTable.grantReadWriteData(listImporterFunction)
+    /*
+     * Hammerhead console functions
+     */
+    /* Risk Quantification function */
+    const riskQuantificationFunction = this.createFunction(
+      {
+        name: HammerheadStackConstants.RISK_QUANTIFICATION_FUNCTION_NAME,
+        handler: 'app.riskQuantificationHandler',
+        codePath: 'dist/phytoplankton-internal-api-handlers/',
+      },
+      atlasFunctionProps
+    )
+    hammerheadDynamoDbTable.grantReadWriteData(riskQuantificationFunction)
 
-    /* Kinesis Change capture consumer */
+    /* Tarpon Kinesis Change capture consumer */
 
     const tarponChangeCaptureKinesisConsumer = this.createFunction(
       {
@@ -622,10 +683,52 @@ export class CdkTarponStack extends cdk.Stack {
     tarponChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
       new Policy(
         this,
-        getResourceName('tarponTarponChangeCaptureKinesisConsumerPolicy'),
+        getResourceNameForTarpon(
+          'tarponTarponChangeCaptureKinesisConsumerPolicy'
+        ),
         {
-          policyName: getResourceName(
+          policyName: getResourceNameForTarpon(
             'tarponTarponChangeCaptureKinesisConsumerPolicy'
+          ),
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
+            }),
+          ],
+        }
+      )
+    )
+
+    /* Hammerhead Kinesis Change capture consumer */
+
+    const hammerheadChangeCaptureKinesisConsumer = this.createFunction(
+      {
+        name: HammerheadStackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+        handler: 'app.hammerheadChangeCaptureHandler',
+        codePath: 'dist/hammerhead-change-capture-kinesis-consumer',
+      },
+      {
+        ...atlasFunctionProps,
+        timeout: Duration.minutes(15),
+      }
+    )
+
+    hammerheadChangeCaptureKinesisConsumer.addEventSource(
+      new KinesisEventSource(hammerheadStream, {
+        batchSize: 10,
+        startingPosition: StartingPosition.TRIM_HORIZON,
+      })
+    )
+
+    hammerheadChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        getResourceNameForHammerhead('ChangeCaptureKinesisConsumerPolicy'),
+        {
+          policyName: getResourceNameForHammerhead(
+            'ChangeCaptureKinesisConsumerPolicy'
           ),
           statements: [
             new PolicyStatement({
@@ -775,8 +878,8 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     apiKeyAuthorizerFunction.role?.attachInlinePolicy(
-      new Policy(this, getResourceName('ApiKeyAuthorizerPolicy'), {
-        policyName: getResourceName('ApiKeyAuthorizerPolicy'),
+      new Policy(this, getResourceNameForTarpon('ApiKeyAuthorizerPolicy'), {
+        policyName: getResourceNameForTarpon('ApiKeyAuthorizerPolicy'),
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -805,8 +908,8 @@ export class CdkTarponStack extends cdk.Stack {
       ],
     })
     jwtAuthorizerFunction.role?.attachInlinePolicy(
-      new Policy(this, getResourceName('JwtAuthorizerPolicy'), {
-        policyName: getResourceName('JwtAuthorizerPolicy'),
+      new Policy(this, getResourceNameForTarpon('JwtAuthorizerPolicy'), {
+        policyName: getResourceNameForTarpon('JwtAuthorizerPolicy'),
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
@@ -847,7 +950,7 @@ export class CdkTarponStack extends cdk.Stack {
       value: userFunction.functionName,
     })
     new CfnOutput(this, 'Transaction Table', {
-      value: dynamoDbTable.tableName,
+      value: tarponDynamoDbTable.tableName,
     })
   }
 

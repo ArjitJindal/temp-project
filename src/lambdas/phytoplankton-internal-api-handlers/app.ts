@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest, InternalServerError, NotFound } from 'http-errors'
+import { HammerheadStackConstants } from '@cdk/constants'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
@@ -36,6 +37,7 @@ import { Tenant as ApiTenant } from '@/@types/openapi-internal/Tenant'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { Account } from '@/@types/openapi-internal/Account'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -651,3 +653,62 @@ export const tenantsHandler = lambdaApi()(
     throw new BadRequest('Unhandled request')
   }
 )
+
+export const riskQuantificationHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId, role } = event.requestContext.authorizer
+    assertRole(role, 'root')
+    const dynamoDb = getDynamoDbClient(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+
+    if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/risk-quantification'
+    ) {
+      try {
+        return riskRepository.getRiskQuantification()
+      } catch (e) {
+        console.error(e)
+        return e
+      }
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/risk-quantification'
+    ) {
+      if (!event.body) {
+        throw new BadRequest('Empty body')
+      }
+      let quantificationsValues
+      try {
+        quantificationsValues = JSON.parse(event.body)
+        validateQuantificationRequest(quantificationsValues)
+      } catch (e) {
+        throw new BadRequest('Invalid Request')
+      }
+      return riskRepository.createOrUpdateRiskQuantification(
+        quantificationsValues
+      )
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+const validateQuantificationRequest = (quantificationsValues: Array<any>) => {
+  if (
+    quantificationsValues.length !=
+    HammerheadStackConstants.NUMBER_OF_RISK_LEVELS
+  ) {
+    throw new BadRequest('Invalid Request - Please provide 5 risk levels')
+  }
+  const unique = new Set()
+  const hasDuplicate = quantificationsValues.some(
+    (element) => unique.size === unique.add(element.riskLevel).size
+  )
+  if (hasDuplicate) {
+    throw new BadRequest('Invalid request - duplicate risk levels')
+  }
+}
