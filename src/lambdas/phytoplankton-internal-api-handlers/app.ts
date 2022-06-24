@@ -689,9 +689,10 @@ export const riskClassificationHandler = lambdaApi()(
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return riskRepository.createOrUpdateRiskClassification(
+      const result = await riskRepository.createOrUpdateRiskClassification(
         classificationValues
       )
+      return result.classificationValues
     }
     throw new BadRequest('Unhandled request')
   }

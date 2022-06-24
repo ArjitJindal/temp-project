@@ -1,8 +1,36 @@
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
 import { HammerheadStackConstants } from '@cdk/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+
+const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
+  {
+    riskLevel: 'VERY_LOW',
+    lowerBoundRiskScore: 0,
+    upperBoundRiskScore: 20,
+  },
+  {
+    riskLevel: 'LOW',
+    lowerBoundRiskScore: 20,
+    upperBoundRiskScore: 40,
+  },
+  {
+    riskLevel: 'MEDIUM',
+    lowerBoundRiskScore: 40,
+    upperBoundRiskScore: 60,
+  },
+  {
+    riskLevel: 'HIGH',
+    lowerBoundRiskScore: 60,
+    upperBoundRiskScore: 80,
+  },
+  {
+    riskLevel: 'VERY_HIGH',
+    lowerBoundRiskScore: 80,
+    upperBoundRiskScore: 100,
+  },
+]
 
 export class RiskRepository {
   tenantId: string
@@ -32,7 +60,10 @@ export class RiskRepository {
     }
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items ? result.Items : []
+
+      return result.Items && result.Items.length > 0
+        ? result.Items[0].classificationValues
+        : DEFAULT_CLASSIFICATION_SETTINGS
     } catch (e) {
       console.log(e)
       return []

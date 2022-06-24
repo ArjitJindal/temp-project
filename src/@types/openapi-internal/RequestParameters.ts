@@ -50,6 +50,7 @@ import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
+import { RiskClassificationScore } from './RiskClassificationScore'
 import { RiskLevel } from './RiskLevel'
 import { RiskLevelRuleActions } from './RiskLevelRuleActions'
 import { RiskLevelRuleParameters } from './RiskLevelRuleParameters'
@@ -598,10 +599,10 @@ export interface DefaultApiPostListsRequest {
 export interface DefaultApiPostPulseRiskClassificationRequest {
   /**
    *
-   * @type Array&lt;any&gt;
+   * @type Array&lt;RiskClassificationScore&gt;
    * @memberof DefaultApipostPulseRiskClassification
    */
-  request_body?: Array<any>
+  RiskClassificationScore?: Array<RiskClassificationScore>
 }
 
 export interface DefaultApiPostRuleInstancesRequest {

@@ -2136,7 +2136,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskClassificationScore'
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
               examples:
                 example-1:
                   value:
@@ -2161,13 +2163,21 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
         '400':
           description: Bad Request
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RiskClassificationScore'
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -2732,31 +2742,28 @@ components:
         - id
         - name
     RiskClassificationScore:
-      type: array
-      x-examples:
-        example-1:
-          - riskLevel: VERY_LOW
-            lowerBoundRiskScore: 0
-            upperBoundRiskScore: 25
       description: ''
       title: RiskClassificationScore
-      items:
-        type: object
-        properties:
-          riskLevel:
-            $ref: '#/components/schemas/RiskLevel'
-          lowerBoundRiskScore:
-            type: number
-            minimum: 0
-            maximum: 100
-            exclusiveMinimum: false
-            exclusiveMaximum: false
-          upperBoundRiskScore:
-            type: number
-            exclusiveMinimum: false
-            exclusiveMaximum: false
-            minimum: 0
-            maximum: 100
+      type: object
+      properties:
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        lowerBoundRiskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          exclusiveMinimum: false
+          exclusiveMaximum: false
+        upperBoundRiskScore:
+          type: number
+          exclusiveMinimum: false
+          exclusiveMaximum: false
+          minimum: 0
+          maximum: 100
+      required:
+        - riskLevel
+        - lowerBoundRiskScore
+        - upperBoundRiskScore
     RiskLevelRuleParameters:
       title: RiskLevelRuleParameters
       x-stoplight:
