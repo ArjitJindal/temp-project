@@ -425,7 +425,7 @@ paths:
                     type: string
               examples:
                 example-1:
-                  value: Too larget dataset
+                  value: {}
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -755,9 +755,7 @@ paths:
               - DAY
               - YEAR
           in: query
-          name: timeframe
-          required: true
-          description: 'MONTH, DAY or YEAR'
+          name: startTimestamp
         - schema:
             type: number
           in: query
@@ -951,6 +949,34 @@ paths:
               items:
                 $ref: '#/components/schemas/RiskClassificationScore'
     parameters: []
+  /pulse/manual-risk-assignment:
+    parameters: []
+    post:
+      summary: Risk Level - Manual Assignment
+      operationId: pulse-manual-risk-assignment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: ChangeTenantPayload
+              properties:
+                riskLevel:
+                  $ref: '#/components/schemas/RiskLevel'
+              required:
+                - riskLevel
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user whose risk is being manually assigned
 components:
   schemas:
     Rule:

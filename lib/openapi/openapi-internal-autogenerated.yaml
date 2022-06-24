@@ -939,7 +939,7 @@ paths:
                     type: string
               examples:
                 example-1:
-                  value: Too larget dataset
+                  value: {}
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -1675,9 +1675,7 @@ paths:
               - DAY
               - YEAR
           in: query
-          name: timeframe
-          required: true
-          description: MONTH, DAY or YEAR
+          name: startTimestamp
         - schema:
             type: number
           in: query
@@ -2189,6 +2187,70 @@ paths:
       security:
         - lambda-authorizer: []
     parameters: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+  /pulse/manual-risk-assignment:
+    parameters: []
+    post:
+      summary: Risk Level - Manual Assignment
+      operationId: pulse-manual-risk-assignment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: ChangeTenantPayload
+              properties:
+                riskLevel:
+                  $ref: '#/components/schemas/RiskLevel'
+              required:
+                - riskLevel
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user whose risk is being manually assigned
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualRiskAssignment.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
     options:
       parameters: []
       responses:

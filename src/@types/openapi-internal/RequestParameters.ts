@@ -12,6 +12,7 @@ import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
 import { CardPaymentMethod } from './CardPaymentMethod'
 import { ChangeTenantPayload } from './ChangeTenantPayload'
+import { ChangeTenantPayload1 } from './ChangeTenantPayload1'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
@@ -282,11 +283,11 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
 
 export interface DefaultApiGetDashboardStatsRuleHitRequest {
   /**
-   * MONTH, DAY or YEAR
+   *
    * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsRuleHit
    */
-  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
+  startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
   /**
    *
    * @type number
@@ -651,6 +652,21 @@ export interface DefaultApiPostTransactionsTransactionIdRequest {
    * @memberof DefaultApipostTransactionsTransactionId
    */
   TransactionUpdateRequest?: TransactionUpdateRequest
+}
+
+export interface DefaultApiPulseManualRiskAssignmentRequest {
+  /**
+   * UserID of the user whose risk is being manually assigned
+   * @type string
+   * @memberof DefaultApipulseManualRiskAssignment
+   */
+  userId: string
+  /**
+   *
+   * @type ChangeTenantPayload1
+   * @memberof DefaultApipulseManualRiskAssignment
+   */
+  ChangeTenantPayload1?: ChangeTenantPayload1
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

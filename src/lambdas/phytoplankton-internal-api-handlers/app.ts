@@ -635,7 +635,7 @@ export const tenantsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, role } = event.requestContext.authorizer
+    const { role } = event.requestContext.authorizer
     assertRole(role, 'root')
 
     const config = process.env as AccountsConfig
@@ -713,3 +713,33 @@ const validateClassificationRequest = (classificationValues: Array<any>) => {
     throw new BadRequest('Invalid request - duplicate risk levels')
   }
 }
+
+export const manualRiskAssignmentHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId, role } = event.requestContext.authorizer
+    const { userId } = event.queryStringParameters as any
+    assertRole(role, 'root')
+    const dynamoDb = getDynamoDbClient(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/manual-risk-assignment'
+    ) {
+      if (!event.body) {
+        throw new BadRequest('Empty body')
+      }
+      let riskLevel
+      try {
+        riskLevel = JSON.parse(event.body)
+      } catch (e) {
+        throw new BadRequest('Invalid Request')
+      }
+      return riskRepository.createOrUpdateManualDRSRiskItem(userId, riskLevel)
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)

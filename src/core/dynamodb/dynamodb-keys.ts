@@ -194,9 +194,13 @@ export const DynamoDbKeys = {
   }),
   /** Hammerhead keys */
   // Attributes: refer to Rule
-  RISK_CLASSIFICATION: (tenantId: string, riskLevel?: string) => ({
+  RISK_CLASSIFICATION: (tenantId: string, version?: string) => ({
     PartitionKeyID: `${tenantId}#risk-classification-values`,
-    SortKeyID: riskLevel,
+    SortKeyID: version,
+  }),
+  DRS_RISK_DETAILS: (tenantId: string, userId: string, version?: string) => ({
+    PartitionKeyID: `${tenantId}#userId#${userId}#drs-value`,
+    SortKeyID: version,
   }),
 }
 

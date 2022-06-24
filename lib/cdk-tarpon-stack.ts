@@ -659,6 +659,14 @@ export class CdkTarponStack extends cdk.Stack {
     )
     hammerheadDynamoDbTable.grantReadWriteData(riskClassificationFunction)
 
+    /* Manual User Risk Assignment function */
+    const manualRiskAssignmentFunction = this.createFunction({
+      name: HammerheadStackConstants.MANUAL_RISK_ASSIGNMENT_FUNCTION_NAME,
+      handler: 'app.manualRiskAssignmentHandler',
+      codePath: 'dist/phytoplankton-internal-api-handlers/',
+    })
+    hammerheadDynamoDbTable.grantReadWriteData(manualRiskAssignmentFunction)
+
     /* Tarpon Kinesis Change capture consumer */
 
     const tarponChangeCaptureKinesisConsumer = this.createFunction(

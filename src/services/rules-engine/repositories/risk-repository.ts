@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb'
 import { HammerheadStackConstants } from '@cdk/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
+import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
@@ -89,5 +90,25 @@ export class RiskRepository {
     }
     await this.dynamoDb.put(putItemInput).promise()
     return newRiskClassificationValues
+  }
+
+  async createOrUpdateManualDRSRiskItem(userId: string, riskLevel: RiskLevel) {
+    const now = Date.now()
+    const newDRSRiskItem: any = {
+      riskLevel: riskLevel,
+      isManualOverride: true,
+      isUpdatable: false,
+      createdAt: now,
+    }
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId, 'LATEST'), // Version it later
+        ...newDRSRiskItem,
+      },
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    await this.dynamoDb.put(putItemInput).promise()
+    return newDRSRiskItem
   }
 }
