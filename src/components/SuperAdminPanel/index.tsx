@@ -30,7 +30,7 @@ export default function SuperAdminPanel() {
         const tenants = await api.getTenantsList();
         setTenantsRes(success(tenants));
       } catch (e) {
-        setTenantsRes(failed(e instanceof Error ? e.message : 'Unknown message'));
+        setTenantsRes(failed(e instanceof Error ? e.message : 'Unknown error'));
       }
     }
     fetch().catch((e) => {

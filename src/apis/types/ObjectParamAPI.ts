@@ -26,6 +26,8 @@ import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
 import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
 import { DashboardStatsHitsPerUserData } from '../models/DashboardStatsHitsPerUserData';
+import { DashboardStatsRulesCount } from '../models/DashboardStatsRulesCount';
+import { DashboardStatsRulesCountData } from '../models/DashboardStatsRulesCountData';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
@@ -52,6 +54,7 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
+import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
@@ -284,6 +287,21 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
   endTimestamp?: number;
 }
 
+export interface DefaultApiGetDashboardStatsRuleHitRequest {
+  /**
+   * MONTH, DAY or YEAR
+   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @memberof DefaultApigetDashboardStatsRuleHit
+   */
+  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
+  /**
+   *
+   * @type number
+   * @memberof DefaultApigetDashboardStatsRuleHit
+   */
+  endTimestamp?: number;
+}
+
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
    * MONTH, DAY or YEAR
@@ -314,7 +332,14 @@ export interface DefaultApiGetRuleImplementationsRequest {}
 
 export interface DefaultApiGetRuleInstancesRequest {}
 
-export interface DefaultApiGetRulesRequest {}
+export interface DefaultApiGetRulesRequest {
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetRules
+   */
+  ruleId?: string;
+}
 
 export interface DefaultApiGetTenantsListRequest {}
 
@@ -581,10 +606,10 @@ export interface DefaultApiPostListsRequest {
 export interface DefaultApiPostPulseRiskClassificationRequest {
   /**
    *
-   * @type Array&lt;any&gt;
+   * @type Array&lt;RiskClassificationScore&gt;
    * @memberof DefaultApipostPulseRiskClassification
    */
-  request_body?: Array<any>;
+  RiskClassificationScore?: Array<RiskClassificationScore>;
 }
 
 export interface DefaultApiPostRuleInstancesRequest {
@@ -863,6 +888,19 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * DashboardStats - Rule hit
+   * @param param the request object
+   */
+  public getDashboardStatsRuleHit(
+    param: DefaultApiGetDashboardStatsRuleHitRequest,
+    options?: Configuration,
+  ): Promise<DashboardStatsRulesCount> {
+    return this.api
+      .getDashboardStatsRuleHit(param.timeframe, param.endTimestamp, options)
+      .toPromise();
+  }
+
+  /**
    * DashboardStats - Transactions
    * @param param the request object
    */
@@ -893,7 +931,7 @@ export class ObjectDefaultApi {
   public getPulseRiskClassification(
     param: DefaultApiGetPulseRiskClassificationRequest = {},
     options?: Configuration,
-  ): Promise<Array<any>> {
+  ): Promise<Array<RiskClassificationScore>> {
     return this.api.getPulseRiskClassification(options).toPromise();
   }
 
@@ -927,7 +965,7 @@ export class ObjectDefaultApi {
     param: DefaultApiGetRulesRequest = {},
     options?: Configuration,
   ): Promise<Array<Rule>> {
-    return this.api.getRules(options).toPromise();
+    return this.api.getRules(param.ruleId, options).toPromise();
   }
 
   /**
@@ -1101,8 +1139,8 @@ export class ObjectDefaultApi {
   public postPulseRiskClassification(
     param: DefaultApiPostPulseRiskClassificationRequest = {},
     options?: Configuration,
-  ): Promise<void> {
-    return this.api.postPulseRiskClassification(param.request_body, options).toPromise();
+  ): Promise<Array<RiskClassificationScore>> {
+    return this.api.postPulseRiskClassification(param.RiskClassificationScore, options).toPromise();
   }
 
   /**

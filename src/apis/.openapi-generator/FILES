@@ -36,6 +36,8 @@ models/ContactDetails.ts
 models/ContactDetails1.ts
 models/DashboardStatsHitsPerUser.ts
 models/DashboardStatsHitsPerUserData.ts
+models/DashboardStatsRulesCount.ts
+models/DashboardStatsRulesCountData.ts
 models/DashboardStatsTransactionsCount.ts
 models/DashboardStatsTransactionsCountData.ts
 models/DeviceData.ts
@@ -63,6 +65,7 @@ models/ListImportRequest.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts
+models/RiskClassificationScore.ts
 models/RiskLevel.ts
 models/RiskLevelRuleActions.ts
 models/RiskLevelRuleParameters.ts

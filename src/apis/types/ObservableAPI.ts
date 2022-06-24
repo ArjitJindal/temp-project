@@ -27,6 +27,8 @@ import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
 import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
 import { DashboardStatsHitsPerUserData } from '../models/DashboardStatsHitsPerUserData';
+import { DashboardStatsRulesCount } from '../models/DashboardStatsRulesCount';
+import { DashboardStatsRulesCountData } from '../models/DashboardStatsRulesCountData';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
@@ -53,6 +55,7 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
+import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
@@ -657,6 +660,47 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * DashboardStats - Rule hit
+   * @param timeframe MONTH, DAY or YEAR
+   * @param endTimestamp
+   */
+  public getDashboardStatsRuleHit(
+    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    endTimestamp?: number,
+    _options?: Configuration,
+  ): Observable<DashboardStatsRulesCount> {
+    const requestContextPromise = this.requestFactory.getDashboardStatsRuleHit(
+      timeframe,
+      endTimestamp,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getDashboardStatsRuleHit(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
@@ -734,7 +778,9 @@ export class ObservableDefaultApi {
   /**
    * Risk classification - GET
    */
-  public getPulseRiskClassification(_options?: Configuration): Observable<Array<any>> {
+  public getPulseRiskClassification(
+    _options?: Configuration,
+  ): Observable<Array<RiskClassificationScore>> {
     const requestContextPromise = this.requestFactory.getPulseRiskClassification(_options);
 
     // build promise chain
@@ -826,9 +872,10 @@ export class ObservableDefaultApi {
 
   /**
    * Rules - List
+   * @param ruleId
    */
-  public getRules(_options?: Configuration): Observable<Array<Rule>> {
-    const requestContextPromise = this.requestFactory.getRules(_options);
+  public getRules(ruleId?: string, _options?: Configuration): Observable<Array<Rule>> {
+    const requestContextPromise = this.requestFactory.getRules(ruleId, _options);
 
     // build promise chain
     let middlewarePreObservable = from<RequestContext>(requestContextPromise);
@@ -1364,14 +1411,14 @@ export class ObservableDefaultApi {
 
   /**
    * Risk classification - POST
-   * @param request_body
+   * @param RiskClassificationScore
    */
   public postPulseRiskClassification(
-    request_body?: Array<any>,
+    RiskClassificationScore?: Array<RiskClassificationScore>,
     _options?: Configuration,
-  ): Observable<void> {
+  ): Observable<Array<RiskClassificationScore>> {
     const requestContextPromise = this.requestFactory.postPulseRiskClassification(
-      request_body,
+      RiskClassificationScore,
       _options,
     );
 

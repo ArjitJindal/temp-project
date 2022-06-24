@@ -173,6 +173,23 @@ export default defineConfig({
       component: './accounts',
     },
     {
+      path: '/risk-levels',
+      icon: 'BarChartOutlined',
+      name: 'risk-levels',
+      routes: [
+        {
+          path: '/risk-levels',
+          redirect: '/risk-levels/configure',
+        },
+        {
+          name: 'Configure risk levels',
+          icon: 'smile',
+          path: '/risk-levels/configure',
+          component: './risk-levels/configure',
+        },
+      ],
+    },
+    {
       path: '/',
       redirect: '/dashboard/analysis',
     },

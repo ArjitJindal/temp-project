@@ -18,6 +18,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getConsumerUsersItem**](DefaultApi.md#getConsumerUsersItem) | **GET** /consumer/users/{userId} | Consumer Users - Item - Get |
 | [**getConsumerUsersList**](DefaultApi.md#getConsumerUsersList) | **GET** /consumer/users | Consumer Users - List |
 | [**getDashboardStatsHitsPerUser**](DefaultApi.md#getDashboardStatsHitsPerUser) | **GET** /dashboard_stats/hits_per_user | DashboardStats - Hits per user |
+| [**getDashboardStatsRuleHit**](DefaultApi.md#getDashboardStatsRuleHit) | **GET** /dashboard_stats/rule_hit | DashboardStats - Rule hit |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
 | [**getPulseRiskClassification**](DefaultApi.md#getPulseRiskClassification) | **GET** /pulse/risk-classification | Risk classification - GET |
@@ -784,6 +785,59 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getDashboardStatsRuleHit**
+
+> DashboardStatsRulesCount getDashboardStatsRuleHit()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetDashboardStatsRuleHitRequest = {
+  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
+  timeframe: "WEEK",
+  // number (optional)
+  endTimestamp: 3.14,
+};
+
+apiInstance.getDashboardStatsRuleHit(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name             | Type                | Description     | Notes                            |
+| ---------------- | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
+| **timeframe**    | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
+| **endTimestamp** | [**number**]        |                 | (optional) defaults to undefined |
+
+### Return type
+
+**DashboardStatsRulesCount**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getDashboardStatsTransactions**
 
 > DashboardStatsTransactionsCount getDashboardStatsTransactions()
@@ -889,7 +943,7 @@ No authorization required
 
 # **getPulseRiskClassification**
 
-> Array<any> getPulseRiskClassification()
+> Array<RiskClassificationScore> getPulseRiskClassification()
 
 ### Example
 
@@ -913,7 +967,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-**Array<any>**
+**Array<RiskClassificationScore>**
 
 ### Authorization
 
@@ -1035,7 +1089,10 @@ import * as fs from 'fs';
 const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
-let body:any = {};
+let body:.DefaultApiGetRulesRequest = {
+  // string (optional)
+  ruleId: "ruleId_example",
+};
 
 apiInstance.getRules(body).then((data:any) => {
   console.log('API called successfully. Returned data: ' + data);
@@ -1044,7 +1101,9 @@ apiInstance.getRules(body).then((data:any) => {
 
 ### Parameters
 
-This endpoint does not need any parameter.
+| Name       | Type         | Description | Notes                            |
+| ---------- | ------------ | ----------- | -------------------------------- |
+| **ruleId** | [**string**] |             | (optional) defaults to undefined |
 
 ### Return type
 
@@ -1837,7 +1896,7 @@ No authorization required
 
 # **postPulseRiskClassification**
 
-> void postPulseRiskClassification()
+> Array<RiskClassificationScore> postPulseRiskClassification()
 
 ### Example
 
@@ -1849,8 +1908,8 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiPostPulseRiskClassificationRequest = {
-  // Array<any> (optional)
-  request_body: [
+  // Array<RiskClassificationScore> (optional)
+  RiskClassificationScore: [
     {
       riskLevel: "VERY_HIGH",
       lowerBoundRiskScore: 0,
@@ -1866,13 +1925,13 @@ apiInstance.postPulseRiskClassification(body).then((data:any) => {
 
 ### Parameters
 
-| Name             | Type           | Description | Notes |
-| ---------------- | -------------- | ----------- | ----- |
-| **request_body** | **Array<any>** |             |
+| Name                        | Type                               | Description | Notes |
+| --------------------------- | ---------------------------------- | ----------- | ----- |
+| **RiskClassificationScore** | **Array<RiskClassificationScore>** |             |
 
 ### Return type
 
-**void**
+**Array<RiskClassificationScore>**
 
 ### Authorization
 
@@ -1881,7 +1940,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
+- **Accept**: application/json
 
 ### HTTP response details
 

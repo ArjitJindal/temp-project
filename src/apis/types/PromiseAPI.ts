@@ -26,6 +26,8 @@ import { ContactDetails } from '../models/ContactDetails';
 import { ContactDetails1 } from '../models/ContactDetails1';
 import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
 import { DashboardStatsHitsPerUserData } from '../models/DashboardStatsHitsPerUserData';
+import { DashboardStatsRulesCount } from '../models/DashboardStatsRulesCount';
+import { DashboardStatsRulesCountData } from '../models/DashboardStatsRulesCountData';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
@@ -52,6 +54,7 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
+import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
@@ -300,6 +303,20 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * DashboardStats - Rule hit
+   * @param timeframe MONTH, DAY or YEAR
+   * @param endTimestamp
+   */
+  public getDashboardStatsRuleHit(
+    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    endTimestamp?: number,
+    _options?: Configuration,
+  ): Promise<DashboardStatsRulesCount> {
+    const result = this.api.getDashboardStatsRuleHit(timeframe, endTimestamp, _options);
+    return result.toPromise();
+  }
+
+  /**
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
@@ -325,7 +342,9 @@ export class PromiseDefaultApi {
   /**
    * Risk classification - GET
    */
-  public getPulseRiskClassification(_options?: Configuration): Promise<Array<any>> {
+  public getPulseRiskClassification(
+    _options?: Configuration,
+  ): Promise<Array<RiskClassificationScore>> {
     const result = this.api.getPulseRiskClassification(_options);
     return result.toPromise();
   }
@@ -348,9 +367,10 @@ export class PromiseDefaultApi {
 
   /**
    * Rules - List
+   * @param ruleId
    */
-  public getRules(_options?: Configuration): Promise<Array<Rule>> {
-    const result = this.api.getRules(_options);
+  public getRules(ruleId?: string, _options?: Configuration): Promise<Array<Rule>> {
+    const result = this.api.getRules(ruleId, _options);
     return result.toPromise();
   }
 
@@ -572,13 +592,13 @@ export class PromiseDefaultApi {
 
   /**
    * Risk classification - POST
-   * @param request_body
+   * @param RiskClassificationScore
    */
   public postPulseRiskClassification(
-    request_body?: Array<any>,
+    RiskClassificationScore?: Array<RiskClassificationScore>,
     _options?: Configuration,
-  ): Promise<void> {
-    const result = this.api.postPulseRiskClassification(request_body, _options);
+  ): Promise<Array<RiskClassificationScore>> {
+    const result = this.api.postPulseRiskClassification(RiskClassificationScore, _options);
     return result.toPromise();
   }
 

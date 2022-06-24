@@ -4,13 +4,14 @@ import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
 import { Link, RunTimeLayoutConfig, setLocale } from 'umi';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
+import { IConfigFromPlugins } from '@@/core/pluginConfig';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
-
 import Footer from '@/components/Footer';
 import RightContent from '@/components/RightContent';
 import AppWrapper from '@/components/AppWrapper';
 
+// todo: move dsn to config?
 Sentry.init({
   dsn: 'https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175',
   integrations: [new BrowserTracing()],
@@ -63,6 +64,25 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     ...initialState?.settings,
   };
 };
+
+export function modifyClientRenderOpts(memo: IConfigFromPlugins) {
+  const rootRoute = (memo.routes ?? [])[0];
+  rootRoute.routes;
+  return {
+    ...memo,
+    routes: [
+      {
+        ...rootRoute,
+        routes: rootRoute.routes?.filter((x) => {
+          if (x.name === 'risk-levels' && !(FEATURES_ENABLED ?? {})['risk-levels']) {
+            return false;
+          }
+          return true;
+        }),
+      },
+    ],
+  };
+}
 
 export function rootContainer(container: ReactNode) {
   return <AppWrapper>{container}</AppWrapper>;

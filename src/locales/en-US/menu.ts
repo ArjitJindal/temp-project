@@ -33,4 +33,6 @@ export default {
   'menu.account.trigger': 'Trigger Error',
   'menu.account.logout': 'Logout',
   'menu.accounts': 'Accounts Management',
+  'menu.risk-levels': 'Risk Levels',
+  'menu.risk-levels.configure': 'Configure Risk Levels',
 };

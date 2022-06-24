@@ -22,6 +22,8 @@ export * from './ContactDetails';
 export * from './ContactDetails1';
 export * from './DashboardStatsHitsPerUser';
 export * from './DashboardStatsHitsPerUserData';
+export * from './DashboardStatsRulesCount';
+export * from './DashboardStatsRulesCountData';
 export * from './DashboardStatsTransactionsCount';
 export * from './DashboardStatsTransactionsCountData';
 export * from './DeviceData';
@@ -48,6 +50,7 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './Person';
 export * from './PresignedUrlResponse';
+export * from './RiskClassificationScore';
 export * from './RiskLevel';
 export * from './RiskLevelRuleActions';
 export * from './RiskLevelRuleParameters';
@@ -104,6 +107,8 @@ import { ContactDetails } from './ContactDetails';
 import { ContactDetails1 } from './ContactDetails1';
 import { DashboardStatsHitsPerUser } from './DashboardStatsHitsPerUser';
 import { DashboardStatsHitsPerUserData } from './DashboardStatsHitsPerUserData';
+import { DashboardStatsRulesCount } from './DashboardStatsRulesCount';
+import { DashboardStatsRulesCountData } from './DashboardStatsRulesCountData';
 import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCount';
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData';
 import { DeviceData } from './DeviceData';
@@ -136,6 +141,7 @@ import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
+import { RiskClassificationScore } from './RiskClassificationScore';
 import { RiskLevel } from './RiskLevel';
 import { RiskLevelRuleActions } from './RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
@@ -225,6 +231,8 @@ let typeMap: { [index: string]: any } = {
   ContactDetails1: ContactDetails1,
   DashboardStatsHitsPerUser: DashboardStatsHitsPerUser,
   DashboardStatsHitsPerUserData: DashboardStatsHitsPerUserData,
+  DashboardStatsRulesCount: DashboardStatsRulesCount,
+  DashboardStatsRulesCountData: DashboardStatsRulesCountData,
   DashboardStatsTransactionsCount: DashboardStatsTransactionsCount,
   DashboardStatsTransactionsCountData: DashboardStatsTransactionsCountData,
   DeviceData: DeviceData,
@@ -249,6 +257,7 @@ let typeMap: { [index: string]: any } = {
   ListImportRequest: ListImportRequest,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
+  RiskClassificationScore: RiskClassificationScore,
   RiskLevelRuleActions: RiskLevelRuleActions,
   RiskLevelRuleParameters: RiskLevelRuleParameters,
   Rule: Rule,

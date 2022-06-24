@@ -41,6 +41,11 @@ paths:
               examples: {}
       operationId: get-rules
       description: ''
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: ruleId
     parameters: []
     post:
       summary: Rules - Create
@@ -727,6 +732,37 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/rule_hit:
+    get:
+      summary: DashboardStats - Rule hit
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsRulesCount'
+              examples: {}
+      operationId: get-dashboard-stats-rule-hit
+      description: ''
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - WEEK
+              - MONTH
+              - DAY
+              - YEAR
+          in: query
+          name: timeframe
+          required: true
+          description: 'MONTH, DAY or YEAR'
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
+    parameters: []
   /dashboard_stats/hits_per_user:
     get:
       summary: DashboardStats - Hits per user
@@ -882,7 +918,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskClassificationScore'
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
               examples:
                 example-1:
                   value:
@@ -897,13 +935,21 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
         '400':
           description: Bad Request
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RiskClassificationScore'
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
     parameters: []
 components:
   schemas:
@@ -1087,8 +1133,6 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
-
-
         - type: object
           properties:
             comments:
@@ -1170,12 +1214,29 @@ components:
               - _id
       required:
         - data
+    DashboardStatsRulesCount:
+      type: object
+      x-examples: {}
+      title: DashboardStatsRulesCount
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              ruleId:
+                type: string
+              hitCount:
+                type: number
+            required:
+              - ruleId
+              - hitCount
+      required:
+        - data
     InternalConsumerUser:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
-
-
         - type: object
           properties:
             type:
@@ -1192,8 +1253,6 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
-
         - type: object
           properties:
             type:
@@ -1416,31 +1475,28 @@ components:
         - id
         - name
     RiskClassificationScore:
-      type: array
-      x-examples:
-        example-1:
-          - riskLevel: VERY_LOW
-            lowerBoundRiskScore: 0
-            upperBoundRiskScore: 25
       description: ''
       title: RiskClassificationScore
-      items:
-        type: object
-        properties:
-          riskLevel:
-            $ref: '#/components/schemas/RiskLevel'
-          lowerBoundRiskScore:
-            type: number
-            minimum: 0
-            maximum: 100
-            exclusiveMinimum: false
-            exclusiveMaximum: false
-          upperBoundRiskScore:
-            type: number
-            exclusiveMinimum: false
-            exclusiveMaximum: false
-            minimum: 0
-            maximum: 100
+      type: object
+      properties:
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        lowerBoundRiskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          exclusiveMinimum: false
+          exclusiveMaximum: false
+        upperBoundRiskScore:
+          type: number
+          exclusiveMinimum: false
+          exclusiveMaximum: false
+          minimum: 0
+          maximum: 100
+      required:
+        - riskLevel
+        - lowerBoundRiskScore
+        - upperBoundRiskScore
     RiskLevelRuleParameters:
       title: RiskLevelRuleParameters
       x-stoplight:

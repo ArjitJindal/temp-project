@@ -14,6 +14,7 @@ import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
 import { ConsumerUsersListResponse } from '../models/ConsumerUsersListResponse';
 import { DashboardStatsHitsPerUser } from '../models/DashboardStatsHitsPerUser';
+import { DashboardStatsRulesCount } from '../models/DashboardStatsRulesCount';
 import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransactionsCount';
 import { FileImport } from '../models/FileImport';
 import { FileInfo } from '../models/FileInfo';
@@ -25,7 +26,7 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
-import { RiskLevel } from '../models/RiskLevel';
+import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleImplementation } from '../models/RuleImplementation';
@@ -641,6 +642,55 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
   }
 
   /**
+   * DashboardStats - Rule hit
+   * @param timeframe MONTH, DAY or YEAR
+   * @param endTimestamp
+   */
+  public async getDashboardStatsRuleHit(
+    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    endTimestamp?: number,
+    _options?: Configuration,
+  ): Promise<RequestContext> {
+    let _config = _options || this.configuration;
+
+    // verify required parameter 'timeframe' is not null or undefined
+    if (timeframe === null || timeframe === undefined) {
+      throw new RequiredError('DefaultApi', 'getDashboardStatsRuleHit', 'timeframe');
+    }
+
+    // Path Params
+    const localVarPath = '/dashboard_stats/rule_hit';
+
+    // Make Request Context
+    const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
+    requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Query Params
+    if (timeframe !== undefined) {
+      requestContext.setQueryParam(
+        'timeframe',
+        ObjectSerializer.serialize(timeframe, "'WEEK' | 'MONTH' | 'DAY' | 'YEAR'", ''),
+      );
+    }
+
+    // Query Params
+    if (endTimestamp !== undefined) {
+      requestContext.setQueryParam(
+        'endTimestamp',
+        ObjectSerializer.serialize(endTimestamp, 'number', ''),
+      );
+    }
+
+    const defaultAuth: SecurityAuthentication | undefined =
+      _options?.authMethods?.default || this.configuration?.authMethods?.default;
+    if (defaultAuth?.applySecurityAuthentication) {
+      await defaultAuth?.applySecurityAuthentication(requestContext);
+    }
+
+    return requestContext;
+  }
+
+  /**
    * DashboardStats - Transactions
    * @param timeframe MONTH, DAY or YEAR
    * @param endTimestamp
@@ -791,8 +841,9 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
 
   /**
    * Rules - List
+   * @param ruleId
    */
-  public async getRules(_options?: Configuration): Promise<RequestContext> {
+  public async getRules(ruleId?: string, _options?: Configuration): Promise<RequestContext> {
     let _config = _options || this.configuration;
 
     // Path Params
@@ -801,6 +852,11 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     // Make Request Context
     const requestContext = _config.baseServer.makeRequestContext(localVarPath, HttpMethod.GET);
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
+
+    // Query Params
+    if (ruleId !== undefined) {
+      requestContext.setQueryParam('ruleId', ObjectSerializer.serialize(ruleId, 'string', ''));
+    }
 
     const defaultAuth: SecurityAuthentication | undefined =
       _options?.authMethods?.default || this.configuration?.authMethods?.default;
@@ -1488,10 +1544,10 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
 
   /**
    * Risk classification - POST
-   * @param request_body
+   * @param RiskClassificationScore
    */
   public async postPulseRiskClassification(
-    request_body?: Array<any>,
+    RiskClassificationScore?: Array<RiskClassificationScore>,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -1507,7 +1563,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     const contentType = ObjectSerializer.getPreferredMediaType(['application/json']);
     requestContext.setHeaderParam('Content-Type', contentType);
     const serializedBody = ObjectSerializer.stringify(
-      ObjectSerializer.serialize(request_body, 'Array<any>', ''),
+      ObjectSerializer.serialize(RiskClassificationScore, 'Array<RiskClassificationScore>', ''),
       contentType,
     );
     requestContext.setBody(serializedBody);
@@ -2255,6 +2311,44 @@ export class DefaultApiResponseProcessor {
    * Unwraps the actual response sent by the server from the response context and deserializes the response content
    * to the expected objects
    *
+   * @params response Response returned by the server for a request to getDashboardStatsRuleHit
+   * @throws ApiException if the response code was not in [200, 299]
+   */
+  public async getDashboardStatsRuleHit(
+    response: ResponseContext,
+  ): Promise<DashboardStatsRulesCount> {
+    const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
+    if (isCodeInRange('200', response.httpStatusCode)) {
+      const body: DashboardStatsRulesCount = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'DashboardStatsRulesCount',
+        '',
+      ) as DashboardStatsRulesCount;
+      return body;
+    }
+
+    // Work around for missing responses in specification, e.g. for petstore.yaml
+    if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
+      const body: DashboardStatsRulesCount = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'DashboardStatsRulesCount',
+        '',
+      ) as DashboardStatsRulesCount;
+      return body;
+    }
+
+    throw new ApiException<string | Blob | undefined>(
+      response.httpStatusCode,
+      'Unknown API Status Code!',
+      await response.getBodyAsAny(),
+      response.headers,
+    );
+  }
+
+  /**
+   * Unwraps the actual response sent by the server from the response context and deserializes the response content
+   * to the expected objects
+   *
    * @params response Response returned by the server for a request to getDashboardStatsTransactions
    * @throws ApiException if the response code was not in [200, 299]
    */
@@ -2332,24 +2426,26 @@ export class DefaultApiResponseProcessor {
    * @params response Response returned by the server for a request to getPulseRiskClassification
    * @throws ApiException if the response code was not in [200, 299]
    */
-  public async getPulseRiskClassification(response: ResponseContext): Promise<Array<any>> {
+  public async getPulseRiskClassification(
+    response: ResponseContext,
+  ): Promise<Array<RiskClassificationScore>> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
-      const body: Array<any> = ObjectSerializer.deserialize(
+      const body: Array<RiskClassificationScore> = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<any>',
+        'Array<RiskClassificationScore>',
         '',
-      ) as Array<any>;
+      ) as Array<RiskClassificationScore>;
       return body;
     }
 
     // Work around for missing responses in specification, e.g. for petstore.yaml
     if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: Array<any> = ObjectSerializer.deserialize(
+      const body: Array<RiskClassificationScore> = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'Array<any>',
+        'Array<RiskClassificationScore>',
         '',
-      ) as Array<any>;
+      ) as Array<RiskClassificationScore>;
       return body;
     }
 
@@ -2906,10 +3002,17 @@ export class DefaultApiResponseProcessor {
    * @params response Response returned by the server for a request to postPulseRiskClassification
    * @throws ApiException if the response code was not in [200, 299]
    */
-  public async postPulseRiskClassification(response: ResponseContext): Promise<void> {
+  public async postPulseRiskClassification(
+    response: ResponseContext,
+  ): Promise<Array<RiskClassificationScore>> {
     const contentType = ObjectSerializer.normalizeMediaType(response.headers['content-type']);
     if (isCodeInRange('200', response.httpStatusCode)) {
-      return;
+      const body: Array<RiskClassificationScore> = ObjectSerializer.deserialize(
+        ObjectSerializer.parse(await response.body.text(), contentType),
+        'Array<RiskClassificationScore>',
+        '',
+      ) as Array<RiskClassificationScore>;
+      return body;
     }
     if (isCodeInRange('400', response.httpStatusCode)) {
       throw new ApiException<undefined>(
@@ -2922,11 +3025,11 @@ export class DefaultApiResponseProcessor {
 
     // Work around for missing responses in specification, e.g. for petstore.yaml
     if (response.httpStatusCode >= 200 && response.httpStatusCode <= 299) {
-      const body: void = ObjectSerializer.deserialize(
+      const body: Array<RiskClassificationScore> = ObjectSerializer.deserialize(
         ObjectSerializer.parse(await response.body.text(), contentType),
-        'void',
+        'Array<RiskClassificationScore>',
         '',
-      ) as void;
+      ) as Array<RiskClassificationScore>;
       return body;
     }
 
