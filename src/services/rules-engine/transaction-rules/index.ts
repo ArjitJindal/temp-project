@@ -25,6 +25,7 @@ import TransactionsVolumeQuantilesRule from './transactions-volume-quantiles'
 import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
 import MerchantReceiverNameRuleParameters from './merchant-receiver-name'
+import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -52,6 +53,7 @@ export const TRANSACTION_RULES = {
   'user-transaction-pairs': UserTransactionPairsRule,
   'transaction-amount-pattern': TransactionMatchesPatternRule,
   'merchant-receiver-name': MerchantReceiverNameRuleParameters,
+  'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,
 
   // For testing only
   'tests/test-success-rule': TestSuccessRule,
