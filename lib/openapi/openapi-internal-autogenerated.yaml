@@ -2223,7 +2223,7 @@ paths:
           application/json:
             schema:
               type: object
-              title: ChangeTenantPayload
+              title: ManualRiskAssignmentPayload
               properties:
                 riskLevel:
                   $ref: '#/components/schemas/RiskLevel'
@@ -2232,6 +2232,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
       parameters:
@@ -2245,7 +2249,36 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualRiskAssignment.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualRiskAssignmentFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    get:
+      summary: Risk Level - Get Manual Assignment
+      operationId: get-pulse-manual-risk-assignment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user to get manual risk assignment settings
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualRiskAssignmentFunction.Arn}/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2279,6 +2312,25 @@ paths:
               method.response.header.Access-Control-Allow-Origin: "'*'"
 components:
   schemas:
+    ManualRiskAssignmentUserState:
+      title: ManualRiskAssignmentUserState
+      type: object
+      properties:
+        isManualOverride:
+          type: boolean
+        isUpdatable:
+          type: boolean
+        riskLevel:
+          type: object
+          properties:
+            riskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+          required:
+            - riskLevel
+      required:
+        - isManualOverride
+        - isUpdatable
+        - riskLevel
     Rule:
       title: Rule
       type: object

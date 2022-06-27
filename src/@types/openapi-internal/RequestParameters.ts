@@ -12,7 +12,6 @@ import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
 import { CardPaymentMethod } from './CardPaymentMethod'
 import { ChangeTenantPayload } from './ChangeTenantPayload'
-import { ChangeTenantPayload1 } from './ChangeTenantPayload1'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
@@ -49,6 +48,9 @@ import { LegalDocument } from './LegalDocument'
 import { LegalDocument1 } from './LegalDocument1'
 import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
+import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
+import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState'
+import { ManualRiskAssignmentUserStateRiskLevel } from './ManualRiskAssignmentUserStateRiskLevel'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { RiskClassificationScore } from './RiskClassificationScore'
@@ -318,6 +320,15 @@ export interface DefaultApiGetImportImportIdRequest {
    * @memberof DefaultApigetImportImportId
    */
   importId: string
+}
+
+export interface DefaultApiGetPulseManualRiskAssignmentRequest {
+  /**
+   * UserID of the user to get manual risk assignment settings
+   * @type string
+   * @memberof DefaultApigetPulseManualRiskAssignment
+   */
+  userId: string
 }
 
 export interface DefaultApiGetPulseRiskClassificationRequest {}
@@ -663,10 +674,10 @@ export interface DefaultApiPulseManualRiskAssignmentRequest {
   userId: string
   /**
    *
-   * @type ChangeTenantPayload1
+   * @type ManualRiskAssignmentPayload
    * @memberof DefaultApipulseManualRiskAssignment
    */
-  ChangeTenantPayload1?: ChangeTenantPayload1
+  ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

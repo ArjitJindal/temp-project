@@ -38,6 +38,7 @@ import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPaylo
 import { Account } from '@/@types/openapi-internal/Account'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
+import { ManualRiskAssignmentPayload } from '@/@types/openapi-internal/ManualRiskAssignmentPayload'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -722,7 +723,7 @@ export const manualRiskAssignmentHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId, role } = event.requestContext.authorizer
     const { userId } = event.queryStringParameters as any
-    assertRole(role, 'root')
+    // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClient(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     if (
@@ -732,13 +733,21 @@ export const manualRiskAssignmentHandler = lambdaApi()(
       if (!event.body) {
         throw new BadRequest('Empty body')
       }
-      let riskLevel
+      let body
       try {
-        riskLevel = JSON.parse(event.body)
+        body = JSON.parse(event.body) as ManualRiskAssignmentPayload
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return riskRepository.createOrUpdateManualDRSRiskItem(userId, riskLevel)
+      return riskRepository.createOrUpdateManualDRSRiskItem(
+        userId,
+        body.riskLevel
+      )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/manual-risk-assignment'
+    ) {
+      return riskRepository.getManualDRSRiskItem(userId)
     }
     throw new BadRequest('Unhandled request')
   }

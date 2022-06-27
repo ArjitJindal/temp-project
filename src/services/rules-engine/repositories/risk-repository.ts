@@ -33,6 +33,12 @@ const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   },
 ]
 
+const DEFAULT_DRS_RISK_ITEM = {
+  riskLevel: null,
+  isManualOverride: false,
+  isUpdatable: true,
+}
+
 export class RiskRepository {
   tenantId: string
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -90,6 +96,27 @@ export class RiskRepository {
     }
     await this.dynamoDb.put(putItemInput).promise()
     return newRiskClassificationValues
+  }
+
+  async getManualDRSRiskItem(userId: string) {
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ReturnConsumedCapacity: 'TOTAL',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId)
+          .PartitionKeyID,
+      },
+    }
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0
+        ? result.Items[0]
+        : DEFAULT_DRS_RISK_ITEM
+    } catch (e) {
+      console.log(e)
+      return []
+    }
   }
 
   async createOrUpdateManualDRSRiskItem(userId: string, riskLevel: RiskLevel) {
