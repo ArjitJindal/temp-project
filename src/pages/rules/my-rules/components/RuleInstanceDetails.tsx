@@ -79,7 +79,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             <Button
               analyticsName="Save"
               type="primary"
-              danger
               size="small"
               onClick={handleUpdateRuleInstance}
               disabled={validationErrors.length > 0}
