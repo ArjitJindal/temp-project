@@ -1,11 +1,13 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
-import { Divider } from 'antd';
+import { Col, Divider, Row, Typography } from 'antd';
 import { UserTransactionHistoryTable } from './UserTransactionHistoryTable';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalBusinessUser } from '@/apis';
+import UserManualRiskPanel from '@/pages/users/users-list/components/UserManualRiskPanel';
+import { Feature } from '@/components/AppWrapper/FeaturesProvider';
 
 interface Props {
   user: InternalBusinessUser;
@@ -14,11 +16,24 @@ interface Props {
 
 export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
   const api = useApi();
+  const userId = user.userId;
   return (
     <>
+      <Row justify="space-between" align="middle">
+        <Col>
+          <Typography.Title level={5} style={{ margin: 0 }}>
+            {getUserName(user)}
+          </Typography.Title>
+        </Col>
+        <Feature name="manual-user-risk-level">
+          <Col>
+            <UserManualRiskPanel userId={userId} />
+          </Col>
+        </Feature>
+      </Row>
+      <Divider />
       <ProDescriptions<InternalBusinessUser>
         column={2}
-        title={getUserName(user)}
         request={async () => ({
           data: user || {},
         })}

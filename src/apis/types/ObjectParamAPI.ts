@@ -52,6 +52,8 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
+import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
@@ -324,6 +326,15 @@ export interface DefaultApiGetImportImportIdRequest {
    * @memberof DefaultApigetImportImportId
    */
   importId: string;
+}
+
+export interface DefaultApiGetPulseManualRiskAssignmentRequest {
+  /**
+   * UserID of the user to get manual risk assignment settings
+   * @type string
+   * @memberof DefaultApigetPulseManualRiskAssignment
+   */
+  userId: string;
 }
 
 export interface DefaultApiGetPulseRiskClassificationRequest {}
@@ -660,6 +671,21 @@ export interface DefaultApiPostTransactionsTransactionIdRequest {
   TransactionUpdateRequest?: TransactionUpdateRequest;
 }
 
+export interface DefaultApiPulseManualRiskAssignmentRequest {
+  /**
+   * UserID of the user whose risk is being manually assigned
+   * @type string
+   * @memberof DefaultApipulseManualRiskAssignment
+   */
+  userId: string;
+  /**
+   *
+   * @type ManualRiskAssignmentPayload
+   * @memberof DefaultApipulseManualRiskAssignment
+   */
+  ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload;
+}
+
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {
   /**
    *
@@ -925,6 +951,17 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Risk Level - Get Manual Assignment
+   * @param param the request object
+   */
+  public getPulseManualRiskAssignment(
+    param: DefaultApiGetPulseManualRiskAssignmentRequest,
+    options?: Configuration,
+  ): Promise<ManualRiskAssignmentUserState> {
+    return this.api.getPulseManualRiskAssignment(param.userId, options).toPromise();
+  }
+
+  /**
    * Risk classification - GET
    * @param param the request object
    */
@@ -1185,6 +1222,19 @@ export class ObjectDefaultApi {
   ): Promise<void> {
     return this.api
       .postTransactionsTransactionId(param.transactionId, param.TransactionUpdateRequest, options)
+      .toPromise();
+  }
+
+  /**
+   * Risk Level - Manual Assignment
+   * @param param the request object
+   */
+  public pulseManualRiskAssignment(
+    param: DefaultApiPulseManualRiskAssignmentRequest,
+    options?: Configuration,
+  ): Promise<ManualRiskAssignmentUserState> {
+    return this.api
+      .pulseManualRiskAssignment(param.userId, param.ManualRiskAssignmentPayload, options)
       .toPromise();
   }
 

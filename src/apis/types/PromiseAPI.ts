@@ -52,6 +52,8 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
+import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
@@ -336,6 +338,18 @@ export class PromiseDefaultApi {
    */
   public getImportImportId(importId: string, _options?: Configuration): Promise<FileImport> {
     const result = this.api.getImportImportId(importId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Risk Level - Get Manual Assignment
+   * @param userId UserID of the user to get manual risk assignment settings
+   */
+  public getPulseManualRiskAssignment(
+    userId: string,
+    _options?: Configuration,
+  ): Promise<ManualRiskAssignmentUserState> {
+    const result = this.api.getPulseManualRiskAssignment(userId, _options);
     return result.toPromise();
   }
 
@@ -650,6 +664,24 @@ export class PromiseDefaultApi {
     const result = this.api.postTransactionsTransactionId(
       transactionId,
       TransactionUpdateRequest,
+      _options,
+    );
+    return result.toPromise();
+  }
+
+  /**
+   * Risk Level - Manual Assignment
+   * @param userId UserID of the user whose risk is being manually assigned
+   * @param ManualRiskAssignmentPayload
+   */
+  public pulseManualRiskAssignment(
+    userId: string,
+    ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload,
+    _options?: Configuration,
+  ): Promise<ManualRiskAssignmentUserState> {
+    const result = this.api.pulseManualRiskAssignment(
+      userId,
+      ManualRiskAssignmentPayload,
       _options,
     );
     return result.toPromise();

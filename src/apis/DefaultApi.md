@@ -21,6 +21,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getDashboardStatsRuleHit**](DefaultApi.md#getDashboardStatsRuleHit) | **GET** /dashboard_stats/rule_hit | DashboardStats - Rule hit |
 | [**getDashboardStatsTransactions**](DefaultApi.md#getDashboardStatsTransactions) | **GET** /dashboard_stats/transactions | DashboardStats - Transactions |
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
+| [**getPulseManualRiskAssignment**](DefaultApi.md#getPulseManualRiskAssignment) | **GET** /pulse/manual-risk-assignment | Risk Level - Get Manual Assignment |
 | [**getPulseRiskClassification**](DefaultApi.md#getPulseRiskClassification) | **GET** /pulse/risk-classification | Risk classification - GET |
 | [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
@@ -42,6 +43,7 @@ All URIs are relative to _http://localhost:3000_
 | [**postRules**](DefaultApi.md#postRules) | **POST** /rules | Rules - Create |
 | [**postTransactionsComments**](DefaultApi.md#postTransactionsComments) | **POST** /transactions/{transactionId}/comments | Create a Transaction Comment |
 | [**postTransactionsTransactionId**](DefaultApi.md#postTransactionsTransactionId) | **POST** /transactions/{transactionId} | Transaction - Update |
+| [**pulseManualRiskAssignment**](DefaultApi.md#pulseManualRiskAssignment) | **POST** /pulse/manual-risk-assignment | Risk Level - Manual Assignment |
 | [**putRuleInstancesRuleInstanceId**](DefaultApi.md#putRuleInstancesRuleInstanceId) | **PUT** /rule_instances/{ruleInstanceId} | Rule Instance - Update |
 | [**putRuleRuleId**](DefaultApi.md#putRuleRuleId) | **PUT** /rules/{ruleId} | Rule - Update |
 
@@ -938,6 +940,57 @@ No authorization required
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getPulseManualRiskAssignment**
+
+> ManualRiskAssignmentUserState getPulseManualRiskAssignment()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetPulseManualRiskAssignmentRequest = {
+  // string | UserID of the user to get manual risk assignment settings
+  userId: "userId_example",
+};
+
+apiInstance.getPulseManualRiskAssignment(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **userId** | [**string**] | UserID of the user to get manual risk assignment settings | defaults to undefined |
+
+### Return type
+
+**ManualRiskAssignmentUserState**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description           | Response headers |
+| ----------- | --------------------- | ---------------- |
+| **200**     | OK                    | -                |
+| **403**     | Not enough privileges | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
@@ -2236,6 +2289,62 @@ No authorization required
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **pulseManualRiskAssignment**
+
+> ManualRiskAssignmentUserState pulseManualRiskAssignment()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPulseManualRiskAssignmentRequest = {
+  // string | UserID of the user whose risk is being manually assigned
+  userId: "userId_example",
+  // ManualRiskAssignmentPayload (optional)
+  ManualRiskAssignmentPayload: {
+    riskLevel: "VERY_HIGH",
+  },
+};
+
+apiInstance.pulseManualRiskAssignment(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **ManualRiskAssignmentPayload** | **ManualRiskAssignmentPayload** |  |
+| **userId** | [**string**] | UserID of the user whose risk is being manually assigned | defaults to undefined |
+
+### Return type
+
+**ManualRiskAssignmentUserState**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description           | Response headers |
+| ----------- | --------------------- | ---------------- |
+| **200**     | OK                    | -                |
+| **403**     | Not enough privileges | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 

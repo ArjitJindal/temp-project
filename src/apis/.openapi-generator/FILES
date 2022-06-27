@@ -62,6 +62,8 @@ models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts
 models/ListImportRequest.ts
+models/ManualRiskAssignmentPayload.ts
+models/ManualRiskAssignmentUserState.ts
 models/ObjectSerializer.ts
 models/Person.ts
 models/PresignedUrlResponse.ts

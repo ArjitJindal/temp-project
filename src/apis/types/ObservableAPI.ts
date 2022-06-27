@@ -53,6 +53,8 @@ import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
+import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
+import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
 import { Person } from '../models/Person';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
@@ -770,6 +772,44 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getImportImportId(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Risk Level - Get Manual Assignment
+   * @param userId UserID of the user to get manual risk assignment settings
+   */
+  public getPulseManualRiskAssignment(
+    userId: string,
+    _options?: Configuration,
+  ): Observable<ManualRiskAssignmentUserState> {
+    const requestContextPromise = this.requestFactory.getPulseManualRiskAssignment(
+      userId,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getPulseManualRiskAssignment(rsp)),
           );
         }),
       );
@@ -1593,6 +1633,47 @@ export class ObservableDefaultApi {
             map((rsp: ResponseContext) =>
               this.responseProcessor.postTransactionsTransactionId(rsp),
             ),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Risk Level - Manual Assignment
+   * @param userId UserID of the user whose risk is being manually assigned
+   * @param ManualRiskAssignmentPayload
+   */
+  public pulseManualRiskAssignment(
+    userId: string,
+    ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload,
+    _options?: Configuration,
+  ): Observable<ManualRiskAssignmentUserState> {
+    const requestContextPromise = this.requestFactory.pulseManualRiskAssignment(
+      userId,
+      ManualRiskAssignmentPayload,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.pulseManualRiskAssignment(rsp)),
           );
         }),
       );

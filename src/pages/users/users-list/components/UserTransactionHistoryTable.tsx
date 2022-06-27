@@ -23,6 +23,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
         Transaction History
       </Divider>
       <Table<TransactionCaseManagement>
+        search={false}
         form={{
           labelWrap: true,
         }}
@@ -63,7 +64,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
             },
-            key: 'amount',
+            key: 'originAmountDetails',
           },
           {
             title: 'Destination Amount',
@@ -72,7 +73,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
                 entity.destinationAmountDetails,
               )}`;
             },
-            key: 'amount',
+            key: 'destinationAmountDetails',
           },
         ]}
       />

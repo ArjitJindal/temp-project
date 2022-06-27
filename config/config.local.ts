@@ -11,6 +11,7 @@ export default defineConfig({
     SEGMENT_WRITE_KEY: 'gBpbFMwyJQrf91g8zag3IrTOCnPfAiO5',
     FEATURES_ENABLED: {
       'risk-levels': true,
+      'manual-user-risk-level': true,
     },
   },
 });

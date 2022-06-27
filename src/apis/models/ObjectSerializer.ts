@@ -48,6 +48,8 @@ export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
 export * from './ListImportRequest';
+export * from './ManualRiskAssignmentPayload';
+export * from './ManualRiskAssignmentUserState';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './RiskClassificationScore';
@@ -139,6 +141,8 @@ import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
+import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload';
+import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState';
 import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { RiskClassificationScore } from './RiskClassificationScore';
@@ -255,6 +259,8 @@ let typeMap: { [index: string]: any } = {
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
   ListImportRequest: ListImportRequest,
+  ManualRiskAssignmentPayload: ManualRiskAssignmentPayload,
+  ManualRiskAssignmentUserState: ManualRiskAssignmentUserState,
   Person: Person,
   PresignedUrlResponse: PresignedUrlResponse,
   RiskClassificationScore: RiskClassificationScore,

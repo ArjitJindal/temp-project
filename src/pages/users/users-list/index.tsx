@@ -374,7 +374,7 @@ const ConsumerUsersTab = (
         }}
         headerTitle="Consumer Users"
         actionRef={actionRef}
-        rowKey="key"
+        rowKey="userId"
         search={{
           labelWidth: 120,
         }}

@@ -48,6 +48,8 @@ export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
 export * from './ListImportRequest';
+export * from './ManualRiskAssignmentPayload';
+export * from './ManualRiskAssignmentUserState';
 export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './RiskClassificationScore';
