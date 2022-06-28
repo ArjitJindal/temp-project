@@ -1,16 +1,15 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { message, Radio, Row, Space, Tag } from 'antd';
-import { withTheme, AjvError, IChangeEvent } from '@rjsf/core';
-import { Theme } from '@rjsf/antd';
+import { message, Row, Space } from 'antd';
+import { AjvError } from '@rjsf/core';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Fragment, useCallback, useState } from 'react';
-import { getRuleActionColor, RULE_ACTION_OPTIONS } from '../../utils';
+import { useCallback, useState } from 'react';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
-
-const JSONSchemaForm = withTheme(Theme);
+import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
+import { RiskLevel } from '@/apis/models/RiskLevel';
+import { useFeature } from '@/components/AppWrapper/FeaturesProvider';
 
 interface Props {
   rule: Rule;
@@ -27,21 +26,56 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   onRuleInstanceDeleted,
 }) => {
   const api = useApi();
+  const isPulseEnabled = useFeature('risk-levels');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [parameters, setParameters] = useState(ruleInstance.parameters);
+  const [riskLevelParameters, setRiskLevelParameters] = useState(
+    ruleInstance.riskLevelParameters || isPulseEnabled
+      ? {
+          VERY_HIGH: {},
+          HIGH: {},
+          MEDIUM: {},
+          LOW: {},
+          VERY_LOW: {},
+        }
+      : undefined,
+  );
   const [ruleAction, setRuleAction] = useState<RuleAction>(ruleInstance.action);
+  const [riskLevelActions, setRiskLevelActions] = useState(
+    ruleInstance.riskLevelActions || isPulseEnabled
+      ? {
+          VERY_HIGH: rule.defaultAction,
+          HIGH: rule.defaultAction,
+          MEDIUM: rule.defaultAction,
+          LOW: rule.defaultAction,
+          VERY_LOW: rule.defaultAction,
+        }
+      : undefined,
+  );
   const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
   const handleCancelEditing = useCallback(() => {
     setEditing(false);
     setParameters(ruleInstance.parameters);
     setRuleAction(ruleInstance.action);
   }, [ruleInstance.action, ruleInstance.parameters]);
-  const handleParametersChange = useCallback((event: IChangeEvent) => {
-    setParameters(event.formData);
-    setValidationErrors(event.errors);
+  const handleParametersChange = useCallback((newParameters: object, errors: AjvError[]) => {
+    setParameters(newParameters);
+    setValidationErrors(errors);
   }, []);
+  const handleRiskLevelParametersChange = useCallback(
+    (riskLevel: RiskLevel, newParameters: object, errors: AjvError[]) => {
+      if (riskLevelParameters) {
+        setRiskLevelParameters({
+          ...riskLevelParameters,
+          [riskLevel]: newParameters,
+        });
+      }
+      setValidationErrors(errors);
+    },
+    [riskLevelParameters],
+  );
   const handleUpdateRuleInstance = useCallback(async () => {
     const hideMessage = message.loading(`Updating rule ${rule.id}...`, 0);
     try {
@@ -49,7 +83,9 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       await onRuleInstanceUpdate({
         ...ruleInstance,
         parameters,
+        riskLevelParameters,
         action: ruleAction,
+        riskLevelActions,
       });
       message.success(`Successfully updated rule ${rule.id}`);
       setEditing(false);
@@ -59,7 +95,15 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       hideMessage();
       setSaving(false);
     }
-  }, [onRuleInstanceUpdate, parameters, rule.id, ruleAction, ruleInstance]);
+  }, [
+    onRuleInstanceUpdate,
+    parameters,
+    riskLevelActions,
+    riskLevelParameters,
+    rule.id,
+    ruleAction,
+    ruleInstance,
+  ]);
   const handleDeleteRuleInstance = useCallback(async () => {
     setDeleting(true);
     await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId: ruleInstance.id as string });
@@ -126,33 +170,22 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         <ProDescriptions.Item label={<b>Updated At:</b>} valueType="dateTime">
           {ruleInstance.createdAt}
         </ProDescriptions.Item>
-        <ProDescriptions.Item label={<b>Action:</b>} valueType="text">
-          {editing ? (
-            <Radio.Group
-              options={RULE_ACTION_OPTIONS}
-              onChange={(e) => {
-                setRuleAction(e.target.value);
-              }}
-              value={ruleAction}
-              optionType="button"
-              buttonStyle="solid"
-              style={{ margin: '0px auto', width: '100%', textAlign: 'center' }}
-              size="large"
-            />
-          ) : (
-            <Tag color={getRuleActionColor(ruleInstance.action)}>{ruleInstance.action}</Tag>
-          )}
-        </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Parameters:</b>} valueType="text">
-          <JSONSchemaForm
-            schema={ruleParametersSchema}
-            formData={ruleInstance.parameters}
-            onChange={handleParametersChange}
+          <RuleParametersEditor
+            parametersSchema={ruleParametersSchema}
+            parameters={parameters}
+            action={ruleAction}
+            riskLevelActions={riskLevelActions}
+            riskLevelParameters={riskLevelParameters}
             readonly={!editing}
-            liveValidate
-          >
-            <Fragment />
-          </JSONSchemaForm>
+            onActionChange={setRuleAction}
+            onRiskLevelActionChange={(riskLevel, newAction) =>
+              riskLevelActions &&
+              setRiskLevelActions({ ...riskLevelActions, [riskLevel]: newAction })
+            }
+            onParametersChange={handleParametersChange}
+            onRiskLevelParametersChange={handleRiskLevelParametersChange}
+          />
         </ProDescriptions.Item>
       </ProDescriptions>
     </>

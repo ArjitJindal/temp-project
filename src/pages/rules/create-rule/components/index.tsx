@@ -1,4 +1,4 @@
-import { RuleParametersEditor } from './RuleParametersEditor';
+import { RuleConfigurationsEditor } from './RuleConfigurationsEditor';
 import { RulesTable } from './RulesTable';
 
-export { RuleParametersEditor, RulesTable };
+export { RuleConfigurationsEditor, RulesTable };

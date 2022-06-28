@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Divider, Row, Steps } from 'antd';
-import { PageContainer } from '@ant-design/pro-layout';
 import _ from 'lodash';
-import { RulesTable, RuleParametersEditor } from './components';
+import { RulesTable } from './components';
 import styles from './style.less';
 import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
+import { RuleConfigurationsEditor } from './components/RuleConfigurationsEditor';
 import { Rule } from '@/apis';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import { useApi } from '@/api';
@@ -65,7 +65,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
         {current === 0 ? (
           <RulesTable onSelectRule={handleSelectRule} ruleImplementations={ruleImplementations} />
         ) : current === 1 && selectedRule ? (
-          <RuleParametersEditor
+          <RuleConfigurationsEditor
             rule={selectedRule}
             ruleParametersSchema={
               ruleImplementations?.[selectedRule.ruleImplementationName].parametersSchema

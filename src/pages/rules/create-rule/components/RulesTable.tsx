@@ -1,7 +1,5 @@
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { useMemo, useRef } from 'react';
-import { Tag } from 'antd';
-import { getRuleActionColor } from '../../utils';
 import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
 import { Rule, RuleImplementation } from '@/apis';
@@ -9,6 +7,7 @@ import { useApi } from '@/api';
 import { isFlagrightTenantUser, useAuth0User } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
+import { RuleActionTag } from '@/components/rules/RuleActionTag';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -62,7 +61,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         render: (_, rule) => {
           return (
             <span>
-              <Tag color={getRuleActionColor(rule.defaultAction)}>{rule.defaultAction}</Tag>
+              <RuleActionTag action={rule.defaultAction} />
             </span>
           );
         },

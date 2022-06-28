@@ -2,7 +2,6 @@ import { Drawer, message, Popover, Progress, Switch, Tag, Tooltip } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { getRuleActionColor } from '../utils';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { Rule, RuleInstance } from '@/apis';
@@ -10,6 +9,7 @@ import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
 import Table from '@/components/ui/Table';
+import { RuleActionTag } from '@/components/rules/RuleActionTag';
 
 export default () => {
   const api = useApi();
@@ -132,7 +132,7 @@ export default () => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
             <span>
-              <Tag color={getRuleActionColor(ruleInstance.action)}>{ruleInstance.action}</Tag>
+              <RuleActionTag action={ruleInstance.action} />
             </span>
           );
         },
@@ -197,7 +197,7 @@ export default () => {
       />
 
       <Drawer
-        width={500}
+        width={700}
         visible={showDetail}
         onClose={() => {
           setCurrentRow(undefined);
