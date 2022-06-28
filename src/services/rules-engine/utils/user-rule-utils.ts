@@ -3,6 +3,7 @@ import * as _ from 'lodash'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DeviceData } from '@/@types/openapi-public/DeviceData'
+import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 export function isUserBetweenAge(
   user: User | Business | undefined,
@@ -27,6 +28,19 @@ export function isConsumerUser(user: User | Business) {
 
 export function isBusinessUser(user: User | Business) {
   return !isConsumerUser(user)
+}
+
+export function getConsumerName(
+  name: ConsumerName,
+  ignoreMiddlename?: boolean
+): string {
+  if (name !== undefined) {
+    if (ignoreMiddlename === true) {
+      return name.firstName + ' ' + name.lastName
+    }
+    return name.firstName + ' ' + name.middleName + ' ' + name.lastName
+  }
+  return ' '
 }
 
 export function isUserInList(

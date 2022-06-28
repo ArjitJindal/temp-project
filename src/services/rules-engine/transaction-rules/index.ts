@@ -26,6 +26,7 @@ import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
 import MerchantReceiverNameRuleParameters from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
+import CardHolderNameRule from './card-holder-name-levensthein-distance'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -54,6 +55,7 @@ export const TRANSACTION_RULES = {
   'transaction-amount-pattern': TransactionMatchesPatternRule,
   'merchant-receiver-name': MerchantReceiverNameRuleParameters,
   'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,
+  'card-holder-name-levensthein-distance': CardHolderNameRule,
 
   // For testing only
   'tests/test-success-rule': TestSuccessRule,
