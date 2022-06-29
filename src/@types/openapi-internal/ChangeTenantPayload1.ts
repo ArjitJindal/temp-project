@@ -11,7 +11,7 @@
  */
 
 import { RiskLevel } from './RiskLevel'
-export class ManualRiskAssignmentPayload {
+export class ChangeTenantPayload1 {
   'riskLevel': RiskLevel
 
   static readonly discriminator: string | undefined = undefined
@@ -31,7 +31,7 @@ export class ManualRiskAssignmentPayload {
   ]
 
   static getAttributeTypeMap() {
-    return ManualRiskAssignmentPayload.attributeTypeMap
+    return ChangeTenantPayload1.attributeTypeMap
   }
 
   public constructor() {}

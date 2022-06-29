@@ -56,11 +56,14 @@ const PathToLambda: any = {
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}/comments/{commentId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/dashboard_stats/rule_hit': null,
+  '/dashboard_stats/rule_hit':
+    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/pulse/risk-classification':
     HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':
-    HammerheadStackConstants.MANUAL_RISK_ASSIGNMENT_FUNCTION_NAME,
+    HammerheadStackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/pulse/risk-parameter':
+    HammerheadStackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {

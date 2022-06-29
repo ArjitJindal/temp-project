@@ -13,6 +13,8 @@ import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
 import { CardPaymentMethod } from './CardPaymentMethod'
 import { ChangeTenantPayload } from './ChangeTenantPayload'
+import { ChangeTenantPayload1 } from './ChangeTenantPayload1'
+import { ChangeTenantPayload2 } from './ChangeTenantPayload2'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
@@ -50,14 +52,15 @@ import { LegalDocument } from './LegalDocument'
 import { LegalDocument1 } from './LegalDocument1'
 import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
-import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
 import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState'
+import { ParameterAttributeRiskValues } from './ParameterAttributeRiskValues'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { RiskClassificationScore } from './RiskClassificationScore'
 import { RiskLevel } from './RiskLevel'
 import { RiskLevelRuleActions } from './RiskLevelRuleActions'
 import { RiskLevelRuleParameters } from './RiskLevelRuleParameters'
+import { RiskParameterLevelKeyValue } from './RiskParameterLevelKeyValue'
 import { Rule } from './Rule'
 import { RuleAction } from './RuleAction'
 import { RuleAction1 } from './RuleAction1'
@@ -324,16 +327,16 @@ export interface DefaultApiGetImportImportIdRequest {
   importId: string
 }
 
-export interface DefaultApiGetPulseManualRiskAssignmentRequest {
-  /**
-   * UserID of the user to get manual risk assignment settings
-   * @type string
-   * @memberof DefaultApigetPulseManualRiskAssignment
-   */
-  userId: string
-}
-
 export interface DefaultApiGetPulseRiskClassificationRequest {}
+
+export interface DefaultApiGetPulseRiskParameterRequest {
+  /**
+   * Parameter you want to filter on
+   * @type string
+   * @memberof DefaultApigetPulseRiskParameter
+   */
+  parameter?: string
+}
 
 export interface DefaultApiGetRuleImplementationsRequest {}
 
@@ -687,10 +690,19 @@ export interface DefaultApiPulseManualRiskAssignmentRequest {
   userId: string
   /**
    *
-   * @type ManualRiskAssignmentPayload
+   * @type ChangeTenantPayload1
    * @memberof DefaultApipulseManualRiskAssignment
    */
-  ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload
+  ChangeTenantPayload1?: ChangeTenantPayload1
+}
+
+export interface DefaultApiPulseRiskParameterRequest {
+  /**
+   *
+   * @type ChangeTenantPayload2
+   * @memberof DefaultApipulseRiskParameter
+   */
+  ChangeTenantPayload2?: ChangeTenantPayload2
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

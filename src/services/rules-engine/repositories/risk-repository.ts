@@ -4,6 +4,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
@@ -140,5 +141,57 @@ export class RiskRepository {
     }
     await this.dynamoDb.put(putItemInput).promise()
     return newDRSRiskItem
+  }
+
+  async createOrUpdateParameterRiskItem(
+    parameterRiskLevels: ParameterAttributeRiskValues
+  ) {
+    const { parameter, ...paramMetaDetails } = parameterRiskLevels
+    console.log(`PARAMETER: \n\n ${parameter}`)
+    console.log(`Meta deets: \n\n ${JSON.stringify(paramMetaDetails)}`)
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(
+          this.tenantId,
+          parameter
+        ), // Version it later
+        schemaAttributes: paramMetaDetails,
+      },
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    await this.dynamoDb.put(putItemInput).promise()
+    return parameterRiskLevels
+  }
+
+  async getParameterRiskItem(parameter?: string) {
+    let keyConditionExpr, expressionAttributeVals
+    if (parameter) {
+      keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
+      expressionAttributeVals = {
+        ':pk': DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
+          .PartitionKeyID,
+        ':sk': parameter,
+      }
+    } else {
+      keyConditionExpr = 'PartitionKeyID = :pk'
+      expressionAttributeVals = {
+        ':pk': DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
+          .PartitionKeyID,
+      }
+    }
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: keyConditionExpr,
+      ReturnConsumedCapacity: 'TOTAL',
+      ExpressionAttributeValues: expressionAttributeVals,
+    }
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0 ? result.Items : []
+    } catch (e) {
+      console.log(e)
+      return []
+    }
   }
 }

@@ -38,7 +38,6 @@ import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPaylo
 import { Account } from '@/@types/openapi-internal/Account'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
-import { ManualRiskAssignmentPayload } from '@/@types/openapi-internal/ManualRiskAssignmentPayload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
@@ -674,8 +673,8 @@ export const riskClassificationHandler = lambdaApi({
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, role } = event.requestContext.authorizer
-    assertRole(role, 'root')
+    const { principalId: tenantId } = event.requestContext.authorizer
+
     const dynamoDb = getDynamoDbClient(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
 
@@ -728,6 +727,45 @@ const validateClassificationRequest = (classificationValues: Array<any>) => {
   }
 }
 
+export const parameterRiskAssignmentHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})
+;async (
+  event: APIGatewayProxyWithLambdaAuthorizerEvent<
+    APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+  >
+) => {
+  const { principalId: tenantId } = event.requestContext.authorizer
+
+  const dynamoDb = getDynamoDbClient(event)
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  if (
+    event.httpMethod === 'POST' &&
+    event.resource === '/pulse/risk-parameter'
+  ) {
+    if (!event.body) {
+      throw new BadRequest('Empty body')
+    }
+    let parameterRiskLevels
+    try {
+      parameterRiskLevels = JSON.parse(event.body)
+    } catch (e) {
+      throw new BadRequest('Invalid Request')
+    }
+    return riskRepository.createOrUpdateParameterRiskItem(
+      parameterRiskLevels.parameterAttributeRiskValues
+    )
+  } else if (
+    event.httpMethod === 'GET' &&
+    event.resource === '/pulse/risk-parameter'
+  ) {
+    const { parameter } = event.queryStringParameters as any
+
+    return riskRepository.getParameterRiskItem(parameter)
+  }
+  throw new BadRequest('Unhandled request')
+}
+
 export const manualRiskAssignmentHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
 })(
@@ -738,6 +776,7 @@ export const manualRiskAssignmentHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const { userId } = event.queryStringParameters as any
+
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClient(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
@@ -750,7 +789,7 @@ export const manualRiskAssignmentHandler = lambdaApi({
       }
       let body
       try {
-        body = JSON.parse(event.body) as ManualRiskAssignmentPayload
+        body = JSON.parse(event.body)
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }

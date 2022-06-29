@@ -207,6 +207,13 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#userId#${userId}#drs-value`,
     SortKeyID: version,
   }),
+  RULE_PARAMETER_RISK_SCORES_DETAILS: (
+    tenantId: string,
+    parameter?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#rule-parameter-scores`,
+    SortKeyID: parameter,
+  }),
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {

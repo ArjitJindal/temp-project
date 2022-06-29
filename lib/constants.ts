@@ -83,8 +83,11 @@ export const HammerheadStackConstants = {
   RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
     'RiskClassificationFunction'
   ),
-  MANUAL_RISK_ASSIGNMENT_FUNCTION_NAME: getResourceNameForHammerhead(
-    'ManualRiskAssignmentFunction'
+  MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME: getResourceNameForHammerhead(
+    'ManualUserRiskAssignmentFunction'
+  ),
+  PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME: getResourceNameForHammerhead(
+    'ParameterRiskAssignmentFunction'
   ),
   NUMBER_OF_RISK_LEVELS: 5,
 }
