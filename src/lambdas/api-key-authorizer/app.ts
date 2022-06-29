@@ -6,7 +6,7 @@ import {
   APIGatewayAuthorizerResultContext,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
-import { TarponStackConstants } from '@cdk/constants'
+import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -27,6 +27,7 @@ async function getTenantScopeCredentials(
       Policy: JSON.stringify(
         new PolicyBuilder(tenantId)
           .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
+          .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
           .build()
       ),
     })

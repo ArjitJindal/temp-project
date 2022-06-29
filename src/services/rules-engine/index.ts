@@ -436,11 +436,9 @@ function getUserSpecificParameters(
     userRiskLevel &&
     ruleInstance.riskLevelParameters
   ) {
-    if (userRiskLevel) {
-      return {
-        parameters: ruleInstance.riskLevelParameters[userRiskLevel],
-        action: ruleInstance.riskLevelActions?.[userRiskLevel] as RuleAction,
-      }
+    return {
+      parameters: ruleInstance.riskLevelParameters[userRiskLevel],
+      action: ruleInstance.riskLevelActions?.[userRiskLevel] as RuleAction,
     }
   }
   return {

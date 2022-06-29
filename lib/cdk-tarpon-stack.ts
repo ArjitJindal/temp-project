@@ -354,6 +354,7 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     })
     tarponDynamoDbTable.grantReadWriteData(transactionFunction)
+    hammerheadDynamoDbTable.grantReadData(transactionFunction)
 
     /* Transaction Event */
     const transactionEventFunction = this.createFunction({

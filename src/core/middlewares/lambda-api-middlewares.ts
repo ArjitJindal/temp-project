@@ -8,11 +8,11 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   const middlewares = [
+    localDev(),
     httpErrorHandler(),
     jsonSerializer(),
     contextProvider(),
     featureProtected(options?.requiredFeatures),
-    localDev(),
   ] as const
   return compose(...middlewares)
 }
