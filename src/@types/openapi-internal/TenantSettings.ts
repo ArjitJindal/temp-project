@@ -10,9 +10,9 @@
  * Do not edit the class manually.
  */
 
-import { RiskLevel } from './RiskLevel'
-export class ManualRiskAssignmentUserStateRiskLevel {
-  'riskLevel': RiskLevel
+import { Feature } from './Feature'
+export class TenantSettings {
+  'features'?: Array<Feature>
 
   static readonly discriminator: string | undefined = undefined
 
@@ -23,15 +23,15 @@ export class ManualRiskAssignmentUserStateRiskLevel {
     format: string
   }> = [
     {
-      name: 'riskLevel',
-      baseName: 'riskLevel',
-      type: 'RiskLevel',
+      name: 'features',
+      baseName: 'features',
+      type: 'Array<Feature>',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return ManualRiskAssignmentUserStateRiskLevel.attributeTypeMap
+    return TenantSettings.attributeTypeMap
   }
 
   public constructor() {}

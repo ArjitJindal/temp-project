@@ -1,12 +1,17 @@
 import { compose } from './compose'
+import { contextProvider } from './context-provider'
+import { featureProtected } from './feature-protected'
 import { httpErrorHandler } from './http-error-handler'
 import { jsonSerializer } from './json-serializer'
 import { localDev } from './local-dev'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
-export const lambdaApi = () => {
+export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   const middlewares = [
     httpErrorHandler(),
     jsonSerializer(),
+    contextProvider(),
+    featureProtected(options?.requiredFeatures),
     localDev(),
   ] as const
   return compose(...middlewares)

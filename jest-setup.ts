@@ -4,4 +4,7 @@ jest.mock('@cdk/constants', () => ({
   TarponStackConstants: {
     DYNAMODB_TABLE_NAME: TEST_DYNAMODB_TABLE_NAME,
   },
+  HammerheadStackConstants: {
+    DYNAMODB_TABLE_NAME: TEST_DYNAMODB_TABLE_NAME,
+  },
 }))

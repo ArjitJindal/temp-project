@@ -4,6 +4,10 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import {
+  ExpressionAttributeValueMap,
+  UpdateExpression,
+} from 'aws-sdk/clients/dynamodb'
 import { getCredentialsFromEvent } from './credentials'
 
 export function getDynamoDbClient(
@@ -79,5 +83,23 @@ export async function* paginateQueryGenerator(
     yield result
     lastEvaluateKey = result.LastEvaluatedKey || null
     currentPage += 1
+  }
+}
+
+export function getUpdateAttributesUpdateItemInput(attributes: {
+  [key: string]: any
+}): {
+  UpdateExpression: UpdateExpression
+  ExpressionAttributeValues: ExpressionAttributeValueMap
+} {
+  const updateExpressions = []
+  const expresssionValues: { [key: string]: any } = {}
+  for (const key in attributes) {
+    updateExpressions.push(`${key} = :${key}`)
+    expresssionValues[`:${key}`] = attributes[key]
+  }
+  return {
+    UpdateExpression: `SET ${updateExpressions.join(' ,')}`,
+    ExpressionAttributeValues: expresssionValues,
   }
 }

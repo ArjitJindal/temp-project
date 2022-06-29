@@ -10,11 +10,11 @@
  * Do not edit the class manually.
  */
 
-import { ManualRiskAssignmentUserStateRiskLevel } from './ManualRiskAssignmentUserStateRiskLevel'
+import { RiskLevel } from './RiskLevel'
 export class ManualRiskAssignmentUserState {
   'isManualOverride': boolean
   'isUpdatable': boolean
-  'riskLevel': ManualRiskAssignmentUserStateRiskLevel
+  'riskLevel'?: RiskLevel
 
   static readonly discriminator: string | undefined = undefined
 
@@ -39,7 +39,7 @@ export class ManualRiskAssignmentUserState {
     {
       name: 'riskLevel',
       baseName: 'riskLevel',
-      type: 'ManualRiskAssignmentUserStateRiskLevel',
+      type: 'RiskLevel',
       format: '',
     },
   ]

@@ -10,7 +10,7 @@ import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
-import { isJwtRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
@@ -115,7 +115,7 @@ export const jwtAuthorizer = async (
     context: {
       ...tenantScopeCredentials,
       userId: verifiedDecoded.sub,
-      role: isJwtRole(role) ? role : 'user',
+      role: isValidRole(role) ? role : 'user',
       tenantName,
     } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
   }

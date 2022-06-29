@@ -1668,12 +1668,7 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: string
-            enum:
-              - WEEK
-              - MONTH
-              - DAY
-              - YEAR
+            type: number
           in: query
           name: startTimestamp
         - schema:
@@ -1684,7 +1679,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${null.Arn}/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1937,6 +1932,79 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'*'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /tenants/settings:
+    get:
+      summary: Tenant - Get Settings
+      operationId: get-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    parameters: []
+    post:
+      summary: Tenant - POST Settings
+      operationId: post-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSettings'
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+      security:
+        - lambda-authorizer: []
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /accounts/{userId}/change_tenant:
     parameters:
       - schema:
@@ -1961,6 +2029,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
       x-amazon-apigateway-request-validator: all
@@ -2134,15 +2206,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
-              examples:
-                example-1:
-                  value:
-                    - riskLevel: VERY_LOW
-                      lowerBoundRiskScore: 0
-                      upperBoundRiskScore: 25
+                $ref: '#/components/schemas/RiskClassificationScore'
       operationId: get-pulse-risk-classification
       description: ''
       x-amazon-apigateway-request-validator: all
@@ -2161,21 +2225,13 @@ paths:
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
         '400':
           description: Bad Request
       requestBody:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RiskClassificationScore'
+              $ref: '#/components/schemas/RiskClassificationScore'
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -2232,10 +2288,6 @@ paths:
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
       parameters:
@@ -2321,16 +2373,10 @@ components:
         isUpdatable:
           type: boolean
         riskLevel:
-          type: object
-          properties:
-            riskLevel:
-              $ref: '#/components/schemas/RiskLevel'
-          required:
-            - riskLevel
+          $ref: '#/components/schemas/RiskLevel'
       required:
         - isManualOverride
         - isUpdatable
-        - riskLevel
     Rule:
       title: Rule
       type: object
@@ -2855,6 +2901,14 @@ components:
       required:
         - id
         - name
+    TenantSettings:
+      title: TenantSettings
+      type: object
+      properties:
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
@@ -2933,6 +2987,24 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    Feature:
+      type: string
+      title: Feature
+      x-stoplight:
+        id: xc9jmvdpmvtof
+      enum:
+        - PULSE
+        - PULSE_MANUAL_USER_RISK_LEVEL
+      description: ''
+    AccountRole:
+      type: string
+      title: AccountRole
+      x-stoplight:
+        id: byu0hqffp9hxz
+      enum:
+        - root
+        - admin
+        - user
     Address:
       title: Address
       required:

@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { verifyTransaction, verifyTransactionEvent } from '..'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { RiskRepository } from '../repositories/risk-repository'
 import {
   dynamoDbSetupHook,
   getTestDynamoDbClient,
@@ -10,6 +11,11 @@ import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
+import { getContextStorage } from '@/core/utils/context'
+import {
+  getTestUser,
+  setUpConsumerUsersHooks,
+} from '@/test-utils/user-test-utils'
 
 const dynamoDb = getTestDynamoDbClient()
 
@@ -245,22 +251,62 @@ describe('Verify Transaction Event', () => {
         },
       },
     ])
+    setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
-    test('returns risk-level action', async () => {
-      const transaction = getTestTransaction({ transactionId: 'dummy' })
+    test('returns risk-level action with PULSE feature flag', async () => {
+      await getContextStorage().run({ features: ['PULSE'] }, async () => {
+        const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+          dynamoDb,
+        })
+        await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
+
+        const transaction = getTestTransaction({
+          transactionId: '1',
+          originUserId: '1',
+        })
+        const result = await verifyTransaction(
+          transaction,
+          TEST_TENANT_ID,
+          dynamoDb
+        )
+        expect(result).toEqual({
+          transactionId: '1',
+          executedRules: [
+            {
+              ruleId: 'R-1',
+              ruleName: 'test rule name',
+              ruleDescription: 'test rule description',
+              ruleAction: 'BLOCK',
+              ruleHit: true,
+            },
+          ],
+          hitRules: [
+            {
+              ruleId: 'R-1',
+              ruleName: 'test rule name',
+              ruleDescription: 'test rule description',
+              ruleAction: 'BLOCK',
+            },
+          ],
+        } as TransactionMonitoringResult)
+      })
+    })
+
+    test('returns normal action without PULSE feature flag', async () => {
+      const transaction = getTestTransaction({ transactionId: '2' })
       const result = await verifyTransaction(
         transaction,
         TEST_TENANT_ID,
         dynamoDb
       )
       expect(result).toEqual({
-        transactionId: 'dummy',
+        transactionId: '2',
         executedRules: [
           {
             ruleId: 'R-1',
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
-            ruleAction: 'BLOCK',
+            ruleAction: 'FLAG',
             ruleHit: true,
           },
         ],
@@ -269,7 +315,7 @@ describe('Verify Transaction Event', () => {
             ruleId: 'R-1',
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
-            ruleAction: 'BLOCK',
+            ruleAction: 'FLAG',
           },
         ],
       } as TransactionMonitoringResult)

@@ -39,6 +39,8 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
 import { ManualRiskAssignmentPayload } from '@/@types/openapi-internal/ManualRiskAssignmentPayload'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -636,7 +638,7 @@ export const tenantsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { role } = event.requestContext.authorizer
+    const { role, principalId: tenantId } = event.requestContext.authorizer
     assertRole(role, 'root')
 
     const config = process.env as AccountsConfig
@@ -650,12 +652,23 @@ export const tenantsHandler = lambdaApi()(
         })
       )
       return tenants
+    } else if (event.resource === '/tenants/settings') {
+      const dynamoDb = getDynamoDbClient(event)
+      const tenantRepository = new TenantRepository(tenantId, dynamoDb)
+      if (event.httpMethod === 'GET') {
+        return tenantRepository.getTenantSettings()
+      } else if (event.httpMethod === 'POST' && event.body) {
+        const newTenantSettings = JSON.parse(event.body) as TenantSettings
+        return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+      }
     }
     throw new BadRequest('Unhandled request')
   }
 )
 
-export const riskClassificationHandler = lambdaApi()(
+export const riskClassificationHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -715,7 +728,9 @@ const validateClassificationRequest = (classificationValues: Array<any>) => {
   }
 }
 
-export const manualRiskAssignmentHandler = lambdaApi()(
+export const manualRiskAssignmentHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>

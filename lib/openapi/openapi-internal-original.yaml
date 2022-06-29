@@ -748,12 +748,7 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: string
-            enum:
-              - WEEK
-              - MONTH
-              - DAY
-              - YEAR
+            type: number
           in: query
           name: startTimestamp
         - schema:
@@ -837,6 +832,33 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Tenant'
+  /tenants/settings:
+    get:
+      summary: Tenant - Get Settings
+      operationId: get-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+    parameters: []
+    post:
+      summary: Tenant - POST Settings
+      operationId: post-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSettings'
   '/accounts/{userId}/change_tenant':
     parameters:
       - schema:
@@ -861,6 +883,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
   '/accounts/{userId}':
@@ -916,15 +942,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
-              examples:
-                example-1:
-                  value:
-                    - riskLevel: VERY_LOW
-                      lowerBoundRiskScore: 0
-                      upperBoundRiskScore: 25
+                $ref: '#/components/schemas/RiskClassificationScore'
       operationId: get-pulse-risk-classification
       description: ''
     post:
@@ -933,21 +951,13 @@ paths:
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RiskClassificationScore'
         '400':
           description: Bad Request
       requestBody:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RiskClassificationScore'
+              $ref: '#/components/schemas/RiskClassificationScore'
     parameters: []
   /pulse/manual-risk-assignment:
     parameters: []
@@ -968,10 +978,6 @@ paths:
       responses:
         '200':
           description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
       parameters:
@@ -1536,6 +1542,14 @@ components:
       required:
         - id
         - name
+    TenantSettings:
+      title: TenantSettings
+      type: object
+      properties:
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
@@ -1614,6 +1628,24 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    Feature:
+      type: string
+      title: Feature
+      x-stoplight:
+        id: xc9jmvdpmvtof
+      enum:
+        - PULSE
+        - PULSE_MANUAL_USER_RISK_LEVEL
+      description: ''
+    AccountRole:
+      type: string
+      title: AccountRole
+      x-stoplight:
+        id: byu0hqffp9hxz
+      enum:
+        - root
+        - admin
+        - user
   securitySchemes:
     Authorization:
       type: http

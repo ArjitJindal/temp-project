@@ -1,3 +1,5 @@
+// TODO: Refactor rules engine to be a class
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as _ from 'lodash'
 import { NotFound } from 'http-errors'
@@ -11,6 +13,7 @@ import { Rule as RuleBase } from './rule'
 import { USER_RULES } from './user-rules'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
+import { RiskRepository } from './repositories/risk-repository'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -27,6 +30,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { hasFeature } from '@/core/utils/context'
 
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
@@ -69,6 +73,9 @@ export async function verifyTransactionIdempotent(
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
+  const riskRepository = new RiskRepository(tenantId, {
+    dynamoDb,
+  })
   const userRepository = new UserRepository(tenantId, {
     dynamoDb,
   })
@@ -86,6 +93,7 @@ export async function verifyTransactionIdempotent(
   return getRulesResult(
     ruleRepository,
     ruleInstanceRepository,
+    riskRepository,
     ruleInstances,
     senderUser,
     (ruleImplementationName, parameters, action) =>
@@ -282,6 +290,9 @@ export async function verifyUserEvent(
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
   })
+  const riskRepository = new RiskRepository(tenantId, {
+    dynamoDb,
+  })
   const userRepository = new UserRepository(tenantId, {
     dynamoDb,
   })
@@ -294,6 +305,7 @@ export async function verifyUserEvent(
   const { executedRules, hitRules } = await getRulesResult(
     ruleRepository,
     ruleInstanceRepository,
+    riskRepository,
     ruleInstances,
     user,
     (ruleImplementationName, parameters, action) =>
@@ -322,6 +334,7 @@ export async function verifyUserEvent(
 async function getRulesResult(
   ruleRepository: RuleRepository,
   ruleInstanceRepository: RuleInstanceRepository,
+  riskRepository: RiskRepository,
   ruleInstances: ReadonlyArray<RuleInstance>,
   user: User | Business | undefined,
   getRuleImplementationCallback: (
@@ -337,13 +350,14 @@ async function getRulesResult(
     'id'
   )
   const hitRuleInstanceIds: string[] = []
+  const userRiskLevel = await getUserRiskLevel(riskRepository, user)
   const ruleResults = (
     await Promise.all(
       ruleInstances.map(async (ruleInstance) => {
         const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
         try {
           const { parameters, action } = getUserSpecificParameters(
-            user,
+            userRiskLevel,
             ruleInstance
           )
           const rule = getRuleImplementationCallback(
@@ -399,17 +413,29 @@ async function getRulesResult(
   }
 }
 
+async function getUserRiskLevel(
+  riskRepository: RiskRepository,
+  user: User | Business | undefined
+): Promise<RiskLevel | undefined> {
+  if (!user?.userId || !hasFeature('PULSE')) {
+    return undefined
+  }
+  const riskItem = await riskRepository.getManualDRSRiskItem(user?.userId)
+  return riskItem?.riskLevel
+}
+
 function getUserSpecificParameters(
-  user: User | Business | undefined,
+  userRiskLevel: RiskLevel | undefined,
   ruleInstance: RuleInstance
 ): {
   parameters: object
   action: RuleAction
 } {
-  if (ruleInstance.riskLevelParameters) {
-    // TODO: Get user risk level
-    const userRiskLevel: RiskLevel = 'LOW'
-
+  if (
+    hasFeature('PULSE') &&
+    userRiskLevel &&
+    ruleInstance.riskLevelParameters
+  ) {
     if (userRiskLevel) {
       return {
         parameters: ruleInstance.riskLevelParameters[userRiskLevel],

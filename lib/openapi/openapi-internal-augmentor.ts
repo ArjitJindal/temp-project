@@ -10,6 +10,7 @@ import { HammerheadStackConstants, TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
   '/tenants': TarponStackConstants.TENANT_FUNCTION_NAME,
+  '/tenants/settings': TarponStackConstants.TENANT_FUNCTION_NAME,
   '/accounts': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
   '/accounts/{userId}/change_tenant':
     TarponStackConstants.ACCOUNT_FUNCTION_NAME,
@@ -54,8 +55,7 @@ const PathToLambda: any = {
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}/comments/{commentId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/dashboard_stats/rule_hit':
-    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME, // hack for now
+  '/dashboard_stats/rule_hit': null,
   '/pulse/risk-classification':
     HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':

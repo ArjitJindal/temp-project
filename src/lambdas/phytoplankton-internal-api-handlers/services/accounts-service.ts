@@ -1,8 +1,8 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { ManagementClient, Organization, User } from 'auth0'
 import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
-import { JwtRole } from '@/@types/jwt'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
+import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -19,7 +19,7 @@ function getUsersManagement(managementClient: ManagementClient): {
 const CONNECTION_NAME = 'Username-Password-Authentication'
 
 export interface AppMetadata {
-  role: JwtRole
+  role: AccountRole
 }
 
 export type Account = ApiAccount
@@ -94,7 +94,7 @@ export class AccountsService {
     params: {
       email: string
       password: string
-      role: JwtRole
+      role: AccountRole
     }
   ): Promise<Account> {
     const user = await this.managementClient.createUser({

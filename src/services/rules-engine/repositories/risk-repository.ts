@@ -4,6 +4,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -33,8 +34,8 @@ const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   },
 ]
 
-const DEFAULT_DRS_RISK_ITEM = {
-  riskLevel: null,
+const DEFAULT_DRS_RISK_ITEM: ManualRiskAssignmentUserState = {
+  riskLevel: 'LOW',
   isManualOverride: false,
   isUpdatable: true,
 }
@@ -98,7 +99,9 @@ export class RiskRepository {
     return newRiskClassificationValues
   }
 
-  async getManualDRSRiskItem(userId: string) {
+  async getManualDRSRiskItem(
+    userId: string
+  ): Promise<ManualRiskAssignmentUserState | null> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -111,11 +114,11 @@ export class RiskRepository {
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
       return result.Items && result.Items.length > 0
-        ? result.Items[0]
+        ? (result.Items[0] as ManualRiskAssignmentUserState)
         : DEFAULT_DRS_RISK_ITEM
     } catch (e) {
       console.log(e)
-      return []
+      return null
     }
   }
 

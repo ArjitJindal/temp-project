@@ -2,6 +2,7 @@ import { ACHDetails } from './ACHDetails'
 import { ACHPaymentMethod } from './ACHPaymentMethod'
 import { Account } from './Account'
 import { AccountInvitePayload } from './AccountInvitePayload'
+import { AccountRole } from './AccountRole'
 import { Address } from './Address'
 import { Address1 } from './Address1'
 import { Address2 } from './Address2'
@@ -28,6 +29,7 @@ import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCou
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData'
 import { DeviceData } from './DeviceData'
 import { ExecutedRulesResult } from './ExecutedRulesResult'
+import { Feature } from './Feature'
 import { FileImport } from './FileImport'
 import { FileImportStatusChange } from './FileImportStatusChange'
 import { FileInfo } from './FileInfo'
@@ -50,7 +52,6 @@ import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
 import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
 import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState'
-import { ManualRiskAssignmentUserStateRiskLevel } from './ManualRiskAssignmentUserStateRiskLevel'
 import { Person } from './Person'
 import { PresignedUrlResponse } from './PresignedUrlResponse'
 import { RiskClassificationScore } from './RiskClassificationScore'
@@ -66,6 +67,7 @@ import { SWIFTDetails } from './SWIFTDetails'
 import { SWIFTPaymentMethod } from './SWIFTPaymentMethod'
 import { Tag } from './Tag'
 import { Tenant } from './Tenant'
+import { TenantSettings } from './TenantSettings'
 import { Transaction } from './Transaction'
 import { TransactionAmountDetails } from './TransactionAmountDetails'
 import { TransactionCaseManagement } from './TransactionCaseManagement'
@@ -286,10 +288,10 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
 export interface DefaultApiGetDashboardStatsRuleHitRequest {
   /**
    *
-   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @type number
    * @memberof DefaultApigetDashboardStatsRuleHit
    */
-  startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
+  startTimestamp?: number
   /**
    *
    * @type number
@@ -347,6 +349,8 @@ export interface DefaultApiGetRulesRequest {
 }
 
 export interface DefaultApiGetTenantsListRequest {}
+
+export interface DefaultApiGetTenantsSettingsRequest {}
 
 export interface DefaultApiGetTransactionRequest {
   /**
@@ -611,10 +615,10 @@ export interface DefaultApiPostListsRequest {
 export interface DefaultApiPostPulseRiskClassificationRequest {
   /**
    *
-   * @type Array&lt;RiskClassificationScore&gt;
+   * @type RiskClassificationScore
    * @memberof DefaultApipostPulseRiskClassification
    */
-  RiskClassificationScore?: Array<RiskClassificationScore>
+  RiskClassificationScore?: RiskClassificationScore
 }
 
 export interface DefaultApiPostRuleInstancesRequest {
@@ -633,6 +637,15 @@ export interface DefaultApiPostRulesRequest {
    * @memberof DefaultApipostRules
    */
   Rule?: Rule
+}
+
+export interface DefaultApiPostTenantsSettingsRequest {
+  /**
+   *
+   * @type TenantSettings
+   * @memberof DefaultApipostTenantsSettings
+   */
+  TenantSettings?: TenantSettings
 }
 
 export interface DefaultApiPostTransactionsCommentsRequest {

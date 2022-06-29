@@ -21,6 +21,7 @@ const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
+export type TenantSettingName = 'features'
 
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
@@ -191,6 +192,10 @@ export const DynamoDbKeys = {
   LIST: (tenantId: string, listName: string, indexName: string) => ({
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,
+  }),
+  TENANT_SETTINGS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#settings`,
+    SortKeyID: 'settings',
   }),
   /** Hammerhead keys */
   // Attributes: refer to Rule
