@@ -184,10 +184,6 @@ export async function verifyTransactionEvent(
       `transaction ${transactionEvent.transactionId} not found`
     )
   }
-
-  const hasTransactionUpdates = !_.isNil(
-    transactionEvent.updatedTransactionAttributes
-  )
   const updatedTransaction: TransactionWithRulesResult = {
     ...transaction,
     transactionState: transactionEvent.transactionState,

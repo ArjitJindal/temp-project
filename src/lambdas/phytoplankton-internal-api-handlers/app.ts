@@ -721,7 +721,7 @@ export const manualRiskAssignmentHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, role } = event.requestContext.authorizer
+    const { principalId: tenantId } = event.requestContext.authorizer
     const { userId } = event.queryStringParameters as any
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClient(event)

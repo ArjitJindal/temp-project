@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

@@ -1,5 +1,4 @@
 import { MongoClient } from 'mongodb'
-import _ from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'

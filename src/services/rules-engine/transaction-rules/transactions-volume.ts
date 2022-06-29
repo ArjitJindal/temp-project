@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import {
   ThinTransaction,
   TransactionRepository,

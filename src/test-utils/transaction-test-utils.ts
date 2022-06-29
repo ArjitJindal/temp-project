@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import dayjs from 'dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 

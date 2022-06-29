@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { getTestDynamoDbClient } from './dynamodb-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { TransactionRule } from './rule'

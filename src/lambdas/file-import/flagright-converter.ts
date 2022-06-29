@@ -57,6 +57,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
       }) || []
     )
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   convert(rawItem: any): T {
     return this.validatedItem as T
   }

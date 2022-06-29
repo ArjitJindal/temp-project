@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 
 type CsvAction<T> = T extends string | number | boolean
   ? 'INCLUDE' | 'SKIP'
-  : T extends (infer S)[]
+  : T extends unknown[]
   ? 'JSON' | 'SKIP'
   : 'JSON' | 'SKIP' | CsvHeaderSettings<T>
 type CsvHeaderSettingsKeys<T> = T extends CsvHeaderSettings<infer S>

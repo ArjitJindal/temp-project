@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,

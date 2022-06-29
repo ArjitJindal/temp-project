@@ -1,8 +1,7 @@
 import { BadRequest, Conflict } from 'http-errors'
 import { ManagementClient, Organization, User } from 'auth0'
 import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
-import { assertRole, JwtRole } from '@/@types/jwt'
-import { Tenant as ApiTenant } from '@/@types/openapi-internal/Tenant'
+import { JwtRole } from '@/@types/jwt'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and

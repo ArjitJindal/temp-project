@@ -1,6 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import { boolean } from 'fp-ts'
-import { orElse } from 'fp-ts/lib/EitherT'
 import { TransactionRule } from './rule'
 
 export type TransactionMatchesPatternRuleParameters = {
