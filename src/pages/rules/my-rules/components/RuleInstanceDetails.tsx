@@ -32,27 +32,29 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   const [deleting, setDeleting] = useState(false);
   const [parameters, setParameters] = useState(ruleInstance.parameters);
   const [riskLevelParameters, setRiskLevelParameters] = useState(
-    ruleInstance.riskLevelParameters || isPulseEnabled
-      ? {
-          VERY_HIGH: {},
-          HIGH: {},
-          MEDIUM: {},
-          LOW: {},
-          VERY_LOW: {},
-        }
-      : undefined,
+    ruleInstance.riskLevelParameters ||
+      (isPulseEnabled
+        ? {
+            VERY_HIGH: ruleInstance.parameters,
+            HIGH: ruleInstance.parameters,
+            MEDIUM: ruleInstance.parameters,
+            LOW: ruleInstance.parameters,
+            VERY_LOW: ruleInstance.parameters,
+          }
+        : undefined),
   );
   const [ruleAction, setRuleAction] = useState<RuleAction>(ruleInstance.action);
   const [riskLevelActions, setRiskLevelActions] = useState(
-    ruleInstance.riskLevelActions || isPulseEnabled
-      ? {
-          VERY_HIGH: rule.defaultAction,
-          HIGH: rule.defaultAction,
-          MEDIUM: rule.defaultAction,
-          LOW: rule.defaultAction,
-          VERY_LOW: rule.defaultAction,
-        }
-      : undefined,
+    ruleInstance.riskLevelActions ||
+      (isPulseEnabled
+        ? {
+            VERY_HIGH: rule.defaultAction,
+            HIGH: rule.defaultAction,
+            MEDIUM: rule.defaultAction,
+            LOW: rule.defaultAction,
+            VERY_LOW: rule.defaultAction,
+          }
+        : undefined),
   );
   const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
   const handleCancelEditing = useCallback(() => {

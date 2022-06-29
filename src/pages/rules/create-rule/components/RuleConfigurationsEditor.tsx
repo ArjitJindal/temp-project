@@ -44,11 +44,11 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
   const [riskLevelParameters, setRiskLevelParameters] = useState(
     isPulseEnabled
       ? rule.defaultRiskLevelParameters || {
-          VERY_HIGH: {},
-          HIGH: {},
-          MEDIUM: {},
-          LOW: {},
-          VERY_LOW: {},
+          VERY_HIGH: rule.defaultParameters,
+          HIGH: rule.defaultParameters,
+          MEDIUM: rule.defaultParameters,
+          LOW: rule.defaultParameters,
+          VERY_LOW: rule.defaultParameters,
         }
       : undefined,
   );
