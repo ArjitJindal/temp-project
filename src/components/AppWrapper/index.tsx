@@ -5,6 +5,7 @@ import SegmentProvider from './SegmentProvider';
 import IdentityAnalitycs from './IdentityAnalitycs';
 import { FlagrightUserProvider } from '@/utils/user-utils';
 import { FeaturesProvider } from '@/components/AppWrapper/FeaturesProvider';
+import { Feature } from '@/apis';
 
 interface Props {
   pageContainerProps?: PageContainerProps;
@@ -15,7 +16,7 @@ export default function AppWrapper(props: Props) {
   return (
     <AuthProvider>
       <FlagrightUserProvider>
-        <FeaturesProvider initialFeatures={FEATURES_ENABLED ?? {}}>
+        <FeaturesProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
           <SegmentProvider writeKey={SEGMENT_WRITE_KEY}>
             <IdentityAnalitycs>{props.children}</IdentityAnalitycs>
           </SegmentProvider>

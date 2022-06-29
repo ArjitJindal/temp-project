@@ -27,6 +27,7 @@ All URIs are relative to _http://localhost:3000_
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
 | [**getTenantsList**](DefaultApi.md#getTenantsList) | **GET** /tenants | Tenant - List |
+| [**getTenantsSettings**](DefaultApi.md#getTenantsSettings) | **GET** /tenants/settings | Tenant - Get Settings |
 | [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
 | [**getTransactionsList**](DefaultApi.md#getTransactionsList) | **GET** /transactions | Transaction - List |
 | [**getTransactionsListExport**](DefaultApi.md#getTransactionsListExport) | **GET** /transactions/export | Transaction - Export |
@@ -41,6 +42,7 @@ All URIs are relative to _http://localhost:3000_
 | [**postPulseRiskClassification**](DefaultApi.md#postPulseRiskClassification) | **POST** /pulse/risk-classification | Risk classification - POST |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
 | [**postRules**](DefaultApi.md#postRules) | **POST** /rules | Rules - Create |
+| [**postTenantsSettings**](DefaultApi.md#postTenantsSettings) | **POST** /tenants/settings | Tenant - POST Settings |
 | [**postTransactionsComments**](DefaultApi.md#postTransactionsComments) | **POST** /transactions/{transactionId}/comments | Create a Transaction Comment |
 | [**postTransactionsTransactionId**](DefaultApi.md#postTransactionsTransactionId) | **POST** /transactions/{transactionId} | Transaction - Update |
 | [**pulseManualRiskAssignment**](DefaultApi.md#pulseManualRiskAssignment) | **POST** /pulse/manual-risk-assignment | Risk Level - Manual Assignment |
@@ -801,8 +803,8 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiGetDashboardStatsRuleHitRequest = {
-  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
-  timeframe: "WEEK",
+  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' (optional)
+  startTimestamp: "WEEK",
   // number (optional)
   endTimestamp: 3.14,
 };
@@ -814,10 +816,10 @@ apiInstance.getDashboardStatsRuleHit(body).then((data:any) => {
 
 ### Parameters
 
-| Name             | Type                | Description     | Notes                            |
-| ---------------- | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
-| **timeframe**    | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
-| **endTimestamp** | [**number**]        |                 | (optional) defaults to undefined |
+| Name               | Type                | Description     | Notes                            |
+| ------------------ | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | --- | -------------------------------- |
+| **startTimestamp** | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* |     | (optional) defaults to undefined |
+| **endTimestamp**   | [**number**]        |                 | (optional) defaults to undefined |
 
 ### Return type
 
@@ -1206,6 +1208,51 @@ This endpoint does not need any parameter.
 ### Return type
 
 **Array<Tenant>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getTenantsSettings**
+
+> TenantSettings getTenantsSettings()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getTenantsSettings(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**TenantSettings**
 
 ### Authorization
 
@@ -2141,6 +2188,60 @@ apiInstance.postRules(body).then((data:any) => {
 ### Return type
 
 **Rule**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postTenantsSettings**
+
+> TenantSettings postTenantsSettings()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostTenantsSettingsRequest = {
+  // TenantSettings (optional)
+  TenantSettings: {
+    features: [
+      "PULSE",
+    ],
+  },
+};
+
+apiInstance.postTenantsSettings(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name               | Type               | Description | Notes |
+| ------------------ | ------------------ | ----------- | ----- |
+| **TenantSettings** | **TenantSettings** |             |
+
+### Return type
+
+**TenantSettings**
 
 ### Authorization
 

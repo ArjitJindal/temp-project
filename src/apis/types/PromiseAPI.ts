@@ -6,6 +6,7 @@ import { ACHDetails } from '../models/ACHDetails';
 import { ACHPaymentMethod } from '../models/ACHPaymentMethod';
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
+import { AccountRole } from '../models/AccountRole';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -32,6 +33,7 @@ import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransac
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
+import { Feature } from '../models/Feature';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
@@ -69,6 +71,7 @@ import { SWIFTDetails } from '../models/SWIFTDetails';
 import { SWIFTPaymentMethod } from '../models/SWIFTPaymentMethod';
 import { Tag } from '../models/Tag';
 import { Tenant } from '../models/Tenant';
+import { TenantSettings } from '../models/TenantSettings';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
@@ -306,15 +309,15 @@ export class PromiseDefaultApi {
 
   /**
    * DashboardStats - Rule hit
-   * @param timeframe MONTH, DAY or YEAR
+   * @param startTimestamp
    * @param endTimestamp
    */
   public getDashboardStatsRuleHit(
-    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
     endTimestamp?: number,
     _options?: Configuration,
   ): Promise<DashboardStatsRulesCount> {
-    const result = this.api.getDashboardStatsRuleHit(timeframe, endTimestamp, _options);
+    const result = this.api.getDashboardStatsRuleHit(startTimestamp, endTimestamp, _options);
     return result.toPromise();
   }
 
@@ -393,6 +396,14 @@ export class PromiseDefaultApi {
    */
   public getTenantsList(_options?: Configuration): Promise<Array<Tenant>> {
     const result = this.api.getTenantsList(_options);
+    return result.toPromise();
+  }
+
+  /**
+   * Tenant - Get Settings
+   */
+  public getTenantsSettings(_options?: Configuration): Promise<TenantSettings> {
+    const result = this.api.getTenantsSettings(_options);
     return result.toPromise();
   }
 
@@ -634,6 +645,18 @@ export class PromiseDefaultApi {
    */
   public postRules(Rule?: Rule, _options?: Configuration): Promise<Rule> {
     const result = this.api.postRules(Rule, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Tenant - POST Settings
+   * @param TenantSettings
+   */
+  public postTenantsSettings(
+    TenantSettings?: TenantSettings,
+    _options?: Configuration,
+  ): Promise<TenantSettings> {
+    const result = this.api.postTenantsSettings(TenantSettings, _options);
     return result.toPromise();
   }
 

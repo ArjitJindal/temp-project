@@ -45,7 +45,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   onParametersChange,
   onRiskLevelParametersChange,
 }) => {
-  const isPulseEnabled = useFeature('risk-levels');
+  const isPulseEnabled = useFeature('PULSE');
   const [activeRiskLevel, setActiveRiskLevel] = useState<RiskLevel>('VERY_HIGH');
   const handleParametersChange = useCallback(
     (event: IChangeEvent) => {

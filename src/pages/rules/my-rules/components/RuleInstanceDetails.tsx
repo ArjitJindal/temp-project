@@ -26,7 +26,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   onRuleInstanceDeleted,
 }) => {
   const api = useApi();
-  const isPulseEnabled = useFeature('risk-levels');
+  const isPulseEnabled = useFeature('PULSE');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);

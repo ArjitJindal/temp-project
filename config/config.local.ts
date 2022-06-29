@@ -9,9 +9,6 @@ export default defineConfig({
     AUTH0_DOMAIN: 'login.dev.console.flagright.com',
     AUTH0_CLIENT_ID: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
     SEGMENT_WRITE_KEY: 'gBpbFMwyJQrf91g8zag3IrTOCnPfAiO5',
-    FEATURES_ENABLED: {
-      'risk-levels': true,
-      'manual-user-risk-level': true,
-    },
+    FEATURES_ENABLED: [],
   },
 });

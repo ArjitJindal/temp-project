@@ -2,6 +2,7 @@ export * from './ACHDetails';
 export * from './ACHPaymentMethod';
 export * from './Account';
 export * from './AccountInvitePayload';
+export * from './AccountRole';
 export * from './Address';
 export * from './Address1';
 export * from './Address2';
@@ -28,6 +29,7 @@ export * from './DashboardStatsTransactionsCount';
 export * from './DashboardStatsTransactionsCountData';
 export * from './DeviceData';
 export * from './ExecutedRulesResult';
+export * from './Feature';
 export * from './FileImport';
 export * from './FileImportStatusChange';
 export * from './FileInfo';
@@ -65,6 +67,7 @@ export * from './SWIFTDetails';
 export * from './SWIFTPaymentMethod';
 export * from './Tag';
 export * from './Tenant';
+export * from './TenantSettings';
 export * from './Transaction';
 export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
@@ -89,6 +92,7 @@ import { ACHDetails } from './ACHDetails';
 import { ACHPaymentMethod } from './ACHPaymentMethod';
 import { Account } from './Account';
 import { AccountInvitePayload } from './AccountInvitePayload';
+import { AccountRole } from './AccountRole';
 import { Address } from './Address';
 import { Address1 } from './Address1';
 import { Address2 } from './Address2';
@@ -115,6 +119,7 @@ import { DashboardStatsTransactionsCount } from './DashboardStatsTransactionsCou
 import { DashboardStatsTransactionsCountData } from './DashboardStatsTransactionsCountData';
 import { DeviceData } from './DeviceData';
 import { ExecutedRulesResult } from './ExecutedRulesResult';
+import { Feature } from './Feature';
 import { FileImport, FileImportTypeEnum } from './FileImport';
 import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './FileImportStatusChange';
 import { FileInfo } from './FileInfo';
@@ -158,6 +163,7 @@ import { SWIFTDetails } from './SWIFTDetails';
 import { SWIFTPaymentMethod } from './SWIFTPaymentMethod';
 import { Tag } from './Tag';
 import { Tenant } from './Tenant';
+import { TenantSettings } from './TenantSettings';
 import { Transaction } from './Transaction';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
 import { TransactionCaseManagement } from './TransactionCaseManagement';
@@ -189,7 +195,9 @@ const supportedMediaTypes: { [mediaType: string]: number } = {
 
 let enumsMap: Set<string> = new Set<string>([
   'ACHPaymentMethod',
+  'AccountRole',
   'CardPaymentMethod',
+  'Feature',
   'FileImportTypeEnum',
   'FileImportStatusChangeStatusEnum',
   'GeneralBankAccountPaymentMethod',
@@ -272,6 +280,7 @@ let typeMap: { [index: string]: any } = {
   SWIFTDetails: SWIFTDetails,
   Tag: Tag,
   Tenant: Tenant,
+  TenantSettings: TenantSettings,
   Transaction: Transaction,
   TransactionAmountDetails: TransactionAmountDetails,
   TransactionCaseManagement: TransactionCaseManagement,

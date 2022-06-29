@@ -7,6 +7,7 @@ import { ACHDetails } from '../models/ACHDetails';
 import { ACHPaymentMethod } from '../models/ACHPaymentMethod';
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
+import { AccountRole } from '../models/AccountRole';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -33,6 +34,7 @@ import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransac
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
+import { Feature } from '../models/Feature';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
@@ -70,6 +72,7 @@ import { SWIFTDetails } from '../models/SWIFTDetails';
 import { SWIFTPaymentMethod } from '../models/SWIFTPaymentMethod';
 import { Tag } from '../models/Tag';
 import { Tenant } from '../models/Tenant';
+import { TenantSettings } from '../models/TenantSettings';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
@@ -663,16 +666,16 @@ export class ObservableDefaultApi {
 
   /**
    * DashboardStats - Rule hit
-   * @param timeframe MONTH, DAY or YEAR
+   * @param startTimestamp
    * @param endTimestamp
    */
   public getDashboardStatsRuleHit(
-    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
     endTimestamp?: number,
     _options?: Configuration,
   ): Observable<DashboardStatsRulesCount> {
     const requestContextPromise = this.requestFactory.getDashboardStatsRuleHit(
-      timeframe,
+      startTimestamp,
       endTimestamp,
       _options,
     );
@@ -968,6 +971,37 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getTenantsList(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Tenant - Get Settings
+   */
+  public getTenantsSettings(_options?: Configuration): Observable<TenantSettings> {
+    const requestContextPromise = this.requestFactory.getTenantsSettings(_options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getTenantsSettings(rsp)),
           );
         }),
       );
@@ -1549,6 +1583,41 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.postRules(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Tenant - POST Settings
+   * @param TenantSettings
+   */
+  public postTenantsSettings(
+    TenantSettings?: TenantSettings,
+    _options?: Configuration,
+  ): Observable<TenantSettings> {
+    const requestContextPromise = this.requestFactory.postTenantsSettings(TenantSettings, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postTenantsSettings(rsp)),
           );
         }),
       );

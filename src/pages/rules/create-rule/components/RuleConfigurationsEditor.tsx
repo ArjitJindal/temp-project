@@ -27,7 +27,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
   onActivated,
 }) => {
   const api = useApi();
-  const isPulseEnabled = useFeature('risk-levels');
+  const isPulseEnabled = useFeature('PULSE');
   const [ruleAction, setRuleAction] = useState<RuleAction>(rule.defaultAction);
   const [riskLevelRuleActions, setRiskLevelRuleActions] = useState(
     isPulseEnabled

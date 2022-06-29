@@ -25,7 +25,7 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
             {getUserName(user)}
           </Typography.Title>
         </Col>
-        <Feature name="manual-user-risk-level">
+        <Feature name="PULSE_MANUAL_USER_RISK_LEVEL">
           <Col>
             <UserManualRiskPanel userId={userId} />
           </Col>

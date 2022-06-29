@@ -16,6 +16,7 @@ models/ACHDetails.ts
 models/ACHPaymentMethod.ts
 models/Account.ts
 models/AccountInvitePayload.ts
+models/AccountRole.ts
 models/Address.ts
 models/Address1.ts
 models/Address2.ts
@@ -42,6 +43,7 @@ models/DashboardStatsTransactionsCount.ts
 models/DashboardStatsTransactionsCountData.ts
 models/DeviceData.ts
 models/ExecutedRulesResult.ts
+models/Feature.ts
 models/FileImport.ts
 models/FileImportStatusChange.ts
 models/FileInfo.ts
@@ -80,6 +82,7 @@ models/SWIFTDetails.ts
 models/SWIFTPaymentMethod.ts
 models/Tag.ts
 models/Tenant.ts
+models/TenantSettings.ts
 models/Transaction.ts
 models/TransactionAmountDetails.ts
 models/TransactionCaseManagement.ts

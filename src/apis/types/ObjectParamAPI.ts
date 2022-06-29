@@ -6,6 +6,7 @@ import { ACHDetails } from '../models/ACHDetails';
 import { ACHPaymentMethod } from '../models/ACHPaymentMethod';
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
+import { AccountRole } from '../models/AccountRole';
 import { Address } from '../models/Address';
 import { Address1 } from '../models/Address1';
 import { Address2 } from '../models/Address2';
@@ -32,6 +33,7 @@ import { DashboardStatsTransactionsCount } from '../models/DashboardStatsTransac
 import { DashboardStatsTransactionsCountData } from '../models/DashboardStatsTransactionsCountData';
 import { DeviceData } from '../models/DeviceData';
 import { ExecutedRulesResult } from '../models/ExecutedRulesResult';
+import { Feature } from '../models/Feature';
 import { FileImport } from '../models/FileImport';
 import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
@@ -69,6 +71,7 @@ import { SWIFTDetails } from '../models/SWIFTDetails';
 import { SWIFTPaymentMethod } from '../models/SWIFTPaymentMethod';
 import { Tag } from '../models/Tag';
 import { Tenant } from '../models/Tenant';
+import { TenantSettings } from '../models/TenantSettings';
 import { Transaction } from '../models/Transaction';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
@@ -291,11 +294,11 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
 
 export interface DefaultApiGetDashboardStatsRuleHitRequest {
   /**
-   * MONTH, DAY or YEAR
+   *
    * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
    * @memberof DefaultApigetDashboardStatsRuleHit
    */
-  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
+  startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
   /**
    *
    * @type number
@@ -353,6 +356,8 @@ export interface DefaultApiGetRulesRequest {
 }
 
 export interface DefaultApiGetTenantsListRequest {}
+
+export interface DefaultApiGetTenantsSettingsRequest {}
 
 export interface DefaultApiGetTransactionRequest {
   /**
@@ -641,6 +646,15 @@ export interface DefaultApiPostRulesRequest {
   Rule?: Rule;
 }
 
+export interface DefaultApiPostTenantsSettingsRequest {
+  /**
+   *
+   * @type TenantSettings
+   * @memberof DefaultApipostTenantsSettings
+   */
+  TenantSettings?: TenantSettings;
+}
+
 export interface DefaultApiPostTransactionsCommentsRequest {
   /**
    *
@@ -918,11 +932,11 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public getDashboardStatsRuleHit(
-    param: DefaultApiGetDashboardStatsRuleHitRequest,
+    param: DefaultApiGetDashboardStatsRuleHitRequest = {},
     options?: Configuration,
   ): Promise<DashboardStatsRulesCount> {
     return this.api
-      .getDashboardStatsRuleHit(param.timeframe, param.endTimestamp, options)
+      .getDashboardStatsRuleHit(param.startTimestamp, param.endTimestamp, options)
       .toPromise();
   }
 
@@ -1014,6 +1028,17 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<Array<Tenant>> {
     return this.api.getTenantsList(options).toPromise();
+  }
+
+  /**
+   * Tenant - Get Settings
+   * @param param the request object
+   */
+  public getTenantsSettings(
+    param: DefaultApiGetTenantsSettingsRequest = {},
+    options?: Configuration,
+  ): Promise<TenantSettings> {
+    return this.api.getTenantsSettings(options).toPromise();
   }
 
   /**
@@ -1197,6 +1222,17 @@ export class ObjectDefaultApi {
    */
   public postRules(param: DefaultApiPostRulesRequest = {}, options?: Configuration): Promise<Rule> {
     return this.api.postRules(param.Rule, options).toPromise();
+  }
+
+  /**
+   * Tenant - POST Settings
+   * @param param the request object
+   */
+  public postTenantsSettings(
+    param: DefaultApiPostTenantsSettingsRequest = {},
+    options?: Configuration,
+  ): Promise<TenantSettings> {
+    return this.api.postTenantsSettings(param.TenantSettings, options).toPromise();
   }
 
   /**

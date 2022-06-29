@@ -1,4 +1,5 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
+import { Feature } from '@/apis';
 
 declare global {
   declare const API_BASE_PATH: string | undefined;
@@ -6,7 +7,7 @@ declare global {
   declare const AUTH0_DOMAIN: string;
   declare const AUTH0_CLIENT_ID: string;
   declare const AUTH0_CLIENT_ID: string;
-  declare const FEATURES_ENABLED: { [key: string]: boolean } | undefined;
+  declare const FEATURES_ENABLED: Feature[];
   declare const EXPORT_ENTRIES_LIMIT: number;
   declare const SEGMENT_WRITE_KEY: string;
 

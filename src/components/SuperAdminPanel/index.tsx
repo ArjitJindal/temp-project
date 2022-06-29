@@ -1,5 +1,6 @@
-import { Alert, Form, Modal, Select } from 'antd';
-import React, { useEffect, useState } from 'react';
+import { Alert, Form, message, Modal, Select } from 'antd';
+import { useEffect, useState } from 'react';
+import { useFeatures } from '../AppWrapper/FeaturesProvider';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import {
@@ -7,17 +8,20 @@ import {
   failed,
   init,
   isFailed,
-  isLoading,
   isSuccess,
   loading,
   match,
   success,
 } from '@/utils/asyncResource';
-import { Tenant } from '@/apis';
+import { Feature, Tenant } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
+
+const FEATURES: Feature[] = ['PULSE', 'PULSE_MANUAL_USER_RISK_LEVEL'];
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const initialFeatures = useFeatures();
+  const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const user = useAuth0User();
 
   const [tenantsRes, setTenantsRes] = useState<AsyncResource<Tenant[]>>(init());
@@ -40,19 +44,32 @@ export default function SuperAdminPanel() {
 
   const [changeTenantRes, setChangeTenantRes] = useState<AsyncResource<void>>(init());
 
-  const handleChangeTenant = async (data: { currentTenantId: string }) => {
+  const handleChangeTenant = async (newTenantId: string) => {
     setChangeTenantRes(loading());
     try {
+      message.loading('Changing Tenant...', 10000);
       await api.accountsChangeTenant({
         userId: user.userId,
         ChangeTenantPayload: {
-          newTenantId: data.currentTenantId,
+          newTenantId,
         },
       });
       setChangeTenantRes(success(undefined));
       window.location.reload();
     } catch (e) {
       setChangeTenantRes(failed(e instanceof Error ? e.message : 'Unknown error'));
+    }
+  };
+  const handleChangeFeatures = async (newFeatures: Feature[]) => {
+    setFeatures(newFeatures);
+    const hideMessage = message.loading('Saving...', 0);
+    try {
+      await api.postTenantsSettings({ TenantSettings: { features: newFeatures } });
+      hideMessage();
+      message.success('Saved');
+    } catch (e) {
+      hideMessage();
+      message.error(e as Error);
     }
   };
   const showModal = () => {
@@ -63,7 +80,7 @@ export default function SuperAdminPanel() {
     setIsModalVisible(false);
   };
 
-  const options = match(tenantsRes, {
+  const tenantOptions = match(tenantsRes, {
     init: () => [],
     success: (value) =>
       value.map(({ id, name }) => ({
@@ -91,19 +108,25 @@ export default function SuperAdminPanel() {
           wrapperCol={{ span: 16 }}
           onValuesChange={() => {}}
           initialValues={{ currentTenantId: user.tenantId }}
-          onFinish={handleChangeTenant}
           autoComplete="off"
         >
-          <Form.Item label="Current tenant">
-            <b>{options.find(({ value }) => value === user.tenantId)?.label ?? user.tenantId}</b>
+          <Form.Item label="Tenant">
+            <Select
+              disabled={!isSuccess(tenantsRes)}
+              options={tenantOptions}
+              onChange={handleChangeTenant}
+              value={user.tenantId}
+            />
           </Form.Item>
-          <Form.Item label="Change to" name="currentTenantId">
-            <Select disabled={!isSuccess(tenantsRes)} options={options} />
-          </Form.Item>
-          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-            <Button type="primary" htmlType="submit" disabled={isLoading(changeTenantRes)}>
-              Save
-            </Button>
+          <Form.Item label="Features">
+            <Select<Feature[]>
+              mode="multiple"
+              options={FEATURES.map((feature) => ({ label: feature, value: feature }))}
+              onChange={handleChangeFeatures}
+              allowClear
+              disabled={!initialFeatures}
+              value={features || initialFeatures}
+            />
           </Form.Item>
           {isFailed(changeTenantRes) && <Alert message={changeTenantRes.message} type="error" />}
         </Form>

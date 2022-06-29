@@ -425,7 +425,7 @@ paths:
                     type: string
               examples:
                 example-1:
-                  value: Too larget dataset
+                  value: {}
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -755,9 +755,7 @@ paths:
               - DAY
               - YEAR
           in: query
-          name: timeframe
-          required: true
-          description: 'MONTH, DAY or YEAR'
+          name: startTimestamp
         - schema:
             type: number
           in: query
@@ -839,6 +837,33 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Tenant'
+  /tenants/settings:
+    get:
+      summary: Tenant - Get Settings
+      operationId: get-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+    parameters: []
+    post:
+      summary: Tenant - POST Settings
+      operationId: post-tenants-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSettings'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantSettings'
   '/accounts/{userId}/change_tenant':
     parameters:
       - schema:
@@ -1197,6 +1222,8 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+
+
         - type: object
           properties:
             comments:
@@ -1301,6 +1328,8 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+
+
         - type: object
           properties:
             type:
@@ -1317,6 +1346,8 @@ components:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+
+
         - type: object
           properties:
             type:
@@ -1538,6 +1569,16 @@ components:
       required:
         - id
         - name
+    TenantSettings:
+      title: TenantSettings
+      type: object
+      properties:
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+      required:
+        - features
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
@@ -1616,6 +1657,24 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    Feature:
+      type: string
+      title: Feature
+      x-stoplight:
+        id: xc9jmvdpmvtof
+      enum:
+        - PULSE
+        - PULSE_MANUAL_USER_RISK_LEVEL
+      description: ''
+    AccountRole:
+      type: string
+      title: AccountRole
+      x-stoplight:
+        id: byu0hqffp9hxz
+      enum:
+        - root
+        - admin
+        - user
   securitySchemes:
     Authorization:
       type: http

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import React from 'react';
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
 import { Link, RunTimeLayoutConfig, setLocale } from 'umi';
@@ -64,25 +63,6 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
     ...initialState?.settings,
   };
 };
-
-export function modifyClientRenderOpts(memo: IConfigFromPlugins) {
-  const rootRoute = (memo.routes ?? [])[0];
-  rootRoute.routes;
-  return {
-    ...memo,
-    routes: [
-      {
-        ...rootRoute,
-        routes: rootRoute.routes?.filter((x) => {
-          if (x.name === 'risk-levels' && !(FEATURES_ENABLED ?? {})['risk-levels']) {
-            return false;
-          }
-          return true;
-        }),
-      },
-    ],
-  };
-}
 
 export function rootContainer(container: ReactNode) {
   return <AppWrapper>{container}</AppWrapper>;
