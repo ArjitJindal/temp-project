@@ -98,9 +98,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       headerTitle="Select Rule"
       actionRef={actionRef}
       rowKey="id"
-      search={{
-        labelWidth: 30,
-      }}
+      search={false}
       toolBarRender={() => (isFlagrightTenantUser(user) ? [<RuleCreationForm />] : [])}
       request={async () => {
         const rules = await api.getRules({});
