@@ -6,6 +6,7 @@
 
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
+import _ from 'lodash'
 import { HammerheadStackConstants, TarponStackConstants } from '../constants'
 
 const PathToLambda: any = {
@@ -90,6 +91,12 @@ const openapi = yaml.load(
 ) as any
 
 assertValidLambdaMappings(openapi)
+
+// Filter out not-yet-implemented paths
+openapi.paths = _.omit(
+  openapi.paths,
+  Object.keys(PathToLambda).filter((path) => !PathToLambda[path])
+)
 
 // Request validator setting
 openapi['x-amazon-apigateway-request-validators'] = {
