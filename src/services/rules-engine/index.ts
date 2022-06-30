@@ -32,6 +32,10 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { hasFeature } from '@/core/utils/context'
 
+export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
+  message: string
+}
+
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
   rule2: HitRulesResult
@@ -114,7 +118,7 @@ export async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
-): Promise<TransactionMonitoringResult> {
+): Promise<TransactionMonitoringResult | DuplicateTransactionReturnType> {
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
   })
@@ -129,6 +133,8 @@ export async function verifyTransaction(
     if (existingTransaction) {
       return {
         transactionId: transaction.transactionId,
+        message:
+          'The provided transactionId already exists. No rules were run. If you want to update the attributes of this transaction, please use transaction events instead.',
         executedRules: existingTransaction.executedRules,
         hitRules: existingTransaction.hitRules,
       }

@@ -131,7 +131,7 @@ describe('Verify Transaction', () => {
         TEST_TENANT_ID,
         dynamoDb
       )
-      expect(result1).toEqual(result2)
+      expect(result1.executedRules).toEqual(result2.executedRules)
     })
   })
 })

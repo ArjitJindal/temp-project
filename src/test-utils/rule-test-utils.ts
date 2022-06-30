@@ -2,7 +2,11 @@ import { getTestDynamoDbClient } from './dynamodb-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import { verifyTransaction, verifyUserEvent } from '@/services/rules-engine'
+import {
+  DuplicateTransactionReturnType,
+  verifyTransaction,
+  verifyUserEvent,
+} from '@/services/rules-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
@@ -49,7 +53,7 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
 export async function bulkVerifyTransactions(
   tenantId: string,
   transactions: Transaction[]
-): Promise<TransactionMonitoringResult[]> {
+): Promise<TransactionMonitoringResult[] | DuplicateTransactionReturnType[]> {
   const dynamoDb = getTestDynamoDbClient()
   const results = []
   for (const transaction of transactions) {
