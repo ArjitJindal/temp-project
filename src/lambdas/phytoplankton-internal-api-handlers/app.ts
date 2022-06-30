@@ -638,12 +638,11 @@ export const tenantsHandler = lambdaApi()(
     >
   ) => {
     const { role, principalId: tenantId } = event.requestContext.authorizer
-    assertRole(role, 'root')
-
     const config = process.env as AccountsConfig
     const accountsService = new AccountsService(config)
 
     if (event.httpMethod === 'GET' && event.resource === '/tenants') {
+      assertRole(role, 'root')
       const tenants: ApiTenant[] = (await accountsService.getTenants()).map(
         (tenant: Tenant): ApiTenant => ({
           id: tenant.id,
@@ -657,6 +656,7 @@ export const tenantsHandler = lambdaApi()(
       if (event.httpMethod === 'GET') {
         return tenantRepository.getTenantSettings()
       } else if (event.httpMethod === 'POST' && event.body) {
+        assertRole(role, 'root')
         const newTenantSettings = JSON.parse(event.body) as TenantSettings
         return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
       }
