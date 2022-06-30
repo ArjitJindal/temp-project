@@ -60,14 +60,33 @@ async function createNewApiKeyForTenant(
   return newApiKey
 }
 
-export const createDocumentDBCollections = async (tenantId: string) => {
+export const createMongoDBCollections = async (tenantId: string) => {
   client = await connectToDB()
   const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
   try {
     await db.createCollection(TRANSACTIONS_COLLECTION(tenantId))
+    const transactionCollection = db.collection(
+      TRANSACTIONS_COLLECTION(tenantId)
+    )
+    await transactionCollection.createIndex({
+      timestamp: 1,
+      type: 1,
+      status: 1,
+    })
+    await transactionCollection.createIndex({ transactionId: 1 })
+    await transactionCollection.createIndex({ destinationUserId: 1 })
+    await transactionCollection.createIndex({ originUserId: 1 })
+
     await db.createCollection(USERS_COLLECTION(tenantId))
+    const usersCollection = db.collection(USERS_COLLECTION(tenantId))
+    await usersCollection.createIndex({
+      createdTimestamp: 1,
+    })
+    await usersCollection.createIndex({
+      userId: 1,
+    })
   } catch (e) {
-    console.log(`Error in creating DocumentDB collections: ${e}`)
+    console.log(`Error in creating MongoDB collections: ${e}`)
   }
 }
 export const apiKeyGeneratorHandler = lambdaApi()(
@@ -78,7 +97,7 @@ export const apiKeyGeneratorHandler = lambdaApi()(
   ) => {
     const { tenantId, usagePlanId } =
       event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-    await createDocumentDBCollections(tenantId)
+    await createMongoDBCollections(tenantId)
     return createNewApiKeyForTenant(tenantId, usagePlanId)
   }
 )
