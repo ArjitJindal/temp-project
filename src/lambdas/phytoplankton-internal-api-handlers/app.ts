@@ -40,6 +40,7 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -690,18 +691,13 @@ export const riskClassificationHandler = lambdaApi({
       }
     } else if (
       event.httpMethod === 'POST' &&
-      event.resource === '/pulse/risk-classification'
+      event.resource === '/pulse/risk-classification' &&
+      event.body
     ) {
-      if (!event.body) {
-        throw new BadRequest('Empty body')
-      }
-      let classificationValues
-      try {
-        classificationValues = JSON.parse(event.body)
-        validateClassificationRequest(classificationValues)
-      } catch (e) {
-        throw new BadRequest('Invalid Request')
-      }
+      const classificationValues = JSON.parse(
+        event.body
+      ) as RiskClassificationScore[]
+      validateClassificationRequest(classificationValues)
       const result = await riskRepository.createOrUpdateRiskClassification(
         classificationValues
       )
@@ -711,7 +707,9 @@ export const riskClassificationHandler = lambdaApi({
   }
 )
 
-const validateClassificationRequest = (classificationValues: Array<any>) => {
+const validateClassificationRequest = (
+  classificationValues: Array<RiskClassificationScore>
+) => {
   if (
     classificationValues.length !=
     HammerheadStackConstants.NUMBER_OF_RISK_LEVELS

@@ -2231,7 +2231,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RiskClassificationScore'
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
       x-amazon-apigateway-request-validator: all
       x-amazon-apigateway-integration:
         uri:
@@ -3045,11 +3047,8 @@ components:
       x-examples: {}
       title: RiskParameterLevelKeyValue
       properties:
-        parameter:
+        parameterValue:
           type: string
-          enum:
-            - userDetails.countryOfResidence
-            - userDetails.countryOfOrigin
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
     ParameterAttributeRiskValues:

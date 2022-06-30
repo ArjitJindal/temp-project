@@ -618,10 +618,10 @@ export interface DefaultApiPostListsRequest {
 export interface DefaultApiPostPulseRiskClassificationRequest {
   /**
    *
-   * @type RiskClassificationScore
+   * @type Array&lt;RiskClassificationScore&gt;
    * @memberof DefaultApipostPulseRiskClassification
    */
-  RiskClassificationScore?: RiskClassificationScore
+  RiskClassificationScore?: Array<RiskClassificationScore>
 }
 
 export interface DefaultApiPostRuleInstancesRequest {

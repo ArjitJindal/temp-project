@@ -957,7 +957,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RiskClassificationScore'
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskClassificationScore'
     parameters: []
   /pulse/manual-risk-assignment:
     parameters: []

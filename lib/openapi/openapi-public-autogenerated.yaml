@@ -531,6 +531,98 @@ paths:
               method.response.header.Access-Control-Allow-Headers: "'*'"
               method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
               method.response.header.Access-Control-Allow-Origin: "'*'"
+  /events/transaction/{eventId}:
+    get:
+      security:
+        - x-api-key: []
+        - lambda-authorizer: []
+      summary: Retrieve a Transaction Event
+      description: >
+        ### GET Transaction Events
+
+
+        `/events/transaction` endpoint allows you to operate on the [Transaction
+        Events
+        entity.](https://docs.flagright.com/docs/flagright-api/8c06ae6a3231a-entities-and-relationships#transaction-event). 
+
+
+        You can retrieve any transaction event you create using the [POST
+        Transaction
+        Events](https://docs.flagright.com/docs/flagright-api/d7c4dc4d02850-create-a-transaction-event)
+        call.
+      operationId: get-transaction-event
+      parameters:
+        - name: eventId
+          in: path
+          description: Unique Transaction Identifier
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionEvent'
+              examples:
+                example-1:
+                  value:
+                    eventType: CREATED
+                    employeeID: 8cdeb166147a406b957dd9e709907b89
+                    transactionId: 443dea26147a406b957d9ee3a1247b11
+                    transactionState: SUCCESSFUL
+                    timestamp: 1641654664000
+                    metaData:
+                      ipAddress: 144.13.22.19
+                      vpnUsed: true
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+      x-internal: false
+      x-amazon-apigateway-request-validator: all
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponUserFunction.Arn}/invocations
+        httpMethod: POST
+        type: aws_proxy
+        passthroughBehavior: never
+    options:
+      parameters: []
+      responses:
+        '200':
+          description: Default response
+          headers:
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: '{"statusCode":200}'
+        responses:
+          default:
+            statusCode: 200
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'*'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST,GET'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
   /consumer/users:
     post:
       security:

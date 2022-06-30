@@ -12,7 +12,7 @@
 
 import { RiskLevel } from './RiskLevel'
 export class RiskParameterLevelKeyValue {
-  'parameter'?: RiskParameterLevelKeyValueParameterEnum
+  'parameterValue'?: string
   'riskLevel'?: RiskLevel
 
   static readonly discriminator: string | undefined = undefined
@@ -24,9 +24,9 @@ export class RiskParameterLevelKeyValue {
     format: string
   }> = [
     {
-      name: 'parameter',
-      baseName: 'parameter',
-      type: 'RiskParameterLevelKeyValueParameterEnum',
+      name: 'parameterValue',
+      baseName: 'parameterValue',
+      type: 'string',
       format: '',
     },
     {
@@ -43,7 +43,3 @@ export class RiskParameterLevelKeyValue {
 
   public constructor() {}
 }
-
-export type RiskParameterLevelKeyValueParameterEnum =
-  | 'userDetails.countryOfResidence'
-  | 'userDetails.countryOfOrigin'
