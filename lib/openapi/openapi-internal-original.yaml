@@ -989,7 +989,25 @@ paths:
           name: userId
           required: true
           description: UserID of the user whose risk is being manually assigned
-      description: '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          '
+    get:
+      summary: Risk Level - Get Manual Assignment
+      operationId: get-pulse-manual-risk-assignment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user to get manual risk assignment settings
   /pulse/risk-parameter:
     parameters: []
     post:

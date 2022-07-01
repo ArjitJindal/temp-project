@@ -665,7 +665,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Manual User Risk Assignment function */
     const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
       name: HammerheadStackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
-      handler: 'app.manualUserRiskAssignmentHandler',
+      handler: 'app.manualRiskAssignmentHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
     hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)

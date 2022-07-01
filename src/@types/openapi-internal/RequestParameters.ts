@@ -327,6 +327,15 @@ export interface DefaultApiGetImportImportIdRequest {
   importId: string
 }
 
+export interface DefaultApiGetPulseManualRiskAssignmentRequest {
+  /**
+   * UserID of the user to get manual risk assignment settings
+   * @type string
+   * @memberof DefaultApigetPulseManualRiskAssignment
+   */
+  userId: string
+}
+
 export interface DefaultApiGetPulseRiskClassificationRequest {}
 
 export interface DefaultApiGetPulseRiskParameterRequest {
