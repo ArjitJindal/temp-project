@@ -74,6 +74,7 @@ export const TarponStackConstants = {
   LIST_IMPORTER_FUNCTION_NAME: getResourceNameForTarpon('ListImporterFunction'),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumer'),
+  LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
 }
 
 export const HammerheadStackConstants = {

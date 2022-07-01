@@ -289,7 +289,7 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     /* API Key Generator */
-    const apiKeyGeneratorFunction = this.createFunction(
+    const { alias: apiKeyGeneratorAlias } = this.createFunction(
       {
         name: TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
         handler: 'app.apiKeyGeneratorHandler',
@@ -297,7 +297,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    apiKeyGeneratorFunction.role?.attachInlinePolicy(
+    apiKeyGeneratorAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyGeneratorPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyGeneratorPolicy'),
         statements: [
@@ -319,32 +319,34 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* API Key Authorizer */
-    const apiKeyAuthorizerFunction = this.createFunction({
-      name: TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
-      handler: 'app.apiKeyAuthorizer',
-      codePath: 'dist/api-key-authorizer',
-      provisionedConcurrency:
-        config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
-    })
+    const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
+      this.createFunction({
+        name: TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
+        handler: 'app.apiKeyAuthorizer',
+        codePath: 'dist/api-key-authorizer',
+        provisionedConcurrency:
+          config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
+      })
 
     /* JWT Authorizer */
-    const jwtAuthorizerFunction = this.createFunction(
-      {
-        name: TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
-        handler: 'app.jwtAuthorizer',
-        codePath: 'dist/jwt-authorizer',
-      },
-      {
-        environment: {
-          AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
-          AUTH0_TOKEN_ISSUER: config.application.AUTH0_TOKEN_ISSUER,
-          AUTH0_JWKS_URI: config.application.AUTH0_JWKS_URI,
+    const { alias: jwtAuthorizerAlias, func: jwtAuthorizerFunction } =
+      this.createFunction(
+        {
+          name: TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
+          handler: 'app.jwtAuthorizer',
+          codePath: 'dist/jwt-authorizer',
         },
-      }
-    )
+        {
+          environment: {
+            AUTH0_AUDIENCE: config.application.AUTH0_AUDIENCE,
+            AUTH0_TOKEN_ISSUER: config.application.AUTH0_TOKEN_ISSUER,
+            AUTH0_JWKS_URI: config.application.AUTH0_JWKS_URI,
+          },
+        }
+      )
 
     /* Transaction */
-    const transactionFunction = this.createFunction({
+    const { alias: transactionAlias } = this.createFunction({
       name: TarponStackConstants.TRANSACTION_FUNCTION_NAME,
       handler: 'app.transactionHandler',
       codePath: 'dist/rules-engine',
@@ -353,27 +355,27 @@ export class CdkTarponStack extends cdk.Stack {
       layers: [fastGeoIpLayer],
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     })
-    tarponDynamoDbTable.grantReadWriteData(transactionFunction)
-    hammerheadDynamoDbTable.grantReadData(transactionFunction)
+    tarponDynamoDbTable.grantReadWriteData(transactionAlias)
+    hammerheadDynamoDbTable.grantReadData(transactionAlias)
 
     /* Transaction Event */
-    const transactionEventFunction = this.createFunction({
+    const { alias: transactionEventAlias } = this.createFunction({
       name: TarponStackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
       handler: 'app.transactionEventHandler',
       codePath: 'dist/rules-engine',
     })
-    tarponDynamoDbTable.grantReadWriteData(transactionEventFunction)
+    tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
 
     /* User Event */
-    const userEventFunction = this.createFunction({
+    const { alias: userEventAlias } = this.createFunction({
       name: TarponStackConstants.USER_EVENT_FUNCTION_NAME,
       handler: 'app.userEventHandler',
       codePath: 'dist/rules-engine',
     })
-    tarponDynamoDbTable.grantReadWriteData(userEventFunction)
+    tarponDynamoDbTable.grantReadWriteData(userEventAlias)
 
     /* File Import */
-    const fileImportFunction = this.createFunction(
+    const { alias: fileImportAlias } = this.createFunction(
       {
         name: TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
         handler: 'app.fileImportHandler',
@@ -389,10 +391,10 @@ export class CdkTarponStack extends cdk.Stack {
         timeout: Duration.minutes(15),
       }
     )
-    tarponDynamoDbTable.grantReadWriteData(fileImportFunction)
-    s3TmpBucket.grantRead(fileImportFunction)
-    s3ImportBucket.grantWrite(fileImportFunction)
-    fileImportFunction.role?.attachInlinePolicy(
+    tarponDynamoDbTable.grantReadWriteData(fileImportAlias)
+    s3TmpBucket.grantRead(fileImportAlias)
+    s3ImportBucket.grantWrite(fileImportAlias)
+    fileImportAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.FILE_IMPORT_FUNCTION_NAME}Policy`,
@@ -409,7 +411,7 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
 
-    const getPresignedUrlFunction = this.createFunction(
+    const { alias: getPresignedUrlAlias } = this.createFunction(
       {
         name: TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
         handler: 'app.getPresignedUrlHandler',
@@ -421,10 +423,10 @@ export class CdkTarponStack extends cdk.Stack {
         } as GetPresignedUrlConfig,
       }
     )
-    s3TmpBucket.grantPut(getPresignedUrlFunction)
+    s3TmpBucket.grantPut(getPresignedUrlAlias)
 
     /* Rule Template */
-    const ruleFunction = this.createFunction(
+    const { alias: ruleAlias } = this.createFunction(
       {
         name: TarponStackConstants.RULE_FUNCTION_NAME,
         handler: 'app.ruleHandler',
@@ -432,8 +434,8 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    tarponDynamoDbTable.grantWriteData(ruleFunction)
-    ruleFunction.role?.attachInlinePolicy(
+    tarponDynamoDbTable.grantWriteData(ruleAlias)
+    ruleAlias.role?.attachInlinePolicy(
       new Policy(this, `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`, {
         policyName: `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`,
         statements: [
@@ -447,7 +449,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Rule Instance */
-    const ruleInstanceFunction = this.createFunction(
+    const { alias: ruleInstanceAlias } = this.createFunction(
       {
         name: TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
         handler: 'app.ruleInstanceHandler',
@@ -455,8 +457,8 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    tarponDynamoDbTable.grantReadWriteData(ruleInstanceFunction)
-    ruleInstanceFunction.role?.attachInlinePolicy(
+    tarponDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
+    ruleInstanceAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
@@ -474,7 +476,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Transactions view */
-    const transactionsViewFunction = this.createFunction(
+    const { alias: transactionsViewAlias } = this.createFunction(
       {
         name: TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
         handler: 'app.transactionsViewHandler',
@@ -492,10 +494,10 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    tarponDynamoDbTable.grantReadWriteData(transactionsViewFunction)
-    s3TmpBucket.grantRead(transactionsViewFunction)
-    s3DocumentBucket.grantWrite(transactionsViewFunction)
-    transactionsViewFunction.role?.attachInlinePolicy(
+    tarponDynamoDbTable.grantReadWriteData(transactionsViewAlias)
+    s3TmpBucket.grantRead(transactionsViewAlias)
+    s3DocumentBucket.grantWrite(transactionsViewAlias)
+    transactionsViewAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
@@ -533,7 +535,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Business users view */
-    const businessUsersViewFunction = this.createFunction(
+    const { alias: businessUsersViewAlias } = this.createFunction(
       {
         name: TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.businessUsersViewHandler',
@@ -550,7 +552,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    businessUsersViewFunction.role?.attachInlinePolicy(
+    businessUsersViewAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
@@ -568,7 +570,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Consumer users view */
-    const consumerUsersViewFunction = this.createFunction(
+    const { alias: consumerUsersViewAlias } = this.createFunction(
       {
         name: TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.consumerUsersViewHandler',
@@ -585,7 +587,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    consumerUsersViewFunction.role?.attachInlinePolicy(
+    consumerUsersViewAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
@@ -603,7 +605,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* dashboard stats */
-    const dashboardStatsFunction = this.createFunction(
+    const { alias: dashboardStatsAlias } = this.createFunction(
       {
         name: TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
         handler: 'app.dashboardStatsHandler',
@@ -611,7 +613,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    dashboardStatsFunction.role?.attachInlinePolicy(
+    dashboardStatsAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         `${TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME}Policy`,
@@ -629,7 +631,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* User */
-    const userFunction = this.createFunction({
+    const { alias: userAlias } = this.createFunction({
       name: TarponStackConstants.USER_FUNCTION_NAME,
       handler: 'app.userHandler',
       codePath: 'dist/user-management',
@@ -637,20 +639,20 @@ export class CdkTarponStack extends cdk.Stack {
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
     })
-    tarponDynamoDbTable.grantReadWriteData(userFunction)
+    tarponDynamoDbTable.grantReadWriteData(userAlias)
 
     /* List Importer */
-    const listImporterFunction = this.createFunction({
+    const { alias: listImporterAlias } = this.createFunction({
       name: TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
       handler: 'app.listImporterHandler',
       codePath: 'dist/list-importer',
     })
-    tarponDynamoDbTable.grantReadWriteData(listImporterFunction)
+    tarponDynamoDbTable.grantReadWriteData(listImporterAlias)
     /*
      * Hammerhead console functions
      */
     /* Risk Classification function */
-    const riskClassificationFunction = this.createFunction(
+    const { alias: riskClassificationAlias } = this.createFunction(
       {
         name: HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
         handler: 'app.riskClassificationHandler',
@@ -658,54 +660,55 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    hammerheadDynamoDbTable.grantReadWriteData(riskClassificationFunction)
+    hammerheadDynamoDbTable.grantReadWriteData(riskClassificationAlias)
 
     /* Manual User Risk Assignment function */
-    const manualUserRiskAssignmentFunction = this.createFunction({
+    const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
       name: HammerheadStackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.manualUserRiskAssignmentHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
-    hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentFunction)
+    hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)
 
     /* Parameter risk level assignment function */
-    const parameterRiskAssignmentFunction = this.createFunction({
+    const { alias: parameterRiskAssignmentAlias } = this.createFunction({
       name: HammerheadStackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.parameterRiskAssignmentHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
-    hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentFunction)
+    hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
     /* Tarpon Kinesis Change capture consumer */
 
-    const tarponChangeCaptureKinesisConsumer = this.createFunction(
-      {
-        name: TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-        handler: 'app.tarponChangeCaptureHandler',
-        codePath: 'dist/tarpon-change-capture-kinesis-consumer',
-      },
-      {
-        ...atlasFunctionProps,
-        timeout: Duration.minutes(15),
-      }
-    )
+    const { alias: tarponChangeCaptureKinesisConsumerAlias } =
+      this.createFunction(
+        {
+          name: TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          handler: 'app.tarponChangeCaptureHandler',
+          codePath: 'dist/tarpon-change-capture-kinesis-consumer',
+        },
+        {
+          ...atlasFunctionProps,
+          timeout: Duration.minutes(15),
+        }
+      )
 
-    tarponChangeCaptureKinesisConsumer.addEventSource(
+    tarponChangeCaptureKinesisConsumerAlias.addEventSource(
       new KinesisEventSource(tarponStream, {
         batchSize: 10,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
     )
 
-    tarponChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
+    tarponChangeCaptureKinesisConsumerAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         getResourceNameForTarpon(
-          'tarponTarponChangeCaptureKinesisConsumerPolicy'
+          'tarpontarponChangeCaptureKinesisConsumerAliasPolicy'
         ),
         {
           policyName: getResourceNameForTarpon(
-            'tarponTarponChangeCaptureKinesisConsumerPolicy'
+            'tarpontarponChangeCaptureKinesisConsumerAliasPolicy'
           ),
           statements: [
             new PolicyStatement({
@@ -720,26 +723,27 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Hammerhead Kinesis Change capture consumer */
 
-    const hammerheadChangeCaptureKinesisConsumer = this.createFunction(
-      {
-        name: HammerheadStackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-        handler: 'app.hammerheadChangeCaptureHandler',
-        codePath: 'dist/hammerhead-change-capture-kinesis-consumer',
-      },
-      {
-        ...atlasFunctionProps,
-        timeout: Duration.minutes(15),
-      }
-    )
+    const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
+      this.createFunction(
+        {
+          name: HammerheadStackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          handler: 'app.hammerheadChangeCaptureHandler',
+          codePath: 'dist/hammerhead-change-capture-kinesis-consumer',
+        },
+        {
+          ...atlasFunctionProps,
+          timeout: Duration.minutes(15),
+        }
+      )
 
-    hammerheadChangeCaptureKinesisConsumer.addEventSource(
+    hammerheadChangeCaptureKinesisConsumerAlias.addEventSource(
       new KinesisEventSource(hammerheadStream, {
         batchSize: 10,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
     )
 
-    hammerheadChangeCaptureKinesisConsumer.role?.attachInlinePolicy(
+    hammerheadChangeCaptureKinesisConsumerAlias.role?.attachInlinePolicy(
       new Policy(
         this,
         getResourceNameForHammerhead('ChangeCaptureKinesisConsumerPolicy'),
@@ -887,14 +891,14 @@ export class CdkTarponStack extends cdk.Stack {
       {
         roleName: apiKeyAuthorizerBaseRoleName,
         assumedBy: new ArnPrincipal(
-          apiKeyAuthorizerFunction.role?.roleArn as string
+          apiKeyAuthorizerAlias.role?.roleArn as string
         ),
         managedPolicies: [
           ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
         ],
       }
     )
-    apiKeyAuthorizerFunction.role?.attachInlinePolicy(
+    apiKeyAuthorizerAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyAuthorizerPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyAuthorizerPolicy'),
         statements: [
@@ -917,14 +921,12 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const jwtAuthorizerBaseRole = new Role(this, jwtAuthorizerBaseRoleName, {
       roleName: jwtAuthorizerBaseRoleName,
-      assumedBy: new ArnPrincipal(
-        jwtAuthorizerFunction.role?.roleArn as string
-      ),
+      assumedBy: new ArnPrincipal(jwtAuthorizerAlias.role?.roleArn as string),
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
       ],
     })
-    jwtAuthorizerFunction.role?.attachInlinePolicy(
+    jwtAuthorizerAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('JwtAuthorizerPolicy'), {
         policyName: getResourceNameForTarpon('JwtAuthorizerPolicy'),
         statements: [
@@ -961,20 +963,23 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     new CfnOutput(this, 'Transaction Function Name', {
-      value: transactionFunction.functionName,
+      value: transactionAlias.functionName,
     })
     new CfnOutput(this, 'User Function Name', {
-      value: userFunction.functionName,
+      value: userAlias.functionName,
     })
     new CfnOutput(this, 'Transaction Table', {
       value: tarponDynamoDbTable.tableName,
     })
   }
 
+  // IMPORTANT: We should use the returned `alias` for granting further roles.
+  // We should only use the returned `func` to do the things that alias cannot do
+  // (e.g add environment variables)
   createFunction(
     internalFunctionProps: InternalFunctionProps,
     props: Partial<FunctionProps> = {}
-  ): LambdaFunction {
+  ): { alias: Alias; func: LambdaFunction } {
     const {
       layers,
       name,
@@ -1018,16 +1023,8 @@ export class CdkTarponStack extends cdk.Stack {
         },
       },
     })
-    // This is needed because of the usage of SpecRestApi
-    func.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
     // This is needed to allow using ${Function.Arn} in openapi.yaml
     ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
-    // Add permissions for lambda insights in cloudWatch
-    func.role?.addManagedPolicy(
-      ManagedPolicy.fromAwsManagedPolicyName(
-        'CloudWatchLambdaInsightsExecutionRolePolicy'
-      )
-    )
 
     /* Alarms */
     createLambdaErrorPercentageAlarm(
@@ -1037,14 +1034,25 @@ export class CdkTarponStack extends cdk.Stack {
     )
     createLambdaThrottlingAlarm(this, this.betterUptimeCloudWatchTopic, name)
 
-    // Provisioned concurrency settings
-    if (provisionedConcurrency) {
-      new Alias(this, `${name}-alias`, {
-        aliasName: `${name}-alias`,
+    // Alias is required for setting provisioned concurrency. We always create
+    // an alias for a lambda even it has no provisioned concurrency.
+    const alias = new Alias(
+      this,
+      `${name}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}`,
+      {
+        aliasName: TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME,
         version: func.currentVersion,
         provisionedConcurrentExecutions: provisionedConcurrency,
-      })
-    }
-    return func
+      }
+    )
+    // This is needed because of the usage of SpecRestApi
+    alias.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))
+    // Add permissions for lambda insights in cloudWatch
+    alias.role?.addManagedPolicy(
+      ManagedPolicy.fromAwsManagedPolicyName(
+        'CloudWatchLambdaInsightsExecutionRolePolicy'
+      )
+    )
+    return { alias, func }
   }
 }

@@ -75,7 +75,7 @@ openapi['components']['securitySchemes']['lambda-authorizer'] = {
     type: 'request',
     identitySource: 'method.request.header.x-api-key',
     authorizerUri: {
-      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME}.Arn}/invocations`,
+      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
     },
     authorizerResultTtlInSeconds: 3600,
     enableSimpleResponses: false,
@@ -92,7 +92,7 @@ for (const path in openapi.paths) {
     methodSetting['x-amazon-apigateway-request-validator'] = 'all'
     methodSetting['x-amazon-apigateway-integration'] = {
       uri: {
-        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}/invocations`,
+        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
       },
       httpMethod: 'POST',
       type: 'aws_proxy',

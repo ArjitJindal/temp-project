@@ -29,7 +29,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponApiKeyGeneratorFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponApiKeyGeneratorFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -88,7 +88,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -114,7 +114,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -173,7 +173,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -231,7 +231,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -286,7 +286,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -302,7 +302,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleTemplateFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -366,7 +366,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -388,7 +388,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -458,7 +458,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -510,7 +510,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -541,7 +541,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponRuleInstanceFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -605,7 +605,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -659,7 +659,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponFileImportFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -709,7 +709,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponGetPresignedUrlFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponGetPresignedUrlFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -757,7 +757,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponListImporterFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponListImporterFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -879,7 +879,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -995,7 +995,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1050,7 +1050,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1073,7 +1073,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1147,7 +1147,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1199,7 +1199,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1259,7 +1259,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1313,7 +1313,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponConsumersUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1387,7 +1387,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1439,7 +1439,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1499,7 +1499,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1553,7 +1553,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponBusinessUsersViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1619,7 +1619,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1679,7 +1679,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1739,7 +1739,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1791,7 +1791,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1851,7 +1851,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1900,7 +1900,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1947,7 +1947,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -1973,7 +1973,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTenantFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2039,7 +2039,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2088,7 +2088,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2141,7 +2141,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2164,7 +2164,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponAccountFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2213,7 +2213,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadRiskClassificationFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadRiskClassificationFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2238,7 +2238,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadRiskClassificationFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadRiskClassificationFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2304,7 +2304,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualUserRiskAssignmentFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadManualUserRiskAssignmentFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2363,7 +2363,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadParameterRiskAssignmentFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadParameterRiskAssignmentFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2385,7 +2385,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadParameterRiskAssignmentFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${hammerheadParameterRiskAssignmentFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -5172,7 +5172,7 @@ components:
         identitySource: method.request.header.authorization
         authorizerUri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponJWTAuthorizerFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponJWTAuthorizerFunction.Arn}:LATEST/invocations
         authorizerResultTtlInSeconds: 600
         enableSimpleResponses: false
       x-amazon-apigateway-authtype: Custom scheme with tenant claims
