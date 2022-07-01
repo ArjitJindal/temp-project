@@ -983,7 +983,7 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize,
       provisionedConcurrency,
     } = internalFunctionProps
-    const layersArray = layers ? layers : []
+    const layersArray = layers ? [...layers] : []
     if (
       !layersArray.includes(this.cwInsightsLayer) &&
       this.config.stage !== 'local'
@@ -1000,7 +1000,7 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize: memorySize
         ? memorySize
         : this.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-      layers,
+      layers: layersArray,
       ...{
         ...props,
         environment: {
