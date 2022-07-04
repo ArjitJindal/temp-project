@@ -57,7 +57,7 @@ const PathToLambda: any = {
   '/transactions/{transactionId}/comments/{commentId}':
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/rule_hit':
-    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
   '/pulse/risk-classification':
     HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':

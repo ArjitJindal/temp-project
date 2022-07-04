@@ -307,6 +307,41 @@ export const dashboardStatsHandler = lambdaApi()(
           endTimestampNumber
         ),
       }
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/dashboard_stats/rule_hit')
+    ) {
+      const client = await connectToDB()
+      const { principalId: tenantId } = event.requestContext.authorizer
+      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
+        startTimestamp?: string
+        endTimestamp?: string
+      }
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      // await dashboardStatsRepository.refreshStats(tenantId)
+
+      const endTimestampNumber = endTimestamp
+        ? parseInt(endTimestamp)
+        : Number.NaN
+      if (Number.isNaN(endTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
+      }
+      const startTimestampNumber = startTimestamp
+        ? parseInt(startTimestamp)
+        : Number.NaN
+      if (Number.isNaN(startTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+      }
+
+      return {
+        data: await dashboardStatsRepository.getRuleHitCountStats(
+          tenantId,
+          startTimestampNumber,
+          endTimestampNumber
+        ),
+      }
     }
     throw new BadRequest('Unsupported path')
   }

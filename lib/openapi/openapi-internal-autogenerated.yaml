@@ -1679,7 +1679,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponTransactionsViewFunction.Arn}:LATEST/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never
@@ -2281,7 +2281,7 @@ paths:
           application/json:
             schema:
               type: object
-              title: ChangeTenantPayload
+              title: ManualRiskAssignmentPayload
               properties:
                 riskLevel:
                   $ref: '#/components/schemas/RiskLevel'
@@ -2290,6 +2290,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
       parameters:

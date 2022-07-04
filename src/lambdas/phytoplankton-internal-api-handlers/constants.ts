@@ -15,6 +15,11 @@ export type TransactionDashboardStats = {
   stoppedTransactions: number
 }
 
+export type RuleDashboardStats = {
+  ruleId: string
+  hitCount: number
+}
+
 export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionCaseManagement> =
   {
     type: 'INCLUDE',

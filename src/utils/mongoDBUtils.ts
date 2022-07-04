@@ -105,16 +105,6 @@ export const DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-rule-stats-hourly`
 }
 
-export const DASHBOARD_RULE_HIT_STATS_COLLECTION_MONTHLY = (
-  tenantId: string
-) => {
-  return `${tenantId}-dashboard-rule-stats-monthly`
-}
-
-export const DASHBOARD_RULE_HIT_STATS_COLLECTION_DAILY = (tenantId: string) => {
-  return `${tenantId}-dashboard-rule-stats-daily`
-}
-
 export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
   tenantId: string
 ) => {

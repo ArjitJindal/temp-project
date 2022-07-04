@@ -13,7 +13,6 @@ import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
 import { CardPaymentMethod } from './CardPaymentMethod'
 import { ChangeTenantPayload } from './ChangeTenantPayload'
-import { ChangeTenantPayload1 } from './ChangeTenantPayload1'
 import { ChangeTenantPayload2 } from './ChangeTenantPayload2'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
@@ -90,6 +89,7 @@ import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
 import { WalletDetails } from './WalletDetails'
 import { WalletPaymentMethod } from './WalletPaymentMethod'
+import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
 
 export interface DefaultApiAccountsChangeTenantRequest {
   /**
@@ -699,10 +699,10 @@ export interface DefaultApiPulseManualRiskAssignmentRequest {
   userId: string
   /**
    *
-   * @type ChangeTenantPayload1
+   * @type ManualRiskAssignmentPayload
    * @memberof DefaultApipulseManualRiskAssignment
    */
-  ChangeTenantPayload1?: ChangeTenantPayload1
+  ManualRiskAssignmentPayload?: ManualRiskAssignmentPayload
 }
 
 export interface DefaultApiPulseRiskParameterRequest {
