@@ -4,6 +4,7 @@ import { ActionType, ProColumns } from '@ant-design/pro-table';
 import { ProFormInstance } from '@ant-design/pro-form';
 import type { CreateListsTableListItem } from './data.d';
 import PageWrapper from '@/components/PageWrapper';
+import { useI18n } from '@/locales';
 
 const StepForm: React.FC<Record<string, any>> = () => {
   const actionRef = useRef<ActionType>();
@@ -60,12 +61,13 @@ const StepForm: React.FC<Record<string, any>> = () => {
     },
   ];
 
+  const i18n = useI18n();
+
   return (
     <PageWrapper
-      pageContainerProps={{
-        content: 'Custom lists you have created',
-      }}
-    ></PageWrapper>
+      title={i18n('menu.lists.created-lists')}
+      description="Custom lists you have created"
+    />
   );
 };
 

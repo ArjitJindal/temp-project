@@ -1,5 +1,5 @@
 import { Table } from 'antd';
-import styles from './RuleParametersTable.less';
+import styles from './style.module.less';
 
 interface Props {
   parameters: object;

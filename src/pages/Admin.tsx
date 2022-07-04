@@ -2,21 +2,19 @@ import React from 'react';
 import { HeartTwoTone, SmileTwoTone } from '@ant-design/icons';
 import { Card, Typography, Alert } from 'antd';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
-import { useIntl } from 'umi';
+import { useI18n } from '@/locales';
 
 export default (): React.ReactNode => {
-  const intl = useIntl();
+  const i18n = useI18n();
   return (
     <PageHeaderWrapper
-      content={intl.formatMessage({
-        id: 'pages.admin.subPage.title',
+      content={i18n('pages.admin.subPage.title', {
         defaultMessage: 'This page can only be viewed by admin',
       })}
     >
       <Card>
         <Alert
-          message={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
+          message={i18n('pages.welcome.alertMessage', {
             defaultMessage: 'Faster and stronger heavy-duty components have been released.',
           })}
           type="success"

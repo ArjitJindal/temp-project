@@ -1,10 +1,10 @@
 import { Card, message } from 'antd';
 import ProForm, { ProFormSelect, ProFormText, ProFormTextArea } from '@ant-design/pro-form';
-import { useRequest } from 'umi';
+import useRequest from '@umijs/use-request';
 import type { FC } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
 import { fakeSubmitForm } from './service';
 import PageWrapper from '@/components/PageWrapper';
+import { useI18n } from '@/locales';
 
 const RequestNew: FC<Record<string, any>> = () => {
   const { run } = useRequest(fakeSubmitForm, {
@@ -18,12 +18,12 @@ const RequestNew: FC<Record<string, any>> = () => {
     run(values);
   };
 
+  // todo: i18n
+  const i18n = useI18n();
   return (
     <PageWrapper
-      pageContainerProps={{
-        content:
-          "Can't find a rule to suit your use case? Request a new rule and we will create one for you.",
-      }}
+      title={i18n('menu.rules.request-new')}
+      description="Can't find a rule to suit your use case? Request a new rule and we will create one for you."
     >
       <Card bordered={false}>
         <ProForm

@@ -1,5 +1,5 @@
-import { Link } from 'umi';
 import { Divider } from 'antd';
+import { Link } from 'react-router-dom';
 import { TransactionAmountDetails, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';

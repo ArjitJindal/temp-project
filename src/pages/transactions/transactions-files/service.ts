@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { request } from 'umi';
+import request from 'umi-request';
 import { TableListItem } from './data';
 
 export async function files(

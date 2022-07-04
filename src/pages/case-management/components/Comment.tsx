@@ -1,5 +1,5 @@
 import * as Ant from 'antd';
-import styles from './TransactionDetails.less';
+import styles from './TransactionDetails.module.less';
 import { Comment as ApiComment } from '@/apis';
 import { useUserName } from '@/utils/user-utils';
 import { FilesList } from '@/components/files/FilesList';

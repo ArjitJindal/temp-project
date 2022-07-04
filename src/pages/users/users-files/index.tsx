@@ -1,12 +1,12 @@
 import React, { useRef } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
-import type { ProColumns, ActionType } from '@ant-design/pro-table';
+import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
 import Table from '@/components/ui/Table';
+import { useI18n } from '@/locales';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -66,8 +66,9 @@ const TableList: React.FC = () => {
     },
   ];
 
+  const i18n = useI18n();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.users.users-files')}>
       <Table<TableListItem, TableListPagination>
         form={{
           labelWrap: true,

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Alert, Card, Typography } from 'antd';
-import { FormattedMessage, useIntl } from 'umi';
-import styles from './Welcome.less';
+import styles from './Welcome.module.less';
 import PageWrapper from '@/components/PageWrapper';
+import { FormattedMessage, useI18n } from '@/locales';
 
 const CodePreview: React.FC = ({ children }) => (
   <pre className={styles.pre}>
@@ -13,13 +13,12 @@ const CodePreview: React.FC = ({ children }) => (
 );
 
 export default (): React.ReactNode => {
-  const intl = useIntl();
+  const i18n = useI18n();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.welcome')}>
       <Card>
         <Alert
-          message={intl.formatMessage({
-            id: 'pages.welcome.alertMessage',
+          message={i18n('pages.welcome.alertMessage', {
             defaultMessage: 'Faster and stronger heavy-duty components have been released.',
           })}
           type="success"

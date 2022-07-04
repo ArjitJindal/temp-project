@@ -10,6 +10,7 @@ declare global {
   declare const FEATURES_ENABLED: Feature[];
   declare const EXPORT_ENTRIES_LIMIT: number;
   declare const SEGMENT_WRITE_KEY: string;
+  declare const SENTRY_DSN: string;
 
   interface Window {
     analytics: AnalyticsBrowser & {

@@ -3,11 +3,11 @@ import { AjvError, IChangeEvent, withTheme } from '@rjsf/core';
 import { Radio, Tabs, Typography } from 'antd';
 import { Fragment, useCallback, useState } from 'react';
 import _ from 'lodash';
-import { useFeature } from '../AppWrapper/FeaturesProvider';
 import { RuleActionTag } from './RuleActionTag';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RiskLevelRuleActions, RuleAction } from '@/apis';
+import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
 
 const JSONSchemaForm = withTheme(Theme);
 

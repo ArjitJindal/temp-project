@@ -1,6 +1,5 @@
 import { Alert, Form, message, Modal, Select } from 'antd';
 import { useEffect, useState } from 'react';
-import { useFeatures } from '../AppWrapper/FeaturesProvider';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import {
@@ -15,6 +14,7 @@ import {
 } from '@/utils/asyncResource';
 import { Feature, Tenant } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
+import { useFeatures } from '@/components/AppWrapper/Providers/FeaturesProvider';
 
 const FEATURES: Feature[] = ['PULSE', 'PULSE_MANUAL_USER_RISK_LEVEL', 'SLACK_ALERTS'];
 

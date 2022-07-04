@@ -34,8 +34,8 @@ screenshot
 .firebase
 .eslintcache
 
-build
-
 # CDK
 cdk.out
 .cdk*
+
+esbuild.json

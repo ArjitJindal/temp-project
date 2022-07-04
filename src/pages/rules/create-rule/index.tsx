@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Card, Divider, Row, Steps } from 'antd';
 import _ from 'lodash';
 import { RulesTable } from './components';
-import styles from './style.less';
+import styles from './style.module.less';
 import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
 import { RuleConfigurationsEditor } from './components/RuleConfigurationsEditor';
 import { Rule } from '@/apis';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
+import { useI18n } from '@/locales';
 
 const STEPS = [
   {
@@ -44,12 +45,12 @@ const StepForm: React.FC<Record<string, any>> = () => {
       .then((ruleImplementations) => setRuleImplementations(_.keyBy(ruleImplementations, 'name')));
   }, [api]);
 
+  const i18n = useI18n();
   return (
     <PageWrapper
-      pageContainerProps={{
-        content: 'Create a transaction monitoring rule with a straight-forward 3 step process',
-        loading: !ruleImplementations,
-      }}
+      title={i18n('menu.rules.create-rule')}
+      description="Create a transaction monitoring rule with a straight-forward 3 step process"
+      loading={!ruleImplementations}
     >
       <Card bordered={false}>
         <Row justify="center">

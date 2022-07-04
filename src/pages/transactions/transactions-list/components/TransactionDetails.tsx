@@ -4,7 +4,7 @@ import { Col, Divider, Input, message, Row, Tag, Upload } from 'antd';
 import { useCallback, useState } from 'react';
 import { PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import styles from './TransactionDetails.less';
+import styles from './TransactionDetails.module.less';
 import {
   Comment as TransactionComment,
   FileInfo,

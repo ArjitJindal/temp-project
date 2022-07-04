@@ -10,6 +10,7 @@ import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
 import Table from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
+import { useI18n } from '@/locales';
 
 export default () => {
   const api = useApi();
@@ -162,11 +163,12 @@ export default () => {
     ],
     [handleActivationChange, ruleImplementations, rules, updatedRuleInstances],
   );
+  const i18n = useI18n();
+  // todo: i18n
   return (
     <PageWrapper
-      pageContainerProps={{
-        content: 'List of all your rules. Activate/deactivate them in one click',
-      }}
+      title={i18n('menu.rules.my-rules')}
+      description="List of all your rules. Activate/deactivate them in one click"
     >
       <Table<RuleInstance>
         form={{

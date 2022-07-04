@@ -12,6 +12,7 @@ import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
+import { useI18n } from '@/locales';
 
 export default function () {
   const api = useApi();
@@ -94,9 +95,10 @@ export default function () {
 
   const analytics = useAnalytics();
 
+  const i18n = useI18n();
   // todo: i18n
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.accounts')}>
       <Table<Account>
         actionRef={actionRef}
         form={{

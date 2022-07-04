@@ -425,7 +425,7 @@ paths:
                     type: string
               examples:
                 example-1:
-                  value: {}
+                  value: Too larget dataset
       operationId: get-transactions-list-export
       description: ''
       parameters:

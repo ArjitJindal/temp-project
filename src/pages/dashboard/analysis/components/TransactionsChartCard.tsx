@@ -4,7 +4,7 @@ import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import type moment from 'moment';
 import { Column } from '@ant-design/charts';
 import { useEffect, useState } from 'react';
-import styles from '../style.less';
+import styles from '../style.module.less';
 import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
 import { useApi } from '@/api';
 import {
@@ -20,9 +20,9 @@ import {
 import { DashboardStatsTransactionsCountData } from '@/apis';
 
 // FIXME: import doesn't work
-const toPng = require('html-to-image').toPng;
-const autoTable = require('jspdf-autotable').default;
-const jsPDF = require('jspdf');
+// const toPng = require('html-to-image').toPng;
+// const autoTable = require('jspdf-autotable').default;
+// const jsPDF = require('jspdf');
 
 type RangePickerValue = RangePickerProps<moment.Moment>['value'];
 export type TimeWindowType = DefaultApiGetDashboardStatsTransactionsRequest['timeframe'];
@@ -36,52 +36,52 @@ export type TransactionsStats = {
   stoppedTransactions: number;
 }[];
 
-function saveToFile(blob: Blob, filename: string) {
-  const a = document.createElement('a');
-  const url = window.URL.createObjectURL(blob);
-  a.href = url;
-  a.download = filename;
-  a.click();
-  window.URL.revokeObjectURL(url);
-}
+// function saveToFile(blob: Blob, filename: string) {
+//   const a = document.createElement('a');
+//   const url = window.URL.createObjectURL(blob);
+//   a.href = url;
+//   a.download = filename;
+//   a.click();
+//   window.URL.revokeObjectURL(url);
+// }
 
-function getDateRange(rangePickerValue: RangePickerValue) {
-  if (!rangePickerValue) {
-    return null;
-  }
-  const fromDate = rangePickerValue[0] as moment.Moment;
-  const toDate = rangePickerValue[1] as moment.Moment;
-  return `${fromDate.format('YYYYMMDD')}-${toDate.format('YYYYMMDD')}`;
-}
+// function getDateRange(rangePickerValue: RangePickerValue) {
+//   if (!rangePickerValue) {
+//     return null;
+//   }
+//   const fromDate = rangePickerValue[0] as moment.Moment;
+//   const toDate = rangePickerValue[1] as moment.Moment;
+//   return `${fromDate.format('YYYYMMDD')}-${toDate.format('YYYYMMDD')}`;
+// }
 
-function exportToCsv(header: string[], exportData: any[], rangePickerValue: RangePickerValue) {
-  const data = [[header, ...exportData].map((row) => row.join(',')).join('\n')];
-  saveToFile(
-    new Blob(data, { type: 'octet/stream' }),
-    `flagright-stopped-transactions-${getDateRange(rangePickerValue)}.csv`,
-  );
-}
+// function exportToCsv(header: string[], exportData: any[], rangePickerValue: RangePickerValue) {
+//   const data = [[header, ...exportData].map((row) => row.join(',')).join('\n')];
+//   saveToFile(
+//     new Blob(data, { type: 'octet/stream' }),
+//     `flagright-stopped-transactions-${getDateRange(rangePickerValue)}.csv`,
+//   );
+// }
 
-async function exportToPdf(header: any[], exportData: any[], rangePickerValue: RangePickerValue) {
-  const doc = new jsPDF.jsPDF();
-  const chart = document.getElementById('sales-card')!;
-  const ratio = chart.clientHeight / chart.clientWidth;
-  const chartImage = await toPng(chart);
-  const chartImageX = 10;
-  const chartImageY = 10;
-  const chartWidth = doc.internal.pageSize.getWidth() - 2 * chartImageX;
-  const chartHeight = chartWidth * ratio;
-  doc.addImage(chartImage, 'PNG', chartImageX, chartImageY, chartWidth, chartHeight);
-  autoTable(doc, {
-    startY: chartImageY + chartHeight + 10,
-    headStyles: { fillColor: '#6294FA' },
-    styles: { cellPadding: 1 },
-    head: [header],
-    body: exportData,
-  });
-
-  doc.save(`flagright-stopped-transactions-${getDateRange(rangePickerValue)}.pdf`);
-}
+// async function exportToPdf(header: any[], exportData: any[], rangePickerValue: RangePickerValue) {
+//   const doc = new jsPDF.jsPDF();
+//   const chart = document.getElementById('sales-card')!;
+//   const ratio = chart.clientHeight / chart.clientWidth;
+//   const chartImage = await toPng(chart);
+//   const chartImageX = 10;
+//   const chartImageY = 10;
+//   const chartWidth = doc.internal.pageSize.getWidth() - 2 * chartImageX;
+//   const chartHeight = chartWidth * ratio;
+//   doc.addImage(chartImage, 'PNG', chartImageX, chartImageY, chartWidth, chartHeight);
+//   autoTable(doc, {
+//     startY: chartImageY + chartHeight + 10,
+//     headStyles: { fillColor: '#6294FA' },
+//     styles: { cellPadding: 1 },
+//     head: [header],
+//     body: exportData,
+//   });
+//
+//   doc.save(`flagright-stopped-transactions-${getDateRange(rangePickerValue)}.pdf`);
+// }
 
 const TransactionsChartCard = () => {
   const [endDate, setEndDate] = useState<moment.Moment | null>(null);
@@ -132,21 +132,6 @@ const TransactionsChartCard = () => {
 
   const data = getOr(dataResource, []);
 
-  // const onActionsMenuClick = useCallback((event: MenuInfo) => {
-  //   const { key } = event;
-  //   const exportData = salesData.flatMap((data1) => {
-  //     return rankingListData.map((data2, index) => [
-  //       index === 0 ? data1.xValue : '',
-  //       data2.title,
-  //       Math.floor(Math.random() * 1000),
-  //     ]);
-  //   });
-  //   if (key === 'csv') {
-  //     exportToCsv(['Month', 'Rule', 'Hits'], exportData, endDate);
-  //   } else if (key === 'pdf') {
-  //     exportToPdf(['Month', 'Rule', 'Hits'], exportData, endDate);
-  //   }
-  // }, []);
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">
       <div className={styles.salesCard}>

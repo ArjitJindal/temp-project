@@ -3,12 +3,13 @@ import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Avatar, Drawer, Tooltip } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
-import { IRouteComponentProps, Link } from 'umi';
-import { currencies } from '../../utils/currencies';
+import { Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
+import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
@@ -27,16 +28,13 @@ import {
 } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
-import ExportButton from '@/pages/case-management/components/ExportButton';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
-import { Feature } from '@/components/AppWrapper/FeaturesProvider';
+import { useI18n } from '@/locales';
+import { Feature } from '@/components/AppWrapper/Providers/FeaturesProvider';
 
-const TableList = (
-  props: IRouteComponentProps<{
-    id?: string;
-  }>,
-) => {
+function TableList() {
+  const { id: transactionId } = useParams<'id'>();
   const [users] = useUsers();
   const actionRef = useRef<ActionType>();
   const formRef = useRef<ProFormInstance<FormValues>>();
@@ -53,7 +51,6 @@ const TableList = (
   }, []);
   const api = useApi();
 
-  const transactionId = props.match.params.id;
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
@@ -82,7 +79,7 @@ const TableList = (
         // todo: i18n
         let message = 'Unknown error';
         if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find сфыу by id "${transactionId}"`;
+          message = `Unable to find transaction by id "${transactionId}"`;
         } else if (e instanceof Error && e.message) {
           message = e.message;
         }
@@ -353,8 +350,11 @@ const TableList = (
     [api, reloadTable, updatedTransactions, users],
   );
   const [isLoading, setLoading] = useState(false);
+  const i18n = useI18n();
+  const navigate = useNavigate();
+
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.case-management')}>
       <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
@@ -471,7 +471,7 @@ const TableList = (
         width={700}
         visible={!isInit(currentItem)}
         onClose={() => {
-          props.history.replace('/case-management/all');
+          navigate('/case-management/all', { replace: true });
         }}
         closable={false}
       >
@@ -490,6 +490,6 @@ const TableList = (
       </Drawer>
     </PageWrapper>
   );
-};
+}
 
 export default TableList;

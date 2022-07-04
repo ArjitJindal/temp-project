@@ -1,18 +1,12 @@
-import type { FC } from 'react';
 import { Col, Row } from 'antd';
 import TransactionsChartCard from './components/TransactionsChartCard';
 import HitsPerUserCard from './components/HitsPerUserCard';
-import { AnalysisData } from './data.d';
 import RuleHitCard from './components/RulesHitCard';
+import PageWrapper from '@/components/PageWrapper';
 
-type AnalysisProps = {
-  dashboardAndanalysis: AnalysisData;
-  loading: boolean;
-};
-
-const Analysis: FC<AnalysisProps> = () => {
+function Analysis() {
   return (
-    <>
+    <PageWrapper>
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <TransactionsChartCard />
@@ -24,8 +18,8 @@ const Analysis: FC<AnalysisProps> = () => {
           <RuleHitCard />
         </Col>
       </Row>
-    </>
+    </PageWrapper>
   );
-};
+}
 
 export default Analysis;

@@ -1,33 +1,48 @@
 import React, { useEffect } from 'react';
-import { PageContainerProps } from '@ant-design/pro-layout/lib/components/PageContainer';
-import { useRouteMatch } from 'react-router';
-import AntConfigProvider from './AntConfigProvider';
-import AntPageComponent from './AntPageComponent';
+import { Typography } from 'antd';
+import { useLocation } from 'react-router-dom';
+import s from './styles.module.less';
 import { useAnalytics } from '@/utils/segment/context';
 import { useAuth0User } from '@/utils/user-utils';
 
 interface Props {
-  pageContainerProps?: PageContainerProps;
+  title?: string;
+  description?: string;
+  // pageContainerProps?: PageContainerProps;
+  loading?: boolean;
   children?: React.ReactNode;
 }
 
 export default function PageWrapper(props: Props) {
   const user = useAuth0User();
   const analytics = useAnalytics();
-  const location = useRouteMatch();
+  const location = useLocation();
 
   const userId = user.userId;
   const tenantId = user.tenantId;
 
+  // todo: migration: check if something is broken
   useEffect(() => {
     analytics.page({
-      url: location.url,
+      url: location.pathname,
     });
-  }, [analytics, tenantId, location.url]);
-
+  }, [analytics, tenantId, location.pathname]);
+  const { title, description } = props;
   return (
-    <AntConfigProvider>
-      <AntPageComponent {...props.pageContainerProps}>{props.children}</AntPageComponent>
-    </AntConfigProvider>
+    <>
+      {(title || description) && (
+        <header className={s.head}>
+          {title && (
+            <Typography.Title level={4} className={s.title}>
+              {title}
+            </Typography.Title>
+          )}
+          {description && (
+            <Typography.Paragraph className={s.description}>{description}</Typography.Paragraph>
+          )}
+        </header>
+      )}
+      <div className={s.body}>{props.children}</div>
+    </>
   );
 }

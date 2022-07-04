@@ -1,10 +1,11 @@
 import { Drawer, Tabs, Tag } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import { IRouteComponentProps, Link } from 'umi';
 import moment from 'moment';
+import { RouteMatch, useNavigate, useParams } from 'react-router';
+import { Link } from 'react-router-dom';
 import type { TableListPagination } from './data.d';
-import styles from './UsersList.less';
+import styles from './UsersList.module.less';
 import { ConsumerUserDetails } from './components/ConsumerUserDetails';
 import { BusinessUserDetails } from './components/BusinessUserDetails';
 import Table from '@/components/ui/Table';
@@ -25,21 +26,18 @@ import {
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
+import { useI18n } from '@/locales';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
 };
 
-const BusinessUsersTab = (
-  props: IRouteComponentProps<{
-    id?: string;
-  }>,
-) => {
+const BusinessUsersTab = (props: { id?: string }) => {
   const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalBusinessUser>>(init());
   const api = useApi();
 
-  const userId = props.match.params.id;
+  const { id: userId } = props;
   const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
   useEffect(() => {
     if (userId == null || userId === 'all') {
@@ -169,6 +167,7 @@ const BusinessUsersTab = (
   ];
 
   const analytics = useAnalytics();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -216,7 +215,7 @@ const BusinessUsersTab = (
         width={800}
         visible={!isInit(currentItem)}
         onClose={() => {
-          props.history.replace('/users/list/business/all');
+          navigate('/users/list/business/all', { replace: true });
         }}
         closable={false}
       >
@@ -228,16 +227,12 @@ const BusinessUsersTab = (
   );
 };
 
-const ConsumerUsersTab = (
-  props: IRouteComponentProps<{
-    id?: string;
-  }>,
-) => {
+const ConsumerUsersTab = (props: { id?: string }) => {
   const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
 
   const api = useApi();
-  const userId = props.match.params.id;
+  const { id: userId } = props;
   const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
   useEffect(() => {
     if (userId == null || userId === 'all') {
@@ -365,6 +360,7 @@ const ConsumerUsersTab = (
   ];
 
   const analytics = useAnalytics();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -411,7 +407,7 @@ const ConsumerUsersTab = (
         width={600}
         visible={!isInit(currentItem)}
         onClose={() => {
-          props.history.replace('/users/list/consumer/all');
+          navigate('/users/list/consumer/all', { replace: true });
         }}
         closable={false}
       >
@@ -423,28 +419,25 @@ const ConsumerUsersTab = (
   );
 };
 
-const TableList = (
-  props: IRouteComponentProps<{
-    list?: string;
-    id?: string;
-  }>,
-) => {
-  const { list = 'consumer' } = props.match.params;
+const TableList = () => {
+  const { list = 'consumer', id } = useParams<'list' | 'id'>();
+  const navigate = useNavigate();
+  const i18n = useI18n();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.users.lists')}>
       <Tabs
         type="line"
         activeKey={list}
         destroyInactiveTabPane={true}
         onChange={(key) => {
-          props.history.push(`/users/list/${key}/all`);
+          navigate(`/users/list/${key}/all`, { replace: true });
         }}
       >
         <Tabs.TabPane tab="Consumer Users" key="consumer">
-          <ConsumerUsersTab {...props} />
+          <ConsumerUsersTab id={id} />
         </Tabs.TabPane>
         <Tabs.TabPane tab="Business Users" key="business">
-          <BusinessUsersTab {...props} />
+          <BusinessUsersTab id={id} />
         </Tabs.TabPane>
       </Tabs>
     </PageWrapper>

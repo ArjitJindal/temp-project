@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
-import { IRouteComponentProps, Link } from 'umi';
+import { Link } from 'react-router-dom';
+import { RouteMatch, useNavigate, useParams } from 'react-router';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
 import { getUserName } from '@/utils/api/users';
@@ -22,20 +23,17 @@ import {
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
+import { useI18n } from '@/locales';
 
 // todo: move to config
 export const DATE_TIME_FORMAT = 'L LTS';
 
-const TableList = (
-  props: IRouteComponentProps<{
-    id?: string;
-  }>,
-) => {
+const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
+  const { id: transactionId } = useParams<'id'>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const api = useApi();
 
-  const transactionId = props.match.params.id;
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
@@ -243,8 +241,10 @@ const TableList = (
 
   const analytics = useAnalytics();
 
+  const i18n = useI18n();
+  const navigate = useNavigate();
   return (
-    <PageWrapper>
+    <PageWrapper title={i18n('menu.transactions.transactions-list')}>
       <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
@@ -305,7 +305,7 @@ const TableList = (
         width={700}
         visible={!isInit(currentItem)}
         onClose={() => {
-          props.history.replace('/transactions/transactions-list/all');
+          navigate('/transactions/transactions-list/all', { replace: true });
         }}
         closable={false}
       >

@@ -2,7 +2,7 @@ import { Descriptions, Divider, message, Row, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { AjvError } from '@rjsf/core';
-import styles from './RuleConfigurationsEditor.less';
+import styles from './style.module.less';
 import { Rule } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
@@ -11,7 +11,7 @@ import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
-import { useFeature } from '@/components/AppWrapper/FeaturesProvider';
+import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
 
 interface Props {
   rule: Rule;

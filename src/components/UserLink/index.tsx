@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'umi';
+import { Link } from 'react-router-dom';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 

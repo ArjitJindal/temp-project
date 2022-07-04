@@ -23,7 +23,7 @@ import {
   PaperClipOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import styles from './TransactionDetails.less';
+import styles from './TransactionDetails.module.less';
 import { RuleActionStatus } from './RuleActionStatus';
 import Comment from './Comment';
 import {

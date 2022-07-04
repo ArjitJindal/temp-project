@@ -1,7 +1,7 @@
 import React from 'react';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
 import { PageLoading } from '@ant-design/pro-layout';
-import { history } from '@@/core/history';
+// import { history } from '@@/core/history';
 
 const AuthenticationRequiredWrapper = withAuthenticationRequired(
   (({ children: innerChildren }) => innerChildren) as React.FC,
@@ -9,7 +9,7 @@ const AuthenticationRequiredWrapper = withAuthenticationRequired(
 );
 
 const onRedirectCallback = (appState: any) => {
-  history.push(appState && appState.returnTo ? appState.returnTo : window.location.pathname);
+  // navigate(appState && appState.returnTo ? appState.returnTo : window.location.pathname)
 };
 
 const providerConfig = {

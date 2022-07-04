@@ -1,5 +1,7 @@
 import { ConfigProvider } from 'antd';
+import * as ProProvider from '@ant-design/pro-provider';
 import React from 'react';
+import enUS from 'antd/lib/locale/en_US';
 
 export const defaultValidateMessages = {
   default: "Validation error on field '${name}'",
@@ -55,8 +57,15 @@ interface Props {
 
 export default function AntConfigProvider(props: Props) {
   return (
-    <ConfigProvider form={{ validateMessages: defaultValidateMessages }}>
-      {props.children}
+    <ConfigProvider locale={enUS} form={{ validateMessages: defaultValidateMessages }}>
+      <ProProvider.ConfigProvider
+        value={{
+          intl: ProProvider.enUSIntl,
+          valueTypeMap: {},
+        }}
+      >
+        <ProProvider.ConfigProviderWrap>{props.children}</ProProvider.ConfigProviderWrap>
+      </ProProvider.ConfigProvider>
     </ConfigProvider>
   );
 }

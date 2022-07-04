@@ -1,6 +1,6 @@
 import { Descriptions, Result } from 'antd';
-import { Link } from 'umi';
-import styles from './RuleInstanceCreatedInfo.less';
+import { Link } from 'react-router-dom';
+import styles from './style.module.less';
 import { Rule } from '@/apis';
 import Button from '@/components/ui/Button';
 
