@@ -133,7 +133,10 @@ describe('Core logic', () => {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-volume',
         defaultParameters: {
-          timeWindowInSeconds: 3600,
+          timeWindow: {
+            units: 3600,
+            granularity: 'second',
+          },
           ...ruleParams,
         } as TransactionsVolumeRuleParameters,
       },
@@ -156,7 +159,11 @@ describe('Transaction State', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'transactions-volume',
       defaultParameters: {
-        timeWindowInSeconds: 3600,
+        timeWindow: {
+          units: 3600,
+          granularity: 'second',
+          rollingBasis: false,
+        },
         checkSender: 'all',
         checkReceiver: 'all',
         transactionVolumeThreshold: {
@@ -205,6 +212,103 @@ describe('Transaction State', () => {
         }),
       ],
       expectedHits: [false, false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Rolling basis parameter', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-volume',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: false,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionVolumeThreshold: {
+          EUR: 300,
+        },
+      } as TransactionsVolumeRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Skip transactions with non-target state',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Skip transactions with non-target state',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T11:59:59.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-3',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-02T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

@@ -9,14 +9,28 @@ import {
   isTransactionAmountAboveThreshold,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
+import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
+export type TimeWindowGranularity =
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'week'
+  | 'month'
+
+export type TimeWindow = {
+  units: number
+  granularity: TimeWindowGranularity
+  rollingBasis?: boolean
+}
 export type TransactionsVolumeRuleParameters =
   DefaultTransactionRuleParameters & {
     transactionVolumeThreshold: {
       [currency: string]: number
     }
-    timeWindowInSeconds: number
+    timeWindow: TimeWindow
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
   }
@@ -53,9 +67,24 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           },
           required: [],
         },
-        timeWindowInSeconds: {
-          type: 'integer',
-          title: 'Time Window (Seconds)',
+        timeWindow: {
+          type: 'object',
+          title: 'Time Window',
+          properties: {
+            units: { type: 'integer', title: 'Number of time unit' },
+            granularity: {
+              type: 'string',
+              title: 'Time granularity',
+              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
+            },
+            rollingBasis: {
+              type: 'boolean',
+              nullable: true,
+              description:
+                'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+            },
+          },
+          required: ['units', 'granularity'],
         },
         checkSender: {
           type: 'string',
@@ -68,7 +97,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           enum: ['receiving', 'all', 'none'],
         },
       },
-      required: ['transactionVolumeThreshold', 'timeWindowInSeconds'],
+      required: ['transactionVolumeThreshold', 'timeWindow'],
       additionalProperties: false,
     }
   }
@@ -78,7 +107,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       checkSender,
       checkReceiver,
       transactionVolumeThreshold,
-      timeWindowInSeconds,
+      timeWindow,
     } = this.parameters
 
     this.transactionRepository = new TransactionRepository(this.tenantId, {
@@ -86,9 +115,11 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     })
 
     // Retrieve all the transactions during the target time window
-    const afterTimestamp = dayjs(this.transaction.timestamp)
-      .subtract(timeWindowInSeconds, 'seconds')
-      .valueOf()
+    const afterTimestamp = subtractTime(
+      dayjs(this.transaction.timestamp),
+      timeWindow
+    )
+
     const senderTransactionsPromise =
       this.transaction.originUserId && checkSender !== 'none'
         ? this.getTransactions(

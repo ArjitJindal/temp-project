@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { TransactionsVolumeRuleParameters } from '../transactions-volume'
 import { TransactionsVolumeQuantilesRuleParameters } from '../transactions-volume-quantiles'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -150,7 +149,7 @@ describe('Sender/Receiver Parameters', () => {
         defaultParameters: {
           timeWindowInSeconds: 3600,
           ...ruleParams,
-        } as TransactionsVolumeRuleParameters,
+        } as TransactionsVolumeQuantilesRuleParameters,
       },
     ])
 
@@ -285,7 +284,7 @@ describe('Time Granularities', () => {
         defaultParameters: {
           timeWindowInSeconds: 3600,
           ...ruleParams,
-        } as TransactionsVolumeRuleParameters,
+        } as TransactionsVolumeQuantilesRuleParameters,
       },
     ])
 
@@ -432,7 +431,7 @@ describe('User Check', () => {
         defaultParameters: {
           timeWindowInSeconds: 3600,
           ...ruleParams,
-        } as TransactionsVolumeRuleParameters,
+        } as TransactionsVolumeQuantilesRuleParameters,
       },
     ])
 
@@ -591,7 +590,7 @@ describe('Transaction type', () => {
         defaultParameters: {
           timeWindowInSeconds: 3600,
           ...ruleParams,
-        } as TransactionsVolumeRuleParameters,
+        } as TransactionsVolumeQuantilesRuleParameters,
       },
     ])
 
@@ -763,7 +762,7 @@ describe('Payment Method', () => {
         defaultParameters: {
           timeWindowInSeconds: 3600,
           ...ruleParams,
-        } as TransactionsVolumeRuleParameters,
+        } as TransactionsVolumeQuantilesRuleParameters,
       },
     ])
 
