@@ -18,6 +18,7 @@ export interface FlagrightAuth0User {
   picture: string | null;
   role: string | null;
   userId: string;
+  verifiedEmail: string | null;
   tenantId: string;
   tenantName: string;
   tenantConsoleApiUrl: string;
@@ -56,7 +57,16 @@ export function getUserRole(user: FlagrightAuth0User | null): UserRole {
 }
 
 export function isAtLeast(user: FlagrightAuth0User | null, role: UserRole) {
-  return getUserRole(user).valueOf() <= role.valueOf();
+  if (getUserRole(user).valueOf() > role.valueOf()) {
+    return false;
+  }
+  if (role === UserRole.ROOT) {
+    const isFlagrightEmail = user?.verifiedEmail?.endsWith('@flagright.com') ?? false;
+    if (!isFlagrightEmail) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
@@ -110,6 +120,7 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
     const tenantApiAudience: string | null = user[`${NAMESPACE}/tenantApiAudience`];
     const tenantId: string | null = user[`${NAMESPACE}/tenantId`];
     const tenantName: string | null = user[`${NAMESPACE}/tenantName`];
+    const verifiedEmail: string | null = user[`${NAMESPACE}/verifiedEmail`];
 
     if (
       tenantConsoleApiUrl == null ||
@@ -128,6 +139,7 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
       tenantName: tenantName,
       tenantConsoleApiUrl: tenantConsoleApiUrl,
       tenantApiAudience: tenantApiAudience,
+      verifiedEmail: verifiedEmail ?? null,
     };
   }, [user]);
   if (flagrightUser == null) {
