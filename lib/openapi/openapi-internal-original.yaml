@@ -1707,6 +1707,7 @@ components:
       enum:
         - PULSE
         - PULSE_MANUAL_USER_RISK_LEVEL
+        - SLACK_ALERTS
       description: ''
     AccountRole:
       type: string

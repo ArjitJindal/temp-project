@@ -10,4 +10,4 @@
  * Do not edit the class manually.
  */
 
-export type Feature = 'PULSE' | 'PULSE_MANUAL_USER_RISK_LEVEL'
+export type Feature = 'PULSE' | 'PULSE_MANUAL_USER_RISK_LEVEL' | 'SLACK_ALERTS'
