@@ -803,8 +803,8 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiGetDashboardStatsRuleHitRequest = {
-  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' (optional)
-  startTimestamp: "WEEK",
+  // number (optional)
+  startTimestamp: 3.14,
   // number (optional)
   endTimestamp: 3.14,
 };
@@ -816,10 +816,10 @@ apiInstance.getDashboardStatsRuleHit(body).then((data:any) => {
 
 ### Parameters
 
-| Name               | Type                | Description     | Notes                            |
-| ------------------ | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | --- | -------------------------------- |
-| **startTimestamp** | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* |     | (optional) defaults to undefined |
-| **endTimestamp**   | [**number**]        |                 | (optional) defaults to undefined |
+| Name               | Type         | Description | Notes                            |
+| ------------------ | ------------ | ----------- | -------------------------------- |
+| **startTimestamp** | [**number**] |             | (optional) defaults to undefined |
+| **endTimestamp**   | [**number**] |             | (optional) defaults to undefined |
 
 ### Return type
 

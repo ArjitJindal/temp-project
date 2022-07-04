@@ -295,10 +295,10 @@ export interface DefaultApiGetDashboardStatsHitsPerUserRequest {
 export interface DefaultApiGetDashboardStatsRuleHitRequest {
   /**
    *
-   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   * @type number
    * @memberof DefaultApigetDashboardStatsRuleHit
    */
-  startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
+  startTimestamp?: number;
   /**
    *
    * @type number

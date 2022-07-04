@@ -670,7 +670,7 @@ export class ObservableDefaultApi {
    * @param endTimestamp
    */
   public getDashboardStatsRuleHit(
-    startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Observable<DashboardStatsRulesCount> {

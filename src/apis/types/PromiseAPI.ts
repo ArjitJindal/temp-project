@@ -313,7 +313,7 @@ export class PromiseDefaultApi {
    * @param endTimestamp
    */
   public getDashboardStatsRuleHit(
-    startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Promise<DashboardStatsRulesCount> {

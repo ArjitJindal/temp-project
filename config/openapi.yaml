@@ -748,12 +748,7 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: string
-            enum:
-              - WEEK
-              - MONTH
-              - DAY
-              - YEAR
+            type: number
           in: query
           name: startTimestamp
         - schema:

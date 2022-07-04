@@ -3,6 +3,7 @@ import { Col, Row } from 'antd';
 import TransactionsChartCard from './components/TransactionsChartCard';
 import HitsPerUserCard from './components/HitsPerUserCard';
 import { AnalysisData } from './data.d';
+import RuleHitCard from './components/RulesHitCard';
 
 type AnalysisProps = {
   dashboardAndanalysis: AnalysisData;
@@ -18,6 +19,9 @@ const Analysis: FC<AnalysisProps> = () => {
         </Col>
         <Col span={24}>
           <HitsPerUserCard />
+        </Col>
+        <Col span={24}>
+          <RuleHitCard />
         </Col>
       </Row>
     </>

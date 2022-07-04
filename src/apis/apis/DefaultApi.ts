@@ -650,7 +650,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param endTimestamp
    */
   public async getDashboardStatsRuleHit(
-    startTimestamp?: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Promise<RequestContext> {
@@ -667,7 +667,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     if (startTimestamp !== undefined) {
       requestContext.setQueryParam(
         'startTimestamp',
-        ObjectSerializer.serialize(startTimestamp, "'WEEK' | 'MONTH' | 'DAY' | 'YEAR'", ''),
+        ObjectSerializer.serialize(startTimestamp, 'number', ''),
       );
     }
 
