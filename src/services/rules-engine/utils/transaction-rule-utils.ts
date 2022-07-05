@@ -66,12 +66,12 @@ export function isTransactionWithinTimeWindow(
   transaction: Transaction,
   timeWindow:
     | {
-        from: string // format: 00:00:00+00:00
-        to: string
+        from?: string // format: 00:00:00+00:00
+        to?: string
       }
     | undefined
 ) {
-  if (!timeWindow) {
+  if (!timeWindow || !timeWindow.from || !timeWindow.to) {
     return true
   }
   const transactionTime = dayjs(transaction.timestamp)

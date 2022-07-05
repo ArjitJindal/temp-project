@@ -79,9 +79,10 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
             },
             rollingBasis: {
               type: 'boolean',
-              nullable: true,
+              title: 'Rolling basis',
               description:
                 'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+              nullable: true,
             },
           },
           required: ['units', 'granularity'],

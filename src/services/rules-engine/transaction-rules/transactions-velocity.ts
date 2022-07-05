@@ -41,8 +41,8 @@ export type TransactionsVelocityRuleParameters =
     // Optional parameters
     userIdsToCheck?: string[] // If empty, all users will be checked
     checkTimeWindow?: {
-      from: string // e.g 20:20:39+03:00
-      to: string
+      from?: string // e.g 20:20:39+03:00
+      to?: string
     }
     transactionType?: string
     paymentMethod?: PaymentMethod
@@ -90,9 +90,10 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
             },
             rollingBasis: {
               type: 'boolean',
-              nullable: true,
+              title: 'Rolling basis',
               description:
                 'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+              nullable: true,
             },
           },
           required: ['units', 'granularity'],
@@ -119,10 +120,17 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
           type: 'object',
           title: 'Time Window',
           properties: {
-            from: { type: 'string', title: 'From (format: 00:00:00+00:00)' },
-            to: { type: 'string', title: 'To (format: 00:00:00+00:00)' },
+            from: {
+              type: 'string',
+              title: 'From (format: 00:00:00+00:00)',
+              nullable: true,
+            },
+            to: {
+              type: 'string',
+              title: 'To (format: 00:00:00+00:00)',
+              nullable: true,
+            },
           },
-          required: ['from', 'to'],
           nullable: true,
         },
         transactionType: {
