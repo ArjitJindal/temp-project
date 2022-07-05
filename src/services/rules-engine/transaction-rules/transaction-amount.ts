@@ -55,6 +55,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         userType: {
           type: 'string',
           title: 'Type of user',
+          enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
       },

@@ -86,6 +86,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         userType: {
           type: 'string',
           title: 'Type of user',
+          enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
       },
