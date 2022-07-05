@@ -9,8 +9,6 @@ export type RuleResult = {
   action: RuleAction
 }
 
-export type RuleFilter = () => Promise<boolean> | boolean
-
 export type DefaultTransactionRuleParameters = {
   transactionState?: TransactionState
 }
