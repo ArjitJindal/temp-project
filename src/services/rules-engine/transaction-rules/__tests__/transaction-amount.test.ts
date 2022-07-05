@@ -132,6 +132,32 @@ describe.each<TransactionRuleTestCase>([
     ],
     expectedHits: [true],
   },
+  {
+    name: 'Undefined age range, above threshold- hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedHits: [true],
+  },
+  {
+    name: 'Undefined age range, below threshold - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    expectedHits: [false],
+  },
 ])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,

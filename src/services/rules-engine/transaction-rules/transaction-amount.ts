@@ -39,7 +39,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
             minAge: { type: 'integer', title: 'Min Age' },
             maxAge: { type: 'integer', title: 'Max Age' },
           },
-          required: ['minAge', 'maxAge'],
+          required: [],
           nullable: true,
         },
         transactionType: {
@@ -67,7 +67,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
     const { ageRange, transactionType, paymentMethod, userType } =
       this.parameters
     return [
-      () => isUserBetweenAge(this.senderUser, ageRange),
+      () => !ageRange || isUserBetweenAge(this.senderUser, ageRange),
       () => !transactionType || this.transaction.type === transactionType,
       () =>
         !paymentMethod ||
