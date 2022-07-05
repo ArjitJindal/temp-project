@@ -591,7 +591,7 @@ export const accountsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, role } = event.requestContext.authorizer
+    const { userId, verifiedEmail, role } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
 
     const accountsService = new AccountsService(config)
@@ -605,7 +605,7 @@ export const accountsHandler = lambdaApi()(
       )
       return accounts
     } else if (event.httpMethod === 'POST' && event.resource === '/accounts') {
-      assertRole(role, 'admin')
+      assertRole({ role, verifiedEmail }, 'admin')
       if (event.body == null) {
         throw new Error(`Body should not be empty`)
       }
@@ -627,7 +627,7 @@ export const accountsHandler = lambdaApi()(
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{userId}/change_tenant'
     ) {
-      assertRole(role, 'root')
+      assertRole({ role, verifiedEmail }, 'root')
       const { pathParameters } = event
       const idToChange = pathParameters?.userId
       if (!idToChange) {
@@ -651,7 +651,7 @@ export const accountsHandler = lambdaApi()(
       event.resource === '/accounts/{userId}'
     ) {
       const { pathParameters } = event
-      assertRole(role, 'admin')
+      assertRole({ role, verifiedEmail }, 'admin')
 
       const idToDelete = pathParameters?.userId
       if (!idToDelete) {
@@ -673,12 +673,16 @@ export const tenantsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { role, principalId: tenantId } = event.requestContext.authorizer
+    const {
+      role,
+      principalId: tenantId,
+      verifiedEmail,
+    } = event.requestContext.authorizer
     const config = process.env as AccountsConfig
     const accountsService = new AccountsService(config)
 
     if (event.httpMethod === 'GET' && event.resource === '/tenants') {
-      assertRole(role, 'root')
+      assertRole({ role, verifiedEmail }, 'root')
       const tenants: ApiTenant[] = (await accountsService.getTenants()).map(
         (tenant: Tenant): ApiTenant => ({
           id: tenant.id,
@@ -692,7 +696,7 @@ export const tenantsHandler = lambdaApi()(
       if (event.httpMethod === 'GET') {
         return tenantRepository.getTenantSettings()
       } else if (event.httpMethod === 'POST' && event.body) {
-        assertRole(role, 'root')
+        assertRole({ role, verifiedEmail }, 'root')
         const newTenantSettings = JSON.parse(event.body) as TenantSettings
         return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
       }

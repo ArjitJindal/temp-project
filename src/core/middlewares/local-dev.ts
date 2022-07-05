@@ -6,6 +6,7 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import { getToken } from '@/lambdas/jwt-authorizer/app'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
@@ -44,23 +45,26 @@ export const localDev =
         }
         const userInfo = decoded.payload as Record<string, unknown>
 
-        event.requestContext.authorizer = {
+        const jwtAuthorizerResult: JWTAuthorizerResult = {
           principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
-          tenantConsoleHost: userInfo[`${CUSTOM_CLAIMS_NS}/tenantConsoleHost`],
+          verifiedEmail:
+            userInfo[`${CUSTOM_CLAIMS_NS}/verifiedEmail`] ?? undefined,
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
           role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
           ...authorizer,
         }
+        event.requestContext.authorizer = jwtAuthorizerResult
       } else {
         // For requests of the public REST APIs
-        event.requestContext.authorizer = {
+        const jwtAuthorizerResult: JWTAuthorizerResult = {
           principalId: event.headers?.['Tenant-Id'] || 'unset',
           tenantName: event.headers?.['Tenant-Name'] || 'unset',
           userId: event.headers?.['User-Id'] || 'unset',
           ...authorizer,
         }
+        event.requestContext.authorizer = jwtAuthorizerResult
       }
     }
     return handler(event, context, callback)
