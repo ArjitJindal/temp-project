@@ -4,6 +4,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DeviceData } from '@/@types/openapi-public/DeviceData'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { UserType } from '@/@types/user/user-type'
 
 export function isUserBetweenAge(
   user: User | Business | undefined,
@@ -55,10 +56,17 @@ export function isUserInList(
 
 export function isUserType(
   user: User | Business | undefined,
-  userType: string | undefined
+  userType: UserType | undefined
 ) {
-  if (!userType || !user) return true
-  if (userType === 'CONSUMER') return isConsumerUser(user)
+  if (!userType) {
+    return true
+  }
+  if (!user) {
+    return false
+  }
+  if (userType === 'CONSUMER') {
+    return isConsumerUser(user)
+  }
   return isBusinessUser(user)
 }
 

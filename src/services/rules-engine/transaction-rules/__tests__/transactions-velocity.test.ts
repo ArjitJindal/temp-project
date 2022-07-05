@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { v4 as uuidv4 } from 'uuid'
 import { TransactionsVelocityRuleParameters } from '../transactions-velocity'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -838,6 +839,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -846,6 +848,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -854,6 +857,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
       ],
@@ -868,6 +872,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -876,6 +881,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -899,6 +905,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -907,6 +914,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -915,6 +923,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
       ],
@@ -929,6 +938,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: 'fingerprint',
           },
         }),
         getTestTransaction({
@@ -937,6 +947,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: 'fingerprint',
           },
         }),
         getTestTransaction({
@@ -945,10 +956,11 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: 'fingerprint',
           },
         }),
       ],
-      expectedHits: [false, false, false],
+      expectedHits: [false, false, true],
     },
     {
       name: 'Normal transactions - not hit',
@@ -959,6 +971,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -967,6 +980,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -975,6 +989,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:20.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
       ],
@@ -989,6 +1004,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -997,6 +1013,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1005,6 +1022,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1013,6 +1031,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1021,6 +1040,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1029,6 +1049,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
       ],
@@ -1043,6 +1064,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1051,6 +1073,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1068,6 +1091,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1076,6 +1100,7 @@ describe('Optional parameter - Payment Method', () => {
           timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
+            cardFingerprint: uuidv4(),
           },
         }),
         getTestTransaction({
@@ -1311,5 +1336,78 @@ describe('Optional parameter - User type', () => {
       transactions,
       expectedHits
     )
+  })
+
+  describe('Optional parameter - Only check transactions from known users (with user ID)', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-velocity',
+        defaultParameters: {
+          transactionsLimit: 1,
+          timeWindow: {
+            units: 60,
+            granularity: 'second',
+          },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+          onlyCheckKnownUsers: true,
+        } as TransactionsVelocityRuleParameters,
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'Ignore non-user sending transactions',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: undefined,
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-4',
+            timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+      {
+        name: 'Ignore non-user receiving transactions',
+        transactions: [
+          getTestTransaction({
+            originUserId: '2-2',
+            destinationUserId: '2-1',
+            timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: undefined,
+            destinationUserId: '2-1',
+            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          }),
+          getTestTransaction({
+            originUserId: '2-3',
+            destinationUserId: '2-1',
+            timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+          }),
+        ],
+        expectedHits: [false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
   })
 })

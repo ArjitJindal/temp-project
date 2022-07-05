@@ -9,11 +9,12 @@ import {
 import { isUserType } from '@/services/rules-engine/utils/user-rule-utils'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
+import { UserType } from '@/@types/user/user-type'
 
 export type Filters = DefaultTransactionRuleParameters & {
   transactionType?: string
   paymentMethod?: string
-  userType?: string
+  userType?: UserType
 }
 
 export type Parameters = Filters & {
@@ -35,12 +36,14 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
         },
         paymentMethod: {
           type: 'string',
-          title: 'Payment method',
+          title: 'Method of payment',
+          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
           nullable: true,
         },
         userType: {
           type: 'string',
-          title: 'User type',
+          title: 'Type of user',
+          enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
         timeWindowInDays: {

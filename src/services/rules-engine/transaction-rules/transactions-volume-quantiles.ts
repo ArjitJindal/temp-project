@@ -81,6 +81,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
+          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
           nullable: true,
         },
         userType: {

@@ -1,13 +1,20 @@
 import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import {
+  ThinTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
 import { isUserInList, isUserType } from '../utils/user-rule-utils'
 import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
+import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -40,6 +47,7 @@ export type TransactionsVelocityRuleParameters =
     transactionType?: string
     paymentMethod?: PaymentMethod
     userType?: UserType
+    onlyCheckKnownUsers?: boolean
   }
 
 export default class TransactionsVelocityRule extends TransactionRule<TransactionsVelocityRuleParameters> {
@@ -125,11 +133,18 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
+          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
           nullable: true,
         },
         userType: {
           type: 'string',
           title: 'Type of user',
+          enum: ['CONSUMER', 'BUSINESS'],
+          nullable: true,
+        },
+        onlyCheckKnownUsers: {
+          type: 'boolean',
+          title: 'Only check transactions from known users (with user ID)',
           nullable: true,
         },
       },
@@ -145,6 +160,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       transactionType,
       paymentMethod,
       userType,
+      onlyCheckKnownUsers,
     } = this.parameters
     return super
       .getFilters()
@@ -156,12 +172,22 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
           !paymentMethod ||
           this.transaction.originPaymentDetails?.method === paymentMethod,
         () => isUserType(this.senderUser, userType),
+        () =>
+          onlyCheckKnownUsers
+            ? !!this.transaction.originUserId &&
+              !!this.transaction.destinationUserId
+            : true,
       ])
   }
 
   public async computeRule() {
-    const { transactionsLimit, timeWindow, checkSender, checkReceiver } =
-      this.parameters
+    const {
+      transactionsLimit,
+      timeWindow,
+      checkSender,
+      checkReceiver,
+      onlyCheckKnownUsers,
+    } = this.parameters
     if (transactionsLimit === undefined) {
       throw new MissingRuleParameter()
     }
@@ -175,20 +201,23 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       timeWindow
     )
 
-    const senderTransactionsCountPromise =
-      this.transaction.originUserId && checkSender
-        ? this.getTransactionsCount(
-            this.transaction.originUserId,
-            afterTimestamp,
-            checkSender
-          )
-        : Promise.resolve(0)
+    const senderTransactionsCountPromise = checkSender
+      ? this.getTransactionsCount(
+          this.transaction.originUserId,
+          this.transaction.originPaymentDetails,
+          afterTimestamp,
+          checkSender,
+          onlyCheckKnownUsers
+        )
+      : Promise.resolve(0)
     const receiverTransactionsCountPromise =
       this.transaction.destinationUserId && checkReceiver
         ? this.getTransactionsCount(
             this.transaction.destinationUserId,
+            this.transaction.destinationPaymentDetails,
             afterTimestamp,
-            checkReceiver
+            checkReceiver,
+            onlyCheckKnownUsers
           )
         : Promise.resolve(0)
     const [senderTransactionsCount, receiverTransactionsCount] =
@@ -198,44 +227,83 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       ])
 
     if (
-      (this.transaction.originUserId &&
-        senderTransactionsCount + 1 > transactionsLimit) ||
-      (this.transaction.destinationUserId &&
-        receiverTransactionsCount + 1 > transactionsLimit)
+      senderTransactionsCount + 1 > transactionsLimit ||
+      receiverTransactionsCount + 1 > transactionsLimit
     ) {
       return { action: this.action }
     }
   }
 
   private async getTransactionsCount(
-    userId: string,
+    userId: string | undefined,
+    paymentDetails: PaymentDetails | undefined,
     afterTimestamp: number,
-    checkType: 'sending' | 'receiving' | 'all' | 'none'
+    checkType: 'sending' | 'receiving' | 'all' | 'none',
+    onlyCheckKnownUsers = false
   ) {
     const transactionRepository = this
       .transactionRepository as TransactionRepository
+    const timeRange = {
+      afterTimestamp,
+      beforeTimestamp: this.transaction.timestamp!,
+    }
+    const filterOptions = {
+      transactionState: this.parameters.transactionState,
+      transactionType: this.parameters.transactionType,
+    }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getUserSendingTransactionsCount(
-            userId,
-            {
-              afterTimestamp,
-              beforeTimestamp: this.transaction.timestamp!,
-            },
-            { transactionState: this.parameters.transactionState }
-          )
-        : Promise.resolve({ count: 0 }),
+        ? onlyCheckKnownUsers
+          ? (async () =>
+              this.getTransactionsCountForKnownUsers(
+                await transactionRepository.getGenericUserSendingThinTransactions(
+                  userId,
+                  paymentDetails,
+                  timeRange,
+                  filterOptions
+                ),
+                'sending'
+              ))()
+          : transactionRepository.getGenericUserSendingTransactionsCount(
+              userId,
+              paymentDetails,
+              timeRange,
+              filterOptions
+            )
+        : Promise.resolve(0),
       checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getUserReceivingTransactionsCount(
-            userId,
-            {
-              afterTimestamp,
-              beforeTimestamp: this.transaction.timestamp!,
-            },
-            { transactionState: this.parameters.transactionState }
-          )
-        : Promise.resolve({ count: 0 }),
+        ? onlyCheckKnownUsers
+          ? (async () =>
+              this.getTransactionsCountForKnownUsers(
+                await transactionRepository.getGenericUserReceivingThinTransactions(
+                  userId,
+                  paymentDetails,
+                  timeRange,
+                  filterOptions
+                ),
+                'receiving'
+              ))()
+          : transactionRepository.getGenericUserReceivingTransactionsCount(
+              userId,
+              paymentDetails,
+              timeRange,
+              filterOptions
+            )
+        : Promise.resolve(0),
     ])
-    return transactionsCount[0].count + transactionsCount[1].count
+    return transactionsCount[0] + transactionsCount[1]
+  }
+
+  private getTransactionsCountForKnownUsers(
+    thinTransactions: ThinTransaction[],
+    direction: 'sending' | 'receiving'
+  ): number {
+    return thinTransactions.filter((thinTransaction) =>
+      keyHasUserId(
+        (direction === 'sending'
+          ? thinTransaction.receiverKeyId
+          : thinTransaction.senderKeyId) || ''
+      )
+    ).length
   }
 }

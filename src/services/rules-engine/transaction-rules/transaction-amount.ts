@@ -50,6 +50,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
+          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
           nullable: true,
         },
         userType: {

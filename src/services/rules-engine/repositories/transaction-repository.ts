@@ -631,23 +631,23 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ) {
-    if (userId != null) {
-      const queryCountResult = await this.getUserSendingTransactionsCount(
-        userId,
-        timeRange,
-        filterOptions
-      )
-      return queryCountResult.count
-    }
-    if (paymentDetails != null) {
-      const queryCountResult = await this.getNonUserSendingTransactionsCount(
-        paymentDetails,
-        timeRange,
-        filterOptions
-      )
-      return queryCountResult.count
-    }
-    return 0
+    return userId
+      ? (
+          await this.getUserSendingTransactionsCount(
+            userId,
+            timeRange,
+            filterOptions
+          )
+        ).count
+      : paymentDetails
+      ? (
+          await this.getNonUserSendingTransactionsCount(
+            paymentDetails,
+            timeRange,
+            filterOptions
+          )
+        ).count
+      : 0
   }
 
   public async getGenericUserReceivingTransactionsCount(
@@ -657,13 +657,21 @@ export class TransactionRepository {
     filterOptions?: ThinTransactionsFilterOptions
   ) {
     return userId
-      ? this.getUserReceivingTransactionsCount(userId, timeRange, filterOptions)
+      ? (
+          await this.getUserReceivingTransactionsCount(
+            userId,
+            timeRange,
+            filterOptions
+          )
+        ).count
       : paymentDetails
-      ? this.getNonUserReceivingTransactionsCount(
-          paymentDetails,
-          timeRange,
-          filterOptions
-        )
+      ? (
+          await this.getNonUserReceivingTransactionsCount(
+            paymentDetails,
+            timeRange,
+            filterOptions
+          )
+        ).count
       : 0
   }
 
