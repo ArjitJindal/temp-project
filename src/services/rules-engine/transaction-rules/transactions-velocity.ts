@@ -1,15 +1,32 @@
 import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isUserInList } from '../utils/user-rule-utils'
+import { isUserInList, isUserType } from '../utils/user-rule-utils'
 import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
+import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { UserType } from '@/@types/user/user-type'
+
+export type TimeWindowGranularity =
+  | 'second'
+  | 'minute'
+  | 'hour'
+  | 'day'
+  | 'week'
+  | 'month'
+
+export type TimeWindow = {
+  units: number
+  granularity: TimeWindowGranularity
+  rollingBasis?: boolean
+}
 
 export type TransactionsVelocityRuleParameters =
   DefaultTransactionRuleParameters & {
-    transactionsPerSecond: number
-    timeWindowInSeconds: number
+    transactionsLimit: number
+    timeWindow: TimeWindow
 
     checkSender?: 'sending' | 'all' | 'none'
     checkReceiver?: 'receiving' | 'all' | 'none'
@@ -20,6 +37,9 @@ export type TransactionsVelocityRuleParameters =
       from: string // e.g 20:20:39+03:00
       to: string
     }
+    transactionType?: string
+    paymentMethod?: PaymentMethod
+    userType?: UserType
   }
 
 export default class TransactionsVelocityRule extends TransactionRule<TransactionsVelocityRuleParameters> {
@@ -46,13 +66,28 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
             'If not specified, all transactions regardless of the state will be used for running the rule',
           nullable: true,
         },
-        transactionsPerSecond: {
+        transactionsLimit: {
           type: 'number',
-          title: 'Transactions/sec Threshold',
+          title: 'Transactions Limit',
         },
-        timeWindowInSeconds: {
-          type: 'integer',
-          title: 'Time Window (Seconds)',
+        timeWindow: {
+          type: 'object',
+          title: 'Time Window',
+          properties: {
+            units: { type: 'integer', title: 'Number of time unit' },
+            granularity: {
+              type: 'string',
+              title: 'Time granularity',
+              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
+            },
+            rollingBasis: {
+              type: 'boolean',
+              nullable: true,
+              description:
+                'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+            },
+          },
+          required: ['units', 'granularity'],
         },
         checkSender: {
           type: 'string',
@@ -82,33 +117,52 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
           required: ['from', 'to'],
           nullable: true,
         },
+        transactionType: {
+          type: 'string',
+          title: 'Target Transaction Type',
+          nullable: true,
+        },
+        paymentMethod: {
+          type: 'string',
+          title: 'Method of payment',
+          nullable: true,
+        },
+        userType: {
+          type: 'string',
+          title: 'Type of user',
+          nullable: true,
+        },
       },
-      required: ['transactionsPerSecond', 'timeWindowInSeconds'],
+      required: ['transactionsLimit', 'timeWindow'],
       additionalProperties: false,
     }
   }
 
   public getFilters() {
-    const { userIdsToCheck, checkTimeWindow } = this.parameters
+    const {
+      userIdsToCheck,
+      checkTimeWindow,
+      transactionType,
+      paymentMethod,
+      userType,
+    } = this.parameters
     return super
       .getFilters()
       .concat([
         () => isUserInList(this.senderUser, userIdsToCheck),
         () => isTransactionWithinTimeWindow(this.transaction, checkTimeWindow),
+        () => !transactionType || this.transaction.type === transactionType,
+        () =>
+          !paymentMethod ||
+          this.transaction.originPaymentDetails?.method === paymentMethod,
+        () => isUserType(this.senderUser, userType),
       ])
   }
 
   public async computeRule() {
-    const {
-      transactionsPerSecond,
-      timeWindowInSeconds,
-      checkSender,
-      checkReceiver,
-    } = this.parameters
-    if (
-      transactionsPerSecond === undefined ||
-      timeWindowInSeconds === undefined
-    ) {
+    const { transactionsLimit, timeWindow, checkSender, checkReceiver } =
+      this.parameters
+    if (transactionsLimit === undefined) {
       throw new MissingRuleParameter()
     }
 
@@ -116,9 +170,10 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       dynamoDb: this.dynamoDb,
     })
 
-    const afterTimestamp = dayjs(this.transaction.timestamp)
-      .subtract(timeWindowInSeconds, 'seconds')
-      .valueOf()
+    const afterTimestamp = subtractTime(
+      dayjs(this.transaction.timestamp),
+      timeWindow
+    )
 
     const senderTransactionsCountPromise =
       this.transaction.originUserId && checkSender
@@ -144,11 +199,9 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
 
     if (
       (this.transaction.originUserId &&
-        (senderTransactionsCount + 1) / timeWindowInSeconds >
-          transactionsPerSecond) ||
+        senderTransactionsCount + 1 > transactionsLimit) ||
       (this.transaction.destinationUserId &&
-        (receiverTransactionsCount + 1) / timeWindowInSeconds >
-          transactionsPerSecond)
+        receiverTransactionsCount + 1 > transactionsLimit)
     ) {
       return { action: this.action }
     }

@@ -23,8 +23,11 @@ describe('Core logic', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'transactions-velocity',
       defaultParameters: {
-        transactionsPerSecond: 0.4,
-        timeWindowInSeconds: 5,
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
         checkSender: 'all',
         checkReceiver: 'all',
       } as TransactionsVelocityRuleParameters,
@@ -257,8 +260,11 @@ describe('Optional parameters', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'transactions-velocity',
       defaultParameters: {
-        transactionsPerSecond: 1,
-        timeWindowInSeconds: 1,
+        transactionsLimit: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'second',
+        },
         checkTimeWindow: {
           from: '09:00:00+00:00',
           to: '18:00:00+00:00',
@@ -425,13 +431,15 @@ describe('checksender/checkreceiver', () => {
         type: 'TRANSACTION',
         ruleImplementationName: 'transactions-velocity',
         defaultParameters: {
-          transactionsPerSecond: 0.4,
-          timeWindowInSeconds: 5,
+          transactionsLimit: 2,
+          timeWindow: {
+            units: 5,
+            granularity: 'second',
+          },
           ...ruleParams,
         } as TransactionsVelocityRuleParameters,
       },
     ])
-
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
@@ -449,8 +457,11 @@ describe('Transaction State', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'transactions-velocity',
       defaultParameters: {
-        transactionsPerSecond: 2,
-        timeWindowInSeconds: 1,
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 1,
+          granularity: 'second',
+        },
         checkSender: 'all',
         checkReceiver: 'all',
         transactionState: 'SUCCESSFUL',
@@ -488,6 +499,810 @@ describe('Transaction State', () => {
         }),
       ],
       expectedHits: [false, false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Optional parameter - Transaction type', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionType: 'Withdrawal',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Too frequent sending transactions with same transaction type - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+    {
+      name: 'Too frequent sending transactions with different transaction type - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Deposit',
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Wthdrawal',
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions by different users - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '3-1',
+          destinationUserId: '3-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '3-3',
+          destinationUserId: '3-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '3-5',
+          destinationUserId: '3-6',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions without user IDs - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Normal transactions - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-3',
+          timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-4',
+          timestamp: dayjs('2022-01-01T00:00:20.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Too frequent transactions with same transaction type - hit twice',
+      transactions: [
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+      ],
+      expectedHits: [false, false, true, false, false, true],
+    },
+    {
+      name: 'Too frequent transactions with different transaction type - not hit ',
+      transactions: [
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          type: 'Deposit',
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+          type: 'Withdrawal',
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+          type: 'Deposit',
+        }),
+      ],
+      expectedHits: [false, false, false, false, false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Rolling basis parameter', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: false,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Transaction out of limit - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Transaction in limit - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-01-01T11:59:59.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-3',
+          timestamp: dayjs('2022-01-02T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Optional parameter - Payment Method', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        paymentMethod: 'CARD',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Too frequent sending transactions with same payment method - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+    {
+      name: 'Too frequent sending transactions with different payment method - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'WALLET',
+            walletType: 'savings',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions by different users - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '3-1',
+          destinationUserId: '3-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '3-3',
+          destinationUserId: '3-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '3-5',
+          destinationUserId: '3-6',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions without user IDs - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Normal transactions - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-3',
+          timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-4',
+          timestamp: dayjs('2022-01-01T00:00:20.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Too frequent transactions with same payment method - hit twice',
+      transactions: [
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+      ],
+      expectedHits: [false, false, true, false, false, true],
+    },
+    {
+      name: 'Too frequent transactions with different payment method - not hit ',
+      transactions: [
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'WALLET',
+            walletType: 'savings',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'CARD',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+          originPaymentDetails: {
+            method: 'WALLET',
+            walletType: 'savings',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false, false, false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Optional parameter - User type', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        userType: 'CONSUMER',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({ userId: '1-1' }),
+    getTestUser({ userId: '3-1' }),
+    getTestUser({ userId: '5-1' }),
+    getTestUser({ userId: '6-1' }),
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Too frequent sending transactions with same userType - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+    {
+      name: 'Too frequent sending transactions with different userType - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-1',
+          destinationUserId: '2-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions by different users - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '3-1',
+          destinationUserId: '3-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '3-3',
+          destinationUserId: '3-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '3-5',
+          destinationUserId: '3-6',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Frequent transactions without user IDs - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          destinationUserId: undefined,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Normal transactions - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-3',
+          timestamp: dayjs('2022-01-01T00:00:10.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-4',
+          timestamp: dayjs('2022-01-01T00:00:20.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+    {
+      name: 'Too frequent transactions with same userType - hit twice',
+      transactions: [
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6-1',
+          destinationUserId: '6-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true, false, false, true],
+    },
+    {
+      name: 'Too frequent transactions with different userType - not hit ',
+      transactions: [
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-2',
+          timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-3',
+          timestamp: dayjs('2022-01-01T00:10:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '7-1',
+          destinationUserId: '7-4',
+          timestamp: dayjs('2022-01-01T00:10:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false, false, false, false],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
