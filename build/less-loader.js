@@ -168,8 +168,17 @@ module.exports = (options = {}, loaderOptions = {}) => {
         }
 
         const isExternal = args.path.startsWith('~') || args.path.indexOf('node_modules') !== -1;
-        const isModule = !isExternal && args.path.endsWith('.module.less');
+        const isModule = !isExternal && args.path.endsWith(MODULES_EXTENSION);
         const dir = path.dirname(args.path);
+
+        //
+        // if (isExternal) {
+        //   return {
+        //     contents: '',
+        //     loader: 'css',
+        //     resolveDir: dir,
+        //   };
+        // }
 
         const opts = {
           filename: args.path,

@@ -4,7 +4,7 @@ import { useApi } from '@/api';
 import { Feature as FeatureName } from '@/apis';
 
 interface ContextValue {
-  features: FeatureName[] | undefined;
+  features: FeatureName[];
 }
 
 const Context = React.createContext<ContextValue | null>(null);
@@ -13,23 +13,23 @@ export function FeaturesProvider(props: {
   globalFeatures?: FeatureName[];
   children: React.ReactNode;
 }) {
+  const globalFeatures = props.globalFeatures;
   const api = useApi();
-  const [features, setFeatures] = useState<FeatureName[] | undefined>(undefined);
+  const [features, setFeatures] = useState<FeatureName[] | null>(null);
   useEffect(() => {
     async function fetch() {
       const settings = await api.getTenantsSettings();
-      setFeatures((settings.features || []).concat(props.globalFeatures || []));
+      setFeatures((settings.features || []).concat(globalFeatures ?? []));
     }
     fetch().catch((e) => {
-      setFeatures([]);
+      setFeatures(globalFeatures ?? []);
       console.error(e);
     });
-  }, [api, props.globalFeatures]);
-  return (
-    <Context.Provider value={{ features }}>
-      {features ? props.children : <PageLoading />}
-    </Context.Provider>
-  );
+  }, [api, globalFeatures]);
+  if (features == null) {
+    return <PageLoading />;
+  }
+  return <Context.Provider value={{ features: features }}>{props.children}</Context.Provider>;
 }
 
 function useFeaturesContext() {
@@ -40,14 +40,14 @@ function useFeaturesContext() {
   return context;
 }
 
-export function useFeatures(): FeatureName[] | undefined {
+export function useFeatures(): FeatureName[] {
   const context = useFeaturesContext();
   return context.features;
 }
 
 export function useFeature(feature: FeatureName): boolean {
-  const context = useFeaturesContext();
-  return context.features?.includes(feature) || false;
+  const features = useFeatures();
+  return features.includes(feature) || false;
 }
 
 export function Feature(props: {

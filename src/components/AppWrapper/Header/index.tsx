@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import RightContent from './RightContent';
 import LogoSvg from '@/flagright-console-logo.svg';
 
@@ -10,7 +11,9 @@ interface Props {
 export default function Header(props: Props) {
   return (
     <header className={props.className}>
-      <img src={LogoSvg} alt="logo" height="28px" />
+      <Link to={'/'}>
+        <img src={LogoSvg} alt="logo" height="28px" />
+      </Link>
       <RightContent />
     </header>
   );

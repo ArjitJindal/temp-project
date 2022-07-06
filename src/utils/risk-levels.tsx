@@ -1,5 +1,5 @@
-import { red, green, orange } from '@ant-design/colors';
 import { RiskLevel as ApiRiskLevel } from '@/apis';
+import COLORS from '@/components/ui/colors';
 
 export const RISK_LEVELS = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'] as const;
 
@@ -19,9 +19,9 @@ type RiskLevelColors = {
 };
 
 export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = {
-  VERY_LOW: { primary: green.primary, light: green[0] },
-  LOW: { primary: green.primary, light: green[0] },
-  MEDIUM: { primary: orange.primary, light: orange[0] },
-  HIGH: { primary: red.primary, light: red[0] },
-  VERY_HIGH: { primary: red.primary, light: red[0] },
+  VERY_LOW: { primary: COLORS.successColor.base, light: COLORS.successColor.tint },
+  LOW: { primary: COLORS.successColor.base, light: COLORS.successColor.tint },
+  MEDIUM: { primary: COLORS.warningColor.base, light: COLORS.warningColor.tint },
+  HIGH: { primary: COLORS.errorColor.base, light: COLORS.errorColor.tint },
+  VERY_HIGH: { primary: COLORS.errorColor.base, light: COLORS.errorColor.tint },
 } as const;

@@ -8,6 +8,8 @@ import AppWrapper from '@/components/AppWrapper';
 import { useRoutes } from '@/services/routing';
 import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 
+import './global.less';
+
 Sentry.init({
   dsn: SENTRY_DSN,
   integrations: [new BrowserTracing()],

@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { green, red } from '@ant-design/colors';
 import { ActionType, ProColumns } from '@ant-design/pro-table';
 import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
@@ -13,6 +12,7 @@ import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { useI18n } from '@/locales';
+import COLORS from '@/components/ui/colors';
 
 export default function () {
   const api = useApi();
@@ -48,9 +48,9 @@ export default function () {
         return (
           <span>
             {emailVerified ? (
-              <CheckCircleTwoTone twoToneColor={green.primary} />
+              <CheckCircleTwoTone twoToneColor={COLORS.successColor.base} />
             ) : (
-              <MinusCircleTwoTone twoToneColor={red.primary} />
+              <MinusCircleTwoTone twoToneColor={COLORS.errorColor.base} />
             )}
           </span>
         );

@@ -8,6 +8,6 @@
     "AUTH0_CLIENT_ID": "uGGbVNumU7d57NswPLD5UaTwvf17tc7y",
     "SEGMENT_WRITE_KEY": "gBpbFMwyJQrf91g8zag3IrTOCnPfAiO5",
     "SENTRY_DSN": "https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175",
-    "FEATURES_ENABLED": []
+    "FEATURES_ENABLED": ["PULSE", "PULSE_MANUAL_USER_RISK_LEVEL"]
   }
 }

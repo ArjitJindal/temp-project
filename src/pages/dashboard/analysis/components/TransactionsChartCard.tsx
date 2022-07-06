@@ -173,7 +173,6 @@ const TransactionsChartCard = () => {
               {/*</Dropdown>*/}
             </div>
           }
-          size="large"
           tabBarStyle={{ marginBottom: 24 }}
         >
           {[
