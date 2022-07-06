@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
-import type moment from 'moment';
+import moment from 'moment';
 import { Column } from '@ant-design/charts';
 import { useEffect, useState } from 'react';
 import styles from '../style.module.less';
@@ -192,14 +192,34 @@ const TransactionsChartCard = () => {
                     <Column
                       height={400}
                       forceFit
-                      data={data.map((item) => ({
-                        x: item.id,
-                        y: item[key],
-                      }))}
+                      data={data.map((item) => {
+                        const y = item[key];
+                        let x = item.id;
+                        if (x.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                          x = moment(x, 'YYYY-MM-DD').format('MM/DD');
+                        } else if (x.match(/^\d{4}-\d{2}$/)) {
+                          x = moment(x, 'YYYY-MM').format('YYYY/MM');
+                        } else if (x.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
+                          x = moment(x, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
+                        }
+                        return {
+                          x,
+                          y,
+                        };
+                      })}
                       xField="x"
                       yField="y"
                       xAxis={{
                         visible: true,
+                        label: {
+                          autoRotate: false,
+                          autoHide: false,
+                          rotate: -Math.PI / 6,
+                          style: {
+                            textAlign: 'right',
+                            textBaseline: 'bottom',
+                          },
+                        },
                         title: {
                           visible: false,
                         },
