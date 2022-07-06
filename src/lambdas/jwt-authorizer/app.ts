@@ -91,6 +91,8 @@ export const jwtAuthorizer = async (
   const tenantId = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantId`]
   const tenantName =
     verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
+  const verifiedEmail =
+    verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
   const tenantScopeCredentials = await getTenantScopeCredentials(
     tenantId,
     accountId,
@@ -116,6 +118,7 @@ export const jwtAuthorizer = async (
       ...tenantScopeCredentials,
       userId: verifiedDecoded.sub,
       role: isValidRole(role) ? role : 'user',
+      verifiedEmail,
       tenantName,
     } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
   }
