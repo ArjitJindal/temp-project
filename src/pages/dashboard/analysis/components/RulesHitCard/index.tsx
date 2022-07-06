@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker } from 'antd';
-import ProTable, { ActionType } from '@ant-design/pro-table';
-import React, { useEffect, useRef, useState } from 'react';
+import { ActionType } from '@ant-design/pro-table';
+import { useEffect, useRef, useState } from 'react';
 import { ProColumns, RequestData } from '@ant-design/pro-table/lib/typing';
 import { RangeValue } from 'rc-picker/lib/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
+import Table from '@/components/ui/Table';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -41,7 +42,7 @@ export default function RuleHitCard() {
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
-      <ProTable<DashboardStatsRulesCountData>
+      <Table<DashboardStatsRulesCountData>
         actionRef={actionRef}
         form={{
           labelWrap: true,
