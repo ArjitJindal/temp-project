@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 function composeTwo(f: Function, g: Function) {
   return function (this: any) {
     // eslint-disable-next-line prefer-rest-params

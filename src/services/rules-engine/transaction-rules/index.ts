@@ -24,42 +24,93 @@ import TransactionsVolumeRule from './transactions-volume'
 import TransactionsVolumeQuantilesRule from './transactions-volume-quantiles'
 import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
-import MerchantReceiverNameRuleParameters from './merchant-receiver-name'
+import MerchantReceiverNameRule from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 import CardHolderNameRule from './card-holder-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
 export const TRANSACTION_RULES = {
+  // R-114
   'card-issued-country': CardIssuedCountryRule,
+
+  // R-101
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
+
+  // R-5
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
+
+  // R-1
   'first-payment': FirstPaymentRule,
+
+  // R-6
   'high-risk-currency': HighRiskCurrencyRule,
+
+  // R-52
   'ip-address-multiple-users': IpAddressMultipleUsersRule,
+
+  // R-88
   'ip-address-unexpected-location': IpAddressUnexpectedLocationRule,
+
+  // R-7
   'low-value-incoming-transactions': LowValueIncomingTransactionsRule,
+
+  // R-8
   'low-value-outgoing-transactions': LowValueOutgoingTransactionsRule,
+
+  // R-10
   'multiple-counterparty-senders-within-time-period':
     MultipleCounterpartySendersWithinTimePeriodRule,
+
+  // R-9
   'multiple-user-senders-within-time-period':
     MultipleUserSendersWithinTimePeriodRule,
+
+  // R-113
   'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
+
+  // R-24
   'transaction-reference-keyword': TransactionReferenceKeywordRule,
+
+  // R-2
   'transaction-amount': TransactionAmountRule,
+
+  // R-99
   'transaction-amount-user-limit': TransactionAmountUserLimitRule,
+
+  // R-3
   'transaction-new-country': TransactionNewCountryRule,
+
+  // R-4
   'transaction-new-currency': TransactionNewCurrencyRule,
+
+  // R-84, R-85, R-86, R-87, R-89, R-90, R-91, R-92, R-95, R-30
   'transactions-velocity': TransactionsVelocityRule,
+
+  // R-68, R-69, R-109, R-110
   'transactions-volume': TransactionsVolumeRule,
+
+  // R-68, R-69
   'transactions-volume-quantiles': TransactionsVolumeQuantilesRule,
+
+  // R-111
   'user-transaction-pairs': UserTransactionPairsRule,
+
+  // R-117
   'transaction-amount-pattern': TransactionMatchesPatternRule,
-  'merchant-receiver-name': MerchantReceiverNameRuleParameters,
+
+  // R-13
+  'merchant-receiver-name': MerchantReceiverNameRule,
+
+  // R-22
   'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,
+
+  // R-119
   'high-traffic-between-same-parties': HighTrafficBetweenSameParties,
+
+  // R-118
   'card-holder-name-levensthein-distance': CardHolderNameRule,
 
-  // For testing only
+  // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,
   'tests/test-failure-rule': TestFailureRule,
   'tests/test-non-hit-rule': TestNonHitRule,
