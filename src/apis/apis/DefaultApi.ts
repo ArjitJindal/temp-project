@@ -690,20 +690,15 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
 
   /**
    * DashboardStats - Transactions
-   * @param timeframe MONTH, DAY or YEAR
+   * @param startTimestamp
    * @param endTimestamp
    */
   public async getDashboardStatsTransactions(
-    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
-
-    // verify required parameter 'timeframe' is not null or undefined
-    if (timeframe === null || timeframe === undefined) {
-      throw new RequiredError('DefaultApi', 'getDashboardStatsTransactions', 'timeframe');
-    }
 
     // Path Params
     const localVarPath = '/dashboard_stats/transactions';
@@ -713,10 +708,10 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     requestContext.setHeaderParam('Accept', 'application/json, */*;q=0.8');
 
     // Query Params
-    if (timeframe !== undefined) {
+    if (startTimestamp !== undefined) {
       requestContext.setQueryParam(
-        'timeframe',
-        ObjectSerializer.serialize(timeframe, "'WEEK' | 'MONTH' | 'DAY' | 'YEAR'", ''),
+        'startTimestamp',
+        ObjectSerializer.serialize(startTimestamp, 'number', ''),
       );
     }
 

@@ -323,15 +323,15 @@ export class PromiseDefaultApi {
 
   /**
    * DashboardStats - Transactions
-   * @param timeframe MONTH, DAY or YEAR
+   * @param startTimestamp
    * @param endTimestamp
    */
   public getDashboardStatsTransactions(
-    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Promise<DashboardStatsTransactionsCount> {
-    const result = this.api.getDashboardStatsTransactions(timeframe, endTimestamp, _options);
+    const result = this.api.getDashboardStatsTransactions(startTimestamp, endTimestamp, _options);
     return result.toPromise();
   }
 

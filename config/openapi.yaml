@@ -717,16 +717,9 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: string
-            enum:
-              - WEEK
-              - MONTH
-              - DAY
-              - YEAR
+            type: number
           in: query
-          name: timeframe
-          required: true
-          description: 'MONTH, DAY or YEAR'
+          name: startTimestamp
         - schema:
             type: number
           in: query

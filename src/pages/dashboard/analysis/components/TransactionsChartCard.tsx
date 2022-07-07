@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import { Column } from '@ant-design/charts';
 import { useEffect, useState } from 'react';
+import { RangeValue } from 'rc-picker/lib/interface';
 import styles from '../style.module.less';
 import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
 import { useApi } from '@/api';
@@ -25,7 +26,6 @@ import { DashboardStatsTransactionsCountData } from '@/apis';
 // const jsPDF = require('jspdf');
 
 type RangePickerValue = RangePickerProps<moment.Moment>['value'];
-export type TimeWindowType = DefaultApiGetDashboardStatsTransactionsRequest['timeframe'];
 
 const { TabPane } = Tabs;
 
@@ -85,10 +85,7 @@ export type TransactionsStats = {
 
 const TransactionsChartCard = () => {
   const [endDate, setEndDate] = useState<moment.Moment | null>(null);
-  const [timeWindowType, setTimeWindowType] = useState<TimeWindowType>('YEAR');
-
-  const onChangeEndDate = setEndDate;
-  const onSelectTimeWindow = setTimeWindowType;
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
 
   const api = useApi();
   const [transactionsCountData, setTransactionsCountData] = useState<
@@ -99,9 +96,17 @@ const TransactionsChartCard = () => {
     async function fetch() {
       setTransactionsCountData((state) => loading(getOr(state, null)));
       try {
+        let startTimestamp = moment().subtract(1, 'year').valueOf();
+        let endTimestamp = Date.now();
+
+        const [start, end] = dateRange ?? [];
+        if (start != null && end != null) {
+          startTimestamp = start.startOf('day').valueOf();
+          endTimestamp = end.endOf('day').valueOf();
+        }
         const transactionsCountResult = await api.getDashboardStatsTransactions({
-          timeframe: timeWindowType,
-          endTimestamp: endDate ? endDate.valueOf() : Date.now(),
+          startTimestamp,
+          endTimestamp,
         });
         if (isCanceled) {
           return;
@@ -119,7 +124,7 @@ const TransactionsChartCard = () => {
     return () => {
       isCanceled = true;
     };
-  }, [endDate, timeWindowType, api]);
+  }, [endDate, api, dateRange]);
 
   const dataResource: AsyncResource<TransactionsStats> = map(transactionsCountData, (value) =>
     value.map((item, i) => ({
@@ -136,43 +141,7 @@ const TransactionsChartCard = () => {
     <Card bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">
       <div className={styles.salesCard}>
         <Tabs
-          tabBarExtraContent={
-            <div className={styles.salesExtraWrap}>
-              <div className={styles.salesExtra}>
-                {[
-                  { type: 'DAY' as const, title: 'Day' },
-                  { type: 'WEEK' as const, title: 'Week' },
-                  { type: 'MONTH' as const, title: 'Month' },
-                  { type: 'YEAR' as const, title: 'Year' },
-                ].map(({ type, title }) => (
-                  <a
-                    key={type}
-                    className={type === timeWindowType ? styles.currentDate : ''}
-                    onClick={() => onSelectTimeWindow(type)}
-                  >
-                    {title}
-                  </a>
-                ))}
-              </div>
-              <DatePicker
-                placeholder="Select the period end date"
-                value={endDate}
-                onChange={onChangeEndDate}
-                style={{ width: 256 }}
-              />
-              {/*<Dropdown*/}
-              {/*  overlay={*/}
-              {/*    <Menu onClick={() => {}}>*/}
-              {/*      <Menu.Item key="csv">Export to CSV</Menu.Item>*/}
-              {/*      <Menu.Item key="pdf">Export to PDF</Menu.Item>*/}
-              {/*    </Menu>*/}
-              {/*  }*/}
-              {/*  trigger={['hover']}*/}
-              {/*>*/}
-              {/*  <Button icon={<EllipsisOutlined />} />*/}
-              {/*</Dropdown>*/}
-            </div>
-          }
+          tabBarExtraContent={<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />}
           tabBarStyle={{ marginBottom: 24 }}
         >
           {[

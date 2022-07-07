@@ -309,11 +309,11 @@ export interface DefaultApiGetDashboardStatsRuleHitRequest {
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
-   * MONTH, DAY or YEAR
-   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   *
+   * @type number
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR';
+  startTimestamp?: number;
   /**
    *
    * @type number
@@ -945,11 +945,11 @@ export class ObjectDefaultApi {
    * @param param the request object
    */
   public getDashboardStatsTransactions(
-    param: DefaultApiGetDashboardStatsTransactionsRequest,
+    param: DefaultApiGetDashboardStatsTransactionsRequest = {},
     options?: Configuration,
   ): Promise<DashboardStatsTransactionsCount> {
     return this.api
-      .getDashboardStatsTransactions(param.timeframe, param.endTimestamp, options)
+      .getDashboardStatsTransactions(param.startTimestamp, param.endTimestamp, options)
       .toPromise();
   }
 

@@ -707,16 +707,16 @@ export class ObservableDefaultApi {
 
   /**
    * DashboardStats - Transactions
-   * @param timeframe MONTH, DAY or YEAR
+   * @param startTimestamp
    * @param endTimestamp
    */
   public getDashboardStatsTransactions(
-    timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR',
+    startTimestamp?: number,
     endTimestamp?: number,
     _options?: Configuration,
   ): Observable<DashboardStatsTransactionsCount> {
     const requestContextPromise = this.requestFactory.getDashboardStatsTransactions(
-      timeframe,
+      startTimestamp,
       endTimestamp,
       _options,
     );

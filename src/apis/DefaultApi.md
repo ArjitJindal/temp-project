@@ -856,8 +856,8 @@ const configuration = .createConfiguration();
 const apiInstance = new .DefaultApi(configuration);
 
 let body:.DefaultApiGetDashboardStatsTransactionsRequest = {
-  // 'WEEK' | 'MONTH' | 'DAY' | 'YEAR' | MONTH, DAY or YEAR
-  timeframe: "WEEK",
+  // number (optional)
+  startTimestamp: 3.14,
   // number (optional)
   endTimestamp: 3.14,
 };
@@ -869,10 +869,10 @@ apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
 
 ### Parameters
 
-| Name             | Type                | Description     | Notes                            |
-| ---------------- | ------------------- | --------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------- |
-| **timeframe**    | [\*\*&#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39;                    | &#39;YEAR&#39;**]**Array<&#39;WEEK&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39; &#124; &#39;YEAR&#39;>\*\* | MONTH, DAY or YEAR | defaults to undefined |
-| **endTimestamp** | [**number**]        |                 | (optional) defaults to undefined |
+| Name               | Type         | Description | Notes                            |
+| ------------------ | ------------ | ----------- | -------------------------------- |
+| **startTimestamp** | [**number**] |             | (optional) defaults to undefined |
+| **endTimestamp**   | [**number**] |             | (optional) defaults to undefined |
 
 ### Return type
 
