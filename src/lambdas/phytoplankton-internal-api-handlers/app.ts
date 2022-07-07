@@ -25,10 +25,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { ExportService } from '@/lambdas/phytoplankton-internal-api-handlers/services/export-service'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import {
-  DashboardTimeFrameType,
-  TRANSACTION_EXPORT_HEADERS_SETTINGS,
-} from '@/lambdas/phytoplankton-internal-api-handlers/constants'
+import { TRANSACTION_EXPORT_HEADERS_SETTINGS } from '@/lambdas/phytoplankton-internal-api-handlers/constants'
 import {
   AccountsService,
   Tenant,
@@ -246,17 +243,9 @@ export const dashboardStatsHandler = lambdaApi()(
     ) {
       const client = await connectToDB()
       const { principalId: tenantId } = event.requestContext.authorizer
-      const { timeframe, endTimestamp } = event.queryStringParameters as {
-        timeframe?: DashboardTimeFrameType
+      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
+        startTimestamp?: string
         endTimestamp?: string
-      }
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
-      // await dashboardStatsRepository.refreshStats(tenantId)
-
-      if (timeframe == null) {
-        throw new BadRequest(`Missing required parameter: ${timeframe}`)
       }
       const endTimestampNumber = endTimestamp
         ? parseInt(endTimestamp)
@@ -264,9 +253,19 @@ export const dashboardStatsHandler = lambdaApi()(
       if (Number.isNaN(endTimestampNumber)) {
         throw new BadRequest(`Wrong timestamp format: ${endTimestamp}`)
       }
+      const startTimestampNumber = startTimestamp
+        ? parseInt(startTimestamp)
+        : Number.NaN
+      if (Number.isNaN(startTimestampNumber)) {
+        throw new BadRequest(`Wrong timestamp format: ${startTimestamp}`)
+      }
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      // await dashboardStatsRepository.refreshStats(tenantId)
 
       const data = await dashboardStatsRepository.getTransactionCountStats(
-        timeframe,
+        startTimestampNumber,
         endTimestampNumber
       )
       return {

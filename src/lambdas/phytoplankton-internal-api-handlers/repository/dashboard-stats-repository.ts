@@ -1,28 +1,17 @@
 import { Db, MongoClient } from 'mongodb'
 import { TarponStackConstants } from '@cdk/constants'
 import dayjs from 'dayjs'
-import {
-  DashboardTimeFrameType,
-  RuleDashboardStats,
-  TransactionDashboardStats,
-} from '../constants'
+import { RuleDashboardStats, TransactionDashboardStats } from '../constants'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
-  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
-  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DAY_DATE_FORMAT,
-  DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT,
-  MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { neverThrow } from '@/utils/lang'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
@@ -167,117 +156,99 @@ export class DashboardStatsRepository {
   }
 
   public async recalculateTransactionsVolumeStats(db: Db, tenantId: string) {
-    const dashboardTransactionStatsHandler = async (
-      aggregatedCollectionName: string,
-      dateIdFormat: string
-    ) => {
-      const transactionsCollection = db.collection<TransactionCaseManagement>(
-        TRANSACTIONS_COLLECTION(tenantId)
-      )
-      try {
-        await transactionsCollection
-          .aggregate([
-            { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-            {
-              $group: {
-                _id: {
-                  $dateToString: {
-                    format: dateIdFormat,
-                    date: { $toDate: { $toLong: '$timestamp' } },
-                  },
+    const transactionsCollection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(tenantId)
+    )
+    const aggregatedCollectionName =
+      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
+    try {
+      await transactionsCollection
+        .aggregate([
+          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
                 },
-                totalTransactions: { $sum: 1 },
               },
+              totalTransactions: { $sum: 1 },
             },
-            {
-              $merge: {
-                into: aggregatedCollectionName,
-                whenMatched: 'replace',
-              },
+          },
+          {
+            $merge: {
+              into: aggregatedCollectionName,
+              whenMatched: 'replace',
             },
-          ])
-          .next()
-        await transactionsCollection
-          .aggregate([
-            {
-              $match: {
-                timestamp: { $gte: 0 },
-                hitRules: {
-                  $elemMatch: {
-                    ruleAction: 'FLAG',
-                  },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRules: {
+                $elemMatch: {
+                  ruleAction: 'FLAG',
                 },
               },
             },
-            {
-              $group: {
-                _id: {
-                  $dateToString: {
-                    format: dateIdFormat,
-                    date: { $toDate: { $toLong: '$timestamp' } },
-                  },
-                },
-                flaggedTransactions: { $sum: 1 },
-              },
-            },
-            {
-              $merge: {
-                into: aggregatedCollectionName,
-                whenMatched: 'merge',
-              },
-            },
-          ])
-          .next()
-        await transactionsCollection
-          .aggregate([
-            {
-              $match: {
-                timestamp: { $gte: 0 },
-                hitRules: {
-                  $elemMatch: {
-                    ruleAction: 'BLOCK',
-                  },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
                 },
               },
+              flaggedTransactions: { $sum: 1 },
             },
-            {
-              $group: {
-                _id: {
-                  $dateToString: {
-                    format: dateIdFormat,
-                    date: { $toDate: { $toLong: '$timestamp' } },
-                  },
+          },
+          {
+            $merge: {
+              into: aggregatedCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRules: {
+                $elemMatch: {
+                  ruleAction: 'BLOCK',
                 },
-                stoppedTransactions: { $sum: 1 },
               },
             },
-            {
-              $merge: {
-                into: aggregatedCollectionName,
-                whenMatched: 'merge',
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
               },
+              stoppedTransactions: { $sum: 1 },
             },
-          ])
-          .next()
-      } catch (e) {
-        console.error(`ERROR ${e}`)
-      }
+          },
+          {
+            $merge: {
+              into: aggregatedCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+    } catch (e) {
+      console.error(`ERROR ${e}`)
     }
-
-    await Promise.all([
-      dashboardTransactionStatsHandler(
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId),
-        MONTH_DATE_FORMAT
-      ),
-      dashboardTransactionStatsHandler(
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId),
-        DAY_DATE_FORMAT
-      ),
-      dashboardTransactionStatsHandler(
-        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId),
-        HOUR_DATE_FORMAT
-      ),
-    ])
   }
 
   public async refreshStats(tenantId: string) {
@@ -291,51 +262,24 @@ export class DashboardStatsRepository {
   }
 
   public async getTransactionCountStats(
-    timeframeType: DashboardTimeFrameType,
+    startTimestamp: number,
     endTimestamp: number
   ): Promise<TransactionDashboardStats[]> {
     const tenantId = this.tenantId
     const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
 
-    let collectionName: string
-    if (timeframeType === 'YEAR') {
-      collectionName = DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId)
-    } else if (timeframeType === 'WEEK' || timeframeType === 'MONTH') {
-      collectionName = DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId)
-    } else if (timeframeType === 'DAY') {
-      collectionName = DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
-    } else {
-      throw neverThrow(timeframeType, `Unsupported timeframe: ${timeframeType}`)
-    }
-    const collection = db.collection<TransactionDashboardStats>(collectionName)
+    const collection = db.collection<TransactionDashboardStats>(
+      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
+    )
 
-    const endDate = dayjs(endTimestamp)
-    let endDateText: string
-    let startDateText: string
-    if (timeframeType === 'YEAR') {
-      startDateText = endDate.subtract(1, 'year').format(MONTH_DATE_FORMAT_JS)
-      endDateText = endDate.format(MONTH_DATE_FORMAT_JS)
-    } else if (timeframeType === 'WEEK') {
-      startDateText = endDate.subtract(1, 'week').format(DAY_DATE_FORMAT_JS)
-      endDateText = endDate.format(DAY_DATE_FORMAT_JS)
-    } else if (timeframeType === 'MONTH') {
-      startDateText = endDate.subtract(1, 'month').format(DAY_DATE_FORMAT_JS)
-      endDateText = endDate.format(DAY_DATE_FORMAT_JS)
-    } else if (timeframeType === 'DAY') {
-      startDateText = endDate.subtract(1, 'day').format(HOUR_DATE_FORMAT_JS)
-      endDateText = endDate.format(HOUR_DATE_FORMAT_JS)
-    } else {
-      throw neverThrow(
-        timeframeType,
-        `Unsupported timeframe type: ${timeframeType}`
-      )
-    }
+    const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
+    const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
 
     return await collection
       .find({
         _id: {
-          $gt: startDateText,
-          $lte: endDateText,
+          $gt: startDate,
+          $lte: endDate,
         },
       })
       .sort({ _id: 1 })

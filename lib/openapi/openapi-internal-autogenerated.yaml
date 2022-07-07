@@ -1601,16 +1601,9 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: string
-            enum:
-              - WEEK
-              - MONTH
-              - DAY
-              - YEAR
+            type: number
           in: query
-          name: timeframe
-          required: true
-          description: MONTH, DAY or YEAR
+          name: startTimestamp
         - schema:
             type: number
           in: query
@@ -1679,7 +1672,7 @@ paths:
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${tarponDashboardStatsTransactionsFunction.Arn}:LATEST/invocations
         httpMethod: POST
         type: aws_proxy
         passthroughBehavior: never

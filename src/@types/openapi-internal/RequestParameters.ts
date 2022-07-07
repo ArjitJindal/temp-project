@@ -13,7 +13,7 @@ import { BusinessUsersListResponse } from './BusinessUsersListResponse'
 import { CardDetails } from './CardDetails'
 import { CardPaymentMethod } from './CardPaymentMethod'
 import { ChangeTenantPayload } from './ChangeTenantPayload'
-import { ChangeTenantPayload2 } from './ChangeTenantPayload2'
+import { ChangeTenantPayload1 } from './ChangeTenantPayload1'
 import { Comment } from './Comment'
 import { CompanyFinancialDetails } from './CompanyFinancialDetails'
 import { CompanyGeneralDetails } from './CompanyGeneralDetails'
@@ -51,6 +51,7 @@ import { LegalDocument } from './LegalDocument'
 import { LegalDocument1 } from './LegalDocument1'
 import { LegalEntity } from './LegalEntity'
 import { ListImportRequest } from './ListImportRequest'
+import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
 import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState'
 import { ParameterAttributeRiskValues } from './ParameterAttributeRiskValues'
 import { Person } from './Person'
@@ -89,7 +90,6 @@ import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
 import { WalletDetails } from './WalletDetails'
 import { WalletPaymentMethod } from './WalletPaymentMethod'
-import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload'
 
 export interface DefaultApiAccountsChangeTenantRequest {
   /**
@@ -305,11 +305,11 @@ export interface DefaultApiGetDashboardStatsRuleHitRequest {
 
 export interface DefaultApiGetDashboardStatsTransactionsRequest {
   /**
-   * MONTH, DAY or YEAR
-   * @type &#39;WEEK&#39; | &#39;MONTH&#39; | &#39;DAY&#39; | &#39;YEAR&#39;
+   *
+   * @type number
    * @memberof DefaultApigetDashboardStatsTransactions
    */
-  timeframe: 'WEEK' | 'MONTH' | 'DAY' | 'YEAR'
+  startTimestamp?: number
   /**
    *
    * @type number
@@ -708,10 +708,10 @@ export interface DefaultApiPulseManualRiskAssignmentRequest {
 export interface DefaultApiPulseRiskParameterRequest {
   /**
    *
-   * @type ChangeTenantPayload2
+   * @type ChangeTenantPayload1
    * @memberof DefaultApipulseRiskParameter
    */
-  ChangeTenantPayload2?: ChangeTenantPayload2
+  ChangeTenantPayload1?: ChangeTenantPayload1
 }
 
 export interface DefaultApiPutRuleInstancesRuleInstanceIdRequest {

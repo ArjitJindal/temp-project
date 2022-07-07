@@ -11,7 +11,7 @@
  */
 
 import { ParameterAttributeRiskValues } from './ParameterAttributeRiskValues'
-export class ChangeTenantPayload2 {
+export class ChangeTenantPayload1 {
   'parameterAttributeRiskValues': ParameterAttributeRiskValues
 
   static readonly discriminator: string | undefined = undefined
@@ -31,7 +31,7 @@ export class ChangeTenantPayload2 {
   ]
 
   static getAttributeTypeMap() {
-    return ChangeTenantPayload2.attributeTypeMap
+    return ChangeTenantPayload1.attributeTypeMap
   }
 
   public constructor() {}
