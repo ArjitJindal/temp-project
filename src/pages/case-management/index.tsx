@@ -199,7 +199,7 @@ function TableList() {
       },
       {
         title: 'Destination User ID',
-        dataIndex: 'deatinationUserId',
+        dataIndex: 'destinationUserId',
         width: 150,
         render: (dom, entity) => {
           return entity.destinationUserId;

@@ -165,7 +165,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       {
         title: 'Destination User ID',
         width: 120,
-        dataIndex: 'deatinationUserId',
+        dataIndex: 'destinationUserId',
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
