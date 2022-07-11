@@ -199,7 +199,7 @@ awscurl --service execute-api \
     -X POST \
     --region "$region" \
     --profile "$profile" \
-    -d '{"id":"R-103","name":"Potential trading bot","description":"A user account places >= x buy/sell/send/receive orders within time interval t seconds","defaultParameters":{"transactionsPerSecond":1,"timeWindowInSeconds":1},"defaultAction":"FLAG","ruleImplementationName":"transactions-velocity","labels":["Fraud"],"type":"TRANSACTION"}' \
+    -d '{"id":"R-103","name":"Potential trading bot","description":"A user account places >= x buy/sell/send/receive orders within time interval t seconds","defaultParameters":{"transactionsPerSecond":1, "transactionsLimit":1, "timeWindow": {"units": 50 "granularity": "minutes"}, "timeWindowInSeconds":1},"defaultAction":"FLAG","ruleImplementationName":"transactions-velocity","labels":["Fraud"],"type":"TRANSACTION"}' \
     https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
 
 # R-111
