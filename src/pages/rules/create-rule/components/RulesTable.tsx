@@ -23,7 +23,8 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       {
         title: 'Rule ID',
         width: 100,
-        sorter: true,
+        dataIndex: 'id',
+        sorter: (a, b) => a.id.localeCompare(b.id),
         render: (_, entity) => {
           return isFlagrightTenantUser(user) ? (
             <RuleCreationForm rule={entity}>
@@ -38,7 +39,10 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         title: 'Rule Name',
         width: 300,
         dataIndex: 'name',
-        sorter: true,
+        sorter: (a, b) => a.name.localeCompare(b.name),
+        render: (_, entity) => {
+          return entity.name;
+        },
       },
       {
         title: 'Rule Description',

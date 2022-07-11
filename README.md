@@ -49,9 +49,11 @@ const response = await api.getTransactionsList();
 
 Assuming you have nvm and yarn installed:
 
-1. yarn
-2. nvm use 12
-3. yarn start
+```
+> yarn
+> nvm use 12
+> yarn dev
+```
 
 ## Running It Locally With Tarpon API
 
