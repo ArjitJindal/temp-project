@@ -74,7 +74,11 @@ function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18
         : {
             key: item.name,
             icon: icon,
-            label: <Link to={item.path}>{i18n(fullKey as TranslationId)}</Link>,
+            label: (
+              <Link to={item.path} className={s.links}>
+                {i18n(fullKey as TranslationId)}
+              </Link>
+            ),
             title: i18n(fullKey as TranslationId),
           };
     });
@@ -97,7 +101,7 @@ export default function Menu(props: {
         <AntMenu
           inlineCollapsed={isCollapsed}
           className={s.menu}
-          theme="light"
+          theme="dark"
           mode="inline"
           selectedKeys={selectedKeys}
           defaultOpenKeys={selectedKeys}
@@ -106,13 +110,13 @@ export default function Menu(props: {
       </div>
       <AntMenu
         inlineCollapsed={isCollapsed}
-        className={s.links}
+        theme="dark"
         mode="inline"
         items={[
           {
             key: 'button',
             onClick: () => onChangeCollapsed(!isCollapsed),
-            icon: isCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />,
+            icon: isCollapsed ? <MenuUnfoldOutlined /> : <MenuUnfoldOutlined />,
           },
         ]}
       />

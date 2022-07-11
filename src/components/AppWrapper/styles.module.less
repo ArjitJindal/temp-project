@@ -1,56 +1,60 @@
+@import '../ui/colors.less';
 @collapsed-menu-width: 80px;
 @open-menu-width: 250px;
 
-.root {
-  min-height: 100vh;
-  background: rgb(240, 242, 245);
+:root {
+  .root {
+    min-height: 100vh;
+    background: rgb(240, 242, 245);
 
-  &.isCollapsed {
-    .aside {
-      width: @collapsed-menu-width;
-    }
-    .main {
-      padding-left: @collapsed-menu-width;
+    &.isCollapsed {
+      .aside {
+        width: @collapsed-menu-width;
+      }
+      .main {
+        padding-left: @collapsed-menu-width;
+      }
     }
   }
-}
 
-.header {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100vw;
-  height: 48px;
-  padding: 0 16px;
-  overflow: auto;
-  background: white; // todo: migration: use light theme and remove this
-  box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
-}
-
-.aside {
-  position: fixed;
-  top: 48px;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  width: @open-menu-width;
-  height: calc(100vh - 48px);
-  transition: width 300ms;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  .header {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100vw;
+    height: 48px;
+    padding: 0 16px;
+    overflow: auto;
+    color: #fff;
+    background: @fr-colors-brandBlue;
+    box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
   }
-}
 
-.main {
-  padding-top: 48px;
-  padding-left: @open-menu-width;
-  transition: padding-left 300ms;
+  .aside {
+    position: fixed;
+    top: 48px;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    width: @open-menu-width;
+    height: calc(100vh - 48px);
+    transition: width 300ms;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+  }
+
+  .main {
+    padding-top: 48px;
+    padding-left: @open-menu-width;
+    transition: padding-left 300ms;
+  }
 }
