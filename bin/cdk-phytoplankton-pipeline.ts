@@ -9,33 +9,20 @@ import { CdkPhytoplanktonPipelineStack } from '../lib/cdk-phytoplankton-pipeline
 
 const app = new cdk.App();
 
-let devStack: CdkPhytoplanktonStack | null = null;
-let sandboxStack: CdkPhytoplanktonStack | null = null;
-let prodStack: CdkPhytoplanktonStack | null = null;
-
-if (!process.env.ENV || process.env.ENV === 'dev') {
-  devStack = new CdkPhytoplanktonStack(app, `${devConfig.stage}-phytoplankton`, devConfig);
+if (process.env.ENV === 'dev') {
+  new CdkPhytoplanktonStack(app, `${devConfig.stage}-phytoplankton`, devConfig);
 }
 
-if (!process.env.ENV || process.env.ENV === 'sandbox') {
-  sandboxStack = new CdkPhytoplanktonStack(
-    app,
-    `${sandboxConfig.stage}-phytoplankton`,
-    sandboxConfig,
-  );
+if (process.env.ENV === 'sandbox') {
+  new CdkPhytoplanktonStack(app, `${sandboxConfig.stage}-phytoplankton`, sandboxConfig);
 }
 
-if (!process.env.ENV || process.env.ENV === 'prod') {
-  prodStack = new CdkPhytoplanktonStack(app, `${prodConfig.stage}-phytoplankton`, prodConfig);
+if (process.env.ENV === 'prod') {
+  new CdkPhytoplanktonStack(app, `${prodConfig.stage}-phytoplankton`, prodConfig);
 }
 
 if (!process.env.ENV) {
   new CdkPhytoplanktonPipelineStack(app, 'phytoplankton-pipeline', {
     env: deployConfig.env,
-    devStack,
-    sandboxStack,
-    prodStackSIN: null,
-    prodStackBOM: null,
-    prodStackFRA: prodStack,
   });
 }

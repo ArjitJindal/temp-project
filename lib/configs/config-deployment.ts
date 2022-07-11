@@ -1,11 +1,10 @@
 export const config = {
-  env: { account: '911899431626', region: 'us-east-2' },
+  env: { account: '911899431626', region: 'eu-central-1' },
   github: {
     GITHUB_CONNECTION_ARN:
-      'arn:aws:codestar-connections:us-east-2:911899431626:connection/8842abe1-7978-4a8b-acd8-41826357152b',
+      'arn:aws:codestar-connections:eu-central-1:911899431626:connection/2d055238-d64a-4dd0-8140-fcc0752af612',
     OWNER: 'flagright',
     REPO: 'phytoplankton-console',
-    // TDOO: Switch to main branch after stable
-    BRANCH: 'ci-cd-test',
+    BRANCH: 'main',
   },
 };
