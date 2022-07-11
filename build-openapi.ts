@@ -47,7 +47,6 @@ function buildApi(type: 'public' | 'internal') {
   exec(
     `rm -f src/@types/openapi-${type}/ObjectSerializer.ts src/@types/openapi-${type}/all.ts`
   )
-  exec(`ts-node lib/openapi/openapi-${type}-augmentor.ts`)
 }
 
 buildApi('public')

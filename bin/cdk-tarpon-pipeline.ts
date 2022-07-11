@@ -12,63 +12,32 @@ import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
 
 const app = new cdk.App()
 
-let devTarponStack: CdkTarponStack | null = null
-let sandboxTarponStack: CdkTarponStack | null = null
-let prodTarponStackSIN: CdkTarponStack | null = null
-let prodTarponStackBOM: CdkTarponStack | null = null
-let prodTarponStackFRA: CdkTarponStack | null = null
-
-if (!process.env.ENV || process.env.ENV === 'local') {
+if (process.env.ENV === 'local') {
   new CdkTarponStack(app, `${localConfig.stage}-tarpon`, localConfig)
 }
 
-if (!process.env.ENV || process.env.ENV === 'dev') {
-  devTarponStack = new CdkTarponStack(
-    app,
-    `${devConfig.stage}-tarpon`,
-    devConfig
-  )
+if (process.env.ENV === 'dev') {
+  new CdkTarponStack(app, `${devConfig.stage}-tarpon`, devConfig)
 }
 
-if (!process.env.ENV || process.env.ENV === 'sandbox') {
-  sandboxTarponStack = new CdkTarponStack(
-    app,
-    `${sandboxConfig.stage}-tarpon`,
-    sandboxConfig
-  )
+if (process.env.ENV === 'sandbox') {
+  new CdkTarponStack(app, `${sandboxConfig.stage}-tarpon`, sandboxConfig)
 }
 
-if (!process.env.ENV || process.env.ENV === 'asia-1') {
-  prodTarponStackSIN = new CdkTarponStack(
-    app,
-    `${prodConfigAsia1.stage}-tarpon`,
-    prodConfigAsia1
-  )
+if (process.env.ENV === 'asia-1') {
+  new CdkTarponStack(app, `${prodConfigAsia1.stage}-tarpon`, prodConfigAsia1)
 }
 
-if (!process.env.ENV || process.env.ENV === 'asia-2') {
-  prodTarponStackBOM = new CdkTarponStack(
-    app,
-    `${prodConfigAsia2.stage}-tarpon`,
-    prodConfigAsia2
-  )
+if (process.env.ENV === 'asia-2') {
+  new CdkTarponStack(app, `${prodConfigAsia2.stage}-tarpon`, prodConfigAsia2)
 }
 
-if (!process.env.ENV || process.env.ENV === 'eu-1') {
-  prodTarponStackFRA = new CdkTarponStack(
-    app,
-    `${prodConfigEu1.stage}-tarpon`,
-    prodConfigEu1
-  )
+if (process.env.ENV === 'eu-1') {
+  new CdkTarponStack(app, `${prodConfigEu1.stage}-tarpon`, prodConfigEu1)
 }
 
 if (!process.env.ENV) {
   new CdkTarponPipelineStack(app, 'tarpon-pipeline', {
     env: deployConfig.env,
-    devTarponStack,
-    sandboxTarponStack,
-    prodTarponStackSIN,
-    prodTarponStackBOM,
-    prodTarponStackFRA,
   })
 }

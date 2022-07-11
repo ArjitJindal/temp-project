@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts bin/cdk-tarpon-pipeline.ts",
+  "app": "./node_modules/.bin/ts-node --prefer-ts-exts bin/cdk-tarpon-pipeline.ts",
   "context": {
     "@aws-cdk/aws-apigateway:usagePlanKeyOrderInsensitiveId": true,
     "aws-cdk:enableDiffNoFail": "true",

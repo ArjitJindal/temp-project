@@ -1,28 +1,19 @@
 import * as cdk from 'aws-cdk-lib'
-import { CfnCapabilities, CfnOutput, RemovalPolicy } from 'aws-cdk-lib'
-import * as kms from 'aws-cdk-lib/aws-kms'
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline'
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions'
-import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 
 import { Construct } from 'constructs'
+import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 import { config as deployConfig } from './configs/config-deployment'
 import { config as devConfig } from './configs/config-dev'
 import { config as sandboxConfig } from './configs/config-sandbox'
-import { CdkTarponStack } from './cdk-tarpon-stack'
+import { config as prodConfig } from './configs/config-prod-asia-1'
 
 const PIPELINE_NAME = 'tarpon-pipeline'
 
-export interface CdkTarponPipelineStackProps extends cdk.StackProps {
-  readonly devTarponStack: CdkTarponStack | null
-  readonly sandboxTarponStack: CdkTarponStack | null
-  readonly prodTarponStackSIN: CdkTarponStack | null
-  readonly prodTarponStackBOM: CdkTarponStack | null
-  readonly prodTarponStackFRA: CdkTarponStack | null
-}
-
+export type CdkTarponPipelineStackProps = cdk.StackProps
 export class CdkTarponPipelineStack extends cdk.Stack {
   constructor(
     scope: Construct,
@@ -31,75 +22,22 @@ export class CdkTarponPipelineStack extends cdk.Stack {
   ) {
     super(scope, id, props)
 
-    // Resolve ARNs of cross-account roles for the Dev account
-    const devCloudFormationRole = iam.Role.fromRoleArn(
-      this,
-      'DevDeploymentRole',
-      `arn:aws:iam::${devConfig.env.account}:role/CloudFormationDeploymentRole`,
-      {
-        mutable: false,
-      }
-    )
+    // NOTE: These deployment roles in the different accounts need to be created manually once with
+    // enough priviledges to run `cdk deploy` for the target account.
+    const DEV_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${devConfig.env.account}:role/CodePipelineDeployRole`
     const devCodeDeployRole = iam.Role.fromRoleArn(
       this,
-      'DevCrossAccountRole',
-      `arn:aws:iam::${devConfig.env.account}:role/CodePipelineCrossAccountRole`,
+      'DevCodePipelineDeployRole',
+      DEV_CODE_DEPLOY_ROLE_ARN,
       {
         mutable: false,
       }
     )
+    const SANDBOX_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineDeployRole`
+    const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${prodConfig.env.account}:role/CodePipelineDeployRole`
 
-    // Resolve ARNS of cross-account roles for the Sandbox account
-    const sandboxCloudFormationRole = iam.Role.fromRoleArn(
-      this,
-      'ProdDeploymentRole',
-      `arn:aws:iam::${sandboxConfig.env.account}:role/CloudFormationDeploymentRole`,
-      {
-        mutable: false,
-      }
-    )
-    const sandboxCodeDeployRole = iam.Role.fromRoleArn(
-      this,
-      'ProdCrossAccountRole',
-      `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineCrossAccountRole`,
-      {
-        mutable: false,
-      }
-    )
-
-    // Resolve root Principal ARNs for both deployment accounts
-    const devAccountRootPrincipal = new iam.AccountPrincipal(
-      devConfig.env.account
-    )
-    const sandboxAccountRootPrincipal = new iam.AccountPrincipal(
-      sandboxConfig.env.account
-    )
-
-    // TODO: Move the key creation to the shared infra stack and reference using Cfn output
-    // Create KMS key and update policy with cross-account access
-    const key = new kms.Key(this, 'ArtifactKey', {
-      alias: 'key/pipeline-artifact-key',
-    })
-    key.grantDecrypt(devAccountRootPrincipal)
-    key.grantDecrypt(devCodeDeployRole)
-    key.grantDecrypt(sandboxAccountRootPrincipal)
-    key.grantDecrypt(sandboxCodeDeployRole)
-
-    // TODO: Move the bucket creation to the shared infra stack and reference using Cfn output
-    // Create S3 bucket with target account cross-account access
-    const artifactBucket = new s3.Bucket(this, 'ArtifactBucket', {
-      bucketName: `artifact-bucket-${this.account}`,
-      removalPolicy: RemovalPolicy.DESTROY,
-      encryption: s3.BucketEncryption.KMS,
-      encryptionKey: key,
-    })
-    artifactBucket.grantPut(devAccountRootPrincipal)
-    artifactBucket.grantRead(devAccountRootPrincipal)
-    artifactBucket.grantPut(sandboxAccountRootPrincipal)
-    artifactBucket.grantRead(sandboxAccountRootPrincipal)
-
-    // CDK build definition
-    const cdkBuild = new codebuild.PipelineProject(this, 'TarponCdkBuild', {
+    // Build definition
+    const buildProject = new codebuild.PipelineProject(this, 'TarponBuild', {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
@@ -107,32 +45,75 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             'runtime-versions': {
               nodejs: 14,
             },
-            commands: ['npm install', 'npm install -g aws-cdk'],
+            commands: ['npm install'],
           },
           build: {
-            commands: ['npm run build', 'npm run synth'],
+            commands: ['npm run build'],
           },
         },
+        cache: {
+          paths: ['node_modules/**/*'],
+        },
         artifacts: {
-          'base-directory': 'cdk.out',
-          files: ['*tarpon.template.json'],
+          'base-directory': 'dist',
+          files: ['**/*'],
         },
       }),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+        computeType: ComputeType.MEDIUM,
       },
-      // use the encryption key for build artifacts
-      encryptionKey: key,
     })
+    const getDeployCodeBuildProject = (
+      env: 'dev' | 'sandbox' | 'prod:asia-1' | 'prod:asia-2' | 'prod:eu-1',
+      roleArn: string
+    ) =>
+      new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
+        buildSpec: codebuild.BuildSpec.fromObject({
+          version: '0.2',
+          phases: {
+            install: {
+              'runtime-versions': {
+                nodejs: 14,
+              },
+              commands: [
+                'npm install -g aws-cdk',
+                'npm install @tsconfig/node14 ts-node typescript',
+                `ASSUME_ROLE_ARN="${roleArn}"`,
+                `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
+                'export TEMP_ROLE',
+                'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
+                'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
+                'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
+              ],
+            },
+            build: {
+              commands: [
+                `cp -r $CODEBUILD_SRC_DIR_${buildOutput.artifactName} dist`,
+                `npm run openapi:generate:${env}`,
+                `npm run synth:${env}`,
+                `npm run deploy:${env} -- --require-approval=never`,
+              ],
+            },
+          },
+          artifacts: {
+            'base-directory': 'cdk.out',
+            files: ['*.json'],
+          },
+        }),
+        environment: {
+          buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+        },
+        role: devCodeDeployRole,
+      })
 
     // Define pipeline stage output artifacts
     const sourceOutput = new codepipeline.Artifact()
-    const cdkBuildOutput = new codepipeline.Artifact('CdkBuildOutput')
+    const buildOutput = new codepipeline.Artifact('BuildOutput')
 
     // Pipeline definition
-    const pipeline = new codepipeline.Pipeline(this, PIPELINE_NAME, {
+    new codepipeline.Pipeline(this, PIPELINE_NAME, {
       pipelineName: PIPELINE_NAME,
-      artifactBucket: artifactBucket,
       stages: [
         {
           stageName: 'Source',
@@ -151,70 +132,76 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           stageName: 'Build',
           actions: [
             new codepipeline_actions.CodeBuildAction({
-              actionName: 'CDK_Synth',
-              project: cdkBuild,
+              actionName: 'Build',
+              project: buildProject,
               input: sourceOutput,
-              outputs: [cdkBuildOutput],
+              outputs: [buildOutput],
             }),
           ],
         },
         {
-          stageName: 'Deploy_Dev',
+          stageName: 'Deploy-Dev',
           actions: [
-            new codepipeline_actions.CloudFormationCreateUpdateStackAction({
+            new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
-              templatePath: cdkBuildOutput.atPath('dev-tarpon.template.json'),
-              stackName: 'DevTarponDeploymentStack',
-              adminPermissions: true,
-              cfnCapabilities: [CfnCapabilities.ANONYMOUS_IAM],
-              role: devCodeDeployRole,
-              deploymentRole: devCloudFormationRole,
+              project: getDeployCodeBuildProject(
+                'dev',
+                DEV_CODE_DEPLOY_ROLE_ARN
+              ),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
             }),
           ],
         },
         {
-          stageName: 'Deploy_Sandbox',
+          stageName: 'Deploy-Sandbox',
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
+              runOrder: 1,
             }),
-            new codepipeline_actions.CloudFormationCreateUpdateStackAction({
+            new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
-              templatePath: cdkBuildOutput.atPath(
-                'sandbox-tarpon.template.json'
+              project: getDeployCodeBuildProject(
+                'sandbox',
+                SANDBOX_CODE_DEPLOY_ROLE_ARN
               ),
-              stackName: 'SandboxTarponDeploymentStack',
-              adminPermissions: true,
-              cfnCapabilities: [CfnCapabilities.ANONYMOUS_IAM],
-              role: sandboxCodeDeployRole,
-              deploymentRole: sandboxCloudFormationRole,
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              runOrder: 2,
+            }),
+          ],
+        },
+        {
+          stageName: 'Deploy-Prod',
+          actions: [
+            new codepipeline_actions.ManualApprovalAction({
+              actionName: 'Approve',
+              runOrder: 1,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy_asia-1',
+              project: getDeployCodeBuildProject(
+                'prod:asia-1',
+                PROD_CODE_DEPLOY_ROLE_ARN
+              ),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              runOrder: 2,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy_asia-2',
+              project: getDeployCodeBuildProject(
+                'prod:asia-2',
+                PROD_CODE_DEPLOY_ROLE_ARN
+              ),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              runOrder: 2,
             }),
           ],
         },
       ],
-    })
-
-    // Add the target accounts to the pipeline policy
-    pipeline.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ['sts:AssumeRole'],
-        resources: [
-          `arn:aws:iam::${devConfig.env.account}:role/*`,
-          `arn:aws:iam::${sandboxConfig.env.account}:role/*`,
-        ],
-      })
-    )
-
-    // TODO: Move to the shared infra stack
-    // Publish the KMS Key ARN as an output
-    new CfnOutput(this, 'ArtifactBucketEncryptionKeyArn', {
-      value: key.keyArn,
-      exportName: 'ArtifactBucketEncryptionKey',
-    })
-
-    new CfnOutput(this, 'ArtifactBuckeArn', {
-      value: artifactBucket.bucketArn,
-      exportName: 'ArtifactBucket',
     })
   }
 }
