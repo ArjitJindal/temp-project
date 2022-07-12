@@ -102,15 +102,11 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
         {
           stageName: 'Deploy_Sandbox',
           actions: [
-            new codepipeline_actions.ManualApprovalAction({
-              actionName: 'Approve',
-              runOrder: 1,
-            }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
               project: getDeployCodeBuildProject('sandbox', SANDBOX_CODE_DEPLOY_ROLE_ARN),
               input: sourceOutput,
-              runOrder: 2,
+              runOrder: 1,
             }),
           ],
         },
