@@ -1,4 +1,4 @@
-import { Drawer, message, Popover, Progress, Switch, Tag, Tooltip } from 'antd';
+import { Drawer, message, Popover, Progress, Switch, Tooltip } from 'antd';
 import type { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
@@ -11,8 +11,10 @@ import PageWrapper from '@/components/PageWrapper';
 import Table from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
+import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
 
 export default () => {
+  const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
@@ -111,10 +113,19 @@ export default () => {
         },
       },
       {
-        title: 'Parameters',
+        title: 'Parameter',
         width: 250,
         render: (_, ruleInstance) => {
-          return (
+          return isPulseEnabled ? (
+            <a
+              onClick={() => {
+                setCurrentRow(ruleInstance);
+                setShowDetail(true);
+              }}
+            >
+              Show risk level parameters
+            </a>
+          ) : (
             <RuleParametersTable
               parameters={ruleInstance.parameters}
               schema={
@@ -161,7 +172,7 @@ export default () => {
         },
       },
     ],
-    [handleActivationChange, ruleImplementations, rules, updatedRuleInstances],
+    [handleActivationChange, ruleImplementations, rules, updatedRuleInstances, isPulseEnabled],
   );
   const i18n = useI18n();
   // todo: i18n
