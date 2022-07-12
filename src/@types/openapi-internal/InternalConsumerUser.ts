@@ -18,6 +18,7 @@ import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
 import { User } from './User'
 import { UserDetails } from './UserDetails'
+import { UserStatus } from './UserStatus'
 export class InternalConsumerUser {
   /**
    * Unique user ID
@@ -28,6 +29,7 @@ export class InternalConsumerUser {
    * Timestamp when userId is created
    */
   'createdTimestamp': number
+  'userStatus'?: UserStatus
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -65,6 +67,12 @@ export class InternalConsumerUser {
       name: 'createdTimestamp',
       baseName: 'createdTimestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'UserStatus',
       format: '',
     },
     {

@@ -14,6 +14,7 @@ import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
 import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
+import { UserStatus } from './UserStatus'
 /**
  * Model for a business user
  */
@@ -27,6 +28,7 @@ export class Business {
    * Timestamp when the user was created
    */
   'createdTimestamp': number
+  'userStatus'?: UserStatus
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
    */
@@ -65,6 +67,12 @@ export class Business {
       name: 'createdTimestamp',
       baseName: 'createdTimestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'UserStatus',
       format: '',
     },
     {

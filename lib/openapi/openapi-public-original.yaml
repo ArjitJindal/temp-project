@@ -1053,6 +1053,8 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when userId is created
+        userStatus:
+          $ref: '#/components/schemas/UserStatus'
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -2472,6 +2474,8 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when the user was created
+        userStatus:
+          $ref: '#/components/schemas/UserStatus'
         shareHolders:
           type: array
           description: >-
@@ -2985,6 +2989,30 @@ components:
       description: >-
         Classify the method of payment as "GENERIC_BANK_ACCOUNT" for
         GenericBankAccountDetails
+    UserStatus:
+      type: string
+      title: UserStatus
+      x-stoplight:
+        id: u96ht5plqanrj
+      enum:
+        - UNACCEPTABLE
+        - UNDECIDED
+        - TERMINATED
+        - ACTIVE
+        - INACTIVE
+        - DORMANT
+        - CREATED
+        - DELETED
+        - SUSPENDED - ALL
+        - SUSPENDED - CREDITS
+        - SUSPENDED - DEBITS
+        - SUSPENDED - CARDS
+        - SUSPENDED - STOCKS
+        - SUSPENDED - CRYPTO
+        - SUSPENDED - LOG IN
+      x-examples:
+        example-1: UNACCEPTABLE
+        example-2: ACTIVE
   securitySchemes:
     x-api-key:
       name: x-api-key

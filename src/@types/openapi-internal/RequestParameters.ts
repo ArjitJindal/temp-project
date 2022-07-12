@@ -88,6 +88,7 @@ import { UPIPaymentMethod } from './UPIPaymentMethod'
 import { User } from './User'
 import { UserDetails } from './UserDetails'
 import { UserDetails1 } from './UserDetails1'
+import { UserStatus } from './UserStatus'
 import { WalletDetails } from './WalletDetails'
 import { WalletPaymentMethod } from './WalletPaymentMethod'
 

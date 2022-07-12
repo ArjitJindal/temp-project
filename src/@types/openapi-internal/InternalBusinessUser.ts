@@ -17,6 +17,7 @@ import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
 import { Tag } from './Tag'
 import { TransactionLimits1 } from './TransactionLimits1'
+import { UserStatus } from './UserStatus'
 export class InternalBusinessUser {
   /**
    * Unique user ID for the user
@@ -27,6 +28,7 @@ export class InternalBusinessUser {
    * Timestamp when the user was created
    */
   'createdTimestamp': number
+  'userStatus'?: UserStatus
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
    */
@@ -67,6 +69,12 @@ export class InternalBusinessUser {
       name: 'createdTimestamp',
       baseName: 'createdTimestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'UserStatus',
       format: '',
     },
     {

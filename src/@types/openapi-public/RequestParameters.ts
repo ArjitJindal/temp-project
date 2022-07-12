@@ -53,6 +53,7 @@ import { UserEventWithRulesResult } from './UserEventWithRulesResult'
 import { UserEventWithRulesResultAllOf } from './UserEventWithRulesResultAllOf'
 import { UserMonitoringResult } from './UserMonitoringResult'
 import { UserMonitoringResultAllOf } from './UserMonitoringResultAllOf'
+import { UserStatus } from './UserStatus'
 import { WalletDetails } from './WalletDetails'
 import { WalletPaymentMethod } from './WalletPaymentMethod'
 

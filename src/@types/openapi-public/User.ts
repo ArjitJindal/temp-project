@@ -15,6 +15,7 @@ import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
 import { UserDetails } from './UserDetails'
+import { UserStatus } from './UserStatus'
 /**
  * Model for User details
  */
@@ -28,6 +29,7 @@ export class User {
    * Timestamp when userId is created
    */
   'createdTimestamp': number
+  'userStatus'?: UserStatus
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -63,6 +65,12 @@ export class User {
       name: 'createdTimestamp',
       baseName: 'createdTimestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'UserStatus',
       format: '',
     },
     {
