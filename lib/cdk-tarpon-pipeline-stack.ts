@@ -156,10 +156,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         {
           stageName: 'Deploy-Sandbox',
           actions: [
-            new codepipeline_actions.ManualApprovalAction({
-              actionName: 'Approve',
-              runOrder: 1,
-            }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
               project: getDeployCodeBuildProject(
@@ -168,7 +164,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 2,
+              runOrder: 1,
             }),
           ],
         },
