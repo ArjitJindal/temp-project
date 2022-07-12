@@ -24,7 +24,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         title: 'Rule ID',
         width: 100,
         dataIndex: 'id',
-        sorter: (a, b) => a.id.localeCompare(b.id),
+        sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
         render: (_, entity) => {
           return isFlagrightTenantUser(user) ? (
             <RuleCreationForm rule={entity}>
