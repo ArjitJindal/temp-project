@@ -215,7 +215,7 @@ const TransactionsChartCard = () => {
                         visible: true,
                         label: {
                           autoRotate: false,
-                          autoHide: false,
+                          autoHide: true,
                           rotate: -Math.PI / 6,
                           style: {
                             textAlign: 'right',
