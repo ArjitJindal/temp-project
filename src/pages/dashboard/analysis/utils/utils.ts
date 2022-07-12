@@ -50,3 +50,14 @@ export function getTimeDistance(type: 'today' | 'week' | 'month' | 'year'): Rang
 
   return [moment(`${year}-01-01 00:00:00`), moment(`${year}-12-31 23:59:59`)];
 }
+
+export function momentCalc(val: string) {
+  if (val === 'YEAR') {
+    return moment().subtract(1, 'year');
+  } else if (val === 'MONTH') {
+    return moment().subtract(1, 'month');
+  } else if (val === 'WEEK') {
+    return moment().subtract(1, 'week');
+  }
+  return moment().subtract(1, 'day');
+}
