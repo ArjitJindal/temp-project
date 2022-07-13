@@ -13,6 +13,7 @@
 import { Business } from './Business'
 import { FileInfo } from './FileInfo'
 import { InternalBusinessUserAllOf } from './InternalBusinessUserAllOf'
+import { KYCStatus } from './KYCStatus'
 import { LegalEntity } from './LegalEntity'
 import { Person } from './Person'
 import { Tag } from './Tag'
@@ -29,6 +30,7 @@ export class InternalBusinessUser {
    */
   'createdTimestamp': number
   'userStatus'?: UserStatus
+  'kycStatus'?: KYCStatus
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
    */
@@ -75,6 +77,12 @@ export class InternalBusinessUser {
       name: 'userStatus',
       baseName: 'userStatus',
       type: 'UserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'KYCStatus',
       format: '',
     },
     {

@@ -13,6 +13,7 @@
 import { ContactDetails } from './ContactDetails'
 import { FileInfo } from './FileInfo'
 import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf'
+import { KYCStatus } from './KYCStatus'
 import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
@@ -30,6 +31,7 @@ export class InternalConsumerUser {
    */
   'createdTimestamp': number
   'userStatus'?: UserStatus
+  'kycStatus'?: KYCStatus
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -73,6 +75,12 @@ export class InternalConsumerUser {
       name: 'userStatus',
       baseName: 'userStatus',
       type: 'UserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'KYCStatus',
       format: '',
     },
     {

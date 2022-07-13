@@ -11,6 +11,7 @@
  */
 
 import { ContactDetails } from './ContactDetails'
+import { KYCStatus } from './KYCStatus'
 import { LegalDocument } from './LegalDocument'
 import { Tag } from './Tag'
 import { TransactionLimits } from './TransactionLimits'
@@ -30,6 +31,7 @@ export class User {
    */
   'createdTimestamp': number
   'userStatus'?: UserStatus
+  'kycStatus'?: KYCStatus
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -71,6 +73,12 @@ export class User {
       name: 'userStatus',
       baseName: 'userStatus',
       type: 'UserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'KYCStatus',
       format: '',
     },
     {

@@ -1055,6 +1055,8 @@ components:
           description: Timestamp when userId is created
         userStatus:
           $ref: '#/components/schemas/UserStatus'
+        kycStatus:
+          $ref: '#/components/schemas/KYCStatus'
         legalDocuments:
           type: array
           description: User's legal identity documents - See Document Model for details
@@ -2476,6 +2478,8 @@ components:
           description: Timestamp when the user was created
         userStatus:
           $ref: '#/components/schemas/UserStatus'
+        kycStatus:
+          $ref: '#/components/schemas/KYCStatus'
         shareHolders:
           type: array
           description: >-
@@ -3013,6 +3017,17 @@ components:
       x-examples:
         example-1: UNACCEPTABLE
         example-2: ACTIVE
+    KYCStatus:
+      type: string
+      title: KYCStatus
+      x-stoplight:
+        id: ha9qqemmdqu1y
+      enum:
+        - SUCCESSFUL
+        - FAILED
+        - NOT_STARTED
+        - IN_PROGRESS
+        - MANUAL_REVIEW
   securitySchemes:
     x-api-key:
       name: x-api-key
