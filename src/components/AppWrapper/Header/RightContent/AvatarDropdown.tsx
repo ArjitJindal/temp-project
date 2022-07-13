@@ -25,6 +25,10 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
         logout({ returnTo: window.location.origin });
         return;
       }
+      if (key === 'settings') {
+        navigate(`/accounts`);
+        return;
+      }
       navigate(`/account/${key}`);
     },
     [navigate, logout],
