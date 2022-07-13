@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useLocalStorageState } from 'ahooks';
 import AccountsPage from '@/pages/accounts';
 import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import Page404 from '@/pages/404';
@@ -16,6 +17,7 @@ import { RouteItem } from '@/services/routing/types';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
+  const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
   return useMemo(
     () => [
       {
@@ -67,7 +69,10 @@ export function useRoutes(): RouteItem[] {
             routes: [
               {
                 path: '/users/list',
-                redirect: '/users/list/consumer/all',
+                redirect:
+                  lastActiveTab === 'consumer'
+                    ? '/users/list/consumer/all'
+                    : '/users/list/business/all',
               },
               {
                 path: '/users/list/:list/:id',
@@ -178,6 +183,6 @@ export function useRoutes(): RouteItem[] {
         hideInMenu: true,
       },
     ],
-    [isRiskLevelsEnabled],
+    [isRiskLevelsEnabled, lastActiveTab],
   );
 }

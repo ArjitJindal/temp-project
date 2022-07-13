@@ -5,6 +5,7 @@ import moment, { Moment } from 'moment';
 import { Column } from '@ant-design/charts';
 import { useEffect, useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
+import { useLocalStorageState } from 'ahooks';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
 import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
@@ -140,11 +141,17 @@ const TransactionsChartCard = () => {
   );
 
   const data = getOr(dataResource, []);
+  const [activeTab, setActiveTab] = useLocalStorageState(
+    'dashboard-analytics-active-tab',
+    'totalTransactions',
+  );
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">
       <div className={styles.salesCard}>
         <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
           tabBarExtraContent={
             <div className={styles.salesExtraWrap}>
               <div className={styles.salesExtra}>

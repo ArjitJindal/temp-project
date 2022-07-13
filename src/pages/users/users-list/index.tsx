@@ -1,4 +1,5 @@
 import { Drawer, Tabs, Tag } from 'antd';
+import { useLocalStorageState } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
@@ -426,6 +427,10 @@ const TableList = () => {
   const { list = 'consumer', id } = useParams<'list' | 'id'>();
   const navigate = useNavigate();
   const i18n = useI18n();
+  const [_, setLocalStorageActiveTab] = useLocalStorageState('user-active-tab', list);
+  useEffect(() => {
+    setLocalStorageActiveTab(list);
+  }, [setLocalStorageActiveTab, list]);
   return (
     <PageWrapper title={i18n('menu.users.lists')}>
       <Tabs

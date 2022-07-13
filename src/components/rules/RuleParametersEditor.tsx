@@ -3,6 +3,7 @@ import { AjvError, IChangeEvent, withTheme } from '@rjsf/core';
 import { Radio, Tabs, Typography } from 'antd';
 import { Fragment, useCallback, useState } from 'react';
 import _ from 'lodash';
+import { useLocalStorageState } from 'ahooks';
 import { RuleActionTag } from './RuleActionTag';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
@@ -63,14 +64,19 @@ export const RuleParametersEditor: React.FC<Props> = ({
     },
     [onRiskLevelParametersChange],
   );
-  const handleChangeActiveRiskLevel = useCallback((riskLevel: string) => {
-    setActiveRiskLevel(riskLevel as RiskLevel);
-  }, []);
+  const [activeTab, setActiveTab] = useLocalStorageState('pulse-active-tab', 'VERY_HIGH');
+  const handleChangeActiveRiskLevel = useCallback(
+    (riskLevel: string) => {
+      setActiveRiskLevel(riskLevel as RiskLevel);
+      setActiveTab(riskLevel);
+    },
+    [setActiveTab],
+  );
 
   return (
     <div>
       {isPulseEnabled ? (
-        <Tabs type="line" onChange={handleChangeActiveRiskLevel}>
+        <Tabs activeKey={activeTab} type="line" onChange={handleChangeActiveRiskLevel}>
           {RISK_LEVELS.map((riskLevel) => (
             <Tabs.TabPane tab={riskLevelToLabel(riskLevel)} key={riskLevel}>
               <JSONSchemaForm
