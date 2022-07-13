@@ -32,6 +32,7 @@ import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import '../../components/ui/colors';
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
@@ -113,9 +114,10 @@ function TableList() {
               onClick={() => {
                 setCurrentItem(success(entity));
               }}
+              style={{ color: '@fr-colors-brandBlue' }}
               replace
             >
-              {dom}
+              {entity.transactionId}
             </Link>
           );
         },

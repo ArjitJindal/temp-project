@@ -26,6 +26,7 @@ import {
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
+import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
@@ -90,9 +91,10 @@ const BusinessUsersTab = (props: { id?: string }) => {
             onClick={() => {
               setCurrentItem(success(entity));
             }}
+            style={{ color: '@fr-colors-brandBlue' }}
             replace
           >
-            {dom}
+            {entity.userId}
           </Link>
         );
       },
@@ -285,9 +287,10 @@ const ConsumerUsersTab = (props: { id?: string }) => {
             onClick={() => {
               setCurrentItem(success(entity));
             }}
+            style={{ color: '@fr-colors-brandBlue' }}
             replace
           >
-            {dom}
+            {entity.userId}
           </Link>
         );
       },

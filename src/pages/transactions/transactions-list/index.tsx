@@ -24,6 +24,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import { useI18n } from '@/locales';
+import '../../../components/ui/colors';
 
 // todo: move to config
 export const DATE_TIME_FORMAT = 'L LTS';
@@ -89,9 +90,10 @@ const TableList = (props: RouteMatch<'id'>) => {
               onClick={() => {
                 setCurrentItem(success(entity));
               }}
+              style={{ color: '@fr-colors-brandBlue' }}
               replace
             >
-              {dom}
+              {entity.transactionId}
             </Link>
           );
         },
