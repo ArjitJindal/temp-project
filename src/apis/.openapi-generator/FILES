@@ -76,6 +76,7 @@ models/RiskLevelRuleParameters.ts
 models/Rule.ts
 models/RuleAction.ts
 models/RuleAction1.ts
+models/RuleActionAlias.ts
 models/RuleImplementation.ts
 models/RuleInstance.ts
 models/SWIFTDetails.ts

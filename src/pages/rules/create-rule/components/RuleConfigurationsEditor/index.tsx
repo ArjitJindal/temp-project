@@ -11,7 +11,7 @@ import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
-import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   rule: Rule;

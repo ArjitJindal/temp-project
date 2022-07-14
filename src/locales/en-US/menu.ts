@@ -32,7 +32,8 @@ export default {
   'menu.account.settings': 'Account Settings',
   'menu.account.trigger': 'Trigger Error',
   'menu.account.logout': 'Logout',
-  'menu.accounts': 'Accounts Management',
+  'menu.accounts': 'Team Management',
+  'menu.settings': 'Settings',
   'menu.risk-levels': 'Risk Levels',
   'menu.risk-levels.configure': 'Configure Risk Levels',
 };

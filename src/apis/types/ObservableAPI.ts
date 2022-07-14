@@ -66,6 +66,7 @@ import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
+import { RuleActionAlias } from '../models/RuleActionAlias';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { SWIFTDetails } from '../models/SWIFTDetails';

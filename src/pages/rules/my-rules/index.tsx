@@ -11,7 +11,7 @@ import PageWrapper from '@/components/PageWrapper';
 import Table from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
-import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export default () => {
   const isPulseEnabled = useFeature('PULSE');

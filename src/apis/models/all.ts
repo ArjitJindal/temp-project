@@ -61,6 +61,7 @@ export * from './RiskLevelRuleParameters';
 export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
+export * from './RuleActionAlias';
 export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './SWIFTDetails';

@@ -1,5 +1,6 @@
 export interface RouteCommonProps {
   path: string;
+  position?: 'top' | 'bottom';
 }
 
 export interface LeafRouteItem extends RouteCommonProps {

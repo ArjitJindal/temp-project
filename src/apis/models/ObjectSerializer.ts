@@ -61,6 +61,7 @@ export * from './RiskLevelRuleParameters';
 export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
+export * from './RuleActionAlias';
 export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './SWIFTDetails';
@@ -157,6 +158,7 @@ import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
 import { Rule, RuleTypeEnum } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
+import { RuleActionAlias } from './RuleActionAlias';
 import { RuleImplementation } from './RuleImplementation';
 import { RuleInstance, RuleInstanceTypeEnum, RuleInstanceStatusEnum } from './RuleInstance';
 import { SWIFTDetails } from './SWIFTDetails';
@@ -275,6 +277,7 @@ let typeMap: { [index: string]: any } = {
   RiskLevelRuleActions: RiskLevelRuleActions,
   RiskLevelRuleParameters: RiskLevelRuleParameters,
   Rule: Rule,
+  RuleActionAlias: RuleActionAlias,
   RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,
   SWIFTDetails: SWIFTDetails,

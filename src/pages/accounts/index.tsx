@@ -105,7 +105,7 @@ export default function () {
           labelWrap: true,
         }}
         search={false}
-        headerTitle="Tenant accounts"
+        headerTitle="Team accounts"
         rowKey="id"
         toolBarRender={() => {
           return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];

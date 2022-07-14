@@ -2225,6 +2225,12 @@ let body:.DefaultApiPostTenantsSettingsRequest = {
     features: [
       "PULSE",
     ],
+    ruleActionAliases: [
+      {
+        action: "FLAG",
+        alias: "alias_example",
+      },
+    ],
   },
 };
 

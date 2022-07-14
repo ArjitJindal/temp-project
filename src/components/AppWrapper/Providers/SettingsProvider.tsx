@@ -1,24 +1,27 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
 import { useApi } from '@/api';
-import { Feature as FeatureName } from '@/apis';
+import { Feature as FeatureName, TenantSettings } from '@/apis';
 
 interface ContextValue {
   features: FeatureName[];
+  settings: TenantSettings;
 }
 
 const Context = React.createContext<ContextValue | null>(null);
 
-export function FeaturesProvider(props: {
+export function SettingsProvider(props: {
   globalFeatures?: FeatureName[];
   children: React.ReactNode;
 }) {
   const globalFeatures = props.globalFeatures;
   const api = useApi();
+  const [settings, setSettings] = useState<TenantSettings>({});
   const [features, setFeatures] = useState<FeatureName[] | null>(null);
   useEffect(() => {
     async function fetch() {
       const settings = await api.getTenantsSettings();
+      setSettings(settings);
       setFeatures((settings.features || []).concat(globalFeatures ?? []));
     }
     fetch().catch((e) => {
@@ -29,10 +32,10 @@ export function FeaturesProvider(props: {
   if (features == null) {
     return <PageLoading />;
   }
-  return <Context.Provider value={{ features: features }}>{props.children}</Context.Provider>;
+  return <Context.Provider value={{ features, settings }}>{props.children}</Context.Provider>;
 }
 
-function useFeaturesContext() {
+function useSettingsContext() {
   const context = useContext(Context);
   if (context == null) {
     throw new Error(`Features context is not initialized`);
@@ -40,8 +43,13 @@ function useFeaturesContext() {
   return context;
 }
 
+export function useSettings(): TenantSettings {
+  const context = useSettingsContext();
+  return context.settings;
+}
+
 export function useFeatures(): FeatureName[] {
-  const context = useFeaturesContext();
+  const context = useSettingsContext();
   return context.features;
 }
 

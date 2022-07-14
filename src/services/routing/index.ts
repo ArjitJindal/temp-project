@@ -12,8 +12,9 @@ import TransactionsTransactionsFilesPage from '@/pages/transactions/transactions
 import TransactionsTransactionsListPage from '@/pages/transactions/transactions-list';
 import UsersUsersFilesPage from '@/pages/users/users-files';
 import UsersUsersListPage from '@/pages/users/users-list';
-import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
-import { RouteItem } from '@/services/routing/types';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RouteItem, TreeRouteItem } from '@/services/routing/types';
+import SettingsPage from '@/pages/settings';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
@@ -24,6 +25,7 @@ export function useRoutes(): RouteItem[] {
         path: '/dashboard',
         name: 'dashboard',
         icon: 'dashboard',
+        position: 'top',
         routes: [
           {
             path: '/dashboard',
@@ -40,6 +42,7 @@ export function useRoutes(): RouteItem[] {
         path: '/case-management',
         name: 'case-management',
         icon: 'FlagOutlined',
+        position: 'top',
         hideChildrenInMenu: true,
         routes: [
           {
@@ -54,9 +57,43 @@ export function useRoutes(): RouteItem[] {
         ],
       },
       {
+        path: '/transactions',
+        icon: 'table',
+        name: 'transactions',
+        position: 'top',
+        routes: [
+          {
+            path: '/transactions',
+            redirect: '/transactions/transactions-list',
+          },
+          {
+            name: 'transactions-list',
+            path: '/transactions/transactions-list',
+            hideChildrenInMenu: true,
+            routes: [
+              {
+                path: '/transactions/transactions-list',
+                redirect: '/transactions/transactions-list/all',
+              },
+              {
+                path: '/transactions/transactions-list/:id',
+                name: 'item',
+                component: TransactionsTransactionsListPage,
+              },
+            ],
+          },
+          {
+            name: 'transactions-files',
+            path: '/transactions/transactions-files',
+            component: TransactionsTransactionsFilesPage,
+          },
+        ],
+      },
+      {
         path: '/users',
-        icon: 'UsergroupAddOutlined',
+        icon: 'TeamOutlined',
         name: 'users',
+        position: 'top',
         routes: [
           {
             path: '/users',
@@ -89,41 +126,10 @@ export function useRoutes(): RouteItem[] {
         ],
       },
       {
-        path: '/transactions',
-        icon: 'table',
-        name: 'transactions',
-        routes: [
-          {
-            path: '/transactions',
-            redirect: '/transactions/transactions-list',
-          },
-          {
-            name: 'transactions-list',
-            path: '/transactions/transactions-list',
-            hideChildrenInMenu: true,
-            routes: [
-              {
-                path: '/transactions/transactions-list',
-                redirect: '/transactions/transactions-list/all',
-              },
-              {
-                path: '/transactions/transactions-list/:id',
-                name: 'item',
-                component: TransactionsTransactionsListPage,
-              },
-            ],
-          },
-          {
-            name: 'transactions-files',
-            path: '/transactions/transactions-files',
-            component: TransactionsTransactionsFilesPage,
-          },
-        ],
-      },
-      {
         path: '/rules',
         name: 'rules',
-        icon: 'profile',
+        icon: 'UnorderedListOutlined',
+        position: 'top',
         routes: [
           {
             path: '/rules',
@@ -146,18 +152,13 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      {
-        path: '/accounts',
-        icon: 'UserSwitchOutlined',
-        name: 'accounts',
-        component: AccountsPage,
-      },
-      ...(isRiskLevelsEnabled
+      ...((isRiskLevelsEnabled
         ? [
             {
               path: '/risk-levels',
               icon: 'BarChartOutlined',
               name: 'risk-levels',
+              position: 'top',
               routes: [
                 {
                   path: '/risk-levels',
@@ -171,7 +172,21 @@ export function useRoutes(): RouteItem[] {
               ],
             },
           ]
-        : []),
+        : []) as TreeRouteItem[]),
+      {
+        path: '/settings',
+        icon: 'SettingOutlined',
+        name: 'settings',
+        position: 'bottom',
+        component: SettingsPage,
+      },
+      {
+        path: '/accounts',
+        icon: 'UsergroupAddOutlined',
+        name: 'accounts',
+        position: 'bottom',
+        component: AccountsPage,
+      },
       {
         path: '/',
         redirect: '/dashboard/analysis',

@@ -7,7 +7,7 @@ import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalBusinessUser } from '@/apis';
 import UserManualRiskPanel from '@/pages/users/users-list/components/UserManualRiskPanel';
-import { Feature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   user: InternalBusinessUser;

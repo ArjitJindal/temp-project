@@ -31,7 +31,7 @@ import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
-import { Feature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
 
 function TableList() {

@@ -2,7 +2,7 @@ import React from 'react';
 import RiskClassification from './RiskClassification';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { Feature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export default function () {
   const i18n = useI18n();

@@ -8,7 +8,7 @@ import { RuleActionTag } from './RuleActionTag';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RiskLevelRuleActions, RuleAction } from '@/apis';
-import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const JSONSchemaForm = withTheme(Theme);
 

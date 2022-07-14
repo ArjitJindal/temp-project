@@ -1,4 +1,3 @@
-import React from 'react';
 import { Menu as AntMenu } from 'antd';
 import {
   BarChartOutlined,
@@ -6,11 +5,12 @@ import {
   FlagOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  ProfileOutlined,
   SmileOutlined,
   TableOutlined,
   UsergroupAddOutlined,
-  UserSwitchOutlined,
+  SettingOutlined,
+  UnorderedListOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/lib/menu/hooks/useItems';
@@ -23,12 +23,13 @@ import { hasName, isTree, RouteItem } from '@/services/routing/types';
 const icons = {
   FlagOutlined: <FlagOutlined />,
   UsergroupAddOutlined: <UsergroupAddOutlined />,
-  UserSwitchOutlined: <UserSwitchOutlined />,
+  UnorderedListOutlined: <UnorderedListOutlined />,
+  TeamOutlined: <TeamOutlined />,
   BarChartOutlined: <BarChartOutlined />,
+  SettingOutlined: <SettingOutlined />,
   dashboard: <DashboardOutlined />,
   smile: <SmileOutlined />,
   table: <TableOutlined />,
-  profile: <ProfileOutlined />,
 };
 
 function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {
@@ -105,20 +106,28 @@ export default function Menu(props: {
           mode="inline"
           selectedKeys={selectedKeys}
           defaultOpenKeys={selectedKeys}
-          items={renderItems('menu', routes, i18n)}
+          items={renderItems(
+            'menu',
+            routes.filter((route) => route.position === 'top'),
+            i18n,
+          )}
         />
       </div>
       <AntMenu
         inlineCollapsed={isCollapsed}
         theme="dark"
         mode="inline"
-        items={[
+        items={renderItems(
+          'menu',
+          routes.filter((route) => route.position === 'bottom'),
+          i18n,
+        ).concat([
           {
             key: 'button',
             onClick: () => onChangeCollapsed(!isCollapsed),
             icon: isCollapsed ? <MenuUnfoldOutlined /> : <MenuUnfoldOutlined />,
           },
-        ]}
+        ])}
       />
     </div>
   );

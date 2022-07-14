@@ -1134,6 +1134,23 @@ components:
         - WHITELIST
         - ALLOW
         - SUSPEND
+    RuleActionAlias:
+      type: object
+      title: RuleActionAlias
+      enum:
+        - FLAG
+        - BLOCK
+        - WHITELIST
+        - ALLOW
+        - SUSPEND
+      properties:
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        alias:
+          type: string
+      required:
+        - action
+        - alias
     ImportRequest:
       title: ImportRequest
       type: object
@@ -1565,8 +1582,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Feature'
-      required:
-        - features
+        ruleActionAliases:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleActionAlias'
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore

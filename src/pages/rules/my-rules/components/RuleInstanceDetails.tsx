@@ -9,7 +9,7 @@ import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
-import { useFeature } from '@/components/AppWrapper/Providers/FeaturesProvider';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   rule: Rule;
