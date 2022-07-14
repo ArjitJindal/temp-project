@@ -178,9 +178,13 @@ function TableList() {
         dataIndex: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
-        width: 80,
+        width: 120,
         render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionAmount;
+          if (entity.originAmountDetails?.transactionAmount !== undefined) {
+            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
+          } else {
+            return entity.originAmountDetails?.transactionAmount;
+          }
         },
       },
       {
@@ -229,7 +233,13 @@ function TableList() {
         hideInSearch: true,
         sorter: true,
         render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionAmount;
+          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+            return new Intl.NumberFormat().format(
+              entity.destinationAmountDetails?.transactionAmount,
+            );
+          } else {
+            return entity.destinationAmountDetails?.transactionAmount;
+          }
         },
       },
       {

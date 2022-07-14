@@ -145,7 +145,11 @@ const TableList = (props: RouteMatch<'id'>) => {
         hideInSearch: true,
         sorter: true,
         render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionAmount;
+          if (entity.originAmountDetails?.transactionAmount !== undefined) {
+            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
+          } else {
+            return entity.originAmountDetails?.transactionAmount;
+          }
         },
       },
       {
@@ -194,7 +198,13 @@ const TableList = (props: RouteMatch<'id'>) => {
         hideInSearch: true,
         sorter: true,
         render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionAmount;
+          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+            return new Intl.NumberFormat().format(
+              entity.destinationAmountDetails?.transactionAmount,
+            );
+          } else {
+            return entity.destinationAmountDetails?.transactionAmount;
+          }
         },
       },
       {

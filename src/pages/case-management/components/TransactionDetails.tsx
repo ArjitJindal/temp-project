@@ -353,7 +353,11 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               {getUserName(transaction.originUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
-              {transaction.originAmountDetails?.transactionAmount}
+              {new Intl.NumberFormat().format(
+                transaction.originAmountDetails?.transactionAmount
+                  ? transaction.originAmountDetails?.transactionAmount
+                  : NaN,
+              )}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Currency" valueType="text">
               {transaction.originAmountDetails?.transactionCurrency}
@@ -392,7 +396,11 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               {getUserName(transaction.destinationUser)}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Amount" valueType="text">
-              {transaction.destinationAmountDetails?.transactionAmount}
+              {new Intl.NumberFormat().format(
+                transaction.destinationAmountDetails?.transactionAmount
+                  ? transaction.destinationAmountDetails?.transactionAmount
+                  : NaN,
+              )}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Currency" valueType="text">
               {transaction.destinationAmountDetails?.transactionCurrency}
