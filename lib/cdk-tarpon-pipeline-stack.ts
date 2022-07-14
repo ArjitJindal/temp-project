@@ -195,6 +195,16 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               extraInputs: [buildOutput],
               runOrder: 2,
             }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy_eu-1',
+              project: getDeployCodeBuildProject(
+                'prod:eu-1',
+                PROD_CODE_DEPLOY_ROLE_ARN
+              ),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              runOrder: 2,
+            }),
           ],
         },
       ],
