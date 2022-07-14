@@ -666,6 +666,8 @@ export const accountsHandler = lambdaApi()(
   }
 )
 
+const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features']
+
 export const tenantsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -695,8 +697,16 @@ export const tenantsHandler = lambdaApi()(
       if (event.httpMethod === 'GET') {
         return tenantRepository.getTenantSettings()
       } else if (event.httpMethod === 'POST' && event.body) {
-        assertRole({ role, verifiedEmail }, 'root')
         const newTenantSettings = JSON.parse(event.body) as TenantSettings
+        if (
+          ROOT_ONLY_SETTINGS.find(
+            (settingName) => newTenantSettings[settingName]
+          )
+        ) {
+          assertRole({ role, verifiedEmail }, 'root')
+        }
+        assertRole({ role, verifiedEmail }, 'admin')
+
         return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
       }
     }

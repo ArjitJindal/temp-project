@@ -10,11 +10,10 @@
  * Do not edit the class manually.
  */
 
-import { Feature } from './Feature'
-import { RuleActionAlias } from './RuleActionAlias'
-export class TenantSettings {
-  'features'?: Array<Feature>
-  'ruleActionAliases'?: Array<RuleActionAlias>
+import { RuleAction } from './RuleAction'
+export class RuleActionAlias {
+  'action': RuleAction
+  'alias': string
 
   static readonly discriminator: string | undefined = undefined
 
@@ -25,21 +24,21 @@ export class TenantSettings {
     format: string
   }> = [
     {
-      name: 'features',
-      baseName: 'features',
-      type: 'Array<Feature>',
+      name: 'action',
+      baseName: 'action',
+      type: 'RuleAction',
       format: '',
     },
     {
-      name: 'ruleActionAliases',
-      baseName: 'ruleActionAliases',
-      type: 'Array<RuleActionAlias>',
+      name: 'alias',
+      baseName: 'alias',
+      type: 'string',
       format: '',
     },
   ]
 
   static getAttributeTypeMap() {
-    return TenantSettings.attributeTypeMap
+    return RuleActionAlias.attributeTypeMap
   }
 
   public constructor() {}
