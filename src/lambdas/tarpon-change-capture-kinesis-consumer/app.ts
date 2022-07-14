@@ -20,13 +20,13 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
+import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 function getAggregatedRuleStatus(
   ruleActions: ReadonlyArray<RuleAction>
 ): RuleAction {
-  const rulesPrecedences: RuleAction[] = ['BLOCK', 'FLAG', 'WHITELIST', 'ALLOW']
   return ruleActions.reduce((prev, curr) => {
-    if (rulesPrecedences.indexOf(curr) < rulesPrecedences.indexOf(prev)) {
+    if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
       return curr
     } else {
       return prev
