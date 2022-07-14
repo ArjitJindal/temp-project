@@ -1162,12 +1162,6 @@ components:
     RuleActionAlias:
       type: object
       title: RuleActionAlias
-      enum:
-        - FLAG
-        - BLOCK
-        - WHITELIST
-        - ALLOW
-        - SUSPEND
       properties:
         action:
           $ref: '#/components/schemas/RuleAction'
