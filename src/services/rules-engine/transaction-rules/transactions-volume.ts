@@ -11,6 +11,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -122,9 +123,10 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     )
 
     const senderTransactionsPromise =
-      this.transaction.originUserId && checkSender !== 'none'
+      checkSender !== 'none'
         ? this.getTransactions(
             this.transaction.originUserId,
+            this.transaction.originPaymentDetails,
             afterTimestamp,
             checkSender
           )
@@ -133,9 +135,10 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
             receivingTransactions: [],
           })
     const receiverTransactionsPromise =
-      this.transaction.destinationUserId && checkReceiver !== 'none'
+      checkReceiver !== 'none'
         ? this.getTransactions(
             this.transaction.destinationUserId,
+            this.transaction.destinationPaymentDetails,
             afterTimestamp,
             checkReceiver
           )
@@ -236,7 +239,8 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
   }
 
   private async getTransactions(
-    userId: string,
+    userId: string | undefined,
+    paymentDetails: PaymentDetails | undefined,
     afterTimestamp: number,
     checkType: 'sending' | 'receiving' | 'all' | 'none'
   ): Promise<{
@@ -247,8 +251,9 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       .transactionRepository as TransactionRepository
     const [sendingTransactions, receivingTransactions] = await Promise.all([
       checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getUserSendingThinTransactions(
+        ? transactionRepository.getGenericUserSendingThinTransactions(
             userId,
+            paymentDetails,
             {
               afterTimestamp,
               beforeTimestamp: this.transaction.timestamp!,
@@ -257,8 +262,9 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           )
         : Promise.resolve([]),
       checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getUserReceivingThinTransactions(
+        ? transactionRepository.getGenericUserReceivingThinTransactions(
             userId,
+            paymentDetails,
             {
               afterTimestamp,
               beforeTimestamp: this.transaction.timestamp!,

@@ -1411,3 +1411,117 @@ describe('Optional parameter - User type', () => {
     })
   })
 })
+
+describe('Anonymous sender/receiver', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 1,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Anonymous sender (no identifier) - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: undefined,
+          destinationUserId: '1-1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: undefined,
+          destinationUserId: '1-1',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous sender - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-1',
+          },
+          destinationUserId: '2-1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-1',
+          },
+          destinationUserId: '2-2',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous receiver (no identifier) - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '3-1',
+          destinationUserId: undefined,
+          destinationPaymentDetails: undefined,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '3-1',
+          destinationUserId: undefined,
+          destinationPaymentDetails: undefined,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous receiver - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '4-1',
+          destinationUserId: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-2',
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '4-2',
+          destinationUserId: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-2',
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

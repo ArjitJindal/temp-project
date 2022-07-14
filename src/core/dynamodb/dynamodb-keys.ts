@@ -75,6 +75,10 @@ export const DynamoDbKeys = {
     switch (paymentDetails.method) {
       case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
+        if (!BIC || !IBAN) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#BIC:${BIC}#IBAN:${IBAN}#${direction}`,
           SortKeyID: `${timestamp}`,
@@ -82,6 +86,10 @@ export const DynamoDbKeys = {
       }
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
+        if (!cardFingerprint) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#cardFingerprint:${cardFingerprint}#${direction}`,
           SortKeyID: `${timestamp}`,
@@ -89,6 +97,10 @@ export const DynamoDbKeys = {
       }
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
+        if (!routingNumber || !accountNumber) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#routingNumber:${routingNumber}#accountNumber:${accountNumber}#${direction}`,
           SortKeyID: `${timestamp}`,
@@ -96,28 +108,44 @@ export const DynamoDbKeys = {
       }
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
+        if (!upiID) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#upiID:${upiID}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'WALLET': {
-        const { walletType } = paymentDetails as WalletDetails
+        const { walletId } = paymentDetails as WalletDetails
+        if (!walletId) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${walletType}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletId:${walletId}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'GENERIC_BANK_ACCOUNT': {
         const { accountNumber, accountType } =
           paymentDetails as GenericBankAccountDetails
+        if (!accountNumber || !accountType) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
-          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#walletType:${accountNumber}#${accountType}#${direction}`,
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#accountType:${accountType}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
       case 'SWIFT': {
         const { accountNumber, swiftCode } = paymentDetails as SWIFTDetails
+        if (!accountNumber || !swiftCode) {
+          console.warn('Unable to identify the anonymous user')
+          return null
+        }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#swiftCode:${swiftCode}#${direction}`,
           SortKeyID: `${timestamp}`,

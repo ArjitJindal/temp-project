@@ -218,16 +218,15 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
           onlyCheckKnownUsers
         )
       : Promise.resolve(0)
-    const receiverTransactionsCountPromise =
-      this.transaction.destinationUserId && checkReceiver
-        ? this.getTransactionsCount(
-            this.transaction.destinationUserId,
-            this.transaction.destinationPaymentDetails,
-            afterTimestamp,
-            checkReceiver,
-            onlyCheckKnownUsers
-          )
-        : Promise.resolve(0)
+    const receiverTransactionsCountPromise = checkReceiver
+      ? this.getTransactionsCount(
+          this.transaction.destinationUserId,
+          this.transaction.destinationPaymentDetails,
+          afterTimestamp,
+          checkReceiver,
+          onlyCheckKnownUsers
+        )
+      : Promise.resolve(0)
     const [senderTransactionsCount, receiverTransactionsCount] =
       await Promise.all([
         senderTransactionsCountPromise,

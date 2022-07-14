@@ -319,3 +319,172 @@ describe('Rolling basis parameter', () => {
     )
   })
 })
+
+describe('Anonymous sender/receiver', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-volume',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'minute',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionVolumeThreshold: {
+          EUR: 300,
+        },
+      } as TransactionsVolumeRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Anonymous sender (no identifier) - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: undefined,
+          originAmountDetails: undefined,
+          destinationUserId: '1-1',
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: undefined,
+          originAmountDetails: undefined,
+          destinationUserId: '1-1',
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous sender - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-1',
+          },
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: '2-1',
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: undefined,
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-1',
+          },
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: '2-2',
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous receiver (no identifier) - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '3-1',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: undefined,
+          destinationPaymentDetails: undefined,
+          destinationAmountDetails: undefined,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '3-1',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: undefined,
+          destinationPaymentDetails: undefined,
+          destinationAmountDetails: undefined,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Anonymous receiver - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '4-1',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-2',
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '4-2',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationUserId: undefined,
+          destinationPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: 'fingerprint-2',
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

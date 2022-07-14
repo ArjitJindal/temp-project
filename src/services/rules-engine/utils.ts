@@ -10,7 +10,8 @@ export function getSenderKeys(
       PartitionKeyID: string
       SortKeyID: string
     }
-  | undefined {
+  | undefined
+  | null {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
     transaction.originUserId,
@@ -30,7 +31,8 @@ export function getReceiverKeys(
       PartitionKeyID: string
       SortKeyID: string
     }
-  | undefined {
+  | undefined
+  | null {
   return DynamoDbKeys.ALL_TRANSACTION(
     tenantId,
     transaction.destinationUserId,

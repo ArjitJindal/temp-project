@@ -330,28 +330,26 @@ export class TransactionRepository {
                 },
               },
             },
-            senderKeys &&
-              receiverKeys && {
-                PutRequest: {
-                  Item: {
-                    ...senderKeys,
-                    transactionId: transaction.transactionId,
-                    receiverKeyId: receiverKeys.PartitionKeyID,
-                    transactionState: transaction.transactionState,
-                  },
+            senderKeys && {
+              PutRequest: {
+                Item: {
+                  ...senderKeys,
+                  transactionId: transaction.transactionId,
+                  receiverKeyId: receiverKeys?.PartitionKeyID,
+                  transactionState: transaction.transactionState,
                 },
               },
-            senderKeys &&
-              receiverKeys && {
-                PutRequest: {
-                  Item: {
-                    ...receiverKeys,
-                    transactionId: transaction.transactionId,
-                    senderKeyId: senderKeys.PartitionKeyID,
-                    transactionState: transaction.transactionState,
-                  },
+            },
+            receiverKeys && {
+              PutRequest: {
+                Item: {
+                  ...receiverKeys,
+                  transactionId: transaction.transactionId,
+                  senderKeyId: senderKeys?.PartitionKeyID,
+                  transactionState: transaction.transactionState,
                 },
               },
+            },
             senderKeysOfTransactionType && {
               PutRequest: {
                 Item: {
@@ -714,16 +712,19 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    return this.getUserThinTransactionsCount(
-      DynamoDbKeys.NON_USER_TRANSACTION(
-        this.tenantId,
-        paymentDetails,
-        'sending',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
-    )
+    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+      this.tenantId,
+      paymentDetails,
+      'sending',
+      filterOptions?.transactionType
+    )?.PartitionKeyID
+    return partitionKeyId
+      ? this.getUserThinTransactionsCount(
+          partitionKeyId,
+          timeRange,
+          filterOptions
+        )
+      : { count: 0, scannedCount: 0 }
   }
 
   public async getNonUserReceivingTransactionsCount(
@@ -731,16 +732,19 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    return this.getUserThinTransactionsCount(
-      DynamoDbKeys.NON_USER_TRANSACTION(
-        this.tenantId,
-        paymentDetails,
-        'receiving',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
-    )
+    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+      this.tenantId,
+      paymentDetails,
+      'receiving',
+      filterOptions?.transactionType
+    )?.PartitionKeyID
+    return partitionKeyId
+      ? this.getUserThinTransactionsCount(
+          partitionKeyId,
+          timeRange,
+          filterOptions
+        )
+      : { count: 0, scannedCount: 0 }
   }
 
   public async getNonUserSendingThinTransactions(
@@ -748,16 +752,15 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getThinTransactions(
-      DynamoDbKeys.NON_USER_TRANSACTION(
-        this.tenantId,
-        paymentDetails,
-        'sending',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
-    )
+    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+      this.tenantId,
+      paymentDetails,
+      'sending',
+      filterOptions?.transactionType
+    )?.PartitionKeyID
+    return partitionKeyId
+      ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+      : []
   }
 
   public async getNonUserReceivingThinTransactions(
@@ -765,16 +768,15 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getThinTransactions(
-      DynamoDbKeys.NON_USER_TRANSACTION(
-        this.tenantId,
-        paymentDetails,
-        'receiving',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
-    )
+    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+      this.tenantId,
+      paymentDetails,
+      'receiving',
+      filterOptions?.transactionType
+    )?.PartitionKeyID
+    return partitionKeyId
+      ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+      : []
   }
 
   public async getIpAddressThinTransactions(
