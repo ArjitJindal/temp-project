@@ -11,6 +11,7 @@ declare global {
   declare const EXPORT_ENTRIES_LIMIT: number;
   declare const SEGMENT_WRITE_KEY: string;
   declare const SENTRY_DSN: string;
+  declare const SLACK_CLIENT_ID: string;
 
   interface Window {
     analytics: AnalyticsBrowser & {
