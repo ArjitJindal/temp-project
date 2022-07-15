@@ -83,3 +83,52 @@ describe.each<TransactionRuleTestCase>([
     expectedHits
   )
 })
+
+describe('hitDistance parameter', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-reference-keyword',
+      defaultParameters: {
+        keywords: ['keyword1', 'keyword2'],
+        allowedDistance: 2,
+      } as TransactionReferenceKeywordRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'reference contains a target keyword,less than allowedDistance - hit',
+      transactions: [
+        getTestTransaction({
+          reference: 'A reference with ttyword1',
+        }),
+        getTestTransaction({
+          reference: '   teyword2 in a reference',
+        }),
+      ],
+      expectedHits: [true, true],
+    },
+    {
+      name: "reference doesn't contain a target keyword, more than allowedDistance - not hit",
+      transactions: [
+        getTestTransaction({
+          reference: 'A reference with tyoword1',
+        }),
+        getTestTransaction({
+          reference: 'ygturd2 in a reference',
+        }),
+      ],
+      expectedHits: [false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
