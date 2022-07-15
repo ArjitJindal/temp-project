@@ -21,7 +21,7 @@ export async function getInitialContext(
   try {
     const tenantId = event.requestContext.authorizer?.principalId
     const dynamoDb = getDynamoDbClient(event)
-    const tenantRepository = new TenantRepository(tenantId, dynamoDb)
+    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     const settings = await tenantRepository.getTenantSettings(['features'])
     return { features: settings?.features }
   } catch (e) {

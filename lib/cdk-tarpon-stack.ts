@@ -650,6 +650,41 @@ export class CdkTarponStack extends cdk.Stack {
       codePath: 'dist/list-importer',
     })
     tarponDynamoDbTable.grantReadWriteData(listImporterAlias)
+
+    /* Slack App */
+    const { alias: slackAppAlias } = this.createFunction(
+      {
+        name: TarponStackConstants.SLACK_APP_FUNCTION_NAME,
+        handler: 'app.slackAppHandler',
+        codePath: 'dist/slack-app',
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
+          SLACK_CLIENT_SECRET: config.application.SLACK_CLIENT_SECRET,
+          SLACK_REDIRECT_URI: config.application.SLACK_REDIRECT_URI,
+        },
+      }
+    )
+    slackAppAlias.role?.attachInlinePolicy(
+      new Policy(
+        this,
+        `${TarponStackConstants.SLACK_APP_FUNCTION_NAME}Policy`,
+        {
+          policyName: `${TarponStackConstants.SLACK_APP_FUNCTION_NAME}Policy`,
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: ['secretsmanager:GetSecretValue'],
+              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
+            }),
+          ],
+        }
+      )
+    )
+
     /*
      * Hammerhead console functions
      */

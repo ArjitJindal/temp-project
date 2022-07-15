@@ -34,6 +34,18 @@ export const jsonSerializer =
         body: '',
       }
     }
+
+    if (response?.headers && response?.body) {
+      return {
+        statusCode: 200,
+        headers: {
+          ...response.headers,
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: response.body,
+      }
+    }
+
     return {
       statusCode: 200,
       headers: {

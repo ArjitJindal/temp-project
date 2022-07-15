@@ -693,7 +693,7 @@ export const tenantsHandler = lambdaApi()(
       return tenants
     } else if (event.resource === '/tenants/settings') {
       const dynamoDb = getDynamoDbClient(event)
-      const tenantRepository = new TenantRepository(tenantId, dynamoDb)
+      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       if (event.httpMethod === 'GET') {
         return tenantRepository.getTenantSettings()
       } else if (event.httpMethod === 'POST' && event.body) {

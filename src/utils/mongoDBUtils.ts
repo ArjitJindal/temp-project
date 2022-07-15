@@ -115,6 +115,10 @@ export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }
 
+export const METADATA_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-metadata`
+}
+
 export const MONTH_DATE_FORMAT = '%Y-%m'
 export const DAY_DATE_FORMAT = '%Y-%m-%d'
 export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'

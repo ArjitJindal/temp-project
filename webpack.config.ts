@@ -34,6 +34,14 @@ const config: Configuration = {
         },
       ],
     }),
+    new CopyPlugin({
+      patterns: [
+        {
+          from: 'src/lambdas/slack-app/templates',
+          to: 'slack-app/templates',
+        },
+      ],
+    }),
   ],
   module: {
     rules: [

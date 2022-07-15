@@ -38,5 +38,8 @@ export type Config = {
     ATLAS_CREDENTIALS_SECRET_ARN: string
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
     BETTERUPTIME_HOOK_URL?: string
+    SLACK_CLIENT_ID: string
+    SLACK_CLIENT_SECRET: string
+    SLACK_REDIRECT_URI: string
   }
 }

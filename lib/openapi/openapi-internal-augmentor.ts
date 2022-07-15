@@ -59,6 +59,7 @@ const PathToLambda: any = {
     TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/rule_hit':
     TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+  '/slack/oauth_redirect': TarponStackConstants.SLACK_APP_FUNCTION_NAME,
   '/pulse/risk-classification':
     HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':
@@ -155,6 +156,8 @@ for (const path in openapi.paths) {
     if (['/apikey', '/iam/rules', '/iam/rule_instances'].includes(path)) {
       methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }
       methodSetting['security'] = [{ sigv4: [] }]
+    } else if (['/slack/oauth_redirect'].includes(path)) {
+      // Called by slack. Make it public
     } else {
       methodSetting['security'] = [{ 'lambda-authorizer': [] }]
     }

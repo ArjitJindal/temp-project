@@ -1040,6 +1040,13 @@ paths:
           in: query
           name: parameter
           description: Parameter you want to filter on
+  /slack/oauth_redirect:
+    get:
+      summary: Slack OAuth Redirect
+      tags: []
+      responses: {}
+      operationId: get-slack-oauth-redirect
+    parameters: []
 components:
   schemas:
     ManualRiskAssignmentUserState:
