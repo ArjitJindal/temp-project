@@ -4,6 +4,7 @@ import { featureProtected } from './feature-protected'
 import { httpErrorHandler } from './http-error-handler'
 import { jsonSerializer } from './json-serializer'
 import { localDev } from './local-dev'
+import { initSentry } from './init-sentry'
 import { Feature } from '@/@types/openapi-internal/Feature'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
@@ -11,6 +12,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     localDev(),
     httpErrorHandler(),
     jsonSerializer(),
+    initSentry(),
     contextProvider(),
     featureProtected(options?.requiredFeatures),
   ] as const

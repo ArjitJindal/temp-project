@@ -21,6 +21,7 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 
 function getAggregatedRuleStatus(
   ruleActions: ReadonlyArray<RuleAction>
@@ -89,59 +90,67 @@ async function userEventHandler(
   )
 }
 
-export const tarponChangeCaptureHandler = async (event: KinesisStreamEvent) => {
-  try {
-    const client = await connectToDB()
-    const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-    for (const record of event.Records) {
-      const payload: KinesisStreamRecordPayload = record.kinesis
-      const message: string = Buffer.from(payload.data, 'base64').toString()
-      const dynamoDBStreamObject = JSON.parse(message).dynamodb
-      const tenantId = dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-        mongoDb: client,
-      })
-      if (
-        dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-          TRANSACTION_PRIMARY_KEY_IDENTIFIER
+export const tarponChangeCaptureHandler = lambdaConsumer()(
+  async (event: KinesisStreamEvent) => {
+    try {
+      const client = await connectToDB()
+      const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+      for (const record of event.Records) {
+        const payload: KinesisStreamRecordPayload = record.kinesis
+        const message: string = Buffer.from(payload.data, 'base64').toString()
+        const dynamoDBStreamObject = JSON.parse(message).dynamodb
+        const tenantId =
+          dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
+        const dashboardStatsRepository = new DashboardStatsRepository(
+          tenantId,
+          {
+            mongoDb: client,
+          }
         )
-      ) {
-        const transaction = handlePrimaryItem(
-          message
-        ) as TransactionWithRulesResult
-        console.info(`Processing transaction ${transaction.transactionId}`)
-        await transactionHandler(db, tenantId, transaction)
-        /*
+        if (
+          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
+            TRANSACTION_PRIMARY_KEY_IDENTIFIER
+          )
+        ) {
+          const transaction = handlePrimaryItem(
+            message
+          ) as TransactionWithRulesResult
+          console.info(`Processing transaction ${transaction.transactionId}`)
+          await transactionHandler(db, tenantId, transaction)
+          /*
          todo: this is not very efficient, because we recalculate all the
            statistics for each transaction. Need to implement updating
            a single record in DB using transaction date
          */
-        await dashboardStatsRepository.refreshStats(tenantId)
-      } else if (
-        dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-          USER_PRIMARY_KEY_IDENTIFIER
-        )
-      ) {
-        const user = handlePrimaryItem(message) as User
-        console.info(`Processing user ${user.userId}`)
-        await userHandler(db, tenantId, user)
-      } else if (
-        dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-          USER_EVENT_KEY_IDENTIFIER
-        )
-      ) {
-        const userEvent = handlePrimaryItem(message) as UserEventWithRulesResult
-        console.info(
-          `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
-        )
-        await userEventHandler(db, tenantId, userEvent)
+          await dashboardStatsRepository.refreshStats(tenantId)
+        } else if (
+          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
+            USER_PRIMARY_KEY_IDENTIFIER
+          )
+        ) {
+          const user = handlePrimaryItem(message) as User
+          console.info(`Processing user ${user.userId}`)
+          await userHandler(db, tenantId, user)
+        } else if (
+          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
+            USER_EVENT_KEY_IDENTIFIER
+          )
+        ) {
+          const userEvent = handlePrimaryItem(
+            message
+          ) as UserEventWithRulesResult
+          console.info(
+            `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
+          )
+          await userEventHandler(db, tenantId, userEvent)
+        }
       }
+    } catch (err) {
+      console.error(err)
+      return 'Internal error'
     }
-  } catch (err) {
-    console.error(err)
-    return 'Internal error'
   }
-}
+)
 
 const handlePrimaryItem = (message: string) => {
   const stremNewImage = JSON.parse(message).dynamodb.NewImage
