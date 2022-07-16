@@ -13,6 +13,7 @@ export type TransactionDashboardStats = {
   totalTransactions: number
   flaggedTransactions: number
   stoppedTransactions: number
+  suspendedTransactions: number
 }
 
 export type RuleDashboardStats = {

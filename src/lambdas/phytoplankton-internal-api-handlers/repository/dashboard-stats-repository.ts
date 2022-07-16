@@ -246,6 +246,37 @@ export class DashboardStatsRepository {
           },
         ])
         .next()
+      await transactionsCollection
+        .aggregate([
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRules: {
+                $elemMatch: {
+                  ruleAction: 'SUSPEND',
+                },
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: HOUR_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              suspendedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
     } catch (e) {
       console.error(`ERROR ${e}`)
     }

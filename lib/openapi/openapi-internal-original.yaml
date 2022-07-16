@@ -1330,6 +1330,8 @@ components:
                 type: number
               stoppedTransactions:
                 type: number
+              suspendedTransactions:
+                type: number
             required:
               - _id
       required:
