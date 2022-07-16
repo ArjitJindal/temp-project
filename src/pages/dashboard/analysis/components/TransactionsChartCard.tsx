@@ -131,16 +131,7 @@ const TransactionsChartCard = () => {
     };
   }, [api, dateRange, timeWindowType]);
 
-  const dataResource: AsyncResource<TransactionsStats> = map(transactionsCountData, (value) =>
-    value.map((item, i) => ({
-      id: item._id,
-      totalTransactions: item.totalTransactions ?? 0,
-      flaggedTransactions: item.flaggedTransactions ?? 0,
-      stoppedTransactions: item.stoppedTransactions ?? 0,
-    })),
-  );
-
-  const data = getOr(dataResource, []);
+  const data = getOr(transactionsCountData, []);
   const [activeTab, setActiveTab] = useLocalStorageState(
     'dashboard-analytics-active-tab',
     'totalTransactions',
@@ -186,11 +177,12 @@ const TransactionsChartCard = () => {
         >
           {[
             { title: 'Total Transactions', key: 'totalTransactions' },
+            { title: 'Suspended Transactions', key: 'suspendedTransactions' },
             { title: 'Blocked Transactions', key: 'stoppedTransactions' },
             { title: 'Flagged Transactions', key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
-              <Spin spinning={isLoading(dataResource)}>
+              <Spin spinning={isLoading(transactionsCountData)}>
                 <div className={styles.salesBar}>
                   {data.length === 0 ? (
                     <Empty
@@ -202,8 +194,8 @@ const TransactionsChartCard = () => {
                       height={400}
                       forceFit
                       data={data.map((item) => {
-                        const y = item[key];
-                        let x = item.id;
+                        const y = item[key] ?? 0;
+                        let x = item._id;
                         if (x.match(/^\d{4}-\d{2}-\d{2}$/)) {
                           x = moment(x, 'YYYY-MM-DD').format('MM/DD');
                         } else if (x.match(/^\d{4}-\d{2}$/)) {

@@ -1291,6 +1291,7 @@ components:
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
+              suspendedTransactions: 67
       title: DashboardStatsTransactionsCount
       properties:
         data:
@@ -1305,6 +1306,8 @@ components:
               flaggedTransactions:
                 type: number
               stoppedTransactions:
+                type: number
+              suspendedTransactions:
                 type: number
             required:
               - _id

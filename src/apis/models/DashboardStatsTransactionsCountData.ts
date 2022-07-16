@@ -17,6 +17,7 @@ export class DashboardStatsTransactionsCountData {
   'totalTransactions'?: number;
   'flaggedTransactions'?: number;
   'stoppedTransactions'?: number;
+  'suspendedTransactions'?: number;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -47,6 +48,12 @@ export class DashboardStatsTransactionsCountData {
     {
       name: 'stoppedTransactions',
       baseName: 'stoppedTransactions',
+      type: 'number',
+      format: '',
+    },
+    {
+      name: 'suspendedTransactions',
+      baseName: 'suspendedTransactions',
       type: 'number',
       format: '',
     },
