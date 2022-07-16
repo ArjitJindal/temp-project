@@ -31,6 +31,10 @@ export class TransactionEvent {
    */
   'eventId'?: string
   /**
+   * Reason for the event or a state change
+   */
+  'reason'?: string
+  /**
    * Event description
    */
   'eventDescription'?: string
@@ -70,6 +74,12 @@ export class TransactionEvent {
     {
       name: 'eventId',
       baseName: 'eventId',
+      type: 'string',
+      format: '',
+    },
+    {
+      name: 'reason',
+      baseName: 'reason',
       type: 'string',
       format: '',
     },

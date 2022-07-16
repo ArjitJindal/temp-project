@@ -2799,6 +2799,9 @@ components:
         eventId:
           type: string
           description: Unique event ID
+        reason:
+          type: string
+          description: Reason for the event or a state change
         eventDescription:
           type: string
           description: Event description

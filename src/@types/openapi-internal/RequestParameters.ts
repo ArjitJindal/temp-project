@@ -363,6 +363,8 @@ export interface DefaultApiGetRulesRequest {
   ruleId?: string
 }
 
+export interface DefaultApiGetSlackOauthRedirectRequest {}
+
 export interface DefaultApiGetTenantsListRequest {}
 
 export interface DefaultApiGetTenantsSettingsRequest {}
