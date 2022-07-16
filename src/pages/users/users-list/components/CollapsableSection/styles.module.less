@@ -1,0 +1,23 @@
+@import 'src/components/ui/colors';
+
+.root {
+  margin-top: 24px;
+
+  &.isOpen,
+  &:hover {
+    .title {
+      color: @fr-colors-brandBlue;
+    }
+  }
+
+  &.isOpen {
+    .icon {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.icon {
+  width: 10px;
+  margin-left: 12px;
+}

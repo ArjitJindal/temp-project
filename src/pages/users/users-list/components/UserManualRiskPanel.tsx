@@ -42,7 +42,7 @@ export default function UserManualRiskPanel(props: Props) {
         console.error(e);
         // todo: i18n
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.success('Unable to update user risk level!');
+        message.error('Unable to get user risk level!');
       });
     return () => {
       isCanceled = true;
@@ -67,7 +67,7 @@ export default function UserManualRiskPanel(props: Props) {
         console.error(e);
         // todo: i18n
         setSyncState(failed(e instanceof Error ? e.message : 'Unknown error'));
-        message.success('Unable to update user risk level!');
+        message.error('Unable to update user risk level!');
       });
   };
 

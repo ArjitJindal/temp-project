@@ -1,12 +1,16 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row, Typography } from 'antd';
-import { UserTransactionHistoryTable } from './UserTransactionHistoryTable';
+import { useState } from 'react';
+import { UserTransactionHistoryTable } from '../UserTransactionHistoryTable';
+import UserManualRiskPanel from '../UserManualRiskPanel';
+import CollapsableSection from '../CollapsableSection';
+import s from './styles.module.less';
+import PersonsTable from './PersonsTable';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalBusinessUser } from '@/apis';
-import UserManualRiskPanel from '@/pages/users/users-list/components/UserManualRiskPanel';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
@@ -17,11 +21,13 @@ interface Props {
 export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
   const api = useApi();
   const userId = user.userId;
+  const [isShareholdersCollapsed, setShareholdersCollapsed] = useState(true);
+  const [isDirectorsCollapsed, setDirectorsCollapsed] = useState(true);
   return (
     <>
       <Row justify="space-between" align="middle">
         <Col>
-          <Typography.Title level={5} style={{ margin: 0 }}>
+          <Typography.Title level={3} style={{ margin: 0 }}>
             {getUserName(user)}
           </Typography.Title>
         </Col>
@@ -40,8 +46,30 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
         params={{ id: getUserName(user) }}
         columns={columns}
       />
+      {user.shareHolders && user.shareHolders.length > 0 && (
+        <CollapsableSection
+          title={`Shareholders (${user.shareHolders.length})`}
+          isCollapsed={isShareholdersCollapsed}
+          onChangeCollapsed={setShareholdersCollapsed}
+        >
+          <PersonsTable persons={user.shareHolders} />
+        </CollapsableSection>
+      )}
+      <Divider />
+      {user.directors && user.directors.length > 0 && (
+        <CollapsableSection
+          title={`Directors (${user.directors.length})`}
+          isCollapsed={isDirectorsCollapsed}
+          onChangeCollapsed={setDirectorsCollapsed}
+        >
+          <PersonsTable persons={user.directors} />
+        </CollapsableSection>
+      )}
+      <Divider className={s.divider} orientation="left" orientationMargin="0">
+        Transaction History
+      </Divider>
       <UserTransactionHistoryTable userId={user.userId} />
-      <Divider orientation="left" orientationMargin="0">
+      <Divider className={s.divider} orientation="left" orientationMargin="0">
         Documents
       </Divider>
       <UploadFilesList

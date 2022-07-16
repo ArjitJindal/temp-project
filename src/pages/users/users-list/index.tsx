@@ -183,7 +183,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
         }}
         headerTitle="Business Users"
         actionRef={actionRef}
-        rowKey="key"
+        rowKey="userId"
         search={false}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
