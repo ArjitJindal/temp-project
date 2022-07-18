@@ -1,0 +1,33 @@
+name: Push OpenAPI schema to Stoplight
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      # Push events on above branches when files matching the pattern below have changed
+      - 'lib/openapi/**.yaml'
+jobs:
+  build:
+    name: Push to Stoplight
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Get branch name (merge)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | tr / -)" >> $GITHUB_ENV
+      - name: Get branch name (pull request)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
+      - name: Use Node.js 14
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+          cache: 'npm'
+      - run: npm ci
+      - name: Publish schemas
+        run: npm run openapi:publish
+        env:
+          PUBLIC_PROJECT_TOKEN: ${{ secrets.STOPLIGHT_PUBLIC_PROJECT_TOKEN }}
+          INTERNAL_PROJECT_TOKEN: ${{ secrets.STOPLIGHT_INTERNAL_PROJECT_TOKEN }}

@@ -935,7 +935,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RiskClassificationScore'
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
+              examples:
+                example-1:
+                  value:
+                    - riskLevel: VERY_LOW
+                      lowerBoundRiskScore: 0
+                      upperBoundRiskScore: 25
       operationId: get-pulse-risk-classification
       description: ''
     post:
@@ -944,6 +952,18 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskClassificationScore'
+              examples:
+                example-1:
+                  value:
+                    - riskLevel: VERY_LOW
+                      lowerBoundRiskScore: 0
+                      upperBoundRiskScore: 25
         '400':
           description: Bad Request
       requestBody:
@@ -1252,7 +1272,7 @@ components:
     TransactionCaseManagement:
       allOf:
         - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
+            ./openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
         - type: object
           properties:
             comments:
@@ -1358,7 +1378,7 @@ components:
     InternalConsumerUser:
       allOf:
         - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
+            ./openapi-public-original.yaml#/components/schemas/User
         - type: object
           properties:
             type:
@@ -1374,7 +1394,7 @@ components:
     InternalBusinessUser:
       allOf:
         - $ref: >-
-            https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
+            ./openapi-public-original.yaml#/components/schemas/Business
         - type: object
           properties:
             type:
