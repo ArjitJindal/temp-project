@@ -11,7 +11,8 @@ import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import { TarponStackConstants } from '../constants'
 
-const env = process.env.ENV || 'prod'
+// We don't care about region
+const env = (process.env.ENV || 'prod').split(':')[0]
 
 const PathToLambda: any = {
   '/transactions': TarponStackConstants.TRANSACTION_FUNCTION_NAME,

@@ -24,15 +24,15 @@ if (process.env.ENV === 'sandbox') {
   new CdkTarponStack(app, `${sandboxConfig.stage}-tarpon`, sandboxConfig)
 }
 
-if (process.env.ENV === 'asia-1') {
+if (process.env.ENV === 'prod:asia-1') {
   new CdkTarponStack(app, `${prodConfigAsia1.stage}-tarpon`, prodConfigAsia1)
 }
 
-if (process.env.ENV === 'asia-2') {
+if (process.env.ENV === 'prod:asia-2') {
   new CdkTarponStack(app, `${prodConfigAsia2.stage}-tarpon`, prodConfigAsia2)
 }
 
-if (process.env.ENV === 'eu-1') {
+if (process.env.ENV === 'prod:eu-1') {
   new CdkTarponStack(app, `${prodConfigEu1.stage}-tarpon`, prodConfigEu1)
 }
 

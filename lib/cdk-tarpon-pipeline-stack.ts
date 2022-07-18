@@ -90,7 +90,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             build: {
               commands: [
                 `cp -r $CODEBUILD_SRC_DIR_${buildOutput.artifactName} dist`,
-                `npm run openapi:generate:${env.split(':')[0]}`,
                 `npm run synth:${env}`,
                 `npm run deploy:${env} -- --require-approval=never`,
               ],
