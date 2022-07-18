@@ -30,7 +30,9 @@ export class TransactionService {
     params: DefaultApiGetTransactionsListRequest
   ): Promise<TransactionsListResponse> {
     const result = await this.transactionRepository.getTransactions(params)
-    result.data = result.data.map(this.getAugmentedTransactionCaseManagement)
+    result.data = result.data.map((transaction) =>
+      this.getAugmentedTransactionCaseManagement(transaction)
+    )
     return result
   }
 
