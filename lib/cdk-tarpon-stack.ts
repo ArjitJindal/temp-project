@@ -17,6 +17,8 @@ import {
   ResponseType,
   SpecRestApi,
 } from 'aws-cdk-lib/aws-apigateway'
+import { Queue } from 'aws-cdk-lib/aws-sqs'
+import { Topic, Subscription, SubscriptionProtocol } from 'aws-cdk-lib/aws-sns'
 
 import {
   Alias,
@@ -36,13 +38,14 @@ import { Construct } from 'constructs'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 
 import { Stream } from 'aws-cdk-lib/aws-kinesis'
-import { KinesisEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'
-import { Topic, Subscription, SubscriptionProtocol } from 'aws-cdk-lib/aws-sns'
+import {
+  KinesisEventSource,
+  SqsEventSource,
+} from 'aws-cdk-lib/aws-lambda-event-sources'
 import { LogGroup } from 'aws-cdk-lib/aws-logs'
 
 import {
   getNameForGlobalResource,
-  getResourceNameForHammerhead,
   getResourceNameForTarpon,
   HammerheadStackConstants,
   TarponStackConstants,
@@ -68,6 +71,8 @@ import {
   UserViewConfig,
 } from '@/lambdas/phytoplankton-internal-api-handlers/app'
 
+const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
+
 type InternalFunctionProps = {
   name: string
   handler: string
@@ -85,9 +90,8 @@ export class CdkTarponStack extends cdk.Stack {
       env: config.env,
     })
     this.config = config
-    /* Cloudwatch Insights Layer
-    Deets: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html
-    */
+
+    /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
     const cwInsightsLayerArn = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
     this.cwInsightsLayer = LayerVersion.fromLayerVersionArn(
       this,
@@ -95,7 +99,10 @@ export class CdkTarponStack extends cdk.Stack {
       cwInsightsLayerArn
     ) as LayerVersion
 
-    /* Better Uptime SNS topic */
+    /**
+     * SQS & SNS
+     */
+
     const BetterUptimeCloudWatchTopic = new Topic(
       this,
       'BetterUptimeCloudWatchTopic',
@@ -114,9 +121,12 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
+    const slackAlertQueue = new Queue(this, 'SlackAlertQueue', {
+      visibilityTimeout: DEFAULT_LAMBDA_TIMEOUT,
+    })
+
     /*
      * Kinesis Data Streams
-     *
      */
     const tarponStream = new Stream(this, 'tarponStream', {
       streamName: 'tarponDynamoChangeCaptureStream',
@@ -299,6 +309,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
+    this.grantMongoDbAccess(apiKeyGeneratorAlias)
     apiKeyGeneratorAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyGeneratorPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyGeneratorPolicy'),
@@ -310,11 +321,6 @@ export class CdkTarponStack extends cdk.Stack {
               'arn:aws:apigateway:*::/apikeys',
               'arn:aws:apigateway:*::/usageplans/*/keys',
             ],
-          }),
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['secretsmanager:GetSecretValue'],
-            resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
           }),
         ],
       })
@@ -396,22 +402,7 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(fileImportAlias)
     s3TmpBucket.grantRead(fileImportAlias)
     s3ImportBucket.grantWrite(fileImportAlias)
-    fileImportAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.FILE_IMPORT_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.FILE_IMPORT_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(fileImportAlias)
 
     const { alias: getPresignedUrlAlias } = this.createFunction(
       {
@@ -437,18 +428,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantWriteData(ruleAlias)
-    ruleAlias.role?.attachInlinePolicy(
-      new Policy(this, `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`, {
-        policyName: `${TarponStackConstants.RULE_FUNCTION_NAME}Policy`,
-        statements: [
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['secretsmanager:GetSecretValue'],
-            resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-          }),
-        ],
-      })
-    )
+    this.grantMongoDbAccess(ruleAlias)
 
     /* Rule Instance */
     const { alias: ruleInstanceAlias } = this.createFunction(
@@ -460,22 +440,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
-    ruleInstanceAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(ruleInstanceAlias)
 
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
@@ -499,22 +464,7 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(transactionsViewAlias)
     s3TmpBucket.grantRead(transactionsViewAlias)
     s3DocumentBucket.grantWrite(transactionsViewAlias)
-    transactionsViewAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(transactionsViewAlias)
 
     /* Accounts */
     this.createFunction(
@@ -554,22 +504,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    businessUsersViewAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(businessUsersViewAlias)
 
     /* Consumer users view */
     const { alias: consumerUsersViewAlias } = this.createFunction(
@@ -589,22 +524,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    consumerUsersViewAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(consumerUsersViewAlias)
 
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(
@@ -615,22 +535,7 @@ export class CdkTarponStack extends cdk.Stack {
       },
       atlasFunctionProps
     )
-    dashboardStatsAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(dashboardStatsAlias)
 
     /* User */
     const { alias: userAlias } = this.createFunction({
@@ -668,21 +573,31 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
-    slackAppAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        `${TarponStackConstants.SLACK_APP_FUNCTION_NAME}Policy`,
-        {
-          policyName: `${TarponStackConstants.SLACK_APP_FUNCTION_NAME}Policy`,
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
+    this.grantMongoDbAccess(slackAppAlias)
+
+    const { alias: slackAlertAlias } = this.createFunction(
+      {
+        name: TarponStackConstants.SLACK_ALERT_FUNCTION_NAME,
+        handler: 'app.slackAlertHandler',
+        codePath: 'dist/slack-app',
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          SLACK_CLIENT_ID: config.application.SLACK_CLIENT_ID,
+          SLACK_CLIENT_SECRET: config.application.SLACK_CLIENT_SECRET,
+          SLACK_REDIRECT_URI: config.application.SLACK_REDIRECT_URI,
+          CONSOLE_URI: config.application.CONSOLE_URI,
+        },
+      }
+    )
+    this.grantMongoDbAccess(slackAlertAlias)
+    tarponDynamoDbTable.grantReadData(slackAlertAlias)
+    slackAlertQueue.grantConsumeMessages(slackAlertAlias)
+    slackAlertAlias.addEventSource(
+      // We set batch size to 1 then in case of error, we don't resend the already-sent alerts
+      new SqsEventSource(slackAlertQueue, { batchSize: 1 })
     )
 
     /*
@@ -726,37 +641,21 @@ export class CdkTarponStack extends cdk.Stack {
         },
         {
           ...atlasFunctionProps,
+          environment: {
+            ...atlasFunctionProps.environment,
+            SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
+          },
           timeout: Duration.minutes(15),
         }
       )
-
     tarponChangeCaptureKinesisConsumerAlias.addEventSource(
       new KinesisEventSource(tarponStream, {
-        batchSize: 10,
+        batchSize: 1,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
     )
-
-    tarponChangeCaptureKinesisConsumerAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        getResourceNameForTarpon(
-          'tarpontarponChangeCaptureKinesisConsumerAliasPolicy'
-        ),
-        {
-          policyName: getResourceNameForTarpon(
-            'tarpontarponChangeCaptureKinesisConsumerAliasPolicy'
-          ),
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
+    slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
 
     /* Hammerhead Kinesis Change capture consumer */
 
@@ -779,25 +678,7 @@ export class CdkTarponStack extends cdk.Stack {
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
     )
-
-    hammerheadChangeCaptureKinesisConsumerAlias.role?.attachInlinePolicy(
-      new Policy(
-        this,
-        getResourceNameForHammerhead('ChangeCaptureKinesisConsumerPolicy'),
-        {
-          policyName: getResourceNameForHammerhead(
-            'ChangeCaptureKinesisConsumerPolicy'
-          ),
-          statements: [
-            new PolicyStatement({
-              effect: Effect.ALLOW,
-              actions: ['secretsmanager:GetSecretValue'],
-              resources: [config.application.ATLAS_CREDENTIALS_SECRET_ARN],
-            }),
-          ],
-        }
-      )
-    )
+    this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
 
     /**
      * API Gateway
@@ -1035,7 +916,7 @@ export class CdkTarponStack extends cdk.Stack {
       handler,
       code: Code.fromAsset(codePath),
       tracing: Tracing.ACTIVE,
-      timeout: Duration.seconds(100),
+      timeout: DEFAULT_LAMBDA_TIMEOUT,
       memorySize: memorySize
         ? memorySize
         : this.config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
@@ -1088,5 +969,21 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
     return { alias, func }
+  }
+
+  private grantMongoDbAccess(alias: Alias) {
+    const aliasIdentifier = alias.node.id.replace(/:/g, '-')
+    alias.role?.attachInlinePolicy(
+      new Policy(this, `${aliasIdentifier}-MongoDbPolicy`, {
+        policyName: `${aliasIdentifier}-MongoDbPolicy`,
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['secretsmanager:GetSecretValue'],
+            resources: [this.config.application.ATLAS_CREDENTIALS_SECRET_ARN],
+          }),
+        ],
+      })
+    )
   }
 }

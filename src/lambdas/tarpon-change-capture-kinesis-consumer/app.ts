@@ -1,5 +1,6 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { Db } from 'mongodb'
+import * as AWS from 'aws-sdk'
 import { TarponStackConstants } from '@cdk/constants'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
@@ -22,6 +23,10 @@ import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithR
 import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
+import { AlertPayload } from '@/@types/alert/alert-payload'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
+const sqs = new AWS.SQS()
 
 function getAggregatedRuleStatus(
   ruleActions: ReadonlyArray<RuleAction>
@@ -43,18 +48,44 @@ async function transactionHandler(
   const transactionsCollection = db.collection<TransactionCaseManagement>(
     TRANSACTIONS_COLLECTION(tenantId)
   )
+  const currentTransaction =
+    await transactionsCollection.findOne<TransactionCaseManagement>({
+      transactionId: transaction.transactionId,
+    })
+  const newStatus = getAggregatedRuleStatus(
+    transaction.executedRules
+      .filter((rule) => rule.ruleHit)
+      .map((rule) => rule.ruleAction)
+  )
   await transactionsCollection.replaceOne(
     { transactionId: transaction.transactionId },
     {
       ...transaction,
-      status: getAggregatedRuleStatus(
-        transaction.executedRules
-          .filter((rule) => rule.ruleHit)
-          .map((rule) => rule.ruleAction)
-      ),
+      status: newStatus,
     },
     { upsert: true }
   )
+
+  // Alerting
+  if (currentTransaction?.status !== newStatus && newStatus !== 'ALLOW') {
+    const tenantRepository = new TenantRepository(tenantId, {
+      mongoDb: await connectToDB(),
+    })
+    if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
+      console.info(
+        `Sending slack alert SQS message for transaction ${transaction.transactionId}`
+      )
+      await sqs
+        .sendMessage({
+          MessageBody: JSON.stringify({
+            tenantId,
+            transactionId: transaction.transactionId,
+          } as AlertPayload),
+          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+        })
+        .promise()
+    }
+  }
 }
 
 async function userHandler(db: Db, tenantId: string, user: Business | User) {

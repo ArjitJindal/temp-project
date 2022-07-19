@@ -21,7 +21,7 @@ const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
-export type TenantSettingName = 'features'
+export type TenantSettingName = 'features' | 'ruleActionAliases'
 
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
