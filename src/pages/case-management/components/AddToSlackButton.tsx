@@ -6,7 +6,7 @@ export const AddToSlackButton: React.FC = () => {
   const redirectUri = `${user.tenantConsoleApiUrl}/slack/oauth_redirect`;
   const href = `https://slack.com/oauth/v2/authorize?scope=incoming-webhook&redirect_uri=${redirectUri}&client_id=${SLACK_CLIENT_ID}&state=${user.tenantId}`;
   return (
-    <Tooltip title="Receive the real-time notification in a Slack channel whenever there's a new case created">
+    <Tooltip title="Receive real-time notifications in Slack whenever a new case is created">
       <a href={href} target="__blank">
         <img
           alt="Add to Slack"
