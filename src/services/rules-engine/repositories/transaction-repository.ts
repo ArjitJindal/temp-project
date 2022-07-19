@@ -3,7 +3,14 @@ import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import _, { chunk } from 'lodash'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
-import { getReceiverKeys, getSenderKeys } from '../utils'
+import {
+  getNonUserReceiverKeys,
+  getNonUserSenderKeys,
+  getReceiverKeys,
+  getSenderKeys,
+  getUserReceiverKeys,
+  getUserSenderKeys,
+} from '../utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -32,6 +39,8 @@ export type ThinTransaction = {
   transactionState?: TransactionState
   senderKeyId?: string
   receiverKeyId?: string
+  originUserId?: string
+  destinationUserId?: string
 }
 
 type ThinTransactionsFilterOptions = {
@@ -302,17 +311,6 @@ export class TransactionRepository {
       `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
     transaction.timestamp = transaction.timestamp || Date.now()
 
-    const senderKeys = getSenderKeys(this.tenantId, transaction)
-    const receiverKeys = getReceiverKeys(this.tenantId, transaction)
-    const senderKeysOfTransactionType =
-      transaction.type === undefined
-        ? undefined
-        : getSenderKeys(this.tenantId, transaction, transaction.type)
-    const receiverKeysOfTransactionType =
-      transaction.type === undefined
-        ? undefined
-        : getReceiverKeys(this.tenantId, transaction, transaction.type)
-
     // Important: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
@@ -330,67 +328,115 @@ export class TransactionRepository {
                 },
               },
             },
-            senderKeys && {
+            ...this.getTransactionAuxiliaryIndices(transaction).map((item) => ({
               PutRequest: {
-                Item: {
-                  ...senderKeys,
-                  transactionId: transaction.transactionId,
-                  receiverKeyId: receiverKeys?.PartitionKeyID,
-                  transactionState: transaction.transactionState,
-                },
+                Item: item,
               },
-            },
-            receiverKeys && {
-              PutRequest: {
-                Item: {
-                  ...receiverKeys,
-                  transactionId: transaction.transactionId,
-                  senderKeyId: senderKeys?.PartitionKeyID,
-                  transactionState: transaction.transactionState,
-                },
-              },
-            },
-            senderKeysOfTransactionType && {
-              PutRequest: {
-                Item: {
-                  ...senderKeysOfTransactionType,
-                  transactionId: transaction.transactionId,
-                  receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
-                  transactionState: transaction.transactionState,
-                },
-              },
-            },
-            receiverKeysOfTransactionType && {
-              PutRequest: {
-                Item: {
-                  ...receiverKeysOfTransactionType,
-                  transactionId: transaction.transactionId,
-                  senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
-                  transactionState: transaction.transactionState,
-                },
-              },
-            },
-            senderKeys &&
-              transaction?.deviceData?.ipAddress && {
-                PutRequest: {
-                  Item: {
-                    ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
-                      this.tenantId,
-                      transaction.deviceData.ipAddress,
-                      transaction.timestamp
-                    ),
-                    transactionId: transaction.transactionId,
-                    senderKeyId: senderKeys.PartitionKeyID,
-                    transactionState: transaction.transactionState,
-                  },
-                },
-              },
-          ].filter(Boolean) as WriteRequest[],
+            })),
+          ] as WriteRequest[],
         },
         ReturnConsumedCapacity: 'TOTAL',
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
     return transaction
+  }
+
+  private getTransactionAuxiliaryIndices(transaction: Transaction) {
+    const senderKeys = getSenderKeys(this.tenantId, transaction)
+    const receiverKeys = getReceiverKeys(this.tenantId, transaction)
+    const userSenderKeys = getUserSenderKeys(this.tenantId, transaction)
+    const nonUserSenderKeys = getNonUserSenderKeys(this.tenantId, transaction)
+    const userReceiverKeys = getUserReceiverKeys(this.tenantId, transaction)
+    const nonUserReceiverKeys = getNonUserReceiverKeys(
+      this.tenantId,
+      transaction
+    )
+    const senderKeysOfTransactionType =
+      transaction.type === undefined
+        ? undefined
+        : getSenderKeys(this.tenantId, transaction, transaction.type)
+    const receiverKeysOfTransactionType =
+      transaction.type === undefined
+        ? undefined
+        : getReceiverKeys(this.tenantId, transaction, transaction.type)
+    const userSenderKeysOfTransactionType =
+      transaction.type &&
+      getUserSenderKeys(this.tenantId, transaction, transaction.type)
+    const nonUserSenderKeysOfTransactionType =
+      transaction.type &&
+      getNonUserSenderKeys(this.tenantId, transaction, transaction.type)
+    const userReceiverKeysOfTransactionType =
+      transaction.type &&
+      getUserReceiverKeys(this.tenantId, transaction, transaction.type)
+    const nonUserReceiverKeysOfTransactionType =
+      transaction.type &&
+      getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
+
+    const thinTransactionAttributes: Partial<ThinTransaction> = {
+      transactionId: transaction.transactionId,
+      transactionState: transaction.transactionState,
+      originUserId: transaction.originUserId,
+      destinationUserId: transaction.destinationUserId,
+    }
+    return [
+      userSenderKeys && {
+        ...userSenderKeys,
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+      nonUserSenderKeys && {
+        ...nonUserSenderKeys,
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+      userReceiverKeys && {
+        ...userReceiverKeys,
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+      nonUserReceiverKeys && {
+        ...nonUserReceiverKeys,
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+      userSenderKeysOfTransactionType && {
+        ...userSenderKeysOfTransactionType,
+        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
+        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+      },
+      nonUserSenderKeysOfTransactionType && {
+        ...nonUserSenderKeysOfTransactionType,
+        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
+        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+      },
+      userReceiverKeysOfTransactionType && {
+        ...userReceiverKeysOfTransactionType,
+        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
+        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+      },
+      nonUserReceiverKeysOfTransactionType && {
+        ...nonUserReceiverKeysOfTransactionType,
+        senderKeyId: senderKeysOfTransactionType?.PartitionKeyID,
+        receiverKeyId: receiverKeysOfTransactionType?.PartitionKeyID,
+      },
+      transaction?.deviceData?.ipAddress && {
+        ...DynamoDbKeys.IP_ADDRESS_TRANSACTION(
+          this.tenantId,
+          transaction.deviceData.ipAddress,
+          transaction.timestamp
+        ),
+        senderKeyId: senderKeys?.PartitionKeyID,
+        receiverKeyId: receiverKeys?.PartitionKeyID,
+      },
+    ]
+      .filter(Boolean)
+      .map((key) => ({
+        ...(key as {
+          PartitionKeyID: string
+          SortKeyID: string
+        }),
+        ...thinTransactionAttributes,
+      }))
   }
 
   public async getTransactionById(
@@ -551,6 +597,8 @@ export class TransactionRepository {
         timestamp: parseInt(item.SortKeyID),
         senderKeyId: item.senderKeyId,
         receiverKeyId: item.receiverKeyId,
+        originUserId: item.originUserId,
+        destinationUserId: item.destinationUserId,
       })) || []
     )
   }
@@ -828,6 +876,8 @@ export class TransactionRepository {
         timestamp: parseInt(item.SortKeyID),
         senderKeyId: item.senderKeyId,
         receiverKeyId: item.receiverKeyId,
+        originUserId: item.originUserId,
+        destinationUserId: item.destinationUserId,
       })) || []
     )
   }
