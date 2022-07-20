@@ -261,7 +261,6 @@ const TableList = (props: RouteMatch<'id'>) => {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Transactions"
         actionRef={actionRef}
         rowKey="transactionId"
         search={{
