@@ -101,7 +101,9 @@ export class RuleInstanceRepository {
         id: item.id,
         type: item.type,
         ruleId: item.ruleId,
-        parameters: item.parameters,
+        parameters: item.riskLevelParameters
+          ? item.riskLevelParameters['HIGH']
+          : item.parameters,
         riskLevelParameters: item.riskLevelParameters,
         action: item.action,
         riskLevelActions: item.riskLevelActions,
