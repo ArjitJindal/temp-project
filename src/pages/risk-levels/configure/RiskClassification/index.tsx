@@ -189,7 +189,7 @@ export default function RiskQualification() {
       pagination={false}
       dataSource={LEVEL_ENTRIES}
       toolBarRender={() => [
-        <Button onClick={handleSave} disabled={isLoading(syncRes)}>
+        <Button type="primary" onClick={handleSave} disabled={isLoading(syncRes)}>
           Save
         </Button>,
         <Button onClick={handleCancel} disabled={isLoading(syncRes)}>
