@@ -13,11 +13,13 @@
 import { ContactDetails } from './ContactDetails';
 import { FileInfo } from './FileInfo';
 import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf';
+import { KYCStatus } from './KYCStatus';
 import { LegalDocument } from './LegalDocument';
 import { Tag } from './Tag';
 import { TransactionLimits } from './TransactionLimits';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
+import { UserStatus } from './UserStatus';
 import { HttpFile } from '../http/http';
 
 export class InternalConsumerUser {
@@ -30,6 +32,8 @@ export class InternalConsumerUser {
    * Timestamp when userId is created
    */
   'createdTimestamp': number;
+  'userStatus'?: UserStatus;
+  'kycStatus'?: KYCStatus;
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -67,6 +71,18 @@ export class InternalConsumerUser {
       name: 'createdTimestamp',
       baseName: 'createdTimestamp',
       type: 'number',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'UserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'KYCStatus',
       format: '',
     },
     {

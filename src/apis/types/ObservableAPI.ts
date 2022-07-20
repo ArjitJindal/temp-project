@@ -51,6 +51,7 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
+import { KYCStatus } from '../models/KYCStatus';
 import { LegalDocument } from '../models/LegalDocument';
 import { LegalDocument1 } from '../models/LegalDocument1';
 import { LegalEntity } from '../models/LegalEntity';
@@ -91,6 +92,7 @@ import { UPIPaymentMethod } from '../models/UPIPaymentMethod';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
 import { UserDetails1 } from '../models/UserDetails1';
+import { UserStatus } from '../models/UserStatus';
 import { WalletDetails } from '../models/WalletDetails';
 import { WalletPaymentMethod } from '../models/WalletPaymentMethod';
 

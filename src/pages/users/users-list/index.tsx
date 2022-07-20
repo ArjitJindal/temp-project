@@ -329,6 +329,22 @@ const ConsumerUsersTab = (props: { id?: string }) => {
       valueType: 'textarea',
     },
     {
+      title: 'KYC Status',
+      hideInSearch: true,
+      render: (dom, entity) => {
+        return entity.kycStatus;
+      },
+      valueType: 'textarea',
+    },
+    {
+      title: 'User Status',
+      hideInSearch: true,
+      render: (dom, entity) => {
+        return entity.userStatus;
+      },
+      valueType: 'textarea',
+    },
+    {
       title: 'Tags',
       hideInSearch: true,
       dataIndex: 'tags',

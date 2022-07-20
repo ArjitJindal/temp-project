@@ -60,6 +60,7 @@ models/InternalBusinessUser.ts
 models/InternalBusinessUserAllOf.ts
 models/InternalConsumerUser.ts
 models/InternalConsumerUserAllOf.ts
+models/KYCStatus.ts
 models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts
@@ -101,6 +102,7 @@ models/UPIPaymentMethod.ts
 models/User.ts
 models/UserDetails.ts
 models/UserDetails1.ts
+models/UserStatus.ts
 models/WalletDetails.ts
 models/WalletPaymentMethod.ts
 models/all.ts

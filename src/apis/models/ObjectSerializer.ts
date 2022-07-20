@@ -46,6 +46,7 @@ export * from './InternalBusinessUser';
 export * from './InternalBusinessUserAllOf';
 export * from './InternalConsumerUser';
 export * from './InternalConsumerUserAllOf';
+export * from './KYCStatus';
 export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
@@ -86,6 +87,7 @@ export * from './UPIPaymentMethod';
 export * from './User';
 export * from './UserDetails';
 export * from './UserDetails1';
+export * from './UserStatus';
 export * from './WalletDetails';
 export * from './WalletPaymentMethod';
 
@@ -143,6 +145,7 @@ import {
   InternalConsumerUserAllOf,
   InternalConsumerUserAllOfTypeEnum,
 } from './InternalConsumerUserAllOf';
+import { KYCStatus } from './KYCStatus';
 import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
@@ -183,6 +186,7 @@ import { UPIPaymentMethod } from './UPIPaymentMethod';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
 import { UserDetails1 } from './UserDetails1';
+import { UserStatus } from './UserStatus';
 import { WalletDetails } from './WalletDetails';
 import { WalletPaymentMethod } from './WalletPaymentMethod';
 
@@ -210,6 +214,7 @@ let enumsMap: Set<string> = new Set<string>([
   'InternalBusinessUserAllOfTypeEnum',
   'InternalConsumerUserTypeEnum',
   'InternalConsumerUserAllOfTypeEnum',
+  'KYCStatus',
   'RiskLevel',
   'RuleTypeEnum',
   'RuleAction',
@@ -219,6 +224,7 @@ let enumsMap: Set<string> = new Set<string>([
   'SWIFTPaymentMethod',
   'TransactionState',
   'UPIPaymentMethod',
+  'UserStatus',
   'WalletPaymentMethod',
 ]);
 
