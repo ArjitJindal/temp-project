@@ -45,7 +45,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             'runtime-versions': {
               nodejs: 14,
             },
-            commands: ['npm install'],
+            commands: ['npm ci'],
           },
           build: {
             commands: ['npm run build'],

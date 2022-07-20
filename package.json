@@ -8,8 +8,8 @@
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",
     "aws-sso-login:sandbox": "npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825",
     "aws-sso-login:prod": "npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449",
-    "build": "webpack",
-    "build:watch": "webpack --watch --progress",
+    "build": "npm run openapi:build && webpack",
+    "build:watch": "npm run openapi:build && webpack --watch --progress",
     "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth",
     "synth:local": "export ENV=local && npm run openapi:augment && cdk synth local-tarpon",
@@ -47,8 +47,7 @@
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region=us-east-2",
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
     "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
-    "start-local-mongodb": "docker run -p 27017:27017 mongo",
-    "postinstall": "npm run openapi:build"
+    "start-local-mongodb": "docker run -p 27017:27017 mongo"
   },
   "repository": {
     "type": "git",
