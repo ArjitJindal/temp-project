@@ -1,5 +1,5 @@
 import { Radio } from 'antd';
-import s from './styles.less';
+import s from './styles.module.less';
 import { RISK_LEVEL_COLORS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { neverReturn } from '@/utils/lang';
 
