@@ -28,6 +28,7 @@ import MerchantReceiverNameRule from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 import CardHolderNameRule from './card-holder-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
+import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 
 export const TRANSACTION_RULES = {
   // R-114
@@ -109,6 +110,9 @@ export const TRANSACTION_RULES = {
 
   // R-118
   'card-holder-name-levensthein-distance': CardHolderNameRule,
+
+  // R-53
+  'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,
