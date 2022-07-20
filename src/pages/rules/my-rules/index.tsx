@@ -185,7 +185,6 @@ export default () => {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Rules"
         columns={columns}
         request={async () => {
           const [rules, ruleInstances, ruleImplementations] = await Promise.all([
