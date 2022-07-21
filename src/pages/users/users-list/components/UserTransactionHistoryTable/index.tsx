@@ -1,5 +1,6 @@
 import { Divider } from 'antd';
 import { Link } from 'react-router-dom';
+import style from './style.module.less';
 import { TransactionAmountDetails, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
@@ -23,6 +24,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
       form={{
         labelWrap: true,
       }}
+      className={style.tablePadding}
       request={async (params) => {
         if (!userId) {
           throw new Error(`User id is null, unable to fetch transaction history`);
