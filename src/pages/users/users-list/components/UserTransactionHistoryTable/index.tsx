@@ -1,9 +1,12 @@
-import { Divider } from 'antd';
+import { Divider, Tag } from 'antd';
 import { Link } from 'react-router-dom';
+import moment from 'moment';
 import style from './style.module.less';
 import { TransactionAmountDetails, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
+import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 interface Props {
   userId?: string;
@@ -19,8 +22,13 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
   const api = useApi();
 
   return (
-    <Table<TransactionCaseManagement>
+    <Table<
+      TransactionCaseManagement & {
+        direction: 'Incoming' | 'Outgoing';
+      }
+    >
       search={false}
+      rowKey="transactionId"
       form={{
         labelWrap: true,
       }}
@@ -29,16 +37,23 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
         if (!userId) {
           throw new Error(`User id is null, unable to fetch transaction history`);
         }
-        const response = await api.getTransactionsList({
+        const requestParams: DefaultApiGetTransactionsListRequest = {
           limit: params.pageSize!,
           skip: (params.current! - 1) * params.pageSize!,
           beforeTimestamp: Date.now(),
           filterOriginUserId: userId,
-        });
+        };
+        const [originFilterResult, destFilterResult] = await Promise.all([
+          api.getTransactionsList({ ...requestParams, filterOriginUserId: userId }),
+          api.getTransactionsList({ ...requestParams, filterDestinationUserId: userId }),
+        ]);
         return {
-          data: response.data,
+          data: [
+            ...originFilterResult.data.map((x) => ({ ...x, direction: 'Outgoing' as const })),
+            ...destFilterResult.data.map((x) => ({ ...x, direction: 'Incoming' as const })),
+          ],
           success: true,
-          total: response.total,
+          total: originFilterResult.total + destFilterResult.total,
         };
       }}
       columns={[
@@ -53,9 +68,18 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
         },
         {
-          title: 'Transaction time',
+          title: 'Transaction Time',
           dataIndex: 'timestamp',
+          valueType: 'dateTime',
           key: 'transactionTime',
+          render: (_, transaction) => {
+            return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          },
+        },
+        {
+          title: 'Transaction Direction',
+          dataIndex: 'direction',
+          key: 'direction',
         },
         {
           title: 'Origin Amount',

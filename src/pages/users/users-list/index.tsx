@@ -12,7 +12,6 @@ import { BusinessUserDetails } from './components/BusinessUserDetails';
 import Table from '@/components/ui/Table';
 import { useApi } from '@/api';
 import { Amount, ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import { getFullName } from '@/utils/api/users';
 import PageWrapper from '@/components/PageWrapper';
 import {
@@ -29,6 +28,7 @@ import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
@@ -164,7 +164,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
       dataIndex: 'createdTimestamp',
       valueType: 'dateTimeRange',
       render: (_, user) => {
-        return moment(user.createdTimestamp).format(DATE_TIME_FORMAT);
+        return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
       },
     },
   ];
@@ -374,7 +374,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
       dataIndex: 'createdTimestamp',
       valueType: 'dateTimeRange',
       render: (_, user) => {
-        return moment(user.createdTimestamp).format(DATE_TIME_FORMAT);
+        return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
       },
     },
   ];
@@ -424,7 +424,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         }}
       />
       <Drawer
-        width={600}
+        width={800}
         visible={!isInit(currentItem)}
         onClose={() => {
           navigate('/users/list/consumer/all', { replace: true });

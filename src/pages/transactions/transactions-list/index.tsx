@@ -25,9 +25,7 @@ import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import { useI18n } from '@/locales';
 import '../../../components/ui/colors';
-
-// todo: move to config
-export const DATE_TIME_FORMAT = 'L LTS';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -112,7 +110,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         valueType: 'dateTimeRange',
         sorter: true,
         render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
+          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
       },
       {

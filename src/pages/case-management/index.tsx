@@ -16,7 +16,6 @@ import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { useUsers } from '@/utils/user-utils';
-import { DATE_TIME_FORMAT } from '@/pages/transactions/transactions-list';
 import AllowForm from '@/pages/case-management/components/AllowForm';
 import {
   AsyncResource,
@@ -34,6 +33,7 @@ import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
@@ -137,7 +137,7 @@ function TableList() {
         valueType: 'dateTimeRange',
         sorter: true,
         render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DATE_TIME_FORMAT);
+          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
       },
       {
