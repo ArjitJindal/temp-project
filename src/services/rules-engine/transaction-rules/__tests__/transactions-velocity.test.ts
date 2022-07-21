@@ -1,6 +1,6 @@
-import dayjs from 'dayjs'
 import { v4 as uuidv4 } from 'uuid'
 import { TransactionsVelocityRuleParameters } from '../transactions-velocity'
+import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {

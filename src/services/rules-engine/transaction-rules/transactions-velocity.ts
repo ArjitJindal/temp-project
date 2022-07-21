@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
@@ -9,6 +8,7 @@ import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
+import dayjs from '@/utils/dayjs'
 import {
   PaymentDetails,
   PaymentMethod,

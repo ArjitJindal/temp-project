@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
@@ -11,6 +10,7 @@ import {
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export type TimeWindowGranularity =

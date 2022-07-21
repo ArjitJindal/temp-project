@@ -1,10 +1,7 @@
-import dayjs from 'dayjs'
 import { TimeWindow } from '../transaction-rules/transactions-volume'
+import { Dayjs } from '@/utils/dayjs'
 
-export function subtractTime(
-  timeStamp: dayjs.Dayjs,
-  timeWindow: TimeWindow
-): number {
+export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
   let afterTimestamp = timeStamp
     .subtract(timeWindow.units, timeWindow.granularity)
     .valueOf()

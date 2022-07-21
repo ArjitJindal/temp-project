@@ -1,9 +1,9 @@
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isIpAddressInList, isUserInList } from '../utils/user-rule-utils'
 import { UserEventRepository } from '../repositories/user-event-repository'
 import { UserRule } from './rule'
+import dayjs from '@/utils/dayjs'
 import { UserEvent } from '@/@types/openapi-public/UserEvent'
 
 export type AccountAccessEventRuleParameters = {

@@ -1,4 +1,3 @@
-import { TarponStackConstants } from '@cdk/constants'
 import { MongoClient } from 'mongodb'
 import { IMPORT_COLLECTION } from '@/utils/mongoDBUtils'
 import { FileImport } from '@/@types/openapi-internal/FileImport'
@@ -18,7 +17,7 @@ export class ImportRepository {
   }
 
   public async createFileImport(fileImport: FileImport) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection(IMPORT_COLLECTION(this.tenantId))
     await collection.replaceOne(
       {
@@ -30,7 +29,7 @@ export class ImportRepository {
   }
 
   public async completeFileImport(importId: string, importedRecords: number) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
@@ -43,7 +42,7 @@ export class ImportRepository {
     )
   }
   public async failFileImport(importId: string, error: string) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )
@@ -57,7 +56,7 @@ export class ImportRepository {
   }
 
   public async getFileImport(importId: string): Promise<FileImport | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<FileImport>(
       IMPORT_COLLECTION(this.tenantId)
     )

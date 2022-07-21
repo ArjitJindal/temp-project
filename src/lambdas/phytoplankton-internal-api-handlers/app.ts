@@ -263,7 +263,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV && process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshStats(tenantId)
+        await dashboardStatsRepository.refreshStats()
       }
 
       const data = await dashboardStatsRepository.getTransactionCountStats(
@@ -300,12 +300,11 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV && process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshStats(tenantId)
+        await dashboardStatsRepository.refreshStats()
       }
 
       return {
         data: await dashboardStatsRepository.getHitsByUserStats(
-          tenantId,
           startTimestampNumber,
           endTimestampNumber
         ),

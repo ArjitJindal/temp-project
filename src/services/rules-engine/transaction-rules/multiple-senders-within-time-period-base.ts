@@ -1,10 +1,10 @@
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 
 export type MultipleSendersWithinTimePeriodRuleParameters =

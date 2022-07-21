@@ -1,8 +1,8 @@
 import _ from 'lodash'
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 
 export type ConsecutiveTransactionSameTypeRuleParameters =
   DefaultTransactionRuleParameters & {

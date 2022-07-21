@@ -1,5 +1,5 @@
 import * as _ from 'lodash'
-import dayjs from 'dayjs'
+import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'

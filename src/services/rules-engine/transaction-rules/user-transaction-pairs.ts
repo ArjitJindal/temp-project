@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 
 export type UserTransactionPairsRuleParameters =
   DefaultTransactionRuleParameters & {

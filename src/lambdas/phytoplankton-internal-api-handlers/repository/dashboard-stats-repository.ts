@@ -1,19 +1,19 @@
 import { Db, MongoClient } from 'mongodb'
-import { TarponStackConstants } from '@cdk/constants'
-import dayjs from 'dayjs'
 import { RuleDashboardStats, TransactionDashboardStats } from '../constants'
+import dayjs from '@/utils/dayjs'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
+  DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
-  DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 export class DashboardStatsRepository {
   mongoDb: MongoClient
@@ -29,13 +29,13 @@ export class DashboardStatsRepository {
     this.tenantId = tenantId
   }
 
-  private async recalculateHitsByUser(db: Db, tenantId: string) {
+  private async recalculateHitsByUser(db: Db) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
 
     const aggregationCollection =
-      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
     await db.createIndex(
       aggregationCollection,
       {
@@ -99,12 +99,13 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  private async recalculateRuleHitStats(db: Db, tenantId: string) {
+  private async recalculateRuleHitStats(db: Db) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const aggregationCollection =
-      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+    const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
+      this.tenantId
+    )
     await transactionsCollection
       .aggregate([
         {
@@ -155,12 +156,66 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  public async recalculateTransactionsVolumeStats(db: Db, tenantId: string) {
+  public async recalculateTransactionsVolumeStats(db: Db) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(tenantId)
+      TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const aggregatedCollectionName =
-      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(this.tenantId)
+
+    // Stages for calculating rules final action, which follows the same
+    // logic as TransactionRepository.getAggregatedRuleStatus
+    const rulesResultStages = [
+      {
+        $addFields: {
+          hitRulesResult: {
+            $map: {
+              input: '$hitRules',
+              as: 'rule',
+              in: {
+                ruleAction: '$$rule.ruleAction',
+                order: {
+                  $indexOfArray: [RULE_ACTIONS, '$$rule.ruleAction'],
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          hitRulesResult: {
+            $reduce: {
+              input: '$hitRulesResult',
+              initialValue: null,
+              in: {
+                $cond: {
+                  if: {
+                    $or: [
+                      { $eq: ['$$value', null] },
+                      { $lt: ['$$this.order', '$$value.order'] },
+                    ],
+                  },
+                  then: '$$this',
+                  else: '$$value',
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          hitRulesResult: {
+            $cond: {
+              if: { $eq: ['$hitRulesResult', null] },
+              then: 'null',
+              else: '$hitRulesResult.ruleAction',
+            },
+          },
+        },
+      },
+    ]
     try {
       await transactionsCollection
         .aggregate([
@@ -186,14 +241,11 @@ export class DashboardStatsRepository {
         .next()
       await transactionsCollection
         .aggregate([
+          ...rulesResultStages,
           {
             $match: {
               timestamp: { $gte: 0 },
-              hitRules: {
-                $elemMatch: {
-                  ruleAction: 'FLAG',
-                },
-              },
+              hitRulesResult: 'FLAG',
             },
           },
           {
@@ -217,14 +269,11 @@ export class DashboardStatsRepository {
         .next()
       await transactionsCollection
         .aggregate([
+          ...rulesResultStages,
           {
             $match: {
               timestamp: { $gte: 0 },
-              hitRules: {
-                $elemMatch: {
-                  ruleAction: 'BLOCK',
-                },
-              },
+              hitRulesResult: 'BLOCK',
             },
           },
           {
@@ -248,14 +297,11 @@ export class DashboardStatsRepository {
         .next()
       await transactionsCollection
         .aggregate([
+          ...rulesResultStages,
           {
             $match: {
               timestamp: { $gte: 0 },
-              hitRules: {
-                $elemMatch: {
-                  ruleAction: 'SUSPEND',
-                },
-              },
+              hitRulesResult: 'SUSPEND',
             },
           },
           {
@@ -282,13 +328,13 @@ export class DashboardStatsRepository {
     }
   }
 
-  public async refreshStats(tenantId: string) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+  public async refreshStats() {
+    const db = this.mongoDb.db()
 
     await Promise.all([
-      this.recalculateTransactionsVolumeStats(db, tenantId),
-      this.recalculateRuleHitStats(db, tenantId),
-      this.recalculateHitsByUser(db, tenantId),
+      this.recalculateTransactionsVolumeStats(db),
+      this.recalculateRuleHitStats(db),
+      this.recalculateHitsByUser(db),
     ])
   }
 
@@ -297,7 +343,7 @@ export class DashboardStatsRepository {
     endTimestamp: number
   ): Promise<TransactionDashboardStats[]> {
     const tenantId = this.tenantId
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
 
     const collection = db.collection<TransactionDashboardStats>(
       DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
@@ -318,7 +364,6 @@ export class DashboardStatsRepository {
   }
 
   public async getHitsByUserStats(
-    tenantId: string,
     startTimestamp: number,
     endTimestamp: number
   ): Promise<
@@ -328,9 +373,9 @@ export class DashboardStatsRepository {
       rulesHit: number
     }[]
   > {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionDashboardStats>(
-      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
     )
 
     const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
@@ -357,14 +402,14 @@ export class DashboardStatsRepository {
           },
         },
         {
-          $limit: 10,
-        },
-        {
           $sort: { rulesHit: -1 },
         },
         {
+          $limit: 10,
+        },
+        {
           $lookup: {
-            from: USERS_COLLECTION(tenantId),
+            from: USERS_COLLECTION(this.tenantId),
             localField: '_id',
             foreignField: 'userId',
             as: 'user',
@@ -390,7 +435,7 @@ export class DashboardStatsRepository {
     startTimestamp: number,
     endTimestamp: number
   ): Promise<RuleDashboardStats[]> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionDashboardStats>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     )

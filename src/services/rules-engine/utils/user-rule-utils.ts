@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
 import * as _ from 'lodash'
+import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DeviceData } from '@/@types/openapi-public/DeviceData'

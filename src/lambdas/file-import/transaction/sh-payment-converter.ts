@@ -1,8 +1,8 @@
-import dayjs from 'dayjs'
 import * as t from 'io-ts'
 import reporter from 'io-ts-reporters'
 import { MongoClient } from 'mongodb'
 import { ConverterInterface } from '../converter-interface'
+import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 

@@ -27,6 +27,7 @@ import { paginateQuery } from '@/utils/dynamodb'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
+import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -67,7 +68,42 @@ export class TransactionRepository {
     this.tenantId = tenantId
   }
 
+  static getAggregatedRuleStatus(
+    ruleActions: ReadonlyArray<RuleAction>
+  ): RuleAction {
+    return ruleActions.reduce((prev, curr) => {
+      if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
+        return curr
+      } else {
+        return prev
+      }
+    }, 'ALLOW')
+  }
+
   /* MongoDB operations */
+
+  async addCaseToMongo(
+    transaction: TransactionWithRulesResult
+  ): Promise<TransactionCaseManagement> {
+    const db = this.mongoDb.db()
+    const transactionsCollection = db.collection<TransactionCaseManagement>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const transactionCaseManagement: TransactionCaseManagement = {
+      ...transaction,
+      status: TransactionRepository.getAggregatedRuleStatus(
+        transaction.executedRules
+          .filter((rule) => rule.ruleHit)
+          .map((rule) => rule.ruleAction)
+      ),
+    }
+    await transactionsCollection.replaceOne(
+      { transactionId: transaction.transactionId },
+      transactionCaseManagement,
+      { upsert: true }
+    )
+    return transactionCaseManagement
+  }
 
   public getTransactionsMongoQuery(
     params: DefaultApiGetTransactionsListRequest
@@ -139,7 +175,7 @@ export class TransactionRepository {
     query: Filter<TransactionCaseManagement>,
     params?: DefaultApiGetTransactionsListRequest
   ) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -194,7 +230,7 @@ export class TransactionRepository {
   public async getTransactionsCount(
     params: DefaultApiGetTransactionsListRequest
   ): Promise<number> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -218,7 +254,7 @@ export class TransactionRepository {
       statusChange?: TransactionStatusChange
     }
   ) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -248,7 +284,7 @@ export class TransactionRepository {
     transactionId: string,
     comment: Comment
   ): Promise<Comment> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -273,7 +309,7 @@ export class TransactionRepository {
     transactionId: string,
     commentId: string
   ) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -290,7 +326,7 @@ export class TransactionRepository {
   public async getTransactionCaseManagementById(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )

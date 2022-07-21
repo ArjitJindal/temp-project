@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
 import { TransactionsVolumeRuleParameters } from '../transactions-volume'
+import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {

@@ -57,7 +57,7 @@ export class UserRepository {
     userId: string,
     file: FileInfo
   ): Promise<FileInfo> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<
       InternalBusinessUser | InternalConsumerUser
     >(USERS_COLLECTION(this.tenantId))
@@ -73,7 +73,7 @@ export class UserRepository {
   }
 
   public async deleteMongoUserFile(userId: string, fileId: string) {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<
       InternalBusinessUser | InternalConsumerUser
     >(USERS_COLLECTION(this.tenantId))
@@ -100,7 +100,7 @@ export class UserRepository {
     total: number
     data: Array<InternalBusinessUser | InternalConsumerUser>
   }> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<
       InternalBusinessUser | InternalConsumerUser
     >(USERS_COLLECTION(this.tenantId))
@@ -152,7 +152,7 @@ export class UserRepository {
   public async getMongoUser(
     userId: string
   ): Promise<InternalConsumerUser | InternalBusinessUser | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<
       InternalConsumerUser | InternalBusinessUser
     >(USERS_COLLECTION(this.tenantId))

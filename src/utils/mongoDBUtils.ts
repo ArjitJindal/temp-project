@@ -1,5 +1,6 @@
 import os from 'os'
 import { MongoClient } from 'mongodb'
+import { TarponStackConstants } from '@cdk/constants'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AWS = require('aws-sdk')
@@ -15,9 +16,16 @@ const SM_SECRET_ARN = process.env.SM_SECRET_ARN as string
 
 let cacheClient: MongoClient
 
-export async function connectToDB() {
+export async function connectToDB(
+  dbName = TarponStackConstants.MONGO_DB_DATABASE_NAME
+) {
   if (cacheClient) {
     return cacheClient
+  }
+  if (process.env.NODE_ENV === 'test') {
+    return await MongoClient.connect(
+      process.env.MONGO_URI || `mongodb://localhost:27017/${dbName}`
+    )
   }
   if (process.env.ENV === 'local') {
     return await MongoClient.connect(

@@ -5,7 +5,6 @@ import {
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import { TarponStackConstants } from '@cdk/constants'
 
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -62,7 +61,7 @@ async function createNewApiKeyForTenant(
 
 export const createMongoDBCollections = async (tenantId: string) => {
   client = await connectToDB()
-  const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+  const db = client.db()
   try {
     await db.createCollection(TRANSACTIONS_COLLECTION(tenantId))
     const transactionCollection = db.collection(

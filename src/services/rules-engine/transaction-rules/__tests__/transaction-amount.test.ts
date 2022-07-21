@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
 import { TransactionAmountRuleParameters } from '../transaction-amount'
+import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {

@@ -231,9 +231,7 @@ async function nukeTenantData(tenantId: string) {
       ','
     )})... (${env}: ${region})`
   )
-  mongoDb = (await connectToDB()).db(
-    TarponStackConstants.MONGO_DB_DATABASE_NAME
-  )
+  mongoDb = (await connectToDB()).db()
   allMongoDbCollections = (await mongoDb.listCollections().toArray()).map(
     (collection) => collection.name
   )

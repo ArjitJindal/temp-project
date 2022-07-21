@@ -34,7 +34,7 @@ export const fileImportHandler = lambdaApi()(
     const s3 = getS3Client(event)
     const mongoDb = await connectToDB()
     const importRepository = new ImportRepository(tenantId, {
-      mongoDb: await connectToDB(),
+      mongoDb,
     })
 
     if (event.httpMethod === 'POST' && event.body) {

@@ -1,7 +1,7 @@
 import * as csvFormat from '@fast-csv/format'
 import { customAlphabet } from 'nanoid'
 import { AggregationCursor } from 'mongodb'
-import dayjs from 'dayjs'
+import dayjs from '@/utils/dayjs'
 
 type CsvAction<T> = T extends string | number | boolean
   ? 'INCLUDE' | 'SKIP'

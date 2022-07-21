@@ -55,7 +55,7 @@ export class TenantRepository {
   public async getTenantMetadata(
     type: MetadataType
   ): Promise<MetadataPayload | null> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection<MetadataPayload>(
       METADATA_COLLECTION(this.tenantId)
     )
@@ -66,7 +66,7 @@ export class TenantRepository {
     type: MetadataType,
     payload: MetadataPayload
   ): Promise<void> {
-    const db = this.mongoDb.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+    const db = this.mongoDb.db()
     const collection = db.collection(METADATA_COLLECTION(this.tenantId))
     await collection.replaceOne(
       {

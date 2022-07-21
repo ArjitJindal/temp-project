@@ -1,7 +1,6 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { Db } from 'mongodb'
+import { Db, MongoClient } from 'mongodb'
 import * as AWS from 'aws-sdk'
-import { TarponStackConstants } from '@cdk/constants'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   USER_EVENT_KEY_IDENTIFIER,
@@ -9,77 +8,55 @@ import {
 } from './constants'
 import {
   connectToDB,
-  TRANSACTIONS_COLLECTION,
-  USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
-import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
-import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 
 const sqs = new AWS.SQS()
 
-function getAggregatedRuleStatus(
-  ruleActions: ReadonlyArray<RuleAction>
-): RuleAction {
-  return ruleActions.reduce((prev, curr) => {
-    if (RULE_ACTIONS.indexOf(curr) < RULE_ACTIONS.indexOf(prev)) {
-      return curr
-    } else {
-      return prev
-    }
-  }, 'ALLOW')
-}
-
 async function transactionHandler(
-  db: Db,
+  mongoDb: MongoClient,
   tenantId: string,
   transaction: TransactionWithRulesResult
 ) {
-  const transactionsCollection = db.collection<TransactionCaseManagement>(
-    TRANSACTIONS_COLLECTION(tenantId)
-  )
-  const currentTransaction =
-    await transactionsCollection.findOne<TransactionCaseManagement>({
-      transactionId: transaction.transactionId,
-    })
-  const newStatus = getAggregatedRuleStatus(
-    transaction.executedRules
-      .filter((rule) => rule.ruleHit)
-      .map((rule) => rule.ruleAction)
-  )
-  await transactionsCollection.replaceOne(
-    { transactionId: transaction.transactionId },
-    {
-      ...transaction,
-      status: newStatus,
-    },
-    { upsert: true }
-  )
+  const transactionsRepo = new TransactionRepository(tenantId, {
+    mongoDb,
+  })
+
+  const transactionId = transaction.transactionId
+  let currentStatus: RuleAction | null = null
+  if (transactionId != null) {
+    currentStatus =
+      (await transactionsRepo.getTransactionCaseManagementById(transactionId))
+        ?.status ?? null
+  }
+  const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
 
   // Alerting
-  if (currentTransaction?.status !== newStatus && newStatus !== 'ALLOW') {
+  if (currentStatus !== newStatus && newStatus !== 'ALLOW') {
     const tenantRepository = new TenantRepository(tenantId, {
       mongoDb: await connectToDB(),
     })
     if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
       console.info(
-        `Sending slack alert SQS message for transaction ${transaction.transactionId}`
+        `Sending slack alert SQS message for transaction ${transactionId}`
       )
       await sqs
         .sendMessage({
           MessageBody: JSON.stringify({
             tenantId,
-            transactionId: transaction.transactionId,
+            transactionId: transactionId,
           } as AlertPayload),
           QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
         })
@@ -105,7 +82,7 @@ async function userEventHandler(
   const userEventCollection = db.collection<UserEventWithRulesResult>(
     USER_EVENTS_COLLECTION(tenantId)
   )
-  const aggregatedStatus = getAggregatedRuleStatus(
+  const aggregatedStatus = TransactionRepository.getAggregatedRuleStatus(
     userEvent.executedRules.map((rule) => rule.ruleAction)
   )
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
@@ -125,7 +102,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
     try {
       const client = await connectToDB()
-      const db = client.db(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+      const db = client.db()
       for (const record of event.Records) {
         const payload: KinesisStreamRecordPayload = record.kinesis
         const message: string = Buffer.from(payload.data, 'base64').toString()
@@ -147,13 +124,13 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
             message
           ) as TransactionWithRulesResult
           console.info(`Processing transaction ${transaction.transactionId}`)
-          await transactionHandler(db, tenantId, transaction)
+          await transactionHandler(client, tenantId, transaction)
           /*
          todo: this is not very efficient, because we recalculate all the
            statistics for each transaction. Need to implement updating
            a single record in DB using transaction date
          */
-          await dashboardStatsRepository.refreshStats(tenantId)
+          await dashboardStatsRepository.refreshStats()
         } else if (
           dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
             USER_PRIMARY_KEY_IDENTIFIER

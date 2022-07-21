@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
-import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
   DefaultTransactionRuleParameters,

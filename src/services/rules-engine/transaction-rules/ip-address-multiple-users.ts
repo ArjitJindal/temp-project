@@ -1,9 +1,9 @@
 import { JSONSchemaType } from 'ajv'
-import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getSenderKeys } from '../utils'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 
 export type IpAddressMultipleUsersRuleParameters = {
   uniqueUsersCountThreshold: number

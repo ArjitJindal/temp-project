@@ -1,12 +1,9 @@
 import { TarponStackConstants } from '@cdk/constants'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
+import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys, TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
-
-dayjs.extend(utc)
 
 type UserAggregationAttributes = {
   sendingFromCountries: Set<string>
@@ -278,11 +275,11 @@ export class AggregationRepository {
   ): string {
     switch (timeGranularity) {
       case 'day':
-        return dayjs.utc(timestamp).format('YYYY-MM-DD')
+        return dayjs(timestamp).format('YYYY-MM-DD')
       case 'month':
-        return dayjs.utc(timestamp).format('YYYY-MM')
+        return dayjs(timestamp).format('YYYY-MM')
       case 'year':
-        return dayjs.utc(timestamp).format('YYYY')
+        return dayjs(timestamp).format('YYYY')
     }
   }
 }

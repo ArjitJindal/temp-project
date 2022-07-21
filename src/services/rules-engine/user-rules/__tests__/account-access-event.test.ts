@@ -1,5 +1,5 @@
-import dayjs from 'dayjs'
 import { AccountAccessEventRuleParameters } from '../account-access-event'
+import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import {
   setUpRulesHooks,
