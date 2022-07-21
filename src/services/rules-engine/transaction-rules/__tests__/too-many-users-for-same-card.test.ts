@@ -114,6 +114,50 @@ describe.each<TransactionRuleTestCase>([
     ],
     expectedHits: [false, false],
   },
+  {
+    name: 'Undefined user ID with same card - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: undefined,
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+      getTestTransaction({
+        originUserId: undefined,
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+    ],
+    expectedHits: [false, false],
+  },
+  {
+    name: 'Undefined user ID with different card - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: undefined,
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+      getTestTransaction({
+        originUserId: undefined,
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '456',
+        },
+      }),
+    ],
+    expectedHits: [false, false],
+  },
 ])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,

@@ -65,9 +65,9 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
       )
     const uniqueUserCount = new Set(
       thinTransactionsFromCard
-        .filter((transaction) => transaction.originUserId)
         .map((transaction) => transaction.originUserId)
         .concat(this.transaction.originUserId)
+        .filter(Boolean)
     ).size
     if (uniqueUserCount > uniqueUsersCountThreshold) {
       return {
