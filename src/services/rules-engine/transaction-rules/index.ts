@@ -29,6 +29,7 @@ import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 import CardHolderNameRule from './card-holder-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
+import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 
 export const TRANSACTION_RULES = {
   // R-114
@@ -113,6 +114,9 @@ export const TRANSACTION_RULES = {
 
   // R-53
   'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
+
+  // R-54
+  'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,
