@@ -30,6 +30,9 @@ import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
+const convertToDateString = (createdTimestamp: number) =>
+  moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
 };
@@ -370,11 +373,11 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     },
     {
       title: 'Created time',
-      sorter: true,
+      sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',
       valueType: 'dateTimeRange',
       render: (_, user) => {
-        return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+        return convertToDateString(user.createdTimestamp);
       },
     },
   ];
