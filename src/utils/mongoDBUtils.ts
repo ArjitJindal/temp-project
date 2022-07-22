@@ -32,7 +32,7 @@ export async function connectToDB(
       process.env.MONGO_URI ||
         `mongodb://${
           os.type() === 'Linux' ? '172.17.0.1' : 'host.docker.internal'
-        }:27017`
+        }:27017/${dbName}`
     )
   }
 
@@ -40,7 +40,7 @@ export async function connectToDB(
   const DB_USERNAME = credentials['username']
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
   const DB_HOST = credentials['host']
-  const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}`
+  const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${dbName}`
   cacheClient = await MongoClient.connect(DB_URL as string)
   return cacheClient
 }
