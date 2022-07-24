@@ -26,14 +26,15 @@ export function useRoutes(): RouteItem[] {
         name: 'dashboard',
         icon: 'dashboard',
         position: 'top',
+        hideChildrenInMenu: true,
         routes: [
           {
             path: '/dashboard',
             redirect: '/dashboard/analysis',
           },
           {
-            name: 'analysis',
             path: '/dashboard/analysis',
+            name: 'item',
             component: DashboardAnalysisPage,
           },
         ],
