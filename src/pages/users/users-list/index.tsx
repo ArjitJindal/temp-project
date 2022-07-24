@@ -187,7 +187,9 @@ const BusinessUsersTab = (props: { id?: string }) => {
         headerTitle="Business Users"
         actionRef={actionRef}
         rowKey="userId"
-        search={false}
+        search={{
+          labelWidth: 120,
+        }}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
           const [response, time] = await measure(() =>
