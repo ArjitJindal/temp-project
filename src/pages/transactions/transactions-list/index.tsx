@@ -3,6 +3,8 @@ import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
+import { Resizable } from 'react-resizable';
+import type { ResizeCallbackData } from 'react-resizable';
 import { RouteMatch, useNavigate, useParams } from 'react-router';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
@@ -26,6 +28,7 @@ import { useAnalytics } from '@/utils/segment/context';
 import { useI18n } from '@/locales';
 import '../../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import ResizableTitle from '@/utils/table-utils';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -72,182 +75,203 @@ const TableList = (props: RouteMatch<'id'>) => {
     };
   }, [currentTransactionId, transactionId, api]);
 
-  const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
-    () => [
-      {
-        title: 'Transaction ID',
-        dataIndex: 'transactionId',
-        width: 130,
-        copyable: true,
-        ellipsis: true,
-        render: (dom, entity) => {
-          // todo: fix style
-          return (
-            <Link
-              to={`/transactions/transactions-list/${entity.transactionId}`}
-              onClick={() => {
-                setCurrentItem(success(entity));
-              }}
-              style={{ color: '@fr-colors-brandBlue' }}
-              replace
-            >
-              {entity.transactionId}
-            </Link>
-          );
-        },
-      },
-      {
-        title: 'Transaction Type',
-        dataIndex: 'type',
-        width: 100,
-        ellipsis: true,
-      },
-      {
-        title: 'Timestamp',
-        width: 180,
-        ellipsis: true,
-        dataIndex: 'timestamp',
-        valueType: 'dateTimeRange',
-        sorter: true,
-        render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-        },
-      },
-      {
-        title: 'Origin User ID',
-        width: 120,
-        dataIndex: 'originUserId',
-        render: (dom, entity) => {
-          return entity.originUserId;
-        },
-      },
-      {
-        title: 'Origin User Name',
-        width: 120,
-        render: (dom, entity) => {
-          return getUserName(entity.originUser);
-        },
-      },
-      {
-        title: 'Origin Method',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.originPaymentDetails?.method;
-        },
-      },
-      {
-        title: 'Origin Amount',
-        width: 120,
-        dataIndex: 'originAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: true,
-        render: (dom, entity) => {
-          if (entity.originAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
-          } else {
-            return entity.originAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
-        title: 'Origin Currency',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionCurrency;
-        },
-      },
-      {
-        title: 'Origin Country',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.country;
-        },
-      },
-      {
-        title: 'Destination User ID',
-        width: 120,
-        dataIndex: 'destinationUserId',
-        render: (dom, entity) => {
-          return entity.destinationUserId;
-        },
-      },
-      {
-        title: 'Destination User Name',
-        width: 120,
-        render: (dom, entity) => {
-          return getUserName(entity.destinationUser);
-        },
-      },
-      {
-        title: 'Destination Method',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationPaymentDetails?.method;
-        },
-      },
-      {
-        title: 'Destination Amount',
-        dataIndex: 'destnationAmountDetails.transactionAmount',
-        width: 120,
-        hideInSearch: true,
-        sorter: true,
-        render: (dom, entity) => {
-          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(
-              entity.destinationAmountDetails?.transactionAmount,
+  const [columns, setColumns] = useState<ProColumns<TransactionCaseManagement>[]>(
+    useMemo(
+      () => [
+        {
+          title: 'Transaction ID',
+          dataIndex: 'transactionId',
+          width: 130,
+          copyable: true,
+          ellipsis: true,
+          render: (dom, entity) => {
+            // todo: fix style
+            return (
+              <Link
+                to={`/transactions/transactions-list/${entity.transactionId}`}
+                onClick={() => {
+                  setCurrentItem(success(entity));
+                }}
+                style={{ color: '@fr-colors-brandBlue' }}
+                replace
+              >
+                {entity.transactionId}
+              </Link>
             );
-          } else {
-            return entity.destinationAmountDetails?.transactionAmount;
-          }
+          },
         },
-      },
-      {
-        title: 'Destination Currency',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionCurrency;
+        {
+          title: 'Transaction Type',
+          dataIndex: 'type',
+          width: 100,
+          ellipsis: true,
         },
-      },
-      {
-        title: 'Destination Country',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.country;
+        {
+          title: 'Timestamp',
+          width: 180,
+          ellipsis: true,
+          dataIndex: 'timestamp',
+          valueType: 'dateTimeRange',
+          sorter: true,
+          render: (_, transaction) => {
+            return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          },
         },
-      },
-      {
-        title: 'Origin Currencies',
-        dataIndex: 'originCurrenciesFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        fieldProps: {
-          options: currencies,
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Origin User ID',
+          width: 120,
+          dataIndex: 'originUserId',
+          render: (dom, entity) => {
+            return entity.originUserId;
+          },
         },
-      },
-      {
-        title: 'Destination Currencies',
-        dataIndex: 'destinationCurrenciesFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        fieldProps: {
-          options: currencies,
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Origin User Name',
+          width: 120,
+          render: (dom, entity) => {
+            return getUserName(entity.originUser);
+          },
         },
-      },
-    ],
-    [],
+        {
+          title: 'Origin Method',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.originPaymentDetails?.method;
+          },
+        },
+        {
+          title: 'Origin Amount',
+          width: 120,
+          dataIndex: 'originAmountDetails.transactionAmount',
+          hideInSearch: true,
+          sorter: true,
+          render: (dom, entity) => {
+            if (entity.originAmountDetails?.transactionAmount !== undefined) {
+              return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
+            } else {
+              return entity.originAmountDetails?.transactionAmount;
+            }
+          },
+        },
+        {
+          title: 'Origin Currency',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.originAmountDetails?.transactionCurrency;
+          },
+        },
+        {
+          title: 'Origin Country',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.originAmountDetails?.country;
+          },
+        },
+        {
+          title: 'Destination User ID',
+          width: 120,
+          dataIndex: 'destinationUserId',
+          render: (dom, entity) => {
+            return entity.destinationUserId;
+          },
+        },
+        {
+          title: 'Destination User Name',
+          width: 120,
+          render: (dom, entity) => {
+            return getUserName(entity.destinationUser);
+          },
+        },
+        {
+          title: 'Destination Method',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationPaymentDetails?.method;
+          },
+        },
+        {
+          title: 'Destination Amount',
+          dataIndex: 'destnationAmountDetails.transactionAmount',
+          width: 120,
+          hideInSearch: true,
+          sorter: true,
+          render: (dom, entity) => {
+            if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+              return new Intl.NumberFormat().format(
+                entity.destinationAmountDetails?.transactionAmount,
+              );
+            } else {
+              return entity.destinationAmountDetails?.transactionAmount;
+            }
+          },
+        },
+        {
+          title: 'Destination Currency',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationAmountDetails?.transactionCurrency;
+          },
+        },
+        {
+          title: 'Destination Country',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationAmountDetails?.country;
+          },
+        },
+        {
+          title: 'Origin Currencies',
+          dataIndex: 'originCurrenciesFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          fieldProps: {
+            options: currencies,
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+        {
+          title: 'Destination Currencies',
+          dataIndex: 'destinationCurrenciesFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          fieldProps: {
+            options: currencies,
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+      ],
+      [],
+    ),
   );
+
+  const handleResize =
+    (index: number) =>
+    (_: React.SyntheticEvent<Element>, { size }: ResizeCallbackData) => {
+      const newColumns = [...columns];
+      newColumns[index] = {
+        ...newColumns[index],
+        width: size.width,
+      };
+      setColumns(newColumns);
+    };
+
+  const mergeColumns: ProColumns<TransactionCaseManagement>[] = columns.map((col, index) => ({
+    ...col,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<TransactionCaseManagement>).width,
+      onResize: handleResize(index),
+    }),
+  }));
 
   const analytics = useAnalytics();
 
@@ -258,6 +282,11 @@ const TableList = (props: RouteMatch<'id'>) => {
       <Table<TransactionCaseManagement>
         form={{
           labelWrap: true,
+        }}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
         }}
         actionRef={actionRef}
         rowKey="transactionId"
@@ -304,7 +333,7 @@ const TableList = (props: RouteMatch<'id'>) => {
             total: response.total,
           };
         }}
-        columns={columns}
+        columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'transaction-list-table',

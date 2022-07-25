@@ -5,6 +5,8 @@ import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate, useParams } from 'react-router';
+import { Resizable } from 'react-resizable';
+import type { ResizeCallbackData } from 'react-resizable';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
@@ -34,6 +36,7 @@ import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import ResizableTitle from '@/utils/table-utils';
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
@@ -99,269 +102,292 @@ function TableList() {
   const analytics = useAnalytics();
 
   // todo: i18n
-  const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
-    () => [
-      {
-        title: 'Transaction ID',
-        dataIndex: 'transactionId',
-        width: 130,
-        copyable: true,
-        ellipsis: true,
-        render: (dom, entity) => {
-          // todo: fix style
-          return (
-            <Link
-              to={`/case-management/${entity.transactionId}`}
-              onClick={() => {
-                setCurrentItem(success(entity));
-              }}
-              style={{ color: '@fr-colors-brandBlue' }}
-              replace
-            >
-              {entity.transactionId}
-            </Link>
-          );
-        },
-      },
-      {
-        title: 'Transaction Type',
-        dataIndex: 'type',
-        width: 150,
-        ellipsis: true,
-      },
-      {
-        title: 'Timestamp',
-        width: 130,
-        ellipsis: true,
-        dataIndex: 'timestamp',
-        valueType: 'dateTimeRange',
-        sorter: true,
-        render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-        },
-      },
-      {
-        title: 'Rules hit',
-        width: 100,
-        ellipsis: true,
-        hideInSearch: true,
-        dataIndex: 'ruleHitCount',
-        sorter: true,
-        render: (_, transaction) => {
-          return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
-        },
-      },
-      {
-        title: 'Origin User ID',
-        width: 120,
-        dataIndex: 'originUserId',
-        render: (dom, entity) => {
-          return entity.originUserId;
-        },
-      },
-      {
-        title: 'Origin User Name',
-        width: 120,
-        render: (dom, entity) => {
-          return getUserName(entity.originUser);
-        },
-      },
-      {
-        title: 'Origin Method',
-        width: 100,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.originPaymentDetails?.method;
-        },
-      },
-      {
-        title: 'Origin Amount',
-        dataIndex: 'originAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: true,
-        width: 120,
-        render: (dom, entity) => {
-          if (entity.originAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
-          } else {
-            return entity.originAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
-        title: 'Origin Currency',
-        hideInSearch: true,
-        width: 80,
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionCurrency;
-        },
-      },
-      {
-        title: 'Origin Country',
-        hideInSearch: true,
-        width: 80,
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.country;
-        },
-      },
-      {
-        title: 'Destination User ID',
-        dataIndex: 'destinationUserId',
-        width: 150,
-        render: (dom, entity) => {
-          return entity.destinationUserId;
-        },
-      },
-      {
-        title: 'Destination User Name',
-        width: 180,
-        render: (dom, entity) => {
-          return getUserName(entity.destinationUser);
-        },
-      },
-      {
-        title: 'Destination Method',
-        width: 120,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationPaymentDetails?.method;
-        },
-      },
-      {
-        title: 'Destination Amount',
-        width: 120,
-        dataIndex: 'destnationAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: true,
-        render: (dom, entity) => {
-          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(
-              entity.destinationAmountDetails?.transactionAmount,
+  const [columns, setColumns] = useState<ProColumns<TransactionCaseManagement>[]>(
+    useMemo(
+      () => [
+        {
+          title: 'Transaction ID',
+          dataIndex: 'transactionId',
+          width: 130,
+          copyable: true,
+          ellipsis: true,
+          render: (dom, entity) => {
+            // todo: fix style
+            return (
+              <Link
+                to={`/case-management/${entity.transactionId}`}
+                onClick={() => {
+                  setCurrentItem(success(entity));
+                }}
+                style={{ color: '@fr-colors-brandBlue' }}
+                replace
+              >
+                {entity.transactionId}
+              </Link>
             );
-          } else {
-            return entity.destinationAmountDetails?.transactionAmount;
-          }
+          },
         },
-      },
-      {
-        title: 'Destination Currency',
-        width: 100,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionCurrency;
+        {
+          title: 'Transaction Type',
+          dataIndex: 'type',
+          width: 150,
+          ellipsis: true,
         },
-      },
-      {
-        title: 'Destination Country',
-        width: 100,
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.country;
+        {
+          title: 'Timestamp',
+          width: 130,
+          ellipsis: true,
+          dataIndex: 'timestamp',
+          valueType: 'dateTimeRange',
+          sorter: true,
+          render: (_, transaction) => {
+            return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          },
         },
-      },
-      {
-        title: 'Status',
-        sorter: true,
-        hideInSearch: true,
-        width: 120,
-        render: (dom, entity) => {
-          const transaction = updatedTransactions[entity.transactionId as string] || entity;
-          return <RuleActionStatus ruleAction={transaction.status} />;
+        {
+          title: 'Rules hit',
+          width: 100,
+          ellipsis: true,
+          hideInSearch: true,
+          dataIndex: 'ruleHitCount',
+          sorter: true,
+          render: (_, transaction) => {
+            return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
+          },
         },
-      },
-      {
-        title: 'Operations',
-        hideInSearch: true,
-        sorter: true,
-        width: 120,
-        render: (dom, entity) => {
-          return <AllowForm transactionId={entity.transactionId as string} onSaved={reloadTable} />;
+        {
+          title: 'Origin User ID',
+          width: 120,
+          dataIndex: 'originUserId',
+          render: (dom, entity) => {
+            return entity.originUserId;
+          },
         },
-      },
-      {
-        title: 'Assignees',
-        hideInSearch: true,
-        width: 100,
-        ellipsis: true,
-        render: (dom, entity) => {
-          const transaction = updatedTransactions[entity.transactionId as string] || entity;
-          return (
-            <Avatar.Group maxCount={3}>
-              {transaction.assignments?.map((assignment) => (
-                <Tooltip
-                  key={assignment.assigneeUserId}
-                  title={users[assignment.assigneeUserId]?.name}
-                >
-                  <Avatar size="small" src={users[assignment.assigneeUserId]?.picture} />
-                </Tooltip>
-              ))}
-            </Avatar.Group>
-          );
+        {
+          title: 'Origin User Name',
+          width: 120,
+          render: (dom, entity) => {
+            return getUserName(entity.originUser);
+          },
         },
-      },
-      {
-        title: 'Rules Hit',
-        dataIndex: 'rulesHitFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        request: async () => {
-          const rules = await api.getRules();
-          return rules.map((rule) => ({
-            value: rule.id,
-            label: `${rule.name} (${rule.id})`,
-          }));
+        {
+          title: 'Origin Method',
+          width: 100,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.originPaymentDetails?.method;
+          },
         },
-        fieldProps: {
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Origin Amount',
+          dataIndex: 'originAmountDetails.transactionAmount',
+          hideInSearch: true,
+          sorter: true,
+          width: 120,
+          render: (dom, entity) => {
+            if (entity.originAmountDetails?.transactionAmount !== undefined) {
+              return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
+            } else {
+              return entity.originAmountDetails?.transactionAmount;
+            }
+          },
         },
-      },
-      {
-        title: 'Rules Executed',
-        dataIndex: 'rulesExecutedFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        request: async () => {
-          const rules = await api.getRules();
-          return rules.map((rule) => ({
-            value: rule.id,
-            label: `${rule.name} (${rule.id})`,
-          }));
+        {
+          title: 'Origin Currency',
+          hideInSearch: true,
+          width: 80,
+          render: (dom, entity) => {
+            return entity.originAmountDetails?.transactionCurrency;
+          },
         },
-        fieldProps: {
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Origin Country',
+          hideInSearch: true,
+          width: 80,
+          render: (dom, entity) => {
+            return entity.originAmountDetails?.country;
+          },
         },
-      },
-      {
-        title: 'Origin Currencies',
-        dataIndex: 'originCurrenciesFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        fieldProps: {
-          options: currencies,
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Destination User ID',
+          dataIndex: 'destinationUserId',
+          width: 150,
+          render: (dom, entity) => {
+            return entity.destinationUserId;
+          },
         },
-      },
-      {
-        title: 'Destination Currencies',
-        dataIndex: 'destinationCurrenciesFilter',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        fieldProps: {
-          options: currencies,
-          allowClear: true,
-          mode: 'multiple',
+        {
+          title: 'Destination User Name',
+          width: 180,
+          render: (dom, entity) => {
+            return getUserName(entity.destinationUser);
+          },
         },
-      },
-    ],
-    [api, reloadTable, updatedTransactions, users],
+        {
+          title: 'Destination Method',
+          width: 120,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationPaymentDetails?.method;
+          },
+        },
+        {
+          title: 'Destination Amount',
+          width: 120,
+          dataIndex: 'destnationAmountDetails.transactionAmount',
+          hideInSearch: true,
+          sorter: true,
+          render: (dom, entity) => {
+            if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+              return new Intl.NumberFormat().format(
+                entity.destinationAmountDetails?.transactionAmount,
+              );
+            } else {
+              return entity.destinationAmountDetails?.transactionAmount;
+            }
+          },
+        },
+        {
+          title: 'Destination Currency',
+          width: 100,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationAmountDetails?.transactionCurrency;
+          },
+        },
+        {
+          title: 'Destination Country',
+          width: 100,
+          hideInSearch: true,
+          render: (dom, entity) => {
+            return entity.destinationAmountDetails?.country;
+          },
+        },
+        {
+          title: 'Status',
+          sorter: true,
+          hideInSearch: true,
+          width: 120,
+          render: (dom, entity) => {
+            const transaction = updatedTransactions[entity.transactionId as string] || entity;
+            return <RuleActionStatus ruleAction={transaction.status} />;
+          },
+        },
+        {
+          title: 'Operations',
+          hideInSearch: true,
+          sorter: true,
+          width: 120,
+          render: (dom, entity) => {
+            return (
+              <AllowForm transactionId={entity.transactionId as string} onSaved={reloadTable} />
+            );
+          },
+        },
+        {
+          title: 'Assignees',
+          hideInSearch: true,
+          width: 100,
+          ellipsis: true,
+          render: (dom, entity) => {
+            const transaction = updatedTransactions[entity.transactionId as string] || entity;
+            return (
+              <Avatar.Group maxCount={3}>
+                {transaction.assignments?.map((assignment) => (
+                  <Tooltip
+                    key={assignment.assigneeUserId}
+                    title={users[assignment.assigneeUserId]?.name}
+                  >
+                    <Avatar size="small" src={users[assignment.assigneeUserId]?.picture} />
+                  </Tooltip>
+                ))}
+              </Avatar.Group>
+            );
+          },
+        },
+        {
+          title: 'Rules Hit',
+          dataIndex: 'rulesHitFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          request: async () => {
+            const rules = await api.getRules();
+            return rules.map((rule) => ({
+              value: rule.id,
+              label: `${rule.name} (${rule.id})`,
+            }));
+          },
+          fieldProps: {
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+        {
+          title: 'Rules Executed',
+          dataIndex: 'rulesExecutedFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          request: async () => {
+            const rules = await api.getRules();
+            return rules.map((rule) => ({
+              value: rule.id,
+              label: `${rule.name} (${rule.id})`,
+            }));
+          },
+          fieldProps: {
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+        {
+          title: 'Origin Currencies',
+          dataIndex: 'originCurrenciesFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          fieldProps: {
+            options: currencies,
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+        {
+          title: 'Destination Currencies',
+          dataIndex: 'destinationCurrenciesFilter',
+          hideInTable: true,
+          width: 120,
+          valueType: 'select',
+          fieldProps: {
+            options: currencies,
+            allowClear: true,
+            mode: 'multiple',
+          },
+        },
+      ],
+      [api, reloadTable, updatedTransactions, users],
+    ),
   );
+
+  const handleResize =
+    (index: number) =>
+    (_: React.SyntheticEvent<Element>, { size }: ResizeCallbackData) => {
+      const newColumns = [...columns];
+      newColumns[index] = {
+        ...newColumns[index],
+        width: size.width,
+      };
+      setColumns(newColumns);
+    };
+
+  const mergeColumns: ProColumns<TransactionCaseManagement>[] = columns.map((col, index) => ({
+    ...col,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<TransactionCaseManagement>).width,
+      onResize: handleResize(index),
+    }),
+  }));
   const [isLoading, setLoading] = useState(false);
   const i18n = useI18n();
   const navigate = useNavigate();
@@ -374,6 +400,11 @@ function TableList() {
         }}
         onLoadingChange={(isLoading) => {
           setLoading(isLoading === true);
+        }}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
         }}
         actionRef={actionRef}
         formRef={formRef}
@@ -432,7 +463,7 @@ function TableList() {
             <AddToSlackButton />
           </Feature>,
         ]}
-        columns={columns}
+        columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'case-management-list',
