@@ -1,4 +1,5 @@
 import { DefaultFooter } from '@ant-design/pro-layout';
+import style from '../styles.module.less';
 import { useI18n } from '@/locales';
 
 export default function Footer() {
@@ -9,5 +10,5 @@ export default function Footer() {
 
   const currentYear = new Date().getFullYear();
 
-  return <DefaultFooter copyright={`${currentYear} ${defaultMessage}`} />;
+  return <DefaultFooter copyright={`${currentYear} ${defaultMessage}`} className={style.footer} />;
 }

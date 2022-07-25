@@ -5,7 +5,7 @@
 :root {
   .root {
     min-height: 100vh;
-    background: rgb(240, 242, 245);
+    background: @fr-colors-Purple-NavyBlue;
 
     &.isCollapsed {
       .aside {
@@ -15,6 +15,7 @@
         padding-left: @collapsed-menu-width;
       }
     }
+    
   }
 
   .header {
@@ -57,4 +58,15 @@
     padding-left: @open-menu-width;
     transition: padding-left 300ms;
   }
+
+  .footer{
+    background: none;
+    :global{
+      .ant-pro-global-footer-copyright{
+        color: #fff;
+        opacity: 45%;
+      }
+    }
+  }
+
 }
