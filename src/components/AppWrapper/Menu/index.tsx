@@ -125,7 +125,8 @@ export default function Menu(props: {
           {
             key: 'button',
             onClick: () => onChangeCollapsed(!isCollapsed),
-            icon: isCollapsed ? <MenuUnfoldOutlined /> : <MenuUnfoldOutlined />,
+            icon: isCollapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />,
+            style: !isCollapsed ? { background: 'transparent' } : { background: 'transparent' },
           },
         ])}
       />
