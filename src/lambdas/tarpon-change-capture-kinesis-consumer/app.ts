@@ -3,6 +3,7 @@ import { Db, MongoClient } from 'mongodb'
 import * as AWS from 'aws-sdk'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
+  TRANSACTION_EVENT_KEY_IDENTIFIER,
   USER_EVENT_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
@@ -10,6 +11,7 @@ import {
   connectToDB,
   USER_EVENTS_COLLECTION,
   USERS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -22,6 +24,7 @@ import { TransactionRepository } from '@/services/rules-engine/repositories/tran
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 const sqs = new AWS.SQS()
 
@@ -98,6 +101,25 @@ async function userEventHandler(
   )
 }
 
+async function transactionEventHandler(
+  db: Db,
+  tenantId: string,
+  transactionEvent: TransactionEvent
+) {
+  const transactionEventCollection = db.collection<TransactionEvent>(
+    TRANSACTION_EVENTS_COLLECTION(tenantId)
+  )
+  await transactionEventCollection.replaceOne(
+    { transactionId: transactionEvent.transactionId },
+    {
+      ...transactionEvent,
+    },
+    {
+      upsert: true,
+    }
+  )
+}
+
 export const tarponChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
     try {
@@ -151,6 +173,18 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
             `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
           )
           await userEventHandler(db, tenantId, userEvent)
+        } else if (
+          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
+            TRANSACTION_EVENT_KEY_IDENTIFIER
+          )
+        ) {
+          const transactionEvent = handlePrimaryItem(
+            message
+          ) as TransactionEvent
+          console.info(
+            `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
+          )
+          await transactionEventHandler(db, tenantId, transactionEvent)
         }
       }
     } catch (err) {

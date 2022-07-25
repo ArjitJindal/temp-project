@@ -10,6 +10,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   connectToDB,
   TRANSACTIONS_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 
@@ -83,6 +84,16 @@ export const createMongoDBCollections = async (tenantId: string) => {
     })
     await usersCollection.createIndex({
       userId: 1,
+    })
+
+    await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
+    const transactionEventsCollection = db.collection(
+      TRANSACTION_EVENTS_COLLECTION(tenantId)
+    )
+    await transactionEventsCollection.createIndex({
+      transactionId: 1,
+      timestamp: 1,
+      transactionState: 1,
     })
   } catch (e) {
     console.log(`Error in creating MongoDB collections: ${e}`)

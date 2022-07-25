@@ -85,6 +85,10 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }
 
+export const TRANSACTION_EVENTS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-transaction-events`
+}
+
 export const USER_EVENTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-user-events`
 }
