@@ -28,8 +28,9 @@ export default function HitsPerUserCard() {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Top users by rules hits"
+        headerTitle="Top origin users (senders) by Rule Hits"
         rowKey="originUserId"
+        tooltip="Origin users are the users initiating the transaction - sending the money"
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
