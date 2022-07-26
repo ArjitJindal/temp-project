@@ -461,6 +461,7 @@ const TableList = () => {
         onChange={(key) => {
           navigate(`/users/list/${key}/all`, { replace: true });
         }}
+        className={styles.tab}
       >
         <Tabs.TabPane tab="Consumer Users" key="consumer">
           <ConsumerUsersTab id={id} />

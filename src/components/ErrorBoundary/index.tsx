@@ -18,9 +18,7 @@ const Fallback: FallbackRender = (errorData) => {
       description={
         <>
           <p>
-            <b>
-              Sorry, an error has occurred. {errorData.error.message ?? 'Unknown error'}
-            </b>
+            <b>Sorry, an error has occurred. {errorData.error.message ?? 'Unknown error'}</b>
           </p>
           {process.env.NODE_ENV === 'development' ? (
             <>
@@ -45,8 +43,8 @@ const Fallback: FallbackRender = (errorData) => {
             </>
           ) : (
             <p>
-              Our team has been made aware of this error. It will be fixed soon. Sorry for
-              the inconvenience!
+              Our team has been made aware of this error. It will be fixed soon. Sorry for the
+              inconvenience!
             </p>
           )}
         </>
