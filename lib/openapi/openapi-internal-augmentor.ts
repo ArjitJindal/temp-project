@@ -96,7 +96,10 @@ function assertValidLambdaMappings(openapi: any) {
 }
 
 const openapi = yaml.load(
-  fs.readFileSync('./lib/openapi/openapi-internal-original.yaml', 'utf8')
+  fs.readFileSync(
+    './lib/openapi/internal/openapi-internal-original.yaml',
+    'utf8'
+  )
 ) as any
 
 assertValidLambdaMappings(openapi)
@@ -223,7 +226,7 @@ for (const path in openapi.paths) {
 // and openapi-generator doesn't build for the 'Bundled References' version.
 // TODO: This workaround should be removed after stoplight fixes this issue.
 const publicOpenapi = yaml.load(
-  fs.readFileSync('./lib/openapi/openapi-public-original.yaml', 'utf8')
+  fs.readFileSync('./lib/openapi/public/openapi-public-original.yaml', 'utf8')
 ) as any
 openapi['components']['schemas'] = {
   ...openapi['components']['schemas'],

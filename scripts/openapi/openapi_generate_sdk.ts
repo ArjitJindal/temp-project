@@ -25,7 +25,7 @@ function buildApi(type: 'public' | 'internal') {
   exec(`mkdir -p src/@types/openapi-${type}/ 1>/dev/null 2>&1`)
   exec(
     `
-    ./node_modules/.bin/openapi-generator-cli generate -i lib/openapi/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
+    ./node_modules/.bin/openapi-generator-cli generate -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original
     `
   )
 

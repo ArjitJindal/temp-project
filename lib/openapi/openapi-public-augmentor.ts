@@ -47,7 +47,7 @@ function assertValidLambdaMappings(openapi: any) {
 }
 
 const openapi = yaml.load(
-  fs.readFileSync('./lib/openapi/openapi-public-original.yaml', 'utf8')
+  fs.readFileSync('./lib/openapi/public/openapi-public-original.yaml', 'utf8')
 ) as any
 
 assertValidLambdaMappings(openapi)

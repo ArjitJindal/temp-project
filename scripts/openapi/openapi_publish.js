@@ -9,17 +9,21 @@ const { PROJECT_DIR, parse, stringify } = require('./openapi_helpers.js')
 
 async function prepareSchemas(OUTPUT_DIR) {
   try {
-    await fs.emptyDir(OUTPUT_DIR)
-    const internalDir = path.resolve(OUTPUT_DIR, 'internal')
-    const publicDir = path.resolve(OUTPUT_DIR, 'public')
-    await fs.ensureDir(internalDir)
-    await fs.ensureDir(publicDir)
 
-    const publicSchemaFile = path.resolve(PROJECT_DIR, "lib", "openapi", "openapi-public-original.yaml")
+    const internalDir = path.resolve(PROJECT_DIR, "lib", "openapi", "internal")
+    const publicDir = path.resolve(PROJECT_DIR, "lib", "openapi", "public")
+
+    const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
+    const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
+
+    await fs.ensureDir(internalDirOutput)
+    await fs.ensureDir(publicDirOutput)
+
+    const publicSchemaFile = path.resolve(publicDir, "openapi-public-original.yaml")
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
     const publicSchemaYaml = parse(publicSchemaText);
 
-    const internalSchemaFile = path.resolve(PROJECT_DIR, "lib", "openapi", "openapi-internal-original.yaml")
+    const internalSchemaFile = path.resolve(internalDir, "openapi-internal-original.yaml")
     const internalSchemaText = (await fs.readFile(internalSchemaFile)).toString()
     {
       /*
@@ -28,7 +32,7 @@ async function prepareSchemas(OUTPUT_DIR) {
        */
 
       // Replace all refs to public schema to internal
-      const internalSchemaYaml = parse(internalSchemaText.replace(/\.\/openapi-public-original\.yaml#/g, '#'));
+      const internalSchemaYaml = parse(internalSchemaText.replace(/\..\/public\/openapi-public-original\.yaml#/g, '#'));
 
       // Merge all models from public schema to internal schema
       // todo: check for override
@@ -36,10 +40,12 @@ async function prepareSchemas(OUTPUT_DIR) {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
       }
-      await fs.writeFile(path.resolve(internalDir, 'openapi-internal-original.yaml'), stringify(internalSchemaYaml));
+      await fs.copy(internalDir, internalDirOutput);
+      await fs.writeFile(path.resolve(internalDirOutput, 'openapi-internal-original.yaml'), stringify(internalSchemaYaml));
     }
     {
-      await fs.writeFile(path.resolve(publicDir, 'openapi-public-original.yaml'), await stringify(publicSchemaYaml));
+      await fs.copy(publicDir, publicDirOutput);
+      await fs.writeFile(path.resolve(publicDirOutput, 'openapi-public-original.yaml'), await stringify(publicSchemaYaml));
     }
   }
   catch(err) {
@@ -49,6 +55,8 @@ async function prepareSchemas(OUTPUT_DIR) {
 
 async function main() {
   const OUTPUT_DIR = await fs.mkdtemp(path.resolve(os.tmpdir(), 'tarpon-openapi-publish'))
+  await fs.emptyDir(OUTPUT_DIR)
+
   await prepareSchemas(OUTPUT_DIR)
 
   let { BRANCH_NAME, PUBLIC_PROJECT_TOKEN, INTERNAL_PROJECT_TOKEN } = process.env

@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "type": "item",
+      "title": "1. API Reference",
+      "uri": "/docs/1.-api-reference.md"
+    },
+    {
+      "type": "item",
+      "title": "2. Flagright Overview",
+      "uri": "/docs/2.-flagright-overview.md"
+    },
+    {
+      "type": "item",
+      "title": "3. Beacon: Transaction Monitoring",
+      "uri": "/docs/3.-beacon-transaction-monitoring.md"
+    },
+    {
+      "type": "item",
+      "title": "4. Pulse: Risk Profiling",
+      "uri": "/docs/4.-pulse-risk-profiling.md"
+    },
+    {
+      "type": "item",
+      "title": "5. Why Risk-Based Transaction Monitoring?",
+      "uri": "/docs/5.-why-risk-based-transaction-monitoring.md"
+    },
+    {
+      "type": "item",
+      "title": "6. Using Modules Independently",
+      "uri": "/docs/6.-using-modules-independently.md"
+    },
+    {
+      "type": "item",
+      "title": "7. Sonar: Bad Actor Database for Startups",
+      "uri": "/docs/7.-sonar.md"
+    },
+    {
+      "type": "item",
+      "title": "8. Sonar Faq",
+      "uri": "/docs/8.-sonar-faq.md"
+    },
+    {
+      "type": "divider",
+      "title": "APIS"
+    },
+    {
+      "type": "item",
+      "title": "Flagright API",
+      "uri": "/openapi-public-original.yaml"
+    },
+    {
+      "type": "item",
+      "title": "Sonar API",
+      "uri": "/sonar.yaml"
+    }
+  ]
+}

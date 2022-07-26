@@ -1,0 +1,467 @@
+openapi: 3.0.0
+info:
+  title: Sonar API
+  version: '1.0'
+  description: ''
+servers:
+  - url: 'https://sandbox.api.flagright.com/sonar'
+paths:
+  /bad-actor/ach:
+    post:
+      summary: Report user - ACH
+      operationId: post-user
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Missing Required Information
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '429':
+          description: Too Many Requests
+        '500':
+          description: Internal Server Error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportingReason:
+                  type: string
+                reportingDetails:
+                  type: string
+                paymentDetails:
+                  $ref: '#/components/schemas/PaymentDetailsACH'
+                userDetails:
+                  $ref: '#/components/schemas/BadActor'
+                timestamp:
+                  type: number
+              required:
+                - reportingReason
+                - paymentDetails
+                - timestamp
+            examples:
+              example-1:
+                value:
+                  paymentType: ACH
+                  reportingReason: insufficient_funds
+                  reportingDetails: User had insufficient funds when making transactions
+                  paymentDetails:
+                    routingNumber: '12343432'
+                    accountCountry: US
+                    accountNumber: '123143431'
+                    bankCode: '454321'
+                    transitNumber: '2345'
+                  userDetails:
+                    fullName:
+                      firstName: Baran
+                      middleName: Realblood
+                      lastName: Ozkan
+                    dateOfBirth: 639939034
+                    address:
+                      addressLines:
+                        - Klara-Franke Str 20
+                      postcode: '10557'
+                      city: Berlin
+                      state: Berlin
+                      country: Germany
+                      tags:
+                        - key: customKey
+                          value: customValue
+                    countryOfResidence: string
+                    email: string
+                    idDocumentDetails:
+                      documentType: passport
+                      documentNumber: Z9431P
+                      documentIssuedDate: 1639939034
+                      documentExpirationDate: 1839939034
+                      documentIssuedCountry: DE
+                      tags:
+                        - key: customerType
+                          value: wallet
+                    phoneNumber: string
+                  timestamp: 1639939034
+        description: Post the necessary fields for the API to create a new user.
+      description: Create a new user.
+      security:
+        - X-API-Key: []
+      x-internal: true
+    get:
+      summary: Check user - ACH
+      operationId: get-user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchInDatabase:
+                    type: boolean
+                  matchDetails:
+                    $ref: '#/components/schemas/ACHMatchDetails'
+                required:
+                  - matchInDatabase
+              examples:
+                example-1:
+                  value:
+                    matchInDatabase: true
+                    matchDetails:
+                      totalNumberOfSourcesReported: 13
+                      reportedReasons:
+                        insufficient_funds: 9
+                        authorization_revoked: 3
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '429':
+          description: Too Many Requests
+        '500':
+          description: Internal Server Error
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: accountNumber
+          description: Account number of the user performing the transaction
+        - schema:
+            type: string
+          in: query
+          name: routingNumber
+          description: Routing number of the user performing the transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+            examples: {}
+      security:
+        - X-API-Key: []
+      x-internal: true
+    parameters: []
+  /bad-actor/ecommerce:
+    get:
+      summary: Check user - E-Commerce
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matchInDatabase:
+                    type: boolean
+                  matchDetails:
+                    $ref: '#/components/schemas/EComMatchDetails'
+                required:
+                  - matchInDatabase
+              examples:
+                example-1:
+                  value:
+                    matchInDatabase: true
+                    matchDetails:
+                      totalNumberOfSourcesReported: 16
+                      reportedReasons:
+                        promo_abuse: 9
+                        duplicate_user: 3
+                        account_takeover: 1
+                        address_obfuscation: 0
+                        chargeback_abuse: 3
+      operationId: get-bad-actor-ecommerce
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: accountNumber
+          description: 'When payment Type is ACH: Account number of the user performing the transaction'
+        - schema:
+            type: string
+          in: query
+          name: routingNumber
+          description: 'When payment Type is ACH: Routing number of the user performing the transaction'
+        - schema:
+            type: string
+          in: query
+          name: upiID
+          description: 'When payment Type is UPI: UPI Id of the user'
+        - schema:
+            type: string
+          in: query
+          name: IBAN
+          description: 'When payment Type is IBAN: Iban number'
+        - schema:
+            type: string
+          in: query
+          name: cardFingerprint
+          description: 'When payment Type is Card: Unique fingerprint associated with the card'
+        - schema:
+            type: string
+          in: query
+          name: email
+          description: Email ID of the user
+      x-internal: true
+    post:
+      summary: Report user - E-Commerce
+      operationId: post-bad-actor-ecommerce
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userDetails:
+                  $ref: '#/components/schemas/BadActor'
+                timestamp:
+                  type: number
+                reportingReason:
+                  type: string
+                paymentDetails:
+                  oneOf:
+                    - $ref: ./openapi-public-original.yaml#/components/schemas/ACHDetails
+                    - $ref: ./openapi-public-original.yaml#/components/schemas/CardDetails
+                    - $ref: ./openapi-public-original.yaml#/components/schemas/IBANDetails
+                    - $ref: ./openapi-public-original.yaml#/components/schemas/UPIDetails
+                reportingDetails:
+                  type: string
+              required:
+                - userDetails
+                - timestamp
+                - reportingReason
+            examples:
+              example-1:
+                value:
+                  userDetails:
+                    fullName:
+                      firstName: Baran
+                      middleName: Realblood
+                      lastName: Ozkan
+                    dateOfBirth: 6300221234
+                    address:
+                      addressLines:
+                        - Klara-Franke Str 20
+                      postcode: '10557'
+                      city: Berlin
+                      state: Berlin
+                      country: Germany
+                      tags:
+                        - key: customKey
+                          value: customValue
+                    countryOfResidence: DE
+                    email: baran@flagritht.com
+                    idDocumentDetails:
+                      documentType: passport
+                      documentNumber: Z9431P
+                      documentIssuedDate: 1639939034
+                      documentExpirationDate: 1839939034
+                      documentIssuedCountry: DE
+                      tags:
+                        - key: customerType
+                          value: wallet
+                    phoneNumber: string
+                  timestamp: 0
+                  reportingReason: string
+                  paymentDetails:
+                    method: ACH
+                    routingNumber: '453232'
+                    accountNumber: '1234145322'
+                    bankName: Deutsche Bank
+                    name:
+                      firstName: Baran
+                      middleName: Realblood
+                      lastName: Ozkan
+                    bankAddress:
+                      addressLines:
+                        - Klara-Franke Str 20
+                      postcode: '10557'
+                      city: Berlin
+                      state: Berlin
+                      country: Germany
+                      tags:
+                        - key: customKey
+                          value: customValue
+                  reportingDetails: string
+      x-internal: true
+    parameters: []
+components:
+  schemas:
+    BadActor:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          fullName:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          dateOfBirth: 0
+          address:
+            addressLines:
+              - Klara-Franke Str 20
+            postcode: '10557'
+            city: Berlin
+            state: Berlin
+            country: Germany
+            tags:
+              - key: customKey
+                value: customValue
+          countryOfResidence: string
+          email: string
+          idDocumentDetails:
+            documentType: passport
+            documentNumber: Z9431P
+            documentIssuedDate: 1639939034
+            documentExpirationDate: 1839939034
+            documentIssuedCountry: DE
+            tags:
+              - key: customerType
+                value: wallet
+          phoneNumber: string
+      properties:
+        fullName:
+          $ref: ./openapi-public-original.yaml#/components/schemas/ConsumerName
+        dateOfBirth:
+          type: number
+        address:
+          $ref: ./openapi-public-original.yaml#/components/schemas/Address
+        countryOfResidence:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          minLength: 1
+        idDocumentDetails:
+          $ref: ./openapi-public-original.yaml#/components/schemas/LegalDocument
+        phoneNumber:
+          type: string
+          minLength: 1
+      required:
+        - fullName
+      x-internal: true
+    PaymentDetailsACH:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          routingNumber: '1232343142'
+          accountCountry: US
+          accountNumber: '1231313'
+          bankCode: '123'
+          transitNumber: '1233'
+      properties:
+        routingNumber:
+          type: string
+          minLength: 1
+        accountCountry:
+          type: string
+          minLength: 1
+        accountNumber:
+          type: string
+          minLength: 1
+        bankCode:
+          type: string
+          minLength: 1
+        transitNumber:
+          type: string
+          minLength: 1
+      required:
+        - routingNumber
+        - accountNumber
+      x-internal: true
+    ACHMatchDetails:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          totalNumberOfSourcesReported: 13
+          reportedReasons:
+            insufficient_funds: 9
+            authorization_revoked: 4
+      properties:
+        totalNumberOfSourcesReported:
+          type: number
+        reportedReasons:
+          type: object
+          properties:
+            insufficient_funds:
+              type: number
+            authorization_revoked:
+              type: number
+            scam:
+              type: number
+            account_unqualified:
+              type: number
+            unauthorized_pull:
+              type: number
+            id_theft:
+              type: number
+            fake_id:
+              type: number
+            account_takeover:
+              type: number
+            suspicious_activity:
+              type: number
+            other:
+              type: number
+      required:
+        - totalNumberOfSourcesReported
+        - reportedReasons
+      title: ACHMatchDetails
+      x-internal: true
+    EComMatchDetails:
+      description: ''
+      type: object
+      properties:
+        totalNumberOfSourcesReported:
+          type: number
+        reportedReasons:
+          type: object
+          properties:
+            promo_abuse:
+              type: number
+            duplicate_user:
+              type: number
+            account_takeover:
+              type: number
+            address_obfuscation:
+              type: number
+            chargeback_abuse:
+              type: number
+          required:
+            - promo_abuse
+            - duplicate_user
+            - account_takeover
+            - address_obfuscation
+            - chargeback_abuse
+      required:
+        - totalNumberOfSourcesReported
+        - reportedReasons
+      x-examples:
+        example-1:
+          totalNumberOfSourcesReported: 16
+          reportedReasons:
+            promo_abuse: 4
+            duplicate_user: 9
+            account_takeover: 1
+            address_obfuscation: 0
+            chargeback_abuse: 2
+      title: EComMatchDetails
+      x-internal: true
+  securitySchemes:
+    X-API-Key:
+      name: X-API-Key
+      type: apiKey
+      in: header
+      description: ''
