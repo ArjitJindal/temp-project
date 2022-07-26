@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Typography } from 'antd';
 import { useLocation } from 'react-router-dom';
+import ErrorBoundary from '../ErrorBoundary';
 import s from './styles.module.less';
 import { useAnalytics } from '@/utils/segment/context';
 import { useAuth0User } from '@/utils/user-utils';
@@ -42,7 +43,9 @@ export default function PageWrapper(props: Props) {
           )}
         </header>
       )}
-      <div className={s.body}>{props.children}</div>
+      <div className={s.body}>
+        <ErrorBoundary>{props.children}</ErrorBoundary>
+      </div>
     </>
   );
 }

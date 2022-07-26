@@ -1,5 +1,6 @@
 {
   "mode": "production",
+  "envName": "sandbox",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
     "API_BASE_PATH": "https://sandbox.api.flagright.com/console",

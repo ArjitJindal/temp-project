@@ -2,6 +2,7 @@
 const fs = require('fs-extra');
 const esbuild = require('esbuild');
 const path = require('path');
+const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
 const lessLoader = require('./less-loader.js');
 
@@ -41,6 +42,11 @@ async function buildStatic(env) {
   );
 }
 
+function getGitHeadHash() {
+  const result = execSync('git rev-parse HEAD 2>/dev/null');
+  return result.toString()
+}
+
 async function buildCode(env, options) {
   const { PROJECT_DIR, SRC_FOLDER, OUTPUT_FOLDER } = env;
   const { entry, outFile, watch, config } = options;
@@ -49,7 +55,8 @@ async function buildCode(env, options) {
       nodeModules: PROJECT_DIR + '/node_modules/',
     }),
   ];
-  let devMode = config.mode === 'development';
+  const devMode = config.mode === 'development';
+  const envName = config.envName ?? 'unknown_env';
   return await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
     bundle: true,
@@ -57,7 +64,9 @@ async function buildCode(env, options) {
       '.svg': 'file',
     },
     define: {
+      'process.env.GIT_HEAD_SHA': JSON.stringify(getGitHeadHash()),
       'process.env.NODE_ENV': JSON.stringify(devMode ? 'development' : 'production'),
+      'process.env.ENV_NAME': JSON.stringify(envName),
       'process.env.__IS_SERVER': false,
       'process.env.NODE_DEBUG': false,
       ...Object.entries(config.define).reduce(
@@ -84,12 +93,13 @@ async function buildCode(env, options) {
     publicPath: '/',
     minify: !devMode,
     metafile: !devMode,
+    sourcemap: !devMode,
     // incremental: watch, // todo: migration: use it
     watch: watch
       ? {
           onRebuild(error, result) {
             if (error) {
-              error(`Watch build failed:`, error);
+              console.error(`Watch build failed:`, error);
             } else {
               log(`Watch build succeeded!`);
             }

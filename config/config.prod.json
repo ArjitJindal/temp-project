@@ -1,5 +1,6 @@
 {
   "mode": "production",
+  "envName": "prod",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
     "API_BASE_PATH": null,

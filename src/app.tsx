@@ -12,9 +12,12 @@ import './global.less';
 
 Sentry.init({
   dsn: SENTRY_DSN,
+  release: `phytoplankton-console#${
+    process.env.ENV_NAME === 'local' ? 'local' : process.env.GIT_HEAD_SHA
+  }`,
   integrations: [new BrowserTracing()],
   tracesSampleRate: 0.05,
-  environment: process.env.NODE_ENV ? process.env.NODE_ENV : 'development',
+  environment: process.env.ENV_NAME,
 });
 
 function renderRoutes(routes: RouteItem[]) {

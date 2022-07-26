@@ -1,5 +1,6 @@
 {
   "mode": "development",
+  "envName": "local",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
     "API_BASE_PATH": "http://localhost:3000",

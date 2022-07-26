@@ -3,6 +3,7 @@ import _ from 'lodash';
 import type { User } from 'auth0';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
+import * as Sentry from '@sentry/browser';
 import { useApi } from '@/api';
 import ErrorPage from '@/components/ErrorPage';
 
@@ -130,8 +131,11 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
     ) {
       return 'ORPHAN';
     }
-    return {
-      name: user.name ?? 'N/A',
+
+    const name = user.name ?? 'N/A';
+
+    const appUser = {
+      name: name,
       picture: user.picture ?? null,
       role: user[`${NAMESPACE}/role`] ?? 'user',
       userId: user[`${NAMESPACE}/userId`] ?? null,
@@ -141,6 +145,15 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
       tenantApiAudience: tenantApiAudience,
       verifiedEmail: verifiedEmail ?? null,
     };
+
+    Sentry.setUser({
+      id: appUser.userId,
+      email: appUser.verifiedEmail ?? undefined,
+      username: appUser.name ?? undefined,
+    });
+    Sentry.setTag('tenant', `${appUser.tenantId} (${appUser.tenantName})`);
+
+    return appUser;
   }, [user]);
   if (flagrightUser == null) {
     // todo: i18n
