@@ -22,15 +22,19 @@ export const initSentry =
 
     return Sentry.AWSLambda.wrapHandler(
       async (event, context, callback): Promise<APIGatewayProxyResult> => {
-        const { authorizer = {} } = event.requestContext
-        const { principalId, userId, tenantName, verifiedEmail } =
-          authorizer as unknown as JWTAuthorizerResult
+        if (
+          event.requestContext != null &&
+          event.requestContext.authorizer != null
+        ) {
+          const { principalId, userId, tenantName, verifiedEmail } = event
+            .requestContext.authorizer as unknown as JWTAuthorizerResult
 
-        Sentry.setUser({
-          id: userId,
-          email: verifiedEmail ?? undefined,
-        })
-        Sentry.setTag('tenant', `${principalId} (${tenantName})`)
+          Sentry.setUser({
+            id: userId,
+            email: verifiedEmail ?? undefined,
+          })
+          Sentry.setTag('tenant', `${principalId} (${tenantName})`)
+        }
 
         return handler(event, context, callback)
       }
