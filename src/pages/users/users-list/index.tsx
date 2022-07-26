@@ -454,22 +454,23 @@ const TableList = () => {
   }, [setLocalStorageActiveTab, list]);
   return (
     <PageWrapper title={i18n('menu.users.lists')}>
-      <Tabs
-        type="line"
-        activeKey={list}
-        destroyInactiveTabPane={true}
-        onChange={(key) => {
-          navigate(`/users/list/${key}/all`, { replace: true });
-        }}
-        className={styles.tab}
-      >
-        <Tabs.TabPane tab="Consumer Users" key="consumer">
-          <ConsumerUsersTab id={id} />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Business Users" key="business">
-          <BusinessUsersTab id={id} />
-        </Tabs.TabPane>
-      </Tabs>
+      <div className={styles.tab}>
+        <Tabs
+          type="line"
+          activeKey={list}
+          destroyInactiveTabPane={true}
+          onChange={(key) => {
+            navigate(`/users/list/${key}/all`, { replace: true });
+          }}
+        >
+          <Tabs.TabPane tab="Consumer Users" key="consumer">
+            <ConsumerUsersTab id={id} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Business Users" key="business">
+            <BusinessUsersTab id={id} />
+          </Tabs.TabPane>
+        </Tabs>
+      </div>
     </PageWrapper>
   );
 };
