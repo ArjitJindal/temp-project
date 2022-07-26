@@ -172,6 +172,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
+              externalEntityLink: sandboxConfig.application.CONSOLE_URI,
               runOrder: 1,
             }),
             new codepipeline_actions.CodeBuildAction({
