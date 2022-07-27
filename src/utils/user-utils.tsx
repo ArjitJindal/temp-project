@@ -132,7 +132,7 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
       return 'ORPHAN';
     }
 
-    const name = user.name ?? 'N/A';
+    const name = user.name ?? '-';
 
     const appUser = {
       name: name,

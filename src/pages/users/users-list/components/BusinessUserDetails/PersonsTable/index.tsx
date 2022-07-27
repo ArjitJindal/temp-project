@@ -20,23 +20,23 @@ function expandedRowRender(person: Person) {
         columns={[
           {
             title: 'Type',
-            render: (_, document) => document.documentType ?? 'N/A',
+            render: (_, document) => document.documentType ?? '-',
           },
           {
             title: 'Number',
-            render: (_, document) => document.documentNumber ?? 'N/A',
+            render: (_, document) => document.documentNumber ?? '-',
           },
           {
             title: 'Issued by',
-            render: (_, document) => document.documentIssuedCountry ?? 'N/A',
+            render: (_, document) => document.documentIssuedCountry ?? '-',
           },
           {
             title: 'Date of issue',
-            render: (_, document) => document.documentIssuedDate ?? 'N/A',
+            render: (_, document) => document.documentIssuedDate ?? '-',
           },
           {
             title: 'Date of expiry',
-            render: (_, document) => document.documentExpirationDate ?? 'N/A',
+            render: (_, document) => document.documentExpirationDate ?? '-',
           },
           {
             title: 'Tags',
@@ -125,11 +125,11 @@ export default function PersonsTable(props: Props) {
             },
             {
               title: 'Residence',
-              render: (_, person) => person.generalDetails.countryOfResidence ?? 'N/A',
+              render: (_, person) => person.generalDetails.countryOfResidence ?? '-',
             },
             {
               title: 'Nationality',
-              render: (_, person) => person.generalDetails.countryOfNationality ?? 'N/A',
+              render: (_, person) => person.generalDetails.countryOfNationality ?? '-',
             },
           ],
         },

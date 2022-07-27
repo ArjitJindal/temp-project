@@ -20,7 +20,7 @@ export function businessName(user: InternalBusinessUser): string {
 
 export function getUserName(user?: InternalConsumerUser | InternalBusinessUser) {
   if (user == null) {
-    return 'N/A';
+    return '-';
   }
   if (user.type === 'CONSUMER') {
     return getFullName(user.userDetails);
@@ -28,5 +28,5 @@ export function getUserName(user?: InternalConsumerUser | InternalBusinessUser) 
   if (user.type === 'BUSINESS') {
     return businessName(user);
   }
-  return neverReturn(user, 'N/A');
+  return neverReturn(user, '-');
 }
