@@ -17,7 +17,11 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { TRANSACTIONS_COLLECTION, USERS_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  TRANSACTION_EVENTS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
@@ -182,30 +186,9 @@ export class TransactionRepository {
     const sortField =
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
+
     const pipeline: Document[] = [
       { $match: query },
-      {
-        $lookup: {
-          from: USERS_COLLECTION(this.tenantId),
-          localField: 'originUserId',
-          foreignField: 'userId',
-          as: 'originUser',
-        },
-      },
-      {
-        $lookup: {
-          from: USERS_COLLECTION(this.tenantId),
-          localField: 'destinationUserId',
-          foreignField: 'userId',
-          as: 'destinationUser',
-        },
-      },
-      {
-        $set: {
-          originUser: { $first: '$originUser' },
-          destinationUser: { $first: '$destinationUser' },
-        },
-      },
       { $sort: { [sortField]: sortOrder } },
     ]
     if (sortField === 'ruleHitCount') {
@@ -223,6 +206,61 @@ export class TransactionRepository {
     }
     if (params?.limit) {
       pipeline.push({ $limit: params.limit })
+    }
+    if (params?.includeUsers) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: USERS_COLLECTION(this.tenantId),
+              localField: 'originUserId',
+              foreignField: 'userId',
+              as: 'originUser',
+            },
+          },
+          {
+            $lookup: {
+              from: USERS_COLLECTION(this.tenantId),
+              localField: 'destinationUserId',
+              foreignField: 'userId',
+              as: 'destinationUser',
+            },
+          },
+          {
+            $set: {
+              originUser: { $first: '$originUser' },
+              destinationUser: { $first: '$destinationUser' },
+            },
+          },
+        ]
+      )
+    }
+    if (params?.includeEvents) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
+              localField: 'transactionId',
+              foreignField: 'transactionId',
+              let: {
+                eventTransactionId: '$transactionId',
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: { $eq: ['$transactionId', '$$eventTransactionId'] },
+                  },
+                },
+                {
+                  $sort: { timestamp: 1 },
+                },
+              ],
+              as: 'events',
+            },
+          },
+        ]
+      )
     }
     return collection.aggregate<TransactionCaseManagement>(pipeline)
   }

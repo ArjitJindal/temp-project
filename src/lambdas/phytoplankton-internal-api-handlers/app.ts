@@ -82,6 +82,8 @@ export const transactionsViewHandler = lambdaApi()(
         transactionType,
         sortField,
         sortOrder,
+        includeUsers,
+        includeEvents,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -105,6 +107,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterDestinationCurrencies: filterDestinationCurrencies
           ? filterDestinationCurrencies.split(',')
           : undefined,
+        includeUsers: includeUsers === 'true',
+        includeEvents: includeEvents === 'true',
       }
       return transactionService.getTransactions(params)
     } else if (
