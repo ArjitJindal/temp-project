@@ -61,6 +61,8 @@ models/InternalBusinessUserAllOf.ts
 models/InternalConsumerUser.ts
 models/InternalConsumerUserAllOf.ts
 models/KYCStatus.ts
+models/KYCStatusDetails.ts
+models/KYCStatusDetails1.ts
 models/LegalDocument.ts
 models/LegalDocument1.ts
 models/LegalEntity.ts
@@ -72,6 +74,7 @@ models/Person.ts
 models/PresignedUrlResponse.ts
 models/RiskClassificationScore.ts
 models/RiskLevel.ts
+models/RiskLevel1.ts
 models/RiskLevelRuleActions.ts
 models/RiskLevelRuleParameters.ts
 models/Rule.ts
@@ -103,6 +106,8 @@ models/User.ts
 models/UserDetails.ts
 models/UserDetails1.ts
 models/UserStatus.ts
+models/UserStatusDetails.ts
+models/UserStatusDetails1.ts
 models/WalletDetails.ts
 models/WalletPaymentMethod.ts
 models/all.ts

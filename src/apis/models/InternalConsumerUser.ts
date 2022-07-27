@@ -13,13 +13,14 @@
 import { ContactDetails } from './ContactDetails';
 import { FileInfo } from './FileInfo';
 import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf';
-import { KYCStatus } from './KYCStatus';
+import { KYCStatusDetails } from './KYCStatusDetails';
 import { LegalDocument } from './LegalDocument';
+import { RiskLevel1 } from './RiskLevel1';
 import { Tag } from './Tag';
 import { TransactionLimits } from './TransactionLimits';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
-import { UserStatus } from './UserStatus';
+import { UserStatusDetails } from './UserStatusDetails';
 import { HttpFile } from '../http/http';
 
 export class InternalConsumerUser {
@@ -32,8 +33,8 @@ export class InternalConsumerUser {
    * Timestamp when userId is created
    */
   'createdTimestamp': number;
-  'userStatus'?: UserStatus;
-  'kycStatus'?: KYCStatus;
+  'userStatusDetails'?: UserStatusDetails;
+  'kycStatusDetails'?: KYCStatusDetails;
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -44,6 +45,7 @@ export class InternalConsumerUser {
    */
   'tags'?: Array<Tag>;
   'transactionLimits'?: TransactionLimits;
+  'riskLevel'?: RiskLevel1;
   'type': InternalConsumerUserTypeEnum;
   'files'?: Array<FileInfo>;
 
@@ -74,15 +76,15 @@ export class InternalConsumerUser {
       format: '',
     },
     {
-      name: 'userStatus',
-      baseName: 'userStatus',
-      type: 'UserStatus',
+      name: 'userStatusDetails',
+      baseName: 'userStatusDetails',
+      type: 'UserStatusDetails',
       format: '',
     },
     {
-      name: 'kycStatus',
-      baseName: 'kycStatus',
-      type: 'KYCStatus',
+      name: 'kycStatusDetails',
+      baseName: 'kycStatusDetails',
+      type: 'KYCStatusDetails',
       format: '',
     },
     {
@@ -107,6 +109,12 @@ export class InternalConsumerUser {
       name: 'transactionLimits',
       baseName: 'transactionLimits',
       type: 'TransactionLimits',
+      format: '',
+    },
+    {
+      name: 'riskLevel',
+      baseName: 'riskLevel',
+      type: 'RiskLevel1',
       format: '',
     },
     {

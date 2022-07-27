@@ -337,7 +337,16 @@ const ConsumerUsersTab = (props: { id?: string }) => {
       title: 'KYC Status',
       hideInSearch: true,
       render: (dom, entity) => {
-        return entity.kycStatus;
+        return entity.kycStatusDetails?.status;
+      },
+      valueType: 'textarea',
+    },
+    {
+      title: 'KYC Status Reason',
+      hideInSearch: true,
+      hideInTable: true,
+      render: (dom, entity) => {
+        return entity.kycStatusDetails?.statusReason;
       },
       valueType: 'textarea',
     },
@@ -345,7 +354,16 @@ const ConsumerUsersTab = (props: { id?: string }) => {
       title: 'User Status',
       hideInSearch: true,
       render: (dom, entity) => {
-        return entity.userStatus;
+        return entity.userStatusDetails?.status;
+      },
+      valueType: 'textarea',
+    },
+    {
+      title: 'User Status Reason',
+      hideInSearch: true,
+      hideInTable: true,
+      render: (dom, entity) => {
+        return entity.userStatusDetails?.statusReason;
       },
       valueType: 'textarea',
     },

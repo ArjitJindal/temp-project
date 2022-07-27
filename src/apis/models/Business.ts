@@ -10,12 +10,13 @@
  * Do not edit the class manually.
  */
 
-import { KYCStatus } from './KYCStatus';
+import { KYCStatusDetails1 } from './KYCStatusDetails1';
 import { LegalEntity } from './LegalEntity';
 import { Person } from './Person';
+import { RiskLevel1 } from './RiskLevel1';
 import { Tag } from './Tag';
 import { TransactionLimits1 } from './TransactionLimits1';
-import { UserStatus } from './UserStatus';
+import { UserStatusDetails1 } from './UserStatusDetails1';
 import { HttpFile } from '../http/http';
 
 /**
@@ -31,8 +32,8 @@ export class Business {
    * Timestamp when the user was created
    */
   'createdTimestamp': number;
-  'userStatus'?: UserStatus;
-  'kycStatus'?: KYCStatus;
+  'userStatus'?: UserStatusDetails1;
+  'kycStatus'?: KYCStatusDetails1;
   /**
    * Shareholders (beneficiaries) of the company that hold at least 25% ownership. Can be another company or an individual
    */
@@ -46,6 +47,7 @@ export class Business {
    */
   'tags'?: Array<Tag>;
   'transactionLimits'?: TransactionLimits1;
+  'riskLevel'?: RiskLevel1;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -76,13 +78,13 @@ export class Business {
     {
       name: 'userStatus',
       baseName: 'userStatus',
-      type: 'UserStatus',
+      type: 'UserStatusDetails1',
       format: '',
     },
     {
       name: 'kycStatus',
       baseName: 'kycStatus',
-      type: 'KYCStatus',
+      type: 'KYCStatusDetails1',
       format: '',
     },
     {
@@ -107,6 +109,12 @@ export class Business {
       name: 'transactionLimits',
       baseName: 'transactionLimits',
       type: 'TransactionLimits1',
+      format: '',
+    },
+    {
+      name: 'riskLevel',
+      baseName: 'riskLevel',
+      type: 'RiskLevel1',
       format: '',
     },
   ];

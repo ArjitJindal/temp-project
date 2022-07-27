@@ -47,6 +47,8 @@ export * from './InternalBusinessUserAllOf';
 export * from './InternalConsumerUser';
 export * from './InternalConsumerUserAllOf';
 export * from './KYCStatus';
+export * from './KYCStatusDetails';
+export * from './KYCStatusDetails1';
 export * from './LegalDocument';
 export * from './LegalDocument1';
 export * from './LegalEntity';
@@ -57,6 +59,7 @@ export * from './Person';
 export * from './PresignedUrlResponse';
 export * from './RiskClassificationScore';
 export * from './RiskLevel';
+export * from './RiskLevel1';
 export * from './RiskLevelRuleActions';
 export * from './RiskLevelRuleParameters';
 export * from './Rule';
@@ -88,6 +91,8 @@ export * from './User';
 export * from './UserDetails';
 export * from './UserDetails1';
 export * from './UserStatus';
+export * from './UserStatusDetails';
+export * from './UserStatusDetails1';
 export * from './WalletDetails';
 export * from './WalletPaymentMethod';
 
@@ -146,6 +151,8 @@ import {
   InternalConsumerUserAllOfTypeEnum,
 } from './InternalConsumerUserAllOf';
 import { KYCStatus } from './KYCStatus';
+import { KYCStatusDetails } from './KYCStatusDetails';
+import { KYCStatusDetails1 } from './KYCStatusDetails1';
 import { LegalDocument } from './LegalDocument';
 import { LegalDocument1 } from './LegalDocument1';
 import { LegalEntity } from './LegalEntity';
@@ -156,6 +163,7 @@ import { Person } from './Person';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { RiskClassificationScore } from './RiskClassificationScore';
 import { RiskLevel } from './RiskLevel';
+import { RiskLevel1 } from './RiskLevel1';
 import { RiskLevelRuleActions } from './RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
 import { Rule, RuleTypeEnum } from './Rule';
@@ -187,6 +195,8 @@ import { User } from './User';
 import { UserDetails } from './UserDetails';
 import { UserDetails1 } from './UserDetails1';
 import { UserStatus } from './UserStatus';
+import { UserStatusDetails } from './UserStatusDetails';
+import { UserStatusDetails1 } from './UserStatusDetails1';
 import { WalletDetails } from './WalletDetails';
 import { WalletPaymentMethod } from './WalletPaymentMethod';
 
@@ -216,6 +226,7 @@ let enumsMap: Set<string> = new Set<string>([
   'InternalConsumerUserAllOfTypeEnum',
   'KYCStatus',
   'RiskLevel',
+  'RiskLevel1',
   'RuleTypeEnum',
   'RuleAction',
   'RuleAction1',
@@ -271,6 +282,8 @@ let typeMap: { [index: string]: any } = {
   InternalBusinessUserAllOf: InternalBusinessUserAllOf,
   InternalConsumerUser: InternalConsumerUser,
   InternalConsumerUserAllOf: InternalConsumerUserAllOf,
+  KYCStatusDetails: KYCStatusDetails,
+  KYCStatusDetails1: KYCStatusDetails1,
   LegalDocument: LegalDocument,
   LegalDocument1: LegalDocument1,
   LegalEntity: LegalEntity,
@@ -305,6 +318,8 @@ let typeMap: { [index: string]: any } = {
   User: User,
   UserDetails: UserDetails,
   UserDetails1: UserDetails1,
+  UserStatusDetails: UserStatusDetails,
+  UserStatusDetails1: UserStatusDetails1,
   WalletDetails: WalletDetails,
 };
 

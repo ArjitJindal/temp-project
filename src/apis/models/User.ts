@@ -11,12 +11,13 @@
  */
 
 import { ContactDetails } from './ContactDetails';
-import { KYCStatus } from './KYCStatus';
+import { KYCStatusDetails } from './KYCStatusDetails';
 import { LegalDocument } from './LegalDocument';
+import { RiskLevel1 } from './RiskLevel1';
 import { Tag } from './Tag';
 import { TransactionLimits } from './TransactionLimits';
 import { UserDetails } from './UserDetails';
-import { UserStatus } from './UserStatus';
+import { UserStatusDetails } from './UserStatusDetails';
 import { HttpFile } from '../http/http';
 
 /**
@@ -32,8 +33,8 @@ export class User {
    * Timestamp when userId is created
    */
   'createdTimestamp': number;
-  'userStatus'?: UserStatus;
-  'kycStatus'?: KYCStatus;
+  'userStatusDetails'?: UserStatusDetails;
+  'kycStatusDetails'?: KYCStatusDetails;
   /**
    * User's legal identity documents - See Document Model for details
    */
@@ -44,6 +45,7 @@ export class User {
    */
   'tags'?: Array<Tag>;
   'transactionLimits'?: TransactionLimits;
+  'riskLevel'?: RiskLevel1;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -72,15 +74,15 @@ export class User {
       format: '',
     },
     {
-      name: 'userStatus',
-      baseName: 'userStatus',
-      type: 'UserStatus',
+      name: 'userStatusDetails',
+      baseName: 'userStatusDetails',
+      type: 'UserStatusDetails',
       format: '',
     },
     {
-      name: 'kycStatus',
-      baseName: 'kycStatus',
-      type: 'KYCStatus',
+      name: 'kycStatusDetails',
+      baseName: 'kycStatusDetails',
+      type: 'KYCStatusDetails',
       format: '',
     },
     {
@@ -105,6 +107,12 @@ export class User {
       name: 'transactionLimits',
       baseName: 'transactionLimits',
       type: 'TransactionLimits',
+      format: '',
+    },
+    {
+      name: 'riskLevel',
+      baseName: 'riskLevel',
+      type: 'RiskLevel1',
       format: '',
     },
   ];
