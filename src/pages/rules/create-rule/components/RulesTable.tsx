@@ -4,7 +4,7 @@ import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
 import { Rule, RuleImplementation } from '@/apis';
 import { useApi } from '@/api';
-import { isFlagrightTenantUser, useAuth0User } from '@/utils/user-utils';
+import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
@@ -27,7 +27,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
         sortDirections: ['ascend', 'descend'],
         render: (_, entity) => {
-          return isFlagrightTenantUser(user) ? (
+          return isAtLeast(user, UserRole.ROOT) ? (
             <RuleCreationForm rule={entity}>
               <a>{entity.id}</a>
             </RuleCreationForm>
@@ -104,7 +104,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       actionRef={actionRef}
       rowKey="id"
       search={false}
-      toolBarRender={() => (isFlagrightTenantUser(user) ? [<RuleCreationForm />] : [])}
+      toolBarRender={() => (isAtLeast(user, UserRole.ROOT) ? [<RuleCreationForm />] : [])}
       request={async () => {
         const rules = await api.getRules({});
         return {

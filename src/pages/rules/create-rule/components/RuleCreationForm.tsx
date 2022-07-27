@@ -156,6 +156,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
       <ProFormSelect
         width="xl"
         name="ruleImplementationName"
+        showSearch={true}
         label="Rule Implementation Name"
         rules={[
           {

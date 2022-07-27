@@ -38,10 +38,6 @@ export function useAuth0User(): FlagrightAuth0User {
   return context.user;
 }
 
-export function isFlagrightTenantUser(user: FlagrightAuth0User): boolean {
-  return user.tenantId === 'flagright';
-}
-
 export function parseUserRole(role: string | null): UserRole {
   switch (role) {
     case 'root':
