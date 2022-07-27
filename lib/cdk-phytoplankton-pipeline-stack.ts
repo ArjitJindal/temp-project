@@ -115,6 +115,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
+              externalEntityLink: `https://${sandboxConfig.SITE_DOMAIN}`,
               runOrder: 1,
             }),
             new codepipeline_actions.CodeBuildAction({
