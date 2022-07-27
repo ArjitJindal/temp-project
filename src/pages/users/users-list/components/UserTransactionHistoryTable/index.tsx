@@ -2,11 +2,12 @@ import { Divider, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import style from './style.module.less';
-import { TransactionAmountDetails, TransactionCaseManagement } from '@/apis';
+import { TransactionAmountDetails, TransactionCaseManagement, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import Id from '@/components/ui/Id';
 
 interface Props {
   userId?: string;
@@ -17,6 +18,55 @@ const createCurrencyStringFromTransactionAmount = (
 ) => {
   return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
 };
+
+function expandedRowRender(transaction: TransactionCaseManagement) {
+  return (
+    <Table<TransactionEvent>
+      rowKey="_id"
+      search={false}
+      columns={[
+        {
+          title: 'Event ID',
+          dataIndex: 'eventId',
+          width: 100,
+          render: (dom, event) => (event.eventId ? <Id>{event.eventId}</Id> : '-'),
+        },
+        {
+          title: 'Transaction state',
+          dataIndex: 'transactionState',
+          width: 100,
+        },
+        {
+          title: 'Event Time',
+          dataIndex: 'timestamp',
+          valueType: 'dateTime',
+          key: 'transactionTime',
+          width: 100,
+          render: (_, item) => {
+            return moment(item.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          },
+        },
+        {
+          title: 'Description',
+          dataIndex: 'eventDescription',
+          width: 100,
+        },
+        {
+          title: 'Reason',
+          dataIndex: 'reason',
+          width: 100,
+        },
+      ]}
+      dataSource={transaction.events ?? []}
+      pagination={false}
+      options={{
+        density: false,
+        setting: false,
+        reload: false,
+      }}
+    />
+  );
+}
 
 export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
   const api = useApi();
@@ -41,7 +91,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           limit: params.pageSize!,
           skip: (params.current! - 1) * params.pageSize!,
           beforeTimestamp: Date.now(),
-          filterOriginUserId: userId,
+          includeEvents: true,
         };
         const [originFilterResult, destFilterResult] = await Promise.all([
           api.getTransactionsList({ ...requestParams, filterOriginUserId: userId }),
@@ -96,6 +146,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           key: 'destinationAmountDetails',
         },
       ]}
+      expandable={{ expandedRowRender }}
     />
   );
 };

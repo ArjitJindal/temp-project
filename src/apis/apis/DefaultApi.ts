@@ -991,6 +991,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param sortOrder
    * @param filterOriginUserId
    * @param filterDestinationUserId
+   * @param includeUsers
+   * @param includeEvents
    */
   public async getTransactionsList(
     limit: number,
@@ -1008,6 +1010,8 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     sortOrder?: string,
     filterOriginUserId?: string,
     filterDestinationUserId?: string,
+    includeUsers?: boolean,
+    includeEvents?: boolean,
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -1142,6 +1146,22 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam(
         'filterDestinationUserId',
         ObjectSerializer.serialize(filterDestinationUserId, 'string', ''),
+      );
+    }
+
+    // Query Params
+    if (includeUsers !== undefined) {
+      requestContext.setQueryParam(
+        'includeUsers',
+        ObjectSerializer.serialize(includeUsers, 'boolean', ''),
+      );
+    }
+
+    // Query Params
+    if (includeEvents !== undefined) {
+      requestContext.setQueryParam(
+        'includeEvents',
+        ObjectSerializer.serialize(includeEvents, 'boolean', ''),
       );
     }
 

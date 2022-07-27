@@ -10,31 +10,23 @@
  * Do not edit the class manually.
  */
 
-import { ACHDetails } from './ACHDetails';
-import { Assignment } from './Assignment';
-import { CardDetails } from './CardDetails';
-import { Comment } from './Comment';
+import { ACHDetails1 } from './ACHDetails1';
+import { CardDetails1 } from './CardDetails1';
 import { DeviceData } from './DeviceData';
-import { ExecutedRulesResult } from './ExecutedRulesResult';
-import { GenericBankAccountDetails } from './GenericBankAccountDetails';
-import { HitRulesResult } from './HitRulesResult';
-import { IBANDetails } from './IBANDetails';
-import { InternalBusinessUser } from './InternalBusinessUser';
-import { InternalConsumerUser } from './InternalConsumerUser';
-import { RuleAction } from './RuleAction';
-import { SWIFTDetails } from './SWIFTDetails';
+import { GenericBankAccountDetails1 } from './GenericBankAccountDetails1';
+import { IBANDetails1 } from './IBANDetails1';
+import { SWIFTDetails1 } from './SWIFTDetails1';
 import { Tag } from './Tag';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
-import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf';
-import { TransactionEvent } from './TransactionEvent';
 import { TransactionState } from './TransactionState';
-import { TransactionStatusChange } from './TransactionStatusChange';
-import { TransactionWithRulesResult } from './TransactionWithRulesResult';
-import { UPIDetails } from './UPIDetails';
-import { WalletDetails } from './WalletDetails';
+import { UPIDetails1 } from './UPIDetails1';
+import { WalletDetails1 } from './WalletDetails1';
 import { HttpFile } from '../http/http';
 
-export class TransactionCaseManagement {
+/**
+ * Model for transaction payload
+ */
+export class Transaction1 {
   /**
    * Type of transaction depending on your use case. It can be withdrawal, deposit, payment link, wallet-to-wallet, trading etc.
    */
@@ -62,24 +54,24 @@ export class TransactionCaseManagement {
    * Payment details of the origin. It can be a bank account number, wallet ID, card fingerprint etc.
    */
   'originPaymentDetails'?:
-    | CardDetails
-    | GenericBankAccountDetails
-    | IBANDetails
-    | ACHDetails
-    | SWIFTDetails
-    | UPIDetails
-    | WalletDetails;
+    | CardDetails1
+    | GenericBankAccountDetails1
+    | IBANDetails1
+    | ACHDetails1
+    | SWIFTDetails1
+    | UPIDetails1
+    | WalletDetails1;
   /**
    * Payment details of the destination. It can be a bank account number, wallet ID, card fingerprint etc.
    */
   'destinationPaymentDetails'?:
-    | CardDetails
-    | GenericBankAccountDetails
-    | IBANDetails
-    | ACHDetails
-    | UPIDetails
-    | WalletDetails
-    | SWIFTDetails;
+    | CardDetails1
+    | GenericBankAccountDetails1
+    | IBANDetails1
+    | ACHDetails1
+    | UPIDetails1
+    | WalletDetails1
+    | SWIFTDetails1;
   /**
    * Type of produce being used by the consumer (ex wallets, payments etc)
    */
@@ -97,15 +89,6 @@ export class TransactionCaseManagement {
    * Additional information that can be added via tags
    */
   'tags'?: Array<Tag>;
-  'executedRules': Array<ExecutedRulesResult>;
-  'hitRules': Array<HitRulesResult>;
-  'comments'?: Array<Comment>;
-  'assignments'?: Array<Assignment>;
-  'status': RuleAction;
-  'statusChanges'?: Array<TransactionStatusChange>;
-  'originUser'?: InternalConsumerUser | InternalBusinessUser;
-  'destinationUser'?: InternalConsumerUser | InternalBusinessUser;
-  'events'?: Array<TransactionEvent>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -166,13 +149,13 @@ export class TransactionCaseManagement {
     {
       name: 'originPaymentDetails',
       baseName: 'originPaymentDetails',
-      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | SWIFTDetails | UPIDetails | WalletDetails',
+      type: 'CardDetails1 | GenericBankAccountDetails1 | IBANDetails1 | ACHDetails1 | SWIFTDetails1 | UPIDetails1 | WalletDetails1',
       format: '',
     },
     {
       name: 'destinationPaymentDetails',
       baseName: 'destinationPaymentDetails',
-      type: 'CardDetails | GenericBankAccountDetails | IBANDetails | ACHDetails | UPIDetails | WalletDetails | SWIFTDetails',
+      type: 'CardDetails1 | GenericBankAccountDetails1 | IBANDetails1 | ACHDetails1 | UPIDetails1 | WalletDetails1 | SWIFTDetails1',
       format: '',
     },
     {
@@ -205,64 +188,10 @@ export class TransactionCaseManagement {
       type: 'Array<Tag>',
       format: '',
     },
-    {
-      name: 'executedRules',
-      baseName: 'executedRules',
-      type: 'Array<ExecutedRulesResult>',
-      format: '',
-    },
-    {
-      name: 'hitRules',
-      baseName: 'hitRules',
-      type: 'Array<HitRulesResult>',
-      format: '',
-    },
-    {
-      name: 'comments',
-      baseName: 'comments',
-      type: 'Array<Comment>',
-      format: '',
-    },
-    {
-      name: 'assignments',
-      baseName: 'assignments',
-      type: 'Array<Assignment>',
-      format: '',
-    },
-    {
-      name: 'status',
-      baseName: 'status',
-      type: 'RuleAction',
-      format: '',
-    },
-    {
-      name: 'statusChanges',
-      baseName: 'statusChanges',
-      type: 'Array<TransactionStatusChange>',
-      format: '',
-    },
-    {
-      name: 'originUser',
-      baseName: 'originUser',
-      type: 'InternalConsumerUser | InternalBusinessUser',
-      format: '',
-    },
-    {
-      name: 'destinationUser',
-      baseName: 'destinationUser',
-      type: 'InternalConsumerUser | InternalBusinessUser',
-      format: '',
-    },
-    {
-      name: 'events',
-      baseName: 'events',
-      type: 'Array<TransactionEvent>',
-      format: '',
-    },
   ];
 
   static getAttributeTypeMap() {
-    return TransactionCaseManagement.attributeTypeMap;
+    return Transaction1.attributeTypeMap;
   }
 
   public constructor() {}

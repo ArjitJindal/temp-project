@@ -321,6 +321,7 @@ const TableList = (props: RouteMatch<'id'>) => {
               transactionType: type,
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,
+              includeUsers: true,
             }),
           );
           analytics.event({

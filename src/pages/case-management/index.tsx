@@ -446,6 +446,7 @@ function TableList() {
               transactionType: type,
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,
+              includeUsers: true,
             }),
           );
           analytics.event({

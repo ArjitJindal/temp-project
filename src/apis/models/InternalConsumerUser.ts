@@ -13,6 +13,7 @@
 import { ContactDetails } from './ContactDetails';
 import { FileInfo } from './FileInfo';
 import { InternalConsumerUserAllOf } from './InternalConsumerUserAllOf';
+import { InternalConsumerUserAllOfUserStatus } from './InternalConsumerUserAllOfUserStatus';
 import { KYCStatusDetails } from './KYCStatusDetails';
 import { LegalDocument } from './LegalDocument';
 import { RiskLevel1 } from './RiskLevel1';
@@ -48,6 +49,8 @@ export class InternalConsumerUser {
   'riskLevel'?: RiskLevel1;
   'type': InternalConsumerUserTypeEnum;
   'files'?: Array<FileInfo>;
+  'userStatus'?: InternalConsumerUserAllOfUserStatus;
+  'kycStatus'?: InternalConsumerUserAllOfUserStatus;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -127,6 +130,18 @@ export class InternalConsumerUser {
       name: 'files',
       baseName: 'files',
       type: 'Array<FileInfo>',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'InternalConsumerUserAllOfUserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'InternalConsumerUserAllOfUserStatus',
       format: '',
     },
   ];

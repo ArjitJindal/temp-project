@@ -1,4 +1,5 @@
 export * from './ACHDetails';
+export * from './ACHDetails1';
 export * from './ACHPaymentMethod';
 export * from './Account';
 export * from './AccountInvitePayload';
@@ -11,6 +12,7 @@ export * from './Assignment';
 export * from './Business';
 export * from './BusinessUsersListResponse';
 export * from './CardDetails';
+export * from './CardDetails1';
 export * from './CardPaymentMethod';
 export * from './ChangeTenantPayload';
 export * from './Comment';
@@ -35,8 +37,10 @@ export * from './FileImportStatusChange';
 export * from './FileInfo';
 export * from './GeneralBankAccountPaymentMethod';
 export * from './GenericBankAccountDetails';
+export * from './GenericBankAccountDetails1';
 export * from './HitRulesResult';
 export * from './IBANDetails';
+export * from './IBANDetails1';
 export * from './IBANPaymentMethod';
 export * from './ImportRequest';
 export * from './ImportResponse';
@@ -46,6 +50,7 @@ export * from './InternalBusinessUser';
 export * from './InternalBusinessUserAllOf';
 export * from './InternalConsumerUser';
 export * from './InternalConsumerUserAllOf';
+export * from './InternalConsumerUserAllOfUserStatus';
 export * from './KYCStatus';
 export * from './KYCStatusDetails';
 export * from './KYCStatusDetails1';
@@ -69,14 +74,17 @@ export * from './RuleActionAlias';
 export * from './RuleImplementation';
 export * from './RuleInstance';
 export * from './SWIFTDetails';
+export * from './SWIFTDetails1';
 export * from './SWIFTPaymentMethod';
 export * from './Tag';
 export * from './Tenant';
 export * from './TenantSettings';
 export * from './Transaction';
+export * from './Transaction1';
 export * from './TransactionAmountDetails';
 export * from './TransactionCaseManagement';
 export * from './TransactionCaseManagementAllOf';
+export * from './TransactionEvent';
 export * from './TransactionLimits';
 export * from './TransactionLimits1';
 export * from './TransactionState';
@@ -86,6 +94,7 @@ export * from './TransactionWithRulesResult';
 export * from './TransactionWithRulesResultAllOf';
 export * from './TransactionsListResponse';
 export * from './UPIDetails';
+export * from './UPIDetails1';
 export * from './UPIPaymentMethod';
 export * from './User';
 export * from './UserDetails';
@@ -94,9 +103,11 @@ export * from './UserStatus';
 export * from './UserStatusDetails';
 export * from './UserStatusDetails1';
 export * from './WalletDetails';
+export * from './WalletDetails1';
 export * from './WalletPaymentMethod';
 
 import { ACHDetails } from './ACHDetails';
+import { ACHDetails1 } from './ACHDetails1';
 import { ACHPaymentMethod } from './ACHPaymentMethod';
 import { Account } from './Account';
 import { AccountInvitePayload } from './AccountInvitePayload';
@@ -109,6 +120,7 @@ import { Assignment } from './Assignment';
 import { Business } from './Business';
 import { BusinessUsersListResponse } from './BusinessUsersListResponse';
 import { CardDetails } from './CardDetails';
+import { CardDetails1 } from './CardDetails1';
 import { CardPaymentMethod } from './CardPaymentMethod';
 import { ChangeTenantPayload } from './ChangeTenantPayload';
 import { Comment } from './Comment';
@@ -133,8 +145,10 @@ import { FileImportStatusChange, FileImportStatusChangeStatusEnum } from './File
 import { FileInfo } from './FileInfo';
 import { GeneralBankAccountPaymentMethod } from './GeneralBankAccountPaymentMethod';
 import { GenericBankAccountDetails } from './GenericBankAccountDetails';
+import { GenericBankAccountDetails1 } from './GenericBankAccountDetails1';
 import { HitRulesResult } from './HitRulesResult';
 import { IBANDetails } from './IBANDetails';
+import { IBANDetails1 } from './IBANDetails1';
 import { IBANPaymentMethod } from './IBANPaymentMethod';
 import { ImportRequest, ImportRequestTypeEnum, ImportRequestFormatEnum } from './ImportRequest';
 import { ImportResponse } from './ImportResponse';
@@ -150,6 +164,7 @@ import {
   InternalConsumerUserAllOf,
   InternalConsumerUserAllOfTypeEnum,
 } from './InternalConsumerUserAllOf';
+import { InternalConsumerUserAllOfUserStatus } from './InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from './KYCStatus';
 import { KYCStatusDetails } from './KYCStatusDetails';
 import { KYCStatusDetails1 } from './KYCStatusDetails1';
@@ -173,14 +188,17 @@ import { RuleActionAlias } from './RuleActionAlias';
 import { RuleImplementation } from './RuleImplementation';
 import { RuleInstance, RuleInstanceTypeEnum, RuleInstanceStatusEnum } from './RuleInstance';
 import { SWIFTDetails } from './SWIFTDetails';
+import { SWIFTDetails1 } from './SWIFTDetails1';
 import { SWIFTPaymentMethod } from './SWIFTPaymentMethod';
 import { Tag } from './Tag';
 import { Tenant } from './Tenant';
 import { TenantSettings } from './TenantSettings';
 import { Transaction } from './Transaction';
+import { Transaction1 } from './Transaction1';
 import { TransactionAmountDetails } from './TransactionAmountDetails';
 import { TransactionCaseManagement } from './TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from './TransactionCaseManagementAllOf';
+import { TransactionEvent } from './TransactionEvent';
 import { TransactionLimits } from './TransactionLimits';
 import { TransactionLimits1 } from './TransactionLimits1';
 import { TransactionState } from './TransactionState';
@@ -190,6 +208,7 @@ import { TransactionWithRulesResult } from './TransactionWithRulesResult';
 import { TransactionWithRulesResultAllOf } from './TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from './TransactionsListResponse';
 import { UPIDetails } from './UPIDetails';
+import { UPIDetails1 } from './UPIDetails1';
 import { UPIPaymentMethod } from './UPIPaymentMethod';
 import { User } from './User';
 import { UserDetails } from './UserDetails';
@@ -198,6 +217,7 @@ import { UserStatus } from './UserStatus';
 import { UserStatusDetails } from './UserStatusDetails';
 import { UserStatusDetails1 } from './UserStatusDetails1';
 import { WalletDetails } from './WalletDetails';
+import { WalletDetails1 } from './WalletDetails1';
 import { WalletPaymentMethod } from './WalletPaymentMethod';
 
 /* tslint:disable:no-unused-variable */
@@ -241,6 +261,7 @@ let enumsMap: Set<string> = new Set<string>([
 
 let typeMap: { [index: string]: any } = {
   ACHDetails: ACHDetails,
+  ACHDetails1: ACHDetails1,
   Account: Account,
   AccountInvitePayload: AccountInvitePayload,
   Address: Address,
@@ -251,6 +272,7 @@ let typeMap: { [index: string]: any } = {
   Business: Business,
   BusinessUsersListResponse: BusinessUsersListResponse,
   CardDetails: CardDetails,
+  CardDetails1: CardDetails1,
   ChangeTenantPayload: ChangeTenantPayload,
   Comment: Comment,
   CompanyFinancialDetails: CompanyFinancialDetails,
@@ -272,8 +294,10 @@ let typeMap: { [index: string]: any } = {
   FileImportStatusChange: FileImportStatusChange,
   FileInfo: FileInfo,
   GenericBankAccountDetails: GenericBankAccountDetails,
+  GenericBankAccountDetails1: GenericBankAccountDetails1,
   HitRulesResult: HitRulesResult,
   IBANDetails: IBANDetails,
+  IBANDetails1: IBANDetails1,
   ImportRequest: ImportRequest,
   ImportResponse: ImportResponse,
   InlineResponse200: InlineResponse200,
@@ -282,6 +306,7 @@ let typeMap: { [index: string]: any } = {
   InternalBusinessUserAllOf: InternalBusinessUserAllOf,
   InternalConsumerUser: InternalConsumerUser,
   InternalConsumerUserAllOf: InternalConsumerUserAllOf,
+  InternalConsumerUserAllOfUserStatus: InternalConsumerUserAllOfUserStatus,
   KYCStatusDetails: KYCStatusDetails,
   KYCStatusDetails1: KYCStatusDetails1,
   LegalDocument: LegalDocument,
@@ -300,13 +325,16 @@ let typeMap: { [index: string]: any } = {
   RuleImplementation: RuleImplementation,
   RuleInstance: RuleInstance,
   SWIFTDetails: SWIFTDetails,
+  SWIFTDetails1: SWIFTDetails1,
   Tag: Tag,
   Tenant: Tenant,
   TenantSettings: TenantSettings,
   Transaction: Transaction,
+  Transaction1: Transaction1,
   TransactionAmountDetails: TransactionAmountDetails,
   TransactionCaseManagement: TransactionCaseManagement,
   TransactionCaseManagementAllOf: TransactionCaseManagementAllOf,
+  TransactionEvent: TransactionEvent,
   TransactionLimits: TransactionLimits,
   TransactionLimits1: TransactionLimits1,
   TransactionStatusChange: TransactionStatusChange,
@@ -315,12 +343,14 @@ let typeMap: { [index: string]: any } = {
   TransactionWithRulesResultAllOf: TransactionWithRulesResultAllOf,
   TransactionsListResponse: TransactionsListResponse,
   UPIDetails: UPIDetails,
+  UPIDetails1: UPIDetails1,
   User: User,
   UserDetails: UserDetails,
   UserDetails1: UserDetails1,
   UserStatusDetails: UserStatusDetails,
   UserStatusDetails1: UserStatusDetails1,
   WalletDetails: WalletDetails,
+  WalletDetails1: WalletDetails1,
 };
 
 export class ObjectSerializer {

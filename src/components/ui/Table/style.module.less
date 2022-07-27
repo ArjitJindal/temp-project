@@ -1,8 +1,55 @@
-@import '../colors.less';
+@import 'src/components/ui/colors';
+
+.root {
+  margin: 0 !important;
+  :global {
+    // declare detached ruleset
+    @row-rules: {
+      .ant-table-cell {
+        vertical-align: top;
+        border-color: @fr-colors-gray-1 !important;
+        border-style: solid;
+        border-width: 0 0 1px 1px;
+
+        &:last-child {
+          border-right-width: 1px;
+        }
+      }
+    };
+
+    .ant-table-row {
+      @row-rules();
+    }
+
+    .ant-table-placeholder {
+      @row-rules();
+    }
+
+    .ant-table-thead > tr {
+      @row-rules();
+      &:first-child {
+        :global .ant-table-cell {
+          border-top-width: 1px;
+        }
+      }
+      .ant-table-cell {
+        &::before {
+          content: none !important;
+        }
+      }
+    }
+
+    .ant-table-expanded-row > .ant-table-cell {
+      padding: 20px !important;
+      background: @fr-colors-gray-1 !important;
+    }
+  }
+}
 
 .tableRowLight {
   background-color: #fff;
 }
+
 .tableRowDark {
-  background-color: @fr-colors-brandBlueTint45Transparent;
+  background-color: fade(@fr-colors-brandBlueTint, 45%);
 }

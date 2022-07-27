@@ -397,6 +397,14 @@ paths:
             type: string
           in: query
           name: filterDestinationUserId
+        - schema:
+            type: boolean
+          in: query
+          name: includeUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeEvents
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -1253,6 +1261,10 @@ components:
               oneOf:
                 - $ref: '#/components/schemas/InternalConsumerUser'
                 - $ref: '#/components/schemas/InternalBusinessUser'
+            events:
+              type: array
+              items:
+                $ref: 'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml#/components/schemas/TransactionEvent'
           required:
             - status
       title: TransactionCaseManagement
@@ -1348,6 +1360,20 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FileInfo'
+            userStatus:
+              type: object
+              properties:
+                statusReason:
+                  type: string
+                status:
+                  type: string
+            kycStatus:
+              type: object
+              properties:
+                statusReason:
+                  type: string
+                status:
+                  type: string
           required:
             - type
     InternalBusinessUser:

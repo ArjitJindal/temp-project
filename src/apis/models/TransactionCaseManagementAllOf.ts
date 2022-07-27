@@ -15,6 +15,7 @@ import { Comment } from './Comment';
 import { InternalBusinessUser } from './InternalBusinessUser';
 import { InternalConsumerUser } from './InternalConsumerUser';
 import { RuleAction } from './RuleAction';
+import { TransactionEvent } from './TransactionEvent';
 import { TransactionStatusChange } from './TransactionStatusChange';
 import { HttpFile } from '../http/http';
 
@@ -25,6 +26,7 @@ export class TransactionCaseManagementAllOf {
   'statusChanges'?: Array<TransactionStatusChange>;
   'originUser'?: InternalConsumerUser | InternalBusinessUser;
   'destinationUser'?: InternalConsumerUser | InternalBusinessUser;
+  'events'?: Array<TransactionEvent>;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -68,6 +70,12 @@ export class TransactionCaseManagementAllOf {
       name: 'destinationUser',
       baseName: 'destinationUser',
       type: 'InternalConsumerUser | InternalBusinessUser',
+      format: '',
+    },
+    {
+      name: 'events',
+      baseName: 'events',
+      type: 'Array<TransactionEvent>',
       format: '',
     },
   ];

@@ -13,6 +13,7 @@ http/isomorphic-fetch.ts
 index.ts
 middleware.ts
 models/ACHDetails.ts
+models/ACHDetails1.ts
 models/ACHPaymentMethod.ts
 models/Account.ts
 models/AccountInvitePayload.ts
@@ -25,6 +26,7 @@ models/Assignment.ts
 models/Business.ts
 models/BusinessUsersListResponse.ts
 models/CardDetails.ts
+models/CardDetails1.ts
 models/CardPaymentMethod.ts
 models/ChangeTenantPayload.ts
 models/Comment.ts
@@ -49,8 +51,10 @@ models/FileImportStatusChange.ts
 models/FileInfo.ts
 models/GeneralBankAccountPaymentMethod.ts
 models/GenericBankAccountDetails.ts
+models/GenericBankAccountDetails1.ts
 models/HitRulesResult.ts
 models/IBANDetails.ts
+models/IBANDetails1.ts
 models/IBANPaymentMethod.ts
 models/ImportRequest.ts
 models/ImportResponse.ts
@@ -60,6 +64,7 @@ models/InternalBusinessUser.ts
 models/InternalBusinessUserAllOf.ts
 models/InternalConsumerUser.ts
 models/InternalConsumerUserAllOf.ts
+models/InternalConsumerUserAllOfUserStatus.ts
 models/KYCStatus.ts
 models/KYCStatusDetails.ts
 models/KYCStatusDetails1.ts
@@ -84,14 +89,17 @@ models/RuleActionAlias.ts
 models/RuleImplementation.ts
 models/RuleInstance.ts
 models/SWIFTDetails.ts
+models/SWIFTDetails1.ts
 models/SWIFTPaymentMethod.ts
 models/Tag.ts
 models/Tenant.ts
 models/TenantSettings.ts
 models/Transaction.ts
+models/Transaction1.ts
 models/TransactionAmountDetails.ts
 models/TransactionCaseManagement.ts
 models/TransactionCaseManagementAllOf.ts
+models/TransactionEvent.ts
 models/TransactionLimits.ts
 models/TransactionLimits1.ts
 models/TransactionState.ts
@@ -101,6 +109,7 @@ models/TransactionWithRulesResult.ts
 models/TransactionWithRulesResultAllOf.ts
 models/TransactionsListResponse.ts
 models/UPIDetails.ts
+models/UPIDetails1.ts
 models/UPIPaymentMethod.ts
 models/User.ts
 models/UserDetails.ts
@@ -109,6 +118,7 @@ models/UserStatus.ts
 models/UserStatusDetails.ts
 models/UserStatusDetails1.ts
 models/WalletDetails.ts
+models/WalletDetails1.ts
 models/WalletPaymentMethod.ts
 models/all.ts
 package.json

@@ -3,6 +3,7 @@ import * as models from '../models/all';
 import { Configuration } from '../configuration';
 
 import { ACHDetails } from '../models/ACHDetails';
+import { ACHDetails1 } from '../models/ACHDetails1';
 import { ACHPaymentMethod } from '../models/ACHPaymentMethod';
 import { Account } from '../models/Account';
 import { AccountInvitePayload } from '../models/AccountInvitePayload';
@@ -15,6 +16,7 @@ import { Assignment } from '../models/Assignment';
 import { Business } from '../models/Business';
 import { BusinessUsersListResponse } from '../models/BusinessUsersListResponse';
 import { CardDetails } from '../models/CardDetails';
+import { CardDetails1 } from '../models/CardDetails1';
 import { CardPaymentMethod } from '../models/CardPaymentMethod';
 import { ChangeTenantPayload } from '../models/ChangeTenantPayload';
 import { Comment } from '../models/Comment';
@@ -39,8 +41,10 @@ import { FileImportStatusChange } from '../models/FileImportStatusChange';
 import { FileInfo } from '../models/FileInfo';
 import { GeneralBankAccountPaymentMethod } from '../models/GeneralBankAccountPaymentMethod';
 import { GenericBankAccountDetails } from '../models/GenericBankAccountDetails';
+import { GenericBankAccountDetails1 } from '../models/GenericBankAccountDetails1';
 import { HitRulesResult } from '../models/HitRulesResult';
 import { IBANDetails } from '../models/IBANDetails';
+import { IBANDetails1 } from '../models/IBANDetails1';
 import { IBANPaymentMethod } from '../models/IBANPaymentMethod';
 import { ImportRequest } from '../models/ImportRequest';
 import { ImportResponse } from '../models/ImportResponse';
@@ -50,6 +54,7 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
+import { InternalConsumerUserAllOfUserStatus } from '../models/InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from '../models/KYCStatus';
 import { KYCStatusDetails } from '../models/KYCStatusDetails';
 import { KYCStatusDetails1 } from '../models/KYCStatusDetails1';
@@ -73,14 +78,17 @@ import { RuleActionAlias } from '../models/RuleActionAlias';
 import { RuleImplementation } from '../models/RuleImplementation';
 import { RuleInstance } from '../models/RuleInstance';
 import { SWIFTDetails } from '../models/SWIFTDetails';
+import { SWIFTDetails1 } from '../models/SWIFTDetails1';
 import { SWIFTPaymentMethod } from '../models/SWIFTPaymentMethod';
 import { Tag } from '../models/Tag';
 import { Tenant } from '../models/Tenant';
 import { TenantSettings } from '../models/TenantSettings';
 import { Transaction } from '../models/Transaction';
+import { Transaction1 } from '../models/Transaction1';
 import { TransactionAmountDetails } from '../models/TransactionAmountDetails';
 import { TransactionCaseManagement } from '../models/TransactionCaseManagement';
 import { TransactionCaseManagementAllOf } from '../models/TransactionCaseManagementAllOf';
+import { TransactionEvent } from '../models/TransactionEvent';
 import { TransactionLimits } from '../models/TransactionLimits';
 import { TransactionLimits1 } from '../models/TransactionLimits1';
 import { TransactionState } from '../models/TransactionState';
@@ -90,6 +98,7 @@ import { TransactionWithRulesResult } from '../models/TransactionWithRulesResult
 import { TransactionWithRulesResultAllOf } from '../models/TransactionWithRulesResultAllOf';
 import { TransactionsListResponse } from '../models/TransactionsListResponse';
 import { UPIDetails } from '../models/UPIDetails';
+import { UPIDetails1 } from '../models/UPIDetails1';
 import { UPIPaymentMethod } from '../models/UPIPaymentMethod';
 import { User } from '../models/User';
 import { UserDetails } from '../models/UserDetails';
@@ -98,6 +107,7 @@ import { UserStatus } from '../models/UserStatus';
 import { UserStatusDetails } from '../models/UserStatusDetails';
 import { UserStatusDetails1 } from '../models/UserStatusDetails1';
 import { WalletDetails } from '../models/WalletDetails';
+import { WalletDetails1 } from '../models/WalletDetails1';
 import { WalletPaymentMethod } from '../models/WalletPaymentMethod';
 import { ObservableDefaultApi } from './ObservableAPI';
 
@@ -444,6 +454,8 @@ export class PromiseDefaultApi {
    * @param sortOrder
    * @param filterOriginUserId
    * @param filterDestinationUserId
+   * @param includeUsers
+   * @param includeEvents
    */
   public getTransactionsList(
     limit: number,
@@ -461,6 +473,8 @@ export class PromiseDefaultApi {
     sortOrder?: string,
     filterOriginUserId?: string,
     filterDestinationUserId?: string,
+    includeUsers?: boolean,
+    includeEvents?: boolean,
     _options?: Configuration,
   ): Promise<TransactionsListResponse> {
     const result = this.api.getTransactionsList(
@@ -479,6 +493,8 @@ export class PromiseDefaultApi {
       sortOrder,
       filterOriginUserId,
       filterDestinationUserId,
+      includeUsers,
+      includeEvents,
       _options,
     );
     return result.toPromise();

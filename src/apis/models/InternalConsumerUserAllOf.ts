@@ -11,11 +11,14 @@
  */
 
 import { FileInfo } from './FileInfo';
+import { InternalConsumerUserAllOfUserStatus } from './InternalConsumerUserAllOfUserStatus';
 import { HttpFile } from '../http/http';
 
 export class InternalConsumerUserAllOf {
   'type': InternalConsumerUserAllOfTypeEnum;
   'files'?: Array<FileInfo>;
+  'userStatus'?: InternalConsumerUserAllOfUserStatus;
+  'kycStatus'?: InternalConsumerUserAllOfUserStatus;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -35,6 +38,18 @@ export class InternalConsumerUserAllOf {
       name: 'files',
       baseName: 'files',
       type: 'Array<FileInfo>',
+      format: '',
+    },
+    {
+      name: 'userStatus',
+      baseName: 'userStatus',
+      type: 'InternalConsumerUserAllOfUserStatus',
+      format: '',
+    },
+    {
+      name: 'kycStatus',
+      baseName: 'kycStatus',
+      type: 'InternalConsumerUserAllOfUserStatus',
       format: '',
     },
   ];

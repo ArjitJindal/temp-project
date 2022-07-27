@@ -1374,6 +1374,10 @@ let body:.DefaultApiGetTransactionsListRequest = {
   filterOriginUserId: "filterOriginUserId_example",
   // string (optional)
   filterDestinationUserId: "filterDestinationUserId_example",
+  // boolean (optional)
+  includeUsers: true,
+  // boolean (optional)
+  includeEvents: true,
 };
 
 apiInstance.getTransactionsList(body).then((data:any) => {
@@ -1400,6 +1404,8 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **sortOrder** | [**string**] |  | (optional) defaults to undefined |
 | **filterOriginUserId** | [**string**] |  | (optional) defaults to undefined |
 | **filterDestinationUserId** | [**string**] |  | (optional) defaults to undefined |
+| **includeUsers** | [**boolean**] |  | (optional) defaults to undefined |
+| **includeEvents** | [**boolean**] |  | (optional) defaults to undefined |
 
 ### Return type
 
