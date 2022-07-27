@@ -180,9 +180,6 @@ const BusinessUsersTab = (props: { id?: string }) => {
   return (
     <>
       <Table<InternalBusinessUser, TableListPagination>
-        rowClassName={(record, index) =>
-          index % 2 === 0 ? styles.tableRowLight : styles.tableRowDark
-        }
         form={{
           labelWrap: true,
         }}
