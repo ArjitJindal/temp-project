@@ -43,8 +43,13 @@ async function buildStatic(env) {
 }
 
 function getGitHeadHash() {
-  const result = execSync('git rev-parse HEAD 2>/dev/null');
-  return result.toString()
+  try {
+    const result = execSync('git rev-parse HEAD', { stdio: 'pipe' });
+    return result.toString()
+  } catch (e) {
+    console.error(`Unable to get Git hash for last commit, use 'latest' instead. Reason: "${e.message}"`)
+    return 'latest'
+  }
 }
 
 async function buildCode(env, options) {
