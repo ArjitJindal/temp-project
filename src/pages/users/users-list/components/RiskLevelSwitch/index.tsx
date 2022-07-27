@@ -3,7 +3,7 @@ import s from './styles.module.less';
 import { RISK_LEVEL_COLORS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { neverReturn } from '@/utils/lang';
 
-function getLabel(risk: RiskLevel) {
+export function getLabel(risk: RiskLevel) {
   switch (risk) {
     case 'VERY_LOW':
       return 'Very low';

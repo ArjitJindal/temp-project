@@ -7,10 +7,12 @@ import { RouteMatch, useNavigate, useParams } from 'react-router';
 import { Link } from 'react-router-dom';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.module.less';
+import UserRiskTag from './components/UserRiskTag';
 import { ConsumerUserDetails } from './components/ConsumerUserDetails';
 import { BusinessUserDetails } from './components/BusinessUserDetails';
 import Table from '@/components/ui/Table';
 import { useApi } from '@/api';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Amount, ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
 import PageWrapper from '@/components/PageWrapper';
@@ -238,7 +240,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
 const ConsumerUsersTab = (props: { id?: string }) => {
   const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
-
+  const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const { id: userId } = props;
   const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
@@ -401,6 +403,19 @@ const ConsumerUsersTab = (props: { id?: string }) => {
       },
     },
   ];
+  {
+    if (isPulseEnabled) {
+      columns.push({
+        title: 'Risk Level',
+        dataIndex: 'labels',
+        tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
+        search: false,
+        render: (dom, entity) => {
+          return <UserRiskTag userId={entity.userId} />;
+        },
+      });
+    }
+  }
 
   const analytics = useAnalytics();
   const navigate = useNavigate();
