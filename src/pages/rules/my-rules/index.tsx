@@ -144,7 +144,7 @@ export default () => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
             <span>
-              <RuleActionTag action={ruleInstance.action} />
+              <RuleActionTag ruleAction={ruleInstance.action} />
             </span>
           );
         },

@@ -8,6 +8,7 @@ import { RangeValue } from 'rc-picker/lib/interface';
 import { useLocalStorageState } from 'ahooks';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
+import { useRuleActionTitle } from '../../../../utils/rules';
 import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
 import { useApi } from '@/api';
 import {
@@ -20,7 +21,8 @@ import {
   map,
   success,
 } from '@/utils/asyncResource';
-import { DashboardStatsTransactionsCountData } from '@/apis';
+import { DashboardStatsTransactionsCountData, RuleAction } from '@/apis';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 // FIXME: import doesn't work
 // const toPng = require('html-to-image').toPng;
@@ -86,6 +88,16 @@ export type TransactionsStats = {
 // }
 
 const TransactionsChartCard = () => {
+  const settings = useSettings();
+  const suspendedAlias = useRuleActionTitle(
+    settings.ruleActionAliases?.find((item) => item.action === 'SUSPEND')?.alias || 'SUSPEND',
+  );
+  const blockedAlias = useRuleActionTitle(
+    settings.ruleActionAliases?.find((item) => item.action === 'BLOCK')?.alias || 'BLOCK',
+  );
+  const flaggedAlias = useRuleActionTitle(
+    settings.ruleActionAliases?.find((item) => item.action === 'FLAG')?.alias || 'FLAG',
+  );
   const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
     moment().subtract(1, 'year'),
     moment(),
@@ -177,9 +189,9 @@ const TransactionsChartCard = () => {
         >
           {[
             { title: 'Total Transactions', key: 'totalTransactions' },
-            { title: 'Suspended Transactions', key: 'suspendedTransactions' },
-            { title: 'Blocked Transactions', key: 'stoppedTransactions' },
-            { title: 'Flagged Transactions', key: 'flaggedTransactions' },
+            { title: `${suspendedAlias} Transactions`, key: 'suspendedTransactions' },
+            { title: `${blockedAlias} Transactions`, key: 'stoppedTransactions' },
+            { title: `${flaggedAlias} Transactions`, key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
               <Spin spinning={isLoading(transactionsCountData)}>

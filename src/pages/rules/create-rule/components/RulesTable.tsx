@@ -66,7 +66,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         render: (_, rule) => {
           return (
             <span>
-              <RuleActionTag action={rule.defaultAction} />
+              <RuleActionTag ruleAction={rule.defaultAction} />
             </span>
           );
         },

@@ -117,7 +117,9 @@ export const RuleParametersEditor: React.FC<Props> = ({
 
       {readonly ? (
         <RuleActionTag
-          action={isPulseEnabled && riskLevelActions ? riskLevelActions[activeRiskLevel] : action}
+          ruleAction={
+            isPulseEnabled && riskLevelActions ? riskLevelActions[activeRiskLevel] : action
+          }
         />
       ) : (
         <Radio.Group

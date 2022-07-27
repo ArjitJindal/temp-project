@@ -1,25 +1,20 @@
 import { Tag } from 'antd';
 import React from 'react';
+import _ from 'lodash';
+import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
+import { useRuleActionTitle, useRuleActionColor } from '../../utils/rules';
 import { RuleAction } from '@/apis';
 
-function getRuleActionColor(ruleAction: RuleAction): string {
-  if (ruleAction === 'ALLOW') {
-    return 'green';
-  } else if (ruleAction === 'BLOCK') {
-    return 'red';
-  } else if (ruleAction === 'FLAG') {
-    return 'orange';
-  } else if (ruleAction === 'WHITELIST') {
-    return 'lime';
-  } else {
-    return 'yellow';
-  }
-}
-
 interface Props {
-  action: RuleAction;
+  ruleAction: RuleAction;
 }
 
-export const RuleActionTag: React.FC<Props> = ({ action }) => {
-  return <Tag color={getRuleActionColor(action)}>{action}</Tag>;
+export const RuleActionTag: React.FC<Props> = ({ ruleAction }) => {
+  const settings = useSettings();
+  const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
+  return (
+    <span>
+      <Tag color={useRuleActionColor(ruleAction)}>{useRuleActionTitle(alias || ruleAction)}</Tag>
+    </span>
+  );
 };
