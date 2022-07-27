@@ -47,7 +47,11 @@ function getGitHeadHash() {
     const result = execSync('git rev-parse HEAD', { stdio: 'pipe' });
     return result.toString()
   } catch (e) {
-    console.error(`Unable to get Git hash for last commit, use 'latest' instead. Reason: "${e.message}"`)
+    console.error(`Unable to get Git hash for last commit, trying to use CODEBUILD_RESOLVED_SOURCE_VERSION env variable. Fail reason: "${e.message}"`)
+    if (process.env.CODEBUILD_RESOLVED_SOURCE_VERSION) {
+      return process.env.CODEBUILD_RESOLVED_SOURCE_VERSION
+    }
+    console.error(`Unable to get CODEBUILD_RESOLVED_SOURCE_VERSION (it's empty) use 'latest' instead`)
     return 'latest'
   }
 }
