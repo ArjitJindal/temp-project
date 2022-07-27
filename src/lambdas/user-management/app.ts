@@ -6,6 +6,22 @@ import {
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+
+const handleRiskLevelParam = (
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  userPayload: User | Business
+) => {
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  riskRepository.createOrUpdateManualDRSRiskItem(
+    userPayload.userId,
+    userPayload.riskLevel!
+  )
+  delete userPayload.riskLevel
+}
 
 export const userHandler = lambdaApi()(
   async (
@@ -26,9 +42,11 @@ export const userHandler = lambdaApi()(
         console.log(user)
         return user
       } else if (event.httpMethod === 'POST' && event.body) {
-        const user = await userRepository.createBusinessUser(
-          JSON.parse(event.body)
-        )
+        const userPayload = JSON.parse(event.body)
+        if (userPayload.riskLevel) {
+          handleRiskLevelParam(tenantId, dynamoDb, userPayload)
+        }
+        const user = await userRepository.createBusinessUser(userPayload)
         const result = {
           userId: user.userId,
           // TODO: Implement risk score
@@ -41,9 +59,11 @@ export const userHandler = lambdaApi()(
         const user = await userRepository.getConsumerUser(userId)
         return user
       } else if (event.httpMethod === 'POST' && event.body) {
-        const user = await userRepository.createConsumerUser(
-          JSON.parse(event.body)
-        )
+        const userPayload = JSON.parse(event.body)
+        if (userPayload.riskLevel) {
+          handleRiskLevelParam(tenantId, dynamoDb, userPayload)
+        }
+        const user = await userRepository.createConsumerUser(userPayload)
         const result = {
           userId: user.userId,
           // TODO: Implement risk score
