@@ -655,6 +655,13 @@ export class DashboardStatsRepository {
           $limit: 10,
         },
         {
+          $match: {
+            rulesHit: {
+              $gte: 1,
+            },
+          },
+        },
+        {
           $lookup: {
             from: USERS_COLLECTION(this.tenantId),
             localField: '_id',
