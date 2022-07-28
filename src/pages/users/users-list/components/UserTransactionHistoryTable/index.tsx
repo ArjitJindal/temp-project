@@ -1,8 +1,9 @@
 import { Divider, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import { useRef } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import style from './style.module.less';
+import { RuleActionStatus } from '@/pages/case-management/components/RuleActionStatus';
 import { TransactionAmountDetails, TransactionCaseManagement, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
@@ -70,6 +71,9 @@ function expandedRowRender(transaction: TransactionCaseManagement) {
 }
 
 export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
+  const [updatedTransactions] = useState<{
+    [key: string]: TransactionCaseManagement;
+  }>({});
   const api = useApi();
 
   // Using this hack to fix sticking dropdown on scroll
@@ -144,6 +148,16 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             key: 'transactionTime',
             render: (_, transaction) => {
               return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+            },
+          },
+          {
+            title: 'Status',
+            sorter: true,
+            hideInSearch: true,
+            width: 120,
+            render: (dom, entity) => {
+              const transaction = updatedTransactions[entity.transactionId as string] || entity;
+              return <RuleActionStatus ruleAction={transaction.status} />;
             },
           },
           {
