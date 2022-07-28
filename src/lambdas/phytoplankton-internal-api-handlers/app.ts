@@ -6,7 +6,10 @@ import { BadRequest, InternalServerError, NotFound } from 'http-errors'
 import { HammerheadStackConstants } from '@cdk/constants'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
-import { DashboardStatsRepository } from './repository/dashboard-stats-repository'
+import {
+  DashboardStatsRepository,
+  GranularityValuesType,
+} from './repository/dashboard-stats-repository'
 import { UserService } from './services/user-service'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -247,10 +250,12 @@ export const dashboardStatsHandler = lambdaApi()(
     ) {
       const client = await connectToDB()
       const { principalId: tenantId } = event.requestContext.authorizer
-      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
-        startTimestamp?: string
-        endTimestamp?: string
-      }
+      const { startTimestamp, endTimestamp, granularity } =
+        event.queryStringParameters as {
+          startTimestamp?: string
+          endTimestamp?: string
+          granularity?: GranularityValuesType
+        }
       const endTimestampNumber = endTimestamp
         ? parseInt(endTimestamp)
         : Number.NaN
@@ -272,7 +277,8 @@ export const dashboardStatsHandler = lambdaApi()(
 
       const data = await dashboardStatsRepository.getTransactionCountStats(
         startTimestampNumber,
-        endTimestampNumber
+        endTimestampNumber,
+        granularity
       )
       return {
         data,

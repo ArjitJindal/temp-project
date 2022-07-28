@@ -19,6 +19,9 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
+export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
+const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
+
 export class DashboardStatsRepository {
   mongoDb: MongoClient
   tenantId: string
@@ -571,14 +574,27 @@ export class DashboardStatsRepository {
 
   public async getTransactionCountStats(
     startTimestamp: number,
-    endTimestamp: number
+    endTimestamp: number,
+    granularity?: GranularityValuesType
   ): Promise<TransactionDashboardStats[]> {
     const tenantId = this.tenantId
     const db = this.mongoDb.db()
 
-    const collection = db.collection<TransactionDashboardStats>(
-      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
-    )
+    let collection
+
+    if (granularity === granularityValues.DAY) {
+      collection = db.collection<TransactionDashboardStats>(
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId)
+      )
+    } else if (granularity === granularityValues.MONTH) {
+      collection = db.collection<TransactionDashboardStats>(
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId)
+      )
+    } else {
+      collection = db.collection<TransactionDashboardStats>(
+        DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
+      )
+    }
 
     const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
     const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
