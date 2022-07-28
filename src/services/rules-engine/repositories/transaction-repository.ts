@@ -112,26 +112,41 @@ export class TransactionRepository {
   public getTransactionsMongoQuery(
     params: DefaultApiGetTransactionsListRequest
   ): Filter<TransactionCaseManagement> {
-    const query: Filter<TransactionCaseManagement> = {
+    const conditions: Filter<TransactionCaseManagement>[] = []
+    conditions.push({
       timestamp: {
         $gte: params.afterTimestamp || 0,
         $lte: params.beforeTimestamp,
       },
-    }
+    })
+
     if (params.filterId != null) {
-      query['transactionId'] = { $regex: params.filterId }
+      conditions.push({ transactionId: { $regex: params.filterId } })
     }
     if (params.transactionType != null) {
-      query['type'] = { $regex: params.transactionType }
+      conditions.push({ type: { $regex: params.transactionType } })
     }
     if (params.filterOutStatus != null) {
-      query['status'] = { $ne: params.filterOutStatus }
+      conditions.push({ status: { $ne: params.filterOutStatus } })
     }
-    if (params.filterOriginUserId != null) {
-      query['originUserId'] = { $eq: params.filterOriginUserId }
-    }
-    if (params.filterDestinationUserId != null) {
-      query['destinationUserId'] = { $eq: params.filterDestinationUserId }
+    if (params.filterUserId != null) {
+      conditions.push({
+        $or: [
+          { originUserId: { $eq: params.filterUserId } },
+          { destinationUserId: { $eq: params.filterUserId } },
+        ],
+      })
+    } else {
+      if (params.filterOriginUserId != null) {
+        conditions.push({ originUserId: { $eq: params.filterOriginUserId } })
+      }
+      if (params.filterDestinationUserId != null) {
+        conditions.push({
+          destinationUserId: {
+            $eq: params.filterDestinationUserId,
+          },
+        })
+      }
     }
 
     const executedRulesFilters = []
@@ -149,23 +164,29 @@ export class TransactionRepository {
       })
     }
     if (executedRulesFilters.length > 0) {
-      query['executedRules'] = {
-        $all: executedRulesFilters,
-      }
+      conditions.push({
+        executedRules: {
+          $all: executedRulesFilters,
+        },
+      })
     }
 
     if (params.filterOriginCurrencies != null) {
-      query['originAmountDetails.transactionCurrency'] = {
-        $in: params.filterOriginCurrencies,
-      }
+      conditions.push({
+        'originAmountDetails.transactionCurrency': {
+          $in: params.filterOriginCurrencies,
+        },
+      })
     }
     if (params.filterDestinationCurrencies != null) {
-      query['destinationAmountDetails.transactionCurrency'] = {
-        $in: params.filterDestinationCurrencies,
-      }
+      conditions.push({
+        'destinationAmountDetails.transactionCurrency': {
+          $in: params.filterDestinationCurrencies,
+        },
+      })
     }
 
-    return query
+    return { $and: conditions }
   }
 
   public async getTransactionsCursor(
