@@ -4,9 +4,13 @@ import dayjs from '@/utils/dayjs'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
   DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
+  DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
+  DAY_DATE_FORMAT,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
+  MONTH_DATE_FORMAT,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
@@ -160,8 +164,12 @@ export class DashboardStatsRepository {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    const aggregatedCollectionName =
+    const aggregatedHourlyCollectionName =
       DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(this.tenantId)
+    const aggregatedDailyCollectionName =
+      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(this.tenantId)
+    const aggregatedMonthlyCollectionName =
+      DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(this.tenantId)
 
     // Stages for calculating rules final action, which follows the same
     // logic as TransactionRepository.getAggregatedRuleStatus
@@ -216,6 +224,7 @@ export class DashboardStatsRepository {
         },
       },
     ]
+    // Hourly Stats
     try {
       await transactionsCollection
         .aggregate([
@@ -233,7 +242,7 @@ export class DashboardStatsRepository {
           },
           {
             $merge: {
-              into: aggregatedCollectionName,
+              into: aggregatedHourlyCollectionName,
               whenMatched: 'replace',
             },
           },
@@ -261,7 +270,7 @@ export class DashboardStatsRepository {
           },
           {
             $merge: {
-              into: aggregatedCollectionName,
+              into: aggregatedHourlyCollectionName,
               whenMatched: 'merge',
             },
           },
@@ -289,7 +298,7 @@ export class DashboardStatsRepository {
           },
           {
             $merge: {
-              into: aggregatedCollectionName,
+              into: aggregatedHourlyCollectionName,
               whenMatched: 'merge',
             },
           },
@@ -317,7 +326,229 @@ export class DashboardStatsRepository {
           },
           {
             $merge: {
-              into: aggregatedCollectionName,
+              into: aggregatedHourlyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+    } catch (e) {
+      console.error(`ERROR ${e}`)
+    }
+    // Daily stats
+    try {
+      await transactionsCollection
+        .aggregate([
+          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: DAY_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              totalTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedDailyCollectionName,
+              whenMatched: 'replace',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'FLAG',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: DAY_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              flaggedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedDailyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'BLOCK',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: DAY_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              stoppedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedDailyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'SUSPEND',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: DAY_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              suspendedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedDailyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+    } catch (e) {
+      console.error(`ERROR ${e}`)
+    }
+    // Monthly stats
+    try {
+      await transactionsCollection
+        .aggregate([
+          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: MONTH_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              totalTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedMonthlyCollectionName,
+              whenMatched: 'replace',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'FLAG',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: MONTH_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              flaggedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedMonthlyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'BLOCK',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: MONTH_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              stoppedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedMonthlyCollectionName,
+              whenMatched: 'merge',
+            },
+          },
+        ])
+        .next()
+      await transactionsCollection
+        .aggregate([
+          ...rulesResultStages,
+          {
+            $match: {
+              timestamp: { $gte: 0 },
+              hitRulesResult: 'SUSPEND',
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: MONTH_DATE_FORMAT,
+                  date: { $toDate: { $toLong: '$timestamp' } },
+                },
+              },
+              suspendedTransactions: { $sum: 1 },
+            },
+          },
+          {
+            $merge: {
+              into: aggregatedMonthlyCollectionName,
               whenMatched: 'merge',
             },
           },
