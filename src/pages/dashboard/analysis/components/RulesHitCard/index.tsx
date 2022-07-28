@@ -13,7 +13,10 @@ import Table from '@/components/ui/Table';
 export default function RuleHitCard() {
   const api = useApi();
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
+    moment().subtract(1, 'week'),
+    moment(),
+  ]);
   const [rules, setRules] = useState<{ [key: string]: Rule }>({});
 
   const actionRef = useRef<ActionType>();

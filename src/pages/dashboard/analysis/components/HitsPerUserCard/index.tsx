@@ -12,7 +12,10 @@ import Table from '@/components/ui/Table';
 export default function HitsPerUserCard() {
   const api = useApi();
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>(null);
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
+    moment().subtract(1, 'week'),
+    moment(),
+  ]);
 
   const actionRef = useRef<ActionType>();
   useEffect(() => {
