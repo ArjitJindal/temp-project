@@ -736,6 +736,14 @@ paths:
             type: number
           in: query
           name: endTimestamp
+        - schema:
+            type: string
+            enum:
+              - HOUR
+              - MONTH
+              - DAY
+          in: query
+          name: granularity
     parameters: []
   /dashboard_stats/rule_hit:
     get:

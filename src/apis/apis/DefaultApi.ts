@@ -692,10 +692,12 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * DashboardStats - Transactions
    * @param startTimestamp
    * @param endTimestamp
+   * @param granularity
    */
   public async getDashboardStatsTransactions(
     startTimestamp?: number,
     endTimestamp?: number,
+    granularity?: 'HOUR' | 'MONTH' | 'DAY',
     _options?: Configuration,
   ): Promise<RequestContext> {
     let _config = _options || this.configuration;
@@ -720,6 +722,14 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam(
         'endTimestamp',
         ObjectSerializer.serialize(endTimestamp, 'number', ''),
+      );
+    }
+
+    // Query Params
+    if (granularity !== undefined) {
+      requestContext.setQueryParam(
+        'granularity',
+        ObjectSerializer.serialize(granularity, "'HOUR' | 'MONTH' | 'DAY'", ''),
       );
     }
 

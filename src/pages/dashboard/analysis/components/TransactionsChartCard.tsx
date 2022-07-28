@@ -89,6 +89,9 @@ export type TransactionsStats = {
 
 const TransactionsChartCard = () => {
   const settings = useSettings();
+  type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
+  const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
+
   const suspendedAlias = useRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'SUSPEND')?.alias || 'SUSPEND',
   );
@@ -102,6 +105,18 @@ const TransactionsChartCard = () => {
     moment().subtract(1, 'year'),
     moment(),
   ]);
+  const [granularity, setGranularity] = useState<GranularityValuesType>(
+    granularityValues.MONTH as GranularityValuesType,
+  );
+
+  const calcGranularity = (type: string): GranularityValuesType => {
+    if (type === 'YEAR') {
+      return granularityValues.MONTH as GranularityValuesType;
+    } else if (type === 'MONTH' || type === 'WEEK') {
+      return granularityValues.DAY as GranularityValuesType;
+    }
+    return granularityValues.HOUR as GranularityValuesType;
+  };
 
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
@@ -124,6 +139,7 @@ const TransactionsChartCard = () => {
         const transactionsCountResult = await api.getDashboardStatsTransactions({
           startTimestamp,
           endTimestamp,
+          granularity: granularity,
         });
         if (isCanceled) {
           return;
@@ -141,7 +157,7 @@ const TransactionsChartCard = () => {
     return () => {
       isCanceled = true;
     };
-  }, [api, dateRange, timeWindowType]);
+  }, [api, dateRange, timeWindowType, granularity]);
 
   const data = getOr(transactionsCountData, []);
   const [activeTab, setActiveTab] = useLocalStorageState(
@@ -170,6 +186,7 @@ const TransactionsChartCard = () => {
                     onClick={() => {
                       setTimeWindowType(type);
                       setDateRange([momentCalc(type), moment()]);
+                      setGranularity(calcGranularity(type));
                     }}
                   >
                     {title}

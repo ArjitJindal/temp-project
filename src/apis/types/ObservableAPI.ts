@@ -727,15 +727,18 @@ export class ObservableDefaultApi {
    * DashboardStats - Transactions
    * @param startTimestamp
    * @param endTimestamp
+   * @param granularity
    */
   public getDashboardStatsTransactions(
     startTimestamp?: number,
     endTimestamp?: number,
+    granularity?: 'HOUR' | 'MONTH' | 'DAY',
     _options?: Configuration,
   ): Observable<DashboardStatsTransactionsCount> {
     const requestContextPromise = this.requestFactory.getDashboardStatsTransactions(
       startTimestamp,
       endTimestamp,
+      granularity,
       _options,
     );
 

@@ -860,6 +860,8 @@ let body:.DefaultApiGetDashboardStatsTransactionsRequest = {
   startTimestamp: 3.14,
   // number (optional)
   endTimestamp: 3.14,
+  // 'HOUR' | 'MONTH' | 'DAY' (optional)
+  granularity: "HOUR",
 };
 
 apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
@@ -869,10 +871,11 @@ apiInstance.getDashboardStatsTransactions(body).then((data:any) => {
 
 ### Parameters
 
-| Name               | Type         | Description | Notes                            |
-| ------------------ | ------------ | ----------- | -------------------------------- |
-| **startTimestamp** | [**number**] |             | (optional) defaults to undefined |
-| **endTimestamp**   | [**number**] |             | (optional) defaults to undefined |
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- | --- | --- |
+| **startTimestamp** | [**number**] |  | (optional) defaults to undefined |
+| **endTimestamp** | [**number**] |  | (optional) defaults to undefined |
+| **granularity** | [\*\*&#39;HOUR&#39; | &#39;MONTH&#39; | &#39;DAY&#39;**]**Array<&#39;HOUR&#39; &#124; &#39;MONTH&#39; &#124; &#39;DAY&#39;>\*\* |  | (optional) defaults to undefined |
 
 ### Return type
 

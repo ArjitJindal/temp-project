@@ -338,6 +338,12 @@ export interface DefaultApiGetDashboardStatsTransactionsRequest {
    * @memberof DefaultApigetDashboardStatsTransactions
    */
   endTimestamp?: number;
+  /**
+   *
+   * @type &#39;HOUR&#39; | &#39;MONTH&#39; | &#39;DAY&#39;
+   * @memberof DefaultApigetDashboardStatsTransactions
+   */
+  granularity?: 'HOUR' | 'MONTH' | 'DAY';
 }
 
 export interface DefaultApiGetImportImportIdRequest {
@@ -985,7 +991,12 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<DashboardStatsTransactionsCount> {
     return this.api
-      .getDashboardStatsTransactions(param.startTimestamp, param.endTimestamp, options)
+      .getDashboardStatsTransactions(
+        param.startTimestamp,
+        param.endTimestamp,
+        param.granularity,
+        options,
+      )
       .toPromise();
   }
 
