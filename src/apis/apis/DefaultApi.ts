@@ -989,6 +989,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
+   * @param filterUserId
    * @param filterOriginUserId
    * @param filterDestinationUserId
    * @param includeUsers
@@ -1008,6 +1009,7 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
+    filterUserId?: string,
     filterOriginUserId?: string,
     filterDestinationUserId?: string,
     includeUsers?: boolean,
@@ -1130,6 +1132,14 @@ export class DefaultApiRequestFactory extends BaseAPIRequestFactory {
       requestContext.setQueryParam(
         'sortOrder',
         ObjectSerializer.serialize(sortOrder, 'string', ''),
+      );
+    }
+
+    // Query Params
+    if (filterUserId !== undefined) {
+      requestContext.setQueryParam(
+        'filterUserId',
+        ObjectSerializer.serialize(filterUserId, 'string', ''),
       );
     }
 

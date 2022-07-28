@@ -392,6 +392,10 @@ paths:
         - schema:
             type: string
           in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
           name: filterOriginUserId
         - schema:
             type: string

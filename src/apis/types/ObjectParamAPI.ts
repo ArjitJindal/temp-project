@@ -470,6 +470,12 @@ export interface DefaultApiGetTransactionsListRequest {
    * @type string
    * @memberof DefaultApigetTransactionsList
    */
+  filterUserId?: string;
+  /**
+   *
+   * @type string
+   * @memberof DefaultApigetTransactionsList
+   */
   filterOriginUserId?: string;
   /**
    *
@@ -1105,6 +1111,7 @@ export class ObjectDefaultApi {
         param.filterDestinationCurrencies,
         param.sortField,
         param.sortOrder,
+        param.filterUserId,
         param.filterOriginUserId,
         param.filterDestinationUserId,
         param.includeUsers,

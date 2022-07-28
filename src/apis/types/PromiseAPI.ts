@@ -452,6 +452,7 @@ export class PromiseDefaultApi {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
+   * @param filterUserId
    * @param filterOriginUserId
    * @param filterDestinationUserId
    * @param includeUsers
@@ -471,6 +472,7 @@ export class PromiseDefaultApi {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
+    filterUserId?: string,
     filterOriginUserId?: string,
     filterDestinationUserId?: string,
     includeUsers?: boolean,
@@ -491,6 +493,7 @@ export class PromiseDefaultApi {
       filterDestinationCurrencies,
       sortField,
       sortOrder,
+      filterUserId,
       filterOriginUserId,
       filterDestinationUserId,
       includeUsers,

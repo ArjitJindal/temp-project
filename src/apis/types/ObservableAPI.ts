@@ -1075,6 +1075,7 @@ export class ObservableDefaultApi {
    * @param filterDestinationCurrencies
    * @param sortField
    * @param sortOrder
+   * @param filterUserId
    * @param filterOriginUserId
    * @param filterDestinationUserId
    * @param includeUsers
@@ -1094,6 +1095,7 @@ export class ObservableDefaultApi {
     filterDestinationCurrencies?: Array<string>,
     sortField?: string,
     sortOrder?: string,
+    filterUserId?: string,
     filterOriginUserId?: string,
     filterDestinationUserId?: string,
     includeUsers?: boolean,
@@ -1114,6 +1116,7 @@ export class ObservableDefaultApi {
       filterDestinationCurrencies,
       sortField,
       sortOrder,
+      filterUserId,
       filterOriginUserId,
       filterDestinationUserId,
       includeUsers,

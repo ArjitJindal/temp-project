@@ -1371,6 +1371,8 @@ let body:.DefaultApiGetTransactionsListRequest = {
   // string (optional)
   sortOrder: "sortOrder_example",
   // string (optional)
+  filterUserId: "filterUserId_example",
+  // string (optional)
   filterOriginUserId: "filterOriginUserId_example",
   // string (optional)
   filterDestinationUserId: "filterDestinationUserId_example",
@@ -1402,6 +1404,7 @@ apiInstance.getTransactionsList(body).then((data:any) => {
 | **filterDestinationCurrencies** | **Array&lt;string&gt;** |  | (optional) defaults to undefined |
 | **sortField** | [**string**] |  | (optional) defaults to undefined |
 | **sortOrder** | [**string**] |  | (optional) defaults to undefined |
+| **filterUserId** | [**string**] |  | (optional) defaults to undefined |
 | **filterOriginUserId** | [**string**] |  | (optional) defaults to undefined |
 | **filterDestinationUserId** | [**string**] |  | (optional) defaults to undefined |
 | **includeUsers** | [**boolean**] |  | (optional) defaults to undefined |

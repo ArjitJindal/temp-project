@@ -1,6 +1,7 @@
 import { Divider, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
+import { useRef } from 'react';
 import style from './style.module.less';
 import { TransactionAmountDetails, TransactionCaseManagement, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
@@ -71,82 +72,119 @@ function expandedRowRender(transaction: TransactionCaseManagement) {
 export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
   const api = useApi();
 
+  // Using this hack to fix sticking dropdown on scroll
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
   return (
-    <Table<
-      TransactionCaseManagement & {
-        direction: 'Incoming' | 'Outgoing';
-      }
-    >
-      search={false}
-      rowKey="transactionId"
-      form={{
-        labelWrap: true,
-      }}
-      className={style.tablePadding}
-      request={async (params) => {
-        if (!userId) {
-          throw new Error(`User id is null, unable to fetch transaction history`);
+    <div ref={rootRef} style={{ position: 'relative' }}>
+      <Table<
+        TransactionCaseManagement & {
+          direction: 'Incoming' | 'Outgoing';
         }
-        const requestParams: DefaultApiGetTransactionsListRequest = {
-          limit: params.pageSize!,
-          skip: (params.current! - 1) * params.pageSize!,
-          beforeTimestamp: Date.now(),
-          includeEvents: true,
-        };
-        const [originFilterResult, destFilterResult] = await Promise.all([
-          api.getTransactionsList({ ...requestParams, filterOriginUserId: userId }),
-          api.getTransactionsList({ ...requestParams, filterDestinationUserId: userId }),
-        ]);
-        return {
-          data: [
-            ...originFilterResult.data.map((x) => ({ ...x, direction: 'Outgoing' as const })),
-            ...destFilterResult.data.map((x) => ({ ...x, direction: 'Incoming' as const })),
-          ],
-          success: true,
-          total: originFilterResult.total + destFilterResult.total,
-        };
-      }}
-      columns={[
-        {
-          title: 'Transaction ID',
-          dataIndex: 'transactionId',
-          key: 'transactionId',
-          render: (dom, entity) => {
-            return (
-              <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
-            );
+      >
+        search={false}
+        rowKey="transactionId"
+        form={{
+          labelWrap: true,
+        }}
+        className={style.tablePadding}
+        request={async (params, sort, filters) => {
+          if (!userId) {
+            throw new Error(`User id is null, unable to fetch transaction history`);
+          }
+          const requestParams: DefaultApiGetTransactionsListRequest = {
+            limit: params.pageSize!,
+            skip: (params.current! - 1) * params.pageSize!,
+            beforeTimestamp: Date.now(),
+            includeEvents: true,
+          };
+          const directionFilter = (filters ?? {})['direction'] ?? [];
+          const showIncoming = directionFilter.indexOf('incoming') !== -1;
+          const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
+
+          if (showOutgoing) {
+            requestParams.filterOriginUserId = userId;
+          } else if (showIncoming) {
+            requestParams.filterDestinationUserId = userId;
+          } else {
+            requestParams.filterUserId = userId;
+          }
+
+          const result = await api.getTransactionsList(requestParams);
+          return {
+            data: result.data.map((x) => ({
+              ...x,
+              direction: x.originUserId === userId ? 'Outgoing' : 'Incoming',
+            })),
+            success: true,
+            total: result.total,
+          };
+        }}
+        getPopupContainer={(result) => {
+          if (rootRef.current) {
+            return rootRef.current;
+          }
+          return document.body;
+        }}
+        columns={[
+          {
+            title: 'Transaction ID',
+            dataIndex: 'transactionId',
+            key: 'transactionId',
+            render: (dom, entity) => {
+              return (
+                <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
+              );
+            },
           },
-        },
-        {
-          title: 'Transaction Time',
-          dataIndex: 'timestamp',
-          valueType: 'dateTime',
-          key: 'transactionTime',
-          render: (_, transaction) => {
-            return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          {
+            title: 'Transaction Time',
+            dataIndex: 'timestamp',
+            valueType: 'dateTime',
+            key: 'transactionTime',
+            render: (_, transaction) => {
+              return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+            },
           },
-        },
-        {
-          title: 'Transaction Direction',
-          dataIndex: 'direction',
-          key: 'direction',
-        },
-        {
-          title: 'Origin Amount',
-          render: (dom, entity) => {
-            return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
+          {
+            title: 'Transaction Direction',
+            dataIndex: 'direction',
+            filters: true,
+            onFilter: false,
+            filterMultiple: false,
+            valueType: 'select',
+            valueEnum: {
+              all: {
+                text: 'All',
+              },
+              incoming: {
+                text: 'Incoming',
+              },
+              outgoing: {
+                text: 'Outgoing',
+              },
+            },
+            key: 'direction',
           },
-          key: 'originAmountDetails',
-        },
-        {
-          title: 'Destination Amount',
-          render: (dom, entity) => {
-            return `${createCurrencyStringFromTransactionAmount(entity.destinationAmountDetails)}`;
+          {
+            title: 'Origin Amount',
+            render: (dom, entity) => {
+              return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
+            },
+            key: 'originAmountDetails',
           },
-          key: 'destinationAmountDetails',
-        },
-      ]}
-      expandable={{ expandedRowRender }}
-    />
+          {
+            title: 'Destination Amount',
+            render: (dom, entity) => {
+              return `${createCurrencyStringFromTransactionAmount(
+                entity.destinationAmountDetails,
+              )}`;
+            },
+            key: 'destinationAmountDetails',
+          },
+        ]}
+        expandable={{ expandedRowRender }}
+      />
+    </div>
   );
 };
