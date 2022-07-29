@@ -25,7 +25,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         width: 100,
         dataIndex: 'id',
         sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
-        sortDirections: ['ascend', 'descend'],
+        defaultSortOrder: 'ascend',
         render: (_, entity) => {
           return isAtLeast(user, UserRole.ROOT) ? (
             <RuleCreationForm rule={entity}>
