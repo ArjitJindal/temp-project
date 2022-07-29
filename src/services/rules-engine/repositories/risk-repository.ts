@@ -188,10 +188,12 @@ export class RiskRepository {
     }
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0 ? result.Items : []
+      return result.Items && result.Items.length > 0
+        ? result.Items[0].schemaAttributes
+        : null
     } catch (e) {
       console.log(e)
-      return []
+      return null
     }
   }
 }

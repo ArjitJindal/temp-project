@@ -30,8 +30,8 @@ export const jsonSerializer =
     const response = await handler(event, context, callback)
     if (!response) {
       return {
-        statusCode: 204,
-        body: '',
+        statusCode: 200,
+        body: JSON.stringify(response),
       }
     }
 

@@ -1049,13 +1049,13 @@ paths:
     parameters: []
     post:
       summary: Parameter Risk Level - POST
-      operationId: pulse-risk-parameter
+      operationId: post-pulse-risk-parameter
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              title: ChangeTenantPayload
+              title: PostPulseRiskParameters
               properties:
                 parameterAttributeRiskValues:
                   $ref: '#/components/schemas/ParameterAttributeRiskValues'
@@ -1064,6 +1064,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValues'
         '403':
           description: Not enough privileges
       parameters: []
@@ -1074,6 +1078,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValues'
       parameters:
         - schema:
             type: string
@@ -1737,7 +1745,11 @@ components:
           type: string
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
+      required:
+        - parameterValue
+        - riskLevel
     ParameterAttributeRiskValues:
+      title: 'ParameterAttributeRiskValues'
       type: object
       x-examples:
         example-1:
@@ -1752,6 +1764,8 @@ components:
           enum:
             - userDetails.countryOfResidence
             - userDetails.countryOfOrigin
+        isActive:
+          type: boolean
         riskValueType:
           type: string
           enum:
@@ -1761,7 +1775,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskParameterLevelKeyValue'
-      title: ''
+      required:
+        - parameter
+        - isActive
+        - riskValueType
+        - riskLevelAssignmentValues
     Feature:
       type: string
       title: Feature

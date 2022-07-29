@@ -41,6 +41,7 @@ import { RiskRepository } from '@/services/rules-engine/repositories/risk-reposi
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -788,42 +789,50 @@ const validateClassificationRequest = (
 
 export const parameterRiskAssignmentHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
-})
-;async (
-  event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
-  >
-) => {
-  const { principalId: tenantId } = event.requestContext.authorizer
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    console.log('tenantId', tenantId)
 
-  const dynamoDb = getDynamoDbClient(event)
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  if (
-    event.httpMethod === 'POST' &&
-    event.resource === '/pulse/risk-parameter'
-  ) {
-    if (!event.body) {
-      throw new BadRequest('Empty body')
-    }
-    let parameterRiskLevels
-    try {
-      parameterRiskLevels = JSON.parse(event.body)
-    } catch (e) {
-      throw new BadRequest('Invalid Request')
-    }
-    return riskRepository.createOrUpdateParameterRiskItem(
-      parameterRiskLevels.parameterAttributeRiskValues
-    )
-  } else if (
-    event.httpMethod === 'GET' &&
-    event.resource === '/pulse/risk-parameter'
-  ) {
-    const { parameter } = event.queryStringParameters as any
+    const dynamoDb = getDynamoDbClient(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/risk-parameter'
+    ) {
+      if (!event.body) {
+        throw new BadRequest('Empty body')
+      }
+      let parameterRiskLevels: PostPulseRiskParameters
+      try {
+        parameterRiskLevels = JSON.parse(event.body)
+      } catch (e) {
+        throw new BadRequest('Invalid Request')
+      }
+      return riskRepository.createOrUpdateParameterRiskItem(
+        parameterRiskLevels.parameterAttributeRiskValues
+      )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/risk-parameter'
+    ) {
+      const { parameter } = (event.queryStringParameters || {}) as {
+        [key: string]: string
+      }
 
-    return riskRepository.getParameterRiskItem(parameter)
+      if (parameter == null) {
+        throw new BadRequest(`"parameter" is a requred query parameter`)
+      }
+
+      return riskRepository.getParameterRiskItem(parameter)
+    }
+    throw new BadRequest('Unhandled request')
   }
-  throw new BadRequest('Unhandled request')
-}
+)
 
 export const manualRiskAssignmentHandler = lambdaApi({
   requiredFeatures: ['PULSE'],

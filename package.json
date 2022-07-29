@@ -50,7 +50,7 @@
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
     "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
     "start-local-mongodb": "docker run -p 27017:27017 mongo",
-    "dev:databases": "npm run parallel start-local-dbs start-local-api",
+    "dev:databases": "npm run parallel start-local-ddb start-local-mongodb",
     "dev:api": "npm run start-local-api",
     "dev": "npm run parallel dev:databases dev:api"
   },
