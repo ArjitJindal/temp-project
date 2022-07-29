@@ -6,3 +6,10 @@ export function neverThrow(obj: never, message?: string): never {
 export function neverReturn<T>(obj: never, defaultValue: T): T {
   return defaultValue;
 }
+
+export function getErrorMessage(e: unknown) {
+  if (e instanceof Error && e.message) {
+    return e.message;
+  }
+  return 'Unknown error';
+}

@@ -54,7 +54,6 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
-import { InternalConsumerUserAllOfUserStatus } from '../models/InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from '../models/KYCStatus';
 import { KYCStatusDetails } from '../models/KYCStatusDetails';
 import { KYCStatusDetails1 } from '../models/KYCStatusDetails1';
@@ -64,13 +63,16 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
 import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
+import { ParameterAttributeRiskValues } from '../models/ParameterAttributeRiskValues';
 import { Person } from '../models/Person';
+import { PostPulseRiskParameters } from '../models/PostPulseRiskParameters';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevel1 } from '../models/RiskLevel1';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
+import { RiskParameterLevelKeyValue } from '../models/RiskParameterLevelKeyValue';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
@@ -132,7 +134,7 @@ export class PromiseDefaultApi {
     userId: string,
     ChangeTenantPayload?: ChangeTenantPayload,
     _options?: Configuration,
-  ): Promise<void> {
+  ): Promise<ManualRiskAssignmentUserState> {
     const result = this.api.accountsChangeTenant(userId, ChangeTenantPayload, _options);
     return result.toPromise();
   }
@@ -392,6 +394,18 @@ export class PromiseDefaultApi {
   }
 
   /**
+   * Parameter Risk Level - GET
+   * @param parameter Parameter you want to filter on
+   */
+  public getPulseRiskParameter(
+    parameter?: string,
+    _options?: Configuration,
+  ): Promise<ParameterAttributeRiskValues> {
+    const result = this.api.getPulseRiskParameter(parameter, _options);
+    return result.toPromise();
+  }
+
+  /**
    * Rule Implementations - List
    */
   public getRuleImplementations(_options?: Configuration): Promise<Array<RuleImplementation>> {
@@ -413,6 +427,14 @@ export class PromiseDefaultApi {
    */
   public getRules(ruleId?: string, _options?: Configuration): Promise<Array<Rule>> {
     const result = this.api.getRules(ruleId, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Slack OAuth Redirect
+   */
+  public getSlackOauthRedirect(_options?: Configuration): Promise<void> {
+    const result = this.api.getSlackOauthRedirect(_options);
     return result.toPromise();
   }
 
@@ -658,6 +680,18 @@ export class PromiseDefaultApi {
     _options?: Configuration,
   ): Promise<Array<RiskClassificationScore>> {
     const result = this.api.postPulseRiskClassification(RiskClassificationScore, _options);
+    return result.toPromise();
+  }
+
+  /**
+   * Parameter Risk Level - POST
+   * @param PostPulseRiskParameters
+   */
+  public postPulseRiskParameter(
+    PostPulseRiskParameters?: PostPulseRiskParameters,
+    _options?: Configuration,
+  ): Promise<ParameterAttributeRiskValues> {
+    const result = this.api.postPulseRiskParameter(PostPulseRiskParameters, _options);
     return result.toPromise();
   }
 

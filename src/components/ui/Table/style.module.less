@@ -40,8 +40,22 @@
     }
 
     .ant-table-expanded-row > .ant-table-cell {
-      padding: 20px !important;
       background: @fr-colors-gray-1 !important;
+    }
+  }
+
+  &:not(.disableExpandedRowPadding) {
+    :global {
+      .ant-table-expanded-row > .ant-table-cell {
+        padding: 20px !important;
+      }
+    }
+  }
+  &.disableExpandedRowPadding {
+    :global {
+      .ant-table-expanded-row > .ant-table-cell {
+        padding: 0;
+      }
     }
   }
 }

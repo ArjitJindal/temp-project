@@ -10,13 +10,11 @@
  * Do not edit the class manually.
  */
 
+import { ParameterAttributeRiskValues } from './ParameterAttributeRiskValues';
 import { HttpFile } from '../http/http';
 
-export class DashboardStatsTransactionsCountData {
-  '_id': string;
-  'totalTransactions'?: number;
-  'flaggedTransactions'?: number;
-  'stoppedTransactions'?: number;
+export class PostPulseRiskParameters {
+  'parameterAttributeRiskValues': ParameterAttributeRiskValues;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -27,33 +25,15 @@ export class DashboardStatsTransactionsCountData {
     format: string;
   }> = [
     {
-      name: '_id',
-      baseName: '_id',
-      type: 'string',
-      format: '',
-    },
-    {
-      name: 'totalTransactions',
-      baseName: 'totalTransactions',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'flaggedTransactions',
-      baseName: 'flaggedTransactions',
-      type: 'number',
-      format: '',
-    },
-    {
-      name: 'stoppedTransactions',
-      baseName: 'stoppedTransactions',
-      type: 'number',
+      name: 'parameterAttributeRiskValues',
+      baseName: 'parameterAttributeRiskValues',
+      type: 'ParameterAttributeRiskValues',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return DashboardStatsTransactionsCountData.attributeTypeMap;
+    return PostPulseRiskParameters.attributeTypeMap;
   }
 
   public constructor() {}

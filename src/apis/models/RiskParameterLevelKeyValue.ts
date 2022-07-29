@@ -10,11 +10,12 @@
  * Do not edit the class manually.
  */
 
+import { RiskLevel } from './RiskLevel';
 import { HttpFile } from '../http/http';
 
-export class InternalConsumerUserAllOfUserStatus {
-  'statusReason'?: string;
-  'status'?: string;
+export class RiskParameterLevelKeyValue {
+  'parameterValue': string;
+  'riskLevel': RiskLevel;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -25,21 +26,21 @@ export class InternalConsumerUserAllOfUserStatus {
     format: string;
   }> = [
     {
-      name: 'statusReason',
-      baseName: 'statusReason',
+      name: 'parameterValue',
+      baseName: 'parameterValue',
       type: 'string',
       format: '',
     },
     {
-      name: 'status',
-      baseName: 'status',
-      type: 'string',
+      name: 'riskLevel',
+      baseName: 'riskLevel',
+      type: 'RiskLevel',
       format: '',
     },
   ];
 
   static getAttributeTypeMap() {
-    return InternalConsumerUserAllOfUserStatus.attributeTypeMap;
+    return RiskParameterLevelKeyValue.attributeTypeMap;
   }
 
   public constructor() {}

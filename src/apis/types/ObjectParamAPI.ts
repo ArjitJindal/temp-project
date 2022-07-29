@@ -54,7 +54,6 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
-import { InternalConsumerUserAllOfUserStatus } from '../models/InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from '../models/KYCStatus';
 import { KYCStatusDetails } from '../models/KYCStatusDetails';
 import { KYCStatusDetails1 } from '../models/KYCStatusDetails1';
@@ -64,13 +63,16 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
 import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
+import { ParameterAttributeRiskValues } from '../models/ParameterAttributeRiskValues';
 import { Person } from '../models/Person';
+import { PostPulseRiskParameters } from '../models/PostPulseRiskParameters';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevel1 } from '../models/RiskLevel1';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
+import { RiskParameterLevelKeyValue } from '../models/RiskParameterLevelKeyValue';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
@@ -366,6 +368,15 @@ export interface DefaultApiGetPulseManualRiskAssignmentRequest {
 
 export interface DefaultApiGetPulseRiskClassificationRequest {}
 
+export interface DefaultApiGetPulseRiskParameterRequest {
+  /**
+   * Parameter you want to filter on
+   * @type string
+   * @memberof DefaultApigetPulseRiskParameter
+   */
+  parameter?: string;
+}
+
 export interface DefaultApiGetRuleImplementationsRequest {}
 
 export interface DefaultApiGetRuleInstancesRequest {}
@@ -378,6 +389,8 @@ export interface DefaultApiGetRulesRequest {
    */
   ruleId?: string;
 }
+
+export interface DefaultApiGetSlackOauthRedirectRequest {}
 
 export interface DefaultApiGetTenantsListRequest {}
 
@@ -670,6 +683,15 @@ export interface DefaultApiPostPulseRiskClassificationRequest {
   RiskClassificationScore?: Array<RiskClassificationScore>;
 }
 
+export interface DefaultApiPostPulseRiskParameterRequest {
+  /**
+   *
+   * @type PostPulseRiskParameters
+   * @memberof DefaultApipostPulseRiskParameter
+   */
+  PostPulseRiskParameters?: PostPulseRiskParameters;
+}
+
 export interface DefaultApiPostRuleInstancesRequest {
   /**
    *
@@ -790,7 +812,7 @@ export class ObjectDefaultApi {
   public accountsChangeTenant(
     param: DefaultApiAccountsChangeTenantRequest,
     options?: Configuration,
-  ): Promise<void> {
+  ): Promise<ManualRiskAssignmentUserState> {
     return this.api
       .accountsChangeTenant(param.userId, param.ChangeTenantPayload, options)
       .toPromise();
@@ -1034,6 +1056,17 @@ export class ObjectDefaultApi {
   }
 
   /**
+   * Parameter Risk Level - GET
+   * @param param the request object
+   */
+  public getPulseRiskParameter(
+    param: DefaultApiGetPulseRiskParameterRequest = {},
+    options?: Configuration,
+  ): Promise<ParameterAttributeRiskValues> {
+    return this.api.getPulseRiskParameter(param.parameter, options).toPromise();
+  }
+
+  /**
    * Rule Implementations - List
    * @param param the request object
    */
@@ -1064,6 +1097,17 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<Array<Rule>> {
     return this.api.getRules(param.ruleId, options).toPromise();
+  }
+
+  /**
+   * Slack OAuth Redirect
+   * @param param the request object
+   */
+  public getSlackOauthRedirect(
+    param: DefaultApiGetSlackOauthRedirectRequest = {},
+    options?: Configuration,
+  ): Promise<void> {
+    return this.api.getSlackOauthRedirect(options).toPromise();
   }
 
   /**
@@ -1253,6 +1297,17 @@ export class ObjectDefaultApi {
     options?: Configuration,
   ): Promise<Array<RiskClassificationScore>> {
     return this.api.postPulseRiskClassification(param.RiskClassificationScore, options).toPromise();
+  }
+
+  /**
+   * Parameter Risk Level - POST
+   * @param param the request object
+   */
+  public postPulseRiskParameter(
+    param: DefaultApiPostPulseRiskParameterRequest = {},
+    options?: Configuration,
+  ): Promise<ParameterAttributeRiskValues> {
+    return this.api.postPulseRiskParameter(param.PostPulseRiskParameters, options).toPromise();
   }
 
   /**

@@ -6,6 +6,7 @@ import style from './style.module.less';
 
 interface Props<T, U, ValueType> extends ProTableProps<T, U, ValueType> {
   disableStripedColoring?: boolean;
+  disableExpandedRowPadding?: boolean;
 }
 
 const TABLE_LOCALE = {
@@ -31,11 +32,22 @@ const TABLE_LOCALE = {
 export default function Table<T, U = ParamsType, ValueType = 'text'>(
   props: Props<T, U, ValueType>,
 ) {
-  const { disableStripedColoring = false, className, ...rest } = props;
+  const {
+    disableStripedColoring = false,
+    disableExpandedRowPadding = false,
+    className,
+    ...rest
+  } = props;
 
   return (
     <ProTable
-      className={[style.root, className].filter((x) => !!x).join(' ')}
+      className={[
+        style.root,
+        className,
+        disableExpandedRowPadding && style.disableExpandedRowPadding,
+      ]
+        .filter((x) => !!x)
+        .join(' ')}
       locale={TABLE_LOCALE}
       rowClassName={(_, index) =>
         disableStripedColoring || index % 2 === 0 ? style.tableRowLight : style.tableRowDark

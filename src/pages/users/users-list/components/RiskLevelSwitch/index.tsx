@@ -1,4 +1,5 @@
 import { Radio } from 'antd';
+import cn from 'clsx';
 import s from './styles.module.less';
 import { RISK_LEVEL_COLORS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { neverReturn } from '@/utils/lang';
@@ -20,7 +21,7 @@ export function getLabel(risk: RiskLevel) {
 }
 
 interface Props {
-  disabled: boolean;
+  disabled?: boolean;
   current: RiskLevel | null;
   onChange: (newValue: RiskLevel) => void;
 }
@@ -29,6 +30,7 @@ export default function RiskSwitch(props: Props): JSX.Element {
   const { disabled, current, onChange } = props;
   return (
     <Radio.Group
+      className={cn(s.root)}
       disabled={disabled}
       value={current}
       onChange={(e) => {
@@ -46,7 +48,7 @@ export default function RiskSwitch(props: Props): JSX.Element {
             value={level}
             className={s.button}
             style={
-              isCurrent
+              isCurrent && !disabled
                 ? {
                     borderWidth: 1,
                     background: RISK_LEVEL_COLORS[level].light,

@@ -48,7 +48,7 @@ function escapeClassName(string) {
 }
 
 const MODULES_EXTENSION = '.module.less';
-const localIdentName = '[local]--[hash:8:md5:hex]';
+const localIdentName = '[folder]__[local]--[hash:8:md5:hex]'; // todo: use different for production
 
 const tmpDirPath = tmp.dirSync().name;
 

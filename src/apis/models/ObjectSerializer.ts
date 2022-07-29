@@ -50,7 +50,6 @@ export * from './InternalBusinessUser';
 export * from './InternalBusinessUserAllOf';
 export * from './InternalConsumerUser';
 export * from './InternalConsumerUserAllOf';
-export * from './InternalConsumerUserAllOfUserStatus';
 export * from './KYCStatus';
 export * from './KYCStatusDetails';
 export * from './KYCStatusDetails1';
@@ -60,13 +59,16 @@ export * from './LegalEntity';
 export * from './ListImportRequest';
 export * from './ManualRiskAssignmentPayload';
 export * from './ManualRiskAssignmentUserState';
+export * from './ParameterAttributeRiskValues';
 export * from './Person';
+export * from './PostPulseRiskParameters';
 export * from './PresignedUrlResponse';
 export * from './RiskClassificationScore';
 export * from './RiskLevel';
 export * from './RiskLevel1';
 export * from './RiskLevelRuleActions';
 export * from './RiskLevelRuleParameters';
+export * from './RiskParameterLevelKeyValue';
 export * from './Rule';
 export * from './RuleAction';
 export * from './RuleAction1';
@@ -164,7 +166,6 @@ import {
   InternalConsumerUserAllOf,
   InternalConsumerUserAllOfTypeEnum,
 } from './InternalConsumerUserAllOf';
-import { InternalConsumerUserAllOfUserStatus } from './InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from './KYCStatus';
 import { KYCStatusDetails } from './KYCStatusDetails';
 import { KYCStatusDetails1 } from './KYCStatusDetails1';
@@ -174,13 +175,20 @@ import { LegalEntity } from './LegalEntity';
 import { ListImportRequest } from './ListImportRequest';
 import { ManualRiskAssignmentPayload } from './ManualRiskAssignmentPayload';
 import { ManualRiskAssignmentUserState } from './ManualRiskAssignmentUserState';
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesParameterEnum,
+  ParameterAttributeRiskValuesRiskValueTypeEnum,
+} from './ParameterAttributeRiskValues';
 import { Person } from './Person';
+import { PostPulseRiskParameters } from './PostPulseRiskParameters';
 import { PresignedUrlResponse } from './PresignedUrlResponse';
 import { RiskClassificationScore } from './RiskClassificationScore';
 import { RiskLevel } from './RiskLevel';
 import { RiskLevel1 } from './RiskLevel1';
 import { RiskLevelRuleActions } from './RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from './RiskLevelRuleParameters';
+import { RiskParameterLevelKeyValue } from './RiskParameterLevelKeyValue';
 import { Rule, RuleTypeEnum } from './Rule';
 import { RuleAction } from './RuleAction';
 import { RuleAction1 } from './RuleAction1';
@@ -245,6 +253,8 @@ let enumsMap: Set<string> = new Set<string>([
   'InternalConsumerUserTypeEnum',
   'InternalConsumerUserAllOfTypeEnum',
   'KYCStatus',
+  'ParameterAttributeRiskValuesParameterEnum',
+  'ParameterAttributeRiskValuesRiskValueTypeEnum',
   'RiskLevel',
   'RiskLevel1',
   'RuleTypeEnum',
@@ -306,7 +316,6 @@ let typeMap: { [index: string]: any } = {
   InternalBusinessUserAllOf: InternalBusinessUserAllOf,
   InternalConsumerUser: InternalConsumerUser,
   InternalConsumerUserAllOf: InternalConsumerUserAllOf,
-  InternalConsumerUserAllOfUserStatus: InternalConsumerUserAllOfUserStatus,
   KYCStatusDetails: KYCStatusDetails,
   KYCStatusDetails1: KYCStatusDetails1,
   LegalDocument: LegalDocument,
@@ -315,11 +324,14 @@ let typeMap: { [index: string]: any } = {
   ListImportRequest: ListImportRequest,
   ManualRiskAssignmentPayload: ManualRiskAssignmentPayload,
   ManualRiskAssignmentUserState: ManualRiskAssignmentUserState,
+  ParameterAttributeRiskValues: ParameterAttributeRiskValues,
   Person: Person,
+  PostPulseRiskParameters: PostPulseRiskParameters,
   PresignedUrlResponse: PresignedUrlResponse,
   RiskClassificationScore: RiskClassificationScore,
   RiskLevelRuleActions: RiskLevelRuleActions,
   RiskLevelRuleParameters: RiskLevelRuleParameters,
+  RiskParameterLevelKeyValue: RiskParameterLevelKeyValue,
   Rule: Rule,
   RuleActionAlias: RuleActionAlias,
   RuleImplementation: RuleImplementation,

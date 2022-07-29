@@ -36,4 +36,6 @@ export default {
   'menu.settings': 'Settings',
   'menu.risk-levels': 'Risk Levels',
   'menu.risk-levels.configure': 'Configure Risk Levels',
+  'menu.risk-levels.risk-level': 'Risk Level',
+  'menu.risk-levels.risk-level.description': 'Create a risk level parameter to score your customer',
 };

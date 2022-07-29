@@ -1,4 +1,10 @@
 :root {
+  .root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
   // todo: migration: fix this hack, need to fix ordering in css`
   .head {
     padding: 16px 24px;
@@ -6,8 +12,8 @@
   }
 
   .body {
+    flex: 1;
     padding: 24px;
-
   }
 
   .title {

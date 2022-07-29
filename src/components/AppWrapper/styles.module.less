@@ -15,7 +15,6 @@
         padding-left: @collapsed-menu-width;
       }
     }
-    
   }
 
   .header {
@@ -54,22 +53,24 @@
   }
 
   .main {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     padding-top: 48px;
     padding-left: @open-menu-width;
     transition: padding-left 300ms;
   }
 
-  .footer{
+  .footer {
     background: none;
-    :global{
-      .ant-pro-global-footer-copyright{
+    :global {
+      .ant-pro-global-footer-copyright {
         color: #fff;
         opacity: 45%;
       }
-      .ant-pro-global-footer{
+      .ant-pro-global-footer {
         padding-bottom: 40px !important;
       }
     }
   }
-
 }

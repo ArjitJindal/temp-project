@@ -64,7 +64,6 @@ models/InternalBusinessUser.ts
 models/InternalBusinessUserAllOf.ts
 models/InternalConsumerUser.ts
 models/InternalConsumerUserAllOf.ts
-models/InternalConsumerUserAllOfUserStatus.ts
 models/KYCStatus.ts
 models/KYCStatusDetails.ts
 models/KYCStatusDetails1.ts
@@ -75,13 +74,16 @@ models/ListImportRequest.ts
 models/ManualRiskAssignmentPayload.ts
 models/ManualRiskAssignmentUserState.ts
 models/ObjectSerializer.ts
+models/ParameterAttributeRiskValues.ts
 models/Person.ts
+models/PostPulseRiskParameters.ts
 models/PresignedUrlResponse.ts
 models/RiskClassificationScore.ts
 models/RiskLevel.ts
 models/RiskLevel1.ts
 models/RiskLevelRuleActions.ts
 models/RiskLevelRuleParameters.ts
+models/RiskParameterLevelKeyValue.ts
 models/Rule.ts
 models/RuleAction.ts
 models/RuleAction1.ts

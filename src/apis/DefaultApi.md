@@ -23,9 +23,11 @@ All URIs are relative to _http://localhost:3000_
 | [**getImportImportId**](DefaultApi.md#getImportImportId) | **GET** /import/{importId} | Import - Get Import Info |
 | [**getPulseManualRiskAssignment**](DefaultApi.md#getPulseManualRiskAssignment) | **GET** /pulse/manual-risk-assignment | Risk Level - Get Manual Assignment |
 | [**getPulseRiskClassification**](DefaultApi.md#getPulseRiskClassification) | **GET** /pulse/risk-classification | Risk classification - GET |
+| [**getPulseRiskParameter**](DefaultApi.md#getPulseRiskParameter) | **GET** /pulse/risk-parameter | Parameter Risk Level - GET |
 | [**getRuleImplementations**](DefaultApi.md#getRuleImplementations) | **GET** /rule_implementations | Rule Implementations - List |
 | [**getRuleInstances**](DefaultApi.md#getRuleInstances) | **GET** /rule_instances | Rule Instance - List |
 | [**getRules**](DefaultApi.md#getRules) | **GET** /rules | Rules - List |
+| [**getSlackOauthRedirect**](DefaultApi.md#getSlackOauthRedirect) | **GET** /slack/oauth_redirect | Slack OAuth Redirect |
 | [**getTenantsList**](DefaultApi.md#getTenantsList) | **GET** /tenants | Tenant - List |
 | [**getTenantsSettings**](DefaultApi.md#getTenantsSettings) | **GET** /tenants/settings | Tenant - Get Settings |
 | [**getTransaction**](DefaultApi.md#getTransaction) | **GET** /transactions/{transactionId} | Transaction - Get |
@@ -40,6 +42,7 @@ All URIs are relative to _http://localhost:3000_
 | [**postImport**](DefaultApi.md#postImport) | **POST** /import | Import - Start to Import |
 | [**postLists**](DefaultApi.md#postLists) | **POST** /lists | List Import |
 | [**postPulseRiskClassification**](DefaultApi.md#postPulseRiskClassification) | **POST** /pulse/risk-classification | Risk classification - POST |
+| [**postPulseRiskParameter**](DefaultApi.md#postPulseRiskParameter) | **POST** /pulse/risk-parameter | Parameter Risk Level - POST |
 | [**postRuleInstances**](DefaultApi.md#postRuleInstances) | **POST** /rule_instances | Rule Instance - Create |
 | [**postRules**](DefaultApi.md#postRules) | **POST** /rules | Rules - Create |
 | [**postTenantsSettings**](DefaultApi.md#postTenantsSettings) | **POST** /tenants/settings | Tenant - POST Settings |
@@ -51,7 +54,7 @@ All URIs are relative to _http://localhost:3000_
 
 # **accountsChangeTenant**
 
-> void accountsChangeTenant()
+> ManualRiskAssignmentUserState accountsChangeTenant()
 
 ### Example
 
@@ -85,7 +88,7 @@ apiInstance.accountsChangeTenant(body).then((data:any) => {
 
 ### Return type
 
-**void**
+**ManualRiskAssignmentUserState**
 
 ### Authorization
 
@@ -94,7 +97,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: Not defined
+- **Accept**: application/json
 
 ### HTTP response details
 
@@ -1044,6 +1047,56 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
+# **getPulseRiskParameter**
+
+> ParameterAttributeRiskValues getPulseRiskParameter()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiGetPulseRiskParameterRequest = {
+  // string | Parameter you want to filter on (optional)
+  parameter: "parameter_example",
+};
+
+apiInstance.getPulseRiskParameter(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name | Type | Description | Notes |
+| --- | --- | --- | --- |
+| **parameter** | [**string**] | Parameter you want to filter on | (optional) defaults to undefined |
+
+### Return type
+
+**ParameterAttributeRiskValues**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+| ----------- | ----------- | ---------------- |
+| **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
 # **getRuleImplementations**
 
 > Array<RuleImplementation> getRuleImplementations()
@@ -1181,6 +1234,45 @@ No authorization required
 | Status code | Description | Response headers |
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **getSlackOauthRedirect**
+
+> getSlackOauthRedirect()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:any = {};
+
+apiInstance.getSlackOauthRedirect(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 
@@ -2060,6 +2152,69 @@ No authorization required
 | ----------- | ----------- | ---------------- |
 | **200**     | OK          | -                |
 | **400**     | Bad Request | -                |
+
+[[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
+
+# **postPulseRiskParameter**
+
+> ParameterAttributeRiskValues postPulseRiskParameter()
+
+### Example
+
+```typescript
+import {  } from '';
+import * as fs from 'fs';
+
+const configuration = .createConfiguration();
+const apiInstance = new .DefaultApi(configuration);
+
+let body:.DefaultApiPostPulseRiskParameterRequest = {
+  // PostPulseRiskParameters (optional)
+  PostPulseRiskParameters: {
+    parameterAttributeRiskValues: {
+      parameter: "userDetails.countryOfResidence",
+      isActive: true,
+      riskValueType: "RANGE",
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: "parameterValue_example",
+          riskLevel: "VERY_HIGH",
+        },
+      ],
+    },
+  },
+};
+
+apiInstance.postPulseRiskParameter(body).then((data:any) => {
+  console.log('API called successfully. Returned data: ' + data);
+}).catch((error:any) => console.error(error));
+```
+
+### Parameters
+
+| Name                        | Type                        | Description | Notes |
+| --------------------------- | --------------------------- | ----------- | ----- |
+| **PostPulseRiskParameters** | **PostPulseRiskParameters** |             |
+
+### Return type
+
+**ParameterAttributeRiskValues**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description           | Response headers |
+| ----------- | --------------------- | ---------------- |
+| **200**     | OK                    | -                |
+| **403**     | Not enough privileges | -                |
 
 [[Back to top]](#) [[Back to API list]](README.md#documentation-for-api-endpoints) [[Back to Model list]](README.md#documentation-for-models) [[Back to README]](README.md)
 

@@ -437,7 +437,7 @@ paths:
                     type: string
               examples:
                 example-1:
-                  value: Too larget dataset
+                  value: {}
       operationId: get-transactions-list-export
       description: ''
       parameters:
@@ -896,6 +896,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
   '/accounts/{userId}':
@@ -1035,6 +1039,57 @@ paths:
           name: userId
           required: true
           description: UserID of the user to get manual risk assignment settings
+  /pulse/risk-parameter:
+    parameters: [ ]
+    post:
+      summary: Parameter Risk Level - POST
+      operationId: post-pulse-risk-parameter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              nullable: true
+              type: object
+              title: PostPulseRiskParameters
+              properties:
+                parameterAttributeRiskValues:
+                  $ref: '#/components/schemas/ParameterAttributeRiskValues'
+              required:
+                - parameterAttributeRiskValues
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValues'
+        '403':
+          description: Not enough privileges
+      parameters: [ ]
+      description: '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          '
+    get:
+      summary: Parameter Risk Level - GET
+      operationId: get-pulse-risk-parameter
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValues'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: parameter
+          description: Parameter you want to filter on
+  /slack/oauth_redirect:
+    get:
+      summary: Slack OAuth Redirect
+      tags: []
+      responses: {}
+      operationId: get-slack-oauth-redirect
+    parameters: []
 components:
   schemas:
     ManualRiskAssignmentUserState:
@@ -1157,12 +1212,6 @@ components:
     RuleActionAlias:
       type: object
       title: RuleActionAlias
-      enum:
-        - FLAG
-        - BLOCK
-        - WHITELIST
-        - ALLOW
-        - SUSPEND
       properties:
         action:
           $ref: '#/components/schemas/RuleAction'
@@ -1248,7 +1297,6 @@ components:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/TransactionWithRulesResult
 
-
         - type: object
           properties:
             comments:
@@ -1315,7 +1363,6 @@ components:
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
-              suspendedTransactions: 67
       title: DashboardStatsTransactionsCount
       properties:
         data:
@@ -1330,8 +1377,6 @@ components:
               flaggedTransactions:
                 type: number
               stoppedTransactions:
-                type: number
-              suspendedTransactions:
                 type: number
             required:
               - _id
@@ -1361,7 +1406,6 @@ components:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/User
 
-
         - type: object
           properties:
             type:
@@ -1372,27 +1416,12 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/FileInfo'
-            userStatus:
-              type: object
-              properties:
-                statusReason:
-                  type: string
-                status:
-                  type: string
-            kycStatus:
-              type: object
-              properties:
-                statusReason:
-                  type: string
-                status:
-                  type: string
           required:
             - type
     InternalBusinessUser:
       allOf:
         - $ref: >-
             https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml/components/schemas/Business
-
 
         - type: object
           properties:
@@ -1705,6 +1734,50 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    RiskParameterLevelKeyValue:
+      type: object
+      x-examples: {}
+      title: RiskParameterLevelKeyValue
+      properties:
+        parameterValue:
+          type: string
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - parameterValue
+        - riskLevel
+    ParameterAttributeRiskValues:
+      title: 'ParameterAttributeRiskValues'
+      type: object
+      x-examples:
+        example-1:
+          parameter: userDetails.countryOfResidence
+          riskValueType: DISCRETE
+          riskLevelAssignmentValues:
+            DE: LOW
+            TR: HIGH
+      properties:
+        parameter:
+          type: string
+          enum:
+            - userDetails.countryOfResidence
+            - userDetails.countryOfOrigin
+        isActive:
+          type: boolean
+        riskValueType:
+          type: string
+          enum:
+            - RANGE
+            - DISCRETE
+        riskLevelAssignmentValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskParameterLevelKeyValue'
+      required:
+        - parameter
+        - isActive
+        - riskValueType
+        - riskLevelAssignmentValues
     Feature:
       type: string
       title: Feature

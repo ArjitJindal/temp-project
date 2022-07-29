@@ -5,6 +5,7 @@ import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import Page404 from '@/pages/404';
 import CaseManagementPage from '@/pages/case-management';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
+import RiskLevelPage from '@/pages/risk-levels/risk-level';
 import RiskMyRulesPage from '@/pages/rules/my-rules';
 import RiskCreateRulePage from '@/pages/rules/create-rule';
 import RiskRequestNewPage from '@/pages/rules/request-new';
@@ -163,7 +164,12 @@ export function useRoutes(): RouteItem[] {
               routes: [
                 {
                   path: '/risk-levels',
-                  redirect: '/risk-levels/configure',
+                  redirect: '/risk-levels/risk-level',
+                },
+                {
+                  name: 'risk-level',
+                  path: '/risk-levels/risk-level',
+                  component: RiskLevelPage,
                 },
                 {
                   name: 'configure',

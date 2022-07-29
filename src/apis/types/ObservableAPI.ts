@@ -55,7 +55,6 @@ import { InternalBusinessUser } from '../models/InternalBusinessUser';
 import { InternalBusinessUserAllOf } from '../models/InternalBusinessUserAllOf';
 import { InternalConsumerUser } from '../models/InternalConsumerUser';
 import { InternalConsumerUserAllOf } from '../models/InternalConsumerUserAllOf';
-import { InternalConsumerUserAllOfUserStatus } from '../models/InternalConsumerUserAllOfUserStatus';
 import { KYCStatus } from '../models/KYCStatus';
 import { KYCStatusDetails } from '../models/KYCStatusDetails';
 import { KYCStatusDetails1 } from '../models/KYCStatusDetails1';
@@ -65,13 +64,16 @@ import { LegalEntity } from '../models/LegalEntity';
 import { ListImportRequest } from '../models/ListImportRequest';
 import { ManualRiskAssignmentPayload } from '../models/ManualRiskAssignmentPayload';
 import { ManualRiskAssignmentUserState } from '../models/ManualRiskAssignmentUserState';
+import { ParameterAttributeRiskValues } from '../models/ParameterAttributeRiskValues';
 import { Person } from '../models/Person';
+import { PostPulseRiskParameters } from '../models/PostPulseRiskParameters';
 import { PresignedUrlResponse } from '../models/PresignedUrlResponse';
 import { RiskClassificationScore } from '../models/RiskClassificationScore';
 import { RiskLevel } from '../models/RiskLevel';
 import { RiskLevel1 } from '../models/RiskLevel1';
 import { RiskLevelRuleActions } from '../models/RiskLevelRuleActions';
 import { RiskLevelRuleParameters } from '../models/RiskLevelRuleParameters';
+import { RiskParameterLevelKeyValue } from '../models/RiskParameterLevelKeyValue';
 import { Rule } from '../models/Rule';
 import { RuleAction } from '../models/RuleAction';
 import { RuleAction1 } from '../models/RuleAction1';
@@ -136,7 +138,7 @@ export class ObservableDefaultApi {
     userId: string,
     ChangeTenantPayload?: ChangeTenantPayload,
     _options?: Configuration,
-  ): Observable<void> {
+  ): Observable<ManualRiskAssignmentUserState> {
     const requestContextPromise = this.requestFactory.accountsChangeTenant(
       userId,
       ChangeTenantPayload,
@@ -873,6 +875,41 @@ export class ObservableDefaultApi {
   }
 
   /**
+   * Parameter Risk Level - GET
+   * @param parameter Parameter you want to filter on
+   */
+  public getPulseRiskParameter(
+    parameter?: string,
+    _options?: Configuration,
+  ): Observable<ParameterAttributeRiskValues> {
+    const requestContextPromise = this.requestFactory.getPulseRiskParameter(parameter, _options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getPulseRiskParameter(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
    * Rule Implementations - List
    */
   public getRuleImplementations(_options?: Configuration): Observable<Array<RuleImplementation>> {
@@ -961,6 +998,37 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.getRules(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Slack OAuth Redirect
+   */
+  public getSlackOauthRedirect(_options?: Configuration): Observable<void> {
+    const requestContextPromise = this.requestFactory.getSlackOauthRedirect(_options);
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.getSlackOauthRedirect(rsp)),
           );
         }),
       );
@@ -1546,6 +1614,44 @@ export class ObservableDefaultApi {
           }
           return middlewarePostObservable.pipe(
             map((rsp: ResponseContext) => this.responseProcessor.postPulseRiskClassification(rsp)),
+          );
+        }),
+      );
+  }
+
+  /**
+   * Parameter Risk Level - POST
+   * @param PostPulseRiskParameters
+   */
+  public postPulseRiskParameter(
+    PostPulseRiskParameters?: PostPulseRiskParameters,
+    _options?: Configuration,
+  ): Observable<ParameterAttributeRiskValues> {
+    const requestContextPromise = this.requestFactory.postPulseRiskParameter(
+      PostPulseRiskParameters,
+      _options,
+    );
+
+    // build promise chain
+    let middlewarePreObservable = from<RequestContext>(requestContextPromise);
+    for (let middleware of this.configuration.middleware) {
+      middlewarePreObservable = middlewarePreObservable.pipe(
+        mergeMap((ctx: RequestContext) => middleware.pre(ctx)),
+      );
+    }
+
+    return middlewarePreObservable
+      .pipe(mergeMap((ctx: RequestContext) => this.configuration.httpApi.send(ctx)))
+      .pipe(
+        mergeMap((response: ResponseContext) => {
+          let middlewarePostObservable = of(response);
+          for (let middleware of this.configuration.middleware) {
+            middlewarePostObservable = middlewarePostObservable.pipe(
+              mergeMap((rsp: ResponseContext) => middleware.post(rsp)),
+            );
+          }
+          return middlewarePostObservable.pipe(
+            map((rsp: ResponseContext) => this.responseProcessor.postPulseRiskParameter(rsp)),
           );
         }),
       );

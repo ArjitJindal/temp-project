@@ -30,7 +30,7 @@ export default function PageWrapper(props: Props) {
   }, [analytics, tenantId, location.pathname]);
   const { title, description } = props;
   return (
-    <>
+    <div className={s.root}>
       {(title || description) && (
         <header className={s.head}>
           {title && (
@@ -46,6 +46,6 @@ export default function PageWrapper(props: Props) {
       <div className={s.body}>
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
-    </>
+    </div>
   );
 }
