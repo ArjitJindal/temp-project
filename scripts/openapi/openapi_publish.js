@@ -2,14 +2,14 @@
 const os = require("os");
 const fs = require("fs-extra");
 const path = require('path')
+const yaml = require('yaml')
 const { execSync: exec } = require('child_process')
 require('dotenv').config()
 
-const { PROJECT_DIR, parse, stringify } = require('./openapi_helpers.js')
+const { PROJECT_DIR, parse, stringify, localizeRefs } = require('./openapi_helpers.js')
 
 async function prepareSchemas(OUTPUT_DIR) {
   try {
-
     const internalDir = path.resolve(PROJECT_DIR, "lib", "openapi", "internal")
     const publicDir = path.resolve(PROJECT_DIR, "lib", "openapi", "public")
 
@@ -32,7 +32,8 @@ async function prepareSchemas(OUTPUT_DIR) {
        */
 
       // Replace all refs to public schema to internal
-      const internalSchemaYaml = parse(internalSchemaText.replace(/\..\/public\/openapi-public-original\.yaml#/g, '#'));
+      let internalSchemaYaml = parse(internalSchemaText);
+      internalSchemaYaml = await localizeRefs(internalSchemaYaml);
 
       // Merge all models from public schema to internal schema
       // todo: check for override
