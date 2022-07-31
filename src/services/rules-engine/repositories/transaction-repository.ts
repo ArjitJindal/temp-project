@@ -129,6 +129,9 @@ export class TransactionRepository {
     if (params.filterOutStatus != null) {
       conditions.push({ status: { $ne: params.filterOutStatus } })
     }
+    if (params.filterStatus != null) {
+      conditions.push({ status: { $eq: params.filterStatus } })
+    }
     if (params.filterUserId != null) {
       conditions.push({
         $or: [

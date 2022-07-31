@@ -402,6 +402,10 @@ paths:
           in: query
           name: filterDestinationUserId
         - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
             type: boolean
           in: query
           name: includeUsers
@@ -480,6 +484,10 @@ paths:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
         - schema:
             type: string
           in: query
@@ -1327,7 +1335,7 @@ components:
             events:
               type: array
               items:
-                $ref: '../public/openapi-public-original.yaml#/components/schemas/TransactionEvent'
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
           required:
             - status
           additionalProperties: false

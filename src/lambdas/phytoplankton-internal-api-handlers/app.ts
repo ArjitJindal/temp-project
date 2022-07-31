@@ -88,6 +88,7 @@ export const transactionsViewHandler = lambdaApi()(
         sortOrder,
         includeUsers,
         includeEvents,
+        filterStatus,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -96,6 +97,7 @@ export const transactionsViewHandler = lambdaApi()(
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
         filterOutStatus,
+        filterStatus,
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
