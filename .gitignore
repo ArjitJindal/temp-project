@@ -37,5 +37,8 @@ screenshot
 # CDK
 cdk.out
 .cdk*
+src/apis
 
 esbuild.json
+config/openapi.yaml
+.env

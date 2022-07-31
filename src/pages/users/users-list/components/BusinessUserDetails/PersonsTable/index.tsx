@@ -1,7 +1,7 @@
 import { Tag, Typography } from 'antd';
 import React from 'react';
 import s from './styles.module.less';
-import { Address2, LegalDocument1, Person } from '@/apis';
+import { Address, LegalDocument, Person } from '@/apis';
 import Table from '@/components/ui/Table';
 import { formatConsumerName } from '@/utils/api/users';
 
@@ -9,7 +9,7 @@ function expandedRowRender(person: Person) {
   return (
     <div className={s.expandedRow}>
       <Typography.Title level={5}>Legal documents</Typography.Title>
-      <Table<LegalDocument1 & { i: number }>
+      <Table<LegalDocument & { i: number }>
         className={s.table}
         search={false}
         form={{
@@ -80,7 +80,7 @@ function renderEmail(email: string, i: number) {
   );
 }
 
-function renderAddress(address: Address2, i: number) {
+function renderAddress(address: Address, i: number) {
   return (
     <p key={i}>
       {[

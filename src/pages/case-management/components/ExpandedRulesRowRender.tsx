@@ -1,8 +1,8 @@
 import { Table } from 'antd';
 import { RuleActionStatus } from './RuleActionStatus';
-import { TransactionWithRulesResult } from '@/apis';
+import { TransactionCaseManagement } from '@/apis';
 
-export const ExpandedRulesRowRender = (transaction: TransactionWithRulesResult) => {
+export const ExpandedRulesRowRender = (transaction: TransactionCaseManagement) => {
   return (
     <Table
       columns={[

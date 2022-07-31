@@ -2,7 +2,7 @@ set -e
 
 rm -rf src/apis
 
-openapi-generator-cli generate -i config/openapi.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original
+yarn exec openapi-generator-cli generate -- -i config/openapi.yaml -g typescript -o src/apis --additional-properties=modelPropertyNaming=original
 
 # Fix wrong TS types
 if [ "$(uname)" = "Darwin" ]; then
