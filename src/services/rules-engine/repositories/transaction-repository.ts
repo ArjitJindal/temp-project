@@ -201,7 +201,7 @@ export class TransactionRepository {
 
   private getDenormalizedTransactions(
     query: Filter<TransactionCaseManagement>,
-    params?: DefaultApiGetTransactionsListRequest
+    params: DefaultApiGetTransactionsListRequest
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
@@ -337,9 +337,17 @@ export class TransactionRepository {
   public async getTransactionCaseManagement(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
-    return await this.getDenormalizedTransactions({
-      transactionId,
-    }).next()
+    return await this.getDenormalizedTransactions(
+      {
+        transactionId,
+      },
+      {
+        includeUsers: true,
+        includeEvents: true,
+        limit: 1,
+        skip: 0,
+      }
+    ).next()
   }
 
   public async saveTransactionComment(
