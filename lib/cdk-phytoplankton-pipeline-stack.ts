@@ -42,7 +42,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
               },
               commands: [
                 'npm install -g aws-cdk yarn',
-                'yarn',
+                'yarn --ignore-engines',
                 `ASSUME_ROLE_ARN="${roleArn}"`,
                 `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
                 'export TEMP_ROLE',
@@ -64,7 +64,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           },
         }),
         environment: {
-          buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+          buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         },
         role: devCodeDeployRole,
       });
