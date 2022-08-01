@@ -81,6 +81,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesExecuted,
         filterOriginCurrencies,
         filterDestinationCurrencies,
+        filterUserId,
         filterOriginUserId,
         filterDestinationUserId,
         transactionType,
@@ -102,6 +103,7 @@ export const transactionsViewHandler = lambdaApi()(
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url
         filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        filterUserId,
         filterOriginUserId,
         filterDestinationUserId,
         transactionType,
