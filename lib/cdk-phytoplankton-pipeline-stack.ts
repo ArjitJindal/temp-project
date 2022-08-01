@@ -38,7 +38,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           phases: {
             install: {
               'runtime-versions': {
-                nodejs: 14,
+                nodejs: 16,
               },
               commands: [
                 'npm install -g aws-cdk yarn',
