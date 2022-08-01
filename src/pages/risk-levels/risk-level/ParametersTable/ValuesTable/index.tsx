@@ -6,7 +6,8 @@ import { INPUT_RENDERERS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/pages/users/users-list/components/RiskLevelSwitch';
-import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
+import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
+import { isEqual } from '@/utils/lang';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -18,18 +19,18 @@ export default function ValuesTable(props: Props) {
   const { currentValuesRes, item, onSave } = props;
   const { parameter, dataType } = item;
 
-  const lastValues = getOr(currentValuesRes, []);
-
-  const [values, setValues] = useState<ParameterValues>(lastValues);
-
-  const [newKey, setNewKey] = useState<string[]>([]);
-  const [newValue, setNewValue] = useState<RiskLevel | null>(null);
+  const lastValues = useLastSuccessValue(currentValuesRes, []);
+  const [values, setValues] = useState(lastValues);
 
   useEffect(() => {
-    setValues(getOr(currentValuesRes, []));
-  }, [currentValuesRes]);
+    setValues(lastValues);
+  }, [lastValues]);
 
+  const isChanged = !isEqual(lastValues, values);
   const loading = isLoading(currentValuesRes);
+
+  const [newValue, setNewValue] = useState<string[]>([]);
+  const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
 
   const handleUpdateValues = (cb: (oldValues: ParameterValues) => ParameterValues) => {
     setValues((oldValues) => {
@@ -40,18 +41,18 @@ export default function ValuesTable(props: Props) {
   };
 
   const handleAdd = () => {
-    if (newKey && newValue != null) {
-      for (const value of newKey) {
+    if (newValue && newRiskLevel != null) {
+      for (const value of newValue) {
         handleUpdateValues((values) => [
           ...values.filter((x) => x.parameterValue !== value),
           {
             parameterValue: value,
-            riskLevel: newValue,
+            riskLevel: newRiskLevel,
           },
         ]);
       }
-      setNewKey([]);
-      setNewValue(null);
+      setNewValue([]);
+      setNewRiskLevel(null);
     }
   };
 
@@ -120,25 +121,25 @@ export default function ValuesTable(props: Props) {
           <div>
             {INPUT_RENDERERS[dataType]({
               disabled: loading,
-              values: newKey,
-              onChange: setNewKey,
+              values: newValue,
+              onChange: setNewValue,
             })}
           </div>
           <div>
-            <RiskLevelSwitch disabled={loading} current={newValue} onChange={setNewValue} />
+            <RiskLevelSwitch disabled={loading} current={newRiskLevel} onChange={setNewRiskLevel} />
           </div>
           <div>
-            <Button disabled={loading || !newKey || newValue == null} onClick={handleAdd}>
+            <Button disabled={loading || !newValue || newRiskLevel == null} onClick={handleAdd}>
               Set
             </Button>
           </div>
         </>
       </div>
       <div className={style.footer}>
-        <Button disabled={loading} onClick={handleCancel}>
+        <Button disabled={loading || !isChanged} onClick={handleCancel}>
           Cancel changes
         </Button>
-        <Button disabled={loading} onClick={handleSave} type="primary">
+        <Button disabled={loading || !isChanged} onClick={handleSave} type="primary">
           Save changes
         </Button>
       </div>

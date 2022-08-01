@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { usePrevious } from './hooks';
 import { neverThrow } from './lang';
 
@@ -15,12 +16,13 @@ export interface Success<T> {
   readonly value: T;
 }
 
-export interface Failed {
+export interface Failed<V> {
   readonly kind: 'FAILED';
   readonly message: string;
+  readonly lastValue: V | null;
 }
 
-export type AsyncResource<T = unknown> = Init | Loading<T> | Success<T> | Failed;
+export type AsyncResource<T = unknown> = Init | Loading<T> | Success<T> | Failed<T>;
 
 export function init<T>(): AsyncResource<T> {
   return {
@@ -42,10 +44,11 @@ export function success<T>(value: T): AsyncResource<T> {
   };
 }
 
-export function failed<T>(message: string): AsyncResource<T> {
+export function failed<T>(message: string, lastValue: T | null = null): AsyncResource<T> {
   return {
     kind: 'FAILED',
     message,
+    lastValue,
   };
 }
 
@@ -61,7 +64,7 @@ export function isSuccess<T>(resource: AsyncResource<T>): resource is Success<T>
   return resource.kind === 'SUCCESS';
 }
 
-export function isFailed<T>(resource: AsyncResource<T>): resource is Failed {
+export function isFailed<T>(resource: AsyncResource<T>): resource is Failed<T> {
   return resource.kind === 'FAILED';
 }
 
@@ -71,7 +74,7 @@ export function match<T, R>(
     init: () => R;
     success: (value: T) => R;
     loading: (lastValue: T | null) => R;
-    failed: (message: string) => R;
+    failed: (message: string, lastValue: T | null) => R;
   },
 ): R {
   switch (asyncResource.kind) {
@@ -82,7 +85,7 @@ export function match<T, R>(
     case 'LOADING':
       return callbacks.loading(asyncResource.lastValue);
     case 'FAILED':
-      return callbacks.failed(asyncResource.message);
+      return callbacks.failed(asyncResource.message, asyncResource.lastValue);
   }
   throw neverThrow(asyncResource);
 }
@@ -96,21 +99,35 @@ export function map<T, R>(
     switch (asyncResource.kind) {
       case 'SUCCESS':
         return success(fn(asyncResource.value));
-      case 'LOADING':
+      case 'LOADING': {
+        let lastValue: R | null = null;
         if (asyncResource.lastValue != null) {
           if (loadingFn != null) {
-            return loading(loadingFn(asyncResource.lastValue));
+            lastValue = loadingFn(asyncResource.lastValue);
+          } else {
+            lastValue = fn(asyncResource.lastValue);
           }
-          return loading(fn(asyncResource.lastValue));
         }
-        return loading();
+        return loading(lastValue);
+      }
+      case 'FAILED': {
+        let lastValue: R | null = null;
+        if (asyncResource.lastValue != null) {
+          if (loadingFn != null) {
+            lastValue = loadingFn(asyncResource.lastValue);
+          } else {
+            lastValue = fn(asyncResource.lastValue);
+          }
+        }
+        return failed(asyncResource.message, lastValue);
+      }
     }
   } catch (e: unknown) {
     let message = 'Unknown error';
     if (e instanceof Error && e.message) {
       message = e.message;
     }
-    return failed(message);
+    return failed<R>(message);
   }
   return asyncResource;
 }
@@ -123,6 +140,12 @@ export function getOr<T>(asyncResource: AsyncResource<T>, defaultValue: T): T {
       if (asyncResource.lastValue != null) {
         return asyncResource.lastValue;
       }
+      break;
+    case 'FAILED':
+      if (asyncResource.lastValue != null) {
+        return asyncResource.lastValue;
+      }
+      break;
   }
   return defaultValue;
 }
@@ -150,4 +173,19 @@ export function useFinishedFailed<T>(resource: AsyncResource<T>): boolean {
   const wasLoading = usePrevious(isLoading(resource));
   const isErrorNow = isFailed(resource);
   return wasLoading == true && isErrorNow;
+}
+
+export function useLastSuccessValue<T>(resource: AsyncResource<T>, defaultValue: T): T {
+  const value = getOr(resource, defaultValue);
+
+  const isResSuccess = isSuccess(resource);
+  const [result, setResult] = useState(value);
+
+  useEffect(() => {
+    if (isResSuccess) {
+      setResult(value);
+    }
+  }, [isResSuccess, value]);
+
+  return result;
 }

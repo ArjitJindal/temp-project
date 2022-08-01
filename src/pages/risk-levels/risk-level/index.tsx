@@ -11,7 +11,7 @@ import {
   ParameterValues,
 } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import { ParameterAttributeRiskValues } from '@/apis';
-import { AsyncResource, getOr, init, loading, success } from '@/utils/asyncResource';
+import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
 
 export default function () {
@@ -23,7 +23,8 @@ export default function () {
 
   const onUpdateParameter = useCallback(
     async (parameter: ParameterName, settings: ParameterSettings) => {
-      // const { isActive, values } = params;
+      const lastValue = getOr<ParameterSettings | null>(valuesResources[parameter] ?? init(), null);
+
       setValuesResources((values) => ({
         ...values,
         [parameter]: loading(settings),
@@ -31,7 +32,7 @@ export default function () {
       const hideSavingMessage = message.loading('Saving...', 0);
 
       try {
-        const response: ParameterAttributeRiskValues = await api.postPulseRiskParameter({
+        const response = await api.postPulseRiskParameter({
           PostPulseRiskParameters: {
             parameterAttributeRiskValues: {
               isActive: settings.isActive,
@@ -50,17 +51,16 @@ export default function () {
         }));
         message.success('Saved!');
       } catch (e) {
-        // todo: revert to previous values
         setValuesResources((values) => ({
           ...values,
-          [parameter]: success<ParameterSettings>(settings),
+          [parameter]: failed<ParameterSettings>(getErrorMessage(e), lastValue),
         }));
         message.error(`Unable to save parameter! ${getErrorMessage(e)}`);
       } finally {
         hideSavingMessage();
       }
     },
-    [api],
+    [valuesResources, api],
   );
 
   const onSaveValues = useCallback(
@@ -105,14 +105,15 @@ export default function () {
         };
       });
       try {
-        const response: ParameterAttributeRiskValues | null = await api.getPulseRiskParameter({
+        const response = (await api.getPulseRiskParameter({
           parameter,
-        });
+        })) as ParameterAttributeRiskValues | null;
+        // const response: ParameterAttributeRiskValues | null = null
         setValuesResources((values) => ({
           ...values,
           [parameter]: success<ParameterSettings>({
-            isActive: response.isActive,
-            values: response.riskLevelAssignmentValues,
+            isActive: response?.isActive ?? false,
+            values: response?.riskLevelAssignmentValues ?? [],
           }),
         }));
       } catch (e) {
