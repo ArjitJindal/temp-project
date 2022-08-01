@@ -282,7 +282,7 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     const fastGeoIpLayer = new LayerVersion(this, 'fast-geoip-layer', {
-      compatibleRuntimes: [Runtime.NODEJS_14_X],
+      compatibleRuntimes: [Runtime.NODEJS_16_X],
       code: Code.fromAsset('dist/layers/fast-geoip'),
       description: 'fast-geoip npm module',
     })
@@ -912,7 +912,7 @@ export class CdkTarponStack extends cdk.Stack {
     }
     const func = new LambdaFunction(this, name, {
       functionName: name,
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_16_X,
       handler,
       code: Code.fromAsset(codePath),
       tracing: Tracing.ACTIVE,

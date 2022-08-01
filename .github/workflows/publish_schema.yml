@@ -26,10 +26,10 @@ jobs:
         if: github.event_name == 'pull_request'
         shell: bash
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF} | tr / -)" >> $GITHUB_ENV
-      - name: Use Node.js 14
+      - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
           cache: 'npm'
       - run: npm ci
       - name: Publish schemas

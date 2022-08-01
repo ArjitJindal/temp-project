@@ -43,7 +43,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         phases: {
           install: {
             'runtime-versions': {
-              nodejs: 14,
+              nodejs: 16,
             },
             commands: ['npm ci'],
           },
@@ -74,11 +74,11 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           phases: {
             install: {
               'runtime-versions': {
-                nodejs: 14,
+                nodejs: 16,
               },
               commands: [
                 'npm install -g aws-cdk',
-                'npm install @tsconfig/node14 ts-node typescript',
+                'npm install @tsconfig/node16 ts-node typescript',
                 `ASSUME_ROLE_ARN="${roleArn}"`,
                 `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
                 'export TEMP_ROLE',
