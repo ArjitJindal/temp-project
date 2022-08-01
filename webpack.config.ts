@@ -7,6 +7,7 @@ import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin'
 const CopyPlugin = require('copy-webpack-plugin')
 
 const config: Configuration = {
+  devtool: false,
   entry: Object.fromEntries(
     fs
       .readdirSync('./src/lambdas')
