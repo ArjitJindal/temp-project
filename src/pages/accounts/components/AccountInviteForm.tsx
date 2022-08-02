@@ -8,7 +8,6 @@ import { useApi } from '@/api';
 interface Props {
   onClose: () => void;
 }
-
 export default function AccountInviteForm(props: Props) {
   const { onClose } = props;
   const api = useApi();

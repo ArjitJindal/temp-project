@@ -6,6 +6,7 @@ import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate, useParams } from 'react-router';
 import type { ResizeCallbackData } from 'react-resizable';
+import { RULE_ACTION_OPTIONS } from '../rules/utils';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
@@ -14,7 +15,7 @@ import { AddToSlackButton } from './components/AddToSlackButton';
 import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
-import { ApiException, TransactionCaseManagement } from '@/apis';
+import { ApiException, TransactionCaseManagement, RuleAction } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { useUsers } from '@/utils/user-utils';
@@ -37,6 +38,8 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
+
+const RULE_ACTIONS: RuleAction[] = ['BLOCK', 'SUSPEND', 'FLAG', 'WHITELIST'];
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
@@ -268,7 +271,13 @@ function TableList() {
         {
           title: 'Status',
           sorter: true,
-          hideInSearch: true,
+          dataIndex: 'status',
+          hideInSearch: false,
+          valueType: 'select',
+          fieldProps: {
+            options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
+            allowClear: true,
+          },
           width: 120,
           render: (dom, entity) => {
             const transaction = updatedTransactions[entity.transactionId as string] || entity;
@@ -429,6 +438,7 @@ function TableList() {
             originUserId,
             destinationUserId,
             type,
+            status,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
@@ -441,6 +451,7 @@ function TableList() {
               filterRulesHit: rulesHitFilter,
               filterRulesExecuted: rulesExecutedFilter,
               filterOutStatus: 'ALLOW',
+              filterStatus: status,
               filterOriginCurrencies: originCurrenciesFilter,
               filterDestinationCurrencies: destinationCurrenciesFilter,
               filterOriginUserId: originUserId,
