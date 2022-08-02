@@ -18,7 +18,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
     type: 'TRANSACTION',
     ruleImplementationName: 'same-user-using-too-many-cards',
     defaultParameters: {
-      uniqueUsersCountThreshold: 1,
+      uniqueCardsCountThreshold: 1,
       timeWindowInDays: 1,
     } as SameUserUsingTooManyCardsParameters,
     defaultAction: 'FLAG',

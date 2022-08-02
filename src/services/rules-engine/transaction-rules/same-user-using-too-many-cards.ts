@@ -6,7 +6,7 @@ import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type SameUserUsingTooManyCardsParameters = {
-  uniqueUsersCountThreshold: number
+  uniqueCardsCountThreshold: number
   timeWindowInDays: number
 }
 
@@ -15,13 +15,13 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
     return {
       type: 'object',
       properties: {
-        uniqueUsersCountThreshold: {
+        uniqueCardsCountThreshold: {
           type: 'integer',
-          title: 'Users Count Threshold',
+          title: 'Cards Count Threshold',
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
-      required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
+      required: ['uniqueCardsCountThreshold', 'timeWindowInDays'],
       additionalProperties: false,
     }
   }
@@ -34,9 +34,9 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
   }
 
   public async computeRule() {
-    const { uniqueUsersCountThreshold, timeWindowInDays } = this.parameters
+    const { uniqueCardsCountThreshold, timeWindowInDays } = this.parameters
     if (
-      uniqueUsersCountThreshold === undefined ||
+      uniqueCardsCountThreshold === undefined ||
       timeWindowInDays === undefined
     ) {
       throw new MissingRuleParameter()
@@ -69,7 +69,7 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
             .cardFingerprint
         )
     ).size
-    if (uniqueCardsCount > uniqueUsersCountThreshold) {
+    if (uniqueCardsCount > uniqueCardsCountThreshold) {
       return {
         action: this.action,
       }
