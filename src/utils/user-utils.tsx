@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo, useContext } from 'react';
 import _ from 'lodash';
-import type { User } from 'auth0';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
 import * as Sentry from '@sentry/browser';
 import { useApi } from '@/api';
 import ErrorPage from '@/components/ErrorPage';
+import { Account } from '@/apis';
 
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
@@ -26,7 +26,7 @@ export interface FlagrightAuth0User {
   tenantApiAudience: string;
 }
 
-let cachedUsers: { [userId: string]: User } | null = null;
+let cachedUsers: { [userId: string]: Account } | null = null;
 
 const NAMESPACE = 'https://flagright.com';
 
@@ -70,8 +70,8 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useUsers(): [{ [userId: string]: User }, boolean] {
-  const [users, setUsers] = useState<{ [userId: string]: User }>({});
+export function useUsers(): [{ [userId: string]: Account }, boolean] {
+  const [users, setUsers] = useState<{ [userId: string]: Account }>({});
   const [loading, setLoading] = useState(true);
   const api = useApi();
   useEffect(() => {
@@ -80,8 +80,8 @@ export function useUsers(): [{ [userId: string]: User }, boolean] {
       setLoading(false);
     } else {
       api.getAccounts({}).then(
-        (accounts: User[]) => {
-          cachedUsers = _.keyBy(accounts, 'user_id');
+        (accounts: Account[]) => {
+          cachedUsers = _.keyBy(accounts, 'id');
           setUsers(cachedUsers);
           setLoading(false);
         },

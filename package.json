@@ -39,7 +39,7 @@
     "openapi:build": "npm run openapi:fetch && npm run openapi:generate-sdk",
     "precommit": "lint-staged",
     "prettier": "prettier -c --write \"src/**/*\"",
-    "start:dev": "cross-env ENV=local WATCH=true node build",
+    "start:dev": "npm run openapi:build && cross-env ENV=local WATCH=true node build",
     "pretest": "node ./tests/beforeTest",
     "test:all": "node ./tests/run-tests.js",
     "tsc": "tsc --noEmit"

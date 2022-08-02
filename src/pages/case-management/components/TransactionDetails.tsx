@@ -16,16 +16,12 @@ import {
   Upload,
 } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  EditOutlined,
-  HistoryOutlined,
-  LoadingOutlined,
-  PaperClipOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, HistoryOutlined, PaperClipOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import styles from './TransactionDetails.module.less';
 import { RuleActionStatus } from './RuleActionStatus';
 import Comment from './Comment';
+import { AssigneesDropdown } from './AssigneesDropdown';
 import {
   Comment as TransactionComment,
   FileInfo,
@@ -156,7 +152,7 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
 export const TransactionDetails: React.FC<Props> = ({ transaction, onTransactionUpdate }) => {
   const user = useAuth0User();
   const api = useApi();
-  const [users, loadingUsers] = useUsers();
+  const [users] = useUsers();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
@@ -296,40 +292,11 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           )}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Assignees:</b>}>
-          {editing ? (
-            <Select<string[]>
-              mode="multiple"
-              allowClear
-              style={{ width: '100%' }}
-              disabled={loadingUsers}
-              placeholder={
-                loadingUsers ? (
-                  <>
-                    <LoadingOutlined /> Loading...
-                  </>
-                ) : (
-                  ''
-                )
-              }
-              onChange={handleUpdateAssignments}
-              value={loadingUsers ? [] : assignments.map((assignment) => assignment.assigneeUserId)}
-            >
-              {Object.values(users).map((user) => (
-                <Select.Option key={user.user_id}>
-                  <Avatar size={15} src={user.picture} /> {user.name}
-                </Select.Option>
-              ))}
-            </Select>
-          ) : (
-            assignments?.map((assignment) => (
-              <Tag>
-                <Space>
-                  <Avatar size={15} src={users[assignment.assigneeUserId]?.picture} />
-                  {users[assignment.assigneeUserId]?.name}
-                </Space>
-              </Tag>
-            ))
-          )}
+          <AssigneesDropdown
+            assignments={assignments}
+            editing={editing}
+            onChange={handleUpdateAssignments}
+          />
         </ProDescriptions.Item>
         <ProDescriptions.Item
           label={
