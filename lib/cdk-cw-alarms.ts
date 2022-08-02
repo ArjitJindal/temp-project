@@ -156,12 +156,11 @@ export const createDynamoDBAlarm = (
   return new Alarm(context, dynamoDBTableAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 1,
-    evaluationPeriods: 3,
-    datapointsToAlarm: 3,
+    evaluationPeriods: 1,
+    datapointsToAlarm: 1,
     alarmName: dynamoDBTableAlarmName,
     alarmDescription: `Covers ${metric} for ${operation} in ${dynamoDBTableName} in the AWS account. 
-    Alarm triggers when there is more than 1 ${metric} for 3 consecutive data points in 15 mins 
-    (Checked every 5 minutes).`,
+    Alarm triggers when there is more than 1 ${metric} for 1 data point (Checked every 5 minutes).`,
     metric: new Metric({
       label: `${dynamoDBTableName}${metric}`,
       namespace: 'AWS/DynamoDB',
