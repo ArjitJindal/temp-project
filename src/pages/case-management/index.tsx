@@ -5,13 +5,13 @@ import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate, useParams } from 'react-router';
-import { Resizable } from 'react-resizable';
 import type { ResizeCallbackData } from 'react-resizable';
 import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
 import { AddToSlackButton } from './components/AddToSlackButton';
+import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
@@ -156,26 +156,28 @@ function TableList() {
           },
         },
         {
-          title: 'Origin User ID',
-          width: 120,
+          title: 'Origin (sender) User ID',
+          tooltip: 'Origin users are the users initiating the transaction - sending the money',
+          width: 180,
           dataIndex: 'originUserId',
           render: (dom, entity) => {
             return entity.originUserId;
           },
         },
         {
-          title: 'Origin User Name',
-          width: 120,
+          title: 'Origin (sender) User Name',
+          tooltip: 'Origin users are the users initiating the transaction - sending the money',
+          width: 180,
           render: (dom, entity) => {
             return getUserName(entity.originUser);
           },
         },
         {
           title: 'Origin Method',
-          width: 100,
+          width: 160,
           hideInSearch: true,
           render: (dom, entity) => {
-            return entity.originPaymentDetails?.method;
+            return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
           },
         },
         {
@@ -195,7 +197,7 @@ function TableList() {
         {
           title: 'Origin Currency',
           hideInSearch: true,
-          width: 80,
+          width: 90,
           render: (dom, entity) => {
             return entity.originAmountDetails?.transactionCurrency;
           },
@@ -225,10 +227,10 @@ function TableList() {
         },
         {
           title: 'Destination Method',
-          width: 120,
+          width: 160,
           hideInSearch: true,
           render: (dom, entity) => {
-            return entity.destinationPaymentDetails?.method;
+            return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
           },
         },
         {
@@ -249,7 +251,7 @@ function TableList() {
         },
         {
           title: 'Destination Currency',
-          width: 100,
+          width: 90,
           hideInSearch: true,
           render: (dom, entity) => {
             return entity.destinationAmountDetails?.transactionCurrency;
@@ -257,7 +259,7 @@ function TableList() {
         },
         {
           title: 'Destination Country',
-          width: 100,
+          width: 90,
           hideInSearch: true,
           render: (dom, entity) => {
             return entity.destinationAmountDetails?.country;

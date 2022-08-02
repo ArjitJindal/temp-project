@@ -11,7 +11,7 @@
  */
 
 import { DeviceData } from './DeviceData';
-import { Transaction1 } from './Transaction1';
+import { Transaction } from './Transaction';
 import { TransactionState } from './TransactionState';
 import { HttpFile } from '../http/http';
 
@@ -45,7 +45,7 @@ export class TransactionEvent {
    */
   'employeeId'?: string;
   'metaData'?: DeviceData;
-  'updatedTransactionAttributes'?: Transaction1;
+  'updatedTransactionAttributes'?: Transaction;
 
   static readonly discriminator: string | undefined = undefined;
 
@@ -106,7 +106,7 @@ export class TransactionEvent {
     {
       name: 'updatedTransactionAttributes',
       baseName: 'updatedTransactionAttributes',
-      type: 'Transaction1',
+      type: 'Transaction',
       format: '',
     },
   ];

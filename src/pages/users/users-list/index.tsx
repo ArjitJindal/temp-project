@@ -283,6 +283,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     {
       title: 'User ID',
       dataIndex: 'userId',
+      width: 180,
       tip: 'Unique identification of user.',
       render: (dom, entity) => {
         // todo: fix style
@@ -302,6 +303,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     },
     {
       title: 'Name',
+      width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
         return getFullName(entity.userDetails);
@@ -310,6 +312,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     },
     {
       title: 'Date of Birth',
+      width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.dateOfBirth;

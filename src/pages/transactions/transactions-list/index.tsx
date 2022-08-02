@@ -29,6 +29,7 @@ import { useI18n } from '@/locales';
 import '../../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
+import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -118,26 +119,28 @@ const TableList = (props: RouteMatch<'id'>) => {
           },
         },
         {
-          title: 'Origin User ID',
-          width: 120,
+          title: 'Origin (sender) User ID',
+          tooltip: 'Origin users are the users initiating the transaction - sending the money',
+          width: 180,
           dataIndex: 'originUserId',
           render: (dom, entity) => {
             return entity.originUserId;
           },
         },
         {
-          title: 'Origin User Name',
-          width: 120,
+          title: 'Origin (sender) User Name',
+          tooltip: 'Origin users are the users initiating the transaction - sending the money',
+          width: 180,
           render: (dom, entity) => {
             return getUserName(entity.originUser);
           },
         },
         {
           title: 'Origin Method',
-          width: 120,
+          width: 160,
           hideInSearch: true,
           render: (dom, entity) => {
-            return entity.originPaymentDetails?.method;
+            return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
           },
         },
         {
@@ -172,7 +175,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         },
         {
           title: 'Destination User ID',
-          width: 120,
+          width: 150,
           dataIndex: 'destinationUserId',
           render: (dom, entity) => {
             return entity.destinationUserId;
@@ -180,17 +183,17 @@ const TableList = (props: RouteMatch<'id'>) => {
         },
         {
           title: 'Destination User Name',
-          width: 120,
+          width: 180,
           render: (dom, entity) => {
             return getUserName(entity.destinationUser);
           },
         },
         {
           title: 'Destination Method',
-          width: 120,
+          width: 160,
           hideInSearch: true,
           render: (dom, entity) => {
-            return entity.destinationPaymentDetails?.method;
+            return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
           },
         },
         {
