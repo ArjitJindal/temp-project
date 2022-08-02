@@ -114,6 +114,20 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             requestParams.filterUserId = userId;
           }
 
+          const statusFilter = (filters ?? {})['status'] ?? [];
+
+          if (statusFilter.indexOf('ALLOW') !== -1) {
+            requestParams.filterStatus = 'ALLOW';
+          } else if (statusFilter.indexOf('FLAG') !== -1) {
+            requestParams.filterStatus = 'FLAG';
+          } else if (statusFilter.indexOf('BLOCK') !== -1) {
+            requestParams.filterStatus = 'BLOCK';
+          } else if (statusFilter.indexOf('SUSPEND') !== -1) {
+            requestParams.filterStatus = 'SUSPEND';
+          } else if (statusFilter.indexOf('WHITELIST') !== -1) {
+            requestParams.filterStatus = 'WHITELIST';
+          }
+
           const result = await api.getTransactionsList(requestParams);
           return {
             data: result.data.map((x) => ({
@@ -134,6 +148,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           {
             title: 'Transaction ID',
             dataIndex: 'transactionId',
+            hideInSearch: true,
             key: 'transactionId',
             render: (dom, entity) => {
               return (
@@ -144,6 +159,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           {
             title: 'Transaction Time',
             dataIndex: 'timestamp',
+            hideInSearch: true,
             valueType: 'dateTime',
             key: 'transactionTime',
             render: (_, transaction) => {
@@ -152,8 +168,34 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
           {
             title: 'Status',
+            dataIndex: 'status',
             sorter: true,
+            filters: true,
+            onFilter: false,
+            filterMultiple: false,
             hideInSearch: true,
+            valueType: 'select',
+            valueEnum: {
+              all: {
+                text: 'All',
+              },
+              ALLOW: {
+                text: 'ALLOW',
+              },
+              FLAG: {
+                text: 'FLAG',
+              },
+              BLOCK: {
+                text: 'BLOCK',
+              },
+              WHITELIST: {
+                text: 'WHITELIST',
+              },
+              SUSPEND: {
+                text: 'SUSPEND',
+              },
+            },
+            key: 'status',
             width: 120,
             render: (dom, entity) => {
               const transaction = updatedTransactions[entity.transactionId as string] || entity;
@@ -166,6 +208,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             filters: true,
             onFilter: false,
             filterMultiple: false,
+            hideInSearch: true,
             valueType: 'select',
             valueEnum: {
               all: {
@@ -182,6 +225,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
           {
             title: 'Origin Amount',
+            hideInSearch: true,
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
             },
@@ -189,6 +233,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
           {
             title: 'Destination Amount',
+            hideInSearch: true,
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(
                 entity.destinationAmountDetails,
