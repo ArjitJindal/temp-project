@@ -65,6 +65,7 @@ export class AccountsService {
       role: user.app_metadata?.role ?? 'USER',
       email: user.email,
       emailVerified: user.email_verified ?? false,
+      name: user.name ?? '',
       picture: user.picture,
     }
   }

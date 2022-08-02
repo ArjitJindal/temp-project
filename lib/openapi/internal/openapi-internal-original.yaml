@@ -1624,6 +1624,8 @@ components:
           type: string
         emailVerified:
           type: boolean
+        name:
+          type: string
         picture:
           type: string
       required:
@@ -1631,6 +1633,7 @@ components:
         - role
         - email
         - emailVerified
+        - name
     AccountInvitePayload:
       title: AccountInvitePayload
       type: object
