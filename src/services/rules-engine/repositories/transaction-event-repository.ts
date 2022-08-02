@@ -33,6 +33,11 @@ export class TransactionEventRepository {
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()
 
+    const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
+      this.tenantId,
+      transactionEvent.transactionId,
+      transactionEvent.timestamp
+    )
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -40,11 +45,7 @@ export class TransactionEventRepository {
             {
               PutRequest: {
                 Item: {
-                  ...DynamoDbKeys.TRANSACTION_EVENT(
-                    this.tenantId,
-                    transactionEvent.transactionId,
-                    transactionEvent.timestamp
-                  ),
+                  ...primaryKey,
                   eventId,
                   ...transactionEvent,
                   ...rulesResult,
@@ -56,6 +57,13 @@ export class TransactionEventRepository {
         ReturnConsumedCapacity: 'TOTAL',
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+
+    if (process.env.NODE_ENV === 'development') {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
     return eventId
   }
 }

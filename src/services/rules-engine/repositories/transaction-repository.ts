@@ -346,6 +346,7 @@ export class TransactionRepository {
         includeEvents: true,
         limit: 1,
         skip: 0,
+        beforeTimestamp: Date.now(),
       }
     ).next()
   }
@@ -418,6 +419,10 @@ export class TransactionRepository {
     transaction.timestamp = transaction.timestamp || Date.now()
 
     // Important: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
+    const primaryKey = DynamoDbKeys.TRANSACTION(
+      this.tenantId,
+      transaction.transactionId
+    )
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -425,10 +430,7 @@ export class TransactionRepository {
             {
               PutRequest: {
                 Item: {
-                  ...DynamoDbKeys.TRANSACTION(
-                    this.tenantId,
-                    transaction.transactionId
-                  ),
+                  ...primaryKey,
                   ...transaction,
                   ...rulesResult,
                 },
@@ -444,6 +446,13 @@ export class TransactionRepository {
         ReturnConsumedCapacity: 'TOTAL',
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+
+    if (process.env.NODE_ENV === 'development') {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
     return transaction
   }
 

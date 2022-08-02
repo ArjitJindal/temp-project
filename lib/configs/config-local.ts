@@ -36,6 +36,7 @@ export const config: Config = {
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
     CONSOLE_URI: 'https://dev.console.flagright.com',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
+    NODE_ENV: 'development',
     SLACK_CLIENT_ID: '2800969986821.3797458092182',
     SLACK_CLIENT_SECRET: 'b195cb611e873c4737863ce27e885d39',
     SLACK_REDIRECT_URI: 'https://${ngrok_url}/slack/oauth_redirect',

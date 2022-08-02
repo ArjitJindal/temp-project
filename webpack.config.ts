@@ -58,7 +58,9 @@ const config: Configuration = {
     plugins: [new TsconfigPathsPlugin()],
   },
   target: 'node',
-  mode: process.env.ENV === 'prod' ? 'production' : 'development',
+  mode: ['local', 'dev'].includes(process.env.ENV as string)
+    ? 'development'
+    : 'production',
 }
 
 export default config

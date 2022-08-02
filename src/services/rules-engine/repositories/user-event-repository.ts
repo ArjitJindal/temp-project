@@ -38,7 +38,12 @@ export class UserEventRepository {
     } = {}
   ): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()
-
+    const primaryKey = DynamoDbKeys.USER_EVENT(
+      this.tenantId,
+      userEvent.type,
+      userEvent.userId,
+      userEvent.timestamp
+    )
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
@@ -46,12 +51,7 @@ export class UserEventRepository {
             {
               PutRequest: {
                 Item: {
-                  ...DynamoDbKeys.USER_EVENT(
-                    this.tenantId,
-                    userEvent.type,
-                    userEvent.userId,
-                    userEvent.timestamp
-                  ),
+                  ...primaryKey,
                   eventId,
                   ...userEvent,
                   ...rulesResult,
@@ -63,6 +63,13 @@ export class UserEventRepository {
         ReturnConsumedCapacity: 'TOTAL',
       }
     await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+
+    if (process.env.NODE_ENV === 'development') {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
     return eventId
   }
 

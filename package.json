@@ -22,7 +22,7 @@
     "synth:prod:eu-1": "export ENV=prod:eu-1 && npm run openapi:augment && cdk synth prod-tarpon --profile=AWSAdministratorAccess-870721492449",
     "synth:pipeline": "cdk synth tarpon-pipeline",
     "deploy:dev": "ENV=dev cdk deploy dev-tarpon",
-    "deploy:dev:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && npm run build && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
+    "deploy:dev:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && ENV=dev npm run build && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-tarpon",
     "deploy:sandbox:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825 && npm run build && npm run synth:sandbox && npm run deploy:sandbox -- --profile=AWSAdministratorAccess-293986822825",
     "deploy:prod:asia-1": "ENV=prod:asia-1 cdk deploy prod-tarpon",
@@ -51,7 +51,7 @@
     "start-local-ddb": "docker run -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb",
     "start-local-mongodb": "docker run -p 27017:27017 mongo",
     "dev:databases": "npm run parallel start-local-ddb start-local-mongodb",
-    "dev:api": "npm run build && npm run synth:local && npm run start-local-api",
+    "dev:api": "ENV=local npm run build && npm run synth:local && npm run start-local-api",
     "dev": "npm run parallel dev:databases dev:api"
   },
   "repository": {

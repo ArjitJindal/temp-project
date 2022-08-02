@@ -192,16 +192,24 @@ export class UserRepository {
       ...user,
       userId,
     }
+    const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.USER(this.tenantId, userId),
+        ...primaryKey,
         type,
         ...newUser,
       },
       ReturnConsumedCapacity: 'TOTAL',
     }
     await this.dynamoDb.put(putItemInput).promise()
+
+    if (process.env.NODE_ENV === 'development') {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
     return newUser
   }
 

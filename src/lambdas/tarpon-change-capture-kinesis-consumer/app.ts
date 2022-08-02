@@ -186,6 +186,8 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           )
           await transactionEventHandler(db, tenantId, transactionEvent)
         }
+        // NOTE: If we handle more entites, please add `localTarponChangeCaptureHandler(...)` to the corresponding
+        // place that updates the entity to make local work
       }
     } catch (err) {
       console.error(err)
