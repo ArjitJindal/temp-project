@@ -1795,6 +1795,7 @@ components:
       enum:
         - PULSE
         - PULSE_MANUAL_USER_RISK_LEVEL
+        - AUDIT_LOGS
         - SLACK_ALERTS
       description: ''
     AccountRole:
