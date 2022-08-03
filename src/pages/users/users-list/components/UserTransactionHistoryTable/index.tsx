@@ -1,19 +1,37 @@
-import { Divider, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useState } from 'react';
 import style from './style.module.less';
+import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { RuleActionStatus } from '@/pages/case-management/components/RuleActionStatus';
-import { TransactionAmountDetails, TransactionCaseManagement, TransactionEvent } from '@/apis';
+import { RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import Id from '@/components/ui/Id';
+import ExpandIcon from '@/components/ui/Table/ExpandIcon';
 
 interface Props {
   userId?: string;
 }
+
+export type DataItem = {
+  index: number;
+  status: RuleAction;
+  rowKey: string;
+  lastRowKey: string;
+  transactionId?: string;
+  timestamp?: number;
+  originAmountDetails?: TransactionAmountDetails;
+  destinationAmountDetails?: TransactionAmountDetails;
+  direction?: 'Incoming' | 'Outgoing';
+  events: Array<TransactionEvent>;
+  isFirstRow: boolean;
+  isLastRow: boolean;
+  rowSpan: number;
+  ruleName: string | null;
+  ruleDescription: string | null;
+};
 
 const createCurrencyStringFromTransactionAmount = (
   amount: TransactionAmountDetails | undefined,
@@ -21,73 +39,18 @@ const createCurrencyStringFromTransactionAmount = (
   return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
 };
 
-function expandedRowRender(transaction: TransactionCaseManagement) {
-  return (
-    <Table<TransactionEvent>
-      rowKey="_id"
-      search={false}
-      columns={[
-        {
-          title: 'Event ID',
-          dataIndex: 'eventId',
-          width: 100,
-          render: (dom, event) => (event.eventId ? <Id>{event.eventId}</Id> : '-'),
-        },
-        {
-          title: 'Transaction state',
-          dataIndex: 'transactionState',
-          width: 100,
-        },
-        {
-          title: 'Event Time',
-          dataIndex: 'timestamp',
-          valueType: 'dateTime',
-          key: 'transactionTime',
-          width: 100,
-          render: (_, item) => {
-            return moment(item.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-          },
-        },
-        {
-          title: 'Description',
-          dataIndex: 'eventDescription',
-          width: 100,
-        },
-        {
-          title: 'Reason',
-          dataIndex: 'reason',
-          width: 100,
-        },
-      ]}
-      dataSource={transaction.events ?? []}
-      pagination={false}
-      options={{
-        density: false,
-        setting: false,
-        reload: false,
-      }}
-    />
-  );
-}
-
 export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
-  const [updatedTransactions] = useState<{
-    [key: string]: TransactionCaseManagement;
-  }>({});
   const api = useApi();
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
   // Using this hack to fix sticking dropdown on scroll
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
-      <Table<
-        TransactionCaseManagement & {
-          direction: 'Incoming' | 'Outgoing';
-        }
-      >
+      <Table<DataItem>
         search={false}
-        rowKey="transactionId"
+        rowKey="rowKey"
         form={{
           labelWrap: true,
         }}
@@ -132,11 +95,45 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           }
 
           const result = await api.getTransactionsList(requestParams);
+
+          const data: DataItem[] = result.data.reduce((acc, item, index): DataItem[] => {
+            const dataItem: DataItem = {
+              index,
+              rowKey: item.transactionId ?? `${index}`,
+              lastRowKey: `${item.transactionId}#${item.hitRules.length - 1}`,
+              transactionId: item.transactionId,
+              timestamp: item.timestamp,
+              originAmountDetails: item.originAmountDetails,
+              destinationAmountDetails: item.destinationAmountDetails,
+              direction: item.originUserId === userId ? 'Outgoing' : 'Incoming',
+              status: item.status,
+              events: item.events ?? [],
+              isFirstRow: true,
+              isLastRow: true,
+              ruleName: null,
+              ruleDescription: null,
+              rowSpan: 1,
+            };
+            if (item.hitRules.length === 0) {
+              return [...acc, dataItem];
+            }
+            return [
+              ...acc,
+              ...item.hitRules.map(
+                (rule, i): DataItem => ({
+                  ...dataItem,
+                  rowSpan: i === 0 ? item.hitRules.length : 0,
+                  isFirstRow: i === 0,
+                  isLastRow: i === item.hitRules.length - 1,
+                  rowKey: `${item.transactionId}#${i}`,
+                  ruleName: rule.ruleName,
+                  ruleDescription: rule.ruleDescription,
+                }),
+              ),
+            ];
+          }, [] as DataItem[]);
           return {
-            data: result.data.map((x) => ({
-              ...x,
-              direction: x.originUserId === userId ? 'Outgoing' : 'Incoming',
-            })),
+            data,
             success: true,
             total: result.total,
           };
@@ -153,11 +150,34 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             dataIndex: 'transactionId',
             hideInSearch: true,
             key: 'transactionId',
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
             render: (dom, entity) => {
+              const { lastRowKey } = entity;
+              const isExpanded = expandedRows.indexOf(lastRowKey) !== -1;
               return (
-                <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
+                <div className={style.idColumn}>
+                  <ExpandIcon
+                    onClick={() => {
+                      setExpandedRows((keys) =>
+                        isExpanded ? keys.filter((x) => x !== lastRowKey) : [lastRowKey],
+                      );
+                    }}
+                    isExpanded={isExpanded}
+                  />
+                  <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
+                </div>
               );
             },
+          },
+          {
+            title: 'Rules Hit',
+            dataIndex: 'ruleName',
+          },
+          {
+            title: 'Rules Parameters Matched',
+            dataIndex: 'ruleDescription',
           },
           {
             title: 'Transaction Time',
@@ -165,6 +185,10 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             hideInSearch: true,
             valueType: 'dateTime',
             key: 'transactionTime',
+            width: 180,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
             render: (_, transaction) => {
               return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
             },
@@ -200,9 +224,11 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             },
             key: 'status',
             width: 120,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
             render: (dom, entity) => {
-              const transaction = updatedTransactions[entity.transactionId as string] || entity;
-              return <RuleActionStatus ruleAction={transaction.status} />;
+              return <RuleActionStatus ruleAction={entity.status} />;
             },
           },
           {
@@ -224,7 +250,9 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
                 text: 'Outgoing',
               },
             },
-            key: 'direction',
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
           },
           {
             title: 'Origin Amount',
@@ -232,7 +260,9 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
             },
-            key: 'originAmountDetails',
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
           },
           {
             title: 'Destination Amount',
@@ -242,10 +272,18 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
                 entity.destinationAmountDetails,
               )}`;
             },
-            key: 'destinationAmountDetails',
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
           },
         ]}
-        expandable={{ expandedRowRender }}
+        expandable={{
+          showExpandColumn: false,
+          expandedRowKeys: expandedRows,
+          expandedRowRender: (item) => <ExpandedRowRenderer events={item.events} />,
+        }}
+        isEvenRow={(item) => item.index % 2 === 0}
+        scroll={{ x: 1300 }}
       />
     </div>
   );

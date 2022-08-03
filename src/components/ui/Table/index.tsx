@@ -5,6 +5,7 @@ import { ProTableProps } from '@ant-design/pro-table/lib';
 import style from './style.module.less';
 
 interface Props<T, U, ValueType> extends ProTableProps<T, U, ValueType> {
+  isEvenRow?: (item: T) => boolean;
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
 }
@@ -36,6 +37,7 @@ export default function Table<T, U = ParamsType, ValueType = 'text'>(
     disableStripedColoring = false,
     disableExpandedRowPadding = false,
     className,
+    isEvenRow,
     ...rest
   } = props;
 
@@ -49,9 +51,10 @@ export default function Table<T, U = ParamsType, ValueType = 'text'>(
         .filter((x) => !!x)
         .join(' ')}
       locale={TABLE_LOCALE}
-      rowClassName={(_, index) =>
-        disableStripedColoring || index % 2 === 0 ? style.tableRowLight : style.tableRowDark
-      }
+      rowClassName={(_, index) => {
+        const isEven = isEvenRow ? isEvenRow(_) : index % 2 === 0;
+        return disableStripedColoring || isEven ? style.tableRowLight : style.tableRowDark;
+      }}
       {...rest}
     />
   );

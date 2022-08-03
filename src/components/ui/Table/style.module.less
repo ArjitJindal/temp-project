@@ -65,9 +65,19 @@
 }
 
 .tableRowLight {
-  background-color: #fff;
+  &,
+  &:hover {
+    > td {
+      background-color: #fff !important;
+    }
+  }
 }
 
 .tableRowDark {
-  background-color: fade(@fr-colors-brandBlueTint, 45%);
+  &,
+  &:hover {
+    > td {
+      background-color: fade(@fr-colors-brandBlueTint, 45%) !important;
+    }
+  }
 }

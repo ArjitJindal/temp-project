@@ -219,7 +219,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
         }}
       />
       <Drawer
-        width={800}
+        width={960}
         visible={!isInit(currentItem)}
         onClose={() => {
           navigate('/users/list/business/all', { replace: true });
@@ -462,7 +462,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         }}
       />
       <Drawer
-        width={800}
+        width={960}
         visible={!isInit(currentItem)}
         onClose={() => {
           navigate('/users/list/consumer/all', { replace: true });
