@@ -16,7 +16,7 @@ import { Feature, Tenant } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-const FEATURES: Feature[] = ['PULSE', 'PULSE_MANUAL_USER_RISK_LEVEL', 'SLACK_ALERTS'];
+const FEATURES: Feature[] = ['PULSE', 'PULSE_MANUAL_USER_RISK_LEVEL', 'SLACK_ALERTS', 'AUDIT_LOGS'];
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
