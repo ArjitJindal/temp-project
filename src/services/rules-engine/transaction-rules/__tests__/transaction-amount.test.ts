@@ -13,158 +13,134 @@ import {
   setUpConsumerUsersHooks,
 } from '@/test-utils/user-test-utils'
 
-const TEST_TENANT_ID = getTestTenantId()
-
 dynamoDbSetupHook()
 
-setUpRulesHooks(TEST_TENANT_ID, [
-  {
-    type: 'TRANSACTION',
-    ruleImplementationName: 'transaction-amount',
-    defaultParameters: {
-      transactionAmountThreshold: { EUR: 1000 },
-      ageRange: { minAge: 18, maxAge: 25 },
-    } as TransactionAmountRuleParameters,
-    defaultAction: 'FLAG',
-  },
-])
+describe('Core logic', () => {
+  const TEST_TENANT_ID = getTestTenantId()
 
-const user1DateOfBirth = dayjs().subtract(20, 'years')
-const user2DateOfBirth = dayjs().subtract(40, 'years')
-
-setUpConsumerUsersHooks(TEST_TENANT_ID, [
-  getTestUser({
-    userId: '1',
-    userDetails: {
-      name: {
-        firstName: '1',
-      },
-      dateOfBirth: user1DateOfBirth.format('YYYY-MM-DD'),
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { EUR: 1000 },
+        ageRange: { minAge: 18, maxAge: 25 },
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
     },
-  }),
-  getTestUser({
-    userId: '2',
-    userDetails: {
-      name: {
-        firstName: '2',
-      },
-      dateOfBirth: user2DateOfBirth.format('YYYY-MM-DD'),
-    },
-  }),
-])
+  ])
 
-describe.each<TransactionRuleTestCase>([
-  {
-    name: 'User in the target age range AND too big transaction amount - hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
+  const user1DateOfBirth = dayjs().subtract(20, 'years')
+  const user2DateOfBirth = dayjs().subtract(40, 'years')
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      userDetails: {
+        name: {
+          firstName: '1',
         },
-      }),
-    ],
-    expectedHits: [true],
-  },
-  {
-    name: 'User in the target age range AND too big transaction amount (currency not in the rule params) - hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'USD',
+        dateOfBirth: user1DateOfBirth.format('YYYY-MM-DD'),
+      },
+    }),
+    getTestUser({
+      userId: '2',
+      userDetails: {
+        name: {
+          firstName: '2',
         },
-      }),
-    ],
-    expectedHits: [true],
-  },
-  {
-    name: 'User in the target age range AND normal transaction amount - not hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 100,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [false],
-  },
-  {
-    name: 'User not in the target range AND too big transaction amount - not hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '2',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [false],
-  },
-  {
-    name: 'User not in the target range AND normal transaction amount - not hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '2',
-        originAmountDetails: {
-          transactionAmount: 100,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [false],
-  },
-  {
-    name: 'Missing sender user ID - hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: undefined,
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [true],
-  },
-  {
-    name: 'Undefined age range, above threshold- hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [true],
-  },
-  {
-    name: 'Undefined age range, below threshold - not hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 10,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    expectedHits: [false],
-  },
-])('', ({ name, transactions, expectedHits }) => {
-  createTransactionRuleTestCase(
-    name,
-    TEST_TENANT_ID,
-    transactions,
-    expectedHits
-  )
+        dateOfBirth: user2DateOfBirth.format('YYYY-MM-DD'),
+      },
+    }),
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'User in the target age range AND too big transaction amount - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+    {
+      name: 'User in the target age range AND too big transaction amount (currency not in the rule params) - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'USD',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+    {
+      name: 'User in the target age range AND normal transaction amount - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'User not in the target range AND too big transaction amount - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'User not in the target range AND normal transaction amount - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'Missing sender user ID - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: undefined,
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
 })
 
 describe('Optional parameters - Payment Method', () => {
@@ -414,6 +390,47 @@ describe('Optional parameters - User Type', () => {
         }),
       ],
       expectedHits: [false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Optional parameters - ageRange', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { EUR: 1000 },
+        ageRange: {},
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Transaction amount above threshold - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

@@ -8,7 +8,7 @@ import { UserType } from '@/@types/user/user-type'
 
 export function isUserBetweenAge(
   user: User | Business | undefined,
-  ageRange: { minAge: number; maxAge: number } | undefined
+  ageRange: { minAge?: number; maxAge?: number } | undefined
 ): boolean {
   const consumerUser = user as User
   if (
@@ -20,7 +20,7 @@ export function isUserBetweenAge(
     return true
   }
   const age = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'year')
-  return _.inRange(age, ageRange.minAge, ageRange.maxAge)
+  return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 200)
 }
 
 export function isConsumerUser(user: User | Business) {

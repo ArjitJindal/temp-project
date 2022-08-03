@@ -10,8 +10,8 @@ export type TransactionAmountRuleParameters = {
     [currency: string]: number
   }
   ageRange?: {
-    minAge: number
-    maxAge: number
+    minAge?: number
+    maxAge?: number
   }
   // optional parameter
   transactionType?: string
@@ -36,8 +36,8 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
           type: 'object',
           title: 'Target Age Range',
           properties: {
-            minAge: { type: 'integer', title: 'Min Age' },
-            maxAge: { type: 'integer', title: 'Max Age' },
+            minAge: { type: 'integer', title: 'Min Age', nullable: true },
+            maxAge: { type: 'integer', title: 'Max Age', nullable: true },
           },
           required: [],
           nullable: true,

@@ -67,7 +67,7 @@
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.5.1",
     "@stoplight/cli": "^5.0.722",
-    "@tsconfig/node14": "^1.0.1",
+    "@tsconfig/node16": "^1.0.1",
     "@types/ajv": "^1.0.0",
     "@types/auth0": "^2.34.16",
     "@types/aws-lambda": "^8.10.89",
