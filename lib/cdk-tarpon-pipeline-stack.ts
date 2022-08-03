@@ -5,7 +5,6 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 
 import { Construct } from 'constructs'
-import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 import { config as deployConfig } from './configs/config-deployment'
 import { config as devConfig } from './configs/config-dev'
 import { config as sandboxConfig } from './configs/config-sandbox'
@@ -60,8 +59,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         },
       }),
       environment: {
-        buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
-        computeType: ComputeType.MEDIUM,
+        buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
       },
     })
     const getDeployCodeBuildProject = (
@@ -101,7 +99,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           },
         }),
         environment: {
-          buildImage: codebuild.LinuxBuildImage.STANDARD_5_0,
+          buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         },
         role: devCodeDeployRole,
       })
