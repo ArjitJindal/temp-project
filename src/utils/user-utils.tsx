@@ -26,7 +26,7 @@ export interface FlagrightAuth0User {
   tenantApiAudience: string;
 }
 
-let cachedUsers: { [userId: string]: Account } | null = null;
+let cachedUsers: Promise<{ [userId: string]: Account }> | null = null;
 
 const NAMESPACE = 'https://flagright.com';
 
@@ -75,23 +75,21 @@ export function useUsers(): [{ [userId: string]: Account }, boolean] {
   const [loading, setLoading] = useState(true);
   const api = useApi();
   useEffect(() => {
-    if (cachedUsers) {
-      setUsers(cachedUsers);
-      setLoading(false);
-    } else {
-      api.getAccounts({}).then(
-        (accounts: Account[]) => {
-          cachedUsers = _.keyBy(accounts, 'id');
-          setUsers(cachedUsers);
-          setLoading(false);
-        },
-        () => {
-          cachedUsers = {};
-          setUsers({});
-          setLoading(false);
-        },
-      );
+    if (!cachedUsers) {
+      cachedUsers = api
+        .getAccounts({})
+        .then((accounts: Account[]) =>
+          _.keyBy(
+            accounts.filter((account) => parseUserRole(account.role) !== UserRole.ROOT),
+            'id',
+          ),
+        )
+        .catch((e) => ({}));
     }
+    cachedUsers.then((users) => {
+      setUsers(users);
+      setLoading(false);
+    });
   }, [api, users]);
   return [users, loading];
 }
