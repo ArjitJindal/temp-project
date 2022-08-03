@@ -1,3 +1,4 @@
+import { Button } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { useRef, useState } from 'react';
@@ -9,6 +10,8 @@ import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import Id from '@/components/ui/Id';
+import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
 
 interface Props {
@@ -271,6 +274,25 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
               return `${createCurrencyStringFromTransactionAmount(
                 entity.destinationAmountDetails,
               )}`;
+            },
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+          },
+          {
+            title: 'Actions',
+            render: (dom, entity) => {
+              return (
+                <Link
+                  to={makeUrl(`/case-management/:id`, {
+                    id: entity.transactionId,
+                  })}
+                >
+                  <Button size="small" type="ghost">
+                    View Case
+                  </Button>
+                </Link>
+              );
             },
             onCell: (_) => ({
               rowSpan: _.rowSpan,
