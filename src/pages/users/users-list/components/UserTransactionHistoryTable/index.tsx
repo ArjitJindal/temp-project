@@ -92,15 +92,18 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           labelWrap: true,
         }}
         className={style.tablePadding}
-        request={async (params, sort, filters) => {
+        request={async (params, sorter, filters) => {
           if (!userId) {
             throw new Error(`User id is null, unable to fetch transaction history`);
           }
+          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const requestParams: DefaultApiGetTransactionsListRequest = {
             limit: params.pageSize!,
             skip: (params.current! - 1) * params.pageSize!,
             beforeTimestamp: Date.now(),
             includeEvents: true,
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
           };
           const directionFilter = (filters ?? {})['direction'] ?? [];
           const showIncoming = directionFilter.indexOf('incoming') !== -1;
