@@ -6,7 +6,6 @@ import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate, useParams } from 'react-router';
 import type { ResizeCallbackData } from 'react-resizable';
-import { ExpandedRulesRowRender } from './components/ExpandedRulesRowRender';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { FormValues } from './types';
@@ -38,6 +37,17 @@ import '../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { useAuth0User } from '@/utils/user-utils';
+
+export type CaseManagementItem = TransactionCaseManagement & {
+  index: number;
+  transactionId?: string;
+  isFirstRow: boolean;
+  isLastRow: boolean;
+  rowSpan: number;
+  ruleName: string | null;
+  ruleDescription: string | null;
+  rowKey: string;
+};
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
@@ -133,7 +143,7 @@ function TableList() {
   }, []);
   const analytics = useAnalytics();
   // todo: i18n
-  const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
+  const columns: ProColumns<CaseManagementItem>[] = useMemo(
     () => [
       {
         title: 'Transaction ID',
@@ -141,6 +151,9 @@ function TableList() {
         width: 130,
         copyable: true,
         ellipsis: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           // todo: fix style
           return (
@@ -162,6 +175,20 @@ function TableList() {
         dataIndex: 'type',
         width: 150,
         ellipsis: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
+      },
+      {
+        title: 'Rules Hit',
+        width: 150,
+        dataIndex: 'ruleName',
+      },
+      {
+        title: 'Rules Description',
+        tooltip: 'Describes the conditions required for this rule to be hit.',
+        width: 270,
+        dataIndex: 'ruleDescription',
       },
       {
         title: 'Timestamp',
@@ -170,19 +197,11 @@ function TableList() {
         dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
         sorter: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (_, transaction) => {
           return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-        },
-      },
-      {
-        title: 'Rules hit',
-        width: 100,
-        ellipsis: true,
-        hideInSearch: true,
-        dataIndex: 'ruleHitCount',
-        sorter: true,
-        render: (_, transaction) => {
-          return `${transaction.executedRules.filter((rule) => rule.ruleHit).length} rule(s)`;
         },
       },
       {
@@ -190,6 +209,9 @@ function TableList() {
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
         width: 180,
         dataIndex: 'originUserId',
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -198,6 +220,9 @@ function TableList() {
         title: 'Origin (sender) User Name',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
         width: 180,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return getUserName(entity.originUser);
         },
@@ -206,6 +231,9 @@ function TableList() {
         title: 'Origin Method',
         width: 160,
         hideInSearch: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
         },
@@ -216,6 +244,9 @@ function TableList() {
         hideInSearch: true,
         sorter: true,
         width: 120,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           if (entity.originAmountDetails?.transactionAmount !== undefined) {
             return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
@@ -228,6 +259,9 @@ function TableList() {
         title: 'Origin Currency',
         hideInSearch: true,
         width: 90,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
         },
@@ -236,6 +270,9 @@ function TableList() {
         title: 'Origin Country',
         hideInSearch: true,
         width: 80,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
         },
@@ -244,6 +281,9 @@ function TableList() {
         title: 'Destination User ID',
         dataIndex: 'destinationUserId',
         width: 150,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
@@ -251,6 +291,9 @@ function TableList() {
       {
         title: 'Destination User Name',
         width: 180,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return getUserName(entity.destinationUser);
         },
@@ -259,6 +302,9 @@ function TableList() {
         title: 'Destination Method',
         width: 160,
         hideInSearch: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
         },
@@ -269,6 +315,9 @@ function TableList() {
         dataIndex: 'destnationAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
             return new Intl.NumberFormat().format(
@@ -282,6 +331,9 @@ function TableList() {
       {
         title: 'Destination Currency',
         width: 90,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
@@ -301,6 +353,9 @@ function TableList() {
         dataIndex: 'status',
         hideInSearch: false,
         valueType: 'select',
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         fieldProps: {
           options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
           allowClear: true,
@@ -316,6 +371,9 @@ function TableList() {
         hideInSearch: true,
         sorter: true,
         width: 120,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return <AllowForm transactionId={entity.transactionId as string} onSaved={reloadTable} />;
         },
@@ -325,6 +383,9 @@ function TableList() {
         hideInSearch: true,
         width: 300,
         ellipsis: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           const transaction = updatedTransactions[entity.transactionId as string] || entity;
           return (
@@ -407,11 +468,11 @@ function TableList() {
         [index]: size.width,
       }));
     };
-  const mergeColumns: ProColumns<TransactionCaseManagement>[] = columns.map((col, index) => ({
+  const mergeColumns: ProColumns<CaseManagementItem>[] = columns.map((col, index) => ({
     ...col,
     width: updatedColumnWidth[index] || col.width,
     onHeaderCell: (column) => ({
-      width: (column as ProColumns<TransactionCaseManagement>).width,
+      width: (column as ProColumns<CaseManagementItem>).width,
       onResize: handleResize(index),
     }),
   }));
@@ -420,13 +481,14 @@ function TableList() {
   const navigate = useNavigate();
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <Table<TransactionCaseManagement>
+      <Table<CaseManagementItem>
         form={{
           labelWrap: true,
         }}
         onLoadingChange={(isLoading) => {
           setLoading(isLoading === true);
         }}
+        isEvenRow={(item) => item.index % 2 === 0}
         components={{
           header: {
             cell: ResizableTitle,
@@ -434,12 +496,11 @@ function TableList() {
         }}
         actionRef={actionRef}
         formRef={formRef}
-        rowKey="transactionId"
+        rowKey="rowKey"
         search={{
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
-        expandable={{ expandedRowRender: ExpandedRulesRowRender }}
         request={async (params, sorter) => {
           const {
             pageSize,
@@ -481,8 +542,38 @@ function TableList() {
             title: 'Table Loaded',
             time,
           });
+          const data: CaseManagementItem[] = response.data.reduce(
+            (acc, item, index): CaseManagementItem[] => {
+              const dataItem = {
+                index,
+                rowKey: item.transactionId ?? `${index}`,
+                isFirstRow: true,
+                isLastRow: true,
+                ruleName: null,
+                ruleDescription: null,
+                ...item,
+                rowSpan: 1,
+              };
+              return [
+                ...acc,
+                ...item.hitRules.map(
+                  (rule, i): CaseManagementItem => ({
+                    ...dataItem,
+                    rowSpan: i === 0 ? item.hitRules.length : 0,
+                    isFirstRow: i === 0,
+                    isLastRow: i === item.hitRules.length - 1,
+                    rowKey: `${item.transactionId}#${i}`,
+                    ruleName: rule.ruleName,
+                    ruleDescription: rule.ruleDescription,
+                  }),
+                ),
+              ];
+            },
+            [] as CaseManagementItem[],
+          );
+
           return {
-            data: response.data,
+            data: data,
             success: true,
             total: response.total,
           };

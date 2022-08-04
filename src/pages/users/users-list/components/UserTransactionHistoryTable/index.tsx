@@ -179,7 +179,8 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             dataIndex: 'ruleName',
           },
           {
-            title: 'Rules Parameters Matched',
+            title: 'Rules Description',
+            tooltip: 'Describes the conditions required for this rule to be hit.',
             dataIndex: 'ruleDescription',
           },
           {
