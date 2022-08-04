@@ -62,6 +62,7 @@ export default function AccountInviteForm(props: Props) {
           {
             required: true,
             type: 'email',
+            message: 'Please enter the E-mail',
           },
         ]}
       />
@@ -72,6 +73,7 @@ export default function AccountInviteForm(props: Props) {
         rules={[
           {
             required: true,
+            message: 'Please enter the Password',
           },
         ]}
       />

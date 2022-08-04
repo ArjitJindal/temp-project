@@ -103,7 +103,11 @@ export default function AllowForm(props: Props) {
             reasonOther: null,
           }}
         >
-          <Form.Item name="reasons" label="Reason" rules={[{ required: true }]}>
+          <Form.Item
+            name="reasons"
+            label="Reason"
+            rules={[{ required: true, message: 'Please enter a Reason' }]}
+          >
             <Select<string[]>
               mode="multiple"
               onChange={(value) => setIsOtherReason(value.includes(OTHER_REASON))}
@@ -119,7 +123,7 @@ export default function AllowForm(props: Props) {
             <Form.Item
               name="reasonOther"
               label="Describe the reason"
-              rules={[{ required: true, max: 50 }]}
+              rules={[{ required: true, message: 'Please describe the reason', max: 50 }]}
             >
               <Input />
             </Form.Item>

@@ -111,6 +111,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Rule ID',
           },
         ]}
         initialValue={rule?.id}
@@ -123,6 +124,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Rule Type',
           },
         ]}
         options={[
@@ -138,6 +140,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Rule Name',
           },
         ]}
         initialValue={rule?.name}
@@ -149,6 +152,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Rule Description',
           },
         ]}
         initialValue={rule?.description}
@@ -161,6 +165,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Rule Implementation Name',
           },
         ]}
         options={ruleImplementations.map((ruleImplementation) => ({
@@ -177,6 +182,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Default Rule Action',
           },
         ]}
         initialValue={rule?.defaultAction}
@@ -188,6 +194,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         rules={[
           {
             required: true,
+            message: 'Please enter Default Parameters',
           },
         ]}
         placeholder={`{
