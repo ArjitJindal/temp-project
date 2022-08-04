@@ -170,26 +170,13 @@ export class CdkTarponStack extends cdk.Stack {
         sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
         readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
         writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
+        billingMode: config.resource.DYNAMODB.BILLING_MODE,
         kinesisStream: tarponStream,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
-    /*
-     * tarpon Alarms
-     */
-    dynamoTableOperationMetrics.map((metric) => {
-      dynamoTableOperations.map((operation) => {
-        createDynamoDBAlarm(
-          this,
-          this.betterUptimeCloudWatchTopic,
-          `DynamoTarpon${operation}${metric}`,
-          tarponDynamoDbTable.tableName,
-          operation,
-          metric
-        )
-      })
-    })
+    this.createDynamoDbAlarms(TarponStackConstants.DYNAMODB_TABLE_NAME)
 
     const hammerheadDynamoDbTable = new Table(
       this,
@@ -200,27 +187,13 @@ export class CdkTarponStack extends cdk.Stack {
         sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
         readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
         writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
+        billingMode: config.resource.DYNAMODB.BILLING_MODE,
         kinesisStream: hammerheadStream,
         removalPolicy:
           config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
-
-    /*
-     * hammerhead Alarms
-     */
-    dynamoTableOperationMetrics.map((metric) => {
-      dynamoTableOperations.map((operation) => {
-        createDynamoDBAlarm(
-          this,
-          this.betterUptimeCloudWatchTopic,
-          `DynamoHammerhead${operation}${metric}`,
-          hammerheadDynamoDbTable.tableName,
-          operation,
-          metric
-        )
-      })
-    })
+    this.createDynamoDbAlarms(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
 
     /**
      * S3 Buckets
@@ -985,5 +958,54 @@ export class CdkTarponStack extends cdk.Stack {
         ],
       })
     )
+  }
+
+  private createDynamoDbAlarms(tableName: string) {
+    dynamoTableOperationMetrics.map((metric) => {
+      dynamoTableOperations.map((operation) => {
+        createDynamoDBAlarm(
+          this,
+          this.betterUptimeCloudWatchTopic,
+          `Dynamo${tableName}${operation}${metric}`,
+          tableName,
+          metric,
+          {
+            threshold: 1,
+            period: Duration.minutes(5),
+            dimensions: { Operation: operation },
+          }
+        )
+      })
+    })
+
+    if (this.config.stage === 'prod') {
+      // We only monitor consumed read/write capacity for production as we use on-demand
+      // mode only in production
+
+      createDynamoDBAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        `Dynamo${tableName}ConsumedReadCapacityUnits`,
+        tableName,
+        'ConsumedReadCapacityUnits',
+        {
+          threshold: 600,
+          statistic: 'Maximum',
+          period: Duration.minutes(1),
+        }
+      )
+      createDynamoDBAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        `Dynamo${tableName}ConsumedWriteCapacityUnits`,
+        tableName,
+        'ConsumedWriteCapacityUnits',
+        {
+          threshold: 300,
+          statistic: 'Maximum',
+          period: Duration.minutes(1),
+        }
+      )
+    }
   }
 }

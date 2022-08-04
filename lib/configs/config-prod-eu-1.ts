@@ -3,6 +3,7 @@
  * (Full list of regions: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html)
  */
 
+import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 import { Config } from './config'
 
 const account = '870721492449'
@@ -13,8 +14,7 @@ export const config: Config = {
   env: { account: account, region: region },
   resource: {
     DYNAMODB: {
-      READ_CAPACITY: 10,
-      WRITE_CAPACITY: 5,
+      BILLING_MODE: BillingMode.PAY_PER_REQUEST,
     },
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: 256,

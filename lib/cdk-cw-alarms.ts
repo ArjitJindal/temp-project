@@ -3,6 +3,7 @@ import {
   Alarm,
   ComparisonOperator,
   MathExpression,
+  DimensionsMap,
 } from 'aws-cdk-lib/aws-cloudwatch'
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions'
 import { Construct } from 'constructs'
@@ -150,28 +151,37 @@ export const createDynamoDBAlarm = (
   betterUptimeTopic: Topic,
   dynamoDBTableAlarmName: string,
   dynamoDBTableName: string,
-  operation: string,
-  metric: string
+  metric: string,
+  options: {
+    threshold: number
+    period: Duration
+    statistic?: string
+    dimensions?: DimensionsMap
+  }
 ) => {
   return new Alarm(context, dynamoDBTableAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 1,
+    threshold: options.threshold,
     evaluationPeriods: 1,
     datapointsToAlarm: 1,
     alarmName: dynamoDBTableAlarmName,
-    alarmDescription: `Covers ${metric} for ${operation} in ${dynamoDBTableName} in the AWS account. 
-    Alarm triggers when there is more than 1 ${metric} for 1 data point (Checked every 5 minutes).`,
+    alarmDescription: `Covers ${metric} for ${
+      options.dimensions?.operation
+    } in ${dynamoDBTableName} in the AWS account. 
+    Alarm triggers when there is more than ${
+      options.threshold
+    } ${metric} for 1 data point (Checked every ${options.period.toMinutes()} minutes).`,
     metric: new Metric({
       label: `${dynamoDBTableName}${metric}`,
       namespace: 'AWS/DynamoDB',
       metricName: metric,
       dimensionsMap: {
         TableName: dynamoDBTableName,
-        Operation: operation,
+        ...(options.dimensions || {}),
       },
     }).with({
-      period: Duration.seconds(300),
-      statistic: 'Average',
+      period: options.period,
+      statistic: options.statistic || 'Average',
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }

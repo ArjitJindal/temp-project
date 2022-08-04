@@ -1,12 +1,14 @@
 import { Environment } from 'aws-cdk-lib'
+import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
 
 export type Config = {
   stage: 'local' | 'dev' | 'sandbox' | 'prod'
   env: Environment
   resource: {
     DYNAMODB: {
-      READ_CAPACITY: number
-      WRITE_CAPACITY: number
+      READ_CAPACITY?: number
+      WRITE_CAPACITY?: number
+      BILLING_MODE?: BillingMode
     }
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: number
