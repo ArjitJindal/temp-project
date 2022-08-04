@@ -3,7 +3,7 @@ import { message, Tooltip } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { useApi } from '@/api';
-import { FormValues } from '@/pages/case-management/types';
+import { TableSearchParams } from '@/pages/case-management/types';
 import { ApiException } from '@/apis';
 import Button from '@/components/ui/Button';
 
@@ -12,7 +12,7 @@ interface Props {
     state: boolean;
     reason: string | null;
   };
-  onGetFormValues: () => FormValues;
+  onGetFormValues: () => TableSearchParams;
 }
 
 export default function ExportButton(props: Props) {

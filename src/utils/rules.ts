@@ -1,4 +1,18 @@
 import { RuleAction } from '@/apis';
+import { neverReturn } from '@/utils/lang';
+
+export function isRuleAction(value: unknown): value is RuleAction {
+  const asRuleAction = value as RuleAction;
+  switch (asRuleAction) {
+    case 'ALLOW':
+    case 'FLAG':
+    case 'BLOCK':
+    case 'WHITELIST':
+    case 'SUSPEND':
+      return true;
+  }
+  return neverReturn(asRuleAction, false);
+}
 
 export function useRuleActionTitle(ruleAction: RuleAction | string): string {
   if (ruleAction === 'ALLOW') {

@@ -1,8 +1,14 @@
-export function makeUrl(
-  route: string,
-  params: { [key: string]: string | number | null | undefined } = {},
-  query: { [key: string]: string | number | null | undefined } = {},
-) {
+export type RawQueryParams = { [key: string]: string | number | null | undefined };
+export type RawParsedQuery = { [key: string]: string | undefined };
+
+export type Serializer<T> = (query: T) => RawQueryParams;
+export type Deserializer<T> = (raw: RawParsedQuery) => T;
+export type Adapter<T> = {
+  serializer: Serializer<T>;
+  deserializer: Deserializer<T>;
+};
+
+export function makeUrl(route: string, params: RawQueryParams = {}, query: RawQueryParams = {}) {
   const match = route.match(/^\/?(.*?)\/?$/);
   if (match == null) {
     throw new Error(`Wrong route format: "${route}"`);
@@ -32,4 +38,18 @@ export function makeUrl(
   queryString = queryString !== '' ? `?${queryString}` : queryString;
 
   return '/' + result + queryString;
+}
+
+export function parseQueryString(queryString: string): RawParsedQuery {
+  if (queryString == '' || !queryString.startsWith('?')) {
+    return {};
+  }
+  return queryString
+    .substring(1)
+    .split('&')
+    .map((part) => part.split('='))
+    .reduce(
+      (acc, [key, value]) => ({ ...acc, [decodeURIComponent(key)]: decodeURIComponent(value) }),
+      {},
+    );
 }

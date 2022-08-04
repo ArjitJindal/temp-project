@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router';
 import type { ResizeCallbackData } from 'react-resizable';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
-import { FormValues } from './types';
+import { TableSearchParams } from './types';
 import { AddToSlackButton } from './components/AddToSlackButton';
 import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
@@ -38,6 +38,10 @@ import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { useAuth0User } from '@/utils/user-utils';
 
+import { makeUrl, parseQueryString } from '@/utils/routing';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import { queryAdapter } from '@/pages/case-management/helpers';
+
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
   transactionId?: string;
@@ -52,7 +56,7 @@ export type CaseManagementItem = TransactionCaseManagement & {
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
   const actionRef = useRef<ActionType>();
-  const formRef = useRef<ProFormInstance<FormValues>>();
+  const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [updatedTransactions, setUpdatedTransactions] = useState<{
@@ -142,6 +146,27 @@ function TableList() {
     actionRef.current?.reload();
   }, []);
   const analytics = useAnalytics();
+  const navigate = useNavigate();
+
+  const parsed = queryAdapter.deserializer(parseQueryString(location.search));
+
+  useDeepEqualEffect(() => {
+    const form = formRef.current;
+    if (form) {
+      form.setFields(Object.entries(parsed).map(([name, value]) => ({ name, value })));
+      form.submit();
+    }
+  }, [parsed]);
+
+  const pushParamsToNavigation = useCallback(
+    (params: TableSearchParams) => {
+      navigate(makeUrl('/case-management/all', {}, queryAdapter.serializer(params)), {
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+
   // todo: i18n
   const columns: ProColumns<CaseManagementItem>[] = useMemo(
     () => [
@@ -476,17 +501,12 @@ function TableList() {
       onResize: handleResize(index),
     }),
   }));
-  const [isLoading, setLoading] = useState(false);
   const i18n = useI18n();
-  const navigate = useNavigate();
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <Table<CaseManagementItem>
+      <Table<CaseManagementItem, TableSearchParams>
         form={{
           labelWrap: true,
-        }}
-        onLoadingChange={(isLoading) => {
-          setLoading(isLoading === true);
         }}
         isEvenRow={(item) => item.index % 2 === 0}
         components={{
@@ -517,6 +537,7 @@ function TableList() {
             status,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
+          pushParamsToNavigation(params);
           const [response, time] = await measure(() =>
             api.getTransactionsList({
               limit: pageSize!,
@@ -587,6 +608,11 @@ function TableList() {
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'case-management-list',
+        }}
+        onReset={() => {
+          console.log('onReset');
+          pushParamsToNavigation({});
+          // formRef.current?.resetFields();
         }}
       />
       <Drawer
