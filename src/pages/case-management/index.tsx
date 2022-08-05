@@ -23,6 +23,7 @@ import {
   failed,
   init,
   isInit,
+  isLoading,
   isSuccess,
   loading,
   success,
@@ -59,6 +60,7 @@ function TableList() {
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
+  const [lastSearchParams, setLastSearchParams] = useState<TableSearchParams>({});
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
   }>({});
@@ -148,23 +150,27 @@ function TableList() {
   const analytics = useAnalytics();
   const navigate = useNavigate();
 
-  const parsed = queryAdapter.deserializer(parseQueryString(location.search));
+  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+
+  const isCurrentItemOpen = isSuccess(currentItem) || isLoading(currentItem);
 
   useDeepEqualEffect(() => {
     const form = formRef.current;
-    if (form) {
-      form.setFields(Object.entries(parsed).map(([name, value]) => ({ name, value })));
+    if (form && !isCurrentItemOpen) {
+      form.setFields(Object.entries(parsedParams).map(([name, value]) => ({ name, value })));
       form.submit();
     }
-  }, [parsed]);
+  }, [parsedParams, isCurrentItemOpen]);
 
   const pushParamsToNavigation = useCallback(
-    (params: TableSearchParams) => {
-      navigate(makeUrl('/case-management/all', {}, queryAdapter.serializer(params)), {
-        replace: true,
-      });
+    (params: TableSearchParams, force = false) => {
+      if (!isCurrentItemOpen || force) {
+        navigate(makeUrl('/case-management/all', {}, queryAdapter.serializer(params)), {
+          replace: true,
+        });
+      }
     },
-    [navigate],
+    [isCurrentItemOpen, navigate],
   );
 
   // todo: i18n
@@ -185,10 +191,10 @@ function TableList() {
             <Link
               to={`/case-management/${entity.transactionId}`}
               onClick={() => {
+                setLastSearchParams(parsedParams);
                 setCurrentItem(success(entity));
               }}
               style={{ color: '@fr-colors-brandBlue' }}
-              replace
             >
               {entity.transactionId}
             </Link>
@@ -483,7 +489,7 @@ function TableList() {
         },
       },
     ],
-    [api, handleUpdateAssignments, reloadTable, updatedTransactions],
+    [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
   );
   const handleResize =
     (index: number) =>
@@ -610,16 +616,14 @@ function TableList() {
           persistenceKey: 'case-management-list',
         }}
         onReset={() => {
-          console.log('onReset');
           pushParamsToNavigation({});
-          // formRef.current?.resetFields();
         }}
       />
       <Drawer
         width={700}
         visible={!isInit(currentItem)}
         onClose={() => {
-          navigate('/case-management/all', { replace: true });
+          pushParamsToNavigation(lastSearchParams, true);
         }}
         closable={false}
       >
