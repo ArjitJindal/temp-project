@@ -14,6 +14,7 @@ import {
   ImportRequestFormatEnum,
 } from '@/@types/openapi-internal/ImportRequest'
 import { verifyTransaction } from '@/services/rules-engine'
+import { logger } from '@/core/logger'
 
 export class Importer {
   tenantId: string
@@ -65,9 +66,7 @@ export class Importer {
       this.tenantId,
       this.connections.dynamoDb
     )
-    console.debug(
-      `Imported transaction (id=${transactionResult.transactionId})`
-    )
+    logger.debug(`Imported transaction (id=${transactionResult.transactionId})`)
   }
 
   public async importConsumerUsers(
@@ -90,7 +89,7 @@ export class Importer {
       dynamoDb: this.connections.dynamoDb,
     })
     const userResult = await userRepository.createConsumerUser(user)
-    console.debug(`Imported consumer user (id=${userResult.userId})`)
+    logger.debug(`Imported consumer user (id=${userResult.userId})`)
   }
 
   public async importBusinessUsers(
@@ -113,7 +112,7 @@ export class Importer {
       dynamoDb: this.connections.dynamoDb,
     })
     const userResult = await userRepository.createBusinessUser(user)
-    console.debug(`Imported business user (id=${userResult.userId})`)
+    logger.debug(`Imported business user (id=${userResult.userId})`)
   }
 
   private async importItems(

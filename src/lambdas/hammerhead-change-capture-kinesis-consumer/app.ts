@@ -1,5 +1,6 @@
 import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
+import { logger } from '@/core/logger'
 
 export const hammerheadChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
@@ -11,10 +12,10 @@ export const hammerheadChangeCaptureHandler = lambdaConsumer()(
         const tenantId =
           dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
         // STUB for now, until we start calculating ARS And DRS
-        console.log(`From tenant with ID: ${tenantId}`)
+        logger.info(`From tenant with ID: ${tenantId}`)
       }
     } catch (err) {
-      console.error(err)
+      logger.error(err)
       return 'Internal error'
     }
   }

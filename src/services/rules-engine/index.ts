@@ -31,6 +31,7 @@ import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { hasFeature } from '@/core/utils/context'
+import { logger } from '@/core/logger'
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -255,10 +256,10 @@ export async function updateAggregation(
           await aggregator.aggregate()
         }
       } catch (e) {
-        console.error(
+        logger.error(
           `Aggregator ${Aggregator.name} failed: ${(e as Error)?.message}`
         )
-        console.error(e)
+        logger.error(e)
       }
     })
   )
@@ -389,7 +390,7 @@ async function getRulesResult(
             ruleHit,
           }
         } catch (e) {
-          console.error(e)
+          logger.error(e)
         }
       })
     )

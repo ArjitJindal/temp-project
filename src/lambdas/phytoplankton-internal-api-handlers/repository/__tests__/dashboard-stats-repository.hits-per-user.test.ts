@@ -9,6 +9,7 @@ import {
 } from '@/lambdas/phytoplankton-internal-api-handlers/repository/__tests__/helpers'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoClient } from '@/test-utils/mongo-test-utils'
+import { logger } from '@/core/logger'
 
 dynamoDbSetupHook()
 
@@ -146,6 +147,6 @@ afterAll(async () => {
   try {
     await db.dropDatabase()
   } catch (e) {
-    console.error(`Mongo: unable to drop test db`, e)
+    logger.error(`Mongo: unable to drop test db`, e)
   }
 })

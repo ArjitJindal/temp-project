@@ -5,6 +5,7 @@ import {
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
+import { logger } from '@/core/logger'
 
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -96,7 +97,7 @@ export const createMongoDBCollections = async (tenantId: string) => {
       transactionState: 1,
     })
   } catch (e) {
-    console.log(`Error in creating MongoDB collections: ${e}`)
+    logger.info(`Error in creating MongoDB collections: ${e}`)
   }
 }
 export const apiKeyGeneratorHandler = lambdaApi()(

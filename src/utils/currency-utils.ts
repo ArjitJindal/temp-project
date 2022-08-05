@@ -1,6 +1,7 @@
 import fetch from 'node-fetch'
 import _ from 'lodash'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { logger } from '@/core/logger'
 
 const cachedData: {
   [sourceCurrency: string]: { [targetCurrency: string]: number }
@@ -28,7 +29,7 @@ export async function getCurrencyExchangeRate(
     _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
     return rate
   } catch (e) {
-    console.error('Failed to fetch the exchange rate!')
+    logger.error('Failed to fetch the exchange rate!')
     throw e
   }
 }

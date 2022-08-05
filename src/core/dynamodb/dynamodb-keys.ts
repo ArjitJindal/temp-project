@@ -6,6 +6,7 @@
  */
 
 import { FLAGRIGHT_TENANT_ID } from '../constants'
+import { logger } from '../logger'
 import { ACHDetails } from '@/@types/openapi-public/ACHDetails'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -76,7 +77,7 @@ export const DynamoDbKeys = {
       case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         if (!BIC || !IBAN) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -87,7 +88,7 @@ export const DynamoDbKeys = {
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
         if (!cardFingerprint) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -98,7 +99,7 @@ export const DynamoDbKeys = {
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
         if (!routingNumber || !accountNumber) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -109,7 +110,7 @@ export const DynamoDbKeys = {
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
         if (!upiID) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -120,7 +121,7 @@ export const DynamoDbKeys = {
       case 'WALLET': {
         const { walletId } = paymentDetails as WalletDetails
         if (!walletId) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -132,7 +133,7 @@ export const DynamoDbKeys = {
         const { accountNumber, accountType } =
           paymentDetails as GenericBankAccountDetails
         if (!accountNumber || !accountType) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {
@@ -143,7 +144,7 @@ export const DynamoDbKeys = {
       case 'SWIFT': {
         const { accountNumber, swiftCode } = paymentDetails as SWIFTDetails
         if (!accountNumber || !swiftCode) {
-          console.warn('Unable to identify the anonymous user')
+          logger.warn('Unable to identify the anonymous user')
           return null
         }
         return {

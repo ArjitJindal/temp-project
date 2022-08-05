@@ -3,6 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -39,7 +40,7 @@ export const userHandler = lambdaApi()(
     if (event.path.includes('business')) {
       if (event.httpMethod === 'GET' && userId) {
         const user = await userRepository.getBusinessUser(userId)
-        console.log(user)
+        logger.info(user)
         return user
       } else if (event.httpMethod === 'POST' && event.body) {
         const userPayload = JSON.parse(event.body)

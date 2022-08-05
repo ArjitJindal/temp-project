@@ -10,6 +10,7 @@ import commandLineArgs from 'command-line-args'
 import mkdirp from 'mkdirp'
 import { config } from './lib/configs/config-dev'
 import { TarponStackConstants } from './lib/constants'
+import { logger } from '@/core/logger'
 
 async function setUpMockS3() {
   await mkdirp(`/tmp/flagright/s3/${TarponStackConstants.S3_TMP_BUCKET_PREFIX}`)
@@ -150,7 +151,7 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   } catch (err) {
     // ignore
   }
-  console.log('%o', {
+  logger.info('%o', {
     ...output,
     body,
   })

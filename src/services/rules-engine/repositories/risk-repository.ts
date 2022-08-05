@@ -6,6 +6,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
+import { logger } from '@/core/logger'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -74,7 +75,7 @@ export class RiskRepository {
         ? result.Items[0].classificationValues
         : DEFAULT_CLASSIFICATION_SETTINGS
     } catch (e) {
-      console.log(e)
+      logger.error(e)
       return []
     }
   }
@@ -118,7 +119,7 @@ export class RiskRepository {
         ? (result.Items[0] as ManualRiskAssignmentUserState)
         : DEFAULT_DRS_RISK_ITEM
     } catch (e) {
-      console.log(e)
+      logger.error(e)
       return null
     }
   }
@@ -147,8 +148,8 @@ export class RiskRepository {
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
     const { parameter, ...paramMetaDetails } = parameterRiskLevels
-    console.log(`PARAMETER: \n\n ${parameter}`)
-    console.log(`Meta deets: \n\n ${JSON.stringify(paramMetaDetails)}`)
+    logger.info(`PARAMETER: \n\n ${parameter}`)
+    logger.info(`Meta deets: \n\n ${JSON.stringify(paramMetaDetails)}`)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
       Item: {
@@ -192,7 +193,7 @@ export class RiskRepository {
         ? result.Items[0].schemaAttributes
         : null
     } catch (e) {
-      console.log(e)
+      logger.error(e)
       return null
     }
   }

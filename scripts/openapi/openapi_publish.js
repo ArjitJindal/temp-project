@@ -50,7 +50,7 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
   }
   catch(err) {
-    console.error(err);
+    logger.error(err);
   }
 }
 
@@ -67,18 +67,18 @@ async function main() {
   }
 
   if (!BRANCH_NAME) {
-    console.error("ERROR: Please set the BRANCH_NAME environment variables");
+    logger.error("ERROR: Please set the BRANCH_NAME environment variables");
     process.exit(1)
   }
   if (!PUBLIC_PROJECT_TOKEN) {
-    console.error("ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables");
+    logger.error("ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables");
     process.exit(1)
   }
   if (!INTERNAL_PROJECT_TOKEN) {
-    console.error("ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables");
+    logger.error("ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables");
     process.exit(1)
   }
-  console.log("BRANCH_NAME", BRANCH_NAME)
+  logger.info("BRANCH_NAME", BRANCH_NAME)
 
   exec(`./node_modules/.bin/stoplight push --ci-token ${PUBLIC_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public --branch ${BRANCH_NAME}`)
   exec(`./node_modules/.bin/stoplight push --ci-token ${INTERNAL_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/internal --branch ${BRANCH_NAME}`)
@@ -87,5 +87,5 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error(e)
+  logger.error(e)
 })

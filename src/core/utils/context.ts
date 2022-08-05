@@ -3,6 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { logger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -25,7 +26,7 @@ export async function getInitialContext(
     const settings = await tenantRepository.getTenantSettings(['features'])
     return { features: settings?.features }
   } catch (e) {
-    console.error(`Failed to initialize context`)
+    logger.error(`Failed to initialize context`)
     return {}
   }
 }

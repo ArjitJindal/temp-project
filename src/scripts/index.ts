@@ -14,6 +14,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { CardPaymentMethod } from '@/@types/openapi-public/CardPaymentMethod'
 import { IBANPaymentMethod } from '@/@types/openapi-public/IBANPaymentMethod'
+import { logger } from '@/core/logger'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
@@ -52,7 +53,7 @@ const createBusinessUsers = (
     }
 
     userRepository.createBusinessUser(userObject)
-    console.log(JSON.stringify(userObject))
+    logger.info(JSON.stringify(userObject))
   }
   return userIDs
 }

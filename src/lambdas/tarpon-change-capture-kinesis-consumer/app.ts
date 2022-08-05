@@ -25,6 +25,7 @@ import { AlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { logger } from '@/core/logger'
 
 const sqs = new AWS.SQS()
 
@@ -52,7 +53,7 @@ async function transactionHandler(
       mongoDb: await connectToDB(),
     })
     if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
-      console.info(
+      logger.info(
         `Sending slack alert SQS message for transaction ${transactionId}`
       )
       await sqs
@@ -145,7 +146,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           const transaction = handlePrimaryItem(
             message
           ) as TransactionWithRulesResult
-          console.info(`Processing transaction ${transaction.transactionId}`)
+          logger.info(`Processing transaction ${transaction.transactionId}`)
           await transactionHandler(client, tenantId, transaction)
           /*
          todo: this is not very efficient, because we recalculate all the
@@ -159,7 +160,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           )
         ) {
           const user = handlePrimaryItem(message) as User
-          console.info(`Processing user ${user.userId}`)
+          logger.info(`Processing user ${user.userId}`)
           await userHandler(db, tenantId, user)
         } else if (
           dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
@@ -169,7 +170,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           const userEvent = handlePrimaryItem(
             message
           ) as UserEventWithRulesResult
-          console.info(
+          logger.info(
             `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
           )
           await userEventHandler(db, tenantId, userEvent)
@@ -181,7 +182,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           const transactionEvent = handlePrimaryItem(
             message
           ) as TransactionEvent
-          console.info(
+          logger.info(
             `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
           )
           await transactionEventHandler(db, tenantId, transactionEvent)
@@ -190,7 +191,7 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
         // place that updates the entity to make local work
       }
     } catch (err) {
-      console.error(err)
+      logger.error(err)
       return 'Internal error'
     }
   }

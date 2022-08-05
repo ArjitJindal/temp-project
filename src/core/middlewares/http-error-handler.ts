@@ -1,4 +1,5 @@
 import * as createError from 'http-errors'
+import { logger } from '../logger'
 
 export const httpErrorHandler =
   () =>
@@ -24,7 +25,7 @@ export const httpErrorHandler =
           statusCode: error.statusCode,
         }
       }
-      console.error(error)
+      logger.error(error)
       return {
         body: JSON.stringify({
           error: 'Internal server error',

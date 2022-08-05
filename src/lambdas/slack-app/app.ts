@@ -17,6 +17,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { logger } from '@/core/logger'
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -117,7 +118,7 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
         (alias) => alias.action === transaction?.status
       )?.alias
       const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
-      console.info(
+      logger.info(
         `Sending Slack alert: tenant=${tenantId}, transactionId=${transactionId}`
       )
       await webhook.send({

@@ -11,6 +11,7 @@ import {
   GranularityValuesType,
 } from './repository/dashboard-stats-repository'
 import { UserService } from './services/user-service'
+import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -655,12 +656,12 @@ export const accountsHandler = lambdaApi()(
       }
       const { newTenantId } = JSON.parse(event.body) as ChangeTenantPayload
       const oldTenant = await accountsService.getAccountTenant(idToChange)
-      console.log('oldTenant', JSON.stringify(oldTenant))
+      logger.info('oldTenant', JSON.stringify(oldTenant))
       const newTenant = await accountsService.getTenantById(newTenantId)
       if (newTenant == null) {
         throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
       }
-      console.log('newTenant', JSON.stringify(newTenant))
+      logger.info('newTenant', JSON.stringify(newTenant))
       await accountsService.changeUserTenant(oldTenant, newTenant, userId)
       return true
     } else if (
@@ -752,7 +753,7 @@ export const riskClassificationHandler = lambdaApi({
       try {
         return riskRepository.getRiskClassification()
       } catch (e) {
-        console.error(e)
+        logger.error(e)
         return e
       }
     } else if (
@@ -800,7 +801,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    console.log('tenantId', tenantId)
+    logger.info('tenantId', tenantId)
 
     const dynamoDb = getDynamoDbClient(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })

@@ -8,11 +8,11 @@ async function main() {
     await reformatFile(path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public', 'openapi-public-original.yaml'));
   }
   catch(err) {
-    console.error(err);
+    logger.error(err);
   }
 }
 
 main().catch((e) => {
-  console.error(e)
+  logger.error(e)
   process.exit(1)
 })

@@ -18,6 +18,7 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import { logger } from '@/core/logger'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -336,7 +337,7 @@ export class DashboardStatsRepository {
         ])
         .next()
     } catch (e) {
-      console.error(`ERROR ${e}`)
+      logger.error(`ERROR ${e}`)
     }
     // Daily stats
     try {
@@ -447,7 +448,7 @@ export class DashboardStatsRepository {
         ])
         .next()
     } catch (e) {
-      console.error(`ERROR ${e}`)
+      logger.error(`ERROR ${e}`)
     }
     // Monthly stats
     try {
@@ -558,7 +559,7 @@ export class DashboardStatsRepository {
         ])
         .next()
     } catch (e) {
-      console.error(`ERROR ${e}`)
+      logger.error(`ERROR ${e}`)
     }
   }
 

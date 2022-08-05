@@ -17,6 +17,7 @@ import {
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
+import { logger } from '@/core/logger'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }
 
@@ -67,7 +68,7 @@ const deletedUserAggregationUserIds = new Set()
 async function dropMongoDbCollection(collectionName: string) {
   if (allMongoDbCollections.includes(collectionName)) {
     await mongoDb.collection(collectionName).drop()
-    console.info(`Dropped mongodb collection - ${collectionName}`)
+    logger.info(`Dropped mongodb collection - ${collectionName}`)
   }
 }
 
@@ -113,7 +114,7 @@ async function deleteTransactions() {
       try {
         await deleteTransaction(transaction)
       } catch (e) {
-        console.error(
+        logger.error(
           `Failed to delete transaction ${transaction.transactionId} - ${e}`
         )
         throw e
@@ -130,7 +131,7 @@ async function deletePartitionKey(entityName: string, key: DynamoDbKey) {
       Key: key,
     })
     .promise()
-  console.info(`Deleted ${entityName} ${JSON.stringify(key)}`)
+  logger.info(`Deleted ${entityName} ${JSON.stringify(key)}`)
 }
 
 async function deletePartition(entityName: string, partitionKeyId: string) {
@@ -147,7 +148,7 @@ async function deletePartition(entityName: string, partitionKeyId: string) {
       try {
         await deletePartitionKey(entityName, item as DynamoDbKey)
       } catch (e) {
-        console.error(`Failed to delete ${entityName} ${item} - ${e}`)
+        logger.error(`Failed to delete ${entityName} ${item} - ${e}`)
         throw e
       }
     }
@@ -191,7 +192,7 @@ async function deleteUsers() {
       try {
         await deleteUser(item.SortKeyID)
       } catch (e) {
-        console.error(`Failed to delete user ${item.SortKeyID} - ${e}`)
+        logger.error(`Failed to delete user ${item.SortKeyID} - ${e}`)
         throw e
       }
     }
@@ -226,7 +227,7 @@ async function deleteImports() {
 
 async function nukeTenantData(tenantId: string) {
   const typesToDelete = (types || TYPES) as TYPES[]
-  console.log(
+  logger.info(
     `Starting to nuke data for tenant ${tenantId} (${typesToDelete.join(
       ','
     )})... (${env}: ${region})`
@@ -256,6 +257,6 @@ async function nukeTenantData(tenantId: string) {
 nukeTenantData(tenantId)
   .then(() => exit(0))
   .catch((e) => {
-    console.error(e)
+    logger.error(e)
     exit(1)
   })
