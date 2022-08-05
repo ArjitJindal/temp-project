@@ -620,7 +620,7 @@ function TableList() {
         }}
       />
       <Drawer
-        width={700}
+        width={736}
         visible={!isInit(currentItem)}
         onClose={() => {
           pushParamsToNavigation(lastSearchParams, true);

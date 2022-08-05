@@ -238,7 +238,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
               </ProDescriptions.Item>
             )}
             {transaction.promotionCodeUsed !== undefined && (
-              <ProDescriptions.Item label="Promotino Code Used" valueType="text">
+              <ProDescriptions.Item label="Promotion Code Used" valueType="text">
                 {String(transaction.promotionCodeUsed)}
               </ProDescriptions.Item>
             )}

@@ -13,15 +13,28 @@ import {
   Select,
   Space,
   Tag,
+  Typography,
   Upload,
 } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
-import { EditOutlined, HistoryOutlined, PaperClipOutlined } from '@ant-design/icons';
+import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  EditOutlined,
+  HistoryOutlined,
+  PaperClipOutlined,
+  ScanOutlined,
+  SwapOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 import styles from './TransactionDetails.module.less';
 import { RuleActionStatus } from './RuleActionStatus';
 import Comment from './Comment';
 import { AssigneesDropdown } from './AssigneesDropdown';
+import { RulesHitDetailsTable } from './RulesHitDetailsTable';
+import { PaymentMethodTag } from './PaymentTypeTag';
+import { PaymentDetails } from './PaymentDetails';
 import {
   Comment as TransactionComment,
   FileInfo,
@@ -256,14 +269,34 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           </Button>
         )}
       </Row>
-      <ProDescriptions size="small" column={1} colon={false}>
-        <ProDescriptions.Item label={<b>Transaction ID:</b>} valueType="text">
+      <ProDescriptions size="small" column={2} colon={false}>
+        <ProDescriptions.Item
+          label={
+            <b>
+              <SwapOutlined /> Transaction ID:
+            </b>
+          }
+          valueType="text"
+        >
           {transaction.transactionId}
         </ProDescriptions.Item>
-        <ProDescriptions.Item label={<b>Timestamp:</b>} valueType="dateTime">
+        <ProDescriptions.Item
+          label={
+            <b>
+              <HistoryOutlined /> Transaction Time:
+            </b>
+          }
+          valueType="dateTime"
+        >
           {transaction.timestamp}
         </ProDescriptions.Item>
-        <ProDescriptions.Item label={<b>Status:</b>}>
+        <ProDescriptions.Item
+          label={
+            <b>
+              <ScanOutlined /> Status:
+            </b>
+          }
+        >
           {editing ? (
             <Select disabled={!editing} style={{ width: 120 }} value={status} onChange={setStatus}>
               {RULE_ACTION_OPTIONS.map((option) => (
@@ -284,30 +317,78 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
                       } at ${new Date(statusChange.timestamp).toISOString()}`}
                     </Row>
                   ))}
-                >
-                  <HistoryOutlined />
-                </Popover>
+                ></Popover>
               </Space>
             </Row>
           )}
         </ProDescriptions.Item>
-        <ProDescriptions.Item label={<b>Assignees:</b>}>
+        <ProDescriptions.Item
+          label={
+            <b>
+              <UserOutlined /> Assignees:
+            </b>
+          }
+        >
           <AssigneesDropdown
             assignments={assignments}
             editing={editing}
             onChange={handleUpdateAssignments}
           />
         </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={
-            <Divider orientation="left" orientationMargin="0">
-              Origin
-            </Divider>
-          }
-          className={styles.verticalDetailsItem}
-        >
+      </ProDescriptions>
+      <Divider />
+      <ProDescriptions size="small" column={3} colon={false}>
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
+          <Typography.Title level={5}></Typography.Title>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
+          <>
+            <Typography.Title level={5}>
+              <ArrowUpOutlined /> {'  '} Sender
+            </Typography.Title>
+          </>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
+          <>
+            <Typography.Title level={5}>
+              <ArrowDownOutlined /> {'  '}Receiver
+            </Typography.Title>
+          </>
+        </ProDescriptions.Item>
+      </ProDescriptions>
+      <ProDescriptions size="small" column={3} colon={false}>
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
           <ProDescriptions size="small" column={1}>
-            <ProDescriptions.Item label="User ID" valueType="text">
+            <ProDescriptions.Item
+              className={styles.verticalDetailsItemLabel}
+            ></ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+              User Name
+            </ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+              User ID
+            </ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+              Amount
+            </ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+              Currency
+            </ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+              Country
+            </ProDescriptions.Item>
+            <ProDescriptions.Item className={styles.verticalDetailsItemLabel}>
+              Payment Method
+            </ProDescriptions.Item>
+            <ProDescriptions.Item>Payment Details</ProDescriptions.Item>
+          </ProDescriptions>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
+          <ProDescriptions size="small" column={1}>
+            <ProDescriptions.Item valueType="text">
+              {getUserName(transaction.originUser)}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item valueType="text">
               {transaction.originUser !== undefined ? (
                 <UserLink user={transaction.originUser}>
                   {String(transaction.originUserId)}
@@ -316,41 +397,33 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
                 String(transaction.originUserId)
               )}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="User Name" valueType="text">
-              {getUserName(transaction.originUser)}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="Amount" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {new Intl.NumberFormat().format(
                 transaction.originAmountDetails?.transactionAmount
                   ? transaction.originAmountDetails?.transactionAmount
                   : NaN,
               )}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="Currency" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {transaction.originAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="Country" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {transaction.originAmountDetails?.country}
             </ProDescriptions.Item>
-            <ProDescriptions.Item
-              label="Payment Details"
-              valueType="jsonCode"
-              className={styles.verticalDetailsItem}
-            >
-              {JSON.stringify(transaction.originPaymentDetails)}
+            <ProDescriptions.Item className={styles.verticalDetailsItem}>
+              <PaymentMethodTag paymentMethod={transaction.originPaymentDetails?.method} />
+            </ProDescriptions.Item>
+            <ProDescriptions.Item valueType="jsonCode" className={styles.verticalDetailsItem}>
+              <PaymentDetails paymentDetails={transaction.originPaymentDetails} />
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={
-            <Divider orientation="left" orientationMargin="0">
-              Destination
-            </Divider>
-          }
-          className={styles.verticalDetailsItem}
-        >
+        <ProDescriptions.Item className={styles.verticalDetailsItem}>
           <ProDescriptions size="small" column={1}>
-            <ProDescriptions.Item label="User ID" valueType="text">
+            <ProDescriptions.Item valueType="text">
+              {getUserName(transaction.destinationUser)}
+            </ProDescriptions.Item>
+            <ProDescriptions.Item valueType="text">
               {transaction.destinationUser !== undefined ? (
                 <UserLink user={transaction.destinationUser}>
                   {String(transaction.destinationUserId)}
@@ -359,37 +432,29 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
                 String(transaction.destinationUserId)
               )}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="User Name" valueType="text">
-              {getUserName(transaction.destinationUser)}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="Amount" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {new Intl.NumberFormat().format(
                 transaction.destinationAmountDetails?.transactionAmount
                   ? transaction.destinationAmountDetails?.transactionAmount
                   : NaN,
               )}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="Currency" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {transaction.destinationAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
-            <ProDescriptions.Item label="Country" valueType="text">
+            <ProDescriptions.Item valueType="text">
               {transaction.destinationAmountDetails?.country}
             </ProDescriptions.Item>
-            <ProDescriptions.Item
-              label="Payment Details"
-              valueType="jsonCode"
-              className={styles.verticalDetailsItem}
-            >
-              {JSON.stringify(transaction.destinationPaymentDetails)}
+            <ProDescriptions.Item className={styles.verticalDetailsItem}>
+              <PaymentMethodTag paymentMethod={transaction.destinationPaymentDetails?.method} />
+            </ProDescriptions.Item>
+            <ProDescriptions.Item valueType="jsonCode" className={styles.verticalDetailsItem}>
+              <PaymentDetails paymentDetails={transaction.destinationPaymentDetails} />
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProDescriptions.Item>
         <ProDescriptions.Item
-          label={
-            <Divider orientation="left" orientationMargin="0">
-              Metadata
-            </Divider>
-          }
+          label={<Typography.Title level={5}>Metadata</Typography.Title>}
           className={styles.verticalDetailsItem}
         >
           <ProDescriptions size="small" column={1}>
@@ -399,7 +464,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               </ProDescriptions.Item>
             )}
             {transaction.promotionCodeUsed !== undefined && (
-              <ProDescriptions.Item label="Promotino Code Used" valueType="text">
+              <ProDescriptions.Item label="Promotion Code Used" valueType="text">
                 {String(transaction.promotionCodeUsed)}
               </ProDescriptions.Item>
             )}
@@ -431,6 +496,12 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               </ProDescriptions.Item>
             )}
           </ProDescriptions>
+        </ProDescriptions.Item>
+      </ProDescriptions>
+      <Divider />
+      <ProDescriptions size="small" column={1} colon={false}>
+        <ProDescriptions.Item>
+          <RulesHitDetailsTable transaction={transaction} />
         </ProDescriptions.Item>
       </ProDescriptions>
       {/* Comments */}
