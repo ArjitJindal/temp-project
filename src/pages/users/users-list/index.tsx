@@ -89,7 +89,6 @@ const BusinessUsersTab = (props: { id?: string }) => {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Business Users"
         actionRef={actionRef}
         rowKey="userId"
         search={{
@@ -212,7 +211,6 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Consumer Users"
         actionRef={actionRef}
         rowKey="userId"
         search={{
