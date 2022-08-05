@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import s from './style.module.less';
 
 interface Props {
   isExpanded: boolean;
@@ -12,7 +13,7 @@ export default function ExpandIcon(props: Props) {
   return (
     <button
       onClick={onClick}
-      className={cn('ant-table-row-expand-icon', {
+      className={cn('ant-table-row-expand-icon', s.root, {
         'ant-table-row-expand-icon-expanded': isExpanded,
         'ant-table-row-expand-icon-collapsed': !isExpanded,
       })}
