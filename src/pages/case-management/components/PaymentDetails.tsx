@@ -10,6 +10,10 @@ const removeMethod = (paymentDetails: any) => {
 };
 
 export const PaymentDetails: React.FC<Props> = ({ paymentDetails }) => {
+  if (!paymentDetails) {
+    return <>-</>;
+  }
+
   const paymentDetailsWithoutMethod = removeMethod(paymentDetails);
   const paymentDetailsKeys = Object.keys(paymentDetailsWithoutMethod);
   return (

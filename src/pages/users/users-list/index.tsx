@@ -1,20 +1,20 @@
-import { Drawer, Tabs, Tag } from 'antd';
+import { Drawer, Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
-import { RouteMatch, useNavigate, useParams } from 'react-router';
-import { Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.module.less';
 import UserRiskTag from './components/UserRiskTag';
 import { ConsumerUserDetails } from './components/ConsumerUserDetails';
 import { BusinessUserDetails } from './components/BusinessUserDetails';
+import { getBusinessUserColumns } from './business-user-columns';
+import { getConsumerUserColumns } from './consumer-users-columns';
 import Table from '@/components/ui/Table';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { Amount, ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { getFullName } from '@/utils/api/users';
+import { ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
 import {
   AsyncResource,
@@ -30,14 +30,6 @@ import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-
-const convertToDateString = (createdTimestamp: number) =>
-  moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-
-const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
-  return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
-};
 
 const BusinessUsersTab = (props: { id?: string }) => {
   const actionRef = useRef<ActionType>();
@@ -84,95 +76,9 @@ const BusinessUsersTab = (props: { id?: string }) => {
     };
   }, [currentUserId, userId, api]);
 
-  const columns: ProColumns<InternalBusinessUser>[] = [
-    {
-      title: 'User ID',
-      dataIndex: 'userId',
-      tip: 'Unique identification of user.',
-      render: (dom, entity) => {
-        // todo: fix style
-        return (
-          <Link
-            to={`/users/list/business/${entity.userId}`}
-            onClick={() => {
-              setCurrentItem(success(entity));
-            }}
-            style={{ color: '@fr-colors-brandBlue' }}
-            replace
-          >
-            {entity.userId}
-          </Link>
-        );
-      },
-    },
-    {
-      title: 'Legal Name',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.legalEntity.companyGeneralDetails.legalName;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Industry',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.legalEntity.companyGeneralDetails.businessIndustry;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Expected Transaction Amount Per Month',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return createCurrencyStringFromAmount(
-          entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth,
-        );
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Expected Turnover Amount Per Month',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return createCurrencyStringFromAmount(
-          entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
-        );
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Maximum Daily Transaction Limit',
-      hideInSearch: true,
-      dataIndex: 'maximumDailyTransactionLimit',
-      valueType: 'textarea',
-    },
-    {
-      title: 'Registration Identifier',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.legalEntity.companyRegistrationDetails?.registrationIdentifier;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Registration Country',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.legalEntity.companyRegistrationDetails?.registrationCountry;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Creation time',
-      sorter: true,
-      dataIndex: 'createdTimestamp',
-      valueType: 'dateTimeRange',
-      render: (_, user) => {
-        return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-      },
-    },
-  ];
+  const columns: ProColumns<InternalBusinessUser>[] = getBusinessUserColumns((user) =>
+    setCurrentItem(success(user)),
+  );
 
   const analytics = useAnalytics();
   const navigate = useNavigate();
@@ -279,130 +185,10 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     };
   }, [currentUserId, userId, api]);
 
-  const columns: ProColumns<InternalConsumerUser>[] = [
-    {
-      title: 'User ID',
-      dataIndex: 'userId',
-      width: 180,
-      tip: 'Unique identification of user.',
-      render: (dom, entity) => {
-        // todo: fix style
-        return (
-          <Link
-            to={`/users/list/consumer/${entity.userId}`}
-            onClick={() => {
-              setCurrentItem(success(entity));
-            }}
-            style={{ color: '@fr-colors-brandBlue' }}
-            replace
-          >
-            {entity.userId}
-          </Link>
-        );
-      },
-    },
-    {
-      title: 'Name',
-      width: 150,
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return getFullName(entity.userDetails);
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Date of Birth',
-      width: 150,
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.userDetails?.dateOfBirth;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Country of residence',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.userDetails?.countryOfResidence;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Country of nationality',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.userDetails?.countryOfNationality;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'KYC Status',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.kycStatusDetails?.status;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'KYC Status Reason',
-      hideInSearch: true,
-      hideInTable: true,
-      render: (dom, entity) => {
-        return entity.kycStatusDetails?.statusReason;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'User Status',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return entity.userStatusDetails?.status;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'User Status Reason',
-      hideInSearch: true,
-      hideInTable: true,
-      render: (dom, entity) => {
-        return entity.userStatusDetails?.statusReason;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'Tags',
-      hideInSearch: true,
-      dataIndex: 'tags',
-      hideInForm: true,
-      render: (tags: any) => {
-        if (tags instanceof Array) {
-          return (
-            <span>
-              <Tag color={'cyan'}>
-                {tags?.map((tag: any) => {
-                  const key = Object.keys(tag)[0];
-                  return (
-                    <span>
-                      {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
-                    </span>
-                  );
-                })}
-              </Tag>
-            </span>
-          );
-        }
-      },
-    },
-    {
-      title: 'Created time',
-      sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
-      dataIndex: 'createdTimestamp',
-      valueType: 'dateTimeRange',
-      render: (_, user) => {
-        return convertToDateString(user.createdTimestamp);
-      },
-    },
-  ];
+  const columns: ProColumns<InternalConsumerUser>[] = getConsumerUserColumns((user) =>
+    setCurrentItem(success(user)),
+  );
+
   {
     if (isPulseEnabled) {
       columns.push({

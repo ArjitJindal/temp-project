@@ -343,7 +343,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         }}
       />
       <Drawer
-        width={700}
+        width={736}
         visible={!isInit(currentItem)}
         onClose={() => {
           navigate('/transactions/transactions-list/all', { replace: true });

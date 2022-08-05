@@ -622,6 +622,7 @@ function TableList() {
       <Drawer
         width={736}
         visible={!isInit(currentItem)}
+        bodyStyle={{ padding: 0 }}
         onClose={() => {
           pushParamsToNavigation(lastSearchParams, true);
         }}

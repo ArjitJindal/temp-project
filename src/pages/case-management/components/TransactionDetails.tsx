@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
+
 import ProDescriptions from '@ant-design/pro-descriptions';
 import {
   Avatar,
+  Card,
   Col,
   Comment as AntComment,
-  Divider,
   Input,
   List,
   message,
@@ -12,6 +13,7 @@ import {
   Row,
   Select,
   Space,
+  Tabs,
   Tag,
   Typography,
   Upload,
@@ -35,6 +37,7 @@ import { AssigneesDropdown } from './AssigneesDropdown';
 import { RulesHitDetailsTable } from './RulesHitDetailsTable';
 import { PaymentMethodTag } from './PaymentTypeTag';
 import { PaymentDetails } from './PaymentDetails';
+import Colors from '@/components/ui/colors';
 import {
   Comment as TransactionComment,
   FileInfo,
@@ -47,6 +50,7 @@ import { useAuth0User, useUsers } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
+import { UserDetails } from '@/pages/users/users-list/components/UserDetails';
 
 const equal = require('fast-deep-equal');
 
@@ -241,298 +245,328 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
   }, [api, assignments, onTransactionUpdate, status, transaction]);
   return (
     <>
-      <Row justify="end">
-        {editing ? (
-          <Space>
-            <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
-              Cancel
-            </Button>
-            <Button
-              analyticsName="Save"
-              type="primary"
-              size="small"
-              onClick={handleUpdateTransaction}
-              loading={saving}
-              disabled={!canSave}
-            >
-              Save
-            </Button>
-          </Space>
-        ) : (
-          <Button
-            analyticsName="Edit"
-            icon={<EditOutlined />}
-            onClick={() => setEditing(true)}
-            size="small"
-          >
-            Edit
-          </Button>
-        )}
-      </Row>
-      <ProDescriptions size="small" column={2} colon={false}>
-        <ProDescriptions.Item
-          label={
-            <b>
-              <SwapOutlined /> Transaction ID:
-            </b>
-          }
-          valueType="text"
-        >
-          {transaction.transactionId}
-        </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={
-            <b>
-              <HistoryOutlined /> Transaction Time:
-            </b>
-          }
-          valueType="dateTime"
-        >
-          {transaction.timestamp}
-        </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={
-            <b>
-              <ScanOutlined /> Status:
-            </b>
-          }
-        >
+      <Card>
+        <Row justify="end">
           {editing ? (
-            <Select disabled={!editing} style={{ width: 120 }} value={status} onChange={setStatus}>
-              {RULE_ACTION_OPTIONS.map((option) => (
-                <Select.Option key={option.value}>
-                  <RuleActionStatus ruleAction={option.value} />
-                </Select.Option>
-              ))}
-            </Select>
+            <Space>
+              <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
+                Cancel
+              </Button>
+              <Button
+                analyticsName="Save"
+                type="primary"
+                size="small"
+                onClick={handleUpdateTransaction}
+                loading={saving}
+                disabled={!canSave}
+              >
+                Save
+              </Button>
+            </Space>
           ) : (
-            <Row align="middle">
-              <Space>
-                <RuleActionStatus ruleAction={status} />
-                <Popover
-                  content={transaction.statusChanges?.filter(Boolean).map((statusChange) => (
-                    <Row>
-                      {`Changed to ${statusChange.status} by ${
-                        users[statusChange.userId]?.name || statusChange.userId
-                      } at ${new Date(statusChange.timestamp).toISOString()}`}
-                    </Row>
-                  ))}
-                ></Popover>
-              </Space>
-            </Row>
+            <Button
+              analyticsName="Edit"
+              icon={<EditOutlined />}
+              onClick={() => setEditing(true)}
+              size="small"
+            >
+              Edit
+            </Button>
           )}
-        </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={
-            <b>
-              <UserOutlined /> Assignees:
-            </b>
-          }
-        >
-          <AssigneesDropdown
-            assignments={assignments}
-            editing={editing}
-            onChange={handleUpdateAssignments}
-          />
-        </ProDescriptions.Item>
-      </ProDescriptions>
-      <Divider />
-      <ProDescriptions size="small" column={3} colon={false}>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <Typography.Title level={5}></Typography.Title>
-        </ProDescriptions.Item>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <>
-            <Typography.Title level={5}>
-              <ArrowUpOutlined /> {'  '} Sender
+        </Row>
+        <ProDescriptions size="small" column={1} colon={false}>
+          <ProDescriptions.Item valueType="text">Transaction ID</ProDescriptions.Item>
+          <ProDescriptions.Item valueType="text">
+            <Typography.Title level={3} style={{ color: Colors.brandBlue.base }}>
+              {transaction.transactionId}
             </Typography.Title>
-          </>
-        </ProDescriptions.Item>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <>
-            <Typography.Title level={5}>
-              <ArrowDownOutlined /> {'  '}Receiver
-            </Typography.Title>
-          </>
-        </ProDescriptions.Item>
-      </ProDescriptions>
-      <ProDescriptions size="small" column={3} colon={false}>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <ProDescriptions size="small" column={1}>
-            <ProDescriptions.Item
-              className={styles.verticalDetailsItemLabel}
-            ></ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
-              User Name
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
-              User ID
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
-              Amount
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
-              Currency
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
-              Country
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItemLabel}>
-              Payment Method
-            </ProDescriptions.Item>
-            <ProDescriptions.Item>Payment Details</ProDescriptions.Item>
-          </ProDescriptions>
-        </ProDescriptions.Item>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <ProDescriptions size="small" column={1}>
-            <ProDescriptions.Item valueType="text">
-              {getUserName(transaction.originUser)}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.originUser !== undefined ? (
-                <UserLink user={transaction.originUser}>
-                  {String(transaction.originUserId)}
-                </UserLink>
-              ) : (
-                String(transaction.originUserId)
-              )}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {new Intl.NumberFormat().format(
-                transaction.originAmountDetails?.transactionAmount
-                  ? transaction.originAmountDetails?.transactionAmount
-                  : NaN,
-              )}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.originAmountDetails?.transactionCurrency}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.originAmountDetails?.country}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItem}>
-              <PaymentMethodTag paymentMethod={transaction.originPaymentDetails?.method} />
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="jsonCode" className={styles.verticalDetailsItem}>
-              <PaymentDetails paymentDetails={transaction.originPaymentDetails} />
-            </ProDescriptions.Item>
-          </ProDescriptions>
-        </ProDescriptions.Item>
-        <ProDescriptions.Item className={styles.verticalDetailsItem}>
-          <ProDescriptions size="small" column={1}>
-            <ProDescriptions.Item valueType="text">
-              {getUserName(transaction.destinationUser)}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.destinationUser !== undefined ? (
-                <UserLink user={transaction.destinationUser}>
-                  {String(transaction.destinationUserId)}
-                </UserLink>
-              ) : (
-                String(transaction.destinationUserId)
-              )}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {new Intl.NumberFormat().format(
-                transaction.destinationAmountDetails?.transactionAmount
-                  ? transaction.destinationAmountDetails?.transactionAmount
-                  : NaN,
-              )}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.destinationAmountDetails?.transactionCurrency}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="text">
-              {transaction.destinationAmountDetails?.country}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item className={styles.verticalDetailsItem}>
-              <PaymentMethodTag paymentMethod={transaction.destinationPaymentDetails?.method} />
-            </ProDescriptions.Item>
-            <ProDescriptions.Item valueType="jsonCode" className={styles.verticalDetailsItem}>
-              <PaymentDetails paymentDetails={transaction.destinationPaymentDetails} />
-            </ProDescriptions.Item>
-          </ProDescriptions>
-        </ProDescriptions.Item>
-        <ProDescriptions.Item
-          label={<Typography.Title level={5}>Metadata</Typography.Title>}
-          className={styles.verticalDetailsItem}
-        >
-          <ProDescriptions size="small" column={1}>
-            {transaction.productType && (
-              <ProDescriptions.Item label="Product Type" valueType="text">
-                {transaction.productType}
-              </ProDescriptions.Item>
+          </ProDescriptions.Item>
+        </ProDescriptions>
+        <ProDescriptions size="small" column={2} colon={false}>
+          <ProDescriptions.Item
+            label={
+              <b>
+                <HistoryOutlined /> Transaction Time:
+              </b>
+            }
+            valueType="dateTime"
+          >
+            {transaction.timestamp}
+          </ProDescriptions.Item>
+          <ProDescriptions.Item
+            label={
+              <b>
+                <ScanOutlined /> Status:
+              </b>
+            }
+          >
+            {editing ? (
+              <Select
+                disabled={!editing}
+                style={{ width: 120 }}
+                value={status}
+                onChange={setStatus}
+              >
+                {RULE_ACTION_OPTIONS.map((option) => (
+                  <Select.Option key={option.value}>
+                    <RuleActionStatus ruleAction={option.value} />
+                  </Select.Option>
+                ))}
+              </Select>
+            ) : (
+              <Row align="middle">
+                <Space>
+                  <RuleActionStatus ruleAction={status} />
+                  <Popover
+                    content={transaction.statusChanges?.filter(Boolean).map((statusChange) => (
+                      <Row>
+                        {`Changed to ${statusChange.status} by ${
+                          users[statusChange.userId]?.name || statusChange.userId
+                        } at ${new Date(statusChange.timestamp).toISOString()}`}
+                      </Row>
+                    ))}
+                  ></Popover>
+                </Space>
+              </Row>
             )}
-            {transaction.promotionCodeUsed !== undefined && (
-              <ProDescriptions.Item label="Promotion Code Used" valueType="text">
-                {String(transaction.promotionCodeUsed)}
-              </ProDescriptions.Item>
-            )}
-            {transaction.reference && (
-              <ProDescriptions.Item label="Reference" valueType="text">
-                {transaction.reference}
-              </ProDescriptions.Item>
-            )}
-            {transaction.deviceData && (
+          </ProDescriptions.Item>
+          <ProDescriptions.Item
+            label={
+              <b>
+                <UserOutlined /> Assignees:
+              </b>
+            }
+          >
+            <AssigneesDropdown
+              assignments={assignments}
+              editing={editing}
+              onChange={handleUpdateAssignments}
+            />
+          </ProDescriptions.Item>
+        </ProDescriptions>
+
+        <br />
+        <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
+          Sender and Receiver Details
+        </Typography.Title>
+        <ProDescriptions size="small" column={3} colon={false}>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <Typography.Title level={5}></Typography.Title>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <>
+              <Typography.Title level={5}>
+                <ArrowUpOutlined /> {'  '} Sender
+              </Typography.Title>
+            </>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <>
+              <Typography.Title level={5}>
+                <ArrowDownOutlined /> {'  '}Receiver
+              </Typography.Title>
+            </>
+          </ProDescriptions.Item>
+        </ProDescriptions>
+        <ProDescriptions size="small" column={3} colon={false}>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <ProDescriptions size="small" column={1}>
               <ProDescriptions.Item
-                label="Device Data"
-                valueType="jsonCode"
+                className={styles.verticalDetailsItemLabel}
+              ></ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+                User Name
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+                User ID
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+                Amount
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+                Currency
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
+                Country
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItemLabel}>
+                Payment Method
+              </ProDescriptions.Item>
+              <ProDescriptions.Item>Payment Details</ProDescriptions.Item>
+            </ProDescriptions>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <ProDescriptions size="small" column={1}>
+              <ProDescriptions.Item valueType="text">
+                {getUserName(transaction.originUser)}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.originUser !== undefined ? (
+                  <UserLink user={transaction.originUser}>
+                    {String(transaction.originUserId)}
+                  </UserLink>
+                ) : (
+                  String(transaction.originUserId)
+                )}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {new Intl.NumberFormat().format(
+                  transaction.originAmountDetails?.transactionAmount
+                    ? transaction.originAmountDetails?.transactionAmount
+                    : NaN,
+                )}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.originAmountDetails?.transactionCurrency}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.originAmountDetails?.country}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItem}>
+                <PaymentMethodTag paymentMethod={transaction.originPaymentDetails?.method} />
+              </ProDescriptions.Item>
+              <ProDescriptions.Item
+                valueType={transaction.originPaymentDetails ? 'jsonCode' : 'text'}
                 className={styles.verticalDetailsItem}
               >
-                {JSON.stringify(transaction.deviceData)}
+                <PaymentDetails paymentDetails={transaction.originPaymentDetails} />
               </ProDescriptions.Item>
-            )}
-            {transaction.tags && transaction.tags.length > 0 && (
-              <ProDescriptions.Item label="Tags">
-                <span>
-                  {transaction.tags.map((tag: TransactionTag, index) => (
-                    <Tag color={'cyan'} key={index}>
-                      <span>
-                        {tag.key}: <span style={{ fontWeight: 700 }}>{tag.value}</span>
-                      </span>
-                    </Tag>
-                  ))}
-                </span>
+            </ProDescriptions>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item className={styles.verticalDetailsItem}>
+            <ProDescriptions size="small" column={1}>
+              <ProDescriptions.Item valueType="text">
+                {getUserName(transaction.destinationUser)}
               </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.destinationUser !== undefined ? (
+                  <UserLink user={transaction.destinationUser}>
+                    {String(transaction.destinationUserId)}
+                  </UserLink>
+                ) : (
+                  String(transaction.destinationUserId)
+                )}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {new Intl.NumberFormat().format(
+                  transaction.destinationAmountDetails?.transactionAmount
+                    ? transaction.destinationAmountDetails?.transactionAmount
+                    : NaN,
+                )}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.destinationAmountDetails?.transactionCurrency}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item valueType="text">
+                {transaction.destinationAmountDetails?.country}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item className={styles.verticalDetailsItem}>
+                <PaymentMethodTag paymentMethod={transaction.destinationPaymentDetails?.method} />
+              </ProDescriptions.Item>
+              <ProDescriptions.Item
+                valueType={transaction.destinationPaymentDetails ? 'jsonCode' : 'text'}
+                className={styles.verticalDetailsItem}
+              >
+                <PaymentDetails paymentDetails={transaction.destinationPaymentDetails} />
+              </ProDescriptions.Item>
+            </ProDescriptions>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item
+            label={<Typography.Title level={5}>Metadata</Typography.Title>}
+            className={styles.verticalDetailsItem}
+          >
+            <ProDescriptions size="small" column={1}>
+              {transaction.productType && (
+                <ProDescriptions.Item label="Product Type" valueType="text">
+                  {transaction.productType}
+                </ProDescriptions.Item>
+              )}
+              {transaction.promotionCodeUsed !== undefined && (
+                <ProDescriptions.Item label="Promotion Code Used" valueType="text">
+                  {String(transaction.promotionCodeUsed)}
+                </ProDescriptions.Item>
+              )}
+              {transaction.reference && (
+                <ProDescriptions.Item label="Reference" valueType="text">
+                  {transaction.reference}
+                </ProDescriptions.Item>
+              )}
+              {transaction.deviceData && (
+                <ProDescriptions.Item
+                  label="Device Data"
+                  valueType="jsonCode"
+                  className={styles.verticalDetailsItem}
+                >
+                  {JSON.stringify(transaction.deviceData)}
+                </ProDescriptions.Item>
+              )}
+              {transaction.tags && transaction.tags.length > 0 && (
+                <ProDescriptions.Item label="Tags">
+                  <span>
+                    {transaction.tags.map((tag: TransactionTag, index) => (
+                      <Tag color={'cyan'} key={index}>
+                        <span>
+                          {tag.key}: <span style={{ fontWeight: 700 }}>{tag.value}</span>
+                        </span>
+                      </Tag>
+                    ))}
+                  </span>
+                </ProDescriptions.Item>
+              )}
+            </ProDescriptions>
+          </ProDescriptions.Item>
+        </ProDescriptions>
+
+        <br />
+        <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
+          Rules Details
+        </Typography.Title>
+        <ProDescriptions size="small" column={1} colon={false}>
+          <ProDescriptions.Item>
+            <RulesHitDetailsTable transaction={transaction} />
+          </ProDescriptions.Item>
+        </ProDescriptions>
+      </Card>
+      <Card>
+        <Tabs type="line">
+          <Tabs.TabPane tab="Sender" key="sender">
+            <UserDetails user={transaction.originUser} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Receiver" key="receiver">
+            <UserDetails user={transaction.destinationUser} />
+          </Tabs.TabPane>
+        </Tabs>
+      </Card>
+      <Card>
+        <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
+          {`Comments (${transaction.comments?.length || 0})`}
+        </Typography.Title>
+        {transaction.comments && transaction.comments?.length > 0 && (
+          <List
+            dataSource={transaction.comments}
+            itemLayout="horizontal"
+            renderItem={(comment) => (
+              <Comment
+                comment={comment}
+                currentUserId={currentUserId}
+                deletingCommentIds={deletingCommentIds}
+                onDelete={() => {
+                  handleDeleteComment(transaction.transactionId!, comment.id!);
+                }}
+              />
             )}
-          </ProDescriptions>
-        </ProDescriptions.Item>
-      </ProDescriptions>
-      <Divider />
-      <ProDescriptions size="small" column={1} colon={false}>
-        <ProDescriptions.Item>
-          <RulesHitDetailsTable transaction={transaction} />
-        </ProDescriptions.Item>
-      </ProDescriptions>
-      {/* Comments */}
-      <Divider orientation="left" orientationMargin="0">
-        {`Comments (${transaction.comments?.length || 0})`}
-      </Divider>
-      {transaction.comments && transaction.comments?.length > 0 && (
-        <List
-          dataSource={transaction.comments}
-          itemLayout="horizontal"
-          renderItem={(comment) => (
-            <Comment
-              comment={comment}
-              currentUserId={currentUserId}
-              deletingCommentIds={deletingCommentIds}
-              onDelete={() => {
-                handleDeleteComment(transaction.transactionId!, comment.id!);
-              }}
-            />
-          )}
-        />
-      )}
-      <AntComment
-        avatar={<Avatar src={user?.picture} />}
-        content={
-          <CommentEditor
-            transactionId={transaction.transactionId!}
-            onCommentAdded={handleCommentAdded}
           />
-        }
-      />
+        )}
+        <AntComment
+          avatar={<Avatar src={user?.picture} />}
+          content={
+            <CommentEditor
+              transactionId={transaction.transactionId!}
+              onCommentAdded={handleCommentAdded}
+            />
+          }
+        />
+      </Card>
     </>
   );
 };
