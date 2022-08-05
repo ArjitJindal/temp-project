@@ -8,7 +8,7 @@ import moment, { Moment } from 'moment';
 import { columns } from './consts';
 import { TableItem } from './types';
 import { useApi } from '@/api';
-import Table from '@/components/ui/Table';
+import Table, { ResponsePayload } from '@/components/ui/Table';
 export default function HitsPerUserCard() {
   const api = useApi();
 
@@ -37,7 +37,7 @@ export default function HitsPerUserCard() {
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        request={async (): Promise<RequestData<TableItem>> => {
+        request={async (): Promise<ResponsePayload<TableItem>> => {
           let startTimestamp = moment().subtract(1, 'day').valueOf();
           let endTimestamp = Date.now();
 

@@ -8,7 +8,7 @@ import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
-import Table from '@/components/ui/Table';
+import Table, { ResponsePayload } from '@/components/ui/Table';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -54,7 +54,7 @@ export default function RuleHitCard() {
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        request={async (): Promise<RequestData<DashboardStatsRulesCountData>> => {
+        request={async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
           const [rules] = await Promise.all([api.getRules({})]);
           setRules(_.keyBy(rules, 'id'));
           let startTimestamp = moment().subtract(1, 'day').valueOf();

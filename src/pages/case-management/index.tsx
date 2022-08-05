@@ -572,8 +572,8 @@ function TableList() {
             title: 'Table Loaded',
             time,
           });
-          const data: CaseManagementItem[] = response.data.reduce(
-            (acc, item, index): CaseManagementItem[] => {
+          const data: CaseManagementItem[][] = response.data.map(
+            (item, index): CaseManagementItem[] => {
               const dataItem = {
                 index,
                 rowKey: item.transactionId ?? `${index}`,
@@ -584,22 +584,21 @@ function TableList() {
                 ...item,
                 rowSpan: 1,
               };
-              return [
-                ...acc,
-                ...item.hitRules.map(
-                  (rule, i): CaseManagementItem => ({
-                    ...dataItem,
-                    rowSpan: i === 0 ? item.hitRules.length : 0,
-                    isFirstRow: i === 0,
-                    isLastRow: i === item.hitRules.length - 1,
-                    rowKey: `${item.transactionId}#${i}`,
-                    ruleName: rule.ruleName,
-                    ruleDescription: rule.ruleDescription,
-                  }),
-                ),
-              ];
+              if (item.hitRules.length === 0) {
+                return [dataItem];
+              }
+              return item.hitRules.map(
+                (rule, i): CaseManagementItem => ({
+                  ...dataItem,
+                  rowSpan: i === 0 ? item.hitRules.length : 0,
+                  isFirstRow: i === 0,
+                  isLastRow: i === item.hitRules.length - 1,
+                  rowKey: `${item.transactionId}#${i}`,
+                  ruleName: rule.ruleName,
+                  ruleDescription: rule.ruleDescription,
+                }),
+              );
             },
-            [] as CaseManagementItem[],
           );
 
           return {

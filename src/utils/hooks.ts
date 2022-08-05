@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { EffectCallback, useEffect, useRef } from 'react';
 import { isEqual } from '@/utils/lang';
 
 export function usePrevious<T>(value: T): T | null {
@@ -9,12 +9,12 @@ export function usePrevious<T>(value: T): T | null {
   return ref.current || null;
 }
 
-export function useDeepEqualEffect(effect: () => void, deps: unknown[]) {
+export function useDeepEqualEffect(effect: EffectCallback, deps: unknown[]) {
   const prevDeps = usePrevious(deps);
   const depsChanged = !isEqual(prevDeps, deps);
   useEffect(() => {
     if (depsChanged) {
-      effect();
+      return effect();
     }
   }, [effect, depsChanged]);
 }

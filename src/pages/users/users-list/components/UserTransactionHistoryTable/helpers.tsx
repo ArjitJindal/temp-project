@@ -4,8 +4,8 @@ import { DataItem } from '@/pages/users/users-list/components/UserTransactionHis
 export function prepareTableData(
   userId: string | undefined,
   transactions: Array<TransactionCaseManagement>,
-): DataItem[] {
-  const data: DataItem[] = transactions.reduce((acc, item, index): DataItem[] => {
+): Array<DataItem[]> {
+  return transactions.map((item, index): DataItem[] => {
     const lastRowKey = `${item.transactionId}_last_row`;
     const dataItem: DataItem = {
       index,
@@ -25,23 +25,19 @@ export function prepareTableData(
       rowSpan: 1,
     };
     if (item.hitRules.length === 0) {
-      return [...acc, dataItem];
+      return [dataItem];
     }
-    return [
-      ...acc,
-      ...item.hitRules.map((rule, i): DataItem => {
-        const isLastRow = i === item.hitRules.length - 1;
-        return {
-          ...dataItem,
-          rowSpan: i === 0 ? item.hitRules.length : 0,
-          isFirstRow: i === 0,
-          isLastRow: isLastRow,
-          rowKey: isLastRow ? lastRowKey : `${item.transactionId}#${i}`,
-          ruleName: rule.ruleName,
-          ruleDescription: rule.ruleDescription,
-        };
-      }),
-    ];
-  }, [] as DataItem[]);
-  return data;
+    return item.hitRules.map((rule, i): DataItem => {
+      const isLastRow = i === item.hitRules.length - 1;
+      return {
+        ...dataItem,
+        rowSpan: i === 0 ? item.hitRules.length : 0,
+        isFirstRow: i === 0,
+        isLastRow: isLastRow,
+        rowKey: isLastRow ? lastRowKey : `${item.transactionId}#${i}`,
+        ruleName: rule.ruleName,
+        ruleDescription: rule.ruleDescription,
+      };
+    });
+  });
 }

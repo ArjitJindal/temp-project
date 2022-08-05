@@ -17,6 +17,8 @@ import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAP
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { prepareTableData } from '@/pages/users/users-list/components/UserTransactionHistoryTable/helpers';
 import {
   AsyncResource,
   failed,
@@ -28,8 +30,6 @@ import {
   success,
 } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
-import { prepareTableData } from '@/pages/users/users-list/components/UserTransactionHistoryTable/helpers';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
 
 interface Props {
   userId?: string;
@@ -114,53 +114,6 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           labelWrap: true,
         }}
         className={style.tablePadding}
-        dataSource={prepareTableData(
-          userId,
-          getOr(
-            map(responseRes, ({ data }) => data),
-            [],
-          ),
-        )}
-        onChange={(pagination, filters, sorter) => {
-          setParams((params) => {
-            const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
-
-            const directionFilter = (filters ?? {})['direction'] ?? [];
-            const showIncoming = directionFilter.indexOf('incoming') !== -1;
-            const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
-
-            const statusFilter = (filters ?? {})['status'] ?? [];
-
-            const newParams: DefaultApiGetTransactionsListRequest = {
-              ...params,
-              skip: 0,
-              sortField,
-              sortOrder,
-            };
-
-            if (showOutgoing) {
-              newParams.filterOriginUserId = userId;
-            } else if (showIncoming) {
-              newParams.filterDestinationUserId = userId;
-            } else {
-              newParams.filterUserId = userId;
-            }
-
-            if (statusFilter.indexOf('ALLOW') !== -1) {
-              newParams.filterStatus = 'ALLOW';
-            } else if (statusFilter.indexOf('FLAG') !== -1) {
-              newParams.filterStatus = 'FLAG';
-            } else if (statusFilter.indexOf('BLOCK') !== -1) {
-              newParams.filterStatus = 'BLOCK';
-            } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-              newParams.filterStatus = 'SUSPEND';
-            } else if (statusFilter.indexOf('WHITELIST') !== -1) {
-              newParams.filterStatus = 'WHITELIST';
-            }
-
-            return newParams;
-          });
-        }}
         getPopupContainer={() => {
           if (rootRef.current) {
             return rootRef.current;
@@ -327,25 +280,52 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
         }}
         isEvenRow={(item) => item.index % 2 === 0}
         scroll={{ x: 1300 }}
-        loading={isLoading(responseRes)}
         options={{
           reload: false,
         }}
         pagination={false}
-      />
-      <Pagination
-        className={style.pagination}
-        size="small"
-        showSizeChanger={false}
-        pageSize={DEFAULT_PAGE_SIZE}
-        showTitle={true}
-        total={getOr(
-          map(responseRes, (x) => x.total),
-          0,
-        )}
-        current={Math.floor(params.skip / DEFAULT_PAGE_SIZE) + 1}
-        onChange={(page) => {
-          setParams((params) => ({ ...params, skip: DEFAULT_PAGE_SIZE * (page - 1) }));
+        request={async (params, sorter, filter) => {
+          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
+
+          const directionFilter = (params ?? {})['direction'] ?? [];
+          const showIncoming = directionFilter.indexOf('incoming') !== -1;
+          const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
+
+          const statusFilter = (params ?? {})['status'] ?? [];
+
+          const newParams: DefaultApiGetTransactionsListRequest = {
+            ...params,
+            skip: ((params.current ?? 1) - 1) * DEFAULT_PAGE_SIZE,
+            limit: DEFAULT_PAGE_SIZE,
+            beforeTimestamp: Date.now(),
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
+          };
+
+          if (showOutgoing) {
+            newParams.filterOriginUserId = userId;
+          } else if (showIncoming) {
+            newParams.filterDestinationUserId = userId;
+          } else {
+            newParams.filterUserId = userId;
+          }
+
+          if (statusFilter.indexOf('ALLOW') !== -1) {
+            newParams.filterStatus = 'ALLOW';
+          } else if (statusFilter.indexOf('FLAG') !== -1) {
+            newParams.filterStatus = 'FLAG';
+          } else if (statusFilter.indexOf('BLOCK') !== -1) {
+            newParams.filterStatus = 'BLOCK';
+          } else if (statusFilter.indexOf('SUSPEND') !== -1) {
+            newParams.filterStatus = 'SUSPEND';
+          } else if (statusFilter.indexOf('WHITELIST') !== -1) {
+            newParams.filterStatus = 'WHITELIST';
+          }
+
+          return api.getTransactionsList(newParams).then((result) => ({
+            total: result.total,
+            data: prepareTableData(userId, result.data),
+          }));
         }}
       />
     </div>
