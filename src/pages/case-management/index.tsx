@@ -374,6 +374,9 @@ function TableList() {
         title: 'Destination Country',
         width: 90,
         hideInSearch: true,
+        onCell: (_) => ({
+          rowSpan: _.rowSpan,
+        }),
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
         },
