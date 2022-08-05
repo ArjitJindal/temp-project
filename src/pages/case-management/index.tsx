@@ -620,7 +620,7 @@ function TableList() {
         }}
       />
       <Drawer
-        width={736}
+        width={1000}
         visible={!isInit(currentItem)}
         bodyStyle={{ padding: 0 }}
         onClose={() => {

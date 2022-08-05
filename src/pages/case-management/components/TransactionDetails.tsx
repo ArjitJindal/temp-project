@@ -51,6 +51,7 @@ import Button from '@/components/ui/Button';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
 import { UserDetails } from '@/pages/users/users-list/components/UserDetails';
+import { TransactionEventsTable } from '@/pages/users/users-list/components/UserTransactionHistoryTable/ExpandedRowRenderer';
 
 const equal = require('fast-deep-equal');
 
@@ -534,6 +535,9 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           </Tabs.TabPane>
           <Tabs.TabPane tab="Receiver" key="receiver">
             <UserDetails user={transaction.destinationUser} />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Transaction Events" key="transactionEvents">
+            <TransactionEventsTable events={transaction.events!} />
           </Tabs.TabPane>
         </Tabs>
       </Card>

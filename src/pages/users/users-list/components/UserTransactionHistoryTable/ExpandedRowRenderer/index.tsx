@@ -10,6 +10,10 @@ interface Props {
 
 export default function ExpandedRowRenderer(props: Props) {
   const { events } = props;
+  return <TransactionEventsTable events={events} />;
+}
+
+export const TransactionEventsTable: React.FC<Props> = ({ events }) => {
   return (
     <Table<TransactionEvent>
       rowKey="_id"
@@ -56,4 +60,4 @@ export default function ExpandedRowRenderer(props: Props) {
       }}
     />
   );
-}
+};
