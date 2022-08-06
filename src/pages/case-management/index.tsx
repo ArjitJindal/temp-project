@@ -212,6 +212,7 @@ function TableList() {
       },
       {
         title: 'Rules Hit',
+        hideInSearch: true,
         width: 150,
         dataIndex: 'ruleName',
       },
@@ -219,6 +220,7 @@ function TableList() {
         title: 'Rules Description',
         tooltip: 'Describes the conditions required for this rule to be hit.',
         width: 270,
+        hideInSearch: true,
         dataIndex: 'ruleDescription',
       },
       {
