@@ -40,6 +40,7 @@
     "lint": "eslint .",
     "tsc": "tsc --noEmit",
     "lint:fix": "eslint --fix .",
+    "generate-local-data": "ts-node ./init_local_db/all.ts",
     "openapi:build": "scripts/openapi/openapi_generate_sdk.ts",
     "openapi:format": "scripts/openapi/openapi_format.js",
     "openapi:publish": "scripts/openapi/openapi_publish.js",

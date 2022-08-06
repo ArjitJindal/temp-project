@@ -91,6 +91,12 @@ npm run start-local-api
 
 Local environment config (ex: tenantID) is stored in `local-dev.ts`.
 
+### Generating Data for Local:
+
+Run the script once you got DynamoDB and mongo running
+
+`generate-local-data`
+
 ## Deploy
 
 In order to deploy to a new account (or the first time you're deploying), you have to run `cdk bootstrap` like so:
