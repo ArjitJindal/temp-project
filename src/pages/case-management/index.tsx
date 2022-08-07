@@ -577,6 +577,7 @@ function TableList() {
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,
               includeUsers: true,
+              includeEvents: true,
             }),
           );
           analytics.event({
