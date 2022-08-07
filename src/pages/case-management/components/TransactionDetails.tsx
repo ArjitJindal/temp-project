@@ -372,9 +372,6 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
         <ProDescriptions size="small" column={3} colon={false}>
           <ProDescriptions.Item className={styles.verticalDetailsItem}>
             <ProDescriptions size="small" column={1}>
-              <ProDescriptions.Item
-                className={styles.verticalDetailsItemLabel}
-              ></ProDescriptions.Item>
               <ProDescriptions.Item className={styles.verticalDetailsItemLabel} valueType="text">
                 User Name
               </ProDescriptions.Item>
@@ -398,19 +395,22 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           </ProDescriptions.Item>
           <ProDescriptions.Item className={styles.verticalDetailsItem}>
             <ProDescriptions size="small" column={1}>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {getUserName(transaction.originUser)}
               </ProDescriptions.Item>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {transaction.originUser !== undefined ? (
+                  // Ellipsis does not work with components withing ProItem.
                   <UserLink user={transaction.originUser}>
-                    {String(transaction.originUserId)}
+                    {String(transaction.originUserId).length <= 33
+                      ? String(transaction.originUserId)
+                      : `${String(transaction.originUserId).substring(0, 33)}…`}
                   </UserLink>
                 ) : (
                   String(transaction.originUserId)
                 )}
               </ProDescriptions.Item>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {new Intl.NumberFormat().format(
                   transaction.originAmountDetails?.transactionAmount
                     ? transaction.originAmountDetails?.transactionAmount
@@ -436,19 +436,21 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           </ProDescriptions.Item>
           <ProDescriptions.Item className={styles.verticalDetailsItem}>
             <ProDescriptions size="small" column={1}>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {getUserName(transaction.destinationUser)}
               </ProDescriptions.Item>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {transaction.destinationUser !== undefined ? (
                   <UserLink user={transaction.destinationUser}>
-                    {String(transaction.destinationUserId)}
+                    {String(transaction.destinationUserId).length <= 33
+                      ? String(transaction.destinationUserId)
+                      : `${String(transaction.destinationUserId).substring(0, 33)}…`}
                   </UserLink>
                 ) : (
                   String(transaction.destinationUserId)
                 )}
               </ProDescriptions.Item>
-              <ProDescriptions.Item valueType="text">
+              <ProDescriptions.Item valueType="text" ellipsis={true}>
                 {new Intl.NumberFormat().format(
                   transaction.destinationAmountDetails?.transactionAmount
                     ? transaction.destinationAmountDetails?.transactionAmount
