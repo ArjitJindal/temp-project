@@ -525,6 +525,11 @@ function TableList() {
   return (
     <PageWrapper title={i18n('menu.case-management')}>
       <Table<CaseManagementItem, TableSearchParams>
+        initialParams={{
+          page: parsedParams.current ?? 1,
+          params: parsedParams,
+          sort: {},
+        }}
         form={{
           labelWrap: true,
         }}

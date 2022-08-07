@@ -39,9 +39,10 @@ interface OverridenProps<T, Params> {
   pagination?: boolean;
 }
 
-interface Props<T, Params, ValueType>
+interface Props<T, Params extends object, ValueType>
   extends Omit<ProTableProps<T, Params, ValueType>, keyof OverridenProps<T, Params>>,
     OverridenProps<T, Params> {
+  initialParams?: ParamsState<Params>;
   isEvenRow?: (item: T) => boolean;
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
@@ -98,14 +99,17 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
     dataSource,
     pagination,
     options = undefined,
+    initialParams,
     ...rest
   } = props;
 
-  const [params, setParams] = useState<ParamsState<Params>>({
-    page: 1,
-    params: {} as Params,
-    sort: {},
-  });
+  const [params, setParams] = useState<ParamsState<Params>>(
+    initialParams ?? {
+      page: 1,
+      params: {} as Params,
+      sort: {},
+    },
+  );
   const [responseData, setResponseData] = useState<
     AsyncResource<{
       total: number;
