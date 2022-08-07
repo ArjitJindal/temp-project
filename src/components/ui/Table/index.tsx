@@ -1,12 +1,11 @@
 import ProTable from '@ant-design/pro-table';
 import type { ParamsType } from '@ant-design/pro-provider';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ProTableProps } from '@ant-design/pro-table/lib';
 import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/lib/table/interface';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
-import { useDeepEqualEffect } from '@/utils/hooks';
 import {
   AsyncResource,
   failed,
@@ -98,6 +97,7 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
     request,
     dataSource,
     pagination,
+    options = undefined,
     ...rest
   } = props;
 
@@ -114,7 +114,6 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
   >(dataSource ? success({ total: dataSource.length, items: [...dataSource] }) : init());
 
   const [firstRequest] = useState<RequestFunctionType<T, Params> | undefined>(() => request);
-
   // todo: implement cancelation
   const handleRequest = useCallback(
     (
@@ -146,13 +145,17 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
     [firstRequest],
   );
 
-  useDeepEqualEffect(() => {
+  const triggerRequest = useCallback(() => {
     handleRequest(
       { ...params.params, pageSize: DEFAULT_PAGE_SIZE, current: params.page },
       params.sort,
       {},
     );
-  }, [handleRequest, params]);
+  }, [handleRequest, params.params, params.page, params.sort]);
+
+  useEffect(() => {
+    triggerRequest();
+  }, [triggerRequest]);
 
   return (
     <div className={style.root}>
@@ -193,13 +196,15 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
             }),
             {} as Record<string, SortOrder>,
           );
-
-          // handleRequest(filters as unknown as Params, sort, {});
           setParams({
             page: 1,
             params: filters as unknown as Params,
             sort: sort,
           });
+        }}
+        options={{
+          ...(options || {}),
+          reload: !options || options.reload != false ? triggerRequest : false,
         }}
       />
       {pagination !== false && (
