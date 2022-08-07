@@ -42,6 +42,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
+import UserLink from '@/components/UserLink';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -241,12 +242,15 @@ function TableList() {
         title: 'Origin (sender) User ID',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
         width: 180,
+        copyable: true,
+        ellipsis: true,
         dataIndex: 'originUserId',
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return entity.originUserId;
+          if (!entity.originUser) return entity.originUserId;
+          return <UserLink user={entity.originUser}>{String(entity.originUserId)}</UserLink>;
         },
       },
       {
@@ -313,12 +317,17 @@ function TableList() {
       {
         title: 'Destination User ID',
         dataIndex: 'destinationUserId',
+        copyable: true,
+        ellipsis: true,
         width: 150,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return entity.destinationUserId;
+          if (!entity.destinationUser) return entity.destinationUserId;
+          return (
+            <UserLink user={entity.destinationUser}>{String(entity.destinationUserId)}</UserLink>
+          );
         },
       },
       {
