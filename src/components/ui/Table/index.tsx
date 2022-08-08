@@ -1,9 +1,8 @@
-import ProTable from '@ant-design/pro-table';
+import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import type { ParamsType } from '@ant-design/pro-provider';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ProTableProps } from '@ant-design/pro-table/lib';
 import { message, Pagination } from 'antd';
-import { SortOrder } from 'antd/lib/table/interface';
+import { SortOrder } from 'antd/es/table/interface';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
 import {

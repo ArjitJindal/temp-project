@@ -1,6 +1,6 @@
 import { CaretUpOutlined, CaretDownOutlined } from '@ant-design/icons';
 import React from 'react';
-import classNames from 'classnames';
+import classNames from 'clsx';
 import styles from './index.module.less';
 
 export type NumberInfoProps = {

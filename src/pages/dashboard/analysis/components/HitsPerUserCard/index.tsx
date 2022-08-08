@@ -2,13 +2,13 @@
 import { Card, DatePicker } from 'antd';
 import { ActionType } from '@ant-design/pro-table';
 import React, { useEffect, useRef, useState } from 'react';
-import { RequestData } from '@ant-design/pro-table/lib/typing';
-import { RangeValue } from 'rc-picker/lib/interface';
+import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import { columns } from './consts';
 import { TableItem } from './types';
 import { useApi } from '@/api';
 import Table, { ResponsePayload } from '@/components/ui/Table';
+
 export default function HitsPerUserCard() {
   const api = useApi();
 

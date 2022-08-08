@@ -1,6 +1,6 @@
 import { Button as AntButton } from 'antd';
 import React from 'react';
-import { ButtonProps } from 'antd/lib/button/button';
+import { ButtonProps } from 'antd/es/button/button';
 import { useAnalytics } from '@/utils/segment/context';
 
 interface ExtraProps {

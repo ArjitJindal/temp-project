@@ -1,8 +1,8 @@
-import Card from 'antd/lib/card';
-import Layout from 'antd/lib/layout';
-import { Content } from 'antd/lib/layout/layout';
-import Sider from 'antd/lib/layout/Sider';
-import Menu from 'antd/lib/menu';
+import Card from 'antd/es/card';
+import Layout from 'antd/es/layout';
+import { Content } from 'antd/es/layout/layout';
+import Sider from 'antd/es/layout/Sider';
+import Menu from 'antd/es/menu';
 import { useCallback, useMemo, useState } from 'react';
 import styles from './SidebarPanel.module.less';
 

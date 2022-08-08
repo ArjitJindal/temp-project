@@ -5,18 +5,11 @@ const path = require('path');
 const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
 const lessLoader = require('./less-loader.js');
-
-function log(message, ...args) {
-  console.log(`[${new Date().toISOString()}] ${message}`, ...args);
-}
-
-function error(message, ...args) {
-  console.error(`[${new Date().toISOString()}] ${message}`, ...args);
-}
-
+const { log, error, notify } = require('./helpers.js');
 
 async function prepare(env) {
   await fs.rm(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER), { recursive: true, force: true });
+  await fs.rm(path.resolve(env.PROJECT_DIR, "esbuild.json"), { recursive: true, force: true });
   await fs.mkdir(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER));
 }
 
@@ -69,6 +62,7 @@ async function buildCode(env, options) {
   return await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
     bundle: true,
+    // logLevel: "verbose",
     loader: {
       '.svg': 'file',
     },
@@ -95,7 +89,7 @@ async function buildCode(env, options) {
       ),
     ],
     outfile: path.join(PROJECT_DIR, OUTPUT_FOLDER, outFile),
-    mainFields: ['browser', 'main'],
+    mainFields: ['module', 'browser', 'main'],
     target: ['chrome102', 'firefox100', 'safari14'],
     inject: [path.join(env.SCRIPT_DIR, 'react-shim.js')],
     assetNames: 'public/[name].[hash]',
@@ -103,14 +97,16 @@ async function buildCode(env, options) {
     minify: !devMode,
     metafile: !devMode,
     sourcemap: !devMode,
-    // incremental: watch, // todo: migration: use it
+    treeShaking: !devMode,
     watch: watch
       ? {
           onRebuild(error, result) {
             if (error) {
-              console.error(`Watch build failed:`, error);
+              notify(`ERROR: ${error.message || 'Unknown error'}`);
+              error(`Watch build failed:`, error);
             } else {
-              log(`Watch build succeeded!`);
+              notify('Re-built successfully');
+              log('Re-built successfully');
             }
           },
         }

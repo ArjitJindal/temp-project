@@ -2,7 +2,7 @@ import { InboxOutlined, LoadingOutlined, UploadOutlined } from '@ant-design/icon
 import { Alert, Divider, message, Modal, Select } from 'antd';
 import axios from 'axios';
 import { useCallback, useState } from 'react';
-import Dragger from 'antd/lib/upload/Dragger';
+import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
 import _ from 'lodash';
 import Button from '@/components/ui/Button';

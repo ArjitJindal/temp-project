@@ -2,8 +2,8 @@
 import { Card, DatePicker } from 'antd';
 import { ActionType } from '@ant-design/pro-table';
 import { useEffect, useRef, useState } from 'react';
-import { ProColumns, RequestData } from '@ant-design/pro-table/lib/typing';
-import { RangeValue } from 'rc-picker/lib/interface';
+import { ProColumns } from '@ant-design/pro-table/es/typing';
+import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';

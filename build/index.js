@@ -4,6 +4,7 @@ const { log, error, readConfig, prepare, buildStatic, buildHtml, buildCode } = r
 const express = require('express');
 const fallback = require('express-history-api-fallback');
 const fs = require('fs-extra');
+const { notify } = require('./helpers.js');
 
 const SCRIPT_DIR = __dirname;
 
@@ -81,10 +82,12 @@ async function main() {
     await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
   }
   if (env.WATCH) {
-    log(`Done, watching for changed...`);
+    log('Build finished, watching for changes');
+    notify('Build finished, watching for changes');
     serve();
   } else {
-    log(`Done`);
+    log('Build finished');
+    notify('Build finished');
   }
 }
 

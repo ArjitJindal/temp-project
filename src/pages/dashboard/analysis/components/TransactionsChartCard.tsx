@@ -4,12 +4,11 @@ import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import moment, { Moment } from 'moment';
 import { Column } from '@ant-design/charts';
 import { useEffect, useState } from 'react';
-import { RangeValue } from 'rc-picker/lib/interface';
+import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
 import { useRuleActionTitle } from '../../../../utils/rules';
-import { DefaultApiGetDashboardStatsTransactionsRequest } from '@/apis/types/ObjectParamAPI';
 import { useApi } from '@/api';
 import {
   AsyncResource,
@@ -18,10 +17,9 @@ import {
   init,
   isLoading,
   loading,
-  map,
   success,
 } from '@/utils/asyncResource';
-import { DashboardStatsTransactionsCountData, RuleAction } from '@/apis';
+import { DashboardStatsTransactionsCountData } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 // FIXME: import doesn't work
@@ -221,7 +219,6 @@ const TransactionsChartCard = () => {
                   ) : (
                     <Column
                       height={400}
-                      forceFit
                       data={data.map((item) => {
                         const y = item[key] ?? 0;
                         let x = item._id;
@@ -240,25 +237,21 @@ const TransactionsChartCard = () => {
                       xField="x"
                       yField="y"
                       xAxis={{
-                        visible: true,
                         label: {
                           autoRotate: false,
                           autoHide: true,
                           rotate: -Math.PI / 6,
+                          offsetX: -10,
+                          offsetY: 10,
                           style: {
                             textAlign: 'right',
                             textBaseline: 'bottom',
                           },
                         },
-                        title: {
-                          visible: false,
-                        },
+                        title: null,
                       }}
                       yAxis={{
-                        visible: true,
-                        title: {
-                          visible: false,
-                        },
+                        title: null,
                       }}
                       meta={{
                         y: {

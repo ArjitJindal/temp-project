@@ -13,7 +13,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { ItemType } from 'antd/lib/menu/hooks/useItems';
+import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { matchPath, useLocation } from 'react-router';
 import s from './styles.module.less';
 import { I18n, TranslationId, useI18n } from '@/locales';

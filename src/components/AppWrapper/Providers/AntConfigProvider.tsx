@@ -1,7 +1,7 @@
 import { ConfigProvider } from 'antd';
 import * as ProProvider from '@ant-design/pro-provider';
 import React from 'react';
-import enUS from 'antd/lib/locale/en_US';
+import enUS from 'antd/es/locale/en_US';
 
 export const defaultValidateMessages = {
   default: "Validation error on field '${name}'",
