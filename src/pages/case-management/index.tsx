@@ -18,16 +18,7 @@ import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import AllowForm from '@/pages/case-management/components/AllowForm';
-import {
-  AsyncResource,
-  failed,
-  init,
-  isInit,
-  isLoading,
-  isSuccess,
-  loading,
-  success,
-} from '@/utils/asyncResource';
+import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
@@ -68,7 +59,6 @@ function TableList() {
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
-  const [saving, setSaving] = useState(false);
   const handleTransactionUpdate = useCallback(async (newTransaction: TransactionCaseManagement) => {
     const transactionId = newTransaction.transactionId as string;
     setUpdatedTransactions((prev) => ({
@@ -77,9 +67,10 @@ function TableList() {
     }));
   }, []);
   const api = useApi();
+  const isTransactionRoute = transactionId != null && transactionId !== 'all';
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   useEffect(() => {
-    if (transactionId == null || transactionId === 'all') {
+    if (!isTransactionRoute) {
       setCurrentItem(init());
       return function () {};
     }
@@ -114,7 +105,7 @@ function TableList() {
     return () => {
       isCanceled = true;
     };
-  }, [currentTransactionId, transactionId, api]);
+  }, [isTransactionRoute, currentTransactionId, transactionId, api]);
   const handleUpdateAssignments = useCallback(
     async (transaction: TransactionCaseManagement, assignees: string[]) => {
       const hideMessage = message.loading(`Saving...`, 0);
@@ -124,7 +115,6 @@ function TableList() {
         timestamp: Date.now(),
       }));
       try {
-        setSaving(true);
         handleTransactionUpdate({
           ...transaction,
           assignments,
@@ -140,7 +130,6 @@ function TableList() {
         message.error('Failed to save');
       } finally {
         hideMessage();
-        setSaving(false);
       }
     },
     [api, handleTransactionUpdate, user.userId],
@@ -153,25 +142,23 @@ function TableList() {
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
 
-  const isCurrentItemOpen = isSuccess(currentItem) || isLoading(currentItem);
-
   useDeepEqualEffect(() => {
     const form = formRef.current;
-    if (form && !isCurrentItemOpen) {
+    if (form && !isTransactionRoute) {
       form.setFields(Object.entries(parsedParams).map(([name, value]) => ({ name, value })));
       form.submit();
     }
-  }, [parsedParams, isCurrentItemOpen]);
+  }, [parsedParams, isTransactionRoute]);
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams, force = false) => {
-      if (!isCurrentItemOpen || force) {
+      if (!isTransactionRoute || force) {
         navigate(makeUrl('/case-management/all', {}, queryAdapter.serializer(params)), {
           replace: true,
         });
       }
     },
-    [isCurrentItemOpen, navigate],
+    [isTransactionRoute, navigate],
   );
 
   // todo: i18n
@@ -640,7 +627,7 @@ function TableList() {
       />
       <Drawer
         width={1000}
-        visible={!isInit(currentItem)}
+        visible={isTransactionRoute}
         bodyStyle={{ padding: 0 }}
         onClose={() => {
           pushParamsToNavigation(lastSearchParams, true);
