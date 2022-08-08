@@ -147,10 +147,11 @@ export async function verifyTransaction(
     dynamoDb,
     transaction
   )
+  const initialTransactionState = transaction.transactionState || 'CREATED'
   const savedTransaction = await transactionRepository.saveTransaction(
     {
       ...transaction,
-      transactionState: transaction.transactionState || 'CREATED',
+      transactionState: initialTransactionState,
     },
     {
       executedRules,
@@ -162,7 +163,7 @@ export async function verifyTransaction(
     {
       transactionId: savedTransaction.transactionId as string,
       timestamp: savedTransaction.timestamp as number,
-      transactionState: 'CREATED',
+      transactionState: initialTransactionState,
       updatedTransactionAttributes: savedTransaction,
     },
     {
