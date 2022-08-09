@@ -6,9 +6,12 @@ import { ProColumns } from '@ant-design/pro-table/es/typing';
 import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
+import { Link } from 'react-router-dom';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
 import Table, { ResponsePayload } from '@/components/ui/Table';
+import { makeUrl } from '@/utils/routing';
+import Button from '@/components/ui/Button';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -30,6 +33,7 @@ export default function RuleHitCard() {
     {
       title: 'Rule ID',
       dataIndex: 'ruleId',
+      width: '10%',
     },
     {
       title: 'Rule Name',
@@ -39,7 +43,29 @@ export default function RuleHitCard() {
     },
     {
       title: 'Hit Count',
+      width: '25%',
       dataIndex: 'hitCount',
+    },
+    {
+      title: 'Actions',
+      width: '25%',
+      render: (_, stat) => {
+        return (
+          <Link
+            to={makeUrl(
+              '/case-management/all',
+              {},
+              {
+                rulesHitFilter: rules[stat.ruleId].name,
+              },
+            )}
+          >
+            <Button analyticsName="View user cases" size="small" type="ghost">
+              View Cases
+            </Button>
+          </Link>
+        );
+      },
     },
   ];
 
