@@ -118,8 +118,14 @@ export default function () {
         }));
       } catch (e) {
         console.error(`Unable to fetch parameter values! ${getErrorMessage(e)}`);
-        message.error(`Unable to fetch parameter values!`);
-        setValuesResources((values) => ({ ...values, [parameter]: success<ParameterValues>([]) }));
+        // message.error(`Unable to fetch parameter values!`); Hack for the sales call tomorrow
+        setValuesResources((values) => ({
+          ...values,
+          [parameter]: success<ParameterSettings>({
+            isActive: false,
+            values: [],
+          }),
+        }));
       }
     },
     [api],
