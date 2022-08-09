@@ -111,7 +111,7 @@ async function transactionEventHandler(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
   )
   await transactionEventCollection.replaceOne(
-    { transactionId: transactionEvent.transactionId },
+    { eventId: transactionEvent.eventId },
     {
       ...transactionEvent,
     },
