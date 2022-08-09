@@ -56,7 +56,7 @@ export default function RuleHitCard() {
               '/case-management/all',
               {},
               {
-                rulesHitFilter: rules[stat.ruleId].name,
+                rulesHitFilter: rules[stat.ruleId].id,
               },
             )}
           >
