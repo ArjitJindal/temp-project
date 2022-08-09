@@ -2,7 +2,6 @@
 
 import { execSync } from 'child_process'
 import * as fs from 'fs'
-import { logger } from '@/core/logger'
 
 function exec(command: string) {
   execSync(command, { env: process.env })
@@ -54,4 +53,4 @@ function buildApi(type: 'public' | 'internal') {
 buildApi('public')
 buildApi('internal')
 
-logger.info('Done!')
+console.info('Done!')

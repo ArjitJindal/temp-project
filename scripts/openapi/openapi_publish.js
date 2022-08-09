@@ -50,7 +50,7 @@ async function prepareSchemas(OUTPUT_DIR) {
     }
   }
   catch(err) {
-    logger.error(err);
+    console.error(err);
   }
 }
 
@@ -67,22 +67,22 @@ async function main() {
   }
 
   if (!BRANCH_NAME) {
-    logger.error("ERROR: Please set the BRANCH_NAME environment variables");
+    console.error("ERROR: Please set the BRANCH_NAME environment variables");
     process.exit(1)
   }
 
-  logger.log("BRANCH_NAME", BRANCH_NAME)
+  console.log("BRANCH_NAME", BRANCH_NAME)
   if (BRANCH_NAME === 'main' && CONFIRM_PUSH_MAIN !== 'true') {
-    logger.error("ERROR: To push to main branch, please, also provide CONFIRM_PUSH_MAIN=true environment variable");
+    console.error("ERROR: To push to main branch, please, also provide CONFIRM_PUSH_MAIN=true environment variable");
     process.exit(1)
   }
 
   if (!PUBLIC_PROJECT_TOKEN) {
-    logger.error("ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables");
+    console.error("ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables");
     process.exit(1)
   }
   if (!INTERNAL_PROJECT_TOKEN) {
-    logger.error("ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables");
+    console.error("ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables");
     process.exit(1)
   }
 
@@ -93,5 +93,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  logger.error(e)
+  console.error(e)
+  process.exit(1)
 })
