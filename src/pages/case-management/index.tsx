@@ -228,7 +228,7 @@ function TableList() {
       {
         title: 'Origin (sender) User ID',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
-        width: 180,
+        width: 200,
         copyable: true,
         ellipsis: true,
         dataIndex: 'originUserId',
@@ -243,7 +243,7 @@ function TableList() {
       {
         title: 'Origin (sender) User Name',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
-        width: 180,
+        width: 220,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -267,7 +267,7 @@ function TableList() {
         dataIndex: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
-        width: 120,
+        width: 150,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -282,7 +282,7 @@ function TableList() {
       {
         title: 'Origin Currency',
         hideInSearch: true,
-        width: 90,
+        width: 140,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -293,7 +293,7 @@ function TableList() {
       {
         title: 'Origin Country',
         hideInSearch: true,
-        width: 80,
+        width: 140,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -306,7 +306,7 @@ function TableList() {
         dataIndex: 'destinationUserId',
         copyable: true,
         ellipsis: true,
-        width: 150,
+        width: 170,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -340,7 +340,7 @@ function TableList() {
       },
       {
         title: 'Destination Amount',
-        width: 120,
+        width: 200,
         dataIndex: 'destnationAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
@@ -359,7 +359,7 @@ function TableList() {
       },
       {
         title: 'Destination Currency',
-        width: 90,
+        width: 200,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -370,7 +370,7 @@ function TableList() {
       },
       {
         title: 'Destination Country',
-        width: 90,
+        width: 200,
         hideInSearch: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,

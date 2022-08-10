@@ -122,7 +122,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       {
         title: 'Origin (sender) User ID',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
-        width: 180,
+        width: 200,
         dataIndex: 'originUserId',
         render: (dom, entity) => {
           return entity.originUserId;
@@ -131,14 +131,14 @@ const TableList = (props: RouteMatch<'id'>) => {
       {
         title: 'Origin (sender) User Name',
         tooltip: 'Origin users are the users initiating the transaction - sending the money',
-        width: 180,
+        width: 220,
         render: (dom, entity) => {
           return getUserName(entity.originUser);
         },
       },
       {
         title: 'Origin Method',
-        width: 160,
+        width: 180,
         hideInSearch: true,
         render: (dom, entity) => {
           return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
@@ -146,7 +146,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Origin Amount',
-        width: 120,
+        width: 150,
         dataIndex: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: true,
@@ -160,7 +160,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Origin Currency',
-        width: 120,
+        width: 140,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.transactionCurrency;
@@ -168,7 +168,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Origin Country',
-        width: 120,
+        width: 140,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.originAmountDetails?.country;
@@ -176,7 +176,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Destination User ID',
-        width: 150,
+        width: 170,
         dataIndex: 'destinationUserId',
         render: (dom, entity) => {
           return entity.destinationUserId;
@@ -200,7 +200,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       {
         title: 'Destination Amount',
         dataIndex: 'destnationAmountDetails.transactionAmount',
-        width: 120,
+        width: 200,
         hideInSearch: true,
         sorter: true,
         render: (dom, entity) => {
@@ -215,7 +215,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Destination Currency',
-        width: 120,
+        width: 200,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.transactionCurrency;
@@ -223,7 +223,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Destination Country',
-        width: 120,
+        width: 200,
         hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationAmountDetails?.country;
@@ -233,7 +233,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         title: 'Origin Currencies',
         dataIndex: 'originCurrenciesFilter',
         hideInTable: true,
-        width: 120,
+        width: 170,
         valueType: 'select',
         fieldProps: {
           options: currencies,
@@ -245,7 +245,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         title: 'Destination Currencies',
         dataIndex: 'destinationCurrenciesFilter',
         hideInTable: true,
-        width: 120,
+        width: 200,
         valueType: 'select',
         fieldProps: {
           options: currencies,
