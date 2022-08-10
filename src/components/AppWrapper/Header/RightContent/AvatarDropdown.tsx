@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { LogoutOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
 import type { MenuInfo } from 'rc-menu/es/interface';
@@ -25,10 +25,6 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
         logout({ returnTo: window.location.origin });
         return;
       }
-      if (key === 'settings') {
-        navigate(`/accounts`);
-        return;
-      }
       navigate(`/account/${key}`);
     },
     [navigate, logout],
@@ -52,13 +48,6 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
 
   const menuHeaderDropdown = (
     <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
-      {isAdmin && (
-        <Menu.Item key="settings" icon={<SettingOutlined />}>
-          Settings
-        </Menu.Item>
-      )}
-      {isAdmin && <Menu.Divider />}
-
       <Menu.Item key="logout" icon={<LogoutOutlined />}>
         Logout
       </Menu.Item>
