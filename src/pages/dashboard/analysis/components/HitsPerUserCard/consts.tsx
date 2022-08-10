@@ -1,10 +1,13 @@
 import { ProColumns } from '@ant-design/pro-table';
 import { Link } from 'react-router-dom';
+import _ from 'lodash';
 import { TableItem } from './types';
+import s from './styles.module.less';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
 import Button from '@/components/ui/Button';
 import { makeUrl } from '@/utils/routing';
+import UserTypeIcon from '@/components/ui/UserTypeIcon';
 
 export const columns: ProColumns<TableItem>[] = [
   {
@@ -31,8 +34,22 @@ export const columns: ProColumns<TableItem>[] = [
     width: '25%',
   },
   {
-    title: 'Actions',
+    title: 'User Type',
     width: '25%',
+    render: (dom, entity) => {
+      const { user } = entity;
+      if (user == null) {
+        return dom;
+      }
+      return (
+        <div className={s.userType}>
+          <UserTypeIcon type={user.type} /> <span>{_.capitalize(user.type)}</span>
+        </div>
+      );
+    },
+  },
+  {
+    title: 'Actions',
     render: (dom, entity) => {
       const { user } = entity;
       if (user == null) {

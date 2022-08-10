@@ -15,12 +15,7 @@
   "rules": {
     "no-console": "off",
     "@typescript-eslint/no-empty-function": "off",
-    "import/no-unresolved": [
-      "error",
-      {
-        "ignore": ["@/*"]
-      }
-    ],
+    "import/no-unresolved": "off",
     "import/order": "error",
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "error"

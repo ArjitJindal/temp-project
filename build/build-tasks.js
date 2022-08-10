@@ -6,6 +6,7 @@ const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
 const lessLoader = require('./less-loader.js');
 const { log, error, notify } = require('./helpers.js');
+const svgrPlugin = require('./svgr-plugin.js');
 
 async function prepare(env) {
   await fs.rm(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER), { recursive: true, force: true });
@@ -87,6 +88,7 @@ async function buildCode(env, options) {
           rootDir: PROJECT_DIR,
         },
       ),
+      svgrPlugin(),
     ],
     outfile: path.join(PROJECT_DIR, OUTPUT_FOLDER, outFile),
     mainFields: ['module', 'browser', 'main'],
@@ -100,10 +102,10 @@ async function buildCode(env, options) {
     treeShaking: !devMode,
     watch: watch
       ? {
-          onRebuild(error, result) {
-            if (error) {
-              notify(`ERROR: ${error.message || 'Unknown error'}`);
-              error(`Watch build failed:`, error);
+          onRebuild(e, result) {
+            if (e) {
+              notify(`ERROR: ${e.message || 'Unknown error'}`);
+              error(`Watch build failed:`, e);
             } else {
               notify('Re-built successfully');
               log('Re-built successfully');
