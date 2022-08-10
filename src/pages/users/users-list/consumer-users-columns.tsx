@@ -2,7 +2,7 @@ import { ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT, DEFAULT_DATE_DISPLAY_FORMAT } from '@/utils/dates';
 import { InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
 
@@ -48,7 +48,9 @@ export function getConsumerUserColumns(
       width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
-        return entity.userDetails?.dateOfBirth;
+        return entity.userDetails?.dateOfBirth
+          ? moment(entity.userDetails?.dateOfBirth).format(DEFAULT_DATE_DISPLAY_FORMAT)
+          : '';
       },
       valueType: 'textarea',
     },

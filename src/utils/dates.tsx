@@ -1,1 +1,2 @@
 export const DEFAULT_DATE_TIME_DISPLAY_FORMAT = 'll LTS';
+export const DEFAULT_DATE_DISPLAY_FORMAT = 'll';
