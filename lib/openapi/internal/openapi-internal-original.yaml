@@ -412,6 +412,14 @@ paths:
             type: boolean
           in: query
           name: includeEvents
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethod
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethod
   /transactions/export:
     get:
       summary: Transaction - Export

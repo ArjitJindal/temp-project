@@ -91,6 +91,8 @@ export const transactionsViewHandler = lambdaApi()(
         includeUsers,
         includeEvents,
         filterStatus,
+        filterOriginPaymentMethod,
+        filterDestinationPaymentMethod,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -118,6 +120,8 @@ export const transactionsViewHandler = lambdaApi()(
           : undefined,
         includeUsers: includeUsers === 'true',
         includeEvents: includeEvents === 'true',
+        filterOriginPaymentMethod: filterOriginPaymentMethod,
+        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
       }
       return transactionService.getTransactions(params)
     } else if (

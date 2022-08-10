@@ -188,6 +188,20 @@ export class TransactionRepository {
         },
       })
     }
+    if (params.filterOriginPaymentMethod != null) {
+      conditions.push({
+        'originPaymentDetails.method': {
+          $eq: params.filterOriginPaymentMethod,
+        },
+      })
+    }
+    if (params.filterDestinationPaymentMethod != null) {
+      conditions.push({
+        'destinationPaymentDetails.method': {
+          $eq: params.filterDestinationPaymentMethod,
+        },
+      })
+    }
 
     return { $and: conditions }
   }
