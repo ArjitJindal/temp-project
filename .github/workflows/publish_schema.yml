@@ -35,6 +35,6 @@ jobs:
       - name: Publish schemas
         run: npm run openapi:publish
         env:
-          CONFIRM_PUSH_TO_MAIN: true
+          CONFIRM_PUSH_MAIN: true
           PUBLIC_PROJECT_TOKEN: ${{ secrets.STOPLIGHT_PUBLIC_PROJECT_TOKEN }}
           INTERNAL_PROJECT_TOKEN: ${{ secrets.STOPLIGHT_INTERNAL_PROJECT_TOKEN }}
