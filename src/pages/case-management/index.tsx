@@ -34,6 +34,7 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
+import { paymentMethod } from '@/utils/paymentMethod';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -489,6 +490,28 @@ function TableList() {
           mode: 'multiple',
         },
       },
+      {
+        title: 'Origin Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'originMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
+      {
+        title: 'Destination Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'destinationMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
     ],
     [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
   );
@@ -547,6 +570,8 @@ function TableList() {
             destinationUserId,
             type,
             status,
+            originMethodFilter,
+            destinationMethodFilter,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           pushParamsToNavigation(params);
@@ -570,6 +595,8 @@ function TableList() {
               sortOrder: sortOrder ?? undefined,
               includeUsers: true,
               includeEvents: true,
+              filterOriginPaymentMethod: originMethodFilter,
+              filterDestinationPaymentMethod: destinationMethodFilter,
             }),
           );
           analytics.event({

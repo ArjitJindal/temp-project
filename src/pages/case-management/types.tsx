@@ -14,4 +14,6 @@ export type TableSearchParams = Partial<{
   destinationUserId: string;
   type: string;
   status: RuleAction;
+  originMethodFilter: string;
+  destinationMethodFilter: string;
 }>;

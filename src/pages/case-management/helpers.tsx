@@ -20,6 +20,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationUserId: params.destinationUserId,
       type: params.type,
       status: params.status,
+      originMethodFilter: params.originMethodFilter,
+      destinationMethodFilter: params.destinationMethodFilter,
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -37,6 +39,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationUserId: raw.destinationUserId,
       type: raw.type,
       status: isRuleAction(raw.status) ? raw.status : undefined,
+      originMethodFilter: raw.originMethodFilter,
+      destinationMethodFilter: raw.destinationMethodFilter,
     };
   },
 };

@@ -29,6 +29,7 @@ import '../../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
+import { paymentMethod } from '@/utils/paymentMethod';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -253,6 +254,28 @@ const TableList = (props: RouteMatch<'id'>) => {
           mode: 'multiple',
         },
       },
+      {
+        title: 'Origin Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'originMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
+      {
+        title: 'Destination Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'destinationMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
     ],
     [],
   );
@@ -307,6 +330,8 @@ const TableList = (props: RouteMatch<'id'>) => {
             destinationCurrenciesFilter,
             originUserId,
             destinationUserId,
+            originMethodFilter,
+            destinationMethodFilter,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           const [response, time] = await measure(() =>
@@ -324,6 +349,8 @@ const TableList = (props: RouteMatch<'id'>) => {
               sortField: sortField ?? undefined,
               sortOrder: sortOrder ?? undefined,
               includeUsers: true,
+              filterOriginPaymentMethod: originMethodFilter,
+              filterDestinationPaymentMethod: destinationMethodFilter,
             }),
           );
           analytics.event({
