@@ -5,6 +5,7 @@ import {
   BankOutlined,
   MobileOutlined,
 } from '@ant-design/icons';
+import style from './TransactionDetails.module.less';
 
 interface Props {
   paymentMethod: string | undefined;
@@ -43,7 +44,7 @@ export const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
   }
 
   return (
-    <span>
+    <span className={style.tag}>
       <Tag color={tagColor}>
         {paymentIcon} {paymentMethodDisplay}
       </Tag>
