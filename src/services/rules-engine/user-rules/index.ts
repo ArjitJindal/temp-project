@@ -1,6 +1,3 @@
-import AccountAccessEventRule from './account-access-event'
 import { UserRule } from './rule'
 
-export const USER_RULES = {
-  'account-access-event': AccountAccessEventRule,
-} as unknown as { [key: string]: typeof UserRule }
+export const USER_RULES = {} as unknown as { [key: string]: typeof UserRule }
