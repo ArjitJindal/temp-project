@@ -102,6 +102,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       }}
       headerTitle="Select Rule"
       actionRef={actionRef}
+      pagination={false}
       rowKey="id"
       search={false}
       toolBarRender={() => (isAtLeast(user, UserRole.ROOT) ? [<RuleCreationForm />] : [])}
