@@ -9,6 +9,7 @@ import { useLocalStorageState } from 'ahooks';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
 import { useRuleActionTitle } from '../../../../utils/rules';
+import header from './dashboardutils';
 import { useApi } from '@/api';
 import {
   AsyncResource,
@@ -164,44 +165,45 @@ const TransactionsChartCard = () => {
   );
 
   return (
-    <Card bordered={false} bodyStyle={{ padding: 0 }} id="sales-card">
-      <div className={styles.salesCard}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          tabBarExtraContent={
-            <div className={styles.salesExtraWrap}>
-              <div className={styles.salesExtra}>
-                {[
-                  { type: 'DAY' as const, title: 'Day' },
-                  { type: 'WEEK' as const, title: 'Week' },
-                  { type: 'MONTH' as const, title: 'Month' },
-                  { type: 'YEAR' as const, title: 'Year' },
-                ].map(({ type, title }) => (
-                  <a
-                    key={type}
-                    className={type === timeWindowType ? styles.currentDate : ''}
-                    onClick={() => {
-                      setTimeWindowType(type);
-                      setDateRange([momentCalc(type), moment()]);
-                      setGranularity(calcGranularity(type));
-                    }}
-                  >
-                    {title}
-                  </a>
-                ))}
-              </div>
-              <DatePicker.RangePicker
-                value={dateRange}
-                onChange={(e) => {
-                  setDateRange(e);
-                  setTimeWindowType(null);
+    <Card
+      title={header('Transaction Breakdown')}
+      extra={
+        <div className={styles.salesExtraWrap}>
+          <div className={styles.salesExtra}>
+            {[
+              { type: 'DAY' as const, title: 'Day' },
+              { type: 'WEEK' as const, title: 'Week' },
+              { type: 'MONTH' as const, title: 'Month' },
+              { type: 'YEAR' as const, title: 'Year' },
+            ].map(({ type, title }) => (
+              <a
+                key={type}
+                className={type === timeWindowType ? styles.currentDate : ''}
+                onClick={() => {
+                  setTimeWindowType(type);
+                  setDateRange([momentCalc(type), moment()]);
+                  setGranularity(calcGranularity(type));
                 }}
-              />
-            </div>
-          }
-          tabBarStyle={{ marginBottom: 24 }}
-        >
+              >
+                {title}
+              </a>
+            ))}
+          </div>
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={(e) => {
+              setDateRange(e);
+              setTimeWindowType(null);
+            }}
+          />
+        </div>
+      }
+      bordered={false}
+      bodyStyle={{ padding: 0 }}
+      id="sales-card"
+    >
+      <div className={styles.salesCard}>
+        <Tabs activeKey={activeTab} onChange={setActiveTab} tabBarStyle={{ marginBottom: 24 }}>
           {[
             { title: 'Total Transactions', key: 'totalTransactions' },
             { title: `${suspendedAlias} Transactions`, key: 'suspendedTransactions' },

@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, DatePicker } from 'antd';
+import { Card, DatePicker, Tooltip } from 'antd';
 import { ActionType } from '@ant-design/pro-table';
 import React, { useEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import header from '../dashboardutils';
 import { columns } from './consts';
 import { TableItem } from './types';
 import { useApi } from '@/api';
@@ -31,9 +33,9 @@ export default function HitsPerUserCard() {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Top origin users (senders) by Rule Hits"
+        headerTitle={header('Top origin users by Rule Hits')}
         rowKey="originUserId"
-        tooltip="Origin users are the users initiating the transaction - sending the money"
+        tooltip="Origin is the Sender in a transaction"
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}

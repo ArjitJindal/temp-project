@@ -7,6 +7,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
+import header from '../dashboardutils';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
 import Table, { ResponsePayload } from '@/components/ui/Table';
@@ -76,7 +77,7 @@ export default function RuleHitCard() {
         form={{
           labelWrap: true,
         }}
-        headerTitle="Top rules by hit count"
+        headerTitle={header('Top Rule Hits by Count')}
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
