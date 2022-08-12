@@ -779,6 +779,60 @@ paths:
           content: {}
       deprecated: false
       tags: []
+  /events/consumer/user:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a User Event
+      description: |
+        ## POST User Events
+
+        `/events/consumer/user` endpoint allows you to operate on the User Events entity.
+
+        User events are created after the initial `POST /consumer/users` or `POST /business/users` call (which creates a user) and are used to:
+
+        * Update the STATE and KYC Status of the user, using the `userState` or `kycStatus` field and manage the User Lifecycle
+        * Update the user details, using the `updatedConsumerUserAttributes` field.
+
+        > If you have neither of the above two use cases, you do not need to use user events. 
+
+        ### Payload
+
+        Each user event needs three mandatory fields:
+
+        * `userState`- the state of the user (ex: `ACTIVE`, `SUSPENDED` etc)
+        * `timestamp`- the timestamp of when the event was created or occured in your system
+        * `userId` - The ID of the transaction for which this event is generated. 
+
+        In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
+      operationId: post-user-event
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerUserEvent'
+        required: false
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+      x-internal: false
 components:
   schemas:
     Address:
@@ -826,7 +880,7 @@ components:
         tags:
           - key: customKey
             value: customValue
-    User:
+    UserBase:
       title: User
       type: object
       description: Model for User details
@@ -924,8 +978,100 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when userId is created
-        userStatusDetails:
-          $ref: '#/components/schemas/UserStatusDetails'
+      required:
+        - userId
+        - userDetails
+        - createdTimestamp
+    UserOptional:
+      title: User
+      type: object
+      description: Model for User details
+      example:
+        createdTimestamp: 1641654664000
+        userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        userDetails:
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          dateOfBirth: '1991-01-01'
+          countryOfResidence: US
+          countryOfNationality: DE
+        legalDocuments:
+          - documentType: passport
+            documentNumber: Z9431P
+            documentIssuedDate: 1639939034
+            documentExpirationDate: 1839939034
+            documentIssuedCountry: DE
+            tags:
+              - key: customerType
+                value: wallet
+        contactDetails:
+          emailIds:
+            - baran@flagright.com
+          contactNumbers:
+            - '+37112345432'
+          websites:
+            - flagright.com
+          addresses:
+            - addressLines:
+                - Klara-Franke Str 20
+              postcode: '10557'
+              city: Berlin
+              state: Berlin
+              country: Germany
+              tags:
+                - key: customKey
+                  value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          userDetails:
+            name:
+              firstName: Baran
+              middleName: Realblood
+              lastName: Ozkan
+            dateOfBirth:
+              day: 1
+              month: 1
+              year: 1990
+            countryOfResidence: US
+            countryOfNationality: DE
+          legalDocuments:
+            - documentType: passport
+              documentNumber: Z9431P
+              documentIssuedDate: 1639939034
+              documentExpirationDate: 1839939034
+              documentIssuedCountry: DE
+              tags:
+                - key: customerType
+                  value: wallet
+          contactDetails:
+            emailIds:
+              - baran@flagright.com
+            contactNumbers:
+              - '+37112345432'
+            websites:
+              - flagright.com
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+          tags:
+            - key: customKey
+              value: customValue
+      properties:
+        userStateDetails:
+          $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetails'
         legalDocuments:
@@ -944,10 +1090,95 @@ components:
           $ref: '#/components/schemas/TransactionLimits'
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-      required:
-        - userId
-        - userDetails
-        - createdTimestamp
+    User:
+      title: User
+      description: Model for User details
+      example:
+        createdTimestamp: 1641654664000
+        userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        userDetails:
+          name:
+            firstName: Baran
+            middleName: Realblood
+            lastName: Ozkan
+          dateOfBirth: '1991-01-01'
+          countryOfResidence: US
+          countryOfNationality: DE
+        legalDocuments:
+          - documentType: passport
+            documentNumber: Z9431P
+            documentIssuedDate: 1639939034
+            documentExpirationDate: 1839939034
+            documentIssuedCountry: DE
+            tags:
+              - key: customerType
+                value: wallet
+        contactDetails:
+          emailIds:
+            - baran@flagright.com
+          contactNumbers:
+            - '+37112345432'
+          websites:
+            - flagright.com
+          addresses:
+            - addressLines:
+                - Klara-Franke Str 20
+              postcode: '10557'
+              city: Berlin
+              state: Berlin
+              country: Germany
+              tags:
+                - key: customKey
+                  value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          userDetails:
+            name:
+              firstName: Baran
+              middleName: Realblood
+              lastName: Ozkan
+            dateOfBirth:
+              day: 1
+              month: 1
+              year: 1990
+            countryOfResidence: US
+            countryOfNationality: DE
+          legalDocuments:
+            - documentType: passport
+              documentNumber: Z9431P
+              documentIssuedDate: 1639939034
+              documentExpirationDate: 1839939034
+              documentIssuedCountry: DE
+              tags:
+                - key: customerType
+                  value: wallet
+          contactDetails:
+            emailIds:
+              - baran@flagright.com
+            contactNumbers:
+              - '+37112345432'
+            websites:
+              - flagright.com
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+          tags:
+            - key: customKey
+              value: customValue
+      allOf:
+        - $ref: '#/components/schemas/UserBase'
+        - $ref: '#/components/schemas/UserOptional'
     Person:
       title: Person
       required:
@@ -1337,27 +1568,6 @@ components:
               ruleName: Proof of funds for high value transactions
               ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask for proof of funds
               ruleAction: BLOCK
-    UserEventWithRulesResult:
-      title: UserEventWithRulesResult
-      description: Model for user event payload with rules result
-      allOf:
-        - $ref: '#/components/schemas/UserEvent'
-        - type: object
-          properties:
-            status:
-              $ref: '#/components/schemas/RuleAction'
-            executedRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/ExecutedRulesResult'
-            hitRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/HitRulesResult'
-          required:
-            - executedRules
-            - hitRules
-      x-examples: {}
     CardDetails:
       title: CardDetails
       type: object
@@ -2274,8 +2484,8 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when the user was created
-        userStatus:
-          $ref: '#/components/schemas/UserStatusDetails'
+        userState:
+          $ref: '#/components/schemas/UserStateDetails'
         kycStatus:
           $ref: '#/components/schemas/KYCStatusDetails'
         shareHolders:
@@ -2610,6 +2820,88 @@ components:
         - transactionState
         - timestamp
         - transactionId
+    ConsumerUserEvent:
+      description: Model for consumer user-related events
+      type: object
+      x-examples:
+        example-1:
+          timestamp: 1262300400000
+          userId: string
+          userStateDetails:
+            reason: string
+            state: UNACCEPTABLE
+          eventId: string
+          reason: string
+          eventDescription: string
+          employeeId: string
+          updatedConsumerUserAttributes:
+            createdTimestamp: 1641654664000
+            userId: 96647cfd9e8fe66ee0f3362e011e34e8
+            userDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: '1991-01-01'
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034
+                documentExpirationDate: 1839939034
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - '+37112345432'
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+      title: ConsumerUserEvent
+      properties:
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          description: Timestamp of the event
+        userId:
+          type: string
+          minLength: 1
+          description: Transaction ID the event pertains to
+        eventId:
+          type: string
+          description: Unique event ID
+        reason:
+          type: string
+          description: Reason for the event or a state change
+        eventDescription:
+          type: string
+          description: Event description
+        employeeId:
+          type: string
+          minLength: 1
+          description: Employee ID the event pertains to. E.g. Employee login event on behalf of an end user
+        updatedConsumerUserAttributes:
+          $ref: '#/components/schemas/UserOptional'
+      required:
+        - timestamp
+        - userId
     CaseManagementEvent:
       type: object
       x-examples:
@@ -2663,36 +2955,6 @@ components:
         - caseStatus
         - timestamp
         - caseStatusReason
-    UserEvent:
-      description: Model for user-related events
-      type: object
-      x-examples: {}
-      properties:
-        type:
-          type: string
-          minLength: 1
-          enum:
-            - LOGGED_IN
-          description: 'Type of events. E.g. Onboarding, Checkout etc.'
-        timestamp:
-          type: number
-          description: Timestamp of the event
-        userId:
-          type: string
-          minLength: 1
-          description: User ID the event pertains to
-        eventId:
-          type: string
-          description: Unique event ID
-        eventDescription:
-          type: string
-          description: Event description
-        metaData:
-          $ref: '#/components/schemas/DeviceData'
-      required:
-        - type
-        - timestamp
-        - userId
     Date:
       title: Date
       type: object
@@ -2728,16 +2990,12 @@ components:
     UPIPaymentMethod:
       type: string
       title: UPIPaymentMethod
-      x-stoplight:
-        id: ey7wghj9d55m1
       enum:
         - UPI
       description: Classify the method of payment as "UPI" for UPIDetails
     IBANPaymentMethod:
       type: string
       title: IBANPaymentMethod
-      x-stoplight:
-        id: 88rsygg2982ga
       enum:
         - IBAN
       description: |
@@ -2745,8 +3003,6 @@ components:
     CardPaymentMethod:
       type: string
       title: CardPaymentMethod
-      x-stoplight:
-        id: fcy1vejkjakna
       enum:
         - CARD
       description: |
@@ -2754,40 +3010,30 @@ components:
     WalletPaymentMethod:
       type: string
       title: WalletPaymentMethod
-      x-stoplight:
-        id: 2aj6flqakvxse
       enum:
         - WALLET
       description: Classify the method of payment as "Wallet" for WalletDetails
     ACHPaymentMethod:
       type: string
       title: ACHPaymentMethod
-      x-stoplight:
-        id: 6wplfpsuprljy
       enum:
         - ACH
       description: Classify the method of payment as "ACH" for ACHDetails
     SWIFTPaymentMethod:
       type: string
       title: SWIFTPaymentMethod
-      x-stoplight:
-        id: 3eh7tx9dnissq
       enum:
         - SWIFT
       description: Classify the method of payment as "SWIFT" for SWIFTDetails
     GeneralBankAccountPaymentMethod:
       type: string
       title: GeneralBankAccountPaymentMethod
-      x-stoplight:
-        id: jvi90ofl0kzfe
       enum:
         - GENERIC_BANK_ACCOUNT
       description: Classify the method of payment as "GENERIC_BANK_ACCOUNT" for GenericBankAccountDetails
-    UserStatus:
+    UserState:
       type: string
-      title: UserStatus
-      x-stoplight:
-        id: u96ht5plqanrj
+      title: UserState
       enum:
         - UNACCEPTABLE
         - UNDECIDED
@@ -2828,16 +3074,16 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/KYCStatus'
-    UserStatusDetails:
-      title: UserStatusDetails
-      x-stoplight:
-        id: n2z32q8nm3w19
+    UserStateDetails:
+      title: UserStateDetails
       type: object
       properties:
-        statusReason:
+        reason:
           type: string
-        status:
-          $ref: '#/components/schemas/UserStatus'
+        state:
+          $ref: '#/components/schemas/UserState'
+      required:
+        - state
     RiskLevel:
       type: string
       title: RiskLevel

@@ -10,7 +10,6 @@ import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase } from './rule'
-import { USER_RULES } from './user-rules'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RiskRepository } from './repositories/risk-repository'
@@ -22,8 +21,7 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { everyAsync } from '@/core/utils/array'
-import { UserEvent } from '@/@types/openapi-public/UserEvent'
-import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -266,77 +264,26 @@ export async function updateAggregation(
   )
 }
 
-function getUserRuleImplementation(
-  ruleImplementationName: string,
-  tenantId: string,
-  user: User | Business,
-  userEvent: UserEvent,
-  ruleParameters: object,
-  ruleAction: RuleAction,
-  dynamoDb: AWS.DynamoDB.DocumentClient
-) {
-  const RuleClass = USER_RULES[ruleImplementationName]
-  if (!RuleClass) {
-    throw new Error(`${ruleImplementationName} rule implementation not found!`)
-  }
-  return new RuleClass(
-    tenantId,
-    { user, userEvent },
-    { parameters: ruleParameters, action: ruleAction },
-    dynamoDb
-  )
-}
-
 export async function verifyUserEvent(
-  userEvent: UserEvent,
+  userEvent: ConsumerUserEvent,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
-): Promise<UserMonitoringResult> {
-  const ruleRepository = new RuleRepository(tenantId, {
-    dynamoDb,
-  })
-  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
-    dynamoDb,
-  })
-  const riskRepository = new RiskRepository(tenantId, {
-    dynamoDb,
-  })
-  const userRepository = new UserRepository(tenantId, {
-    dynamoDb,
-  })
+): Promise<User> {
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
   const userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
-
-  const [user, ruleInstances] = await Promise.all([
-    userRepository.getUser<User | Business>(userEvent.userId),
-    ruleInstanceRepository.getActiveRuleInstances('USER'),
-  ])
-  const { executedRules, hitRules } = await getRulesResult(
-    ruleRepository,
-    ruleInstanceRepository,
-    riskRepository,
-    ruleInstances,
-    user,
-    (ruleImplementationName, parameters, action) =>
-      getUserRuleImplementation(
-        ruleImplementationName,
-        tenantId,
-        user,
-        userEvent,
-        parameters,
-        action,
-        dynamoDb
-      )
-  )
-  await userEventRepository.saveUserEvent(userEvent, {
-    executedRules,
-    hitRules,
-  })
-
-  return {
-    userId: userEvent.userId,
-    executedRules,
-    hitRules,
+  const user = await userRepository.getConsumerUser(userEvent.userId)
+  if (!user) {
+    throw new NotFound(
+      `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
+    )
   }
+  const updatedConsumerUser: User = {
+    ...user,
+    ...(userEvent.updatedConsumerUserAttributes || {}),
+  }
+  await userEventRepository.saveUserEvent(userEvent)
+  await userRepository.saveConsumerUser(updatedConsumerUser)
+  return updatedConsumerUser
 }
 
 async function getRulesResult(

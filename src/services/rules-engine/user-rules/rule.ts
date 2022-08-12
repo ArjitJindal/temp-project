@@ -2,7 +2,7 @@ import { Rule } from '../rule'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { User } from '@/@types/openapi-public/User'
-import { UserEvent } from '@/@types/openapi-public/UserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 
 export type RuleResult = {
   action: RuleAction
@@ -13,7 +13,7 @@ export type RuleFilter = () => Promise<boolean> | boolean
 export class UserRule<P> extends Rule {
   tenantId: string
   user: User | Business
-  userEvent: UserEvent | undefined
+  userEvent: ConsumerUserEvent | undefined
   parameters: P
   action: RuleAction
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -22,7 +22,7 @@ export class UserRule<P> extends Rule {
     tenantId: string,
     data: {
       user: User | Business
-      userEvent?: UserEvent
+      userEvent?: ConsumerUserEvent
     },
     params: {
       parameters: P

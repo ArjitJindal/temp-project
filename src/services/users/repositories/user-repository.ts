@@ -179,7 +179,7 @@ export class UserRepository {
     return (await this.createUser(user, 'BUSINESS')) as Business
   }
 
-  public async createConsumerUser(user: User): Promise<User> {
+  public async saveConsumerUser(user: User): Promise<User> {
     return (await this.createUser(user, 'CONSUMER')) as User
   }
 

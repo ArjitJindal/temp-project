@@ -12,7 +12,6 @@ import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
@@ -209,13 +208,12 @@ export const DynamoDbKeys = {
     SortKeyID: userId,
   }),
   // Attributes: refer to UserEvent
-  USER_EVENT: (
+  CONSUMER_USER_EVENT: (
     tenantId: string,
-    eventType: UserEventTypeEnum,
     userId: string,
     timestamp?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#user-event#${TYPE_PREFIX}${eventType}#${USER_ID_PREFIX}${userId}`,
+    PartitionKeyID: `${tenantId}#consumer-user-event#${USER_ID_PREFIX}${userId}`,
     SortKeyID: `${timestamp}`,
   }),
   LIST: (tenantId: string, listName: string, indexName: string) => ({

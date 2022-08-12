@@ -3,10 +3,8 @@ import { MongoClient } from 'mongodb'
 import { TarponStackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { UserEvent, UserEventTypeEnum } from '@/@types/openapi-public/UserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
-import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 type TimeRange = {
   beforeTimestamp: number
@@ -30,17 +28,10 @@ export class UserEventRepository {
     this.tenantId = tenantId
   }
 
-  public async saveUserEvent(
-    userEvent: UserEvent,
-    rulesResult: {
-      executedRules?: ExecutedRulesResult[]
-      hitRules?: HitRulesResult[]
-    } = {}
-  ): Promise<string> {
+  public async saveUserEvent(userEvent: ConsumerUserEvent): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()
-    const primaryKey = DynamoDbKeys.USER_EVENT(
+    const primaryKey = DynamoDbKeys.CONSUMER_USER_EVENT(
       this.tenantId,
-      userEvent.type,
       userEvent.userId,
       userEvent.timestamp
     )
@@ -54,7 +45,6 @@ export class UserEventRepository {
                   ...primaryKey,
                   eventId,
                   ...userEvent,
-                  ...rulesResult,
                 },
               },
             },
@@ -75,11 +65,10 @@ export class UserEventRepository {
 
   public async getTypeUserEvents(
     userId: string,
-    timeRange: TimeRange,
-    eventType: UserEventTypeEnum
-  ): Promise<ReadonlyArray<UserEvent>> {
+    timeRange: TimeRange
+  ): Promise<ReadonlyArray<ConsumerUserEvent>> {
     return this.getUserEvents(
-      DynamoDbKeys.USER_EVENT(this.tenantId, eventType, userId).PartitionKeyID,
+      DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId).PartitionKeyID,
       timeRange
     )
   }
@@ -87,19 +76,19 @@ export class UserEventRepository {
   private async getUserEvents(
     partitionKeyId: string,
     timeRange: TimeRange
-  ): Promise<ReadonlyArray<UserEvent>> {
+  ): Promise<ReadonlyArray<ConsumerUserEvent>> {
     const result = await paginateQuery(
       this.dynamoDb,
       this.getUserEventsQuery(partitionKeyId, timeRange)
     )
-    return result.Items as unknown as ReadonlyArray<UserEvent>
+    return result.Items as unknown as ReadonlyArray<ConsumerUserEvent>
   }
 
   private getUserEventsQuery(
     partitionKeyId: string,
     timeRange: TimeRange
   ): AWS.DynamoDB.DocumentClient.QueryInput {
-    const userEventAttributeNames = UserEvent.getAttributeTypeMap().map(
+    const userEventAttributeNames = ConsumerUserEvent.getAttributeTypeMap().map(
       (attribute) => attribute.name
     )
     return {

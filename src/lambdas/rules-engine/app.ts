@@ -10,7 +10,7 @@ import {
   verifyTransactionEvent,
   verifyUserEvent,
 } from '@/services/rules-engine'
-import { UserEvent } from '@/@types/openapi-public/UserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 export const transactionHandler = lambdaApi()(
@@ -67,7 +67,7 @@ export const userEventHandler = lambdaApi()(
     const dynamoDb = getDynamoDbClient(event)
 
     if (event.httpMethod === 'POST' && event.body) {
-      const userEvent = JSON.parse(event.body) as UserEvent
+      const userEvent = JSON.parse(event.body) as ConsumerUserEvent
       return await verifyUserEvent(userEvent, tenantId, dynamoDb)
     }
     throw new Error('Unhandled request')

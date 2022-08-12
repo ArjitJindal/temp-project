@@ -10,7 +10,8 @@ import {
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
-import { UserEvent } from '@/@types/openapi-public/UserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { User } from '@/@types/openapi-public/User'
 
 export async function createRule(testTenantId: string, rule: Partial<Rule>) {
   const dynamoDb = getTestDynamoDbClient()
@@ -64,8 +65,8 @@ export async function bulkVerifyTransactions(
 
 export async function bulkVerifyUserEvents(
   tenantId: string,
-  userEvents: UserEvent[]
-): Promise<UserMonitoringResult[]> {
+  userEvents: ConsumerUserEvent[]
+): Promise<User[]> {
   const dynamoDb = getTestDynamoDbClient()
   const results = []
   for (const userEvent of userEvents) {
@@ -133,19 +134,6 @@ export function createTransactionRuleTestCase(
 
 export interface UserRuleTestCase {
   name: string
-  userEvents: UserEvent[]
+  userEvents: ConsumerUserEvent[]
   expectedHits: boolean[]
-}
-
-export function createUserRuleTestCase(
-  testCaseName: string,
-  tenantId: string,
-  userEvents: UserEvent[],
-  expectedRuleHits: boolean[]
-) {
-  test(testCaseName, async () => {
-    const results = await bulkVerifyUserEvents(tenantId, userEvents)
-    const ruleHits = getRuleHits(results)
-    expect(ruleHits).toEqual(expectedRuleHits)
-  })
 }

@@ -88,7 +88,7 @@ export class Importer {
     const userRepository = new UserRepository(this.tenantId, {
       dynamoDb: this.connections.dynamoDb,
     })
-    const userResult = await userRepository.createConsumerUser(user)
+    const userResult = await userRepository.saveConsumerUser(user)
     logger.debug(`Imported consumer user (id=${userResult.userId})`)
   }
 

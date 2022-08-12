@@ -4,7 +4,7 @@ import * as AWS from 'aws-sdk'
 import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   TRANSACTION_EVENT_KEY_IDENTIFIER,
-  USER_EVENT_KEY_IDENTIFIER,
+  CONSUMER_USER_EVENT_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
 } from './constants'
 import {
@@ -17,7 +17,6 @@ import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
-import { UserEventWithRulesResult } from '@/@types/openapi-public/UserEventWithRulesResult'
 import { DashboardStatsRepository } from '@/lambdas/phytoplankton-internal-api-handlers/repository/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -26,6 +25,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 
 const sqs = new AWS.SQS()
 
@@ -81,20 +81,17 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
 async function userEventHandler(
   db: Db,
   tenantId: string,
-  userEvent: UserEventWithRulesResult
+  userEvent: ConsumerUserEvent
 ) {
-  const userEventCollection = db.collection<UserEventWithRulesResult>(
+  const userEventCollection = db.collection<ConsumerUserEvent>(
     USER_EVENTS_COLLECTION(tenantId)
   )
-  const aggregatedStatus = TransactionRepository.getAggregatedRuleStatus(
-    userEvent.executedRules.map((rule) => rule.ruleAction)
-  )
+
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
   await userEventCollection.replaceOne(
     { eventId: userEvent.eventId },
     {
       ...userEvent,
-      status: aggregatedStatus,
     },
     {
       upsert: true,
@@ -164,12 +161,10 @@ export const tarponChangeCaptureHandler = lambdaConsumer()(
           await userHandler(db, tenantId, user)
         } else if (
           dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-            USER_EVENT_KEY_IDENTIFIER
+            CONSUMER_USER_EVENT_KEY_IDENTIFIER
           )
         ) {
-          const userEvent = handlePrimaryItem(
-            message
-          ) as UserEventWithRulesResult
+          const userEvent = handlePrimaryItem(message) as ConsumerUserEvent
           logger.info(
             `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
           )

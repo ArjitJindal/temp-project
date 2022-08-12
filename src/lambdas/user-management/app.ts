@@ -64,7 +64,7 @@ export const userHandler = lambdaApi()(
         if (userPayload.riskLevel) {
           handleRiskLevelParam(tenantId, dynamoDb, userPayload)
         }
-        const user = await userRepository.createConsumerUser(userPayload)
+        const user = await userRepository.saveConsumerUser(userPayload)
         const result = {
           userId: user.userId,
           // TODO: Implement risk score

@@ -64,7 +64,7 @@ export function getTestUser(user: Partial<User> = {}): User {
 export async function createConsumerUser(testTenantId: string, user: User) {
   const dynamoDb = getTestDynamoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb })
-  const createdUser = await userRepository.createConsumerUser(user)
+  const createdUser = await userRepository.saveConsumerUser(user)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)
   }
