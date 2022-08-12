@@ -616,7 +616,7 @@ describe('Payment Method', () => {
       timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
     }),
     getTestTransaction({
-      type: 'Deposit',
+      type: 'DEPOSIT',
       originUserId: '1-2',
       destinationUserId: '1-1',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
@@ -627,7 +627,7 @@ describe('Payment Method', () => {
       timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
     }),
     getTestTransaction({
-      type: 'Deposit',
+      type: 'DEPOSIT',
       originUserId: '1-1',
       destinationUserId: '1-2',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
@@ -639,7 +639,7 @@ describe('Payment Method', () => {
       timestamp: dayjs('2022-01-01T00:20:00.000Z').valueOf(),
     }),
     getTestTransaction({
-      type: 'Deposit',
+      type: 'DEPOSIT',
       originUserId: '1-1',
       destinationUserId: '1-3',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
@@ -650,7 +650,7 @@ describe('Payment Method', () => {
       timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
     }),
     getTestTransaction({
-      type: 'Deposit',
+      type: 'DEPOSIT',
       originUserId: '1-2',
       destinationUserId: '1-1',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
@@ -661,7 +661,7 @@ describe('Payment Method', () => {
       timestamp: dayjs('2022-01-01T00:40:00.000Z').valueOf(),
     }),
     getTestTransaction({
-      type: 'Withdrawal',
+      type: 'WITHDRAWAL',
       originUserId: '1-4',
       destinationUserId: '1-2',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,

@@ -24,8 +24,8 @@ describe('Core logic', () => {
       ruleImplementationName: 'consecutive-transactions-same-type',
       defaultParameters: {
         targetTransactionsThreshold: 2,
-        targetTransactionType: 'CRYPTO_DEPOSIT',
-        otherTransactionTypes: ['FIAT_DEPOSIT', 'OTHER_DEPOSIT'],
+        targetTransactionType: 'DEPOSIT',
+        otherTransactionTypes: ['EXTERNAL_PAYMENT', 'EXTERNAL_PAYMENT'],
         timeWindowInDays: 30,
       } as ConsecutiveTransactionSameTypeRuleParameters,
       defaultAction: 'FLAG',
@@ -44,22 +44,22 @@ describe('Core logic', () => {
       name: 'Consecutive transactions of the target type (w/o other types) - hit',
       transactions: [
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-10T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
@@ -70,22 +70,22 @@ describe('Core logic', () => {
       name: 'Consecutive transactions of the target type (with other types) - hit',
       transactions: [
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '2-1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '2-1',
           timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '2-1',
           timestamp: dayjs('2022-01-10T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '2-1',
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
@@ -96,32 +96,32 @@ describe('Core logic', () => {
       name: 'Non-consecutive transactions of the target type - not hit',
       transactions: [
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'OTHER_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-06T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '3-1',
           timestamp: dayjs('2022-01-07T00:00:00.000Z').valueOf(),
         }),
@@ -132,22 +132,22 @@ describe('Core logic', () => {
       name: 'Consecutive transactions of the non-target type - not hit',
       transactions: [
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           timestamp: dayjs('2022-01-10T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'FIAT_DEPOSIT',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
         }),
@@ -172,8 +172,8 @@ describe('Transaction State', () => {
       ruleImplementationName: 'consecutive-transactions-same-type',
       defaultParameters: {
         targetTransactionsThreshold: 2,
-        targetTransactionType: 'CRYPTO_DEPOSIT',
-        otherTransactionTypes: ['FIAT_DEPOSIT'],
+        targetTransactionType: 'DEPOSIT',
+        otherTransactionTypes: ['EXTERNAL_PAYMENT'],
         timeWindowInDays: 30,
         transactionState: 'SUCCESSFUL',
       } as ConsecutiveTransactionSameTypeRuleParameters,
@@ -188,25 +188,25 @@ describe('Transaction State', () => {
       name: 'Skip transactions with non-target state',
       transactions: [
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
           transactionState: 'SUCCESSFUL',
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
           transactionState: 'DECLINED',
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-10T06:00:00.000Z').valueOf(),
           transactionState: 'SUCCESSFUL',
         }),
         getTestTransaction({
-          type: 'CRYPTO_DEPOSIT',
+          type: 'DEPOSIT',
           originUserId: '1-1',
           timestamp: dayjs('2022-01-15T06:00:00.000Z').valueOf(),
           transactionState: 'SUCCESSFUL',

@@ -25,7 +25,7 @@ describe('With transaction type', () => {
       defaultParameters: {
         userPairsThreshold: 1,
         timeWindowInSeconds: 86400,
-        transactionType: 'MATCH_ORDER',
+        transactionType: 'EXTERNAL_PAYMENT',
         excludedUserIds: ['5-1', '5-3'],
       } as UserTransactionPairsRuleParameters,
       defaultAction: 'FLAG',
@@ -52,25 +52,25 @@ describe('With transaction type', () => {
       name: 'Too many user pairs: same transaction type - hit',
       transactions: [
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '1-1',
           destinationUserId: '1-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '1-1',
           destinationUserId: '1-2',
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '1-1',
           destinationUserId: '1-2',
           timestamp: dayjs('2022-01-01T13:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '1-1',
           destinationUserId: '1-2',
           timestamp: dayjs('2022-01-10T13:00:00.000Z').valueOf(),
@@ -82,19 +82,19 @@ describe('With transaction type', () => {
       name: 'Too many user pairs: different transaction type - not hit',
       transactions: [
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '2-1',
           destinationUserId: '2-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'OTHER1',
+          type: 'WITHDRAWAL',
           originUserId: '2-1',
           destinationUserId: '2-2',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'OTHER2',
+          type: 'DEPOSIT',
           originUserId: '2-1',
           destinationUserId: '2-2',
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
@@ -106,19 +106,19 @@ describe('With transaction type', () => {
       name: 'Normal user pairs: same transaction type - no hit',
       transactions: [
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '3-1',
           destinationUserId: '3-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '3-1',
           destinationUserId: '3-2',
           timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '3-1',
           destinationUserId: '3-2',
           timestamp: dayjs('2022-01-05T00:00:00.000Z').valueOf(),
@@ -130,13 +130,13 @@ describe('With transaction type', () => {
       name: 'No user pairs: same transaction type - no hit',
       transactions: [
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           destinationUserId: '4-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '4-1',
           destinationUserId: '4-3',
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
@@ -148,25 +148,25 @@ describe('With transaction type', () => {
       name: 'Too many user pairs (excluded users) - not hit',
       transactions: [
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '5-1',
           destinationUserId: '5-2',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '5-1',
           destinationUserId: '5-2',
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '5-2',
           destinationUserId: '5-3',
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
-          type: 'MATCH_ORDER',
+          type: 'EXTERNAL_PAYMENT',
           originUserId: '5-2',
           destinationUserId: '5-3',
           timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),

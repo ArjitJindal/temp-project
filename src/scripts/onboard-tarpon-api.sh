@@ -119,7 +119,7 @@ awscurl --service execute-api \
     -X POST \
     --region "$region" \
     --profile "$profile" \
-    -d '{"id":"R-101","name":"Isolated crypto users","description":"A user makes >= x crypto transactions without any fiat transactions","defaultParameters":{"targetTransactionsThreshold":5,"targetTransactionType":"CRYPTO_DEPOSIT","otherTransactionTypes":["FIAT_DEPOSIT"],"timeWindowInDays":30},"defaultAction":"FLAG","ruleImplementationName":"consecutive-transactions-same-type","labels":["AML","Fraud"],"type":"TRANSACTION"}' \
+    -d '{"id":"R-101","name":"Isolated crypto users","description":"A user makes >= x crypto transactions without any fiat transactions","defaultParameters":{"targetTransactionsThreshold":5,"targetTransactionType":"DEPOSIT","otherTransactionTypes":["EXTERNAL_PAYMENT"],"timeWindowInDays":30},"defaultAction":"FLAG","ruleImplementationName":"consecutive-transactions-same-type","labels":["AML","Fraud"],"type":"TRANSACTION"}' \
     https://"$apiPrefix"api.flagright.com/console/iam/rules?tenantId=$tenantId
 
 # R-6

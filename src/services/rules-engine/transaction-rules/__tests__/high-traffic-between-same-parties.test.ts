@@ -30,14 +30,14 @@ const cardDetails1: CardDetails = {
   method: 'CARD',
   cardFingerprint: '11111111111111111111111111111111',
   cardIssuedCountry: 'US',
-  transactionReferenceField: 'Deposit',
+  transactionReferenceField: 'DEPOSIT',
   _3dsDone: true,
 }
 const cardDetails2: CardDetails = {
   method: 'CARD',
   cardFingerprint: '22222222222222222222222222222222',
   cardIssuedCountry: 'IN',
-  transactionReferenceField: 'Deposit',
+  transactionReferenceField: 'DEPOSIT',
   _3dsDone: true,
 }
 describe.each<TransactionRuleTestCase>([
