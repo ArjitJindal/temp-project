@@ -3042,13 +3042,8 @@ components:
         - DORMANT
         - CREATED
         - DELETED
-        - SUSPENDED - ALL
-        - SUSPENDED - CREDITS
-        - SUSPENDED - DEBITS
-        - SUSPENDED - CARDS
-        - SUSPENDED - STOCKS
-        - SUSPENDED - CRYPTO
-        - SUSPENDED - LOG IN
+        - SUSPENDED
+        - BLOCKED
       x-examples:
         example-1: UNACCEPTABLE
         example-2: ACTIVE
