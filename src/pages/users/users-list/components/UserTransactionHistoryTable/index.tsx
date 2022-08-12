@@ -300,6 +300,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
             beforeTimestamp: Date.now(),
             sortField: sortField ?? undefined,
             sortOrder: sortOrder ?? undefined,
+            includeEvents: true,
           };
 
           if (showOutgoing) {
