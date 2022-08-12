@@ -3,6 +3,7 @@ import { TransactionEvent } from '@/apis';
 import Table from '@/components/ui/Table';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import Id from '@/components/ui/Id';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 interface Props {
   events: Array<TransactionEvent>;
@@ -37,7 +38,7 @@ export const TransactionEventsTable: React.FC<Props> = ({ events }) => {
           key: 'transactionTime',
           width: 100,
           render: (_, item) => {
-            return moment(item.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+            return <TimestampDisplay timestamp={item.timestamp} />;
           },
         },
         {

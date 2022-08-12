@@ -35,6 +35,7 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
 import { paymentMethod } from '@/utils/paymentMethod';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -223,7 +224,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          return <TimestampDisplay timestamp={transaction.timestamp} />;
         },
       },
       {

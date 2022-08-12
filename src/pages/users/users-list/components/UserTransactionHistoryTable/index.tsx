@@ -1,4 +1,4 @@
-import { Button, Pagination } from 'antd';
+import { Button, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
 import { useEffect, useRef, useState } from 'react';
@@ -14,22 +14,14 @@ import {
 import { useApi } from '@/api';
 import Table from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { DEFAULT_DATE_DISPLAY_FORMAT, DEFAULT_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { prepareTableData } from '@/pages/users/users-list/components/UserTransactionHistoryTable/helpers';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isLoading,
-  loading,
-  map,
-  success,
-} from '@/utils/asyncResource';
+import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 interface Props {
   userId?: string;
@@ -167,7 +159,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
               rowSpan: _.rowSpan,
             }),
             render: (_, transaction) => {
-              return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+              return <TimestampDisplay timestamp={transaction.timestamp} />;
             },
           },
           {
