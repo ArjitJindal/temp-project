@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, DatePicker } from 'antd';
+import { Card, DatePicker, Row, Col } from 'antd';
 import { ActionType } from '@ant-design/pro-table';
 import { useEffect, useRef, useState } from 'react';
 import { ProColumns } from '@ant-design/pro-table/es/typing';
@@ -7,6 +7,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
+import RulesHitBreakdown from '../RulesHitBreakdownChart';
 import header from '../dashboardutils';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
@@ -22,6 +23,8 @@ export default function RuleHitCard() {
     moment(),
   ]);
   const [rules, setRules] = useState<{ [key: string]: Rule }>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
 
   const actionRef = useRef<ActionType>();
   useEffect(() => {
@@ -72,47 +75,57 @@ export default function RuleHitCard() {
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
-      <Table<DashboardStatsRulesCountData>
-        actionRef={actionRef}
-        form={{
-          labelWrap: true,
-        }}
-        headerTitle={header('Top Rule Hits by Count')}
-        search={false}
-        columns={columns}
-        toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        request={async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
-          const [rules] = await Promise.all([api.getRules({})]);
-          setRules(_.keyBy(rules, 'id'));
-          let startTimestamp = moment().subtract(1, 'day').valueOf();
-          let endTimestamp = Date.now();
+      <Row>
+        <Col span={12}>
+          <Table<DashboardStatsRulesCountData>
+            actionRef={actionRef}
+            form={{
+              labelWrap: true,
+            }}
+            headerTitle={header('Top Rule Hits by Count')}
+            search={false}
+            columns={columns}
+            toolBarRender={() => [
+              <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />,
+            ]}
+            request={async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
+              const [rules] = await Promise.all([api.getRules({})]);
+              setRules(_.keyBy(rules, 'id'));
+              let startTimestamp = moment().subtract(1, 'day').valueOf();
+              let endTimestamp = Date.now();
 
-          const [start, end] = dateRange ?? [];
-          if (start != null && end != null) {
-            startTimestamp = start.startOf('day').valueOf();
-            endTimestamp = end.endOf('day').valueOf();
-          }
-          const [result] = await Promise.all([
-            api.getDashboardStatsRuleHit({
-              startTimestamp,
-              endTimestamp,
-            }),
-          ]);
-
-          return {
-            success: true,
-            total: result.data.length,
-            data: result.data,
-          };
-        }}
-        defaultSize={'small'}
-        pagination={false}
-        options={{
-          density: false,
-          setting: false,
-          reload: true,
-        }}
-      />
+              const [start, end] = dateRange ?? [];
+              if (start != null && end != null) {
+                startTimestamp = start.startOf('day').valueOf();
+                endTimestamp = end.endOf('day').valueOf();
+              }
+              const [result] = await Promise.all([
+                api.getDashboardStatsRuleHit({
+                  startTimestamp,
+                  endTimestamp,
+                }),
+              ]);
+              setRulesHitData(result.data);
+              setLoading(false);
+              return {
+                success: true,
+                total: result.data.length,
+                data: result.data,
+              };
+            }}
+            defaultSize={'small'}
+            pagination={false}
+            options={{
+              density: false,
+              setting: false,
+              reload: true,
+            }}
+          />
+        </Col>
+        <Col span={12}>
+          <RulesHitBreakdown loading={loading} data={rulesHitData} />{' '}
+        </Col>
+      </Row>
     </Card>
   );
 }

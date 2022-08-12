@@ -26,7 +26,6 @@ import {
   HistoryOutlined,
   PaperClipOutlined,
   ScanOutlined,
-  SwapOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
