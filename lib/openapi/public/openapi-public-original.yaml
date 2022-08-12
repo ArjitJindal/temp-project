@@ -791,7 +791,7 @@ paths:
 
         User events are created after the initial `POST /consumer/users` or `POST /business/users` call (which creates a user) and are used to:
 
-        * Update the STATE and KYC Status of the user, using the `userState` or `kycStatus` field and manage the User Lifecycle
+        * Update the STATE and KYC Status of the user, using the `userStateDetails` or `kycStatusDetails` field
         * Update the user details, using the `updatedConsumerUserAttributes` field.
 
         > If you have neither of the above two use cases, you do not need to use user events. 
@@ -800,7 +800,6 @@ paths:
 
         Each user event needs three mandatory fields:
 
-        * `userState`- the state of the user (ex: `ACTIVE`, `SUSPENDED` etc)
         * `timestamp`- the timestamp of when the event was created or occured in your system
         * `userId` - The ID of the transaction for which this event is generated. 
 
