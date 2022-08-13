@@ -1,7 +1,9 @@
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { Vars } from '@/services/rules-engine/utils/format-description'
 
 export type RuleResult = {
   action: RuleAction
+  vars?: Vars
 }
 
 export type RuleFilter = () => Promise<boolean> | boolean

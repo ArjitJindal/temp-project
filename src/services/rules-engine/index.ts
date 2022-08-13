@@ -9,7 +9,7 @@ import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
-import { Rule as RuleBase } from './rule'
+import { Rule as RuleBase, RuleResult } from './rule'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RiskRepository } from './repositories/risk-repository'
@@ -21,7 +21,6 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { everyAsync } from '@/core/utils/array'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -30,6 +29,12 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
+import {
+  compileTemplate,
+  Vars,
+} from '@/services/rules-engine/utils/format-description'
+import { getErrorMessage } from '@/utils/lang'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -333,7 +338,12 @@ async function getRulesResult(
           return {
             ruleId: ruleInstance.ruleId,
             ruleName: ruleInfo.name,
-            ruleDescription: ruleInfo.description,
+            ruleDescription: await getRuleDescription(
+              rule,
+              ruleInfo,
+              parameters as Vars,
+              ruleResult ?? null
+            ),
             ruleAction: action,
             ruleHit,
           }
@@ -400,4 +410,31 @@ function getUserSpecificParameters(
     parameters: ruleInstance.parameters,
     action: ruleInstance.action,
   }
+}
+
+async function getRuleDescription(
+  rule: RuleBase,
+  ruleInfo: Rule,
+  parameters: Vars,
+  ruleResult: RuleResult | null
+): Promise<string> {
+  if (ruleResult != null && ruleInfo.descriptionTemplate != null) {
+    try {
+      const ruleDescriptionTemplate = compileTemplate(
+        ruleInfo.descriptionTemplate
+      )
+      // const vars = await rule.getDescriptionVars()
+      return ruleDescriptionTemplate({
+        ...ruleResult.vars,
+        parameters,
+      })
+    } catch (e) {
+      logger.error(
+        `Unable to format contextual description, using general description as a fallback. Original template: "${
+          ruleInfo.descriptionTemplate
+        }". Details: ${getErrorMessage(e)}`
+      )
+    }
+  }
+  return ruleInfo.description
 }

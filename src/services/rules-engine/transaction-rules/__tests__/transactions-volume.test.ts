@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -61,6 +62,46 @@ describe('Core logic', () => {
       timestamp: dayjs('2022-01-01T00:40:00.000Z').valueOf(),
     }),
   ]
+
+  describe('R-69 description formatting', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        defaultParameters: {
+          timeWindow: {
+            units: 3600,
+            granularity: 'second',
+          },
+          ...{
+            checkSender: 'all',
+            checkReceiver: 'all',
+            transactionVolumeThreshold: {
+              EUR: 201,
+            },
+          },
+        } as TransactionsVolumeRuleParameters,
+      },
+    ])
+
+    testRuleDescriptionFormatting(
+      TEST_TENANT_ID,
+      TEST_HIT_TRANSACTIONS,
+      {
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their average amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}`,
+      },
+      [
+        null,
+        null,
+        'Sender is spending 99 EUR above their average amount of 201 EUR',
+        'Sender is spending 199 EUR above their average amount of 201 EUR',
+        'Sender is spending 199 EUR above their average amount of 201 EUR',
+        'Receiver is receiving 299 EUR above their average amount of 201 EUR',
+      ]
+    )
+  })
 
   describe.each<
     TransactionRuleTestCase<Partial<TransactionsVolumeRuleParameters>>

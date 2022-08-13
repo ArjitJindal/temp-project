@@ -33,7 +33,10 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
       .originPaymentDetails as CardDetails
 
     if (cardIssuedCountry && blacklistedCountries.includes(cardIssuedCountry)) {
-      return { action: this.action }
+      return {
+        action: this.action,
+        vars: super.getTransactionVars('origin'),
+      }
     }
   }
 }

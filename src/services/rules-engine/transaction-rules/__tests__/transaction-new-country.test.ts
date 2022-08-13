@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,109 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-3 description formatting', () => {
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: 'formatting-1-1',
+        destinationUserId: 'formatting-1-2',
+        originAmountDetails: {
+          country: 'DE',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'IN',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'formatting-1-1',
+        destinationUserId: 'formatting-1-2',
+        originAmountDetails: {
+          country: 'DE',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'UK',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'formatting-1-1',
+        destinationUserId: 'formatting-1-2',
+        originAmountDetails: {
+          country: 'DE',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'AF',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'formatting-1-1-2',
+        destinationUserId: 'formatting-1-2-2',
+        originAmountDetails: {
+          country: 'DE',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'IN',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'formatting-1-1-2',
+        destinationUserId: 'formatting-1-2-2',
+        originAmountDetails: {
+          country: 'UK',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'IN',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'formatting-1-1-2',
+        destinationUserId: 'formatting-1-2-2',
+        originAmountDetails: {
+          country: 'AF',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          country: 'IN',
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate: `User tried to {{ if-sender 'send' 'receive' }} money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.amount.country }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.payment.country }} prior`,
+    },
+    [
+      null,
+      null,
+      `User tried to send money from Germany more than 2 times. User has not sent any money from Germany prior`,
+      null,
+      null,
+      `User tried to receive money to India more than 2 times. User has not received any money to India prior`,
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

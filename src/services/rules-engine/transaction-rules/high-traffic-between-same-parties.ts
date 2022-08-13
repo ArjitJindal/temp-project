@@ -96,7 +96,24 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
-    const { transactionsLimit, timeWindowInDays } = this.parameters
+    const { transactionsLimit } = this.parameters
+    const { count } = await this.computeResults()
+
+    if (count > transactionsLimit) {
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          count,
+          delta: count - this.parameters.transactionsLimit,
+        },
+      }
+    }
+    return undefined
+  }
+
+  private async computeResults() {
+    const { timeWindowInDays } = this.parameters
     if (timeWindowInDays === undefined) {
       throw new MissingRuleParameter()
     }
@@ -129,10 +146,6 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
             ?.PartitionKeyID,
         }
       )
-
-    if (count > transactionsLimit) {
-      return { action: this.action }
-    }
-    return undefined
+    return { count }
   }
 }

@@ -1,8 +1,9 @@
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -18,6 +19,25 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-1 description formatting', () => {
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} first transaction`,
+    },
+    ['Sender’s first transaction']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

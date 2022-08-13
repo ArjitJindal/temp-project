@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
@@ -47,6 +48,44 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
     },
   }),
 ])
+
+describe('R-118 description formatting', () => {
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '2-1',
+        originPaymentDetails: {
+          method: 'CARD',
+          nameOnCard: {
+            firstName: 'Baran',
+            middleName: 'Realblood',
+            lastName: 'Ozkan',
+          },
+          cardFingerprint: '**1111',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2-1',
+        originPaymentDetails: {
+          method: 'CARD',
+          nameOnCard: {
+            firstName: 'Anikta',
+            lastName: 'Gupta',
+          },
+          cardFingerprint: '**2222',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} name does not match name on {{ if-sender 'sender’s' 'receiver’s' }} card ({{ cardFingerprint }})`,
+    },
+    [
+      'Sender’s name does not match name on sender’s card (**1111)',
+      'Sender’s name does not match name on sender’s card (**2222)',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

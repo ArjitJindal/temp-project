@@ -25,7 +25,7 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
     id: 'rule id',
     type: 'TRANSACTION',
     name: 'test rule name',
-    description: 'test rule description',
+    description: DEFAULT_DESCRIPTION,
     defaultParameters: {},
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
@@ -49,6 +49,37 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
       createdRuleInstance.id as string
     )
   }
+}
+
+export async function updateRule(
+  testTenantId: string,
+  ruleId: string,
+  changes: Partial<Rule>
+) {
+  const dynamoDb = getTestDynamoDbClient()
+  const ruleRepository = new RuleRepository(testTenantId, {
+    dynamoDb,
+  })
+  const rule = await ruleRepository.getRuleById(ruleId)
+  if (!rule) {
+    throw new Error(`Rule not found`)
+  }
+  await ruleRepository.createOrUpdateRule({ ...rule, ...changes })
+}
+
+export async function getRule(
+  testTenantId: string,
+  ruleId: string
+): Promise<Rule> {
+  const dynamoDb = getTestDynamoDbClient()
+  const ruleRepository = new RuleRepository(testTenantId, {
+    dynamoDb,
+  })
+  const rule = await ruleRepository.getRuleById(ruleId)
+  if (!rule) {
+    throw new Error(`Rule not found`)
+  }
+  return rule
 }
 
 export async function bulkVerifyTransactions(
@@ -86,6 +117,8 @@ export function getRuleHits(
   })
 }
 
+export const SETUP_TEST_RULE_ID = 'test rule id'
+
 export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
   const cleanups: Array<() => void> = [
     async () => {
@@ -97,9 +130,9 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
     for (const rule of rules) {
       cleanups.push(
         await createRule(tenantId, {
-          id: 'test rule id',
+          id: SETUP_TEST_RULE_ID,
           name: 'test rule name',
-          description: 'test rule description',
+          description: DEFAULT_DESCRIPTION,
           defaultParameters: {},
           defaultAction: 'FLAG',
           ruleImplementationName: 'tests/test-success-rule',
@@ -112,6 +145,7 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
     await Promise.all(cleanups.map((cleanup) => cleanup()))
   })
 }
+
 export interface TransactionRuleTestCase<T = object> {
   name: string
   transactions: Transaction[]
@@ -129,6 +163,46 @@ export function createTransactionRuleTestCase(
     const results = await bulkVerifyTransactions(tenantId, transactions)
     const ruleHits = getRuleHits(results)
     expect(ruleHits).toEqual(expectedHits)
+  })
+}
+
+const DEFAULT_DESCRIPTION = 'test rule description'
+
+export function testRuleDescriptionFormatting(
+  tenantId: string,
+  transactions: Transaction[],
+  rulePatch: Partial<Rule>,
+  expectedDescriptions: (string | null)[]
+) {
+  test('Description formatting', async () => {
+    const initialRule = await getRule(tenantId, SETUP_TEST_RULE_ID)
+    await updateRule(tenantId, SETUP_TEST_RULE_ID, rulePatch)
+
+    expect(transactions.length).toEqual(expectedDescriptions.length)
+    const results = await bulkVerifyTransactions(tenantId, transactions)
+    expect(results.length).toEqual(expectedDescriptions.length)
+    for (let i = 0; i < results.length; i += 1) {
+      const result = results[i]
+      const expectedDescription = expectedDescriptions[i]
+      if (result.hitRules.length === 0) {
+        if (expectedDescription != null) {
+          throw new Error(
+            `Rule doesn't hit, so description should be default, but you expect non-default description: ${expectedDescription}`
+          )
+        }
+      }
+      result.executedRules.every((rule) => {
+        if (!rule.ruleHit) {
+          expect(expectedDescription).toEqual(null)
+          expect(rule.ruleDescription).toEqual(DEFAULT_DESCRIPTION)
+        } else if (expectedDescription === null) {
+          expect(rule.ruleDescription).toEqual(DEFAULT_DESCRIPTION)
+        } else {
+          expect(rule.ruleDescription).toEqual(expectedDescription)
+        }
+      })
+    }
+    await updateRule(tenantId, SETUP_TEST_RULE_ID, initialRule)
   })
 }
 

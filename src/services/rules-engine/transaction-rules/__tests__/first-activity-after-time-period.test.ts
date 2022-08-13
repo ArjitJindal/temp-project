@@ -6,9 +6,47 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 dynamoDbSetupHook()
+
+describe('R-5 description formatting', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'first-activity-after-time-period',
+      defaultParameters: {
+        dormancyPeriodDays: 365,
+      } as FirstActivityAfterLongTimeRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1-1',
+        destinationUserId: '1-2',
+        timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1-1',
+        destinationUserId: '1-2',
+        timestamp: dayjs('2022-01-02T00:00:01.000Z').valueOf(),
+      }),
+    ],
+    {
+      descriptionTemplate: `User made a transaction from an account which was dormant for {{ parameters.dormancyPeriodDays }} days`,
+    },
+    [
+      null,
+      'User made a transaction from an account which was dormant for 365 days',
+    ]
+  )
+})
 
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()

@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,24 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-22 description formatting', () => {
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardIssuedCountry: 'DE',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} card is issued from {{ if-sender origin.payment.country destination.payment.country }}, a blacklisted country`,
+    },
+    ['Sender’s card is issued from Germany, a blacklisted country']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

@@ -2,8 +2,9 @@ import { CardIssuedCountryRuleParameters } from '../card-issued-country'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -22,6 +23,40 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-114 description formatting', () => {
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardIssuedCountry: 'DE',
+        },
+      }),
+      getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardIssuedCountry: 'TW',
+        },
+      }),
+      getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardIssuedCountry: 'RU',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} card country {{ hitParty.payment.country }} is not whitelisted`,
+    },
+    [
+      null,
+      'Sender’s card country Taiwan is not whitelisted',
+      'Sender’s card country Russian Federation is not whitelisted',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

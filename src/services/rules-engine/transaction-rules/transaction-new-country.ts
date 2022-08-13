@@ -21,7 +21,10 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
     }
   }
 
-  public async computeRule() {
+  public async computeHits(): Promise<{
+    hitReceiver: boolean
+    hitSender: boolean
+  }> {
     const aggregationRepository = new AggregationRepository(
       this.tenantId,
       this.dynamoDb
@@ -45,23 +48,36 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
         aggregationRepository.getUserTransactionsCount(destinationUserId),
     ])
 
-    if (
-      (receiverCountry &&
-        senderTransactionsCount &&
-        senderTransactionsCount?.sendingTransactionsCount &&
-        senderTransactionsCount.sendingTransactionsCount >=
-          this.parameters.initialTransactions &&
-        senderTransactionCountries &&
-        !senderTransactionCountries.sendingToCountries.has(receiverCountry)) ||
-      (senderCountry &&
-        receiverTransactionsCount &&
-        receiverTransactionsCount.receivingTransactionsCount >=
-          this.parameters.initialTransactions &&
-        receiverTransactionCountries &&
-        !receiverTransactionCountries.receivingFromCountries.has(senderCountry))
-    ) {
+    const hitSender =
+      receiverCountry &&
+      senderTransactionsCount &&
+      senderTransactionsCount?.sendingTransactionsCount &&
+      senderTransactionsCount.sendingTransactionsCount >=
+        this.parameters.initialTransactions &&
+      senderTransactionCountries &&
+      !senderTransactionCountries.sendingToCountries.has(receiverCountry)
+    const hitReceiver =
+      senderCountry &&
+      receiverTransactionsCount &&
+      receiverTransactionsCount.receivingTransactionsCount >=
+        this.parameters.initialTransactions &&
+      receiverTransactionCountries &&
+      !receiverTransactionCountries.receivingFromCountries.has(senderCountry)
+    return { hitSender: !!hitSender, hitReceiver: !!hitReceiver }
+  }
+
+  public async computeRule() {
+    const { hitReceiver, hitSender } = await this.computeHits()
+    if (hitReceiver || hitSender) {
+      let direction: 'origin' | 'destination' | null = null
+      if (hitSender) {
+        direction = 'origin'
+      } else if (hitReceiver) {
+        direction = 'destination'
+      }
       return {
         action: this.action,
+        vars: super.getTransactionVars(direction),
       }
     }
   }

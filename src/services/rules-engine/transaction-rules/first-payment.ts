@@ -18,6 +18,7 @@ export default class FirstPaymentRule extends TransactionRule<any> {
     if (isFirstPayment) {
       return {
         action: this.action,
+        vars: super.getTransactionVars('origin'),
       }
     }
   }

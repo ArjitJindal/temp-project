@@ -6,10 +6,11 @@ import {
 } from '../utils/transaction-rule-utils'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { isUserType } from '../utils/user-rule-utils'
-import { RuleResult, TransactionRule } from './rule'
+import { TransactionRule } from './rule'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
+import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 export type TransactionsVolumeQuantilesRuleParameters = {
   transactionVolumeThresholds: {
@@ -108,12 +109,69 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
   }
 
   public async computeRule() {
+    const results = await this.computeResults()
+    if (results == null) {
+      return undefined
+    }
+    const { isSenderHit, isReceiverHit } = results
+    if (isSenderHit || isReceiverHit) {
+      const { timeGranularity, amount } = results
+      const { transactionVolumeThresholds } = this.parameters
+      let volumeDelta
+      let volumeThreshold
+      let transactionVolumeThreshold
+      if (timeGranularity === 'day') {
+        transactionVolumeThreshold = transactionVolumeThresholds.DAILY
+      } else if (timeGranularity === 'month') {
+        transactionVolumeThreshold = transactionVolumeThresholds.MONTHLY
+      } else if (timeGranularity === 'year') {
+        transactionVolumeThreshold = transactionVolumeThresholds.YEARLY
+      }
+
+      if (
+        amount != null &&
+        transactionVolumeThreshold?.[amount.transactionCurrency] != null
+      ) {
+        volumeDelta = {
+          transactionAmount:
+            amount.transactionAmount -
+            transactionVolumeThreshold?.[amount.transactionCurrency],
+          transactionCurrency: amount.transactionCurrency,
+        }
+        volumeThreshold = {
+          transactionAmount:
+            transactionVolumeThreshold?.[amount.transactionCurrency],
+          transactionCurrency: amount.transactionCurrency,
+        }
+      } else {
+        volumeDelta = null
+        volumeThreshold = null
+      }
+
+      let direction: 'origin' | 'destination' | null = null
+      if (results?.isSenderHit) {
+        direction = 'origin'
+      } else if (results?.isReceiverHit) {
+        direction = 'destination'
+      }
+
+      const vars = {
+        ...super.getTransactionVars(direction),
+        volumeDelta,
+        volumeThreshold,
+      }
+
+      return { action: this.action, vars }
+    }
+  }
+
+  private async computeResults() {
     const { transactionVolumeThresholds } = this.parameters
     this.aggregationRepository = new AggregationRepository(
       this.tenantId,
       this.dynamoDb
     )
-    const [dailyResult, monthlyResult, yearlyResult] = await Promise.all([
+    const results = await Promise.all([
       this.computeRuleByTimeGranularity(
         'day',
         transactionVolumeThresholds.DAILY
@@ -127,15 +185,31 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         transactionVolumeThresholds.YEARLY
       ),
     ])
-    return dailyResult || monthlyResult || yearlyResult
+    // return { dailyResult, monthlyResult, yearlyResult }
+    for (const result of results) {
+      if (result.isReceiverHit || result.isSenderHit) {
+        return result
+      }
+    }
+    return undefined
   }
 
   private async computeRuleByTimeGranularity(
     timeGranularity: TimeGranularity,
     threshold: { [currency: string]: number } | undefined
-  ): Promise<RuleResult | undefined> {
+  ): Promise<{
+    isSenderHit: boolean
+    isReceiverHit: boolean
+    amount: TransactionAmountDetails | null
+    timeGranularity: TimeGranularity
+  }> {
     if (!threshold) {
-      return
+      return {
+        isSenderHit: false,
+        isReceiverHit: false,
+        amount: null,
+        timeGranularity: timeGranularity,
+      }
     }
     const { checkSender, checkReceiver } = this.parameters
     const aggregationRepository = this
@@ -186,39 +260,49 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
       receiverTargetCurrency as string
     )
 
+    const senderSum = senderReceivingAmount
+      ? sumTransactionAmountDetails(senderSendingAmount, senderReceivingAmount)
+      : senderSendingAmount
+    const receiverSum = receiverSendingAmount
+      ? sumTransactionAmountDetails(
+          receiverSendingAmount,
+          receiverReceivingAmount
+        )
+      : receiverReceivingAmount
+
+    let isSenderHit = false
+    let isReceiverHit = false
+    let amount: TransactionAmountDetails | null = null
+
     if (
-      (checkSender === 'sending' &&
-        (await isTransactionAmountAboveThreshold(
-          senderSendingAmount,
-          threshold
-        ))) ||
-      (checkSender === 'all' &&
-        (await isTransactionAmountAboveThreshold(
-          senderReceivingAmount
-            ? sumTransactionAmountDetails(
-                senderSendingAmount,
-                senderReceivingAmount
-              )
-            : senderSendingAmount,
-          threshold
-        ))) ||
-      (checkReceiver === 'receiving' &&
-        (await isTransactionAmountAboveThreshold(
-          receiverReceivingAmount,
-          threshold
-        ))) ||
-      (checkReceiver === 'all' &&
-        (await isTransactionAmountAboveThreshold(
-          receiverSendingAmount
-            ? sumTransactionAmountDetails(
-                receiverSendingAmount,
-                receiverReceivingAmount
-              )
-            : receiverReceivingAmount,
-          threshold
-        )))
+      checkSender === 'sending' &&
+      (await isTransactionAmountAboveThreshold(senderSendingAmount, threshold))
     ) {
-      return { action: this.action }
+      isSenderHit = true
+      amount = senderSendingAmount
+    } else if (
+      checkSender === 'all' &&
+      (await isTransactionAmountAboveThreshold(senderSum, threshold))
+    ) {
+      isSenderHit = true
+      amount = senderSum
     }
+    if (
+      checkReceiver === 'receiving' &&
+      (await isTransactionAmountAboveThreshold(
+        receiverReceivingAmount,
+        threshold
+      ))
+    ) {
+      isReceiverHit = true
+      amount = receiverReceivingAmount
+    } else if (
+      checkReceiver === 'all' &&
+      (await isTransactionAmountAboveThreshold(receiverSum, threshold))
+    ) {
+      isReceiverHit = true
+      amount = receiverSum
+    }
+    return { isSenderHit, isReceiverHit, amount, timeGranularity }
   }
 }

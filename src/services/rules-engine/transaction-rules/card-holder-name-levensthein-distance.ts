@@ -45,7 +45,17 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
     )
     const distance = levenshtein.get(userName, cardName)
     if (distance > allowedDistance) {
-      return { action: this.action }
+      const vars = super.getTransactionVars('origin')
+      let cardFingerprint = null
+      const originPaymentDetails = this.transaction.originPaymentDetails
+      if (originPaymentDetails?.method === 'CARD') {
+        cardFingerprint = originPaymentDetails.cardFingerprint
+      }
+
+      return {
+        action: this.action,
+        vars: { ...vars, cardFingerprint },
+      }
     }
   }
 }

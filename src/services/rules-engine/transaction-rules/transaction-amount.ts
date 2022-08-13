@@ -4,6 +4,7 @@ import { isUserBetweenAge, isUserType } from '../utils/user-rule-utils'
 import { TransactionRule } from './rule'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
+import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
@@ -86,7 +87,28 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         transactionAmountThreshold
       )
     ) {
-      return { action: this.action }
+      const { transactionAmountThreshold } = this.parameters
+
+      const thresholdsInUsd = await Promise.all(
+        Object.entries(transactionAmountThreshold).map(([currency, amount]) => {
+          return getTargetCurrencyAmount(
+            { transactionAmount: amount, transactionCurrency: currency },
+            'USD'
+          )
+        })
+      )
+
+      const usdLimit = thresholdsInUsd
+        .map((x) => x.transactionAmount)
+        .reduce((acc, x) => (acc === 0 ? x : Math.min(acc, x)))
+
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars(null),
+          usdLimit: usdLimit.toFixed(2),
+        },
+      }
     }
   }
 }

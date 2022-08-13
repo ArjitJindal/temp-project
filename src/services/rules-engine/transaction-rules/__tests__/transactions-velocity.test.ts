@@ -4,8 +4,9 @@ import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -16,6 +17,94 @@ import {
 
 dynamoDbSetupHook()
 
+describe('Description formatting', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe('R-30 description formatting', () => {
+    testRuleDescriptionFormatting(
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} has {{ if-sender 'sent' 'received' }} {{ transactionsDif }} transactions more than the daily limit of {{ parameters.transactionsLimit }}`,
+      },
+      [
+        null,
+        null,
+        'Sender has sent 1 transactions more than the daily limit of 2',
+        'Sender has sent 2 transactions more than the daily limit of 2',
+      ]
+    )
+  })
+
+  describe('R-84, R-85, R-86, R-87 description formatting', () => {
+    testRuleDescriptionFormatting(
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1-1',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-1',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-1',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transactions above the limit of {{ parameters.transactionsLimit }} in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)`,
+      },
+      [
+        null,
+        null,
+        'Sender made 1 more transactions above the limit of 2 in 5 second(s)',
+      ]
+    )
+  })
+})
+
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
@@ -23,6 +112,7 @@ describe('Core logic', () => {
     {
       type: 'TRANSACTION',
       ruleImplementationName: 'transactions-velocity',
+      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} has {{ if-sender 'sent' 'received' }} {{ transactionsDif }} transactions more than the {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s) limit of {{ parameters.transactionsLimit }}`,
       defaultParameters: {
         transactionsLimit: 2,
         timeWindow: {

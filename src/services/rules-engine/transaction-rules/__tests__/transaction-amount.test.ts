@@ -3,8 +3,9 @@ import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -14,6 +15,51 @@ import {
 } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
+
+describe('R-2 description formatting', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { USD: 1000 },
+        ageRange: { minAge: 18, maxAge: 25 },
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      userDetails: {
+        name: {
+          firstName: '1',
+        },
+      },
+    }),
+  ])
+
+  testRuleDescriptionFormatting(
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate:
+        'Transaction amount is {{ usdLimit }} or more in USD or equivalent',
+    },
+    ['Transaction amount is 1000.00 or more in USD or equivalent']
+  )
+})
 
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()

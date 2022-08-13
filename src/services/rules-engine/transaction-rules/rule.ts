@@ -4,9 +4,32 @@ import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { Vars } from '@/services/rules-engine/utils/format-description'
+import COUNTRIES, { isCountryCode } from '@/utils/countries'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type RuleResult = {
   action: RuleAction
+}
+
+export interface PartyVars {
+  type?: 'origin' | 'destination'
+  title?: string | number | boolean
+  amount?: {
+    country?: string | number | boolean
+    currency?: string | number | boolean
+    amount?: string | number | boolean
+  }
+  payment?: {
+    country?: string | number | boolean
+  }
+  ipAddress?: string | number | boolean
+}
+
+export interface TransactionVars {
+  hitParty?: PartyVars
+  origin?: PartyVars
+  destination?: PartyVars
 }
 
 export type DefaultTransactionRuleParameters = {
@@ -52,5 +75,69 @@ export class TransactionRule<P> extends Rule {
         !parameters.transactionState ||
         this.transaction.transactionState === parameters.transactionState,
     ]
+  }
+
+  private getTransactionDescriptionVars(
+    hitDirection: 'origin' | 'destination' | null
+  ): TransactionVars {
+    const transaction = this.transaction
+
+    function formatCountry(country: string | undefined): string | undefined {
+      return isCountryCode(country) ? COUNTRIES[country] : country
+    }
+
+    const result: TransactionVars = {
+      hitParty: undefined,
+      origin: {
+        type: 'origin',
+        title: 'Sender',
+        payment: {
+          country: formatCountry(
+            (transaction.originPaymentDetails as CardDetails)?.cardIssuedCountry
+          ),
+        },
+        amount: {
+          country: formatCountry(transaction.originAmountDetails?.country),
+          currency: transaction.originAmountDetails?.transactionCurrency,
+          amount: transaction.originAmountDetails?.transactionAmount,
+        },
+        ipAddress: transaction.deviceData?.ipAddress,
+      },
+      destination: {
+        type: 'destination',
+        title: 'Receiver',
+        payment: {
+          country: formatCountry(
+            (transaction.destinationPaymentDetails as CardDetails)
+              ?.cardIssuedCountry
+          ),
+        },
+        amount: {
+          country: formatCountry(transaction.destinationAmountDetails?.country),
+          currency: transaction.destinationAmountDetails?.transactionCurrency,
+          amount: transaction.destinationAmountDetails?.transactionAmount,
+        },
+        ipAddress: transaction.deviceData?.ipAddress,
+      },
+    }
+    if (hitDirection != null) {
+      result.hitParty = result[hitDirection]
+    }
+    return result
+  }
+
+  public getTransactionVars(
+    hitDirection: 'origin' | 'destination' | null
+  ): Vars {
+    // const parentVars = await super.getDescriptionVars()
+    const transactionVars = this.getTransactionDescriptionVars(hitDirection)
+    return {
+      // ...parentVars,
+      ...transactionVars,
+      transaction: this.transaction,
+      senderUser: this.senderUser,
+      receiverUser: this.receiverUser,
+      parameters: this.parameters,
+    }
   }
 }

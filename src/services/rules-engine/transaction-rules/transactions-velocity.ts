@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
@@ -8,7 +9,6 @@ import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
-import dayjs from '@/utils/dayjs'
 import {
   PaymentDetails,
   PaymentMethod,
@@ -237,7 +237,28 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       senderTransactionsCount + 1 > transactionsLimit ||
       receiverTransactionsCount + 1 > transactionsLimit
     ) {
-      return { action: this.action }
+      let transactionsDif = null
+      if (senderTransactionsCount + 1 > transactionsLimit) {
+        transactionsDif = senderTransactionsCount - transactionsLimit + 1
+      }
+      if (receiverTransactionsCount + 1 > transactionsLimit) {
+        transactionsDif = receiverTransactionsCount - transactionsLimit + 1
+      }
+
+      let direction: 'origin' | 'destination' | null = null
+      if (senderTransactionsCount + 1 > transactionsLimit) {
+        direction = 'origin'
+      } else if (receiverTransactionsCount + 1 > transactionsLimit) {
+        direction = 'destination'
+      }
+
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars(direction),
+          transactionsDif: transactionsDif,
+        },
+      }
     }
   }
 

@@ -33,7 +33,10 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
       .originPaymentDetails as CardDetails
 
     if (!cardIssuedCountry || !allowedCountries.includes(cardIssuedCountry)) {
-      return { action: this.action }
+      return {
+        action: this.action,
+        vars: super.getTransactionVars('origin'),
+      }
     }
   }
 }
