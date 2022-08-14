@@ -6,6 +6,7 @@ import s from './styles.module.less';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
 import Button from '@/components/ui/Button';
+import ResizableTitle from '@/utils/table-utils';
 import { makeUrl } from '@/utils/routing';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
 
@@ -13,7 +14,7 @@ export const columns: ProColumns<TableItem>[] = [
   {
     title: 'User ID',
     dataIndex: 'originUserId',
-    width: '25%',
+    width: 300,
     render: (dom, entity) => {
       const { user } = entity;
       if (user == null) {
@@ -25,17 +26,17 @@ export const columns: ProColumns<TableItem>[] = [
   {
     title: 'User Name',
     dataIndex: 'user',
-    width: '25%',
+    width: 300,
     render: (_, { user }) => getUserName(user),
   },
   {
     title: 'Rules hit',
     dataIndex: 'rulesHit',
-    width: '25%',
+    width: 300,
   },
   {
     title: 'User Type',
-    width: '25%',
+    width: 300,
     render: (dom, entity) => {
       const { user } = entity;
       if (user == null) {
@@ -50,6 +51,7 @@ export const columns: ProColumns<TableItem>[] = [
   },
   {
     title: 'Actions',
+    width: 300,
     render: (dom, entity) => {
       const { user } = entity;
       if (user == null) {

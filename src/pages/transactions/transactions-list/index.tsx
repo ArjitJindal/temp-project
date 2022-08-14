@@ -30,6 +30,7 @@ import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
 import { paymentMethod } from '@/utils/paymentMethod';
+import handleResize from '@/components/ui/Table/utils';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -280,21 +281,12 @@ const TableList = (props: RouteMatch<'id'>) => {
     [],
   );
 
-  const handleResize =
-    (index: number) =>
-    (_: React.SyntheticEvent<Element>, { size }: ResizeCallbackData) => {
-      setUpdatedColumnWidth((prev) => ({
-        ...prev,
-        [index]: size.width,
-      }));
-    };
-
   const mergeColumns: ProColumns<TransactionCaseManagement>[] = columns.map((col, index) => ({
     ...col,
     width: updatedColumnWidth[index] || col.width,
     onHeaderCell: (column) => ({
       width: (column as ProColumns<TransactionCaseManagement>).width,
-      onResize: handleResize(index),
+      onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
 

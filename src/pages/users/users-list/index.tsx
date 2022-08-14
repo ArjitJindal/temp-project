@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
+import type { ResizeCallbackData } from 'react-resizable';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.module.less';
 import UserRiskTag from './components/UserRiskTag';
@@ -29,12 +30,17 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
+import ResizableTitle from '@/utils/table-utils';
 import { useI18n } from '@/locales';
+import handleResize from '@/components/ui/Table/utils';
 
 const BusinessUsersTab = (props: { id?: string }) => {
   const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalBusinessUser>>(init());
   const api = useApi();
+  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
+    [key: number]: number;
+  }>({});
 
   const { id: userId } = props;
   const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
@@ -80,6 +86,15 @@ const BusinessUsersTab = (props: { id?: string }) => {
     setCurrentItem(success(user)),
   );
 
+  const mergeColumns: ProColumns<InternalBusinessUser>[] = columns.map((col, index) => ({
+    ...col,
+    width: updatedColumnWidth[index] || col.width,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<InternalBusinessUser>).width,
+      onResize: handleResize(index, setUpdatedColumnWidth),
+    }),
+  }));
+
   const analytics = useAnalytics();
   const navigate = useNavigate();
 
@@ -94,6 +109,14 @@ const BusinessUsersTab = (props: { id?: string }) => {
         search={{
           labelWidth: 120,
         }}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
+        }}
+        className={styles.table}
+        style={{ tableLayout: 'fixed' }}
+        scroll={{ x: 1300 }}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
           const [response, time] = await measure(() =>
@@ -117,7 +140,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
             total: response.total,
           };
         }}
-        columns={columns}
+        columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list-table',
@@ -144,6 +167,9 @@ const ConsumerUsersTab = (props: { id?: string }) => {
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
+  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
+    [key: number]: number;
+  }>({});
   const { id: userId } = props;
   const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
   useEffect(() => {
@@ -202,6 +228,15 @@ const ConsumerUsersTab = (props: { id?: string }) => {
     }
   }
 
+  const mergeColumns: ProColumns<InternalConsumerUser>[] = columns.map((col, index) => ({
+    ...col,
+    width: updatedColumnWidth[index] || col.width,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<InternalConsumerUser>).width,
+      onResize: handleResize(index, setUpdatedColumnWidth),
+    }),
+  }));
+
   const analytics = useAnalytics();
   const navigate = useNavigate();
 
@@ -216,6 +251,13 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         search={{
           labelWidth: 120,
         }}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
+        }}
+        className={styles.table}
+        scroll={{ x: 500 }}
         request={async (params) => {
           const { pageSize, current, userId, createdTimestamp } = params;
           const [response, time] = await measure(() =>
@@ -239,7 +281,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
             total: response.total,
           };
         }}
-        columns={columns}
+        columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',

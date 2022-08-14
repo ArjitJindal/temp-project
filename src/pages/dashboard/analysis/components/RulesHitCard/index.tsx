@@ -2,18 +2,22 @@
 import { Card, DatePicker, Row, Col } from 'antd';
 import { ActionType } from '@ant-design/pro-table';
 import { useEffect, useRef, useState } from 'react';
-import { ProColumns } from '@ant-design/pro-table/es/typing';
-import { RangeValue } from 'rc-picker/es/interface';
+import { ProColumns, RequestData } from '@ant-design/pro-table/lib/typing';
+import { RangeValue } from 'rc-picker/lib/interface';
+import type { ResizeCallbackData } from 'react-resizable';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import RulesHitBreakdown from '../RulesHitBreakdownChart';
 import header from '../dashboardutils';
+import style from '../../style.module.less';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
 import Table, { ResponsePayload } from '@/components/ui/Table';
+import ResizableTitle from '@/utils/table-utils';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
+import handleResize from '@/components/ui/Table/utils';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -26,6 +30,10 @@ export default function RuleHitCard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
 
+  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
+    [key: number]: number;
+  }>({});
+
   const actionRef = useRef<ActionType>();
   useEffect(() => {
     if (actionRef.current) {
@@ -37,22 +45,23 @@ export default function RuleHitCard() {
     {
       title: 'Rule ID',
       dataIndex: 'ruleId',
-      width: '10%',
+      width: 300,
     },
     {
       title: 'Rule Name',
       render: (_, stat) => {
         return <div>{rules[stat.ruleId].name}</div>;
       },
+      width: 300,
     },
     {
       title: 'Hit Count',
-      width: '25%',
       dataIndex: 'hitCount',
+      width: 300,
     },
     {
       title: 'Actions',
-      width: '25%',
+      width: 400,
       render: (_, stat) => {
         return (
           <Link
@@ -73,6 +82,15 @@ export default function RuleHitCard() {
     },
   ];
 
+  const mergeColumns: ProColumns<DashboardStatsRulesCountData>[] = columns.map((col, index) => ({
+    ...col,
+    width: updatedColumnWidth[index] || col.width,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<DashboardStatsRulesCountData>).width,
+      onResize: handleResize(index, setUpdatedColumnWidth),
+    }),
+  }));
+
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
@@ -82,9 +100,16 @@ export default function RuleHitCard() {
             form={{
               labelWrap: true,
             }}
+            components={{
+              header: {
+                cell: ResizableTitle,
+              },
+            }}
             headerTitle={header('Top Rule Hits by Count')}
             search={false}
-            columns={columns}
+            columns={mergeColumns}
+            className={style.table}
+            scroll={{ x: 1300 }}
             toolBarRender={() => [
               <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />,
             ]}

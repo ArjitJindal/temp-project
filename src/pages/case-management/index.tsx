@@ -36,6 +36,7 @@ import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
 import { paymentMethod } from '@/utils/paymentMethod';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import handleResize from '@/components/ui/Table/utils';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -516,20 +517,13 @@ function TableList() {
     ],
     [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
   );
-  const handleResize =
-    (index: number) =>
-    (_: React.SyntheticEvent<Element>, { size }: ResizeCallbackData) => {
-      setUpdatedColumnWidth((prev) => ({
-        ...prev,
-        [index]: size.width,
-      }));
-    };
+
   const mergeColumns: ProColumns<CaseManagementItem>[] = columns.map((col, index) => ({
     ...col,
     width: updatedColumnWidth[index] || col.width,
     onHeaderCell: (column) => ({
       width: (column as ProColumns<CaseManagementItem>).width,
-      onResize: handleResize(index),
+      onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
   const i18n = useI18n();

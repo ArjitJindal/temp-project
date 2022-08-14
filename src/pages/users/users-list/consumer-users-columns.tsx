@@ -16,7 +16,7 @@ export function getConsumerUserColumns(
     {
       title: 'User ID',
       dataIndex: 'userId',
-      width: 180,
+      width: 100,
       tip: 'Unique identification of user.',
       render: (dom, entity) => {
         // todo: fix style
@@ -36,7 +36,7 @@ export function getConsumerUserColumns(
     },
     {
       title: 'Name',
-      width: 150,
+      width: 100,
       hideInSearch: true,
       render: (dom, entity) => {
         return getFullName(entity.userDetails);
@@ -45,7 +45,7 @@ export function getConsumerUserColumns(
     },
     {
       title: 'Date of Birth',
-      width: 150,
+      width: 120,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.dateOfBirth
@@ -57,6 +57,7 @@ export function getConsumerUserColumns(
     {
       title: 'Country of residence',
       hideInSearch: true,
+      width: 150,
       render: (dom, entity) => {
         return entity.userDetails?.countryOfResidence;
       },
@@ -65,6 +66,7 @@ export function getConsumerUserColumns(
     {
       title: 'Country of nationality',
       hideInSearch: true,
+      width: 180,
       render: (dom, entity) => {
         return entity.userDetails?.countryOfNationality;
       },
@@ -73,6 +75,7 @@ export function getConsumerUserColumns(
     {
       title: 'KYC Status',
       hideInSearch: true,
+      width: 120,
       render: (dom, entity) => {
         return entity.kycStatusDetails?.status;
       },
@@ -82,6 +85,7 @@ export function getConsumerUserColumns(
       title: 'KYC Status Reason',
       hideInSearch: true,
       hideInTable: true,
+      width: 180,
       render: (dom, entity) => {
         return entity.kycStatusDetails?.statusReason;
       },
@@ -90,6 +94,7 @@ export function getConsumerUserColumns(
     {
       title: 'User Status',
       hideInSearch: true,
+      width: 120,
       render: (dom, entity) => {
         return entity.userStateDetails?.state;
       },
@@ -99,6 +104,7 @@ export function getConsumerUserColumns(
       title: 'User Status Reason',
       hideInSearch: true,
       hideInTable: true,
+      width: 150,
       render: (dom, entity) => {
         return entity.userStateDetails?.reason;
       },
@@ -109,6 +115,7 @@ export function getConsumerUserColumns(
       hideInSearch: true,
       dataIndex: 'tags',
       hideInForm: true,
+      width: 100,
       render: (tags: any) => {
         if (tags instanceof Array) {
           return (
@@ -130,6 +137,7 @@ export function getConsumerUserColumns(
     },
     {
       title: 'Created time',
+      width: 150,
       sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',
       valueType: 'dateTimeRange',

@@ -1,5 +1,7 @@
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import type { ResizeCallbackData } from 'react-resizable';
+import style from '../style.module.less';
 import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
 import { Rule, RuleImplementation } from '@/apis';
@@ -8,6 +10,8 @@ import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
+import ResizableTitle from '@/utils/table-utils';
+import handleResize from '@/components/ui/Table/utils';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -18,6 +22,9 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
   const user = useAuth0User();
   const api = useApi();
   const actionRef = useRef<ActionType>();
+  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
+    [key: number]: number;
+  }>({});
   const columns: ProColumns<Rule>[] = useMemo(
     () => [
       {
@@ -95,12 +102,28 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
     [onSelectRule, ruleImplementations, user],
   );
 
+  const mergeColumns: ProColumns<Rule>[] = columns.map((col, index) => ({
+    ...col,
+    width: updatedColumnWidth[index] || col.width,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<Rule>).width,
+      onResize: handleResize(index, setUpdatedColumnWidth),
+    }),
+  }));
+
   return (
     <Table<Rule>
       form={{
         labelWrap: true,
       }}
       headerTitle="Select Rule"
+      components={{
+        header: {
+          cell: ResizableTitle,
+        },
+      }}
+      className={style.table}
+      scroll={{ x: 1300 }}
       actionRef={actionRef}
       pagination={false}
       rowKey="id"
@@ -114,7 +137,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
           total: rules.length,
         };
       }}
-      columns={columns}
+      columns={mergeColumns}
     />
   );
 };

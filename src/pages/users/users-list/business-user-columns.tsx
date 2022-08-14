@@ -16,6 +16,7 @@ export function getBusinessUserColumns(
       title: 'User ID',
       dataIndex: 'userId',
       tip: 'Unique identification of user.',
+      width: 180,
       render: (dom, entity) => {
         // todo: fix style
         return (
@@ -34,6 +35,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Legal Name',
+      width: 120,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyGeneralDetails.legalName;
@@ -42,6 +44,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Industry',
+      width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyGeneralDetails.businessIndustry;
@@ -50,6 +53,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Expected Transaction Amount Per Month',
+      width: 300,
       hideInSearch: true,
       render: (dom, entity) => {
         return createCurrencyStringFromAmount(
@@ -60,6 +64,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Expected Turnover Amount Per Month',
+      width: 300,
       hideInSearch: true,
       render: (dom, entity) => {
         return createCurrencyStringFromAmount(
@@ -70,12 +75,14 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Maximum Daily Transaction Limit',
+      width: 300,
       hideInSearch: true,
       dataIndex: 'maximumDailyTransactionLimit',
       valueType: 'textarea',
     },
     {
       title: 'Registration Identifier',
+      width: 200,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyRegistrationDetails?.registrationIdentifier;
@@ -84,6 +91,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Registration Country',
+      width: 200,
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.legalEntity.companyRegistrationDetails?.registrationCountry;
@@ -92,6 +100,7 @@ export function getBusinessUserColumns(
     },
     {
       title: 'Creation time',
+      width: 150,
       sorter: true,
       dataIndex: 'createdTimestamp',
       valueType: 'dateTimeRange',
