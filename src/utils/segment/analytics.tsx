@@ -3,14 +3,14 @@ import { Analytics, Event } from '@/utils/segment/types';
 
 export function makeSegmentAnalytics(segmentAnalytics: AnalyticsBrowser): Analytics {
   return {
-    identify(userId: string) {
-      segmentAnalytics.identify(userId);
+    identify(userId: string, user) {
+      segmentAnalytics.identify(userId, user);
     },
     tenant(groupId: string, traits) {
       segmentAnalytics.group(groupId, traits);
     },
-    page: () => {
-      segmentAnalytics.page(undefined);
+    page: (category: string, properties) => {
+      segmentAnalytics.page(category, properties);
     },
     event: (event: Event) => {
       const { title, ...rest } = event;

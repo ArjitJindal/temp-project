@@ -1,6 +1,14 @@
 import React, { useEffect } from 'react';
 import { Typography } from 'antd';
 import { useLocation } from 'react-router-dom';
+import {
+  browserName,
+  deviceType,
+  browserVersion,
+  osName,
+  mobileModel,
+  mobileVendor,
+} from 'react-device-detect';
 import ErrorBoundary from '../ErrorBoundary';
 import s from './styles.module.less';
 import { useAnalytics } from '@/utils/segment/context';
@@ -24,10 +32,18 @@ export default function PageWrapper(props: Props) {
 
   // todo: migration: check if something is broken
   useEffect(() => {
-    analytics.page({
+    analytics.page(`Viewed ${location.pathname}`, {
       url: location.pathname,
+      userEmail: user.verifiedEmail,
+      tenant: user.tenantName,
+      browserName,
+      deviceType,
+      browserVersion,
+      osName,
+      mobileModel,
+      mobileVendor,
     });
-  }, [analytics, tenantId, location.pathname]);
+  }, [analytics, tenantId, location.pathname, user.verifiedEmail, user.tenantName]);
   const { title, description } = props;
   return (
     <div className={s.root}>

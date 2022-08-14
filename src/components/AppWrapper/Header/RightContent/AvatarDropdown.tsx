@@ -1,11 +1,20 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
 import type { MenuInfo } from 'rc-menu/es/interface';
 import { useNavigate } from 'react-router';
+import {
+  browserName,
+  deviceType,
+  browserVersion,
+  osName,
+  mobileModel,
+  mobileVendor,
+} from 'react-device-detect';
 import HeaderDropdown from '../../../HeaderDropdown';
 import styles from './index.module.less';
+import { useAnalytics } from '@/utils/segment/context';
 import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 
 export type GlobalHeaderRightProps = {
@@ -14,6 +23,7 @@ export type GlobalHeaderRightProps = {
 
 const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
   const { logout } = useAuth0();
+  const analytics = useAnalytics();
   const user = useAuth0User();
   const isAdmin = isAtLeastAdmin(user);
   const navigate = useNavigate();
@@ -22,12 +32,23 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
     (event: MenuInfo) => {
       const { key } = event;
       if (key === 'logout') {
+        analytics.event({
+          title: 'Clicked on Log Out',
+          tenant: user.tenantName,
+          userId: user.userId,
+          browserName,
+          deviceType,
+          browserVersion,
+          osName,
+          mobileModel,
+          mobileVendor,
+        });
         logout({ returnTo: window.location.origin });
         return;
       }
       navigate(`/account/${key}`);
     },
-    [navigate, logout],
+    [navigate, analytics, user.tenantName, user.userId, logout],
   );
 
   const loading = (

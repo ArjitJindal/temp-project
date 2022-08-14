@@ -3,13 +3,23 @@ import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import moment, { Moment } from 'moment';
 import { Column } from '@ant-design/charts';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
+import {
+  browserName,
+  deviceType,
+  browserVersion,
+  osName,
+  mobileModel,
+  mobileVendor,
+} from 'react-device-detect';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
 import { useRuleActionTitle } from '../../../../utils/rules';
 import header from './dashboardutils';
+import { useAuth0User } from '@/utils/user-utils';
+import { useAnalytics } from '@/utils/segment/context';
 import { useApi } from '@/api';
 import {
   AsyncResource,
@@ -88,6 +98,8 @@ export type TransactionsStats = {
 
 const TransactionsChartCard = () => {
   const settings = useSettings();
+  const analytics = useAnalytics();
+  const user = useAuth0User();
   type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
   const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
@@ -163,6 +175,27 @@ const TransactionsChartCard = () => {
     'dashboard-analytics-active-tab',
     'totalTransactions',
   );
+
+  const titleName = (activeTab: string) => {
+    if (activeTab === 'totalTransactions') return 'Clicked on Total Transactions';
+    if (activeTab === 'suspendedTransactions') return 'Clicked on Suspended Transactions';
+    if (activeTab === 'stoppedTransactions') return 'Clicked on Stopped Transactions';
+    return 'Clicked on Flagged Transactions';
+  };
+
+  useEffect(() => {
+    analytics.event({
+      title: titleName(activeTab),
+      tenant: user.tenantName,
+      userId: user.userId,
+      browserName,
+      deviceType,
+      browserVersion,
+      osName,
+      mobileModel,
+      mobileVendor,
+    });
+  }, [activeTab, analytics, user.tenantName, user.userId]);
 
   return (
     <Card
