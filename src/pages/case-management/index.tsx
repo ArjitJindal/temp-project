@@ -12,6 +12,7 @@ import { AddToSlackButton } from './components/AddToSlackButton';
 import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { TransactionTypeTag } from './components/TransactionTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
@@ -28,13 +29,13 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
 import ResizableTitle from '@/utils/table-utils';
 import { useAuth0User } from '@/utils/user-utils';
-
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
 import handleResize from '@/components/ui/Table/utils';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import { TransactionType } from '@/apis/models/TransactionType';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -199,7 +200,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return <TransactionTypeTag transactionType={entity.type} />;
+          return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
         },
       },
       {
