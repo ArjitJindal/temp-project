@@ -1,5 +1,7 @@
 import { Db, MongoClient } from 'mongodb'
+import _ from 'lodash'
 import { RuleDashboardStats, TransactionDashboardStats } from '../constants'
+import { getTimeLabels } from './dashboard-stats-utils'
 import dayjs from '@/utils/dayjs'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
@@ -8,9 +10,11 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   DAY_DATE_FORMAT,
+  DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   MONTH_DATE_FORMAT,
+  MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
@@ -582,25 +586,44 @@ export class DashboardStatsRepository {
     const db = this.mongoDb.db()
 
     let collection
+    let timeLabels: string[]
 
     if (granularity === granularityValues.DAY) {
       collection = db.collection<TransactionDashboardStats>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId)
       )
+      timeLabels = getTimeLabels(
+        DAY_DATE_FORMAT_JS,
+        startTimestamp,
+        endTimestamp,
+        'day'
+      )
     } else if (granularity === granularityValues.MONTH) {
       collection = db.collection<TransactionDashboardStats>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId)
       )
+      timeLabels = getTimeLabels(
+        MONTH_DATE_FORMAT_JS,
+        startTimestamp,
+        endTimestamp,
+        'month'
+      )
     } else {
       collection = db.collection<TransactionDashboardStats>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
+      )
+      timeLabels = getTimeLabels(
+        HOUR_DATE_FORMAT_JS,
+        startTimestamp,
+        endTimestamp,
+        'hour'
       )
     }
 
     const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
     const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
 
-    return await collection
+    const dashboardStats = await collection
       .find({
         _id: {
           $gt: startDate,
@@ -609,6 +632,18 @@ export class DashboardStatsRepository {
       })
       .sort({ _id: 1 })
       .toArray()
+
+    const dashboardStatsById = _.keyBy(dashboardStats, '_id')
+    return timeLabels.map(
+      (timeLabel) =>
+        dashboardStatsById[timeLabel] || {
+          _id: timeLabel,
+          totalTransactions: 0,
+          flaggedTransactions: 0,
+          stoppedTransactions: 0,
+          suspendedTransactions: 0,
+        }
+    )
   }
 
   public async getHitsByUserStats(
