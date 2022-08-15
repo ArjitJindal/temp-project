@@ -16,6 +16,7 @@ const providerConfig = {
   domain: AUTH0_DOMAIN,
   clientId: AUTH0_CLIENT_ID,
   scope: 'openid profile email',
+  cacheLocation: IS_SENTRY_INSTANCE ? ('localstorage' as const) : ('memory' as const),
   audience: AUTH0_AUDIENCE ?? undefined,
   redirectUri: window.location.origin,
   onRedirectCallback,

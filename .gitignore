@@ -42,3 +42,4 @@ src/apis
 esbuild.json
 config/openapi.yaml
 .env
+cypress.env.json

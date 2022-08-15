@@ -19,6 +19,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "strict": true,
+    "types": ["cypress", "node"],
     "paths": {
       "@/*": ["./src/*"]
       //      "@@/*": ["./src/.umi/*"]
@@ -36,6 +37,7 @@
     ".stylelintrc.js",
     ".prettierrc.js",
     "jest.config.js",
+    "cypress/**/*",
     "mock/*"
   ],
   "exclude": ["node_modules", "build", "dist", "scripts", "src/.umi/*", "webpack", "jest"]

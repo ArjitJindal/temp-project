@@ -12,6 +12,7 @@ declare global {
   declare const SEGMENT_WRITE_KEY: string;
   declare const SENTRY_DSN: string;
   declare const SLACK_CLIENT_ID: string;
+  declare const IS_SENTRY_INSTANCE: boolean;
 
   interface Window {
     analytics: AnalyticsBrowser & {

@@ -69,6 +69,31 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
         role: devCodeDeployRole,
       });
 
+    const getE2ETestProject = (env: 'dev') =>
+      new codebuild.PipelineProject(this, `PhytoplanktonE2eTest-${env}`, {
+        buildSpec: codebuild.BuildSpec.fromObject({
+          version: '0.2',
+          phases: {
+            install: {
+              'runtime-versions': {
+                nodejs: 16,
+              },
+              commands: ['npm install -g aws-cdk yarn', 'yarn --ignore-engines'],
+            },
+            build: {
+              commands: ['yarn run cypress:test:dev'],
+            },
+          },
+          cache: {
+            paths: ['node_modules/**/*'],
+          },
+        }),
+        environment: {
+          buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
+        },
+        role: devCodeDeployRole,
+      });
+
     // Define pipeline stage output artifacts
     const sourceOutput = new codepipeline.Artifact();
 
@@ -95,6 +120,26 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
               project: getDeployCodeBuildProject('dev', DEV_CODE_DEPLOY_ROLE_ARN),
+              input: sourceOutput,
+            }),
+          ],
+        },
+        {
+          stageName: 'E2E_Test_Dev',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'E2E_Test_Dev',
+              project: getE2ETestProject('dev'),
+              input: sourceOutput,
+            }),
+          ],
+        },
+        {
+          stageName: 'E2E_Test_Dev',
+          actions: [
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'E2E_Test_Dev',
+              project: getE2ETestProject('dev'),
               input: sourceOutput,
             }),
           ],
