@@ -123,6 +123,9 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         },
       }}
       className={style.table}
+      rowClassName={(_, index) => {
+        return index % 2 === 0 ? style.tableRowLight : `${style.tableRowDark} ${style.rowDark}`;
+      }}
       scroll={{ x: 1300 }}
       actionRef={actionRef}
       pagination={false}
