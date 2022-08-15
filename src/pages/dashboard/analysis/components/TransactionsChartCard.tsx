@@ -2,10 +2,12 @@
 import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import moment, { Moment } from 'moment';
-import { Column } from '@ant-design/charts';
+import { Column } from '@ant-design/plots';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
+import { each, groupBy } from 'lodash';
+import { Annotation } from '@antv/g2plot';
 import {
   browserName,
   deviceType,
@@ -128,6 +130,16 @@ const TransactionsChartCard = () => {
     }
     return granularityValues.HOUR as GranularityValuesType;
   };
+  const formatDate = (type: string): string => {
+    if (type.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      type = moment(type, 'YYYY-MM-DD').format('MM/DD');
+    } else if (type.match(/^\d{4}-\d{2}$/)) {
+      type = moment(type, 'YYYY-MM').format('YYYY/MM');
+    } else if (type.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
+      type = moment(type, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
+    }
+    return type;
+  };
 
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
   const api = useApi();
@@ -175,6 +187,48 @@ const TransactionsChartCard = () => {
     'dashboard-analytics-active-tab',
     'totalTransactions',
   );
+  const value: { _id: string; value: number; type: string }[] = [];
+  data.map((item) => {
+    value.push({
+      _id: item._id,
+      value: item['stoppedTransactions'] ?? 0,
+      type: 'Stopped',
+    });
+    value.push({
+      _id: item._id,
+      value: item['suspendedTransactions'] ?? 0,
+      type: 'Suspended',
+    });
+    value.push({
+      _id: item._id,
+      value: item['flaggedTransactions'] ?? 0,
+      type: 'Flagged',
+    });
+    value.push({
+      _id: item._id,
+      value:
+        (item['totalTransactions'] ?? 0) -
+        (item['stoppedTransactions'] ?? 0) -
+        (item['suspendedTransactions'] ?? 0) -
+        (item['flaggedTransactions'] ?? 0),
+      type: 'Allowed',
+    });
+  });
+  const annotations: Annotation[] | undefined = [];
+  each(groupBy(value, '_id'), (values, k) => {
+    const value = values.reduce((a, b) => a + b.value, 0);
+    annotations.push({
+      type: 'text',
+      position: [k, value],
+      content: `${value}`,
+      style: {
+        textAlign: 'center',
+        fontSize: 14,
+        fill: 'rgba(0,0,0,0.85)',
+      },
+      offsetY: -10,
+    });
+  });
 
   const titleName = (activeTab: string) => {
     if (activeTab === 'totalTransactions') return 'Clicked on Total Transactions';
@@ -254,23 +308,40 @@ const TransactionsChartCard = () => {
                   ) : (
                     <Column
                       height={400}
-                      data={data.map((item) => {
-                        const y = item[key] ?? 0;
-                        let x = item._id;
-                        if (x.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                          x = moment(x, 'YYYY-MM-DD').format('MM/DD');
-                        } else if (x.match(/^\d{4}-\d{2}$/)) {
-                          x = moment(x, 'YYYY-MM').format('YYYY/MM');
-                        } else if (x.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
-                          x = moment(x, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
-                        }
-                        return {
-                          x,
-                          y,
-                        };
-                      })}
-                      xField="x"
-                      yField="y"
+                      isStack={true}
+                      data={
+                        key !== 'totalTransactions'
+                          ? data.map((item) => {
+                              const y = item[key] ?? 0;
+                              const x = formatDate(item._id);
+                              return {
+                                x,
+                                y,
+                              };
+                            })
+                          : value.map((item) => {
+                              const _id = formatDate(item._id);
+                              const value = item.value;
+                              const type = item.type;
+                              return {
+                                _id,
+                                value,
+                                type,
+                              };
+                            })
+                      }
+                      xField={key !== 'totalTransactions' ? 'x' : '_id'}
+                      yField={key !== 'totalTransactions' ? 'y' : 'value'}
+                      color={({ type }) => {
+                        if (key === 'totalTransactions') {
+                          if (type === 'Suspended') return '#87E8DE';
+                          if (type === 'Flagged') return '#F6A429';
+                          if (type === 'Stopped') return '#FF4D4F';
+                          return '#1169F9';
+                        } else if (key === 'flaggedTransactions') return '#F6A429';
+                        else if (key === 'stoppedTransactions') return '#FF4D4F';
+                        return '#87E8DE';
+                      }}
                       xAxis={{
                         label: {
                           autoRotate: false,
@@ -293,6 +364,8 @@ const TransactionsChartCard = () => {
                           alias: 'Transaction Count',
                         },
                       }}
+                      seriesField={key !== 'totalTransactions' ? '' : 'type'}
+                      annotations={annotations}
                     />
                   )}
                 </div>
