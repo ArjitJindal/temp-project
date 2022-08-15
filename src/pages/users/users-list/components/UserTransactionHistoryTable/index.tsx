@@ -225,6 +225,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
           {
             title: 'Origin Amount',
+            tooltip: 'Origin is the Sender in a transaction',
             hideInSearch: true,
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
@@ -235,6 +236,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           },
           {
             title: 'Destination Amount',
+            tooltip: 'Destination is the Receiver in a transaction',
             hideInSearch: true,
             render: (dom, entity) => {
               return `${createCurrencyStringFromTransactionAmount(

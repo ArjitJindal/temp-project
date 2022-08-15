@@ -229,8 +229,8 @@ function TableList() {
         },
       },
       {
-        title: 'Origin (sender) User ID',
-        tooltip: 'Origin users are the users initiating the transaction - sending the money',
+        title: 'Origin User ID',
+        tooltip: 'Origin is the Sender in a transaction',
         width: 200,
         copyable: true,
         ellipsis: true,
@@ -244,8 +244,8 @@ function TableList() {
         },
       },
       {
-        title: 'Origin (sender) User Name',
-        tooltip: 'Origin users are the users initiating the transaction - sending the money',
+        title: 'Origin User Name',
+        tooltip: 'Origin is the Sender in a transaction',
         width: 220,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
@@ -306,6 +306,7 @@ function TableList() {
       },
       {
         title: 'Destination User ID',
+        tooltip: 'Destination is the Receiver in a transaction',
         dataIndex: 'destinationUserId',
         copyable: true,
         ellipsis: true,
@@ -322,6 +323,7 @@ function TableList() {
       },
       {
         title: 'Destination User Name',
+        tooltip: 'Destination is the Receiver in a transaction',
         width: 180,
         onCell: (_) => ({
           rowSpan: _.rowSpan,

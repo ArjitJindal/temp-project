@@ -122,8 +122,8 @@ const TableList = (props: RouteMatch<'id'>) => {
         },
       },
       {
-        title: 'Origin (sender) User ID',
-        tooltip: 'Origin users are the users initiating the transaction - sending the money',
+        title: 'Origin User ID',
+        tooltip: 'Origin is the Sender in a transaction',
         width: 200,
         dataIndex: 'originUserId',
         render: (dom, entity) => {
@@ -131,8 +131,8 @@ const TableList = (props: RouteMatch<'id'>) => {
         },
       },
       {
-        title: 'Origin (sender) User Name',
-        tooltip: 'Origin users are the users initiating the transaction - sending the money',
+        title: 'Origin User Name',
+        tooltip: 'Origin is the Sender in a transaction',
         width: 220,
         render: (dom, entity) => {
           return getUserName(entity.originUser);
@@ -178,6 +178,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Destination User ID',
+        tooltip: 'Destination is the Receiver in a transaction',
         width: 170,
         dataIndex: 'destinationUserId',
         render: (dom, entity) => {
@@ -186,6 +187,7 @@ const TableList = (props: RouteMatch<'id'>) => {
       },
       {
         title: 'Destination User Name',
+        tooltip: 'Destination is the Receiver in a transaction',
         width: 180,
         render: (dom, entity) => {
           return getUserName(entity.destinationUser);

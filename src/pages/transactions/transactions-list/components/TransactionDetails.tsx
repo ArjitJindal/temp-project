@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Divider, Tag } from 'antd';
+import { Divider, Tag, Tooltip } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import styles from './TransactionDetails.module.less';
 import { Tag as TransactionTag, TransactionCaseManagement } from '@/apis';
 import { getUserName } from '@/utils/api/users';
@@ -23,7 +24,10 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
         <ProDescriptions.Item
           label={
             <Divider orientation="left" orientationMargin="0">
-              Sender
+              Origin{' '}
+              <Tooltip title="Origin is the Sender in a transaction">
+                <InfoCircleOutlined />
+              </Tooltip>
             </Divider>
           }
           className={styles.verticalDetailsItem}
@@ -66,7 +70,10 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
         <ProDescriptions.Item
           label={
             <Divider orientation="left" orientationMargin="0">
-              Receiver
+              Destination{' '}
+              <Tooltip title="Destination is the Receiver in a transaction">
+                <InfoCircleOutlined />
+              </Tooltip>
             </Divider>
           }
           className={styles.verticalDetailsItem}
