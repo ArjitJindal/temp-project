@@ -10,6 +10,13 @@ interface Props {
   onChange: (assignees: string[]) => void;
 }
 
+const colorSchema = [
+  { text: '#FF4D4F', background: '#FFE5E6' },
+  { text: '#1AB0A1', background: '#EBFCFB' },
+  { text: '#063075', background: '#EBF2FF' },
+  { text: '#7284A3', background: '#DFE6F2' },
+];
+
 export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onChange }) => {
   const [users, loadingUsers] = useUsers();
   return editing ? (
@@ -25,16 +32,25 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
               <LoadingOutlined /> Loading...
             </>
           ) : (
-            ''
+            'Unassigned'
           )
         }
         onChange={onChange}
         value={loadingUsers ? [] : assignments.map((assignment) => assignment.assigneeUserId)}
       >
-        {Object.values(users).map((user) => (
+        {Object.values(users).map((user, index) => (
           <Select.Option key={user.id}>
             <Space size="small">
-              <Avatar size={15} src={user.picture} />
+              <Avatar
+                size="default"
+                style={{
+                  color: colorSchema[index % 4].text,
+                  backgroundColor: colorSchema[index % 4].background,
+                }}
+              >
+                {' '}
+                {user.email.toUpperCase().charAt(0)}
+              </Avatar>
               <span>{user.name}</span>
             </Space>
           </Select.Option>
