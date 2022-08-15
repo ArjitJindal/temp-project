@@ -53,6 +53,7 @@ import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
 import { UserDetails } from '@/pages/users/users-list/components/UserDetails';
 import { TransactionEventsTable } from '@/pages/users/users-list/components/UserTransactionHistoryTable/ExpandedRowRenderer';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 const equal = require('fast-deep-equal');
 
@@ -431,7 +432,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
                 {transaction.originAmountDetails?.transactionCurrency}
               </ProDescriptions.Item>
               <ProDescriptions.Item valueType="text">
-                {transaction.originAmountDetails?.country}
+                <CountryDisplay isoCode={transaction.originAmountDetails?.country} />
               </ProDescriptions.Item>
               <ProDescriptions.Item className={styles.verticalDetailsItem}>
                 <PaymentMethodTag paymentMethod={transaction.originPaymentDetails?.method} />
@@ -471,7 +472,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
                 {transaction.destinationAmountDetails?.transactionCurrency}
               </ProDescriptions.Item>
               <ProDescriptions.Item valueType="text">
-                {transaction.destinationAmountDetails?.country}
+                <CountryDisplay isoCode={transaction.destinationAmountDetails?.country} />
               </ProDescriptions.Item>
               <ProDescriptions.Item className={styles.verticalDetailsItem}>
                 <PaymentMethodTag paymentMethod={transaction.destinationPaymentDetails?.method} />

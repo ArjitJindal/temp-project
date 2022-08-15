@@ -3,7 +3,6 @@ import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
-import type { ResizeCallbackData } from 'react-resizable';
 import { RouteMatch, useNavigate, useParams } from 'react-router';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
@@ -30,6 +29,7 @@ import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
 import { paymentMethod } from '@/utils/paymentMethod';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 import handleResize from '@/components/ui/Table/utils';
 
 const TableList = (props: RouteMatch<'id'>) => {
@@ -173,7 +173,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         width: 140,
         hideInSearch: true,
         render: (dom, entity) => {
-          return entity.originAmountDetails?.country;
+          return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
         },
       },
       {
@@ -230,7 +230,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         width: 200,
         hideInSearch: true,
         render: (dom, entity) => {
-          return entity.destinationAmountDetails?.country;
+          return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
         },
       },
       {

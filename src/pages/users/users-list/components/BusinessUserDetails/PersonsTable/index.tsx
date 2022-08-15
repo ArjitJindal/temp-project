@@ -4,6 +4,7 @@ import s from './styles.module.less';
 import { Address, LegalDocument, Person } from '@/apis';
 import Table from '@/components/ui/Table';
 import { formatConsumerName } from '@/utils/api/users';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 function expandedRowRender(person: Person) {
   return (
@@ -125,11 +126,15 @@ export default function PersonsTable(props: Props) {
             },
             {
               title: 'Residence',
-              render: (_, person) => person.generalDetails.countryOfResidence ?? '-',
+              render: (_, person) => (
+                <CountryDisplay isoCode={person.generalDetails.countryOfResidence} />
+              ),
             },
             {
               title: 'Nationality',
-              render: (_, person) => person.generalDetails.countryOfNationality ?? '-',
+              render: (_, person) => (
+                <CountryDisplay isoCode={person.generalDetails.countryOfNationality} />
+              ),
             },
           ],
         },

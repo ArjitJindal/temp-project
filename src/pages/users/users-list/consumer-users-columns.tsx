@@ -5,6 +5,7 @@ import { Tag } from 'antd';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT, DEFAULT_DATE_DISPLAY_FORMAT } from '@/utils/dates';
 import { InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 const convertToDateString = (createdTimestamp: number) =>
   moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
@@ -59,7 +60,7 @@ export function getConsumerUserColumns(
       hideInSearch: true,
       width: 150,
       render: (dom, entity) => {
-        return entity.userDetails?.countryOfResidence;
+        return <CountryDisplay isoCode={entity.userDetails?.countryOfResidence} />;
       },
       valueType: 'textarea',
     },
@@ -68,7 +69,7 @@ export function getConsumerUserColumns(
       hideInSearch: true,
       width: 180,
       render: (dom, entity) => {
-        return entity.userDetails?.countryOfNationality;
+        return <CountryDisplay isoCode={entity.userDetails?.countryOfNationality} />;
       },
       valueType: 'textarea',
     },

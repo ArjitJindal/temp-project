@@ -6,6 +6,7 @@ import styles from './TransactionDetails.module.less';
 import { Tag as TransactionTag, TransactionCaseManagement } from '@/apis';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 interface Props {
   transaction: TransactionCaseManagement;
@@ -56,7 +57,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
               {transaction.originAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Country" valueType="text">
-              {transaction.originAmountDetails?.country}
+              <CountryDisplay isoCode={transaction.originAmountDetails?.country} />
             </ProDescriptions.Item>
             <ProDescriptions.Item
               label="Payment Details"
@@ -102,7 +103,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction }) => {
               {transaction.destinationAmountDetails?.transactionCurrency}
             </ProDescriptions.Item>
             <ProDescriptions.Item label="Country" valueType="text">
-              {transaction.destinationAmountDetails?.country}
+              <CountryDisplay isoCode={transaction.destinationAmountDetails?.country} />
             </ProDescriptions.Item>
             <ProDescriptions.Item
               label="Payment Details"

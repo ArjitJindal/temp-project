@@ -33,9 +33,8 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
-import { paymentMethod } from '@/utils/paymentMethod';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import handleResize from '@/components/ui/Table/utils';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -227,7 +226,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (_, transaction) => {
-          return <TimestampDisplay timestamp={transaction.timestamp} />;
+          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
       },
       {
@@ -303,7 +302,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return entity.originAmountDetails?.country;
+          return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
         },
       },
       {
@@ -383,7 +382,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return entity.destinationAmountDetails?.country;
+          return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
         },
       },
       {
@@ -496,28 +495,6 @@ function TableList() {
           mode: 'multiple',
         },
       },
-      {
-        title: 'Origin Method',
-        hideInTable: true,
-        width: 120,
-        dataIndex: 'originMethodFilter',
-        valueType: 'select',
-        fieldProps: {
-          options: paymentMethod,
-          allowClear: true,
-        },
-      },
-      {
-        title: 'Destination Method',
-        hideInTable: true,
-        width: 120,
-        dataIndex: 'destinationMethodFilter',
-        valueType: 'select',
-        fieldProps: {
-          options: paymentMethod,
-          allowClear: true,
-        },
-      },
     ],
     [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
   );
@@ -569,8 +546,6 @@ function TableList() {
             destinationUserId,
             type,
             status,
-            originMethodFilter,
-            destinationMethodFilter,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           pushParamsToNavigation(params);
@@ -594,8 +569,6 @@ function TableList() {
               sortOrder: sortOrder ?? undefined,
               includeUsers: true,
               includeEvents: true,
-              filterOriginPaymentMethod: originMethodFilter,
-              filterDestinationPaymentMethod: destinationMethodFilter,
             }),
           );
           analytics.event({
