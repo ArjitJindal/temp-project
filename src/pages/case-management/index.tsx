@@ -5,12 +5,12 @@ import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate, useParams } from 'react-router';
-import type { ResizeCallbackData } from 'react-resizable';
 import { TransactionDetails } from './components/TransactionDetails';
 import { RuleActionStatus } from './components/RuleActionStatus';
 import { TableSearchParams } from './types';
 import { AddToSlackButton } from './components/AddToSlackButton';
 import { PaymentMethodTag } from './components/PaymentTypeTag';
+import { TransactionTypeTag } from './components/TransactionTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
 import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
@@ -26,7 +26,6 @@ import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import '../../components/ui/colors';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { useAuth0User } from '@/utils/user-utils';
 
@@ -195,11 +194,14 @@ function TableList() {
       {
         title: 'Transaction Type',
         dataIndex: 'type',
-        width: 150,
+        width: 175,
         ellipsis: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
+        render: (dom, entity) => {
+          return <TransactionTypeTag transactionType={entity.type} />;
+        },
       },
       {
         title: 'Rules Hit',

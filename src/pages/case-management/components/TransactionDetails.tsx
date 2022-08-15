@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import {
+  AimOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
   EditOutlined,
@@ -35,6 +36,7 @@ import Comment from './Comment';
 import { AssigneesDropdown } from './AssigneesDropdown';
 import { RulesHitDetailsTable } from './RulesHitDetailsTable';
 import { PaymentMethodTag } from './PaymentTypeTag';
+import { TransactionTypeTag } from './TransactionTypeTag';
 import { PaymentDetails } from './PaymentDetails';
 import Colors from '@/components/ui/colors';
 import {
@@ -296,7 +298,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           <ProDescriptions.Item
             label={
               <b>
-                <ScanOutlined /> Status:
+                <AimOutlined /> Status:
               </b>
             }
           >
@@ -342,6 +344,15 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
               editing={editing}
               onChange={handleUpdateAssignments}
             />
+          </ProDescriptions.Item>
+          <ProDescriptions.Item
+            label={
+              <b>
+                <ScanOutlined /> Transaction Type:
+              </b>
+            }
+          >
+            <TransactionTypeTag transactionType={transaction.type} />
           </ProDescriptions.Item>
         </ProDescriptions>
 
