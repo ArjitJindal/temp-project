@@ -1,0 +1,58 @@
+import { message, Select } from 'antd';
+import { useCallback, useState } from 'react';
+import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { USER_STATES } from '@/utils/api/users';
+import { useApi } from '@/api';
+import { UserState } from '@/apis/models/UserState';
+import { UserStateDetails } from '@/apis/models/UserStateDetails';
+
+// TODO: Use react-query to properly do optimistic updates
+const updatedUserStateDetails: { [key: string]: UserStateDetails } = {};
+
+interface Props {
+  user: InternalConsumerUser | InternalBusinessUser;
+}
+
+export const UserStateEditor: React.FC<Props> = ({ user }) => {
+  const api = useApi();
+  const [userStateDetails, setUserStateDetails] = useState(
+    updatedUserStateDetails[user.userId] || user.userStateDetails,
+  );
+  const handleChangeUserState = useCallback(
+    async (newState: UserState) => {
+      const newStateDetails = {
+        state: newState,
+        // TODO: Allow editing `userStateDetails.reason`
+        reason: 'Manually updated from Console',
+      };
+      const params = {
+        userId: user.userId,
+        UserUpdateRequest: {
+          userStateDetails: newStateDetails,
+        },
+      };
+      setUserStateDetails(newStateDetails);
+      updatedUserStateDetails[user.userId] = newStateDetails;
+      const hideMessage = message.loading(`Saving...`, 0);
+      try {
+        await (user.type === 'CONSUMER'
+          ? api.postConsumerUsersUserId(params)
+          : api.postBusinessUsersUserId(params));
+        message.success('Saved');
+      } catch (e) {
+        message.error('Failed to save');
+      } finally {
+        hideMessage();
+      }
+    },
+    [api, user.type, user.userId],
+  );
+  return (
+    <Select
+      style={{ width: 300 }}
+      options={USER_STATES.map((state) => ({ value: state, label: state }))}
+      value={userStateDetails?.state}
+      onChange={handleChangeUserState}
+    />
+  );
+};

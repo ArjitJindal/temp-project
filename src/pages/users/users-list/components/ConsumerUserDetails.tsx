@@ -2,6 +2,7 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row, Typography } from 'antd';
 import { UserTransactionHistoryTable } from './UserTransactionHistoryTable';
+import { UserStateEditor } from './UserStateEditor';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -20,7 +21,7 @@ export const ConsumerUserDetails: React.FC<Props> = ({ user, columns }) => {
 
   return (
     <>
-      <Row justify="space-between" align="middle">
+      <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
         <Col>
           <Typography.Title level={5} style={{ margin: 0 }}>
             {getUserName(user)}
@@ -32,6 +33,11 @@ export const ConsumerUserDetails: React.FC<Props> = ({ user, columns }) => {
           </Col>
         </Feature>
       </Row>
+      <ProDescriptions column={2}>
+        <ProDescriptions.Item label="User Status" style={{ paddingBottom: 0 }}>
+          <UserStateEditor user={user} />
+        </ProDescriptions.Item>
+      </ProDescriptions>
       <Divider />
       <ProDescriptions<InternalConsumerUser>
         column={2}

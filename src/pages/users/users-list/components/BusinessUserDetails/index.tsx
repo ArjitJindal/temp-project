@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { UserTransactionHistoryTable } from '../UserTransactionHistoryTable';
 import UserManualRiskPanel from '../UserManualRiskPanel';
 import CollapsableSection from '../CollapsableSection';
+import { UserStateEditor } from '../UserStateEditor';
 import s from './styles.module.less';
 import PersonsTable from './PersonsTable';
 import { getUserName } from '@/utils/api/users';
@@ -25,7 +26,7 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
   const [isDirectorsCollapsed, setDirectorsCollapsed] = useState(true);
   return (
     <>
-      <Row justify="space-between" align="middle">
+      <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
         <Col>
           <Typography.Title level={3} style={{ margin: 0 }}>
             {getUserName(user)}
@@ -37,6 +38,11 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
           </Col>
         </Feature>
       </Row>
+      <ProDescriptions column={2}>
+        <ProDescriptions.Item label="User Status" style={{ paddingBottom: 0 }}>
+          <UserStateEditor user={user} />
+        </ProDescriptions.Item>
+      </ProDescriptions>
       <Divider />
       <ProDescriptions<InternalBusinessUser>
         column={2}

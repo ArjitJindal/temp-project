@@ -1,5 +1,19 @@
 import { neverReturn } from '../lang';
 import { ConsumerName, InternalBusinessUser, InternalConsumerUser, UserDetails } from '@/apis';
+import { UserState } from '@/apis/models/UserState';
+
+export const USER_STATES: UserState[] = [
+  'ACTIVE',
+  'BLOCKED',
+  'CREATED',
+  'DELETED',
+  'DORMANT',
+  'INACTIVE',
+  'SUSPENDED',
+  'TERMINATED',
+  'UNACCEPTABLE',
+  'UNDECIDED',
+];
 
 export function formatConsumerName(name: ConsumerName | undefined): string {
   const result = [name?.firstName, name?.middleName, name?.lastName].filter(Boolean).join(' ');

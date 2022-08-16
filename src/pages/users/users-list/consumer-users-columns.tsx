@@ -95,19 +95,9 @@ export function getConsumerUserColumns(
     {
       title: 'User Status',
       hideInSearch: true,
-      width: 120,
+      hideInDescriptions: true,
       render: (dom, entity) => {
         return entity.userStateDetails?.state;
-      },
-      valueType: 'textarea',
-    },
-    {
-      title: 'User Status Reason',
-      hideInSearch: true,
-      hideInTable: true,
-      width: 150,
-      render: (dom, entity) => {
-        return entity.userStateDetails?.reason;
       },
       valueType: 'textarea',
     },
