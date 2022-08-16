@@ -35,7 +35,7 @@ import UserLink from '@/components/UserLink';
 import handleResize from '@/components/ui/Table/utils';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { TransactionType } from '@/apis/models/TransactionType';
-import { paymentMethod } from '@/utils/paymentMethod';
+import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 export type CaseManagementItem = TransactionCaseManagement & {
@@ -200,6 +200,11 @@ function TableList() {
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
+        valueType: 'select',
+        fieldProps: {
+          options: transactionType,
+          allowClear: true,
+        },
         render: (dom, entity) => {
           return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
         },

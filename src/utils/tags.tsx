@@ -1,4 +1,5 @@
 import { PaymentMethodTag } from '../pages/case-management/components/PaymentTypeTag';
+import { TransactionTypeTag } from '../pages/case-management/components/TransactionTypeTag';
 
 export const paymentMethod: { value: string; label: any }[] = [
   {
@@ -28,5 +29,24 @@ export const paymentMethod: { value: string; label: any }[] = [
   {
     value: 'SWIFT',
     label: <PaymentMethodTag paymentMethod="SWIFT" />,
+  },
+];
+
+export const transactionType: { value: string; label: any }[] = [
+  {
+    value: 'DEPOSIT',
+    label: <TransactionTypeTag transactionType="DEPOSIT" />,
+  },
+  {
+    value: 'EXTERNAL_PAYMENT',
+    label: <TransactionTypeTag transactionType="EXTERNAL_PAYMENT" />,
+  },
+  {
+    value: 'WITHDRAWAL',
+    label: <TransactionTypeTag transactionType="WITHDRAWAL" />,
+  },
+  {
+    value: 'TRANSFER',
+    label: <TransactionTypeTag transactionType="TRANSFER" />,
   },
 ];

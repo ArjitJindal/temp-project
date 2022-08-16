@@ -4,11 +4,12 @@ import { Drawer } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { RouteMatch, useNavigate, useParams } from 'react-router';
+import CountryDisplay from 'src/components/ui/CountryDisplay/index';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
 import { getUserName } from '@/utils/api/users';
 import Table from '@/components/ui/Table';
-import { ApiException, TransactionCaseManagement } from '@/apis';
+import { ApiException, TransactionCaseManagement, TransactionType } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import {
@@ -28,9 +29,9 @@ import '../../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
-import { paymentMethod } from '@/utils/paymentMethod';
-import CountryDisplay from '@/components/ui/CountryDisplay';
+import { paymentMethod, transactionType } from '@/utils/tags';
 import handleResize from '@/components/ui/Table/utils';
+import { TransactionTypeTag } from '@/pages/case-management/components/TransactionTypeTag';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const actionRef = useRef<ActionType>();
@@ -107,8 +108,16 @@ const TableList = (props: RouteMatch<'id'>) => {
       {
         title: 'Transaction Type',
         dataIndex: 'type',
-        width: 100,
+        width: 175,
         ellipsis: true,
+        valueType: 'select',
+        fieldProps: {
+          options: transactionType,
+          allowClear: true,
+        },
+        render: (dom, entity) => {
+          return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
+        },
       },
       {
         title: 'Timestamp',
