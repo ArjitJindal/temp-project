@@ -90,6 +90,19 @@ export class DashboardStatsRepository {
               originUserId: '$originUserId',
             },
             rulesHit: { $sum: { $size: '$rulesHit' } },
+            transactionsHit: {
+              $sum: {
+                $switch: {
+                  branches: [
+                    {
+                      case: { $gt: [{ $size: '$rulesHit' }, 0] },
+                      then: 1,
+                    },
+                  ],
+                  default: 0,
+                },
+              },
+            },
           },
         },
         {
@@ -98,6 +111,7 @@ export class DashboardStatsRepository {
             date: '$_id.date',
             originUserId: '$_id.originUserId',
             rulesHit: '$rulesHit',
+            transactionsHit: '$transactionsHit',
           },
         },
         {
