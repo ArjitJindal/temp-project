@@ -131,6 +131,14 @@ export const METADATA_COLLECTION = (tenantId: string) => {
   return `${tenantId}-metadata`
 }
 
+export const WEBHOOK_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-webhooks`
+}
+
+export const WEBHOOK_DELIVERY_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-webhook-deliveries`
+}
+
 export const MONTH_DATE_FORMAT = '%Y-%m'
 export const DAY_DATE_FORMAT = '%Y-%m-%d'
 export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'

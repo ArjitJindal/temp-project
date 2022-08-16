@@ -39,6 +39,7 @@ async function getTenantScopeCredentials(
       Policy: JSON.stringify(
         new PolicyBuilder(tenantId)
           .s3()
+          .secretsManager()
           .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
           .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
           .build()

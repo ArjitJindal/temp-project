@@ -1,19 +1,11 @@
-import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
-import { Db, MongoClient } from 'mongodb'
+import { KinesisStreamEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
-import {
-  TRANSACTION_PRIMARY_KEY_IDENTIFIER,
-  TRANSACTION_EVENT_KEY_IDENTIFIER,
-  CONSUMER_USER_EVENT_KEY_IDENTIFIER,
-  USER_PRIMARY_KEY_IDENTIFIER,
-} from './constants'
 import {
   connectToDB,
   USER_EVENTS_COLLECTION,
   USERS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { unMarshallDynamoDBStream } from '@/utils/dynamodbStream'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -26,15 +18,20 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 
 const sqs = new AWS.SQS()
 
 async function transactionHandler(
-  mongoDb: MongoClient,
   tenantId: string,
   transaction: TransactionWithRulesResult
 ) {
+  logger.info(`Processing transaction ${transaction.transactionId}`)
+  const mongoDb = await connectToDB()
   const transactionsRepo = new TransactionRepository(tenantId, {
+    mongoDb,
+  })
+  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb,
   })
 
@@ -46,6 +43,11 @@ async function transactionHandler(
         ?.status ?? null
   }
   const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
+
+  // TODO: this is not very efficient, because we recalculate all the
+  // statistics for each transaction. Need to implement updating
+  // a single record in DB using transaction date
+  await dashboardStatsRepository.refreshStats()
 
   // Alerting
   if (currentStatus !== newStatus && newStatus !== 'ALLOW') {
@@ -69,7 +71,9 @@ async function transactionHandler(
   }
 }
 
-async function userHandler(db: Db, tenantId: string, user: Business | User) {
+async function userHandler(tenantId: string, user: Business | User) {
+  logger.info(`Processing user ${user.userId}`)
+  const db = (await connectToDB()).db()
   const userCollection = db.collection<Business | User>(
     USERS_COLLECTION(tenantId)
   )
@@ -78,11 +82,14 @@ async function userHandler(db: Db, tenantId: string, user: Business | User) {
   })
 }
 
-async function userEventHandler(
-  db: Db,
+async function consumerUserEventHandler(
   tenantId: string,
   userEvent: ConsumerUserEvent
 ) {
+  logger.info(
+    `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
+  )
+  const db = (await connectToDB()).db()
   const userEventCollection = db.collection<ConsumerUserEvent>(
     USER_EVENTS_COLLECTION(tenantId)
   )
@@ -100,10 +107,13 @@ async function userEventHandler(
 }
 
 async function transactionEventHandler(
-  db: Db,
   tenantId: string,
   transactionEvent: TransactionEvent
 ) {
+  logger.info(
+    `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
+  )
+  const db = (await connectToDB()).db()
   const transactionEventCollection = db.collection<TransactionEvent>(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
   )
@@ -118,81 +128,31 @@ async function transactionEventHandler(
   )
 }
 
+const handler = new TarponStreamConsumerBuilder()
+  .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
+    transactionHandler(tenantId, newTransaction)
+  )
+  .setUserHandler((tenantId, oldUser, newUser) =>
+    userHandler(tenantId, newUser)
+  )
+  .setConsumerUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
+    consumerUserEventHandler(tenantId, newUserEvent)
+  )
+  .setTransactionEventHandler(
+    (tenantId, oldTransactionEvent, newTransactionEvent) =>
+      transactionEventHandler(tenantId, newTransactionEvent)
+  )
+  .build()
+// NOTE: If we handle more entites, please add `localTarponChangeCaptureHandler(...)` to the corresponding
+// place that updates the entity to make local work
+
 export const tarponChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
     try {
-      const client = await connectToDB()
-      const db = client.db()
-      for (const record of event.Records) {
-        const payload: KinesisStreamRecordPayload = record.kinesis
-        const message: string = Buffer.from(payload.data, 'base64').toString()
-        const dynamoDBStreamObject = JSON.parse(message).dynamodb
-        const tenantId =
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-        const dashboardStatsRepository = new DashboardStatsRepository(
-          tenantId,
-          {
-            mongoDb: client,
-          }
-        )
-        if (
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-            TRANSACTION_PRIMARY_KEY_IDENTIFIER
-          )
-        ) {
-          const transaction = handlePrimaryItem(
-            message
-          ) as TransactionWithRulesResult
-          logger.info(`Processing transaction ${transaction.transactionId}`)
-          await transactionHandler(client, tenantId, transaction)
-          /*
-         todo: this is not very efficient, because we recalculate all the
-           statistics for each transaction. Need to implement updating
-           a single record in DB using transaction date
-         */
-          await dashboardStatsRepository.refreshStats()
-        } else if (
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-            USER_PRIMARY_KEY_IDENTIFIER
-          )
-        ) {
-          const user = handlePrimaryItem(message) as User
-          logger.info(`Processing user ${user.userId}`)
-          await userHandler(db, tenantId, user)
-        } else if (
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-            CONSUMER_USER_EVENT_KEY_IDENTIFIER
-          )
-        ) {
-          const userEvent = handlePrimaryItem(message) as ConsumerUserEvent
-          logger.info(
-            `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
-          )
-          await userEventHandler(db, tenantId, userEvent)
-        } else if (
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.includes(
-            TRANSACTION_EVENT_KEY_IDENTIFIER
-          )
-        ) {
-          const transactionEvent = handlePrimaryItem(
-            message
-          ) as TransactionEvent
-          logger.info(
-            `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
-          )
-          await transactionEventHandler(db, tenantId, transactionEvent)
-        }
-        // NOTE: If we handle more entites, please add `localTarponChangeCaptureHandler(...)` to the corresponding
-        // place that updates the entity to make local work
-      }
+      await handler(event)
     } catch (err) {
       logger.error(err)
       return 'Internal error'
     }
   }
 )
-
-const handlePrimaryItem = (message: string) => {
-  const stremNewImage = JSON.parse(message).dynamodb.NewImage
-  return unMarshallDynamoDBStream(JSON.stringify(stremNewImage))
-}

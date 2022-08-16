@@ -42,5 +42,6 @@ export const config: Config = {
     SLACK_CLIENT_SECRET: 'b195cb611e873c4737863ce27e885d39',
     SLACK_REDIRECT_URI:
       'https://dev.api.flagright.com/console/slack/oauth_redirect',
+    WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
   },
 }

@@ -25,7 +25,9 @@ export async function getCurrencyExchangeRate(
   }
   const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${sourceCurr}/${targetCurr}.min.json`
   try {
-    const rate = (await (await fetch(apiUri)).json())[targetCurr]
+    const rate = (
+      (await (await fetch(apiUri)).json()) as { [key: string]: number }
+    )[targetCurr]
     _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
     return rate
   } catch (e) {

@@ -23,10 +23,15 @@ const TYPE_PREFIX = 'type:'
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = 'features' | 'ruleActionAliases'
 
+export const TRANSACTION_PRIMARY_KEY_IDENTIFIER = 'transaction#primary'
+export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'
+export const CONSUMER_USER_EVENT_KEY_IDENTIFIER = 'consumer-user-event#'
+export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
+
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId?: string) => ({
-    PartitionKeyID: `${tenantId}#transaction#primary`,
+    PartitionKeyID: `${tenantId}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}`,
     SortKeyID: transactionId,
   }),
   // Attributes: refer to TransactionEvent
@@ -35,7 +40,7 @@ export const DynamoDbKeys = {
     transactionId: string,
     timestamp?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#transaction-event#${TRANSACTION_ID_PREFIX}${transactionId}`,
+    PartitionKeyID: `${tenantId}#${TRANSACTION_EVENT_KEY_IDENTIFIER}${TRANSACTION_ID_PREFIX}${transactionId}`,
     SortKeyID: `${timestamp}`,
   }),
   ALL_TRANSACTION: (
@@ -204,7 +209,7 @@ export const DynamoDbKeys = {
   }),
   // Attributes: refer to User / Business
   USER: (tenantId: string, userId?: string) => ({
-    PartitionKeyID: `${tenantId}#user#primary`,
+    PartitionKeyID: `${tenantId}#${USER_PRIMARY_KEY_IDENTIFIER}`,
     SortKeyID: userId,
   }),
   // Attributes: refer to UserEvent
@@ -213,7 +218,7 @@ export const DynamoDbKeys = {
     userId: string,
     timestamp?: number
   ) => ({
-    PartitionKeyID: `${tenantId}#consumer-user-event#${USER_ID_PREFIX}${userId}`,
+    PartitionKeyID: `${tenantId}#${CONSUMER_USER_EVENT_KEY_IDENTIFIER}${USER_ID_PREFIX}${userId}`,
     SortKeyID: `${timestamp}`,
   }),
   LIST: (tenantId: string, listName: string, indexName: string) => ({

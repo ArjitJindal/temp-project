@@ -73,9 +73,16 @@ export const TarponStackConstants = {
   ),
   LIST_IMPORTER_FUNCTION_NAME: getResourceNameForTarpon('ListImporterFunction'),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
-    getResourceNameForTarpon('TarponChangeCaptureKinesisConsumer'),
+    getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
   SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon('SlackAppFunction'),
   SLACK_ALERT_FUNCTION_NAME: getResourceNameForTarpon('SlackAlertFunction'),
+  WEBHOOK_DELIVERER_FUNCTION_NAME: getResourceNameForTarpon(
+    'WebhookDelivererFunction'
+  ),
+  WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
+    getResourceNameForTarpon(
+      'WebhookTarponChangeCaptureKinesisConsumerFunction'
+    ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
 }
 

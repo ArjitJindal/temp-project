@@ -122,7 +122,23 @@ export class CdkTarponStack extends cdk.Stack {
     })
 
     const slackAlertQueue = new Queue(this, 'SlackAlertQueue', {
-      visibilityTimeout: DEFAULT_LAMBDA_TIMEOUT,
+      visibilityTimeout: Duration.seconds(
+        DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+      ),
+    })
+
+    const webhookDeliveryDeadLetterQueue = new Queue(
+      this,
+      'WebhookDeliveryDeadLetterQueue'
+    )
+    const webhookDeliveryQueue = new Queue(this, 'WebhookDeliveryQueue', {
+      visibilityTimeout: Duration.seconds(
+        DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+      ),
+      deadLetterQueue: {
+        queue: webhookDeliveryDeadLetterQueue,
+        maxReceiveCount: 50,
+      },
     })
 
     /*
@@ -573,6 +589,20 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(slackAlertQueue, { batchSize: 1 })
     )
 
+    const { alias: webhookDelivererAlias } = this.createFunction(
+      {
+        name: TarponStackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
+        handler: 'app.webhookDeliveryHandler',
+        codePath: 'dist/webhook',
+      },
+      atlasFunctionProps
+    )
+    this.grantMongoDbAccess(webhookDelivererAlias)
+    webhookDeliveryQueue.grantConsumeMessages(webhookDelivererAlias)
+    webhookDelivererAlias.addEventSource(
+      new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
+    )
+
     /*
      * Hammerhead console functions
      */
@@ -605,6 +635,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Tarpon Kinesis Change capture consumer */
 
+    // MongoDB mirror handler
     const { alias: tarponChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
         {
@@ -629,6 +660,34 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
     slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
+
+    // Webhook handler
+    const { alias: webhookTarponChangeCaptureHandlerAlias } =
+      this.createFunction(
+        {
+          name: TarponStackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          handler: 'app.webhookTarponChangeCaptureHandler',
+          codePath: 'dist/webhook',
+        },
+        {
+          ...atlasFunctionProps,
+          environment: {
+            ...atlasFunctionProps.environment,
+            WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+          },
+          timeout: Duration.minutes(15),
+        }
+      )
+    webhookTarponChangeCaptureHandlerAlias.addEventSource(
+      new KinesisEventSource(tarponStream, {
+        batchSize: 1,
+        startingPosition: StartingPosition.LATEST,
+      })
+    )
+    webhookDeliveryQueue.grantSendMessages(
+      webhookTarponChangeCaptureHandlerAlias
+    )
+    this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerAlias)
 
     /* Hammerhead Kinesis Change capture consumer */
 

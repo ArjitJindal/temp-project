@@ -40,5 +40,6 @@ export const config: Config = {
     SLACK_CLIENT_ID: '2800969986821.3797458092182',
     SLACK_CLIENT_SECRET: 'b195cb611e873c4737863ce27e885d39',
     SLACK_REDIRECT_URI: 'https://${ngrok_url}/slack/oauth_redirect',
+    WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
   },
 }

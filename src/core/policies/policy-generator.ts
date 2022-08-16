@@ -60,6 +60,16 @@ export default class PolicyBuilder {
     return this
   }
 
+  secretsManager() {
+    this.statements.push({
+      Sid: 'AllowAllActionsOfTenantSecrets',
+      Action: ['secretsmanager:*'],
+      Effect: 'Allow',
+      Resource: [`arn:aws:secretsmanager:::secret:${this.tenantId}*`],
+    })
+    return this
+  }
+
   build(): PolicyDocument {
     return {
       Version: '2012-10-17',

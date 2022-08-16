@@ -45,5 +45,6 @@ export type Config = {
     SLACK_CLIENT_ID: string
     SLACK_CLIENT_SECRET: string
     SLACK_REDIRECT_URI: string
+    WEBHOOK_REQUEST_TIMEOUT_SEC: number
   }
 }

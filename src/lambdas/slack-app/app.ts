@@ -10,6 +10,7 @@ import fetch from 'node-fetch'
 import * as ejs from 'ejs'
 import { IncomingWebhook } from '@slack/webhook'
 import AWS from 'aws-sdk'
+import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -32,7 +33,7 @@ export const slackAppHandler = lambdaApi()(
       const code = event.queryStringParameters?.['code'] as string
       const tenantId = event.queryStringParameters?.['state'] as string
       try {
-        const response = await (
+        const response = (await (
           await fetch(
             'https://slack.com/api/oauth.v2.access?' +
               new URLSearchParams({
@@ -42,7 +43,7 @@ export const slackAppHandler = lambdaApi()(
                 code,
               })
           )
-        ).json()
+        ).json()) as OauthV2AccessResponse
         const slackWebhookURL = response?.incoming_webhook?.url
         if (!slackWebhookURL) {
           throw Error('Missing webhook url')
