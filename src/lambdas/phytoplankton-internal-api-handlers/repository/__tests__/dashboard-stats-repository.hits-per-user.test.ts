@@ -41,6 +41,7 @@ describe('Verify hits-per-user statistics', () => {
     expect(stats).toHaveLength(1)
     const [item] = stats
     expect(item.originUserId).toEqual(originUserId)
+    expect(item.transactionsHit).toEqual(1)
     expect(item.rulesHit).toEqual(hitRules.length)
   })
   test('Single transaction with uneven executed and hit rules', async () => {
@@ -104,6 +105,7 @@ describe('Verify hits-per-user statistics', () => {
     const [item] = stats
     expect(item.originUserId).toEqual(originUserId)
     expect(item.rulesHit).toEqual(hitRulesCount * transactionsCount)
+    expect(item.transactionsHit).toEqual(transactionsCount)
   })
   test('Large amount of transactions', async () => {
     const TENANT_ID = getTestTenantId()
@@ -136,7 +138,7 @@ describe('Verify hits-per-user statistics', () => {
     expect(stats).toHaveLength(1)
     const [item] = stats
     expect(item.originUserId).toEqual(originUserId)
-    expect(item.rulesHit).toEqual(transactionsCount)
+    expect(item.transactionsHit).toEqual(transactionsCount)
   })
 })
 

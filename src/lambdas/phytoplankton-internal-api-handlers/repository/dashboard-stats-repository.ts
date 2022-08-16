@@ -667,6 +667,7 @@ export class DashboardStatsRepository {
     {
       originUserId: string
       user: InternalConsumerUser | InternalBusinessUser | null
+      transactionsHit: number
       rulesHit: number
     }[]
   > {
@@ -681,6 +682,7 @@ export class DashboardStatsRepository {
     const result = await collection
       .aggregate<{
         _id: string
+        transactionsHit: number
         rulesHit: number
         user: InternalConsumerUser | InternalBusinessUser | null
       }>([
@@ -695,18 +697,19 @@ export class DashboardStatsRepository {
         {
           $group: {
             _id: '$originUserId',
+            transactionsHit: { $sum: '$transactionsHit' },
             rulesHit: { $sum: '$rulesHit' },
           },
         },
         {
-          $sort: { rulesHit: -1 },
+          $sort: { transactionsHit: -1 },
         },
         {
           $limit: 10,
         },
         {
           $match: {
-            rulesHit: {
+            transactionsHit: {
               $gte: 1,
             },
           },
@@ -730,6 +733,7 @@ export class DashboardStatsRepository {
     return result.map((x) => ({
       originUserId: x._id,
       user: x.user ?? null,
+      transactionsHit: x.transactionsHit,
       rulesHit: x.rulesHit,
     }))
   }

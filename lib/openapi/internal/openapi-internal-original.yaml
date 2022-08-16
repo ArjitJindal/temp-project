@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: http://localhost:3000
+  - url: 'http://localhost:3000'
 paths:
   /apikey:
     parameters: []
@@ -1380,7 +1380,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: 2020-01-04
+            - _id: '2020-01-04'
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -1465,15 +1465,17 @@ components:
             properties:
               originUserId:
                 type: string
-              rulesHit:
+              transactionsHit:
                 type: number
               user:
                 oneOf:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'
+              rulesHit:
+                type: number
             required:
               - originUserId
-              - rulesHit
+              - transactionsHit
       required:
         - data
     Comment:
@@ -1769,7 +1771,7 @@ components:
         - parameterValue
         - riskLevel
     ParameterAttributeRiskValues:
-      title: 'ParameterAttributeRiskValues'
+      title: ParameterAttributeRiskValues
       type: object
       x-examples:
         example-1:
