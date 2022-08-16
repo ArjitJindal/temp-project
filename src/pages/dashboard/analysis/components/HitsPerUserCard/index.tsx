@@ -118,8 +118,15 @@ export default function HitsPerUserCard() {
         if (user == null) {
           return dom;
         }
+        let startTimestamp;
+        let endTimestamp;
         const isBlocked =
           user.userStateDetails?.state === 'BLOCKED' || blockedUsers.includes(user.userId);
+        const [start, end] = dateRange ?? [];
+        if (start != null && end != null) {
+          startTimestamp = start.startOf('day').valueOf();
+          endTimestamp = end.endOf('day').valueOf();
+        }
         return (
           <Space>
             <Link
@@ -129,6 +136,7 @@ export default function HitsPerUserCard() {
                 {},
                 {
                   originUserId: user.userId,
+                  timestamp: `${startTimestamp},${endTimestamp}`,
                 },
               )}
             >
