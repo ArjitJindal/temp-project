@@ -43,13 +43,13 @@ const TableList: React.FC = () => {
       valueType: 'dateTime',
     },
     {
-      title: 'Total Users',
-      dataIndex: 'totalUsers',
+      title: 'Total Transactions',
+      dataIndex: 'totalTransactions',
       valueType: 'digit',
     },
     {
-      title: 'Imported Users',
-      dataIndex: 'importedUsers',
+      title: 'Imported Transactions',
+      dataIndex: 'importedTransactions',
       valueType: 'digit',
     },
     {
@@ -68,7 +68,7 @@ const TableList: React.FC = () => {
 
   const i18n = useI18n();
   return (
-    <PageWrapper title={i18n('menu.users.users-files')}>
+    <PageWrapper title={i18n('menu.import.import-transactions')}>
       <Table<TableListItem, TableListPagination>
         form={{
           labelWrap: true,
@@ -81,12 +81,9 @@ const TableList: React.FC = () => {
         columns={columns}
         columnsState={{
           persistenceType: 'localStorage',
-          persistenceKey: 'users-files-list',
+          persistenceKey: 'transactions-files-list',
         }}
-        toolBarRender={() => [
-          <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
-          <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
-        ]}
+        toolBarRender={() => [<FileImportButton type={'TRANSACTION'} />]}
       />
     </PageWrapper>
   );

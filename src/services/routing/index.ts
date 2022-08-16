@@ -9,9 +9,9 @@ import RiskLevelPage from '@/pages/risk-levels/risk-level';
 import RiskMyRulesPage from '@/pages/rules/my-rules';
 import RiskCreateRulePage from '@/pages/rules/create-rule';
 import RiskRequestNewPage from '@/pages/rules/request-new';
-import TransactionsTransactionsFilesPage from '@/pages/transactions/transactions-files';
+import TransactionsTransactionsFilesPage from '@/pages/import/import-transactions';
 import TransactionsTransactionsListPage from '@/pages/transactions/transactions-list';
-import UsersUsersFilesPage from '@/pages/users/users-files';
+import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem, TreeRouteItem } from '@/services/routing/types';
@@ -19,6 +19,7 @@ import SettingsPage from '@/pages/settings';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
+  const isImportFilesEnabled = useFeature('IMPORT_FILES');
   const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
   return useMemo(
     () => [
@@ -62,6 +63,7 @@ export function useRoutes(): RouteItem[] {
         path: '/transactions',
         icon: 'table',
         name: 'transactions',
+        hideChildrenInMenu: true,
         position: 'top',
         routes: [
           {
@@ -95,6 +97,7 @@ export function useRoutes(): RouteItem[] {
         path: '/users',
         icon: 'TeamOutlined',
         name: 'users',
+        hideChildrenInMenu: true,
         position: 'top',
         routes: [
           {
@@ -180,6 +183,28 @@ export function useRoutes(): RouteItem[] {
             },
           ]
         : []) as TreeRouteItem[]),
+      ...((isImportFilesEnabled
+        ? [
+            {
+              path: '/import',
+              name: 'import',
+              icon: 'ImportOutlined',
+              position: 'top',
+              routes: [
+                {
+                  name: 'import-users',
+                  path: '/import/import-users',
+                  component: UsersUsersFilesPage,
+                },
+                {
+                  name: 'import-transactions',
+                  path: '/import/import-transactions',
+                  component: TransactionsTransactionsFilesPage,
+                },
+              ],
+            },
+          ]
+        : []) as TreeRouteItem[]),
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -205,6 +230,6 @@ export function useRoutes(): RouteItem[] {
         hideInMenu: true,
       },
     ],
-    [isRiskLevelsEnabled, lastActiveTab],
+    [isImportFilesEnabled, isRiskLevelsEnabled, lastActiveTab],
   );
 }

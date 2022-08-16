@@ -11,6 +11,7 @@ import {
   SettingOutlined,
   UnorderedListOutlined,
   TeamOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import {
   browserName,
@@ -40,6 +41,7 @@ const icons = {
   dashboard: <DashboardOutlined />,
   smile: <SmileOutlined />,
   table: <TableOutlined />,
+  ImportOutlined: <ImportOutlined />,
 };
 
 function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {
