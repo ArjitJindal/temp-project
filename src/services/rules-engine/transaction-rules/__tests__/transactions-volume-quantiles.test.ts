@@ -93,15 +93,15 @@ describe('Sender/Receiver Parameters', () => {
       TEST_TENANT_ID,
       TEST_TRANSACTIONS,
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their average amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}`,
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their expected amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}`,
       },
       [
         null,
         null,
-        'Sender is spending 99 EUR above their average amount of 201 EUR',
-        'Sender is spending 199 EUR above their average amount of 201 EUR',
-        'Sender is spending 299 EUR above their average amount of 201 EUR',
-        'Receiver is receiving 299 EUR above their average amount of 201 EUR',
+        'Sender is spending 99 EUR above their expected amount of 201 EUR',
+        'Sender is spending 199 EUR above their expected amount of 201 EUR',
+        'Sender is spending 299 EUR above their expected amount of 201 EUR',
+        'Receiver is receiving 299 EUR above their expected amount of 201 EUR',
       ]
     )
   })

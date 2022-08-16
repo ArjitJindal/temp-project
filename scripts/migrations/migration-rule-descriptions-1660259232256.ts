@@ -42,7 +42,7 @@ const changes = [
   {
     ruleId: 'R-69',
     template:
-      "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their average amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}",
+      "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their expected amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}",
   },
   {
     ruleId: 'R-84',
