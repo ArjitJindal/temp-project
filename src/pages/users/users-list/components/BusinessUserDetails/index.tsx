@@ -1,7 +1,7 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row, Typography } from 'antd';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { UserTransactionHistoryTable } from '../UserTransactionHistoryTable';
 import UserManualRiskPanel from '../UserManualRiskPanel';
 import CollapsableSection from '../CollapsableSection';
@@ -24,6 +24,12 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
   const userId = user.userId;
   const [isShareholdersCollapsed, setShareholdersCollapsed] = useState(true);
   const [isDirectorsCollapsed, setDirectorsCollapsed] = useState(true);
+  const request = useCallback(
+    async () => ({
+      data: user || {},
+    }),
+    [user],
+  );
   return (
     <>
       <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
@@ -46,9 +52,7 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
       <Divider />
       <ProDescriptions<InternalBusinessUser>
         column={2}
-        request={async () => ({
-          data: user || {},
-        })}
+        request={request}
         params={{ id: getUserName(user) }}
         columns={columns}
       />

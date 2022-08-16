@@ -1,7 +1,7 @@
 import { ProColumns } from '@ant-design/pro-table';
 import { Typography } from 'antd';
 import moment from 'moment';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 interface TableItem {

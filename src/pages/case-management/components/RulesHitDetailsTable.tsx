@@ -1,5 +1,5 @@
 import { RuleActionStatus } from './RuleActionStatus';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { TransactionCaseManagement } from '@/apis';
 
 interface Props {

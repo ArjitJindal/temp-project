@@ -8,7 +8,7 @@ import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -174,6 +174,20 @@ export default () => {
     ],
     [handleActivationChange, ruleImplementations, rules, updatedRuleInstances, isPulseEnabled],
   );
+  const request = useCallback(async () => {
+    const [rules, ruleInstances, ruleImplementations] = await Promise.all([
+      api.getRules({}),
+      api.getRuleInstances({}),
+      api.getRuleImplementations({}),
+    ]);
+    setRules(_.keyBy(rules, 'id'));
+    setRuleImplementations(_.keyBy(ruleImplementations, 'name'));
+    return {
+      data: ruleInstances,
+      success: true,
+      total: ruleInstances.length,
+    };
+  }, [api]);
   const i18n = useI18n();
   // todo: i18n
   return (
@@ -186,20 +200,7 @@ export default () => {
           labelWrap: true,
         }}
         columns={columns}
-        request={async () => {
-          const [rules, ruleInstances, ruleImplementations] = await Promise.all([
-            api.getRules({}),
-            api.getRuleInstances({}),
-            api.getRuleImplementations({}),
-          ]);
-          setRules(_.keyBy(rules, 'id'));
-          setRuleImplementations(_.keyBy(ruleImplementations, 'name'));
-          return {
-            data: ruleInstances,
-            success: true,
-            total: ruleInstances.length,
-          };
-        }}
+        request={request}
         search={false}
         rowKey="id"
         columnsState={{

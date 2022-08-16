@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ProColumns } from '@ant-design/pro-table';
 import { Drawer } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
@@ -8,7 +8,7 @@ import CountryDisplay from 'src/components/ui/CountryDisplay/index';
 import { currencies } from '../../../utils/currencies';
 import { TransactionDetails } from './components/TransactionDetails';
 import { getUserName } from '@/utils/api/users';
-import Table from '@/components/ui/Table';
+import { Table, RequestFunctionType } from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement, TransactionType } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
@@ -34,7 +34,6 @@ import handleResize from '@/components/ui/Table/utils';
 import { TransactionTypeTag } from '@/pages/case-management/components/TransactionTypeTag';
 
 const TableList = (props: RouteMatch<'id'>) => {
-  const actionRef = useRef<ActionType>();
   const { id: transactionId } = useParams<'id'>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
@@ -302,6 +301,53 @@ const TableList = (props: RouteMatch<'id'>) => {
   }));
 
   const analytics = useAnalytics();
+  const request: RequestFunctionType<TransactionCaseManagement> = useCallback(
+    async (params, sorter) => {
+      const {
+        pageSize,
+        current,
+        timestamp,
+        transactionId,
+        type,
+        originCurrenciesFilter,
+        destinationCurrenciesFilter,
+        originUserId,
+        destinationUserId,
+        originMethodFilter,
+        destinationMethodFilter,
+      } = params;
+      const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
+      const [response, time] = await measure(() =>
+        api.getTransactionsList({
+          limit: pageSize!,
+          skip: (current! - 1) * pageSize!,
+          afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+          beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+          filterId: transactionId,
+          filterOriginUserId: originUserId,
+          filterDestinationUserId: destinationUserId,
+          filterOriginCurrencies: originCurrenciesFilter,
+          filterDestinationCurrencies: destinationCurrenciesFilter,
+          transactionType: type,
+          sortField: sortField ?? undefined,
+          sortOrder: sortOrder ?? undefined,
+          includeUsers: true,
+          filterOriginPaymentMethod: originMethodFilter,
+          filterDestinationPaymentMethod: destinationMethodFilter,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      return {
+        data: response.data,
+        success: true,
+        total: response.total,
+      };
+    },
+    [analytics, api],
+  );
 
   const i18n = useI18n();
   const navigate = useNavigate();
@@ -316,56 +362,12 @@ const TableList = (props: RouteMatch<'id'>) => {
             cell: ResizableTitle,
           },
         }}
-        actionRef={actionRef}
         rowKey="transactionId"
         search={{
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
-        request={async (params, sorter) => {
-          const {
-            pageSize,
-            current,
-            timestamp,
-            transactionId,
-            type,
-            originCurrenciesFilter,
-            destinationCurrenciesFilter,
-            originUserId,
-            destinationUserId,
-            originMethodFilter,
-            destinationMethodFilter,
-          } = params;
-          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
-          const [response, time] = await measure(() =>
-            api.getTransactionsList({
-              limit: pageSize!,
-              skip: (current! - 1) * pageSize!,
-              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-              filterId: transactionId,
-              filterOriginUserId: originUserId,
-              filterDestinationUserId: destinationUserId,
-              filterOriginCurrencies: originCurrenciesFilter,
-              filterDestinationCurrencies: destinationCurrenciesFilter,
-              transactionType: type,
-              sortField: sortField ?? undefined,
-              sortOrder: sortOrder ?? undefined,
-              includeUsers: true,
-              filterOriginPaymentMethod: originMethodFilter,
-              filterDestinationPaymentMethod: destinationMethodFilter,
-            }),
-          );
-          analytics.event({
-            title: 'Table Loaded',
-            time,
-          });
-          return {
-            data: response.data,
-            success: true,
-            total: response.total,
-          };
-        }}
+        request={request}
         columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',

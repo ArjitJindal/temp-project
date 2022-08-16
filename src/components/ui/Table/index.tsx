@@ -1,8 +1,10 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import type { ParamsType } from '@ant-design/pro-provider';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
+import { TableAction } from 'antd/lib/table/interface';
+import _ from 'lodash';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
 import {
@@ -17,13 +19,17 @@ import {
 } from '@/utils/asyncResource';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 
+export type TableActionType = {
+  reload: () => void;
+};
+
 export type ResponsePayload<T> = {
   success?: boolean;
   total?: number;
   data: Array<T | T[]>;
 };
 
-type RequestFunctionType<T, Params> = (
+export type RequestFunctionType<T, Params extends object = ParamsType> = (
   params: Params & {
     pageSize?: number;
     current?: number;
@@ -33,9 +39,10 @@ type RequestFunctionType<T, Params> = (
   filter: Record<string, React.ReactText[] | null>,
 ) => Promise<ResponsePayload<T>>;
 
-interface OverridenProps<T, Params> {
+interface OverridenProps<T, Params extends object = ParamsType> {
   request?: RequestFunctionType<T, Params>;
   pagination?: boolean;
+  actionRef?: React.Ref<TableActionType>;
 }
 
 interface Props<T, Params extends object, ValueType>
@@ -86,9 +93,9 @@ type ParamsState<Params extends object = ParamsType> = {
   sort: Record<string, SortOrder>;
 };
 
-export default function Table<T, Params extends object = ParamsType, ValueType = 'text'>(
+export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>(
   props: Props<T, Params, ValueType>,
-) {
+) => {
   const {
     disableStripedColoring = false,
     disableExpandedRowPadding = false,
@@ -99,6 +106,7 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
     pagination,
     options = undefined,
     initialParams,
+    actionRef,
     ...rest
   } = props;
 
@@ -116,7 +124,12 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
     }>
   >(dataSource ? success({ total: dataSource.length, items: [...dataSource] }) : init());
 
-  const [firstRequest] = useState<RequestFunctionType<T, Params> | undefined>(() => request);
+  useImperativeHandle<TableActionType, TableActionType>(actionRef, () => ({
+    reload() {
+      setParams(_.cloneDeep(params));
+    },
+  }));
+
   // todo: implement cancelation
   const handleRequest = useCallback(
     (
@@ -127,9 +140,9 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
       sort: Record<string, SortOrder>,
       filter: Record<string, React.ReactText[] | null>,
     ) => {
-      if (firstRequest != null) {
+      if (request != null) {
         setResponseData((state) => loading(getOr(state, null)));
-        firstRequest(params, sort, filter)
+        request(params, sort, filter)
           .then((results) => {
             setResponseData(
               success({
@@ -145,7 +158,7 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
           });
       }
     },
-    [firstRequest],
+    [request],
   );
 
   const triggerRequest = useCallback(() => {
@@ -230,4 +243,4 @@ export default function Table<T, Params extends object = ParamsType, ValueType =
       )}
     </div>
   );
-}
+};

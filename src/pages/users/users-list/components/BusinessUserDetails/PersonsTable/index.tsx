@@ -2,7 +2,7 @@ import { Tag, Typography } from 'antd';
 import React from 'react';
 import s from './styles.module.less';
 import { Address, LegalDocument, Person } from '@/apis';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { formatConsumerName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 

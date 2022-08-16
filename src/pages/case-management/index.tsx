@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import type { ProColumns } from '@ant-design/pro-table';
 import { Drawer, message } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
@@ -13,7 +13,7 @@ import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { TransactionTypeTag } from './components/TransactionTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
 import { currencies } from '@/utils/currencies';
-import Table from '@/components/ui/Table';
+import { Table, RequestFunctionType, TableActionType } from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
@@ -51,7 +51,7 @@ export type CaseManagementItem = TransactionCaseManagement & {
 
 function TableList() {
   const { id: transactionId } = useParams<'id'>();
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
@@ -537,6 +537,91 @@ function TableList() {
     }),
   }));
   const i18n = useI18n();
+  const request: RequestFunctionType<CaseManagementItem, TableSearchParams> = useCallback(
+    async (params, sorter) => {
+      const {
+        pageSize,
+        current,
+        timestamp,
+        transactionId,
+        rulesHitFilter,
+        rulesExecutedFilter,
+        originCurrenciesFilter,
+        destinationCurrenciesFilter,
+        originUserId,
+        destinationUserId,
+        type,
+        status,
+        originMethodFilter,
+        destinationMethodFilter,
+      } = params;
+      const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
+      pushParamsToNavigation(params);
+      const [response, time] = await measure(() =>
+        api.getTransactionsList({
+          limit: pageSize!,
+          skip: (current! - 1) * pageSize!,
+          afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+          beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+          filterId: transactionId,
+          filterRulesHit: rulesHitFilter,
+          filterRulesExecuted: rulesExecutedFilter,
+          filterOutStatus: 'ALLOW',
+          filterStatus: status,
+          filterOriginCurrencies: originCurrenciesFilter,
+          filterDestinationCurrencies: destinationCurrenciesFilter,
+          filterOriginUserId: originUserId,
+          filterDestinationUserId: destinationUserId,
+          transactionType: type,
+          sortField: sortField ?? undefined,
+          sortOrder: sortOrder ?? undefined,
+          includeUsers: true,
+          includeEvents: true,
+          filterOriginPaymentMethod: originMethodFilter,
+          filterDestinationPaymentMethod: destinationMethodFilter,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      const data: CaseManagementItem[][] = response.data.map(
+        (item, index): CaseManagementItem[] => {
+          const dataItem = {
+            index,
+            rowKey: item.transactionId ?? `${index}`,
+            isFirstRow: true,
+            isLastRow: true,
+            ruleName: null,
+            ruleDescription: null,
+            ...item,
+            rowSpan: 1,
+          };
+          if (item.hitRules.length === 0) {
+            return [dataItem];
+          }
+          return item.hitRules.map(
+            (rule, i): CaseManagementItem => ({
+              ...dataItem,
+              rowSpan: i === 0 ? item.hitRules.length : 0,
+              isFirstRow: i === 0,
+              isLastRow: i === item.hitRules.length - 1,
+              rowKey: `${item.transactionId}#${i}`,
+              ruleName: rule.ruleName,
+              ruleDescription: rule.ruleDescription,
+            }),
+          );
+        },
+      );
+
+      return {
+        data: data,
+        success: true,
+        total: response.total,
+      };
+    },
+    [analytics, api, pushParamsToNavigation],
+  );
   return (
     <PageWrapper title={i18n('menu.case-management')}>
       <Table<CaseManagementItem, TableSearchParams>
@@ -561,88 +646,7 @@ function TableList() {
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
-        request={async (params, sorter) => {
-          const {
-            pageSize,
-            current,
-            timestamp,
-            transactionId,
-            rulesHitFilter,
-            rulesExecutedFilter,
-            originCurrenciesFilter,
-            destinationCurrenciesFilter,
-            originUserId,
-            destinationUserId,
-            type,
-            status,
-            originMethodFilter,
-            destinationMethodFilter,
-          } = params;
-          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
-          pushParamsToNavigation(params);
-          const [response, time] = await measure(() =>
-            api.getTransactionsList({
-              limit: pageSize!,
-              skip: (current! - 1) * pageSize!,
-              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-              filterId: transactionId,
-              filterRulesHit: rulesHitFilter,
-              filterRulesExecuted: rulesExecutedFilter,
-              filterOutStatus: 'ALLOW',
-              filterStatus: status,
-              filterOriginCurrencies: originCurrenciesFilter,
-              filterDestinationCurrencies: destinationCurrenciesFilter,
-              filterOriginUserId: originUserId,
-              filterDestinationUserId: destinationUserId,
-              transactionType: type,
-              sortField: sortField ?? undefined,
-              sortOrder: sortOrder ?? undefined,
-              includeUsers: true,
-              includeEvents: true,
-              filterOriginPaymentMethod: originMethodFilter,
-              filterDestinationPaymentMethod: destinationMethodFilter,
-            }),
-          );
-          analytics.event({
-            title: 'Table Loaded',
-            time,
-          });
-          const data: CaseManagementItem[][] = response.data.map(
-            (item, index): CaseManagementItem[] => {
-              const dataItem = {
-                index,
-                rowKey: item.transactionId ?? `${index}`,
-                isFirstRow: true,
-                isLastRow: true,
-                ruleName: null,
-                ruleDescription: null,
-                ...item,
-                rowSpan: 1,
-              };
-              if (item.hitRules.length === 0) {
-                return [dataItem];
-              }
-              return item.hitRules.map(
-                (rule, i): CaseManagementItem => ({
-                  ...dataItem,
-                  rowSpan: i === 0 ? item.hitRules.length : 0,
-                  isFirstRow: i === 0,
-                  isLastRow: i === item.hitRules.length - 1,
-                  rowKey: `${item.transactionId}#${i}`,
-                  ruleName: rule.ruleName,
-                  ruleDescription: rule.ruleDescription,
-                }),
-              );
-            },
-          );
-
-          return {
-            data: data,
-            success: true,
-            total: response.total,
-          };
-        }}
+        request={request}
         toolBarRender={() => [
           <Feature name="SLACK_ALERTS">
             <AddToSlackButton />

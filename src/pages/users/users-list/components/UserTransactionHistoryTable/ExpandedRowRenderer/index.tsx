@@ -1,7 +1,5 @@
-import moment from 'moment';
 import { TransactionEvent } from '@/apis';
-import Table from '@/components/ui/Table';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { Table } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 

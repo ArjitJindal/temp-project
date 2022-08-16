@@ -1,7 +1,6 @@
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
 import { Link } from 'react-router-dom';
-import moment from 'moment';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import style from './style.module.less';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { RuleActionStatus } from '@/pages/case-management/components/RuleActionStatus';
@@ -12,9 +11,8 @@ import {
   TransactionEvent,
 } from '@/apis';
 import { useApi } from '@/api';
-import Table from '@/components/ui/Table';
+import { RequestFunctionType, Table } from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
-import { DEFAULT_DATE_DISPLAY_FORMAT, DEFAULT_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
@@ -70,6 +68,53 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
       data: Array<TransactionCaseManagement>;
     }>
   >(init());
+  const request: RequestFunctionType<DataItem> = useCallback(
+    async (params, sorter, filter) => {
+      const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
+
+      const directionFilter = (params ?? {})['direction'] ?? [];
+      const showIncoming = directionFilter.indexOf('incoming') !== -1;
+      const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
+
+      const statusFilter = (params ?? {})['status'] ?? [];
+
+      const newParams: DefaultApiGetTransactionsListRequest = {
+        ...params,
+        skip: ((params.current ?? 1) - 1) * DEFAULT_PAGE_SIZE,
+        limit: DEFAULT_PAGE_SIZE,
+        beforeTimestamp: Date.now(),
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        includeEvents: true,
+      };
+
+      if (showOutgoing) {
+        newParams.filterOriginUserId = userId;
+      } else if (showIncoming) {
+        newParams.filterDestinationUserId = userId;
+      } else {
+        newParams.filterUserId = userId;
+      }
+
+      if (statusFilter.indexOf('ALLOW') !== -1) {
+        newParams.filterStatus = 'ALLOW';
+      } else if (statusFilter.indexOf('FLAG') !== -1) {
+        newParams.filterStatus = 'FLAG';
+      } else if (statusFilter.indexOf('BLOCK') !== -1) {
+        newParams.filterStatus = 'BLOCK';
+      } else if (statusFilter.indexOf('SUSPEND') !== -1) {
+        newParams.filterStatus = 'SUSPEND';
+      } else if (statusFilter.indexOf('WHITELIST') !== -1) {
+        newParams.filterStatus = 'WHITELIST';
+      }
+
+      return api.getTransactionsList(newParams).then((result) => ({
+        total: result.total,
+        data: prepareTableData(userId, result.data),
+      }));
+    },
+    [api, userId],
+  );
 
   useEffect(() => {
     let isCanceled = false;
@@ -278,50 +323,7 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
           reload: false,
         }}
         pagination={false}
-        request={async (params, sorter, filter) => {
-          const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
-
-          const directionFilter = (params ?? {})['direction'] ?? [];
-          const showIncoming = directionFilter.indexOf('incoming') !== -1;
-          const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
-
-          const statusFilter = (params ?? {})['status'] ?? [];
-
-          const newParams: DefaultApiGetTransactionsListRequest = {
-            ...params,
-            skip: ((params.current ?? 1) - 1) * DEFAULT_PAGE_SIZE,
-            limit: DEFAULT_PAGE_SIZE,
-            beforeTimestamp: Date.now(),
-            sortField: sortField ?? undefined,
-            sortOrder: sortOrder ?? undefined,
-            includeEvents: true,
-          };
-
-          if (showOutgoing) {
-            newParams.filterOriginUserId = userId;
-          } else if (showIncoming) {
-            newParams.filterDestinationUserId = userId;
-          } else {
-            newParams.filterUserId = userId;
-          }
-
-          if (statusFilter.indexOf('ALLOW') !== -1) {
-            newParams.filterStatus = 'ALLOW';
-          } else if (statusFilter.indexOf('FLAG') !== -1) {
-            newParams.filterStatus = 'FLAG';
-          } else if (statusFilter.indexOf('BLOCK') !== -1) {
-            newParams.filterStatus = 'BLOCK';
-          } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-            newParams.filterStatus = 'SUSPEND';
-          } else if (statusFilter.indexOf('WHITELIST') !== -1) {
-            newParams.filterStatus = 'WHITELIST';
-          }
-
-          return api.getTransactionsList(newParams).then((result) => ({
-            total: result.total,
-            data: prepareTableData(userId, result.data),
-          }));
-        }}
+        request={request}
       />
     </div>
   );

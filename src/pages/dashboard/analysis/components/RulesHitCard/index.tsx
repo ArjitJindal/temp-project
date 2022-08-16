@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker, Row, Col } from 'antd';
-import { ActionType } from '@ant-design/pro-table';
-import { useEffect, useRef, useState } from 'react';
-import { ProColumns, RequestData } from '@ant-design/pro-table/lib/typing';
+import { useCallback, useState } from 'react';
+import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { RangeValue } from 'rc-picker/lib/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
@@ -12,7 +11,7 @@ import header from '../dashboardutils';
 import style from '../../style.module.less';
 import { DashboardStatsRulesCountData, Rule } from '@/apis';
 import { useApi } from '@/api';
-import Table, { ResponsePayload } from '@/components/ui/Table';
+import { Table, ResponsePayload } from '@/components/ui/Table';
 import ResizableTitle from '@/utils/table-utils';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
@@ -32,13 +31,6 @@ export default function RuleHitCard() {
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
-
-  const actionRef = useRef<ActionType>();
-  useEffect(() => {
-    if (actionRef.current) {
-      actionRef.current?.reload();
-    }
-  }, [dateRange]);
 
   const columns: ProColumns<DashboardStatsRulesCountData>[] = [
     {
@@ -89,13 +81,37 @@ export default function RuleHitCard() {
       onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
+  const request = useCallback(async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
+    const [rules] = await Promise.all([api.getRules({})]);
+    setRules(_.keyBy(rules, 'id'));
+    let startTimestamp = moment().subtract(1, 'day').valueOf();
+    let endTimestamp = Date.now();
+
+    const [start, end] = dateRange ?? [];
+    if (start != null && end != null) {
+      startTimestamp = start.startOf('day').valueOf();
+      endTimestamp = end.endOf('day').valueOf();
+    }
+    const [result] = await Promise.all([
+      api.getDashboardStatsRuleHit({
+        startTimestamp,
+        endTimestamp,
+      }),
+    ]);
+    setRulesHitData(result.data);
+    setLoading(false);
+    return {
+      success: true,
+      total: result.data.length,
+      data: result.data,
+    };
+  }, [api, dateRange]);
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
         <Col span={12}>
           <Table<DashboardStatsRulesCountData>
-            actionRef={actionRef}
             form={{
               labelWrap: true,
             }}
@@ -112,31 +128,7 @@ export default function RuleHitCard() {
             toolBarRender={() => [
               <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />,
             ]}
-            request={async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
-              const [rules] = await Promise.all([api.getRules({})]);
-              setRules(_.keyBy(rules, 'id'));
-              let startTimestamp = moment().subtract(1, 'day').valueOf();
-              let endTimestamp = Date.now();
-
-              const [start, end] = dateRange ?? [];
-              if (start != null && end != null) {
-                startTimestamp = start.startOf('day').valueOf();
-                endTimestamp = end.endOf('day').valueOf();
-              }
-              const [result] = await Promise.all([
-                api.getDashboardStatsRuleHit({
-                  startTimestamp,
-                  endTimestamp,
-                }),
-              ]);
-              setRulesHitData(result.data);
-              setLoading(false);
-              return {
-                success: true,
-                total: result.data.length,
-                data: result.data,
-              };
-            }}
+            request={request}
             defaultSize={'small'}
             pagination={false}
             options={{

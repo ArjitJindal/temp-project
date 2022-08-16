@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-
 import { ActionType, ProColumns } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
@@ -12,7 +11,7 @@ import header from '../dashboardutils';
 import s from './styles.module.less';
 import { TableItem } from './types';
 import { useApi } from '@/api';
-import Table, { ResponsePayload } from '@/components/ui/Table';
+import { Table, ResponsePayload } from '@/components/ui/Table';
 import ResizableTitle from '@/utils/table-utils';
 import handleResize from '@/components/ui/Table/utils';
 import Button from '@/components/ui/Button';
@@ -161,11 +160,32 @@ export default function HitsPerUserCard() {
       onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
+  const request = useCallback(async (): Promise<ResponsePayload<TableItem>> => {
+    let startTimestamp = moment().subtract(1, 'day').valueOf();
+    let endTimestamp = Date.now();
+
+    const [start, end] = dateRange ?? [];
+    if (start != null && end != null) {
+      startTimestamp = start.startOf('day').valueOf();
+      endTimestamp = end.endOf('day').valueOf();
+    }
+
+    const result = await api.getDashboardStatsHitsPerUser({
+      startTimestamp,
+      endTimestamp,
+    });
+    setBlockedUsers([]);
+
+    return {
+      success: true,
+      total: result.data.length,
+      data: result.data,
+    };
+  }, [api, dateRange]);
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Table<TableItem>
-        actionRef={actionRef}
         form={{
           labelWrap: true,
         }}
@@ -182,28 +202,7 @@ export default function HitsPerUserCard() {
         search={false}
         columns={mergeColumns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        request={async (): Promise<ResponsePayload<TableItem>> => {
-          let startTimestamp = moment().subtract(1, 'day').valueOf();
-          let endTimestamp = Date.now();
-
-          const [start, end] = dateRange ?? [];
-          if (start != null && end != null) {
-            startTimestamp = start.startOf('day').valueOf();
-            endTimestamp = end.endOf('day').valueOf();
-          }
-
-          const result = await api.getDashboardStatsHitsPerUser({
-            startTimestamp,
-            endTimestamp,
-          });
-          setBlockedUsers([]);
-
-          return {
-            success: true,
-            total: result.data.length,
-            data: result.data,
-          };
-        }}
+        request={request}
         pagination={false}
         options={{
           density: false,

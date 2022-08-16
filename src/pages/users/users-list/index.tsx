@@ -1,10 +1,9 @@
 import { Drawer, Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
-import { useEffect, useRef, useState } from 'react';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import { useCallback, useEffect, useState } from 'react';
+import type { ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
-import type { ResizeCallbackData } from 'react-resizable';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.module.less';
 import UserRiskTag from './components/UserRiskTag';
@@ -12,7 +11,7 @@ import { ConsumerUserDetails } from './components/ConsumerUserDetails';
 import { BusinessUserDetails } from './components/BusinessUserDetails';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -35,7 +34,6 @@ import { useI18n } from '@/locales';
 import handleResize from '@/components/ui/Table/utils';
 
 const BusinessUsersTab = (props: { id?: string }) => {
-  const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalBusinessUser>>(init());
   const api = useApi();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
@@ -94,9 +92,32 @@ const BusinessUsersTab = (props: { id?: string }) => {
       onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
-
   const analytics = useAnalytics();
   const navigate = useNavigate();
+  const request = useCallback(
+    async (params) => {
+      const { pageSize, current, userId, createdTimestamp } = params;
+      const [response, time] = await measure(() =>
+        api.getBusinessUsersList({
+          limit: pageSize!,
+          skip: (current! - 1) * pageSize!,
+          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      return {
+        data: response.data,
+        success: true,
+        total: response.total,
+      };
+    },
+    [analytics, api],
+  );
 
   return (
     <>
@@ -104,7 +125,6 @@ const BusinessUsersTab = (props: { id?: string }) => {
         form={{
           labelWrap: true,
         }}
-        actionRef={actionRef}
         rowKey="userId"
         search={{
           labelWidth: 120,
@@ -117,29 +137,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
         className={styles.table}
         style={{ tableLayout: 'fixed' }}
         scroll={{ x: 1300 }}
-        request={async (params) => {
-          const { pageSize, current, userId, createdTimestamp } = params;
-          const [response, time] = await measure(() =>
-            api.getBusinessUsersList({
-              limit: pageSize!,
-              skip: (current! - 1) * pageSize!,
-              afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-              beforeTimestamp: createdTimestamp
-                ? moment(createdTimestamp[1]).valueOf()
-                : Date.now(),
-              filterId: userId,
-            }),
-          );
-          analytics.event({
-            title: 'Table Loaded',
-            time,
-          });
-          return {
-            data: response.data,
-            success: true,
-            total: response.total,
-          };
-        }}
+        request={request}
         columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',
@@ -163,7 +161,6 @@ const BusinessUsersTab = (props: { id?: string }) => {
 };
 
 const ConsumerUsersTab = (props: { id?: string }) => {
-  const actionRef = useRef<ActionType>();
   const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
@@ -239,6 +236,30 @@ const ConsumerUsersTab = (props: { id?: string }) => {
 
   const analytics = useAnalytics();
   const navigate = useNavigate();
+  const request = useCallback(
+    async (params) => {
+      const { pageSize, current, userId, createdTimestamp } = params;
+      const [response, time] = await measure(() =>
+        api.getConsumerUsersList({
+          limit: pageSize!,
+          skip: (current! - 1) * pageSize!,
+          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      return {
+        data: response.data,
+        success: true,
+        total: response.total,
+      };
+    },
+    [analytics, api],
+  );
 
   return (
     <>
@@ -246,7 +267,6 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         form={{
           labelWrap: true,
         }}
-        actionRef={actionRef}
         rowKey="userId"
         search={{
           labelWidth: 120,
@@ -258,29 +278,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
         }}
         className={styles.table}
         scroll={{ x: 500 }}
-        request={async (params) => {
-          const { pageSize, current, userId, createdTimestamp } = params;
-          const [response, time] = await measure(() =>
-            api.getConsumerUsersList({
-              limit: pageSize!,
-              skip: (current! - 1) * pageSize!,
-              afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-              beforeTimestamp: createdTimestamp
-                ? moment(createdTimestamp[1]).valueOf()
-                : Date.now(),
-              filterId: userId,
-            }),
-          );
-          analytics.event({
-            title: 'Table Loaded',
-            time,
-          });
-          return {
-            data: response.data,
-            success: true,
-            total: response.total,
-          };
-        }}
+        request={request}
         columns={mergeColumns}
         columnsState={{
           persistenceType: 'localStorage',

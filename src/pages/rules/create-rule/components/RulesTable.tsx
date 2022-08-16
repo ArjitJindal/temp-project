@@ -1,6 +1,5 @@
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
-import { useMemo, useRef, useState } from 'react';
-import type { ResizeCallbackData } from 'react-resizable';
+import type { ProColumns } from '@ant-design/pro-table';
+import { useCallback, useMemo, useState } from 'react';
 import style from '../style.module.less';
 import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
@@ -8,7 +7,7 @@ import { Rule, RuleImplementation } from '@/apis';
 import { useApi } from '@/api';
 import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import ResizableTitle from '@/utils/table-utils';
 import handleResize from '@/components/ui/Table/utils';
@@ -21,7 +20,6 @@ interface Props {
 export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule }) => {
   const user = useAuth0User();
   const api = useApi();
-  const actionRef = useRef<ActionType>();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
@@ -110,6 +108,14 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       onResize: handleResize(index, setUpdatedColumnWidth),
     }),
   }));
+  const request = useCallback(async () => {
+    const rules = await api.getRules({});
+    return {
+      data: rules,
+      success: true,
+      total: rules.length,
+    };
+  }, [api]);
 
   return (
     <Table<Rule>
@@ -127,19 +133,11 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         return index % 2 === 0 ? style.tableRowLight : `${style.tableRowDark} ${style.rowDark}`;
       }}
       scroll={{ x: 1300 }}
-      actionRef={actionRef}
       pagination={false}
       rowKey="id"
       search={false}
       toolBarRender={() => (isAtLeast(user, UserRole.ROOT) ? [<RuleCreationForm />] : [])}
-      request={async () => {
-        const rules = await api.getRules({});
-        return {
-          data: rules,
-          success: true,
-          total: rules.length,
-        };
-      }}
+      request={request}
       columns={mergeColumns}
     />
   );

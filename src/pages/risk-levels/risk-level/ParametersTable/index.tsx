@@ -4,7 +4,7 @@ import { ParameterName, ParameterSettings, ParameterValues, RiskLevelTableItem }
 import { PARAMETERS } from './consts';
 import style from './style.module.less';
 import ValuesTable from './ValuesTable';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResource';
 import { neverReturn } from '@/utils/lang';
 import ActivityIndicator from '@/pages/risk-levels/risk-level/ParametersTable/ActivityIndicator';

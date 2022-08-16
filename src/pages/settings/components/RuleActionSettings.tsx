@@ -2,7 +2,7 @@ import { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Input, message, Space, Tooltip, Typography } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { useApi } from '@/api';

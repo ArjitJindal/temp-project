@@ -1,11 +1,11 @@
-import React, { useRef } from 'react';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import React from 'react';
+import type { ProColumns } from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import { useI18n } from '@/locales';
 
 function getStatusColor(status: string): string {
@@ -21,8 +21,6 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
-  const actionRef = useRef<ActionType>();
-
   const columns: ProColumns<TableListItem>[] = [
     {
       title: 'ID',
@@ -74,7 +72,6 @@ const TableList: React.FC = () => {
           labelWrap: true,
         }}
         headerTitle="Files"
-        actionRef={actionRef}
         rowKey="id"
         search={false}
         request={files}

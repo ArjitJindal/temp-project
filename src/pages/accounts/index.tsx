@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ActionType, ProColumns } from '@ant-design/pro-table';
+import React, { useCallback, useRef } from 'react';
+import { ProColumns } from '@ant-design/pro-table';
 import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
@@ -10,14 +10,14 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
-import Table from '@/components/ui/Table';
+import { Table, TableActionType } from '@/components/ui/Table';
 import { useI18n } from '@/locales';
 import COLORS from '@/components/ui/colors';
 
 export default function () {
   const api = useApi();
   const user = useAuth0User();
-  const actionRef = useRef<ActionType>();
+  const actionRef = useRef<TableActionType>(null);
 
   function refreshTable() {
     if (actionRef.current) {
@@ -94,6 +94,21 @@ export default function () {
   }
 
   const analytics = useAnalytics();
+  const request = useCallback(async () => {
+    const [accounts, time] = await measure(() => api.getAccounts());
+    analytics.event({
+      title: 'Table Loaded',
+      time,
+    });
+    const filteredAccounts = accounts.filter(
+      (account) => parseUserRole(account.role) !== UserRole.ROOT,
+    );
+    return {
+      data: filteredAccounts,
+      success: true,
+      total: filteredAccounts.length,
+    };
+  }, [analytics, api]);
 
   const i18n = useI18n();
   // todo: i18n
@@ -110,21 +125,7 @@ export default function () {
         toolBarRender={() => {
           return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];
         }}
-        request={async () => {
-          const [accounts, time] = await measure(() => api.getAccounts());
-          analytics.event({
-            title: 'Table Loaded',
-            time,
-          });
-          const filteredAccounts = accounts.filter(
-            (account) => parseUserRole(account.role) !== UserRole.ROOT,
-          );
-          return {
-            data: filteredAccounts,
-            success: true,
-            total: filteredAccounts.length,
-          };
-        }}
+        request={request}
         columns={columns}
         columnsState={{
           persistenceType: 'localStorage',

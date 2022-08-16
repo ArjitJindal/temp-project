@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { message, Slider } from 'antd';
 import { ProColumns } from '@ant-design/pro-table/es/typing';
-import Table from '@/components/ui/Table';
+import { Table } from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import {
   AsyncResource,
