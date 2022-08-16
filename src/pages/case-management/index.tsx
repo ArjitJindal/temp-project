@@ -12,7 +12,6 @@ import { AddToSlackButton } from './components/AddToSlackButton';
 import { PaymentMethodTag } from './components/PaymentTypeTag';
 import { TransactionTypeTag } from './components/TransactionTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { currencies } from '@/utils/currencies';
 import Table from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement } from '@/apis';
@@ -36,6 +35,8 @@ import UserLink from '@/components/UserLink';
 import handleResize from '@/components/ui/Table/utils';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { TransactionType } from '@/apis/models/TransactionType';
+import { paymentMethod } from '@/utils/paymentMethod';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -227,7 +228,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          return <TimestampDisplay timestamp={transaction.timestamp} />;
         },
       },
       {
@@ -496,6 +497,28 @@ function TableList() {
           mode: 'multiple',
         },
       },
+      {
+        title: 'Origin Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'originMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
+      {
+        title: 'Destination Method',
+        hideInTable: true,
+        width: 120,
+        dataIndex: 'destinationMethodFilter',
+        valueType: 'select',
+        fieldProps: {
+          options: paymentMethod,
+          allowClear: true,
+        },
+      },
     ],
     [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
   );
@@ -547,6 +570,8 @@ function TableList() {
             destinationUserId,
             type,
             status,
+            originMethodFilter,
+            destinationMethodFilter,
           } = params;
           const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
           pushParamsToNavigation(params);
@@ -570,6 +595,8 @@ function TableList() {
               sortOrder: sortOrder ?? undefined,
               includeUsers: true,
               includeEvents: true,
+              filterOriginPaymentMethod: originMethodFilter,
+              filterDestinationPaymentMethod: destinationMethodFilter,
             }),
           );
           analytics.event({
