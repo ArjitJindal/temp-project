@@ -91,9 +91,10 @@ export default function HitsPerUserCard() {
       render: (_, { user }) => getUserName(user),
     },
     {
-      title: 'Rules hit',
-      dataIndex: 'rulesHit',
+      title: 'Transactions hit',
+      dataIndex: 'transactionsHit',
       width: 300,
+      render: (_, entity) => `${entity.transactionsHit} transactions`,
     },
     {
       title: 'User Type',

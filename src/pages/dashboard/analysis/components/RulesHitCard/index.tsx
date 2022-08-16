@@ -4,7 +4,6 @@ import { ActionType } from '@ant-design/pro-table';
 import { useEffect, useRef, useState } from 'react';
 import { ProColumns, RequestData } from '@ant-design/pro-table/lib/typing';
 import { RangeValue } from 'rc-picker/lib/interface';
-import type { ResizeCallbackData } from 'react-resizable';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
