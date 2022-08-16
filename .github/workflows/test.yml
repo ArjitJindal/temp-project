@@ -28,8 +28,6 @@ jobs:
       - run: yarn run build:dev
       - run: yarn run lint
       - run: yarn run tsc
-  all-checks-passed:
-    runs-on: ubuntu-20.04
-    needs: test
-    steps:
-      - uses: actions/checkout@v2
+  # If we have more than one job in the future and we require all jobs to pass before we can
+  # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
+  # Otherwise we'll need to manually add any new jobs to be required for the branch protection settings in the GitHub repo.
