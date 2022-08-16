@@ -577,7 +577,7 @@ paths:
     parameters: []
   '/consumer/users/{userId}':
     get:
-      summary: Consumer Users - Item - Get
+      summary: Consumer Users - Item - GET
       tags: []
       responses:
         '200':
@@ -596,6 +596,17 @@ paths:
         name: userId
         in: path
         required: true
+    post:
+      summary: Consumer Users - Item - POST
+      operationId: post-consumer-users-userId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
   '/consumer/users/{userId}/files':
     parameters:
       - schema:
@@ -692,6 +703,17 @@ paths:
         name: userId
         in: path
         required: true
+    post:
+      summary: Business Users - Item - POST
+      operationId: post-business-users-userId
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
   '/business/users/{userId}/files':
     parameters:
       - schema:
@@ -1562,6 +1584,12 @@ components:
           type: array
           items:
             type: string
+    UserUpdateRequest:
+      title: UserUpdateRequest
+      type: object
+      properties:
+        userStateDetails:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
     FileImport:
       title: FileImport
       type: object
@@ -1813,6 +1841,7 @@ components:
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES
+        - DASHBOARD_BLOCK_USER
       description: ''
     AccountRole:
       type: string

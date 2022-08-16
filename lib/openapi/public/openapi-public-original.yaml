@@ -2483,7 +2483,7 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when the user was created
-        userState:
+        userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatus:
           $ref: '#/components/schemas/KYCStatusDetails'

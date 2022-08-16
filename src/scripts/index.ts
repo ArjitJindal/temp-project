@@ -52,7 +52,7 @@ const createBusinessUsers = (
         Math.floor(Date.now() / 1000) - getRandomIntInclusive(1, 10000),
     }
 
-    userRepository.createBusinessUser(userObject)
+    userRepository.saveBusinessUser(userObject)
     logger.info(JSON.stringify(userObject))
   }
   return userIDs

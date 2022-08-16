@@ -175,15 +175,15 @@ export class UserRepository {
     return user as T
   }
 
-  public async createBusinessUser(user: Business): Promise<Business> {
-    return (await this.createUser(user, 'BUSINESS')) as Business
+  public async saveBusinessUser(user: Business): Promise<Business> {
+    return (await this.saveUser(user, 'BUSINESS')) as Business
   }
 
   public async saveConsumerUser(user: User): Promise<User> {
-    return (await this.createUser(user, 'CONSUMER')) as User
+    return (await this.saveUser(user, 'CONSUMER')) as User
   }
 
-  public async createUser(
+  public async saveUser(
     user: User | Business,
     type: UserType
   ): Promise<User | Business> {

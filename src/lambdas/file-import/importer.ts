@@ -111,7 +111,7 @@ export class Importer {
     const userRepository = new UserRepository(this.tenantId, {
       dynamoDb: this.connections.dynamoDb,
     })
-    const userResult = await userRepository.createBusinessUser(user)
+    const userResult = await userRepository.saveBusinessUser(user)
     logger.debug(`Imported business user (id=${userResult.userId})`)
   }
 

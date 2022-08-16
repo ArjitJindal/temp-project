@@ -12,7 +12,6 @@ import {
 } from './repository/dashboard-stats-repository'
 import { UserService } from './services/user-service'
 import { logger } from '@/core/logger'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 
@@ -43,6 +42,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -384,11 +384,13 @@ export const businessUsersViewHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
     const client = await connectToDB()
-    const userRepository = new UserRepository(tenantId, {
-      mongoDb: client,
-    })
+    const dynamoDb = getDynamoDbClient(event)
     const userService = new UserService(
-      userRepository,
+      tenantId,
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
@@ -416,6 +418,17 @@ export const businessUsersViewHandler = lambdaApi()(
         throw new NotFound(`Unable to find user by id`)
       }
       return user
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/business/users/{userId}' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(event.body) as UserUpdateRequest
+      return userService.updateBusinessUser(
+        event.pathParameters.userId,
+        updateRequest
+      )
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/business/users/{userId}/files' &&
@@ -450,11 +463,13 @@ export const consumerUsersViewHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
     const client = await connectToDB()
-    const userRepository = new UserRepository(tenantId, {
-      mongoDb: client,
-    })
+    const dynamoDb = getDynamoDbClient(event)
     const userService = new UserService(
-      userRepository,
+      tenantId,
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
@@ -481,6 +496,17 @@ export const consumerUsersViewHandler = lambdaApi()(
         throw new NotFound(`Unable to find user by id`)
       }
       return user
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/consumer/users/{userId}' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const updateRequest = JSON.parse(event.body) as UserUpdateRequest
+      return userService.updateConsumerUser(
+        event.pathParameters.userId,
+        updateRequest
+      )
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/consumer/users/{userId}/files' &&

@@ -1,4 +1,5 @@
 import * as createError from 'http-errors'
+import { MongoClient } from 'mongodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
@@ -9,20 +10,34 @@ import { BusinessUsersListResponse } from '@/@types/openapi-internal/BusinessUse
 import { ConsumerUsersListResponse } from '@/@types/openapi-internal/ConsumerUsersListResponse'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
+import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 
 export class UserService {
   userRepository: UserRepository
+  userEventRepository: UserEventRepository
   s3: AWS.S3
   documentBucketName: string
   tmpBucketName: string
 
   constructor(
-    userRepository: UserRepository,
+    tenantId: string,
+    connections: {
+      dynamoDb?: AWS.DynamoDB.DocumentClient
+      mongoDb?: MongoClient
+    },
     s3: AWS.S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
-    this.userRepository = userRepository
+    this.userRepository = new UserRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
+    this.userEventRepository = new UserEventRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+      dynamoDb: connections.dynamoDb,
+    })
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
@@ -76,6 +91,31 @@ export class UserService {
         downloadLink: this.getDownloadLink(file),
       })),
     } as T
+  }
+
+  public async updateConsumerUser(
+    userId: string,
+    updateRequest: UserUpdateRequest
+  ) {
+    const user = await this.userRepository.getConsumerUser(userId)
+    await this.userRepository.saveConsumerUser({ ...user, ...updateRequest })
+    await this.userEventRepository.saveConsumerUserEvent({
+      timestamp: Date.now(),
+      userId,
+      reason: updateRequest.userStateDetails?.reason,
+      updatedConsumerUserAttributes: updateRequest,
+    })
+    return 'OK'
+  }
+
+  public async updateBusinessUser(
+    userId: string,
+    updateRequest: UserUpdateRequest
+  ) {
+    const user = await this.userRepository.getBusinessUser(userId)
+    await this.userRepository.saveBusinessUser({ ...user, ...updateRequest })
+    // TODO: FDT-45236. Save business user event
+    return 'OK'
   }
 
   public async saveUserFile(userId: string, file: FileInfo): Promise<FileInfo> {

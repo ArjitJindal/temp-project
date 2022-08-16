@@ -286,7 +286,7 @@ export async function verifyUserEvent(
     ...user,
     ...(userEvent.updatedConsumerUserAttributes || {}),
   }
-  await userEventRepository.saveUserEvent(userEvent)
+  await userEventRepository.saveConsumerUserEvent(userEvent)
   await userRepository.saveConsumerUser(updatedConsumerUser)
   return updatedConsumerUser
 }

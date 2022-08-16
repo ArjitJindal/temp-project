@@ -28,7 +28,9 @@ export class UserEventRepository {
     this.tenantId = tenantId
   }
 
-  public async saveUserEvent(userEvent: ConsumerUserEvent): Promise<string> {
+  public async saveConsumerUserEvent(
+    userEvent: ConsumerUserEvent
+  ): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()
     const primaryKey = DynamoDbKeys.CONSUMER_USER_EVENT(
       this.tenantId,
