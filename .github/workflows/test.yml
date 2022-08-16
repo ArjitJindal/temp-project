@@ -39,8 +39,6 @@ jobs:
         with:
           mongodb-version: 4.4.0
       - run: npm run test -- --ci
-  all-checks-passed:
-    runs-on: ubuntu-20.04
-    needs: test
-    steps:
-      - run: echo "All checks passed!"
+  # If we'll have more than one job in the future and we require all jobs to pass before we can
+  # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
+  # Otherwise we'll need to manually add any new jobs to be required for the branch protection settings in the GitHub repo.
