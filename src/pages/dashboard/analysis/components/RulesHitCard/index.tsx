@@ -36,23 +36,23 @@ export default function RuleHitCard() {
     {
       title: 'Rule ID',
       dataIndex: 'ruleId',
-      width: 300,
+      width: 50,
     },
     {
       title: 'Rule Name',
       render: (_, stat) => {
         return <div>{rules[stat.ruleId].name}</div>;
       },
-      width: 300,
+      width: 150,
     },
     {
       title: 'Hit Count',
       dataIndex: 'hitCount',
-      width: 300,
+      width: 50,
     },
     {
       title: 'Actions',
-      width: 400,
+      width: 50,
       render: (_, stat) => {
         return (
           <Link

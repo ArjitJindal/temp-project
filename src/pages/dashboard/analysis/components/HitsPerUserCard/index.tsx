@@ -74,7 +74,7 @@ export default function HitsPerUserCard() {
     {
       title: 'User ID',
       dataIndex: 'originUserId',
-      width: 300,
+      width: 175,
       render: (dom, entity) => {
         const { user } = entity;
         if (user == null) {
@@ -86,18 +86,18 @@ export default function HitsPerUserCard() {
     {
       title: 'User Name',
       dataIndex: 'user',
-      width: 300,
+      width: 150,
       render: (_, { user }) => getUserName(user),
     },
     {
       title: 'Transactions hit',
       dataIndex: 'transactionsHit',
-      width: 300,
+      width: 100,
       render: (_, entity) => `${entity.transactionsHit} transactions`,
     },
     {
       title: 'User Type',
-      width: 300,
+      width: 80,
       render: (dom, entity) => {
         const { user } = entity;
         if (user == null) {
@@ -112,7 +112,7 @@ export default function HitsPerUserCard() {
     },
     {
       title: 'Actions',
-      width: 300,
+      width: 80,
       render: (dom, entity) => {
         const { user } = entity;
         if (user == null) {
