@@ -412,7 +412,7 @@ paths:
 
         Each consumer User entity needs three mandatory fields:
 
-        * `userId` - Unique idetifier for the user
+        * `userId` - Unique identifier for the user
         * `userDetails` - Details of the user (name, DOB, country of residence and nationality etc) - only `name` is mandatory
         * `createdTimestamp` - UNIX timestamp in *milliseconds* for when the User is created in your system
       operationId: post-consumer-user
@@ -439,8 +439,8 @@ paths:
                   legalDocuments:
                     - documentType: passport
                       documentNumber: Z9431P
-                      documentIssuedDate: 1639939034
-                      documentExpirationDate: 1839939034
+                      documentIssuedDate: 1639939034000
+                      documentExpirationDate: 1839939034000
                       documentIssuedCountry: DE
                       tags:
                         - key: customerType
@@ -536,8 +536,8 @@ paths:
                     legalDocuments:
                       - documentType: passport
                         documentNumber: Z9431P
-                        documentIssuedDate: 1639939034
-                        documentExpirationDate: 1839939034
+                        documentIssuedDate: 1639939034000
+                        documentExpirationDate: 1839939034000
                         documentIssuedCountry: DE
                         tags:
                           - key: customerType
@@ -589,7 +589,7 @@ paths:
 
         Each consumer Business entity needs three mandatory fields:
 
-        * `userId` - Unique idetifier for the user
+        * `userId` - Unique identifier for the user
         * `legalEntity` - Details of the business legal entity (CompanyGeneralDetails, FinancialDetails etc) - only `legalName`in `CompanyGeneralDetails` is mandatory
         * `createdTimestamp` - UNIX timestamp in *milliseconds* for when the User is created in your system
       operationId: post-business-user
@@ -702,8 +702,8 @@ paths:
                         legalDocuments:
                           - documentType: passport
                             documentNumber: Z9431P
-                            documentIssuedDate: 1639939034
-                            documentExpirationDate: 1839939034
+                            documentIssuedDate: 1639939034000
+                            documentExpirationDate: 1839939034000
                             documentIssuedCountry: DE
                             tags:
                               - key: customerType
@@ -740,8 +740,8 @@ paths:
                         legalDocuments:
                           - documentType: passport
                             documentNumber: Z9431P
-                            documentIssuedDate: 1639939034
-                            documentExpirationDate: 1839939034
+                            documentIssuedDate: 1639939034000
+                            documentExpirationDate: 1839939034000
                             documentIssuedCountry: DE
                             tags:
                               - key: customerType
@@ -897,8 +897,8 @@ components:
         legalDocuments:
           - documentType: passport
             documentNumber: Z9431P
-            documentIssuedDate: 1639939034
-            documentExpirationDate: 1839939034
+            documentIssuedDate: 1639939034000
+            documentExpirationDate: 1839939034000
             documentIssuedCountry: DE
             tags:
               - key: customerType
@@ -940,8 +940,8 @@ components:
           legalDocuments:
             - documentType: passport
               documentNumber: Z9431P
-              documentIssuedDate: 1639939034
-              documentExpirationDate: 1839939034
+              documentIssuedDate: 1639939034000
+              documentExpirationDate: 1839939034000
               documentIssuedCountry: DE
               tags:
                 - key: customerType
@@ -999,8 +999,8 @@ components:
         legalDocuments:
           - documentType: passport
             documentNumber: Z9431P
-            documentIssuedDate: 1639939034
-            documentExpirationDate: 1839939034
+            documentIssuedDate: 1639939034000
+            documentExpirationDate: 1839939034000
             documentIssuedCountry: DE
             tags:
               - key: customerType
@@ -1042,8 +1042,8 @@ components:
           legalDocuments:
             - documentType: passport
               documentNumber: Z9431P
-              documentIssuedDate: 1639939034
-              documentExpirationDate: 1839939034
+              documentIssuedDate: 1639939034000
+              documentExpirationDate: 1839939034000
               documentIssuedCountry: DE
               tags:
                 - key: customerType
@@ -1106,8 +1106,8 @@ components:
         legalDocuments:
           - documentType: passport
             documentNumber: Z9431P
-            documentIssuedDate: 1639939034
-            documentExpirationDate: 1839939034
+            documentIssuedDate: 1639939034000
+            documentExpirationDate: 1839939034000
             documentIssuedCountry: DE
             tags:
               - key: customerType
@@ -1149,8 +1149,8 @@ components:
           legalDocuments:
             - documentType: passport
               documentNumber: Z9431P
-              documentIssuedDate: 1639939034
-              documentExpirationDate: 1839939034
+              documentIssuedDate: 1639939034000
+              documentExpirationDate: 1839939034000
               documentIssuedCountry: DE
               tags:
                 - key: customerType
@@ -1211,8 +1211,8 @@ components:
         legalDocuments:
           - documentType: passport
             documentNumber: Z9431P
-            documentIssuedDate: 1639939034
-            documentExpirationDate: 1839939034
+            documentIssuedDate: 1639939034000
+            documentExpirationDate: 1839939034000
             documentIssuedCountry: DE
             tags:
               - key: customerType
@@ -1255,10 +1255,10 @@ components:
           description: User's unique identity document number such as passport number
         documentIssuedDate:
           type: number
-          description: User's identity document issuance date
+          description: User's identity document issuance date (UNIX timestamp in milliseconds)
         documentExpirationDate:
           type: number
-          description: User's identity document expiration date
+          description: User's identity document expiration date (UNIX timestamp in milliseconds)
         documentIssuedCountry:
           type: string
           description: User's identity document issuance country
@@ -1273,8 +1273,8 @@ components:
       example:
         documentType: passport
         documentNumber: Z9431P
-        documentIssuedDate: 1639939034
-        documentExpirationDate: 1839939034
+        documentIssuedDate: 1639939034000
+        documentExpirationDate: 1839939034000
         documentIssuedCountry: DE
         tags:
           - key: customerType
@@ -2171,7 +2171,7 @@ components:
         dateOfBirth:
           type: string
           pattern: '^(\d{4}-\d{2}-\d{2})*$'
-          description: Date of birth of the user
+          description: Date of birth of the user (YYYY-MM-DD)
         countryOfResidence:
           minLength: 1
           type: string
@@ -2286,8 +2286,8 @@ components:
             legalDocuments:
               - documentType: passport
                 documentNumber: Z9431P
-                documentIssuedDate: 1639939034
-                documentExpirationDate: 1839939034
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
                 documentIssuedCountry: DE
                 tags:
                   - key: customerType
@@ -2324,8 +2324,8 @@ components:
             legalDocuments:
               - documentType: passport
                 documentNumber: Z9431P
-                documentIssuedDate: 1639939034
-                documentExpirationDate: 1839939034
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
                 documentIssuedCountry: DE
                 tags:
                   - key: customerType
@@ -2401,8 +2401,8 @@ components:
               legalDocuments:
                 - documentType: passport
                   documentNumber: Z9431P
-                  documentIssuedDate: 1639939034
-                  documentExpirationDate: 1839939034
+                  documentIssuedDate: 1639939034000
+                  documentExpirationDate: 1839939034000
                   documentIssuedCountry: DE
                   tags:
                     - key: customerType
@@ -2442,8 +2442,8 @@ components:
               legalDocuments:
                 - documentType: passport
                   documentNumber: Z9431P
-                  documentIssuedDate: 1639939034
-                  documentExpirationDate: 1839939034
+                  documentIssuedDate: 1639939034000
+                  documentExpirationDate: 1839939034000
                   documentIssuedCountry: DE
                   tags:
                     - key: customerType
@@ -2847,8 +2847,8 @@ components:
             legalDocuments:
               - documentType: passport
                 documentNumber: Z9431P
-                documentIssuedDate: 1639939034
-                documentExpirationDate: 1839939034
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
                 documentIssuedCountry: DE
                 tags:
                   - key: customerType

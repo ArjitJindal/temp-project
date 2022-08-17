@@ -32,7 +32,7 @@ const legalDocument1: LegalDocument = {
   documentType: 'Passport',
   documentNumber: '781939182',
   documentIssuedDate: generateRandomTimestamp(),
-  documentExpirationDate: Date.now() + 3600 * 24 * 365 * 4,
+  documentExpirationDate: Date.now() + 3600000 * 24 * 365 * 4,
   documentIssuedCountry: 'USA',
   tags: [documentTag1, documentTag2],
   nameOnDocument: {

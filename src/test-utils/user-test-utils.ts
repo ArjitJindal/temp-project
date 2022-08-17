@@ -20,8 +20,8 @@ export function getTestUser(user: Partial<User> = {}): User {
       {
         documentType: 'passport',
         documentNumber: 'Z9431P',
-        documentIssuedDate: 1639939034,
-        documentExpirationDate: 1839939034,
+        documentIssuedDate: 1639939034000,
+        documentExpirationDate: 1839939034000,
         documentIssuedCountry: 'DE',
         tags: [
           {
