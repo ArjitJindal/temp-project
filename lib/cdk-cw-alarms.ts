@@ -19,12 +19,12 @@ export const createTarponOverallLambdaAlarm = (
 ) => {
   return new Alarm(context, 'OverallLambdaErrorPercentage', {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 90,
+    threshold: 10,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: 'Lambda-OverallErrorPercentage',
     alarmDescription: `Covers all lambdas in the AWS account. 
-    Alarm triggers when average error percentage is higher than 90% for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
+    Alarm triggers when average error percentage is higher than 10% for 3 consecutive data points in 15 mins (Checked every 5 minutes). 
     Error percentage is calculated by dividing total errors by total invocations`,
     metric: new MathExpression({
       expression: '100*(m1/m2)',
@@ -73,8 +73,7 @@ export const createKinesisAlarm = (
           namespace: 'AWS/Kinesis',
           metricName: 'PutRecords.FailedRecords',
           dimensionsMap: {
-            name: 'StreamName',
-            value: kinesisStreamName,
+            StreamName: kinesisStreamName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -85,8 +84,7 @@ export const createKinesisAlarm = (
           namespace: 'AWS/Kinesis',
           metricName: 'PutRecords.Records',
           dimensionsMap: {
-            name: 'StreamName',
-            value: kinesisStreamName,
+            StreamName: kinesisStreamName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -120,8 +118,7 @@ export const createAPIGatewayAlarm = (
           namespace: 'AWS/ApiGateway',
           metricName: '5XXError',
           dimensionsMap: {
-            name: 'ApiName',
-            value: restApiName,
+            ApiName: restApiName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -234,12 +231,12 @@ export const createLambdaErrorPercentageAlarm = (
 ) => {
   return new Alarm(context, `${lambdaName}ErrorPercentage`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 90,
+    threshold: 10,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}ErrorPercentage`,
     alarmDescription: `Covers Error percentage in ${lambdaName} in the AWS account. 
-    Alarm triggers when Error percentage 90%  for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    Alarm triggers when Error percentage 10%  for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
     metric: new MathExpression({
       expression: '100*(m1/m2)',
       usingMetrics: {
@@ -248,8 +245,7 @@ export const createLambdaErrorPercentageAlarm = (
           namespace: 'AWS/Lambda',
           metricName: 'Errors',
           dimensionsMap: {
-            name: 'FunctionName',
-            value: lambdaName,
+            FunctionName: lambdaName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -260,8 +256,7 @@ export const createLambdaErrorPercentageAlarm = (
           namespace: 'AWS/Lambda',
           metricName: 'Invocations',
           dimensionsMap: {
-            name: 'FunctionName',
-            value: lambdaName,
+            FunctionName: lambdaName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -293,8 +288,7 @@ export const createLambdaThrottlingAlarm = (
           namespace: 'AWS/Lambda',
           metricName: 'Throttles',
           dimensionsMap: {
-            name: 'FunctionName',
-            value: lambdaName,
+            FunctionName: lambdaName,
           },
         }).with({
           period: Duration.seconds(300),
@@ -305,8 +299,7 @@ export const createLambdaThrottlingAlarm = (
           namespace: 'AWS/Lambda',
           metricName: 'Invocations',
           dimensionsMap: {
-            name: 'FunctionName',
-            value: lambdaName,
+            FunctionName: lambdaName,
           },
         }).with({
           period: Duration.seconds(300),
