@@ -2485,7 +2485,7 @@ components:
           description: Timestamp when the user was created
         userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
-        kycStatus:
+        kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetails'
         shareHolders:
           type: array
@@ -3064,7 +3064,7 @@ components:
         id: ev3mulr4s7fqf
       type: object
       properties:
-        statusReason:
+        reason:
           type: string
         status:
           $ref: '#/components/schemas/KYCStatus'
