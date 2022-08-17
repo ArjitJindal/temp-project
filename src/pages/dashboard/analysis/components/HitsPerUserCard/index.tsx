@@ -204,7 +204,7 @@ export default function HitsPerUserCard() {
         }}
         className={style.table}
         scroll={{ x: 1300 }}
-        headerTitle={header('Top origin users by Rule Hits')}
+        headerTitle={header('Top origin users (senders) by Transaction Hits')}
         rowKey="originUserId"
         tooltip="Origin is the Sender in a transaction"
         search={false}
