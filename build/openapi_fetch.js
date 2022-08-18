@@ -10,19 +10,19 @@ const OUTPUT_DIR = path.resolve(__dirname, '..', 'config');
 const BRANCH = process.env.STOPLIGHT_BRANCH || 'main';
 const ACCOUNT = process.env.STOPLIGHT_ACCOUNT || `flagright-internal`;
 const PROJECT = process.env.STOPLIGHT_PROJECT || `flagright-internal-api`;
+const FILE_NAME = process.env.STOPLIGHT_FILE_NAME || `openapi-internal-original.yaml`;
 
 console.log(`BRANCH: ${BRANCH}`)
 console.log(`ACCOUNT: ${ACCOUNT}`)
 console.log(`PROJECT: ${PROJECT}`)
 
 async function main() {
-  const STOPLIGHT_FILE_NAME = `openapi-internal-original.yaml`;
 
   const schema = await fetchSchema({
     branch: BRANCH,
     stoplightAccount: ACCOUNT,
     stoplightProject: PROJECT,
-    stoplightFileName: STOPLIGHT_FILE_NAME,
+    stoplightFileName: FILE_NAME,
   });
   await fs.writeFile(path.resolve(OUTPUT_DIR, 'openapi.yaml'), schema);
   console.log('Download finished');

@@ -4,6 +4,7 @@ import { Col, Divider, Row, Typography } from 'antd';
 import { useCallback } from 'react';
 import { UserTransactionHistoryTable } from './UserTransactionHistoryTable';
 import { UserStateEditor } from './UserStateEditor';
+import { KycStatusEditor } from './KycStatusEditor';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -41,8 +42,11 @@ export const ConsumerUserDetails: React.FC<Props> = ({ user, columns }) => {
         </Feature>
       </Row>
       <ProDescriptions column={2}>
-        <ProDescriptions.Item label="User Status" style={{ paddingBottom: 0 }}>
+        <ProDescriptions.Item label="User State" style={{ paddingBottom: 0 }}>
           <UserStateEditor user={user} />
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label="KYC Status" style={{ paddingBottom: 0 }}>
+          <KycStatusEditor user={user} />
         </ProDescriptions.Item>
       </ProDescriptions>
       <Divider />

@@ -93,7 +93,7 @@ export function getConsumerUserColumns(
       valueType: 'textarea',
     },
     {
-      title: 'User Status',
+      title: 'User State',
       hideInSearch: true,
       hideInDescriptions: true,
       render: (dom, entity) => {

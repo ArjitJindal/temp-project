@@ -1,5 +1,11 @@
 import { neverReturn } from '../lang';
-import { ConsumerName, InternalBusinessUser, InternalConsumerUser, UserDetails } from '@/apis';
+import {
+  ConsumerName,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  KYCStatus,
+  UserDetails,
+} from '@/apis';
 import { UserState } from '@/apis/models/UserState';
 
 export const USER_STATES: UserState[] = [
@@ -13,6 +19,14 @@ export const USER_STATES: UserState[] = [
   'TERMINATED',
   'UNACCEPTABLE',
   'UNDECIDED',
+];
+
+export const KYC_STATUSES: KYCStatus[] = [
+  'SUCCESSFUL',
+  'FAILED',
+  'NOT_STARTED',
+  'IN_PROGRESS',
+  'MANUAL_REVIEW',
 ];
 
 export function formatConsumerName(name: ConsumerName | undefined): string {
