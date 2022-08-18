@@ -1,31 +1,28 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
-import { Drawer, message } from 'antd';
+import { Card, message } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
-import { useNavigate, useParams } from 'react-router';
-import { TransactionDetails } from './components/TransactionDetails';
-import { RuleActionStatus } from './components/RuleActionStatus';
+import { useNavigate } from 'react-router';
 import { TableSearchParams } from './types';
 import { AddToSlackButton } from './components/AddToSlackButton';
-import { PaymentMethodTag } from './components/PaymentTypeTag';
-import { TransactionTypeTag } from './components/TransactionTypeTag';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { currencies } from '@/utils/currencies';
-import { Table, RequestFunctionType, TableActionType } from '@/components/ui/Table';
-import { ApiException, TransactionCaseManagement } from '@/apis';
+import { RequestFunctionType, Table, TableActionType } from '@/components/ui/Table';
+import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import CloseCaseForm from '@/pages/case-management/components/CloseCaseForm';
-import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { AsyncResource, init, success } from '@/utils/asyncResource';
 import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import '../../components/ui/colors';
 import ResizableTitle from '@/utils/table-utils';
 import { useAuth0User } from '@/utils/user-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
@@ -50,7 +47,6 @@ export type CaseManagementItem = TransactionCaseManagement & {
 };
 
 function TableList() {
-  const { id: transactionId } = useParams<'id'>();
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
@@ -70,45 +66,6 @@ function TableList() {
     }));
   }, []);
   const api = useApi();
-  const isTransactionRoute = transactionId != null && transactionId !== 'all';
-  const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
-  useEffect(() => {
-    if (!isTransactionRoute) {
-      setCurrentItem(init());
-      return function () {};
-    }
-    if (currentTransactionId === transactionId) {
-      return function () {};
-    }
-    setCurrentItem(loading());
-    let isCanceled = false;
-    api
-      .getTransaction({
-        transactionId,
-      })
-      .then((transaction) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(transaction));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find transaction by id "${transactionId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [isTransactionRoute, currentTransactionId, transactionId, api]);
   const handleUpdateAssignments = useCallback(
     async (transaction: TransactionCaseManagement, assignees: string[]) => {
       const hideMessage = message.loading(`Saving...`, 0);
@@ -147,21 +104,21 @@ function TableList() {
 
   useDeepEqualEffect(() => {
     const form = formRef.current;
-    if (form && !isTransactionRoute) {
+    if (form) {
       form.setFields(Object.entries(parsedParams).map(([name, value]) => ({ name, value })));
       form.submit();
     }
-  }, [parsedParams, isTransactionRoute]);
+  }, [parsedParams]);
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams, force = false) => {
-      if (!isTransactionRoute || force) {
-        navigate(makeUrl('/case-management/all', {}, queryAdapter.serializer(params)), {
+      if (force) {
+        navigate(makeUrl('/case-management', {}, queryAdapter.serializer(params)), {
           replace: true,
         });
       }
     },
-    [isTransactionRoute, navigate],
+    [navigate],
   );
 
   // todo: i18n
@@ -626,65 +583,45 @@ function TableList() {
   );
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <Table<CaseManagementItem, TableSearchParams>
-        initialParams={{
-          page: parsedParams.current ?? 1,
-          params: parsedParams,
-          sort: {},
-        }}
-        form={{
-          labelWrap: true,
-        }}
-        isEvenRow={(item) => item.index % 2 === 0}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
-        }}
-        actionRef={actionRef}
-        formRef={formRef}
-        rowKey="rowKey"
-        search={{
-          labelWidth: 120,
-        }}
-        scroll={{ x: 1300 }}
-        request={request}
-        toolBarRender={() => [
-          <Feature name="SLACK_ALERTS">
-            <AddToSlackButton />
-          </Feature>,
-        ]}
-        columns={mergeColumns}
-        columnsState={{
-          persistenceType: 'localStorage',
-          persistenceKey: 'case-management-list',
-        }}
-        onReset={() => {
-          pushParamsToNavigation({});
-        }}
-      />
-      <Drawer
-        width={1000}
-        visible={isTransactionRoute}
-        bodyStyle={{ padding: 0 }}
-        onClose={() => {
-          pushParamsToNavigation(lastSearchParams, true);
-        }}
-        closable={false}
-      >
-        <AsyncResourceRenderer resource={currentItem}>
-          {(transaction) => (
-            <TransactionDetails
-              transaction={
-                (transaction.transactionId
-                  ? updatedTransactions[transaction.transactionId]
-                  : null) ?? transaction
-              }
-              onTransactionUpdate={handleTransactionUpdate}
-            />
-          )}
-        </AsyncResourceRenderer>
-      </Drawer>
+      <Card>
+        <Table<CaseManagementItem, TableSearchParams>
+          initialParams={{
+            page: parsedParams.current ?? 1,
+            params: parsedParams,
+            sort: {},
+          }}
+          form={{
+            labelWrap: true,
+          }}
+          isEvenRow={(item) => item.index % 2 === 0}
+          components={{
+            header: {
+              cell: ResizableTitle,
+            },
+          }}
+          actionRef={actionRef}
+          formRef={formRef}
+          rowKey="rowKey"
+          search={{
+            labelWidth: 120,
+          }}
+          scroll={{ x: 1300 }}
+          request={request}
+          toolBarRender={() => [
+            <Feature name="SLACK_ALERTS">
+              <AddToSlackButton />
+            </Feature>,
+          ]}
+          columns={mergeColumns}
+          columnsState={{
+            persistenceType: 'localStorage',
+            persistenceKey: 'case-management-list',
+          }}
+          onReset={() => {
+            pushParamsToNavigation({});
+          }}
+        />
+      </Card>
     </PageWrapper>
   );
 }

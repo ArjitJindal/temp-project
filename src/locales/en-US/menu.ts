@@ -12,6 +12,7 @@ export default {
   'menu.dashboard.monitor': 'Monitor',
   'menu.case-management': 'Case Management',
   'menu.case-management.item': 'Case Management',
+  'menu.case-management.item.back-button': 'Back to Case Management',
   'menu.lists': 'Lists',
   'menu.lists.create-list': 'Create List',
   'menu.lists.created-lists': 'Created Lists',

@@ -30,13 +30,8 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import styles from './TransactionDetails.module.less';
-import { RuleActionStatus } from './RuleActionStatus';
+import styles from './index.module.less';
 import Comment from './Comment';
-import { AssigneesDropdown } from './AssigneesDropdown';
-import { RulesHitDetailsTable } from './RulesHitDetailsTable';
-import { PaymentMethodTag } from './PaymentTypeTag';
-import { TransactionTypeTag } from './TransactionTypeTag';
 import { PaymentDetails } from './PaymentDetails';
 import Colors from '@/components/ui/colors';
 import {
@@ -54,6 +49,11 @@ import UserLink from '@/components/UserLink';
 import { UserDetails } from '@/pages/users/users-list/components/UserDetails';
 import { TransactionEventsTable } from '@/pages/users/users-list/components/UserTransactionHistoryTable/ExpandedRowRenderer';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { RulesHitDetailsTable } from '@/pages/case-management/components/RulesHitDetailsTable';
 
 const equal = require('fast-deep-equal');
 
@@ -248,7 +248,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
   }, [api, assignments, onTransactionUpdate, status, transaction]);
   return (
     <>
-      <Card>
+      <>
         <Row justify="end">
           {editing ? (
             <Space>
@@ -540,8 +540,8 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
             <RulesHitDetailsTable transaction={transaction} />
           </ProDescriptions.Item>
         </ProDescriptions>
-      </Card>
-      <Card>
+      </>
+      <>
         <Tabs type="line">
           <Tabs.TabPane tab="Sender" key="sender">
             <UserDetails user={transaction.originUser} />
@@ -553,8 +553,8 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
             <TransactionEventsTable events={transaction.events!} />
           </Tabs.TabPane>
         </Tabs>
-      </Card>
-      <Card>
+      </>
+      <>
         <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
           {`Comments (${transaction.comments?.length || 0})`}
         </Typography.Title>
@@ -583,7 +583,7 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
             />
           }
         />
-      </Card>
+      </>
     </>
   );
 };

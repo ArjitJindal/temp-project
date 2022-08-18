@@ -4,6 +4,7 @@ import AccountsPage from '@/pages/accounts';
 import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import Page404 from '@/pages/404';
 import CaseManagementPage from '@/pages/case-management';
+import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-level';
 import RiskMyRulesPage from '@/pages/rules/my-rules';
@@ -49,13 +50,14 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         routes: [
           {
-            path: '/case-management',
-            redirect: '/case-management/all',
+            path: '/case-management/:id',
+            component: CaseManagementItemPage,
+            name: 'item',
           },
           {
-            path: '/case-management/:id',
+            path: '/case-management',
+            name: 'list',
             component: CaseManagementPage,
-            name: 'item',
           },
         ],
       },

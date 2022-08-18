@@ -1,4 +1,4 @@
-import { RuleActionStatus } from './RuleActionStatus';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { Table } from '@/components/ui/Table';
 import { TransactionCaseManagement } from '@/apis';
 

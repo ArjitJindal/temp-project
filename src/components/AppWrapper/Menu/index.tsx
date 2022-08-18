@@ -79,7 +79,7 @@ function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18
       return 'routes' in item && !item.hideChildrenInMenu
         ? {
             key: item.name,
-            label: i18n(fullKey as TranslationId),
+            label: <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>,
             title: i18n(fullKey as TranslationId),
             icon: icon,
             children: renderItems(fullKey, item.routes, i18n),
@@ -89,7 +89,7 @@ function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18
             icon: icon,
             label: (
               <Link to={item.path} className={s.links}>
-                {i18n(fullKey as TranslationId)}
+                <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>
               </Link>
             ),
             title: i18n(fullKey as TranslationId),

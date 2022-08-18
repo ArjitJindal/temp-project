@@ -5,7 +5,7 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons';
-import style from './TransactionDetails.module.less';
+import style from './index.module.less';
 import { TransactionType } from '@/apis/models/TransactionType';
 import { neverReturn } from '@/utils/lang';
 

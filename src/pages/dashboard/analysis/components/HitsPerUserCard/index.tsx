@@ -132,7 +132,7 @@ export default function HitsPerUserCard() {
             <Link
               key="view-cases"
               to={makeUrl(
-                '/case-management/all',
+                '/case-management',
                 {},
                 {
                   originUserId: user.userId,

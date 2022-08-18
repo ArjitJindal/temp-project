@@ -28,10 +28,10 @@ import { useI18n } from '@/locales';
 import '../../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
-import { PaymentMethodTag } from '@/pages/case-management/components/PaymentTypeTag';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import handleResize from '@/components/ui/Table/utils';
-import { TransactionTypeTag } from '@/pages/case-management/components/TransactionTypeTag';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const { id: transactionId } = useParams<'id'>();

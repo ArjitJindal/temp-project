@@ -5,10 +5,12 @@
     flex-direction: column;
   }
 
-  // todo: migration: fix this hack, need to fix ordering in css`
   .head {
-    padding: 16px 24px;
-    background: none; // todo: migration: fix this
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 56px;
+    padding: 20px 24px 0 24px;
   }
 
   .body {
@@ -25,5 +27,16 @@
     margin-top: 16px;
     margin-bottom: 0;
     color: white;
+  }
+
+  .backButton {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: white;
+
+    > svg {
+      width: 20px;
+    }
   }
 }

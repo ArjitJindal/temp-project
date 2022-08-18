@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import style from './style.module.less';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
-import { RuleActionStatus } from '@/pages/case-management/components/RuleActionStatus';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import {
   RuleAction,
   TransactionAmountDetails,

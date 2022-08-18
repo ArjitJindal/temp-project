@@ -1,5 +1,6 @@
-import { PaymentMethodTag } from '../pages/case-management/components/PaymentTypeTag';
-import { TransactionTypeTag } from '../pages/case-management/components/TransactionTypeTag';
+// todo: move this tags to common UI package
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
 export const paymentMethod: { value: string; label: any }[] = [
   {

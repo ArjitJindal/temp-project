@@ -5,7 +5,7 @@ import {
   BankOutlined,
   MobileOutlined,
 } from '@ant-design/icons';
-import style from './TransactionDetails.module.less';
+import style from './index.module.less';
 
 interface Props {
   paymentMethod: string | undefined;
