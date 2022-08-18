@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -126,9 +126,11 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
           if (!transactionAmountDetails) {
             return false
           }
-          return await isTransactionAmountBetweenThreshold(
-            transactionAmountDetails,
-            lowTransactionValues
+          return (
+            (await checkTransactionAmountBetweenThreshold(
+              transactionAmountDetails,
+              lowTransactionValues
+            )) != null
           )
         }
       )

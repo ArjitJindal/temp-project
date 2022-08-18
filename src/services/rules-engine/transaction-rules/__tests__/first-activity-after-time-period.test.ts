@@ -25,6 +25,7 @@ describe('R-5 description formatting', () => {
   ])
 
   testRuleDescriptionFormatting(
+    'first',
     TEST_TENANT_ID,
     [
       getTestTransaction({

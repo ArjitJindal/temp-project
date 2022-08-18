@@ -90,18 +90,19 @@ describe('Sender/Receiver Parameters', () => {
     ])
 
     testRuleDescriptionFormatting(
+      'first',
       TEST_TENANT_ID,
       TEST_TRANSACTIONS,
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ volumeDelta.transactionAmount }} {{ volumeDelta.transactionCurrency }} above their expected amount of {{ volumeThreshold.transactionAmount }} {{ volumeThreshold.transactionCurrency }}`,
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }}`,
       },
       [
         null,
         null,
-        'Sender is spending 99 EUR above their expected amount of 201 EUR',
-        'Sender is spending 199 EUR above their expected amount of 201 EUR',
-        'Sender is spending 299 EUR above their expected amount of 201 EUR',
-        'Receiver is receiving 299 EUR above their expected amount of 201 EUR',
+        'Sender is spending 99.00 EUR above their expected amount of 201.00 EUR',
+        'Sender is spending 199.00 EUR above their expected amount of 201.00 EUR',
+        'Sender is spending 299.00 EUR above their expected amount of 201.00 EUR',
+        'Receiver is receiving 299.00 EUR above their expected amount of 201.00 EUR',
       ]
     )
   })

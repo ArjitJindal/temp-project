@@ -13,6 +13,13 @@ Handlebars.registerHelper('if-sender', function (ifSender, ifReceiver) {
   return this.hitParty.type === 'origin' ? ifSender : ifReceiver
 })
 
+Handlebars.registerHelper('format-money', function (value, currency) {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return `${value.toFixed(2)} ${currency}`
+  }
+  return `${value} ${currency}`
+})
+
 export type Vars = {
   [key: string]: unknown // todo: improve types
 }

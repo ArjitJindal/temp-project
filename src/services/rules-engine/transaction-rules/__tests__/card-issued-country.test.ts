@@ -26,6 +26,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
 
 describe('R-114 description formatting', () => {
   testRuleDescriptionFormatting(
+    'first',
     TEST_TENANT_ID,
     [
       getTestTransaction({

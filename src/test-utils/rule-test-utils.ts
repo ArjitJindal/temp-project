@@ -169,12 +169,13 @@ export function createTransactionRuleTestCase(
 const DEFAULT_DESCRIPTION = 'test rule description'
 
 export function testRuleDescriptionFormatting(
+  testName: string,
   tenantId: string,
   transactions: Transaction[],
   rulePatch: Partial<Rule>,
   expectedDescriptions: (string | null)[]
 ) {
-  test('Description formatting', async () => {
+  test(`Description formatting (${testName})`, async () => {
     const initialRule = await getRule(tenantId, SETUP_TEST_RULE_ID)
     await updateRule(tenantId, SETUP_TEST_RULE_ID, rulePatch)
 

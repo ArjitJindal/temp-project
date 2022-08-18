@@ -38,6 +38,7 @@ describe('Description formatting', () => {
 
   describe('R-30 description formatting', () => {
     testRuleDescriptionFormatting(
+      'first',
       TEST_TENANT_ID,
       [
         getTestTransaction({
@@ -75,6 +76,7 @@ describe('Description formatting', () => {
 
   describe('R-84, R-85, R-86, R-87 description formatting', () => {
     testRuleDescriptionFormatting(
+      'first',
       TEST_TENANT_ID,
       [
         getTestTransaction({

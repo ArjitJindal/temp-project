@@ -9,13 +9,14 @@ export async function isTransactionAmountAboveThreshold(
   thresholds: {
     [currency: string]: number
   }
-) {
-  return isTransactionAmountBetweenThreshold(
+): Promise<boolean> {
+  const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
     _.mapValues(thresholds, (threshold) => ({
       min: threshold,
     }))
   )
+  return result != null
 }
 
 export async function isTransactionAmountBelowThreshold(
@@ -23,16 +24,19 @@ export async function isTransactionAmountBelowThreshold(
   thresholds: {
     [currency: string]: number
   }
-) {
-  return isTransactionAmountBetweenThreshold(
+): Promise<boolean> {
+  const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
     _.mapValues(thresholds, (threshold) => ({
       max: threshold,
     }))
   )
+  return result != null
 }
 
-export async function isTransactionAmountBetweenThreshold(
+type ThresholdHit = { currency: string; min?: number; max?: number }
+
+export async function checkTransactionAmountBetweenThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
   thresholds: {
     [currency: string]: {
@@ -40,14 +44,13 @@ export async function isTransactionAmountBetweenThreshold(
       max?: number
     }
   }
-): Promise<boolean> {
+): Promise<ThresholdHit | null> {
   if (!transactionAmountDefails) {
-    return false
+    return null
   }
 
-  const convertedTransactionAmount = thresholds[
-    transactionAmountDefails.transactionCurrency
-  ]
+  const transactionCurrency = transactionAmountDefails.transactionCurrency
+  const convertedTransactionAmount = thresholds[transactionCurrency]
     ? transactionAmountDefails
     : await getTargetCurrencyAmount(
         transactionAmountDefails,
@@ -55,11 +58,16 @@ export async function isTransactionAmountBetweenThreshold(
       )
   const { min, max } =
     thresholds[convertedTransactionAmount.transactionCurrency]
-  return _.inRange(
-    convertedTransactionAmount.transactionAmount,
-    min || -Infinity,
-    max || Infinity
-  )
+  if (
+    _.inRange(
+      convertedTransactionAmount.transactionAmount,
+      min || -Infinity,
+      max || Infinity
+    )
+  ) {
+    return { currency: transactionCurrency, min, max }
+  }
+  return null
 }
 
 export function isTransactionWithinTimeWindow(

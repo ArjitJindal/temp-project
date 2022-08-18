@@ -24,7 +24,7 @@ describe('R-2 description formatting', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'transaction-amount',
       defaultParameters: {
-        transactionAmountThreshold: { USD: 1000 },
+        transactionAmountThreshold: { USD: 1000, EUR: 1000 },
         ageRange: { minAge: 18, maxAge: 25 },
       } as TransactionAmountRuleParameters,
       defaultAction: 'FLAG',
@@ -43,6 +43,7 @@ describe('R-2 description formatting', () => {
   ])
 
   testRuleDescriptionFormatting(
+    'first',
     TEST_TENANT_ID,
     [
       getTestTransaction({
@@ -55,9 +56,9 @@ describe('R-2 description formatting', () => {
     ],
     {
       descriptionTemplate:
-        'Transaction amount is {{ usdLimit }} or more in USD or equivalent',
+        'Transaction amount is {{ format-money limit currency }} or more',
     },
-    ['Transaction amount is 1000.00 or more in USD or equivalent']
+    ['Transaction amount is 1000.00 EUR or more']
   )
 })
 
