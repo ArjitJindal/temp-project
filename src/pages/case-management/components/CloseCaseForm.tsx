@@ -12,14 +12,24 @@ interface Props {
 const OTHER_REASON = 'Other';
 const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-const TMP_TENANT_REASONS = ['False positive', 'Investigation completed', 'Documents collected'];
+const CLOSING_REASONS = [
+  'False positive',
+  'Investigation completed',
+  'Documents collected',
+  'Suspicious activity reported (SAR)',
+  'Documents not collected',
+  'Transaction Refunded',
+  'Transaction Rejected',
+  'User Blacklisted',
+  'User Terminated',
+];
 
 interface FormValues {
   reasons: string[];
   reasonOther: string | null;
 }
 
-export default function AllowForm(props: Props) {
+export default function CloseCaseForm(props: Props) {
   const { transactionId, onSaved } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
@@ -57,20 +67,20 @@ export default function AllowForm(props: Props) {
     [onSaved, transactionId, api],
   );
 
-  const possibleReasons = [...COMMON_REASONS, ...TMP_TENANT_REASONS];
+  const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
   // todo: i18n
   return (
     <>
       <Button
-        analyticsName="Allow"
+        analyticsName="CloseCase"
         onClick={() => {
           setModalVisible(true);
         }}
       >
-        Allow
+        Close
       </Button>
       <Modal
-        title="Allow transaction"
+        title="Close case"
         visible={isModalVisible}
         okButtonProps={{
           disabled: isSaving,

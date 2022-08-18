@@ -17,7 +17,7 @@ import { Table, RequestFunctionType, TableActionType } from '@/components/ui/Tab
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
-import AllowForm from '@/pages/case-management/components/AllowForm';
+import CloseCaseForm from '@/pages/case-management/components/CloseCaseForm';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
@@ -420,7 +420,9 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         render: (dom, entity) => {
-          return <AllowForm transactionId={entity.transactionId as string} onSaved={reloadTable} />;
+          return (
+            <CloseCaseForm transactionId={entity.transactionId as string} onSaved={reloadTable} />
+          );
         },
       },
       {
