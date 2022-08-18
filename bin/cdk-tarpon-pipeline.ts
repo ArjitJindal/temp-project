@@ -8,6 +8,7 @@ import { config as devConfig } from '@cdk/configs/config-dev'
 import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
 import { config as prodConfigAsia2 } from '@cdk/configs/config-prod-asia-2'
 import { config as prodConfigAsia1 } from '@cdk/configs/config-prod-asia-1'
+import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
 import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
 
 const app = new cdk.App()
@@ -34,6 +35,10 @@ if (process.env.ENV === 'prod:asia-2') {
 
 if (process.env.ENV === 'prod:eu-1') {
   new CdkTarponStack(app, `${prodConfigEu1.stage}-tarpon`, prodConfigEu1)
+}
+
+if (process.env.ENV === 'prod:us-1') {
+  new CdkTarponStack(app, `${prodConfigUS1.stage}-tarpon`, prodConfigUS1)
 }
 
 if (!process.env.ENV) {

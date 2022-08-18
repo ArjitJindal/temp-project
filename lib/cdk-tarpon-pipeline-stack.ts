@@ -65,7 +65,13 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       },
     })
     const getDeployCodeBuildProject = (
-      env: 'dev' | 'sandbox' | 'prod:asia-1' | 'prod:asia-2' | 'prod:eu-1',
+      env:
+        | 'dev'
+        | 'sandbox'
+        | 'prod:asia-1'
+        | 'prod:asia-2'
+        | 'prod:eu-1'
+        | 'prod:us-1',
       roleArn: string
     ) =>
       new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
@@ -199,6 +205,16 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               actionName: 'Deploy_eu-1',
               project: getDeployCodeBuildProject(
                 'prod:eu-1',
+                PROD_CODE_DEPLOY_ROLE_ARN
+              ),
+              input: sourceOutput,
+              extraInputs: [buildOutput],
+              runOrder: 2,
+            }),
+            new codepipeline_actions.CodeBuildAction({
+              actionName: 'Deploy_us-1',
+              project: getDeployCodeBuildProject(
+                'prod:us-1',
                 PROD_CODE_DEPLOY_ROLE_ARN
               ),
               input: sourceOutput,
