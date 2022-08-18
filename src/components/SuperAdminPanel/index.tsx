@@ -123,6 +123,7 @@ export default function SuperAdminPanel() {
               onChange={handleChangeTenant}
               value={user.tenantId}
             />
+            <b>{`${user.tenantId}`}</b>
           </Form.Item>
           <Form.Item label="Features">
             <Select<Feature[]>
