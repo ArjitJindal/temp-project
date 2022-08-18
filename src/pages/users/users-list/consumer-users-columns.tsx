@@ -88,7 +88,7 @@ export function getConsumerUserColumns(
       hideInTable: true,
       width: 180,
       render: (dom, entity) => {
-        return entity.kycStatusDetails?.statusReason;
+        return entity.kycStatusDetails?.reason;
       },
       valueType: 'textarea',
     },

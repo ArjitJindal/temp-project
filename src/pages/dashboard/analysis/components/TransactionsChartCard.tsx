@@ -290,7 +290,12 @@ const TransactionsChartCard = () => {
       id="sales-card"
     >
       <div className={styles.salesCard}>
-        <Tabs activeKey={activeTab} onChange={setActiveTab} tabBarStyle={{ marginBottom: 24 }}>
+        <Tabs
+          type="card"
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          tabBarStyle={{ marginBottom: 24 }}
+        >
           {[
             { title: 'Total Transactions', key: 'totalTransactions' },
             { title: `${suspendedAlias} Transactions`, key: 'suspendedTransactions' },
@@ -334,13 +339,13 @@ const TransactionsChartCard = () => {
                       yField={key !== 'totalTransactions' ? 'y' : 'value'}
                       color={({ type }) => {
                         if (key === 'totalTransactions') {
-                          if (type === 'Suspended') return '#87E8DE';
+                          if (type === 'Suspended') return '#F5E25A';
                           if (type === 'Flagged') return '#F6A429';
                           if (type === 'Stopped') return '#FF4D4F';
                           return '#1169F9';
                         } else if (key === 'flaggedTransactions') return '#F6A429';
                         else if (key === 'stoppedTransactions') return '#FF4D4F';
-                        return '#87E8DE';
+                        return '#F5E25A';
                       }}
                       xAxis={{
                         label: {
