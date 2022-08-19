@@ -5,7 +5,7 @@ import { getTestUser } from '@/test-utils/user-test-utils'
 import { createKinesisStreamEvent } from '@/utils/local-dynamodb-change-handler'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { WebhookConfiguration } from '@/@types/webhook'
+import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
 describe('Create webhook delivery tasks', () => {
   let tarponChangeCaptureHandler: (event: KinesisStreamEvent) => void
@@ -54,12 +54,12 @@ describe('Create webhook delivery tasks', () => {
     )
     const webhook: WebhookConfiguration = {
       _id: 'webhook_id',
-      created: Date.now(),
+      createdAt: Date.now(),
       webhookUrl: 'https://example.com',
-      events: ['USER_STATUS_UPDATED'],
+      events: ['USER_STATE_UPDATED'],
       enabled: true,
     }
-    await webhookRepository.addWebhook(webhook)
+    await webhookRepository.saveWebhook(webhook)
 
     await tarponChangeCaptureHandler(event)
 
@@ -68,7 +68,7 @@ describe('Create webhook delivery tasks', () => {
     expect(command.input.QueueUrl).toBe(MOCK_WEBHOOK_DELIVERY_QUEUE_URL)
     const messageBody = JSON.parse(command.input.MessageBody as string)
     expect(messageBody).toMatchObject({
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: { reason: 'reason', state: 'DELETED' },
       _id: expect.any(String),
       tenantId: TEST_TENANT_ID,
@@ -107,12 +107,12 @@ describe('Create webhook delivery tasks', () => {
     )
     const webhook: WebhookConfiguration = {
       _id: 'webhook_id',
-      created: Date.now(),
+      createdAt: Date.now(),
       webhookUrl: 'https://example.com',
-      events: ['USER_STATUS_UPDATED'],
+      events: ['USER_STATE_UPDATED'],
       enabled: true,
     }
-    await webhookRepository.addWebhook(webhook)
+    await webhookRepository.saveWebhook(webhook)
     const user = getTestUser({
       userStateDetails: {
         reason: 'reason',

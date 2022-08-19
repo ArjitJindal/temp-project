@@ -64,6 +64,13 @@ const PathToLambda: any = {
   '/dashboard_stats/rule_hit':
     TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
   '/slack/oauth_redirect': TarponStackConstants.SLACK_APP_FUNCTION_NAME,
+  '/webhooks': TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+  '/webhooks/{webhookId}':
+    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+  '/webhooks/{webhookId}/secret':
+    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+  '/webhooks/{webhookId}/deliveries':
+    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/pulse/risk-classification':
     HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':

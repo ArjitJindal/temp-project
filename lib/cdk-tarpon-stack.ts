@@ -603,6 +603,16 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
     )
 
+    const { alias: webhookConfigurationHandlerAlias } = this.createFunction(
+      {
+        name: TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+        handler: 'app.webhookConfigurationHandler',
+        codePath: 'dist/webhook',
+      },
+      atlasFunctionProps
+    )
+    this.grantMongoDbAccess(webhookConfigurationHandlerAlias)
+
     /*
      * Hammerhead console functions
      */

@@ -4,10 +4,9 @@ import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 import express from 'express'
 import bodyParser from 'body-parser'
 import { WebhookDeliveryRepository } from '../repositories/webhook-delivery-repository'
-import { getWebhookSecretKey } from '../utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { connectToDB } from '@/utils/mongoDBUtils'
-import { WebhookDeliveryAttempt } from '@/@types/webhook'
+import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -95,7 +94,7 @@ describe('Webhook delivery', () => {
 
     const expectedPayload = { statusReason: 'reason', status: 'DELETED' }
     const deliveryTask = {
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: expectedPayload,
       _id: 'task_id',
       tenantId: TEST_TENANT_ID,
@@ -110,7 +109,7 @@ describe('Webhook delivery', () => {
     const command = mockSecretsManagerSend.mock
       .calls[0][0] as GetSecretValueCommand
     expect(command.input.SecretId).toEqual(
-      getWebhookSecretKey(TEST_TENANT_ID, deliveryTask.webhookId)
+      `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
     )
 
     // Check headers
@@ -149,7 +148,7 @@ describe('Webhook delivery', () => {
     )
 
     const deliveryTask = {
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: {},
       _id: 'task_id',
       tenantId: TEST_TENANT_ID,
@@ -194,7 +193,7 @@ describe('Webhook delivery', () => {
       async () => null
     )
     const deliveryTask = {
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: {},
       _id: 'task_id',
       tenantId: TEST_TENANT_ID,
@@ -220,7 +219,7 @@ describe('Webhook delivery', () => {
       async () => null
     )
     const deliveryTask = {
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: {},
       _id: 'task_id',
       tenantId: TEST_TENANT_ID,
@@ -253,7 +252,7 @@ describe('Webhook delivery', () => {
       }
     )
     const deliveryTask = {
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: {},
       _id: 'task_id',
       tenantId: TEST_TENANT_ID,

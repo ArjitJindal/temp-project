@@ -1,6 +1,6 @@
 import { Config } from './config'
 
-const account = '911899431626'
+const account = '000000000000'
 const region = 'eu-central-1'
 
 export const config: Config = {

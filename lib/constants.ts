@@ -76,6 +76,9 @@ export const TarponStackConstants = {
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
   SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon('SlackAppFunction'),
   SLACK_ALERT_FUNCTION_NAME: getResourceNameForTarpon('SlackAlertFunction'),
+  WEBHOOK_CONFIGURATION_FUNCTION_NAME: getResourceNameForTarpon(
+    'WebhookConfigurationFunction'
+  ),
   WEBHOOK_DELIVERER_FUNCTION_NAME: getResourceNameForTarpon(
     'WebhookDelivererFunction'
   ),

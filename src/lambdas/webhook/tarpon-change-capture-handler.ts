@@ -59,7 +59,7 @@ async function userHandler(
 
   if (diffResult.userStateDetails) {
     webhookTasks.push({
-      event: 'USER_STATUS_UPDATED',
+      event: 'USER_STATE_UPDATED',
       payload: diffResult.userStateDetails,
     })
   }

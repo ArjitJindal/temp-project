@@ -1132,6 +1132,100 @@ paths:
       responses: {}
       operationId: get-slack-oauth-redirect
     parameters: []
+  /webhooks:
+    post:
+      summary: Create a new webhook
+      operationId: post-webhooks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookConfiguration'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConfiguration'
+    get:
+      summary: Get all webhooks
+      operationId: get-webhooks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookConfiguration'
+  '/webhooks/{webhookId}':
+    post:
+      summary: Update a webhook
+      operationId: post-webhooks-webhookid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookConfiguration'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookConfiguration'
+    parameters:
+      - schema:
+          type: string
+        name: webhookId
+        in: path
+        required: true
+    delete:
+      summary: Delete a webhook
+      operationId: delete-webhooks-webhookId
+      responses:
+        '200':
+          description: OK
+  '/webhooks/{webhookId}/secret':
+    parameters:
+      - schema:
+          type: string
+        name: webhookId
+        in: path
+        required: true
+    get:
+      summary: Get secret of a webhook
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSecrets'
+      operationId: get-webhooks-webhookId-secret
+  '/webhooks/{webhookId}/deliveries':
+    parameters:
+      - schema:
+          type: string
+        name: webhookId
+        in: path
+        required: true
+    get:
+      summary: Get webhook deliveries
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookDeliveryAttempt'
+      operationId: get-webhooks-webhook_id-deliveries
 components:
   schemas:
     ManualRiskAssignmentUserState:
@@ -1854,6 +1948,91 @@ components:
         - root
         - admin
         - user
+    WebhookConfiguration:
+      title: WebhookConfiguration
+      x-stoplight:
+        id: f9ohatgtpmm2v
+      type: object
+      description: ''
+      properties:
+        _id:
+          type: string
+        createdAt:
+          type: number
+          minimum: 1262300400000
+        webhookUrl:
+          type: string
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookEvent'
+        enabled:
+          type: boolean
+        secret:
+          type: string
+        expiringSecret:
+          type: string
+      required:
+        - webhookUrl
+        - events
+        - enabled
+    WebhookEvent:
+      type: string
+      title: WebhookEvent
+      x-stoplight:
+        id: 09ap0wrs3h6tl
+      enum:
+        - USER_STATE_UPDATED
+    WebhookSecrets:
+      title: WebhookSecrets
+      x-stoplight:
+        id: 0urp7qvcfbf2u
+      type: object
+      properties:
+        secret:
+          type: string
+        expiringSecret:
+          type: string
+      required:
+        - secret
+    WebhookDeliveryAttempt:
+      title: WebhookDeliveryAttempt
+      x-stoplight:
+        id: 24pu9dmforx4u
+      type: object
+      properties:
+        _id:
+          type: string
+        deliveryTaskId:
+          type: string
+        webhookId:
+          type: string
+        webhookUrl:
+          type: string
+        requestStartedAt:
+          type: number
+        requestFinishedAt:
+          type: number
+        success:
+          type: boolean
+        event:
+          $ref: '#/components/schemas/WebhookEvent'
+        eventCreatedAt:
+          type: number
+        request:
+          type: object
+        response:
+          type: object
+      required:
+        - deliveryTaskId
+        - webhookId
+        - webhookUrl
+        - requestStartedAt
+        - requestFinishedAt
+        - success
+        - event
+        - eventCreatedAt
+        - request
   securitySchemes:
     Authorization:
       type: http

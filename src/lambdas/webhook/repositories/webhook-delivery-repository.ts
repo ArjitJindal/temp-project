@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { WEBHOOK_DELIVERY_COLLECTION } from '@/utils/mongoDBUtils'
-import { WebhookDeliveryAttempt } from '@/@types/webhook'
+import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 
 export class WebhookDeliveryRepository {
   tenantId: string
@@ -25,6 +25,20 @@ export class WebhookDeliveryRepository {
       .sort({ deliveredAt: -1 })
       .limit(1)
       .next()
+  }
+
+  public async getWebhookDeliveryAttempts(
+    limit: number
+  ): Promise<WebhookDeliveryAttempt[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<WebhookDeliveryAttempt>(
+      WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
+    )
+    return collection
+      .find({})
+      .sort({ requestStartedAt: -1 })
+      .limit(limit)
+      .toArray()
   }
 
   public async addWebhookDeliveryAttempt(
