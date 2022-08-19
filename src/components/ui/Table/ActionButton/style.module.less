@@ -1,0 +1,57 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid black;
+  border-radius: 4px;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+
+  &.isActive {
+    //box-shadow: 0 -1px 6px 0 fade(@fr-colors-purpleGray, 25%);
+  }
+
+  &.color-GREEN {
+    background: @fr-colors-limeGreenTint;
+    border-color: fade(@fr-colors-limeGreenShade, 45%);
+
+    .icon {
+      color: fade(@fr-colors-limeGreenShade, 85%);
+    }
+  }
+
+  &.color-ORANGE {
+    background: @fr-colors-orangeTint;
+    border-color: fade(@fr-colors-orange, 45%);
+
+    .icon {
+      color: fade(@fr-colors-orange, 85%);
+    }
+  }
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.clearIcon {
+  width: 16px;
+  color: fade(@fr-colors-limeGreenShade, 45%);
+}
+
+.children {
+  max-width: 86px;
+  overflow: hidden;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

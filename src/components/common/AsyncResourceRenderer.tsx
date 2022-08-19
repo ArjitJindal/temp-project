@@ -22,7 +22,7 @@ export function AsyncResourceRenderer<T>(props: Props<T>): JSX.Element {
       // todo: i18n
       return (
         <Spin>
-          <Empty description="Please, wait..." />
+          <Empty description="Please, wait..." style={{ margin: '1rem 0' }} />
         </Spin>
       );
     },

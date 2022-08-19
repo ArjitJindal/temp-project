@@ -1,9 +1,15 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import type { ParamsType } from '@ant-design/pro-provider';
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from 'react';
 import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
-import { TableAction } from 'antd/lib/table/interface';
 import _ from 'lodash';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
@@ -45,6 +51,20 @@ interface OverridenProps<T, Params extends object = ParamsType> {
   actionRef?: React.Ref<TableActionType>;
 }
 
+type ParamsState<Params extends object = ParamsType> = {
+  page: number;
+  params: Params;
+  sort: Record<string, SortOrder>;
+};
+
+type ActionRendererProps<Params extends object = ParamsType> = {
+  params: ParamsState<Params>;
+  setParams: Dispatch<SetStateAction<ParamsState<Params>>>;
+};
+type ActionRenderer<Params extends object = ParamsType> = (
+  props: ActionRendererProps<Params>,
+) => React.ReactNode;
+
 interface Props<T, Params extends object, ValueType>
   extends Omit<ProTableProps<T, Params, ValueType>, keyof OverridenProps<T, Params>>,
     OverridenProps<T, Params> {
@@ -53,6 +73,7 @@ interface Props<T, Params extends object, ValueType>
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
   data?: ResponsePayload<T>;
+  actionsHeader?: ActionRenderer<Params>[];
 }
 
 const TABLE_LOCALE = {
@@ -87,12 +108,6 @@ function prepareDataSource<T>(data: Array<T | T[]>): T[] {
   return result;
 }
 
-type ParamsState<Params extends object = ParamsType> = {
-  page: number;
-  params: Params;
-  sort: Record<string, SortOrder>;
-};
-
 export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>(
   props: Props<T, Params, ValueType>,
 ) => {
@@ -107,10 +122,12 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     options = undefined,
     initialParams,
     actionRef,
+    headerTitle,
+    actionsHeader,
     ...rest
   } = props;
 
-  const [params, setParams] = useState<ParamsState<Params>>(
+  const [paramsState, setParamsState] = useState<ParamsState<Params>>(
     initialParams ?? {
       page: 1,
       params: {} as Params,
@@ -126,7 +143,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
 
   useImperativeHandle<TableActionType, TableActionType>(actionRef, () => ({
     reload() {
-      setParams(_.cloneDeep(params));
+      setParamsState(_.cloneDeep(paramsState));
     },
   }));
 
@@ -163,11 +180,11 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
 
   const triggerRequest = useCallback(() => {
     handleRequest(
-      { ...params.params, pageSize: DEFAULT_PAGE_SIZE, current: params.page },
-      params.sort,
+      { ...paramsState.params, pageSize: DEFAULT_PAGE_SIZE, current: paramsState.page },
+      paramsState.sort,
       {},
     );
-  }, [handleRequest, params.params, params.page, params.sort]);
+  }, [handleRequest, paramsState.params, paramsState.page, paramsState.sort]);
 
   useEffect(() => {
     triggerRequest();
@@ -176,6 +193,14 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
   return (
     <div className={style.root}>
       <ProTable<T, Params, ValueType>
+        headerTitle={
+          actionsHeader != null
+            ? renderActionHeader<Params>(actionsHeader, {
+                params: paramsState,
+                setParams: setParamsState,
+              })
+            : headerTitle
+        }
         className={[
           style.table,
           className,
@@ -196,10 +221,10 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
         )}
         pagination={false}
         onSubmit={(newParams) => {
-          setParams((state) => ({
+          setParamsState((state) => ({
             ...state,
-            params: newParams,
-            page: isEqual(params.params, newParams) ? state.page : 1,
+            params: { ...paramsState.params, ...newParams },
+            page: isEqual(paramsState.params, newParams) ? state.page : 1,
           }));
         }}
         onChange={(pagination, filters, sorter) => {
@@ -212,7 +237,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
             }),
             {} as Record<string, SortOrder>,
           );
-          setParams({
+          setParamsState({
             page: 1,
             params: filters as unknown as Params,
             sort: sort,
@@ -235,12 +260,25 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
             map(responseData, ({ total }) => total),
             1,
           )}
-          current={params.page}
+          current={paramsState.page}
           onChange={(page) => {
-            setParams((state) => ({ ...state, page }));
+            setParamsState((state) => ({ ...state, page }));
           }}
         />
       )}
     </div>
   );
 };
+
+function renderActionHeader<Params extends object = ParamsType>(
+  actionsHeader: ActionRenderer<Params>[],
+  props: ActionRendererProps<Params>,
+) {
+  return (
+    <div className={style.actionHeader}>
+      {actionsHeader.map((action, i) => (
+        <React.Fragment key={i}>{action(props)}</React.Fragment>
+      ))}
+    </div>
+  );
+}

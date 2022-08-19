@@ -10,6 +10,7 @@ export type TableSearchParams = Partial<{
   rulesExecutedFilter: Array<string>;
   originCurrenciesFilter: Array<string>;
   destinationCurrenciesFilter: Array<string>;
+  userId: string;
   originUserId: string;
   destinationUserId: string;
   type: string;

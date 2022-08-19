@@ -32,6 +32,7 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import handleResize from '@/components/ui/Table/utils';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const { id: transactionId } = useParams<'id'>();
@@ -134,6 +135,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         tooltip: 'Origin is the Sender in a transaction',
         width: 200,
         dataIndex: 'originUserId',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.originUserId;
         },
@@ -142,6 +144,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         title: 'Origin User Name',
         tooltip: 'Origin is the Sender in a transaction',
         width: 220,
+        hideInSearch: true,
         render: (dom, entity) => {
           return getUserName(entity.originUser);
         },
@@ -189,6 +192,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         tooltip: 'Destination is the Receiver in a transaction',
         width: 170,
         dataIndex: 'destinationUserId',
+        hideInSearch: true,
         render: (dom, entity) => {
           return entity.destinationUserId;
         },
@@ -197,6 +201,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         title: 'Destination User Name',
         tooltip: 'Destination is the Receiver in a transaction',
         width: 180,
+        hideInSearch: true,
         render: (dom, entity) => {
           return getUserName(entity.destinationUser);
         },
@@ -311,6 +316,7 @@ const TableList = (props: RouteMatch<'id'>) => {
         type,
         originCurrenciesFilter,
         destinationCurrenciesFilter,
+        userId,
         originUserId,
         destinationUserId,
         originMethodFilter,
@@ -324,6 +330,7 @@ const TableList = (props: RouteMatch<'id'>) => {
           afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
           beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
           filterId: transactionId,
+          filterUserId: userId,
           filterOriginUserId: originUserId,
           filterDestinationUserId: destinationUserId,
           filterOriginCurrencies: originCurrenciesFilter,
@@ -354,6 +361,19 @@ const TableList = (props: RouteMatch<'id'>) => {
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
       <Table<TransactionCaseManagement>
+        actionsHeader={[
+          ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.params.userId ?? null}
+              onConfirm={(userId) => {
+                setParams((state) => ({
+                  ...state,
+                  params: { ...state.params, userId: userId ?? undefined },
+                }));
+              }}
+            />
+          ),
+        ]}
         form={{
           labelWrap: true,
         }}

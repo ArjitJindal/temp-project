@@ -8,7 +8,6 @@ interface Props {
 }
 
 const Fallback: FallbackRender = (errorData) => {
-  console.log('errorData', errorData);
   return (
     <Alert
       style={{

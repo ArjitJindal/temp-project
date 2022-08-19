@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
-import { Card, message } from 'antd';
+import { message } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
@@ -34,6 +34,7 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { TransactionType } from '@/apis/models/TransactionType';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -200,6 +201,7 @@ function TableList() {
         copyable: true,
         ellipsis: true,
         dataIndex: 'originUserId',
+        hideInSearch: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -212,6 +214,7 @@ function TableList() {
         title: 'Origin User Name',
         tooltip: 'Origin is the Sender in a transaction',
         width: 220,
+        hideInSearch: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -275,6 +278,7 @@ function TableList() {
         dataIndex: 'destinationUserId',
         copyable: true,
         ellipsis: true,
+        hideInSearch: true,
         width: 170,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
@@ -290,6 +294,7 @@ function TableList() {
         title: 'Destination User Name',
         tooltip: 'Destination is the Receiver in a transaction',
         width: 180,
+        hideInSearch: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -509,6 +514,7 @@ function TableList() {
         destinationCurrenciesFilter,
         originUserId,
         destinationUserId,
+        userId,
         type,
         status,
         originMethodFilter,
@@ -529,6 +535,7 @@ function TableList() {
           filterStatus: status,
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,
+          filterUserId: userId,
           filterOriginUserId: originUserId,
           filterDestinationUserId: destinationUserId,
           transactionType: type,
@@ -583,45 +590,56 @@ function TableList() {
   );
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <Card>
-        <Table<CaseManagementItem, TableSearchParams>
-          initialParams={{
-            page: parsedParams.current ?? 1,
-            params: parsedParams,
-            sort: {},
-          }}
-          form={{
-            labelWrap: true,
-          }}
-          isEvenRow={(item) => item.index % 2 === 0}
-          components={{
-            header: {
-              cell: ResizableTitle,
-            },
-          }}
-          actionRef={actionRef}
-          formRef={formRef}
-          rowKey="rowKey"
-          search={{
-            labelWidth: 120,
-          }}
-          scroll={{ x: 1300 }}
-          request={request}
-          toolBarRender={() => [
-            <Feature name="SLACK_ALERTS">
-              <AddToSlackButton />
-            </Feature>,
-          ]}
-          columns={mergeColumns}
-          columnsState={{
-            persistenceType: 'localStorage',
-            persistenceKey: 'case-management-list',
-          }}
-          onReset={() => {
-            pushParamsToNavigation({});
-          }}
-        />
-      </Card>
+      <Table<CaseManagementItem, TableSearchParams>
+        actionsHeader={[
+          ({ params, setParams }) => (
+            <UserSearchButton
+              userId={params.params.userId ?? null}
+              onConfirm={(userId) => {
+                setParams((state) => ({
+                  ...state,
+                  params: { ...state.params, userId: userId ?? undefined },
+                }));
+              }}
+            />
+          ),
+        ]}
+        initialParams={{
+          page: parsedParams.current ?? 1,
+          params: parsedParams,
+          sort: {},
+        }}
+        form={{
+          labelWrap: true,
+        }}
+        isEvenRow={(item) => item.index % 2 === 0}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
+        }}
+        actionRef={actionRef}
+        formRef={formRef}
+        rowKey="rowKey"
+        search={{
+          labelWidth: 120,
+        }}
+        scroll={{ x: 1300 }}
+        request={request}
+        toolBarRender={() => [
+          <Feature name="SLACK_ALERTS">
+            <AddToSlackButton />
+          </Feature>,
+        ]}
+        columns={mergeColumns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'case-management-list',
+        }}
+        onReset={() => {
+          pushParamsToNavigation({});
+        }}
+      />
     </PageWrapper>
   );
 }
