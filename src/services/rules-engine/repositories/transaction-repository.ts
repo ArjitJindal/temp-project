@@ -35,8 +35,8 @@ import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
-  beforeTimestamp: number
-  afterTimestamp: number
+  beforeTimestamp: number // exclusive
+  afterTimestamp: number // inclusive
 }
 export type ThinTransaction = {
   transactionId: string
@@ -982,7 +982,7 @@ export class TransactionRepository {
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
         ':skfrom': `${timeRange.afterTimestamp}`,
-        ':skto': `${timeRange.beforeTimestamp}`,
+        ':skto': `${timeRange.beforeTimestamp - 1}`,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
       ScanIndexForward: false,

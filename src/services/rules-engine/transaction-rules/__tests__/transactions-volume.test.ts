@@ -59,7 +59,7 @@ describe('Core logic', () => {
       destinationUserId: '1-2',
       originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
       destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-      timestamp: dayjs('2022-01-01T00:40:00.000Z').valueOf(),
+      timestamp: dayjs('2022-01-01T00:50:00.000Z').valueOf(),
     }),
   ]
 

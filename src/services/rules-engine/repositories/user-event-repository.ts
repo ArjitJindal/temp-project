@@ -7,8 +7,8 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
 
 type TimeRange = {
-  beforeTimestamp: number
-  afterTimestamp: number
+  beforeTimestamp: number // exclusive
+  afterTimestamp: number // inclusive
 }
 
 export class UserEventRepository {
@@ -100,7 +100,7 @@ export class UserEventRepository {
       ExpressionAttributeValues: {
         ':pk': partitionKeyId,
         ':skfrom': `${timeRange.afterTimestamp}`,
-        ':skto': `${timeRange.beforeTimestamp}`,
+        ':skto': `${timeRange.beforeTimestamp - 1}`,
       },
       ProjectionExpression: userEventAttributeNames
         .map((name) => `#${name}`)
