@@ -359,7 +359,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         fieldProps: {
-          options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
+          options: ['FLAGGED', 'BLOCKED', 'SUSPENDED', 'WHITELISTED'],
           allowClear: true,
         },
         width: 120,

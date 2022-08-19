@@ -30,7 +30,9 @@ export function useRuleActionTitle(ruleAction: RuleAction | string): string {
   if (ruleAction === 'SUSPEND') {
     return 'Suspended';
   }
-  return ruleAction;
+  const ruleActionSmall = ruleAction.toLowerCase();
+  const ruleActionUse = ruleActionSmall.charAt(0).toUpperCase() + ruleActionSmall.slice(1) + 'ed';
+  return ruleActionUse;
 }
 
 export function useRuleActionColor(ruleAction: RuleAction): string {
