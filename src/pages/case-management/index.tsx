@@ -350,7 +350,7 @@ function TableList() {
         },
       },
       {
-        title: 'Status',
+        title: 'Transaction Status',
         sorter: true,
         dataIndex: 'status',
         hideInSearch: false,
@@ -362,7 +362,7 @@ function TableList() {
           options: ['FLAGGED', 'BLOCKED', 'SUSPENDED', 'WHITELISTED'],
           allowClear: true,
         },
-        width: 120,
+        width: 200,
         render: (dom, entity) => {
           const transaction = updatedTransactions[entity.transactionId as string] || entity;
           return <RuleActionStatus ruleAction={transaction.status} />;
