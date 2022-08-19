@@ -397,14 +397,23 @@ export const businessUsersViewHandler = lambdaApi()(
     )
 
     if (event.httpMethod === 'GET' && event.path.endsWith('/business/users')) {
-      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
-        event.queryStringParameters as any
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterName,
+        filterOperator,
+      } = event.queryStringParameters as any
       return userService.getBusinessUsers({
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
+        filterName,
+        filterOperator,
       })
     } else if (
       event.httpMethod === 'GET' &&
@@ -475,14 +484,23 @@ export const consumerUsersViewHandler = lambdaApi()(
       DOCUMENT_BUCKET
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/consumer/users')) {
-      const { limit, skip, afterTimestamp, beforeTimestamp, filterId } =
-        event.queryStringParameters as any
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterName,
+        filterOperator,
+      } = event.queryStringParameters as any
       return userService.getConsumerUsers({
         limit: parseInt(limit),
         skip: parseInt(skip),
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
+        filterName,
+        filterOperator,
       })
     } else if (
       event.httpMethod === 'GET' &&

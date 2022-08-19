@@ -574,6 +574,14 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            $ref: "#/components/schemas/FilterOperator"
+          in: query
+          name: filterOperator
     parameters: []
   '/consumer/users/{userId}':
     get:
@@ -681,6 +689,14 @@ paths:
             type: string
           in: query
           name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            $ref: "#/components/schemas/FilterOperator"
+          in: query
+          name: filterOperator
     parameters: []
   '/business/users/{userId}':
     get:
@@ -1948,6 +1964,12 @@ components:
         - root
         - admin
         - user
+    FilterOperator:
+      type: string
+      title: FilterOperator
+      enum:
+        - AND
+        - OR
     WebhookConfiguration:
       title: WebhookConfiguration
       x-stoplight:

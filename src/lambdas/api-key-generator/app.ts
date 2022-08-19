@@ -86,6 +86,18 @@ export const createMongoDBCollections = async (tenantId: string) => {
     await usersCollection.createIndex({
       userId: 1,
     })
+    await usersCollection.createIndex({
+      'userDetails.name.firstName': 1,
+    })
+    await usersCollection.createIndex({
+      'userDetails.name.middleName': 1,
+    })
+    await usersCollection.createIndex({
+      'userDetails.name.lastName': 1,
+    })
+    await usersCollection.createIndex({
+      'legalEntity.companyGeneralDetails.legalName': 1,
+    })
 
     await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
     const transactionEventsCollection = db.collection(

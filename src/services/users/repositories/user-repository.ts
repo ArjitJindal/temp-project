@@ -9,6 +9,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
+import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 
 export class UserRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -27,27 +28,31 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public async getMongoBusinessUsers(pagination: {
+  public async getMongoBusinessUsers(params: {
     limit: number
     skip: number
     afterTimestamp?: number
     beforeTimestamp: number
     filterId?: string
+    filterName?: string
+    filterOperator?: FilterOperator
   }): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
-    return (await this.getMongoUsers(pagination, 'BUSINESS')) as {
+    return (await this.getMongoUsers(params, 'BUSINESS')) as {
       total: number
       data: Array<InternalBusinessUser>
     }
   }
 
-  public async getMongoConsumerUsers(pagination: {
+  public async getMongoConsumerUsers(params: {
     limit: number
     skip: number
     afterTimestamp?: number
     beforeTimestamp: number
     filterId?: string
+    filterName?: string
+    filterOperator?: FilterOperator
   }): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
-    return (await this.getMongoUsers(pagination, 'CONSUMER')) as {
+    return (await this.getMongoUsers(params, 'CONSUMER')) as {
       total: number
       data: Array<InternalConsumerUser>
     }
@@ -94,6 +99,8 @@ export class UserRepository {
       afterTimestamp?: number
       beforeTimestamp: number
       filterId?: string
+      filterName?: string
+      filterOperator?: FilterOperator
     },
     userType: UserType
   ): Promise<{
@@ -101,18 +108,79 @@ export class UserRepository {
     data: Array<InternalBusinessUser | InternalConsumerUser>
   }> {
     const db = this.mongoDb.db()
+
+    const collectionName = USERS_COLLECTION(this.tenantId)
     const collection = db.collection<
       InternalBusinessUser | InternalConsumerUser
-    >(USERS_COLLECTION(this.tenantId))
-    const query: Filter<InternalBusinessUser | InternalConsumerUser> = {
-      createdTimestamp: {
-        $gte: params.afterTimestamp || 0,
-        $lte: params.beforeTimestamp,
-      },
-      type: userType,
-    }
+    >(collectionName)
+
+    const filterConditions: Filter<
+      InternalBusinessUser | InternalConsumerUser
+    >[] = []
+
     if (params.filterId != null) {
-      query['userId'] = { $regex: params.filterId }
+      filterConditions.push({
+        userId: { $regex: params.filterId },
+      })
+    }
+    if (params.filterName != null) {
+      // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
+      filterConditions.push({
+        $or: [
+          {
+            'userDetails.name.firstName': {
+              $regex: params.filterName,
+              $options: 'i',
+            },
+          },
+          {
+            'userDetails.name.middleName': {
+              $regex: params.filterName,
+              $options: 'i',
+            },
+          },
+          {
+            'userDetails.name.lastName': {
+              $regex: params.filterName,
+              $options: 'i',
+            },
+          },
+          {
+            'legalEntity.companyGeneralDetails.legalName': {
+              $regex: params.filterName,
+              $options: 'i',
+            },
+          },
+        ],
+      })
+    }
+
+    const queryConditions: Filter<
+      InternalBusinessUser | InternalConsumerUser
+    >[] = [
+      {
+        createdTimestamp: {
+          $gte: params.afterTimestamp || 0,
+          $lte: params.beforeTimestamp,
+        },
+        type: userType,
+      },
+    ]
+
+    if (filterConditions.length > 0) {
+      queryConditions.push(
+        params.filterOperator === 'OR'
+          ? {
+              $or: filterConditions,
+            }
+          : {
+              $and: filterConditions,
+            }
+      )
+    }
+
+    const query = {
+      $and: queryConditions,
     }
 
     const users = await collection
