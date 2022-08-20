@@ -90,6 +90,7 @@
     "moment": "^2.25.3",
     "numeral": "^2.0.6",
     "pluralize": "^8.0.0",
+    "rc-resize-observer": "^1.2.0",
     "react": "^16.8.4",
     "react-country-flag": "^3.0.2",
     "react-dev-inspector": "^1.1.1",

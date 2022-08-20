@@ -7,6 +7,7 @@ import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-level';
+import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithm';
 import RiskMyRulesPage from '@/pages/rules/my-rules';
 import RiskCreateRulePage from '@/pages/rules/create-rule';
 import RiskRequestNewPage from '@/pages/rules/request-new';
@@ -180,6 +181,11 @@ export function useRoutes(): RouteItem[] {
                   name: 'configure',
                   path: '/risk-levels/configure',
                   component: RiskLevelsConfigurePage,
+                },
+                {
+                  name: 'risk-algorithm',
+                  path: '/risk-levels/risk-algorithm',
+                  component: RiskAlgorithmTable,
                 },
               ],
             },
