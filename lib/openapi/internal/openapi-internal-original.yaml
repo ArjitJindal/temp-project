@@ -1450,6 +1450,7 @@ components:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
         - type: object
+          additionalProperties: false
           properties:
             comments:
               type: array
@@ -1477,9 +1478,10 @@ components:
               type: array
               items:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
+            caseStatus:
+              $ref: '#/components/schemas/CaseStatus'
           required:
             - status
-          additionalProperties: false
       title: TransactionCaseManagement
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
@@ -1676,9 +1678,10 @@ components:
             type: string
         timestamp:
           type: number
+        caseStatus:
+          $ref: '#/components/schemas/CaseStatus'
       required:
         - userId
-        - status
         - timestamp
     TransactionUpdateRequest:
       title: TransactionUpdateRequest
@@ -1694,6 +1697,8 @@ components:
           type: array
           items:
             type: string
+        caseStatus:
+          $ref: '#/components/schemas/CaseStatus'
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object
@@ -1964,6 +1969,15 @@ components:
         - root
         - admin
         - user
+    CaseStatus:
+      type: string
+      title: CaseStatus
+      x-stoplight:
+        id: kwammtv515uc3
+      enum:
+        - OPEN
+        - CLOSED
+        - REOPENED
     FilterOperator:
       type: string
       title: FilterOperator

@@ -39,6 +39,11 @@ elif [ "$env" == "prod-eu-1" ]; then
     apiId=chw09486vg
     profile="AWSAdministratorAccess-870721492449"
     region="eu-central-1"
+elif [ "$env" == "prod-us-1" ]; then
+    apiPrefix="us-1."
+    apiId=chw09486vg
+    profile="AWSAdministratorAccess-870721492449"
+    region="us-west-2"
 else
     echo "Unknown env"
     exit 1
@@ -87,6 +92,7 @@ fi
 
 echo "Tenant ID: $tenantId";
 echo "Usage plan name: $usagePlanName";
+echo "Usage plan ID: $usagePlanId";
 
 apiKey=$(awscurl --service execute-api \
     -X POST \
