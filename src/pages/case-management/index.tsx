@@ -112,12 +112,10 @@ function TableList() {
   }, [parsedParams]);
 
   const pushParamsToNavigation = useCallback(
-    (params: TableSearchParams, force = false) => {
-      if (force) {
-        navigate(makeUrl('/case-management', {}, queryAdapter.serializer(params)), {
-          replace: true,
-        });
-      }
+    (params: TableSearchParams) => {
+      navigate(makeUrl('/case-management', {}, queryAdapter.serializer(params)), {
+        replace: true,
+      });
     },
     [navigate],
   );
