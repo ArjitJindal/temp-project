@@ -35,6 +35,7 @@ import { TransactionType } from '@/apis/models/TransactionType';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
+import TransactionStatusButton from '@/pages/transactions/transactions-list/components/TransactionStatusButton';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -591,15 +592,26 @@ function TableList() {
       <Table<CaseManagementItem, TableSearchParams>
         actionsHeader={[
           ({ params, setParams }) => (
-            <UserSearchButton
-              userId={params.params.userId ?? null}
-              onConfirm={(userId) => {
-                setParams((state) => ({
-                  ...state,
-                  params: { ...state.params, userId: userId ?? undefined },
-                }));
-              }}
-            />
+            <>
+              <TransactionStatusButton
+                status={params.params.status ?? undefined}
+                onConfirm={(value) => {
+                  setParams((state) => ({
+                    ...state,
+                    params: { ...state.params, status: value ?? undefined },
+                  }));
+                }}
+              />
+              <UserSearchButton
+                userId={params.params.userId ?? null}
+                onConfirm={(userId) => {
+                  setParams((state) => ({
+                    ...state,
+                    params: { ...state.params, userId: userId ?? undefined },
+                  }));
+                }}
+              />
+            </>
           ),
         ]}
         initialParams={{
