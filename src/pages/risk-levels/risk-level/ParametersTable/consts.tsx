@@ -55,9 +55,7 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
         }}
       >
         {Object.entries(COUNTRIES).map(([code, title]) => (
-          <>
-            <Select.Option key={title}>{title}</Select.Option>
-          </>
+          <Select.Option key={code}>{title}</Select.Option>
         ))}
       </Select>
     );
@@ -70,6 +68,6 @@ export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
     if (value == null) {
       return null;
     }
-    return <span>{COUNTRIES[value] ?? value}</span>;
+    return <span>{COUNTRIES[value]}</span>;
   },
 };
