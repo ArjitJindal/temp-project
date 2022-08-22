@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,112 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-4 description formatting', () => {
+  const descriptionTemplate = `User tried to {{ if-sender 'send' 'receive' }} money in {{ hitParty.amount.currency }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money in {{ hitParty.amount.currency }} prior`
+
+  testRuleDescriptionFormatting(
+    'sender',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: 'description-1',
+        destinationUserId: 'description-2',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'INR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'description-1',
+        destinationUserId: 'description-2',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'BHD',
+        },
+      }),
+      getTestTransaction({
+        originUserId: 'description-1',
+        destinationUserId: 'description-2',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'CAD',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      null,
+      null,
+      'User tried to send money in EUR more than 2 times. User has not sent any money in EUR prior',
+    ]
+  )
+
+  testRuleDescriptionFormatting(
+    'receiver',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1-1-1',
+        destinationUserId: '1-2-1',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'INR',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1-1-1',
+        destinationUserId: '1-2-1',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'BHD',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1-1-1',
+        destinationUserId: '1-2-1',
+        originAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'CAD',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 800,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      null,
+      null,
+      'User tried to receive money in EUR more than 2 times. User has not received any money in EUR prior',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

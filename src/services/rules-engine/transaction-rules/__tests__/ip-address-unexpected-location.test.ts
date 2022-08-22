@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
@@ -42,7 +43,42 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
       },
     },
   }),
+  getTestUser({
+    userId: '3',
+    userDetails: {
+      name: {
+        firstName: '1',
+      },
+      countryOfResidence: 'IN',
+      countryOfNationality: 'TR',
+    },
+  }),
 ])
+
+describe('R-88 description formatting', () => {
+  const descriptionTemplate = `{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is not country of origin ({{ format-country hitParty.user.userDetails.countryOfResidence }}) or country of nationality ({{ format-country hitParty.user.userDetails.countryOfNationality }})`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '3',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          // A Germany ip address
+          ipAddress: '18.184.45.226',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      'Sender’s ip-bases country (Germany) is not country of origin (India) or country of nationality (Türkiye)',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

@@ -66,6 +66,11 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
     if (uniqueUsers.size > uniqueUsersCountThreshold) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars(null),
+          ipAddress: this.transaction.deviceData?.ipAddress,
+          uniqueUsersCount: uniqueUsers.size,
+        },
       }
     }
   }

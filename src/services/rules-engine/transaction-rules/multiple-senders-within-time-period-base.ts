@@ -99,7 +99,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
         .map((transaction) => transaction.senderKeyId)
     )
     if (uniqueSenders.size + 1 > sendersCount) {
-      return { action: this.action }
+      return { action: this.action, ...super.getTransactionVars(null) }
     }
   }
 }

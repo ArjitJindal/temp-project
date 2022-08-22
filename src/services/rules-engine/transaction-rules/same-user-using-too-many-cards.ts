@@ -72,6 +72,10 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
     if (uniqueCardsCount > uniqueCardsCountThreshold) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          uniqueCardsCount,
+        },
       }
     }
   }

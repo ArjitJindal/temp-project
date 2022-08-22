@@ -105,6 +105,68 @@ describe('Description formatting', () => {
       ]
     )
   })
+
+  describe('R-89, R-90, R-91, R-92 description formatting', () => {
+    const descriptionTemplate = `An account is {{ if-sender 'receiving' 'sending' }} funds from >= {{ parameters.transactionsLimit }} different sender accounts in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)`
+    testRuleDescriptionFormatting(
+      'first',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        null,
+        null,
+        'An account is receiving funds from >= 2 different sender accounts in 5 second(s)',
+      ]
+    )
+  })
+
+  describe('R-95 description formatting', () => {
+    const descriptionTemplate = `Receiver received {{ parameters.transactionsLimit }} or more transactions in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)`
+    testRuleDescriptionFormatting(
+      'first',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-4',
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1-2',
+          destinationUserId: '1-5',
+          timestamp: dayjs('2022-01-01T00:00:03.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [null, null, 'Receiver received 2 or more transactions in 5 second(s)']
+    )
+  })
 })
 
 describe('Core logic', () => {

@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -24,6 +25,42 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-52 description formatting', () => {
+  const descriptionTemplate = `Same ip address ({{ ipAddress }}) used by {{ uniqueUsersCount }} unique users`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+        deviceData: {
+          ipAddress: '1.1.1.1',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [null, null, 'Same ip address (1.1.1.1) used by 2 unique users']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

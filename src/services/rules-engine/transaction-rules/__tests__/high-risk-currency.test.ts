@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -33,6 +34,62 @@ describe('Core logic', () => {
       defaultAction: 'FLAG',
     },
   ])
+
+  describe('R-6 description formatting', () => {
+    const descriptionTemplate = `{{ if-sender 'Sender’s' 'Receiver’s' }} currency ({{ hitParty.amount.currency }}) is a High Risk`
+
+    testRuleDescriptionFormatting(
+      'sender',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 68351.34,
+            transactionCurrency: 'TRY',
+          },
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        'Sender’s currency (EUR) is a High Risk',
+      ]
+    )
+
+
+    testRuleDescriptionFormatting(
+      'receiver',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '4-1',
+          destinationUserId: '4-2',
+          originAmountDetails: {
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 68351.34,
+            transactionCurrency: 'INR',
+          },
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        'Receiver’s currency (INR) is a High Risk',
+      ]
+    )
+
+  })
 
   describe.each<TransactionRuleTestCase>([
     {

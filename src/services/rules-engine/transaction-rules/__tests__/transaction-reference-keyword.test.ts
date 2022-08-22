@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,24 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-24 description formatting', () => {
+  const descriptionTemplate = `Keyword “{{ keyword }}” in reference is blacklisted`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        reference: 'A reference with keyword1',
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    ['Keyword “keyword1” in reference is blacklisted']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

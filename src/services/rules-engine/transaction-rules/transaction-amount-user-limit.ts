@@ -24,7 +24,13 @@ export default class TransactionAmountUserLimitRule extends TransactionRule<unkn
         { [transactionLimit.amountCurrency]: transactionLimit.amountValue }
       )
     ) {
-      return { action: this.action }
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          transactionLimit,
+        },
+      }
     }
   }
 }

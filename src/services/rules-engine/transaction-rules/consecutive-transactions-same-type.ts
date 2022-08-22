@@ -128,6 +128,9 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     ) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+        },
       }
     }
   }

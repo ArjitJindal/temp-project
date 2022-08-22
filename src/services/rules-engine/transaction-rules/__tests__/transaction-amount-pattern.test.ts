@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,29 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-117 description formatting', () => {
+  const descriptionTemplate = `Transaction amount of {{ format-money hitParty.amount }} matches a blacklisted pattern ending with {{ matchPattern }}`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originAmountDetails: {
+          transactionAmount: 10123,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      'Transaction amount of 10123.00 EUR matches a blacklisted pattern ending with 123',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

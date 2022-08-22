@@ -39,7 +39,13 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<unk
     ].filter(Boolean)
 
     if (!expectedCountries.includes(ipCountry)) {
-      return { action: this.action }
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          ipCountry,
+        },
+      }
     }
   }
 }

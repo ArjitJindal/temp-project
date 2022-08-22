@@ -88,13 +88,14 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
   }
 
   public async computeRule() {
-    const { lowTransactionValues, transactionState } = this.parameters
+    const { lowTransactionCount, lowTransactionValues, transactionState } =
+      this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
     const userId = this.getTransactionUserId()
     if (userId) {
-      const lastNTransactionsToCheck = this.parameters.lowTransactionCount - 1
+      const lastNTransactionsToCheck = lowTransactionCount - 1
       const thinTransactionIds = (
         await (this.getDirection() === 'receiving'
           ? transactionRepository.getLastNUserReceivingThinTransactions(
@@ -135,7 +136,16 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
         }
       )
       if (areAllTransactionsLowValue) {
-        return { action: this.action }
+        return {
+          action: this.action,
+          vars: {
+            ...super.getTransactionVars(
+              this.getDirection() === 'sending' ? 'origin' : 'destination'
+            ),
+            transactionCountDelta:
+              lowTransactionCount - thinTransactionIds.length,
+          },
+        }
       }
     }
   }

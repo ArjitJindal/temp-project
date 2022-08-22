@@ -1,8 +1,9 @@
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -35,6 +36,29 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
   }),
 ])
 
+describe('R-99 description formatting', () => {
+  const descriptionTemplate = `{{ if-sender 'Sender sent' 'Receiver received' }} a transaction amount of {{ format-money hitParty.amount }} more than the limit of {{ format-money transactionLimit }}`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      'Sender sent a transaction amount of 10000.00 EUR more than the limit of 1000.00 EUR',
+    ]
+  )
+})
 describe.each<TransactionRuleTestCase>([
   {
     name: 'Transaction amount exceeds user specific limit - hit',

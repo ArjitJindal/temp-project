@@ -96,6 +96,11 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
     if (uniqueCities.size > uniqueCitiesCountThreshold) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          transactionsCount: transactionsWithIpAddress.length,
+          locationsCount: uniqueCities.size,
+        },
       }
     }
   }

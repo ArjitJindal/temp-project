@@ -5,7 +5,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { Vars } from '@/services/rules-engine/utils/format-description'
-import COUNTRIES, { isCountryCode } from '@/utils/countries'
+import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type RuleResult = {
@@ -14,6 +14,7 @@ export type RuleResult = {
 
 export interface PartyVars {
   type?: 'origin' | 'destination'
+  user?: User | Business
   title?: string | number | boolean
   amount?: {
     country?: string | number | boolean
@@ -82,10 +83,6 @@ export class TransactionRule<P> extends Rule {
   ): TransactionVars {
     const transaction = this.transaction
 
-    function formatCountry(country: string | undefined): string | undefined {
-      return isCountryCode(country) ? COUNTRIES[country] : country
-    }
-
     const result: TransactionVars = {
       hitParty: undefined,
       origin: {
@@ -102,6 +99,7 @@ export class TransactionRule<P> extends Rule {
           amount: transaction.originAmountDetails?.transactionAmount,
         },
         ipAddress: transaction.deviceData?.ipAddress,
+        user: this.senderUser,
       },
       destination: {
         type: 'destination',
@@ -118,6 +116,7 @@ export class TransactionRule<P> extends Rule {
           amount: transaction.destinationAmountDetails?.transactionAmount,
         },
         ipAddress: transaction.deviceData?.ipAddress,
+        user: this.receiverUser,
       },
     }
     if (hitDirection != null) {

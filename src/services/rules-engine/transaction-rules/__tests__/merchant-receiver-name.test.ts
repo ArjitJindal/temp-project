@@ -5,6 +5,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -22,6 +23,28 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-13 description formatting', () => {
+  const descriptionTemplate = `{{ receiverName }} is blacklisted`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        destinationPaymentDetails: {
+          method: 'WALLET',
+          name: 'Mobikwik',
+          walletType: 'wallet',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    ['Mobikwik is blacklisted']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

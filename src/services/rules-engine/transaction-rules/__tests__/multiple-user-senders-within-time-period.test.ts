@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -24,6 +25,40 @@ describe('Core logic', () => {
       defaultAction: 'FLAG',
     },
   ])
+
+  describe('R-9 description formatting', () => {
+    const descriptionTemplate = `More than {{ parameters.sendersCount }} users transacting with a single counterparty over a set period of {{ parameters.timePeriodDays }} days`
+
+    testRuleDescriptionFormatting(
+      'basic case',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '2-2',
+          destinationUserId: '2-1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-3',
+          destinationUserId: '2-1',
+          timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '2-4',
+          destinationUserId: '2-1',
+          timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        null,
+        null,
+        'More than 2 users transacting with a single counterparty over a set period of 30 days',
+      ]
+    )
+  })
 
   describe.each<TransactionRuleTestCase>([
     {

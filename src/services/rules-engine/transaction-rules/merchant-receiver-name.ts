@@ -41,7 +41,13 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
         }
       }) !== -1
     ) {
-      return { action: this.action }
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars('destination'),
+          receiverName,
+        },
+      }
     }
   }
 }

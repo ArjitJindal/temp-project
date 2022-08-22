@@ -62,6 +62,108 @@ describe('R-2 description formatting', () => {
   )
 })
 
+describe('R-75 description formatting', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { USD: 1000, EUR: 1000 },
+        ageRange: { minAge: 18, maxAge: 25 },
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      userDetails: {
+        name: {
+          firstName: '1',
+        },
+      },
+    }),
+    getTestUser({
+      userId: 'description-1',
+      userDetails: {
+        name: {
+          firstName: '1',
+        },
+      },
+    }),
+  ])
+
+  testRuleDescriptionFormatting(
+    'first',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: 'description-1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate:
+        "CTR required since {{ if-sender 'sending' 'receiving' }} {{ format-money hitParty.amount }} is above {{ format-money limit currency }}",
+    },
+    ['CTR required since sending 10000.00 EUR is above 1000.00 EUR']
+  )
+})
+
+describe('R-112 description formatting', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { USD: 1000, EUR: 1000 },
+        ageRange: { minAge: 18, maxAge: 25 },
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: 'description-1',
+      userDetails: {
+        name: {
+          firstName: '1',
+        },
+      },
+    }),
+  ])
+
+  testRuleDescriptionFormatting(
+    'first',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: 'description-1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate:
+        "{{ if-sender 'Sender' 'Receiver' }} whose age is between {{ parameters.ageRange.minAge }} - {{ parameters.ageRange.maxAge }} {{ if-sender 'sent' 'received' }} {{ format-money hitParty.amount }} above the limit {{ format-money limit currency }}",
+    },
+    [
+      'Sender whose age is between 18 - 25 sent 10000.00 EUR above the limit 1000.00 EUR',
+    ]
+  )
+})
+
 describe('Core logic', () => {
   const TEST_TENANT_ID = getTestTenantId()
 

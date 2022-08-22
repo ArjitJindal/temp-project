@@ -72,6 +72,13 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
     if (uniqueUserCount > uniqueUsersCountThreshold) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          cardFingerprint: (
+            this.transaction.originPaymentDetails as CardDetails
+          ).cardFingerprint,
+          uniqueUserCount,
+        },
       }
     }
   }

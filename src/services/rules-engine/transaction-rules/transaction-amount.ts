@@ -92,7 +92,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
       return {
         action: this.action,
         vars: {
-          ...super.getTransactionVars(null),
+          ...super.getTransactionVars('origin'),
           limit: thresholdHit.min?.toFixed(2),
           currency: thresholdHit.currency,
         },

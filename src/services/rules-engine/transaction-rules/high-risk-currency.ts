@@ -27,14 +27,18 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
     const receivingCurrency =
       this.transaction.destinationAmountDetails?.transactionCurrency
 
-    if (
-      (sendingCurrency &&
-        this.parameters.highRiskCurrencies.includes(sendingCurrency)) ||
-      (receivingCurrency &&
-        this.parameters.highRiskCurrencies.includes(receivingCurrency))
-    ) {
+    const senderHit =
+      sendingCurrency &&
+      this.parameters.highRiskCurrencies.includes(sendingCurrency)
+    const receiverHit =
+      receivingCurrency &&
+      this.parameters.highRiskCurrencies.includes(receivingCurrency)
+    if (senderHit || receiverHit) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars(receiverHit ? 'destination' : 'origin'),
+        },
       }
     }
   }

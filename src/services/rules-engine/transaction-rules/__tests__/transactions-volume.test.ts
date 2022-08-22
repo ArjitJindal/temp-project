@@ -104,6 +104,47 @@ describe('Core logic', () => {
     )
   })
 
+  describe('R-109, R-110 description formatting', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-volume',
+        defaultParameters: {
+          timeWindow: {
+            units: 3600,
+            granularity: 'second',
+          },
+          ...{
+            checkSender: 'all',
+            checkReceiver: 'all',
+            transactionVolumeThreshold: {
+              EUR: 201,
+            },
+          },
+        } as TransactionsVolumeRuleParameters,
+      },
+    ])
+
+    testRuleDescriptionFormatting(
+      'first',
+      TEST_TENANT_ID,
+      TEST_HIT_TRANSACTIONS,
+      {
+        descriptionTemplate: `Receiver is receiving >= {{ format-money volumeThreshold }} in total within time {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)`,
+      },
+      [
+        null,
+        null,
+        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
+        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
+        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
+        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
+      ]
+    )
+  })
+
   describe.each<
     TransactionRuleTestCase<Partial<TransactionsVolumeRuleParameters>>
   >([

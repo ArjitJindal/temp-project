@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
@@ -37,7 +38,48 @@ describe('Core logic', () => {
     getTestUser({ userId: '2-1' }),
     getTestUser({ userId: '3-1' }),
     getTestUser({ userId: '4-1' }),
+    getTestUser({ userId: 'description-1' }),
   ])
+
+  describe('R-101 description formatting', () => {
+    const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} made {{ parameters.targetTransactionsThreshold }} or more crypto transactions without any fiat transactions`
+
+    testRuleDescriptionFormatting(
+      'sender',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          type: 'DEPOSIT',
+          originUserId: 'description-1',
+          timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'DEPOSIT',
+          originUserId: 'description-1',
+          timestamp: dayjs('2022-01-05T06:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'DEPOSIT',
+          originUserId: 'description-1',
+          timestamp: dayjs('2022-01-10T06:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          type: 'DEPOSIT',
+          originUserId: 'description-1',
+          timestamp: dayjs('2022-01-20T06:00:00.000Z').valueOf(),
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        null,
+        null,
+        'Sender made 2 or more crypto transactions without any fiat transactions',
+        'Sender made 2 or more crypto transactions without any fiat transactions',
+      ]
+    )
+  })
 
   describe.each<TransactionRuleTestCase>([
     {

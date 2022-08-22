@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 const TEST_TENANT_ID = getTestTenantId()
@@ -23,6 +24,61 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-10 description formatting', () => {
+  const descriptionTemplate = `More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ parameters.timePeriodDays }} day(s)`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: undefined,
+        destinationUserId: 'description-1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '20ac00fegf3ef913aefb17cfae1097cce',
+          cardIssuedCountry: 'CH',
+          transactionReferenceField: 'DEPOSIT',
+          _3dsDone: true,
+        },
+      }),
+      getTestTransaction({
+        originUserId: undefined,
+        destinationUserId: 'description-1',
+        timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '34gf00fed8ef913aefb17cfae1097cce',
+          cardIssuedCountry: 'CH',
+          transactionReferenceField: 'DEPOSIT',
+          _3dsDone: true,
+        },
+      }),
+      getTestTransaction({
+        originUserId: undefined,
+        destinationUserId: 'description-1',
+        timestamp: dayjs('2022-01-04T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '98ju00fed8ef913aefb17cfae1097cce',
+          cardIssuedCountry: 'CH',
+          transactionReferenceField: 'DEPOSIT',
+          _3dsDone: true,
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [
+      null,
+      null,
+      'More than 2 counterparties transacting with a single user over a set period of 30 day(s)',
+    ]
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

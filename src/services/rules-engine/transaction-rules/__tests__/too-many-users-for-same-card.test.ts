@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -24,6 +25,37 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-53 description formatting', () => {
+  const descriptionTemplate = `Same card ({{ cardFingerprint }}) used by {{ uniqueUserCount }} unique users`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [null, 'Same card (123) used by 2 unique users']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

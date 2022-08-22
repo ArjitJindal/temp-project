@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 dynamoDbSetupHook()
@@ -24,6 +25,49 @@ describe('Core logic', () => {
       defaultAction: 'FLAG',
     },
   ])
+
+  describe('R-113 description formatting', () => {
+    const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindowInDays }} day(s)`
+
+    testRuleDescriptionFormatting(
+      'basic case',
+      TEST_TENANT_ID,
+      [
+        getTestTransaction({
+          originUserId: '1-1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          deviceData: {
+            // City: Sungai Petani
+            ipAddress: '175.141.76.76',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+          deviceData: {
+            // City: Bourg-en-Bresse
+            ipAddress: '176.135.186.17',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
+          deviceData: {
+            // City: Newcastle-under-Lyme
+            ipAddress: '160.5.125.137',
+          },
+        }),
+      ],
+      {
+        descriptionTemplate,
+      },
+      [
+        null,
+        null,
+        'Sender made 3 transactions from 3 locations in more than 1 day(s)',
+      ]
+    )
+  })
 
   describe.each<TransactionRuleTestCase>([
     {

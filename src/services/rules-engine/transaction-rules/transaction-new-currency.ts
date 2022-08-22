@@ -47,23 +47,29 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
         aggregationRepository.getUserTransactionsCount(destinationUserId),
     ])
 
-    if (
-      (senderTransactionsCount &&
-        senderTransactionsCount.sendingTransactionsCount >=
-          this.parameters.initialTransactions &&
-        senderTransactionCurrencies &&
-        receiverCurrency &&
-        !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)) ||
-      (destinationUserId &&
-        receiverTransactionsCount &&
-        receiverTransactionsCount.receivingTransactionsCount >=
-          this.parameters.initialTransactions &&
-        receiverTransactionCurrencies &&
-        senderCurrency &&
-        !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency))
-    ) {
+    const isSenderHit =
+      senderTransactionsCount &&
+      senderTransactionsCount.sendingTransactionsCount >=
+        this.parameters.initialTransactions &&
+      senderTransactionCurrencies &&
+      receiverCurrency &&
+      !senderTransactionCurrencies.sendingCurrencies.has(receiverCurrency)
+    const isDestinationHit =
+      destinationUserId &&
+      receiverTransactionsCount &&
+      receiverTransactionsCount.receivingTransactionsCount >=
+        this.parameters.initialTransactions &&
+      receiverTransactionCurrencies &&
+      senderCurrency &&
+      !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency)
+    if (isSenderHit || isDestinationHit) {
       return {
         action: this.action,
+        vars: {
+          ...super.getTransactionVars(
+            isDestinationHit ? 'destination' : 'origin'
+          ),
+        },
       }
     }
   }

@@ -260,4 +260,8 @@ export function isCountryCode(val: unknown): val is CountryCode {
   return val in COUNTRIES
 }
 
+export function formatCountry(country: string | undefined): string | undefined {
+  return isCountryCode(country) ? COUNTRIES[country] : country
+}
+
 export default COUNTRIES

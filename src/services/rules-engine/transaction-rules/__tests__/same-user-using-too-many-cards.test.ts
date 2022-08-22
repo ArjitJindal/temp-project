@@ -6,6 +6,7 @@ import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
+  testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
@@ -24,6 +25,37 @@ setUpRulesHooks(TEST_TENANT_ID, [
     defaultAction: 'FLAG',
   },
 ])
+
+describe('R-54 description formatting', () => {
+  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}`
+
+  testRuleDescriptionFormatting(
+    'basic case',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1-1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '123',
+        },
+      }),
+      getTestTransaction({
+        originUserId: '1-1',
+        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: '456',
+        },
+      }),
+    ],
+    {
+      descriptionTemplate,
+    },
+    [null, 'Sender used 2 unique cards above the limit of 1']
+  )
+})
 
 describe.each<TransactionRuleTestCase>([
   {

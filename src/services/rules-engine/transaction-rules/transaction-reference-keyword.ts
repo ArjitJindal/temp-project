@@ -57,10 +57,17 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
         return { action: this.action }
       }
     }
-    if (
-      keywords.find((keyword) => referenceWordsSet.has(keyword.toLowerCase()))
-    ) {
-      return { action: this.action }
+    const keyword = keywords.find((keyword) =>
+      referenceWordsSet.has(keyword.toLowerCase())
+    )
+    if (keyword) {
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars(null),
+          keyword,
+        },
+      }
     }
   }
 }

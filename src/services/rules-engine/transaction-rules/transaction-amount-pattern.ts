@@ -45,11 +45,16 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
         ? originTransactionAmount!
         : Math.trunc(originTransactionAmount!)
     )
-    if (
-      patterns.find((patterns) =>
-        originTransactionAmountString.endsWith(patterns)
-      )
+    const matchPattern = patterns.find((patterns) =>
+      originTransactionAmountString.endsWith(patterns)
     )
-      return { action: this.action }
+    if (matchPattern != null)
+      return {
+        action: this.action,
+        vars: {
+          ...super.getTransactionVars('origin'),
+          matchPattern,
+        },
+      }
   }
 }
