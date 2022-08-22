@@ -8,13 +8,11 @@ import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-level';
 import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithm';
-import RiskMyRulesPage from '@/pages/rules/my-rules';
-import RiskCreateRulePage from '@/pages/rules/create-rule';
-import RiskRequestNewPage from '@/pages/rules/request-new';
 import TransactionsTransactionsFilesPage from '@/pages/import/import-transactions';
 import TransactionsTransactionsListPage from '@/pages/transactions/transactions-list';
 import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
+import RulesPage from '@/pages/rules';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem, TreeRouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
@@ -23,6 +21,7 @@ export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
   const isImportFilesEnabled = useFeature('IMPORT_FILES');
   const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
+  const [lastActiveRuleTab, __] = useLocalStorageState('rule-active-tab', 'create-rule');
   return useMemo(
     () => [
       {
@@ -137,26 +136,22 @@ export function useRoutes(): RouteItem[] {
         path: '/rules',
         name: 'rules',
         icon: 'UnorderedListOutlined',
+        hideChildrenInMenu: true,
         position: 'top',
         routes: [
           {
             path: '/rules',
-            redirect: '/rules/request-new',
+            redirect:
+              lastActiveRuleTab === 'my-rules'
+                ? '/rules/my-rules'
+                : lastActiveRuleTab === 'create-rule'
+                ? '/rules/create-rule'
+                : '/rules/request-new',
           },
           {
-            name: 'create-rule',
-            path: '/rules/create-rule',
-            component: RiskCreateRulePage,
-          },
-          {
-            name: 'my-rules',
-            path: '/rules/my-rules',
-            component: RiskMyRulesPage,
-          },
-          {
-            name: 'request-new',
-            path: '/rules/request-new',
-            component: RiskRequestNewPage,
+            path: '/rules/:rule',
+            name: 'rule',
+            component: RulesPage,
           },
         ],
       },
@@ -238,6 +233,6 @@ export function useRoutes(): RouteItem[] {
         hideInMenu: true,
       },
     ],
-    [isImportFilesEnabled, isRiskLevelsEnabled, lastActiveTab],
+    [isImportFilesEnabled, isRiskLevelsEnabled, lastActiveRuleTab, lastActiveTab],
   );
 }

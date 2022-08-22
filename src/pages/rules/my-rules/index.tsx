@@ -13,7 +13,7 @@ import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-export default () => {
+const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
@@ -236,3 +236,5 @@ export default () => {
     </PageWrapper>
   );
 };
+
+export default MyRule;

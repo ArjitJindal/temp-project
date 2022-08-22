@@ -1,5 +1,5 @@
 import { Descriptions, Result } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './style.module.less';
 import { Rule } from '@/apis';
 import Button from '@/components/ui/Button';
@@ -8,6 +8,7 @@ export const RuleInstanceCreatedInfo: React.FC<{
   rule: Rule;
   onFinish: () => Promise<void>;
 }> = ({ rule, onFinish }) => {
+  const navigate = useNavigate();
   return (
     <Result
       status="success"
@@ -19,8 +20,13 @@ export const RuleInstanceCreatedInfo: React.FC<{
             Create another rule
           </Button>
 
-          <Button analyticsName="View my rules">
-            <Link to="/rules/my-rules">View my rules</Link>
+          <Button
+            analyticsName="View my rules"
+            onClick={() => {
+              navigate(`/rules/my-rules`, { replace: true });
+            }}
+          >
+            View my rules
           </Button>
         </>
       }
