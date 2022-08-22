@@ -16,7 +16,7 @@ const RiskAlgorithmTable: React.FC = () => {
             <>
               <span className={styles.KRSheader}>Dynamic Risk Score (DRS)</span>
               <div className={styles.KRSsubheader}>
-                Dynamic aggregate score of your customer based on their ARS and DRS.
+                Dynamic aggregate score of your customer based on their KRS and ARS.
               </div>
             </>
           }
