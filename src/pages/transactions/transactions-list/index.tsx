@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { RouteMatch, useNavigate, useParams } from 'react-router';
 import CountryDisplay from 'src/components/ui/CountryDisplay/index';
 import { currencies } from '../../../utils/currencies';
-import { TransactionDetails } from './components/TransactionDetails';
 import { getUserName } from '@/utils/api/users';
 import { Table, RequestFunctionType } from '@/components/ui/Table';
 import { ApiException, TransactionCaseManagement, TransactionType } from '@/apis';
@@ -33,6 +32,7 @@ import { paymentMethod, transactionType } from '@/utils/tags';
 import handleResize from '@/components/ui/Table/utils';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
+import { TransactionDetails } from '@/pages/case-management-item/components/TransactionDetails';
 
 const TableList = (props: RouteMatch<'id'>) => {
   const { id: transactionId } = useParams<'id'>();
@@ -403,7 +403,9 @@ const TableList = (props: RouteMatch<'id'>) => {
         closable={false}
       >
         <AsyncResourceRenderer resource={currentItem}>
-          {(transaction) => <TransactionDetails transaction={transaction} />}
+          {(transaction) => (
+            <TransactionDetails transaction={transaction} isTransactionView={true} />
+          )}
         </AsyncResourceRenderer>
       </Drawer>
     </PageWrapper>

@@ -6,16 +6,25 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser;
+  isEmbedded?: boolean;
 }
 
-export const UserDetails: React.FC<Props> = ({ user }) => {
+export const UserDetails: React.FC<Props> = ({ user, isEmbedded }) => {
   return (
     <>
       {user?.type === 'BUSINESS' && user?.legalEntity && (
-        <BusinessUserDetails user={user} columns={getBusinessUserColumns()} />
+        <BusinessUserDetails
+          user={user}
+          columns={getBusinessUserColumns()}
+          isEmbedded={isEmbedded}
+        />
       )}
       {user?.type === 'CONSUMER' && (
-        <ConsumerUserDetails user={user} columns={getConsumerUserColumns()} />
+        <ConsumerUserDetails
+          user={user}
+          columns={getConsumerUserColumns()}
+          isEmbedded={isEmbedded}
+        />
       )}
     </>
   );

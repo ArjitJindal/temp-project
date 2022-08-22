@@ -9,6 +9,7 @@ import { useApi } from '@/api';
 
 interface Props {
   files: FileInfo[];
+  disableUpload?: boolean;
   onFileUploaded: (file: FileInfo) => Promise<void>;
   onFileRemoved: (s3Key: string) => Promise<void>;
 }
@@ -69,9 +70,11 @@ export const UploadFilesList: React.FC<Props> = (props) => {
         }
       }}
     >
-      <Button analyticsName="Attach files" size="small" icon={<UploadOutlined />}>
-        Upload
-      </Button>
+      {!props.disableUpload && (
+        <Button analyticsName="Attach files" size="small" icon={<UploadOutlined />}>
+          Upload
+        </Button>
+      )}
     </Upload>
   );
 };

@@ -17,9 +17,10 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   user: InternalBusinessUser;
   columns: ProColumns<InternalBusinessUser>[];
+  isEmbedded?: boolean;
 }
 
-export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
+export const BusinessUserDetails: React.FC<Props> = ({ user, columns, isEmbedded }) => {
   const api = useApi();
   const userId = user.userId;
   const [isShareholdersCollapsed, setShareholdersCollapsed] = useState(true);
@@ -84,6 +85,7 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns }) => {
       </Divider>
       <UploadFilesList
         files={user.files || []}
+        disableUpload={isEmbedded}
         onFileUploaded={async (file) => {
           await api.postBusinessUsersUserIdFiles({
             userId: user.userId,

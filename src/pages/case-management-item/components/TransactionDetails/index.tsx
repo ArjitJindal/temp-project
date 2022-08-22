@@ -59,7 +59,8 @@ const equal = require('fast-deep-equal');
 
 interface Props {
   transaction: TransactionCaseManagement;
-  onTransactionUpdate: (newTransaction: TransactionCaseManagement) => void;
+  onTransactionUpdate?: (newTransaction: TransactionCaseManagement) => void;
+  isTransactionView?: boolean;
 }
 
 interface CommentEditorProps {
@@ -169,7 +170,11 @@ const CommentEditor: React.FC<CommentEditorProps> = ({ transactionId, onCommentA
   );
 };
 
-export const TransactionDetails: React.FC<Props> = ({ transaction, onTransactionUpdate }) => {
+export const TransactionDetails: React.FC<Props> = ({
+  transaction,
+  onTransactionUpdate,
+  isTransactionView,
+}) => {
   const user = useAuth0User();
   const api = useApi();
   const [users] = useUsers();
@@ -189,10 +194,12 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
   }, [transaction.assignments, transaction.status]);
   const handleCommentAdded = useCallback(
     (newComment: TransactionComment) => {
-      onTransactionUpdate({
-        ...transaction,
-        comments: [...(transaction.comments || []), newComment],
-      });
+      if (onTransactionUpdate) {
+        onTransactionUpdate({
+          ...transaction,
+          comments: [...(transaction.comments || []), newComment],
+        });
+      }
     },
     [onTransactionUpdate, transaction],
   );
@@ -201,10 +208,12 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
       setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
       await api.deleteTransactionsTransactionIdCommentsCommentId({ transactionId, commentId });
       setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
-      onTransactionUpdate({
-        ...transaction,
-        comments: (transaction.comments || []).filter((comment) => comment.id !== commentId),
-      });
+      if (onTransactionUpdate) {
+        onTransactionUpdate({
+          ...transaction,
+          comments: (transaction.comments || []).filter((comment) => comment.id !== commentId),
+        });
+      }
       message.success('Comment deleted');
     },
     [api, onTransactionUpdate, transaction],
@@ -232,11 +241,13 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           assignments,
         },
       });
-      onTransactionUpdate({
-        ...transaction,
-        status,
-        assignments,
-      });
+      if (onTransactionUpdate) {
+        onTransactionUpdate({
+          ...transaction,
+          status,
+          assignments,
+        });
+      }
       message.success('Saved');
       setEditing(false);
     } catch (e) {
@@ -249,34 +260,36 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
   return (
     <>
       <>
-        <Row justify="end">
-          {editing ? (
-            <Space>
-              <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
-                Cancel
-              </Button>
+        {!isTransactionView && (
+          <Row justify="end">
+            {editing ? (
+              <Space>
+                <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
+                  Cancel
+                </Button>
+                <Button
+                  analyticsName="Save"
+                  type="primary"
+                  size="small"
+                  onClick={handleUpdateTransaction}
+                  loading={saving}
+                  disabled={!canSave}
+                >
+                  Save
+                </Button>
+              </Space>
+            ) : (
               <Button
-                analyticsName="Save"
-                type="primary"
+                analyticsName="Edit"
+                icon={<EditOutlined />}
+                onClick={() => setEditing(true)}
                 size="small"
-                onClick={handleUpdateTransaction}
-                loading={saving}
-                disabled={!canSave}
               >
-                Save
+                Edit
               </Button>
-            </Space>
-          ) : (
-            <Button
-              analyticsName="Edit"
-              icon={<EditOutlined />}
-              onClick={() => setEditing(true)}
-              size="small"
-            >
-              Edit
-            </Button>
-          )}
-        </Row>
+            )}
+          </Row>
+        )}
         <ProDescriptions size="small" column={1} colon={false}>
           <ProDescriptions.Item valueType="text">Transaction ID</ProDescriptions.Item>
           <ProDescriptions.Item valueType="text">
@@ -296,56 +309,60 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           >
             {transaction.timestamp}
           </ProDescriptions.Item>
-          <ProDescriptions.Item
-            label={
-              <b>
-                <AimOutlined /> Status:
-              </b>
-            }
-          >
-            {editing ? (
-              <Select
-                disabled={!editing}
-                style={{ width: 120 }}
-                value={status}
-                onChange={setStatus}
-              >
-                {RULE_ACTION_OPTIONS.map((option) => (
-                  <Select.Option key={option.value}>
-                    <RuleActionStatus ruleAction={option.value} />
-                  </Select.Option>
-                ))}
-              </Select>
-            ) : (
-              <Row align="middle">
-                <Space>
-                  <RuleActionStatus ruleAction={status} />
-                  <Popover
-                    content={transaction.statusChanges?.filter(Boolean).map((statusChange) => (
-                      <Row>
-                        {`Changed to ${statusChange.status} by ${
-                          users[statusChange.userId]?.name || statusChange.userId
-                        } at ${new Date(statusChange.timestamp).toISOString()}`}
-                      </Row>
-                    ))}
-                  ></Popover>
-                </Space>
-              </Row>
-            )}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item
-            label={
-              <b>
-                <UserOutlined /> Assignees:
-              </b>
-            }
-          >
-            <AssigneesDropdown
-              assignments={assignments}
-              editing={editing}
-              onChange={handleUpdateAssignments}
-            />
-          </ProDescriptions.Item>
+          {!isTransactionView && (
+            <ProDescriptions.Item
+              label={
+                <b>
+                  <AimOutlined /> Status:
+                </b>
+              }
+            >
+              {editing ? (
+                <Select
+                  disabled={!editing}
+                  style={{ width: 120 }}
+                  value={status}
+                  onChange={setStatus}
+                >
+                  {RULE_ACTION_OPTIONS.map((option) => (
+                    <Select.Option key={option.value}>
+                      <RuleActionStatus ruleAction={option.value} />
+                    </Select.Option>
+                  ))}
+                </Select>
+              ) : (
+                <Row align="middle">
+                  <Space>
+                    <RuleActionStatus ruleAction={status} />
+                    <Popover
+                      content={transaction.statusChanges?.filter(Boolean).map((statusChange) => (
+                        <Row>
+                          {`Changed to ${statusChange.status} by ${
+                            users[statusChange.userId]?.name || statusChange.userId
+                          } at ${new Date(statusChange.timestamp).toISOString()}`}
+                        </Row>
+                      ))}
+                    ></Popover>
+                  </Space>
+                </Row>
+              )}
+            </ProDescriptions.Item>
+          )}
+          {!isTransactionView && (
+            <ProDescriptions.Item
+              label={
+                <b>
+                  <UserOutlined /> Assignees:
+                </b>
+              }
+            >
+              <AssigneesDropdown
+                assignments={assignments}
+                editing={editing}
+                onChange={handleUpdateAssignments}
+              />
+            </ProDescriptions.Item>
+          )}
           <ProDescriptions.Item
             label={
               <b>
@@ -531,59 +548,65 @@ export const TransactionDetails: React.FC<Props> = ({ transaction, onTransaction
           </ProDescriptions.Item>
         </ProDescriptions>
 
-        <br />
-        <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
-          Rules Details
-        </Typography.Title>
-        <ProDescriptions size="small" column={1} colon={false}>
-          <ProDescriptions.Item>
-            <RulesHitDetailsTable transaction={transaction} />
-          </ProDescriptions.Item>
-        </ProDescriptions>
+        {!isTransactionView && (
+          <>
+            <br />
+            <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
+              Rules Details
+            </Typography.Title>
+            <ProDescriptions size="small" column={1} colon={false}>
+              <ProDescriptions.Item>
+                <RulesHitDetailsTable transaction={transaction} />
+              </ProDescriptions.Item>
+            </ProDescriptions>
+          </>
+        )}
       </>
       <>
         <Tabs type="line">
           <Tabs.TabPane tab="Sender" key="sender">
-            <UserDetails user={transaction.originUser} />
+            <UserDetails user={transaction.originUser} isEmbedded={true} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Receiver" key="receiver">
-            <UserDetails user={transaction.destinationUser} />
+            <UserDetails user={transaction.destinationUser} isEmbedded={true} />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Transaction Events" key="transactionEvents">
             <TransactionEventsTable events={transaction.events!} />
           </Tabs.TabPane>
         </Tabs>
       </>
-      <>
-        <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
-          {`Comments (${transaction.comments?.length || 0})`}
-        </Typography.Title>
-        {transaction.comments && transaction.comments?.length > 0 && (
-          <List
-            dataSource={transaction.comments}
-            itemLayout="horizontal"
-            renderItem={(comment) => (
-              <Comment
-                comment={comment}
-                currentUserId={currentUserId}
-                deletingCommentIds={deletingCommentIds}
-                onDelete={() => {
-                  handleDeleteComment(transaction.transactionId!, comment.id!);
-                }}
-              />
-            )}
-          />
-        )}
-        <AntComment
-          avatar={<Avatar src={user?.picture} />}
-          content={
-            <CommentEditor
-              transactionId={transaction.transactionId!}
-              onCommentAdded={handleCommentAdded}
+      {!isTransactionView && (
+        <>
+          <Typography.Title level={4} style={{ color: Colors.brandBlue.base }}>
+            {`Comments (${transaction.comments?.length || 0})`}
+          </Typography.Title>
+          {transaction.comments && transaction.comments?.length > 0 && (
+            <List
+              dataSource={transaction.comments}
+              itemLayout="horizontal"
+              renderItem={(comment) => (
+                <Comment
+                  comment={comment}
+                  currentUserId={currentUserId}
+                  deletingCommentIds={deletingCommentIds}
+                  onDelete={() => {
+                    handleDeleteComment(transaction.transactionId!, comment.id!);
+                  }}
+                />
+              )}
             />
-          }
-        />
-      </>
+          )}
+          <AntComment
+            avatar={<Avatar src={user?.picture} />}
+            content={
+              <CommentEditor
+                transactionId={transaction.transactionId!}
+                onCommentAdded={handleCommentAdded}
+              />
+            }
+          />
+        </>
+      )}
     </>
   );
 };

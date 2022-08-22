@@ -15,9 +15,10 @@ import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 interface Props {
   user: InternalConsumerUser;
   columns: ProColumns<InternalConsumerUser>[];
+  isEmbedded?: boolean;
 }
 
-export const ConsumerUserDetails: React.FC<Props> = ({ user, columns }) => {
+export const ConsumerUserDetails: React.FC<Props> = ({ user, columns, isEmbedded }) => {
   const api = useApi();
   const userId = user.userId;
   const request = useCallback(
@@ -62,6 +63,7 @@ export const ConsumerUserDetails: React.FC<Props> = ({ user, columns }) => {
       </Divider>
       <UploadFilesList
         files={user.files || []}
+        disableUpload={isEmbedded}
         onFileUploaded={async (file) => {
           await api.postConsumerUsersUserIdFiles({
             userId: userId,
