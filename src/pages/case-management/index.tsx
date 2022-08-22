@@ -194,164 +194,178 @@ function TableList() {
         },
       },
       {
-        title: 'Origin User ID',
-        tooltip: 'Origin is the Sender in a transaction',
-        width: 200,
-        copyable: true,
-        ellipsis: true,
-        dataIndex: 'originUserId',
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          if (!entity.originUser) return entity.originUserId;
-          return <UserLink user={entity.originUser}>{String(entity.originUserId)}</UserLink>;
-        },
+        title: 'Origin',
+        children: [
+          {
+            title: 'Origin User ID',
+            tooltip: 'Origin is the Sender in a transaction',
+            width: 200,
+            copyable: true,
+            ellipsis: true,
+            dataIndex: 'originUserId',
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              if (!entity.originUser) return entity.originUserId;
+              return <UserLink user={entity.originUser}>{String(entity.originUserId)}</UserLink>;
+            },
+          },
+          {
+            title: 'Origin User Name',
+            tooltip: 'Origin is the Sender in a transaction',
+            width: 220,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return getUserName(entity.originUser);
+            },
+          },
+          {
+            title: 'Origin Method',
+            width: 160,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
+            },
+          },
+          {
+            title: 'Origin Amount',
+            dataIndex: 'originAmountDetails.transactionAmount',
+            hideInSearch: true,
+            sorter: true,
+            width: 150,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              if (entity.originAmountDetails?.transactionAmount !== undefined) {
+                return new Intl.NumberFormat().format(
+                  entity.originAmountDetails?.transactionAmount,
+                );
+              } else {
+                return entity.originAmountDetails?.transactionAmount;
+              }
+            },
+          },
+          {
+            title: 'Origin Currency',
+            hideInSearch: true,
+            width: 140,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return entity.originAmountDetails?.transactionCurrency;
+            },
+          },
+          {
+            title: 'Origin Country',
+            hideInSearch: true,
+            width: 140,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
+            },
+          },
+        ],
       },
       {
-        title: 'Origin User Name',
-        tooltip: 'Origin is the Sender in a transaction',
-        width: 220,
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return getUserName(entity.originUser);
-        },
-      },
-      {
-        title: 'Origin Method',
-        width: 160,
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
-        },
-      },
-      {
-        title: 'Origin Amount',
-        dataIndex: 'originAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: true,
-        width: 150,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          if (entity.originAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(entity.originAmountDetails?.transactionAmount);
-          } else {
-            return entity.originAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
-        title: 'Origin Currency',
-        hideInSearch: true,
-        width: 140,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return entity.originAmountDetails?.transactionCurrency;
-        },
-      },
-      {
-        title: 'Origin Country',
-        hideInSearch: true,
-        width: 140,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
-        },
-      },
-      {
-        title: 'Destination User ID',
-        tooltip: 'Destination is the Receiver in a transaction',
-        dataIndex: 'destinationUserId',
-        copyable: true,
-        ellipsis: true,
-        hideInSearch: true,
-        width: 170,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          if (!entity.destinationUser) return entity.destinationUserId;
-          return (
-            <UserLink user={entity.destinationUser}>{String(entity.destinationUserId)}</UserLink>
-          );
-        },
-      },
-      {
-        title: 'Destination User Name',
-        tooltip: 'Destination is the Receiver in a transaction',
-        width: 180,
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return getUserName(entity.destinationUser);
-        },
-      },
-      {
-        title: 'Destination Method',
-        width: 160,
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
-        },
-      },
-      {
-        title: 'Destination Amount',
-        width: 200,
-        dataIndex: 'destnationAmountDetails.transactionAmount',
-        hideInSearch: true,
-        sorter: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
-            return new Intl.NumberFormat().format(
-              entity.destinationAmountDetails?.transactionAmount,
-            );
-          } else {
-            return entity.destinationAmountDetails?.transactionAmount;
-          }
-        },
-      },
-      {
-        title: 'Destination Currency',
-        width: 200,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        hideInSearch: true,
-        render: (dom, entity) => {
-          return entity.destinationAmountDetails?.transactionCurrency;
-        },
-      },
-      {
-        title: 'Destination Country',
-        width: 200,
-        hideInSearch: true,
-        onCell: (_) => ({
-          rowSpan: _.rowSpan,
-        }),
-        render: (dom, entity) => {
-          return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
-        },
+        title: 'Destination',
+        children: [
+          {
+            title: 'Destination User ID',
+            tooltip: 'Destination is the Receiver in a transaction',
+            dataIndex: 'destinationUserId',
+            copyable: true,
+            ellipsis: true,
+            hideInSearch: true,
+            width: 170,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              if (!entity.destinationUser) return entity.destinationUserId;
+              return (
+                <UserLink user={entity.destinationUser}>
+                  {String(entity.destinationUserId)}
+                </UserLink>
+              );
+            },
+          },
+          {
+            title: 'Destination User Name',
+            tooltip: 'Destination is the Receiver in a transaction',
+            width: 180,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return getUserName(entity.destinationUser);
+            },
+          },
+          {
+            title: 'Destination Method',
+            width: 160,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
+            },
+          },
+          {
+            title: 'Destination Amount',
+            width: 200,
+            dataIndex: 'destnationAmountDetails.transactionAmount',
+            hideInSearch: true,
+            sorter: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+                return new Intl.NumberFormat().format(
+                  entity.destinationAmountDetails?.transactionAmount,
+                );
+              } else {
+                return entity.destinationAmountDetails?.transactionAmount;
+              }
+            },
+          },
+          {
+            title: 'Destination Currency',
+            width: 200,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            hideInSearch: true,
+            render: (dom, entity) => {
+              return entity.destinationAmountDetails?.transactionCurrency;
+            },
+          },
+          {
+            title: 'Destination Country',
+            width: 200,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
+            },
+          },
+        ],
       },
       {
         title: 'Transaction Status',
@@ -622,6 +636,7 @@ function TableList() {
         form={{
           labelWrap: true,
         }}
+        bordered
         isEvenRow={(item) => item.index % 2 === 0}
         components={{
           header: {
