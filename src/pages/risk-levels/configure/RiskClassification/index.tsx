@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { message, Slider } from 'antd';
 import { ProColumns } from '@ant-design/pro-table/es/typing';
+import style from './style.module.less';
 import { Table } from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import {
@@ -146,6 +147,7 @@ export default function RiskQualification() {
             min={0}
             max={100}
             value={[start, end]}
+            className={style.tip}
             onChange={([newStart, newEnd]) => {
               setState((state) => {
                 if (state == null) {
