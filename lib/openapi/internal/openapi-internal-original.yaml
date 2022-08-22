@@ -579,7 +579,7 @@ paths:
           in: query
           name: filterName
         - schema:
-            $ref: "#/components/schemas/FilterOperator"
+            $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
     parameters: []
@@ -694,7 +694,7 @@ paths:
           in: query
           name: filterName
         - schema:
-            $ref: "#/components/schemas/FilterOperator"
+            $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
     parameters: []
@@ -1242,6 +1242,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/WebhookDeliveryAttempt'
       operationId: get-webhooks-webhook_id-deliveries
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
 components:
   schemas:
     ManualRiskAssignmentUserState:

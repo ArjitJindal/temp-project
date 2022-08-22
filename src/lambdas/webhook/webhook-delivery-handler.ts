@@ -6,6 +6,7 @@ import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
 import { getWebhookSecrets } from './utils'
 import { WebhookDeliveryRepository } from './repositories/webhook-delivery-repository'
+import { WebhookRepository } from './repositories/webhook-repository'
 import {
   WebhookDeliveryTask,
   SecretsManagerWebhookSecrets,
@@ -13,6 +14,7 @@ import {
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { connectToDB } from '@/utils/mongoDBUtils'
+import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
 function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   return Object.keys(keys).filter(
@@ -21,6 +23,7 @@ function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
 }
 
 async function deliverWebhookEvent(
+  webhook: WebhookConfiguration,
   secrets: string[],
   webhookDeliveryTask: WebhookDeliveryTask
 ) {
@@ -52,7 +55,7 @@ async function deliverWebhookEvent(
   const requestStartedAt = Date.now()
   let response: Response | undefined = undefined
   try {
-    response = await fetch(webhookDeliveryTask.webhookUrl, fetchOptions)
+    response = await fetch(webhook.webhookUrl, fetchOptions)
     if (response.status >= 300 && response.status < 600) {
       throw new Error(
         `Client server returned status ${response.status}. Will retry`
@@ -65,14 +68,14 @@ async function deliverWebhookEvent(
       : false
     if (success) {
       logger.info(
-        `Successfully delivered event ${webhookDeliveryTask.event} to ${webhookDeliveryTask.webhookUrl}`
+        `Successfully delivered event ${webhookDeliveryTask.event} to ${webhook.webhookUrl}`
       )
     }
     await webhookDeliveryRepository.addWebhookDeliveryAttempt({
       _id: uuidv4(),
       deliveryTaskId: webhookDeliveryTask._id,
       webhookId: webhookDeliveryTask.webhookId,
-      webhookUrl: webhookDeliveryTask.webhookUrl,
+      webhookUrl: webhook.webhookUrl,
       requestStartedAt,
       requestFinishedAt,
       success,
@@ -93,9 +96,24 @@ async function deliverWebhookEvent(
 
 async function handleWebhookDeliveryTask(record: SQSRecord) {
   const webhookDeliveryTask = JSON.parse(record.body) as WebhookDeliveryTask
+  const mongoClient = await connectToDB()
+  const webhookRepository = new WebhookRepository(
+    webhookDeliveryTask.tenantId,
+    mongoClient
+  )
+  const webhook = await webhookRepository.getWebhook(
+    webhookDeliveryTask.webhookId
+  )
+  if (
+    !webhook?.enabled ||
+    !webhook.events.includes(webhookDeliveryTask.event)
+  ) {
+    return
+  }
+
   const webhookDeliveryRepository = new WebhookDeliveryRepository(
     webhookDeliveryTask.tenantId,
-    await connectToDB()
+    mongoClient
   )
   const latestAttempt =
     await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
@@ -109,6 +127,7 @@ async function handleWebhookDeliveryTask(record: SQSRecord) {
     webhookDeliveryTask.webhookId
   )
   await deliverWebhookEvent(
+    webhook,
     getNotExpiredSecrets(secretKeys),
     webhookDeliveryTask
   )

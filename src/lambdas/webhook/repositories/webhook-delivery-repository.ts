@@ -28,6 +28,7 @@ export class WebhookDeliveryRepository {
   }
 
   public async getWebhookDeliveryAttempts(
+    webhookId: string,
     limit: number
   ): Promise<WebhookDeliveryAttempt[]> {
     const db = this.mongoDb.db()
@@ -35,7 +36,7 @@ export class WebhookDeliveryRepository {
       WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
     )
     return collection
-      .find({})
+      .find({ webhookId })
       .sort({ requestStartedAt: -1 })
       .limit(limit)
       .toArray()

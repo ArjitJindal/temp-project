@@ -33,7 +33,6 @@ async function sendWebhookTasks(
         _id: uuidv4(),
         tenantId,
         webhookId: webhook._id as string,
-        webhookUrl: webhook.webhookUrl,
         createdAt,
       }
       await sqs.send(
@@ -58,9 +57,13 @@ async function userHandler(
   const diffResult = diff(oldUser, newUser) as Partial<GenericUser>
 
   if (diffResult.userStateDetails) {
+    const updatedUser: Partial<GenericUser> = {
+      userId: newUser.userId,
+      userStateDetails: newUser.userStateDetails,
+    }
     webhookTasks.push({
       event: 'USER_STATE_UPDATED',
-      payload: diffResult.userStateDetails,
+      payload: updatedUser,
     })
   }
   await sendWebhookTasks(tenantId, webhookTasks)

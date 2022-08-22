@@ -31,9 +31,6 @@ export async function createWebhookSecret(
   webhookId: string,
   secret: string
 ): Promise<void> {
-  if (process.env.ENV !== 'local') {
-    return
-  }
   const secretsManagerSecrets: SecretsManagerWebhookSecrets = {
     [secret]: null,
   }

@@ -9,7 +9,6 @@ export type WebhookDeliveryTask = {
   webhookId: string
   tenantId: string
   event: WebhookEvent
-  webhookUrl: string
   createdAt: number
   payload: object
 }

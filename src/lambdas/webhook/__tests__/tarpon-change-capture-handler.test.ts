@@ -69,11 +69,13 @@ describe('Create webhook delivery tasks', () => {
     const messageBody = JSON.parse(command.input.MessageBody as string)
     expect(messageBody).toMatchObject({
       event: 'USER_STATE_UPDATED',
-      payload: { reason: 'reason', state: 'DELETED' },
+      payload: {
+        userId: user.userId,
+        userStateDetails: { reason: 'reason', state: 'DELETED' },
+      },
       _id: expect.any(String),
       tenantId: TEST_TENANT_ID,
       webhookId: webhook._id,
-      webhookUrl: webhook.webhookUrl,
       createdAt: expect.any(Number),
     })
   })

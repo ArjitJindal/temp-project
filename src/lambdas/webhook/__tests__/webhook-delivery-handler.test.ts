@@ -4,6 +4,7 @@ import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 import express from 'express'
 import bodyParser from 'body-parser'
 import { WebhookDeliveryRepository } from '../repositories/webhook-delivery-repository'
+import { WebhookRepository } from '../repositories/webhook-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
@@ -43,6 +44,8 @@ function getExpectedRequestHeaders(payload: any) {
 }
 
 describe('Webhook delivery', () => {
+  const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
+  const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
   const mockSecretsManagerSend = jest.fn().mockReturnValue({
     SecretString: JSON.stringify({
       [MOCK_SECRET_KEY]: null,
@@ -70,200 +73,342 @@ describe('Webhook delivery', () => {
     mockSecretsManagerSend.mockClear()
   })
 
-  test('POST to external webhook server with correct payload and headers', async () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const webhookDeliveryRepository = new WebhookDeliveryRepository(
-      TEST_TENANT_ID,
-      await connectToDB()
-    )
-    let receivedPayload = undefined
-    let receivedHeaders = undefined
-    const webhookUrl = await startTestWebhookServer(
-      {
-        status: 200,
-        headers: {
-          foo: 'bar',
+  describe('Enabled webhook', () => {
+    test('POST to external webhook server with correct payload and headers', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      let receivedPayload = undefined
+      let receivedHeaders = undefined
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 200,
+          headers: {
+            foo: 'bar',
+          },
+          body: 'OK',
         },
-        body: 'OK',
-      },
-      async (headers, payload) => {
-        receivedHeaders = headers
-        receivedPayload = payload
+        async (headers, payload) => {
+          receivedHeaders = headers
+          receivedPayload = payload
+        }
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl: webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+
+      const expectedPayload = { statusReason: 'reason', status: 'DELETED' }
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: expectedPayload,
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
       }
-    )
-
-    const expectedPayload = { statusReason: 'reason', status: 'DELETED' }
-    const deliveryTask = {
-      event: 'USER_STATE_UPDATED',
-      payload: expectedPayload,
-      _id: 'task_id',
-      tenantId: TEST_TENANT_ID,
-      webhookId: 'webhook_id',
-      webhookUrl,
-      createdAt: Date.now(),
-    }
-    await webhookDeliveryHandler({
-      Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-    })
-
-    const command = mockSecretsManagerSend.mock
-      .calls[0][0] as GetSecretValueCommand
-    expect(command.input.SecretId).toEqual(
-      `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
-    )
-
-    // Check headers
-    const expectedReceivedHeaders = getExpectedRequestHeaders(receivedPayload)
-    expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
-
-    // Check payload
-    expect(receivedPayload).toEqual(expectedPayload)
-
-    // Check webhook delivery history
-    const attempt =
-      (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
-        deliveryTask._id
-      )) as WebhookDeliveryAttempt
-    expect(attempt).toMatchObject({
-      deliveryTaskId: deliveryTask._id,
-      event: deliveryTask.event,
-      eventCreatedAt: deliveryTask.createdAt,
-      requestStartedAt: expect.any(Number),
-      requestFinishedAt: expect.any(Number),
-      request: {
-        headers: expectedReceivedHeaders,
-        body: JSON.stringify(receivedPayload),
-      },
-    })
-    expect(attempt.response?.status).toEqual(200)
-    expect(attempt.response?.headers).toMatchObject({ foo: ['bar'] })
-    expect(attempt.response?.body).toEqual('OK')
-  })
-
-  test('POST to invalid webhook server should throw error', async () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const webhookDeliveryRepository = new WebhookDeliveryRepository(
-      TEST_TENANT_ID,
-      await connectToDB()
-    )
-
-    const deliveryTask = {
-      event: 'USER_STATE_UPDATED',
-      payload: {},
-      _id: 'task_id',
-      tenantId: TEST_TENANT_ID,
-      webhookId: 'webhook_id',
-      webhookUrl: 'http://foo',
-      createdAt: Date.now(),
-    }
-    await expect(
-      webhookDeliveryHandler({
+      await webhookDeliveryHandler({
         Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
       })
-    ).rejects.toThrow()
 
-    // Check webhook delivery history
-    const attempt =
-      (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
-        deliveryTask._id
-      )) as WebhookDeliveryAttempt
-    console.log(attempt)
-    expect(attempt).toMatchObject({
-      deliveryTaskId: deliveryTask._id,
-      event: deliveryTask.event,
-      eventCreatedAt: deliveryTask.createdAt,
-      requestStartedAt: expect.any(Number),
-      requestFinishedAt: expect.any(Number),
-      request: {
-        headers: getExpectedRequestHeaders({}),
-        body: JSON.stringify({}),
-      },
-      response: null,
+      const command = mockSecretsManagerSend.mock
+        .calls[0][0] as GetSecretValueCommand
+      expect(command.input.SecretId).toEqual(
+        `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
+      )
+
+      // Check headers
+      const expectedReceivedHeaders = getExpectedRequestHeaders(receivedPayload)
+      expect(receivedHeaders).toMatchObject(expectedReceivedHeaders)
+
+      // Check payload
+      expect(receivedPayload).toEqual(expectedPayload)
+
+      // Check webhook delivery history
+      const attempt =
+        (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+          deliveryTask._id
+        )) as WebhookDeliveryAttempt
+      expect(attempt).toMatchObject({
+        deliveryTaskId: deliveryTask._id,
+        event: deliveryTask.event,
+        eventCreatedAt: deliveryTask.createdAt,
+        requestStartedAt: expect.any(Number),
+        requestFinishedAt: expect.any(Number),
+        request: {
+          headers: expectedReceivedHeaders,
+          body: JSON.stringify(receivedPayload),
+        },
+      })
+      expect(attempt.response?.status).toEqual(200)
+      expect(attempt.response?.headers).toMatchObject({ foo: ['bar'] })
+      expect(attempt.response?.body).toEqual('OK')
     })
-  })
 
-  test('webhook server returns status 3xx-5xx should throw error', async () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const webhookUrl = await startTestWebhookServer(
-      {
-        status: 301,
-        headers: {},
-        body: 'ERROR',
-      },
-      async () => null
-    )
-    const deliveryTask = {
-      event: 'USER_STATE_UPDATED',
-      payload: {},
-      _id: 'task_id',
-      tenantId: TEST_TENANT_ID,
-      webhookId: 'webhook_id',
-      webhookUrl,
-      createdAt: Date.now(),
-    }
-    await expect(
-      webhookDeliveryHandler({
+    test('POST to invalid webhook server should throw error', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl: 'http://foo',
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      await expect(
+        webhookDeliveryHandler({
+          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+        })
+      ).rejects.toThrow()
+
+      // Check webhook delivery history
+      const attempt =
+        (await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+          deliveryTask._id
+        )) as WebhookDeliveryAttempt
+      expect(attempt).toMatchObject({
+        deliveryTaskId: deliveryTask._id,
+        event: deliveryTask.event,
+        eventCreatedAt: deliveryTask.createdAt,
+        requestStartedAt: expect.any(Number),
+        requestFinishedAt: expect.any(Number),
+        request: {
+          headers: getExpectedRequestHeaders({}),
+          body: JSON.stringify({}),
+        },
+        response: null,
+      })
+    })
+
+    test('webhook server returns status 3xx-5xx should throw error', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 301,
+          headers: {},
+          body: 'ERROR',
+        },
+        async () => null
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      await expect(
+        webhookDeliveryHandler({
+          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+        })
+      ).rejects.toThrow()
+    })
+
+    test('webhook server returns status 600 should not throw error', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 600,
+          headers: {},
+          body: 'ERROR',
+        },
+        async () => null
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        createdAt: Date.now(),
+      }
+
+      // Should not throw
+      await webhookDeliveryHandler({
         Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
       })
-    ).rejects.toThrow()
-  })
-
-  test('webhook server returns status 600 should not throw error', async () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const webhookUrl = await startTestWebhookServer(
-      {
-        status: 600,
-        headers: {},
-        body: 'ERROR',
-      },
-      async () => null
-    )
-    const deliveryTask = {
-      event: 'USER_STATE_UPDATED',
-      payload: {},
-      _id: 'task_id',
-      tenantId: TEST_TENANT_ID,
-      webhookId: 'webhook_id',
-      webhookUrl,
-      createdAt: Date.now(),
-    }
-
-    // Should not throw
-    await webhookDeliveryHandler({
-      Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
     })
-  })
 
-  test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should throw error', async () => {
-    const TEST_TENANT_ID = getTestTenantId()
-    const webhookUrl = await startTestWebhookServer(
-      {
-        status: 200,
-        headers: {},
-        body: 'OK',
-      },
-      async () => {
-        await new Promise((resolve) =>
-          setTimeout(
-            resolve,
-            Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC) * 2 * 1000
+    test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should throw error', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookUrl = await startTestWebhookServer(
+        {
+          status: 200,
+          headers: {},
+          body: 'OK',
+        },
+        async () => {
+          await new Promise((resolve) =>
+            setTimeout(
+              resolve,
+              Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC) * 2 * 1000
+            )
           )
-        )
+        }
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        createdAt: Date.now(),
       }
-    )
-    const deliveryTask = {
-      event: 'USER_STATE_UPDATED',
-      payload: {},
-      _id: 'task_id',
-      tenantId: TEST_TENANT_ID,
-      webhookId: 'webhook_id',
-      webhookUrl,
-      createdAt: Date.now(),
-    }
-    await expect(
-      webhookDeliveryHandler({
+      await expect(
+        webhookDeliveryHandler({
+          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+        })
+      ).rejects.toThrow()
+    })
+  })
+  describe('Invalid webhook', () => {
+    test('Skip non-existent webhook', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: 'ghost-webhook-id',
+        createdAt: Date.now(),
+      }
+      await webhookDeliveryHandler({
         Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
       })
-    ).rejects.toThrow()
+      expect(
+        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+          'ghost-webhook-id',
+          1
+        )
+      ).toHaveLength(0)
+    })
+    test('Skip disabled webhook', async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: INACTIVE_WEBHOOK_ID,
+        webhookUrl: 'http://foo',
+        events: ['USER_STATE_UPDATED'],
+        enabled: false,
+      })
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: INACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      await webhookDeliveryHandler({
+        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+      })
+      expect(
+        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+          INACTIVE_WEBHOOK_ID,
+          1
+        )
+      ).toHaveLength(0)
+    })
+    test("Skip webhook if the events don't include the task event", async () => {
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await connectToDB()
+      )
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl: 'http://foo',
+        events: [],
+        enabled: true,
+      })
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+      await webhookDeliveryHandler({
+        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+      })
+      expect(
+        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+          INACTIVE_WEBHOOK_ID,
+          1
+        )
+      ).toHaveLength(0)
+    })
   })
 })

@@ -42,7 +42,7 @@ export const configurationHandler = lambdaApi()(
       const webhook = JSON.parse(event.body) as WebhookConfiguration
       const newWebhook = await webhookRepository.saveWebhook(webhook)
       const secret = uuidv4()
-      createWebhookSecret(tenantId, newWebhook._id as string, secret)
+      await createWebhookSecret(tenantId, newWebhook._id as string, secret)
       const response: WebhookConfiguration = {
         ...newWebhook,
         secret,
@@ -99,6 +99,7 @@ export const configurationHandler = lambdaApi()(
     ) {
       const limit = event.queryStringParameters?.['limit']
       return webhookDeliveryRepository.getWebhookDeliveryAttempts(
+        event.pathParameters.webhookId,
         limit ? Number(limit) : 100
       )
     }

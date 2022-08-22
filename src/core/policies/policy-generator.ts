@@ -65,7 +65,7 @@ export default class PolicyBuilder {
       Sid: 'AllowAllActionsOfTenantSecrets',
       Action: ['secretsmanager:*'],
       Effect: 'Allow',
-      Resource: [`arn:aws:secretsmanager:::secret:${this.tenantId}*`],
+      Resource: [`arn:aws:secretsmanager:*:*:secret:${this.tenantId}*`],
     })
     return this
   }

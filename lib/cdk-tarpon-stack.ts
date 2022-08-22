@@ -598,6 +598,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     this.grantMongoDbAccess(webhookDelivererAlias)
+    this.grantSecretsManagerAccess(webhookDelivererAlias, 'webhooks', 'READ')
     webhookDeliveryQueue.grantConsumeMessages(webhookDelivererAlias)
     webhookDelivererAlias.addEventSource(
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
@@ -612,6 +613,11 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     this.grantMongoDbAccess(webhookConfigurationHandlerAlias)
+    this.grantSecretsManagerAccess(
+      webhookConfigurationHandlerAlias,
+      'webhooks',
+      'READ_WRITE'
+    )
 
     /*
      * Hammerhead console functions
@@ -1023,6 +1029,34 @@ export class CdkTarponStack extends cdk.Stack {
             effect: Effect.ALLOW,
             actions: ['secretsmanager:GetSecretValue'],
             resources: [this.config.application.ATLAS_CREDENTIALS_SECRET_ARN],
+          }),
+        ],
+      })
+    )
+  }
+
+  private grantSecretsManagerAccess(
+    alias: Alias,
+    prefix: string,
+    mode: 'READ' | 'WRITE' | 'READ_WRITE'
+  ) {
+    const aliasIdentifier = alias.node.id.replace(/:/g, '-')
+    const actions = []
+    if (mode === 'READ' || mode === 'READ_WRITE') {
+      actions.push('secretsmanager:GetSecretValue')
+    }
+    if (mode === 'WRITE' || mode === 'READ_WRITE') {
+      actions.push('secretsmanager:CreateSecret')
+      actions.push('secretsmanager:DeleteSecret')
+    }
+    alias.role?.attachInlinePolicy(
+      new Policy(this, `${aliasIdentifier}-SecretsManagerPolicy`, {
+        policyName: `${aliasIdentifier}-SecretsManagerPolicy`,
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: actions,
+            resources: [`arn:aws:secretsmanager:*:*:secret:*/${prefix}/*`],
           }),
         ],
       })
