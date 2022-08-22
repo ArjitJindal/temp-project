@@ -115,7 +115,7 @@ export default function RiskQualification() {
     {
       title: 'Score',
       dataIndex: 'score',
-      tip: 'Tip',
+      tip: 'Range of values that defines the upper and lower limits of a risk level',
       valueType: 'digit',
       width: '100px',
       render: (dom, item, index) => {
