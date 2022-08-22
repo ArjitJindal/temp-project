@@ -19,7 +19,7 @@ type RiskLevelColors = {
 };
 
 export const RISK_LEVEL_COLORS: { [key in RiskLevel]: RiskLevelColors } = {
-  VERY_LOW: { primary: COLORS.successColor.base, light: COLORS.successColor.tint },
+  VERY_LOW: { primary: COLORS.brandBlue.base, light: COLORS.brandBlue.tint },
   LOW: { primary: COLORS.successColor.base, light: COLORS.successColor.tint },
   MEDIUM: { primary: COLORS.warningColor.base, light: COLORS.warningColor.tint },
   HIGH: { primary: COLORS.errorColor.base, light: COLORS.errorColor.tint },
