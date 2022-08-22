@@ -11,7 +11,7 @@ type MenuItem = {
   content: React.ReactNode;
 };
 
-type MenuSection = {
+export type MenuSection = {
   name: string;
   menuItems: MenuItem[];
 };
