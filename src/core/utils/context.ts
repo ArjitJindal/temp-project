@@ -3,13 +3,19 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { logger } from '../logger'
+import { Logger } from 'winston'
+import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
-type Context = {
+type LogMetaData = {
+  tenantId?: string
+}
+
+type Context = LogMetaData & {
   features?: Feature[]
+  logger?: Logger
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
@@ -24,9 +30,16 @@ export async function getInitialContext(
     const dynamoDb = getDynamoDbClient(event)
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     const settings = await tenantRepository.getTenantSettings(['features'])
-    return { features: settings?.features }
+    const logMetaData: LogMetaData = { tenantId: tenantId }
+    const childLogger = winstonLogger.child(logMetaData)
+    const context: Context = {
+      ...logMetaData,
+      features: settings?.features,
+      logger: childLogger,
+    }
+    return context
   } catch (e) {
-    logger.error(`Failed to initialize context`)
+    winstonLogger.error(`Failed to initialize context`)
     return {}
   }
 }
