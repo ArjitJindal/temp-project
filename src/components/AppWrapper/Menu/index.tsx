@@ -9,10 +9,11 @@ import {
   TableOutlined,
   UsergroupAddOutlined,
   SettingOutlined,
-  UnorderedListOutlined,
-  TeamOutlined,
   ImportOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
 } from '@ant-design/icons';
+
 import {
   browserName,
   deviceType,
@@ -24,6 +25,10 @@ import {
 import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { matchPath, useLocation } from 'react-router';
+import TeamOutlined from './Team_Outlined.react.svg';
+import Dashboard from './Team_Outlined.react.svg';
+import Table from './Table.react.svg';
+import UnorderedListOutlined from './Unordered_List_Outlined.react.svg';
 import s from './styles.module.less';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -32,15 +37,19 @@ import { useRoutes } from '@/services/routing';
 import { hasName, isTree, RouteItem } from '@/services/routing/types';
 
 const icons = {
-  FlagOutlined: <FlagOutlined />,
+  FlagOutlined: (
+    <span>
+      <FlagOutlined />
+    </span>
+  ),
   UsergroupAddOutlined: <UsergroupAddOutlined />,
   UnorderedListOutlined: <UnorderedListOutlined />,
   TeamOutlined: <TeamOutlined />,
   BarChartOutlined: <BarChartOutlined />,
   SettingOutlined: <SettingOutlined />,
-  dashboard: <DashboardOutlined />,
+  dashboard: <Dashboard />,
   smile: <SmileOutlined />,
-  table: <TableOutlined />,
+  table: <Table />,
   ImportOutlined: <ImportOutlined />,
 };
 
