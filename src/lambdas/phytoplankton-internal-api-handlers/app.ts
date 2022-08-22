@@ -78,6 +78,7 @@ export const transactionsViewHandler = lambdaApi()(
         beforeTimestamp,
         filterId,
         filterOutStatus,
+        filterOutCaseStatus,
         filterRulesHit,
         filterRulesExecuted,
         filterOriginCurrencies,
@@ -101,6 +102,7 @@ export const transactionsViewHandler = lambdaApi()(
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
         filterOutStatus,
+        filterOutCaseStatus,
         filterStatus,
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')

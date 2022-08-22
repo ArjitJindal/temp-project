@@ -353,6 +353,10 @@ paths:
           in: query
           name: filterOutStatus
         - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
             type: array
             items:
               type: string
