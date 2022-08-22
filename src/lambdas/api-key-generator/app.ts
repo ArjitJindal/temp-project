@@ -14,8 +14,7 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-
-let client: MongoClient
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -61,12 +60,18 @@ async function createNewApiKeyForTenant(
   return newApiKey
 }
 
-export const createMongoDBCollections = async (tenantId: string) => {
-  client = await connectToDB()
-  const db = client.db()
+export const createMongoDBCollections = async (
+  mongoClient: MongoClient,
+  tenantId: string
+) => {
+  const db = mongoClient.db()
   try {
-    await db.createCollection(TRANSACTIONS_COLLECTION(tenantId))
-    const transactionCollection = db.collection(
+    try {
+      await db.createCollection(TRANSACTIONS_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const transactionCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
     await transactionCollection.createIndex({
@@ -78,7 +83,11 @@ export const createMongoDBCollections = async (tenantId: string) => {
     await transactionCollection.createIndex({ destinationUserId: 1 })
     await transactionCollection.createIndex({ originUserId: 1 })
 
-    await db.createCollection(USERS_COLLECTION(tenantId))
+    try {
+      await db.createCollection(USERS_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
     const usersCollection = db.collection(USERS_COLLECTION(tenantId))
     await usersCollection.createIndex({
       createdTimestamp: 1,
@@ -99,7 +108,11 @@ export const createMongoDBCollections = async (tenantId: string) => {
       'legalEntity.companyGeneralDetails.legalName': 1,
     })
 
-    await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
+    try {
+      await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
     const transactionEventsCollection = db.collection(
       TRANSACTION_EVENTS_COLLECTION(tenantId)
     )
@@ -109,9 +122,10 @@ export const createMongoDBCollections = async (tenantId: string) => {
       transactionState: 1,
     })
   } catch (e) {
-    logger.info(`Error in creating MongoDB collections: ${e}`)
+    logger.error(`Error in creating MongoDB collections: ${e}`)
   }
 }
+
 export const apiKeyGeneratorHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -120,7 +134,7 @@ export const apiKeyGeneratorHandler = lambdaApi()(
   ) => {
     const { tenantId, usagePlanId } =
       event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-    await createMongoDBCollections(tenantId)
+    await createMongoDBCollections(await connectToDB(), tenantId)
     return createNewApiKeyForTenant(tenantId, usagePlanId)
   }
 )
