@@ -46,7 +46,7 @@ export const config: Config = {
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-ZEhIp9`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
-      'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/F1qqouNUNcuyfmwMwSEpjRC2',
+      'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/oAoAPX4Yk72hx8X7ZfgWaTqi',
     CONSOLE_URI: 'https://console.flagright.com',
     SLACK_CLIENT_ID: '2800969986821.3767916979623',
     SLACK_CLIENT_SECRET: 'c4263c5996fb4b219f4cf79e7bc05b1a',
