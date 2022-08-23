@@ -3,10 +3,6 @@ const { Buffer } = require('buffer');
 const { createHash } = require('crypto');
 
 const path = require('path');
-const tmp = require('tmp');
-const fs = require('fs-extra');
-const less = require('less');
-const { convertLessError, getLessImports } = require('./less-utils');
 const csstree = require('css-tree');
 
 function interpolatePattern(string, replacer) {
@@ -47,17 +43,14 @@ function escapeClassName(string) {
   return string.replace(/^[^a-zA-Z_]/g, '').replace(/[^a-zA-Z0-9_-]/g, '-');
 }
 
-const MODULES_EXTENSION = '.module.less';
+const MODULES_EXTENSION = '.module.css';
 const localIdentName = '[folder]__[local]--[hash:8:md5:hex]'; // todo: use different for production
 
-const tmpDirPath = tmp.dirSync().name;
-
-async function handleCssModules(rootDir, args, cssResult) {
+async function handleCssModules(args, cssResult) {
   try {
     const parsed = path.parse(args.path);
     const baseName = parsed.name;
     const folderName = path.basename(path.dirname(args.path));
-    const relativeDir = path.relative(rootDir, path.dirname(args.path));
     const extName = parsed.ext;
     const preparedLocalIdentName = interpolatePattern(localIdentName, (name) => {
       switch (name) {
@@ -109,25 +102,15 @@ async function handleCssModules(rootDir, args, cssResult) {
       },
     });
 
-    const baseFileName = path.basename(args.path, extName);
-    const tmpFilePath = path.resolve(tmpDirPath, relativeDir, `${baseFileName}.css`);
-
-    await fs.ensureDir(path.dirname(tmpFilePath));
     let css = csstree.generate(ast);
     if (css.indexOf(':global') !== -1) {
       css = css.replace(/:global/g, ' ');
     }
-    await fs.writeFile(tmpFilePath, css);
-
-    let contents = `
-          import "${tmpFilePath}";
-          const result = ${JSON.stringify(classMap)};
-          export default result;
-        `;
 
     return {
-      contents: contents,
-    };
+      css,
+      classMap
+    }
   } catch (e) {
     console.error(e);
     process.exit(1);
@@ -136,83 +119,42 @@ async function handleCssModules(rootDir, args, cssResult) {
 
 module.exports = (options = {}, loaderOptions = {}) => {
   return {
-    name: 'less-loader',
+    name: 'css-modules',
     setup: (build) => {
-      const filter = loaderOptions.filter;
-      const rootDir = loaderOptions.rootDir;
       const cache = new Map();
 
-      // Resolve *.less files with namespace
-      build.onResolve({ filter: filter || /\.less$/, namespace: 'file' }, (args) => {
-        const filePath = path.resolve(
-          process.cwd(),
-          path.relative(process.cwd(), args.resolveDir),
-          args.path,
-        );
-        const isExternal = filePath.indexOf('node_modules') !== -1;
+      build.onResolve({ filter: /virtual:.*\.module\.css$/ }, async (args) => {
         return {
-          path: filePath,
-          watchFiles:
-            !isExternal && !!build.initialOptions.watch
-              ? [filePath, ...getLessImports(filePath)]
-              : undefined,
-        };
-      });
+          path: args.pluginData.path,
+          namespace: 'css-modules',
+          pluginData: args.pluginData,
+        }
+      })
 
-      // Build .less files
-      build.onLoad({ filter: filter || /\.less$/, namespace: 'file' }, async (args) => {
+      build.onLoad({ filter: /.*/, namespace: 'css-modules' }, async (args) => {
         const cacheKey = args.path;
         const cached = cache.get(cacheKey);
         if (cached) {
           return cached;
         }
 
-        const isExternal = args.path.startsWith('~') || args.path.indexOf('node_modules') !== -1;
-        const isModule = !isExternal && args.path.endsWith(MODULES_EXTENSION);
-        const dir = path.dirname(args.path);
+        const content = args.pluginData.contents
+        const { css, classMap } = await handleCssModules(args, content);
 
-        //
-        // if (isExternal) {
-        //   return {
-        //     contents: '',
-        //     loader: 'css',
-        //     resolveDir: dir,
-        //   };
-        // }
-
-        const opts = {
-          filename: args.path,
-          relativeUrls: true,
-          ...options,
-          paths: [...(options.paths || []), dir],
+        const newPath = args.path.replace(MODULES_EXTENSION, '.css');
+        return {
+          resolveDir: args.pluginData.resolveDir,
+          pluginData: {
+            path: newPath,
+            resolveDir: args.pluginData.resolveDir,
+            contents: css,
+          },
+          contents: `
+            import "virtual:${newPath}";
+            const result = ${JSON.stringify(classMap)};
+            export default result;
+          `
         };
-
-        let result;
-        try {
-          // console.log(`[less-plugin-patched] Rebuilding ${args.path}`);
-          const content = await fs.readFile(args.path, 'utf-8');
-          const { css } = await less.render(content, opts);
-          // console.log(`[less-plugin-patched] Rebuilding ${args.path} done`);
-
-          if (isModule) {
-            result = handleCssModules(rootDir, args, css);
-          } else {
-            result = {
-              contents: css,
-              loader: 'css',
-              resolveDir: dir,
-            };
-          }
-        } catch (e) {
-          result = {
-            errors: [convertLessError(e)],
-            resolveDir: dir,
-          };
-        }
-        if (isExternal) {
-          cache.set(cacheKey, result);
-        }
-        return result;
       });
     },
   };

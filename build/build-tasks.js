@@ -4,9 +4,11 @@ const esbuild = require('esbuild');
 const path = require('path');
 const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
-const lessLoader = require('./less-loader.js');
+const lessPlugin = require('./esbuild-plugin-less-loader.js');
+const svgrPlugin = require('./esbuild-plugin-svgr.js');
+const cssModulesPlugin = require('./esbuild-plugin-css-modules.js');
+const resolveVirtuals = require('./esbuild-plugin-resolve-virtuals.js');
 const { log, error, notify } = require('./helpers.js');
-const svgrPlugin = require('./svgr-plugin.js');
 
 async function prepare(env) {
   await fs.rm(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER), { recursive: true, force: true });
@@ -79,7 +81,7 @@ async function buildCode(env, options) {
       ),
     },
     plugins: [
-      lessLoader(
+      lessPlugin(
         {
           javascriptEnabled: true,
           plugins: lessPlugins,
@@ -88,7 +90,9 @@ async function buildCode(env, options) {
           rootDir: PROJECT_DIR,
         },
       ),
+      cssModulesPlugin(),
       svgrPlugin(),
+      resolveVirtuals(),
     ],
     outfile: path.join(PROJECT_DIR, OUTPUT_FOLDER, outFile),
     mainFields: ['module', 'browser', 'main'],

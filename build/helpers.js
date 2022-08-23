@@ -11,7 +11,6 @@ function error(message, ...args) {
 }
 
 function notify(message, ...args) {
-  console.log(`[${new Date().toISOString()}] ${message}`, ...args);
   notifier.notify({
     title: 'Flagright Console',
     icon: path.resolve(__dirname, 'icon.png'),
