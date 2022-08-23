@@ -322,7 +322,6 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
         options={{
           reload: false,
         }}
-        pagination={false}
         request={request}
       />
     </div>
