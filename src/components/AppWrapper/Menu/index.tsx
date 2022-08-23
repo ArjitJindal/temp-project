@@ -26,7 +26,7 @@ import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { matchPath, useLocation } from 'react-router';
 import TeamOutlined from './Team_Outlined.react.svg';
-import Dashboard from './Team_Outlined.react.svg';
+import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
 import UnorderedListOutlined from './Unordered_List_Outlined.react.svg';
 import s from './styles.module.less';
