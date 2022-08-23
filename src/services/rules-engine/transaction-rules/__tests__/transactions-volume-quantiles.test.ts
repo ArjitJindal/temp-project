@@ -450,7 +450,7 @@ describe('User Check', () => {
     {
       name: 'Sender: none, Receiver: all',
       transactions: TEST_TRANSACTIONS,
-      expectedHits: [false, false, false, false, true, true],
+      expectedHits: [false, false, false, false, false, false],
       ruleParams: {
         checkSender: 'none',
         checkReceiver: 'all',
@@ -476,18 +476,18 @@ describe('User Check', () => {
       },
     ])
 
+    setUpConsumerUsersHooks(TEST_TENANT_ID, [
+      getTestUser({ userId: '1-1' }),
+      getTestUser({ userId: '2-1' }),
+      getTestUser({ userId: '3-1' }),
+    ])
+
     createTransactionRuleTestCase(
       name,
       TEST_TENANT_ID,
       transactions,
       expectedHits
     )
-
-    setUpConsumerUsersHooks(TEST_TENANT_ID, [
-      getTestUser({ userId: '1-1' }),
-      getTestUser({ userId: '2-1' }),
-      getTestUser({ userId: '3-1' }),
-    ])
   })
 })
 

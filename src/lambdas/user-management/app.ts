@@ -36,41 +36,41 @@ export const userHandler = lambdaApi()(
       dynamoDb: dynamoDb,
     })
     const userId = event.pathParameters?.userId
+    const isConsumerUser = event.path.includes('consumer')
 
-    if (event.path.includes('business')) {
-      if (event.httpMethod === 'GET' && userId) {
-        const user = await userRepository.getBusinessUser(userId)
-        logger.info(user)
-        return user
-      } else if (event.httpMethod === 'POST' && event.body) {
-        const userPayload = JSON.parse(event.body)
-        if (userPayload.riskLevel) {
-          handleRiskLevelParam(tenantId, dynamoDb, userPayload)
+    if (event.httpMethod === 'GET' && userId) {
+      const user = isConsumerUser
+        ? await userRepository.getConsumerUser(userId)
+        : await userRepository.getBusinessUser(userId)
+      logger.info(user)
+      return user
+    } else if (event.httpMethod === 'POST' && event.body) {
+      const userPayload = JSON.parse(event.body)
+      if ((userPayload as User).userId) {
+        const user = isConsumerUser
+          ? await userRepository.getConsumerUser(userPayload.userId)
+          : await userRepository.getBusinessUser(userPayload.userId)
+        if (user) {
+          return {
+            userId: user.userId,
+            message:
+              'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+            // TODO: Implement risk score
+            userRiskScoreDetails: undefined,
+          }
         }
-        const user = await userRepository.saveBusinessUser(userPayload)
-        const result = {
-          userId: user.userId,
-          // TODO: Implement risk score
-          userRiskScoreDetails: undefined,
-        }
-        return result
       }
-    } else if (event.path.includes('consumer')) {
-      if (event.httpMethod === 'GET' && userId) {
-        const user = await userRepository.getConsumerUser(userId)
-        return user
-      } else if (event.httpMethod === 'POST' && event.body) {
-        const userPayload = JSON.parse(event.body)
-        if (userPayload.riskLevel) {
-          handleRiskLevelParam(tenantId, dynamoDb, userPayload)
-        }
-        const user = await userRepository.saveConsumerUser(userPayload)
-        const result = {
-          userId: user.userId,
-          // TODO: Implement risk score
-          userRiskScoreDetails: undefined,
-        }
-        return result
+
+      if (userPayload.riskLevel) {
+        handleRiskLevelParam(tenantId, dynamoDb, userPayload)
+      }
+      const user = isConsumerUser
+        ? await userRepository.saveConsumerUser(userPayload)
+        : await userRepository.saveBusinessUser(userPayload)
+      return {
+        userId: user.userId,
+        // TODO: Implement risk score
+        userRiskScoreDetails: undefined,
       }
     }
     return 'Unhandled request'

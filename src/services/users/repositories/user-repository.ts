@@ -193,11 +193,11 @@ export class UserRepository {
     return { total, data: users }
   }
 
-  public async getBusinessUser(userId: string): Promise<Business> {
+  public async getBusinessUser(userId: string): Promise<Business | undefined> {
     return await this.getUser<Business>(userId)
   }
 
-  public async getConsumerUser(userId: string): Promise<User> {
+  public async getConsumerUser(userId: string): Promise<User | undefined> {
     return await this.getUser<User>(userId)
   }
 
@@ -227,13 +227,17 @@ export class UserRepository {
     return await collection.findOne({ userId })
   }
 
-  public async getUser<T>(userId: string): Promise<T> {
+  public async getUser<T>(userId: string): Promise<T | undefined> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
+    if (!result.Item) {
+      return undefined
+    }
+
     const user = {
       ...result.Item,
     }

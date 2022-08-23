@@ -1,5 +1,6 @@
 import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
+import { NotFound } from 'http-errors'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
@@ -98,6 +99,9 @@ export class UserService {
     updateRequest: UserUpdateRequest
   ) {
     const user = await this.userRepository.getConsumerUser(userId)
+    if (!user) {
+      throw new NotFound('User not found')
+    }
     await this.userRepository.saveConsumerUser({ ...user, ...updateRequest })
     await this.userEventRepository.saveConsumerUserEvent({
       timestamp: Date.now(),
@@ -113,6 +117,10 @@ export class UserService {
     updateRequest: UserUpdateRequest
   ) {
     const user = await this.userRepository.getBusinessUser(userId)
+    if (!user) {
+      throw new NotFound('User not found')
+    }
+
     await this.userRepository.saveBusinessUser({ ...user, ...updateRequest })
     // TODO: FDT-45236. Save business user event
     return 'OK'
