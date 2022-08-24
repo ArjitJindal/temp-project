@@ -12,7 +12,10 @@ function Analysis() {
           <TransactionsChartCard />
         </Col>
         <Col span={24}>
-          <HitsPerUserCard />
+          <HitsPerUserCard direction="ORIGIN" />
+        </Col>
+        <Col span={24}>
+          <HitsPerUserCard direction="DESTINATION" />
         </Col>
         <Col span={24}>
           <RuleHitCard />

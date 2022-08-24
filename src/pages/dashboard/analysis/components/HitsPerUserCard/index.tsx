@@ -23,7 +23,12 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-export default function HitsPerUserCard() {
+interface Props {
+  direction: 'ORIGIN' | 'DESTINATION';
+}
+
+export default function HitsPerUserCard(props: Props) {
+  const { direction } = props;
   const api = useApi();
 
   const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
@@ -73,7 +78,6 @@ export default function HitsPerUserCard() {
   const columns: ProColumns<TableItem>[] = [
     {
       title: 'User ID',
-      dataIndex: 'originUserId',
       width: 175,
       render: (dom, entity) => {
         const { user } = entity;
@@ -177,10 +181,10 @@ export default function HitsPerUserCard() {
       startTimestamp = start.startOf('day').valueOf();
       endTimestamp = end.endOf('day').valueOf();
     }
-
     const result = await api.getDashboardStatsHitsPerUser({
       startTimestamp,
       endTimestamp,
+      direction,
     });
     setBlockedUsers([]);
 
@@ -189,7 +193,7 @@ export default function HitsPerUserCard() {
       total: result.data.length,
       data: result.data,
     };
-  }, [api, dateRange]);
+  }, [api, dateRange, direction]);
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
@@ -204,9 +208,17 @@ export default function HitsPerUserCard() {
         }}
         className={style.table}
         scroll={{ x: 1300 }}
-        headerTitle={header('Top origin users (senders) by Transaction Hits')}
-        rowKey="originUserId"
-        tooltip="Origin is the Sender in a transaction"
+        headerTitle={header(
+          direction === 'ORIGIN'
+            ? 'Top origin users (senders) by Transaction Hits'
+            : 'Top destination users (receivers) by Transaction Hits',
+        )}
+        rowKey={direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'}
+        tooltip={
+          direction === 'ORIGIN'
+            ? 'Origin is the Sender in a transaction'
+            : 'Destination is the Receiver in a transaction'
+        }
         search={false}
         columns={mergeColumns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
