@@ -44,7 +44,6 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
         timePeriodDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['sendersCount', 'timePeriodDays'],
-      additionalProperties: false,
     }
   }
 

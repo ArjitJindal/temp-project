@@ -36,7 +36,6 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
         },
       },
       required: ['dormancyPeriodDays'],
-      additionalProperties: false,
     }
   }
 

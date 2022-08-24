@@ -22,7 +22,6 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
-      additionalProperties: false,
     }
   }
 

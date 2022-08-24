@@ -17,7 +17,6 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
         },
       },
       required: ['highRiskCurrencies'],
-      additionalProperties: false,
     }
   }
 

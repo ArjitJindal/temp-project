@@ -1,10 +1,15 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import {
+  checkTransactionAmountBetweenThreshold,
+  isTransactionInTargetTypes,
+} from '../utils/transaction-rule-utils'
 import { isUserBetweenAge, isUserType } from '../utils/user-rule-utils'
 import { TransactionRule } from './rule'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
@@ -15,7 +20,7 @@ export type TransactionAmountRuleParameters = {
     maxAge?: number
   }
   // optional parameter
-  transactionType?: string
+  transactionTypes?: TransactionType[]
   paymentMethod?: PaymentMethod
   userType?: UserType
 }
@@ -43,9 +48,14 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
           required: [],
           nullable: true,
         },
-        transactionType: {
-          type: 'string',
-          title: 'Target Transaction Type',
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
           nullable: true,
         },
         paymentMethod: {
@@ -62,16 +72,15 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         },
       },
       required: ['transactionAmountThreshold'],
-      additionalProperties: false,
     }
   }
 
   public getFilters() {
-    const { ageRange, transactionType, paymentMethod, userType } =
+    const { ageRange, transactionTypes, paymentMethod, userType } =
       this.parameters
     return [
       () => !ageRange || isUserBetweenAge(this.senderUser, ageRange),
-      () => !transactionType || this.transaction.type === transactionType,
+      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
       () =>
         !paymentMethod ||
         this.transaction.originPaymentDetails?.method === paymentMethod,

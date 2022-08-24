@@ -17,7 +17,6 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
         },
       },
       required: ['initialTransactions'],
-      additionalProperties: false,
     }
   }
 

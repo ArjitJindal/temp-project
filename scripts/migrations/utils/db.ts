@@ -5,6 +5,7 @@ import { getConfig } from './config'
 export async function getDynamoDbClient() {
   const config = getConfig()
   return new AWS.DynamoDB.DocumentClient({
+    endpoint: process.env.ENV === 'local' ? 'http://localhost:8000' : undefined,
     credentials: new AWS.SharedIniFileCredentials({
       profile: `AWSAdministratorAccess-${config.env.account}`,
     }),

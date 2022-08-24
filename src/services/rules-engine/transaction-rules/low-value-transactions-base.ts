@@ -58,7 +58,6 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
         },
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],
-      additionalProperties: false,
     }
   }
 

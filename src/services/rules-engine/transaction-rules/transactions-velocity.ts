@@ -2,10 +2,14 @@ import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
+  ThinTransactionsFilterOptions,
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { isUserInList, isUserType } from '../utils/user-rule-utils'
-import { isTransactionWithinTimeWindow } from '../utils/transaction-rule-utils'
+import {
+  isTransactionInTargetTypes,
+  isTransactionWithinTimeWindow,
+} from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
@@ -15,6 +19,8 @@ import {
 } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -44,7 +50,7 @@ export type TransactionsVelocityRuleParameters =
       from?: string // e.g 20:20:39+03:00
       to?: string
     }
-    transactionType?: string
+    transactionTypes: TransactionType[]
     paymentMethod?: PaymentMethod
     userType?: UserType
     onlyCheckKnownUsers?: boolean
@@ -133,9 +139,14 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
           },
           nullable: true,
         },
-        transactionType: {
-          type: 'string',
-          title: 'Target Transaction Type',
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
           nullable: true,
         },
         paymentMethod: {
@@ -157,7 +168,6 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         },
       },
       required: ['transactionsLimit', 'timeWindow'],
-      additionalProperties: false,
     }
   }
 
@@ -165,7 +175,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     const {
       userIdsToCheck,
       checkTimeWindow,
-      transactionType,
+      transactionTypes,
       paymentMethod,
       userType,
       onlyCheckKnownUsers,
@@ -175,7 +185,8 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       .concat([
         () => isUserInList(this.senderUser, userIdsToCheck),
         () => isTransactionWithinTimeWindow(this.transaction, checkTimeWindow),
-        () => !transactionType || this.transaction.type === transactionType,
+        () =>
+          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
         () =>
           !paymentMethod ||
           this.transaction.originPaymentDetails?.method === paymentMethod,
@@ -275,9 +286,9 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       afterTimestamp,
       beforeTimestamp: this.transaction.timestamp!,
     }
-    const filterOptions = {
+    const filterOptions: ThinTransactionsFilterOptions = {
       transactionState: this.parameters.transactionState,
-      transactionType: this.parameters.transactionType,
+      transactionTypes: this.parameters.transactionTypes,
     }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'

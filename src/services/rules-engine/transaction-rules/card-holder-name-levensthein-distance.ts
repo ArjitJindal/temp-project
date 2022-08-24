@@ -21,7 +21,6 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
         },
       },
       required: ['allowedDistance'],
-      additionalProperties: false,
     }
   }
 

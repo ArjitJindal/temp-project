@@ -1,5 +1,4 @@
-import { exit } from 'process'
-import { getDynamoDbClient } from './utils/db'
+import { getDynamoDbClient } from '../utils/db'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
@@ -148,10 +147,3 @@ async function main() {
 }
 
 main()
-  .then(() => {
-    exit(0)
-  })
-  .catch((e) => {
-    console.error(e)
-    exit(1)
-  })

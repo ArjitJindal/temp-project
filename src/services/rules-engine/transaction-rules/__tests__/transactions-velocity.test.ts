@@ -704,7 +704,7 @@ describe('Optional parameter - Transaction type', () => {
         },
         checkSender: 'all',
         checkReceiver: 'all',
-        transactionType: 'WITHDRAWAL',
+        transactionTypes: ['WITHDRAWAL'],
       } as TransactionsVelocityRuleParameters,
     },
   ])

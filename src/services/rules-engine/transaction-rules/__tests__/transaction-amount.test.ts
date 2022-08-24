@@ -393,7 +393,7 @@ describe('Optional parameters - Payment Type', () => {
       ruleImplementationName: 'transaction-amount',
       defaultParameters: {
         transactionAmountThreshold: { EUR: 1000 },
-        transactionType: 'WITHDRAWAL',
+        transactionTypes: ['WITHDRAWAL'],
       } as TransactionAmountRuleParameters,
       defaultAction: 'FLAG',
     },

@@ -18,7 +18,6 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
         },
       },
       required: ['blacklistedCountries'],
-      additionalProperties: false,
     }
   }
 

@@ -32,6 +32,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -48,8 +49,8 @@ export type ThinTransaction = {
   destinationUserId?: string
 }
 
-type ThinTransactionsFilterOptions = {
-  transactionType?: string
+export type ThinTransactionsFilterOptions = {
+  transactionTypes?: TransactionType[]
   transactionState?: TransactionState
   senderKeyId?: string
   receiverKeyId?: string
@@ -642,9 +643,26 @@ export class TransactionRepository {
       ] as Transaction[]) || []
     )
   }
-
   public async hasAnySendingTransaction(
     userId: string,
+    filterOptions?: ThinTransactionsFilterOptions
+  ): Promise<boolean> {
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.hasAnySendingTransactionPrivate(
+            userId,
+            transactionType,
+            filterOptions
+          )
+      )
+    )
+    return results.includes(true)
+  }
+
+  private async hasAnySendingTransactionPrivate(
+    userId: string,
+    transactionType?: TransactionType,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<boolean> {
     const transactionFilterQuery =
@@ -658,7 +676,7 @@ export class TransactionRepository {
           this.tenantId,
           userId,
           'sending',
-          filterOptions?.transactionType
+          transactionType
         ).PartitionKeyID,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
@@ -674,33 +692,45 @@ export class TransactionRepository {
     n: number,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getLastNThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'sending',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      n,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getLastNThinTransactions(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'sending',
+              transactionType
+            ).PartitionKeyID,
+            n,
+            filterOptions
+          )
+      )
     )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  public getLastNUserReceivingThinTransactions(
+  public async getLastNUserReceivingThinTransactions(
     userId: string,
     n: number,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getLastNThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'receiving',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      n,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getLastNThinTransactions(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'receiving',
+              transactionType
+            ).PartitionKeyID,
+            n,
+            filterOptions
+          )
+      )
     )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
   private async getLastNThinTransactions(
@@ -774,16 +804,22 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'sending',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getThinTransactions(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'sending',
+              transactionType
+            ).PartitionKeyID,
+            timeRange,
+            filterOptions
+          )
+      )
     )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
   public async getUserReceivingThinTransactions(
@@ -791,16 +827,22 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    return this.getThinTransactions(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'receiving',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getThinTransactions(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'receiving',
+              transactionType
+            ).PartitionKeyID,
+            timeRange,
+            filterOptions
+          )
+      )
     )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
   public async getGenericUserSendingTransactionsCount(
@@ -858,15 +900,30 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    return this.getUserThinTransactionsCount(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'sending',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getUserThinTransactionsCount(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'sending',
+              transactionType
+            ).PartitionKeyID,
+            timeRange,
+            filterOptions
+          )
+      )
+    )
+    return results.reduce(
+      (prev, curr) => ({
+        count: prev.count + curr.count,
+        scannedCount: prev.scannedCount + curr.scannedCount,
+      }),
+      {
+        count: 0,
+        scannedCount: 0,
+      }
     )
   }
 
@@ -875,15 +932,30 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    return this.getUserThinTransactionsCount(
-      DynamoDbKeys.USER_TRANSACTION(
-        this.tenantId,
-        userId,
-        'receiving',
-        filterOptions?.transactionType
-      ).PartitionKeyID,
-      timeRange,
-      filterOptions
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) =>
+          this.getUserThinTransactionsCount(
+            DynamoDbKeys.USER_TRANSACTION(
+              this.tenantId,
+              userId,
+              'receiving',
+              transactionType
+            ).PartitionKeyID,
+            timeRange,
+            filterOptions
+          )
+      )
+    )
+    return results.reduce(
+      (prev, curr) => ({
+        count: prev.count + curr.count,
+        scannedCount: prev.scannedCount + curr.scannedCount,
+      }),
+      {
+        count: 0,
+        scannedCount: 0,
+      }
     )
   }
 
@@ -892,19 +964,35 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-      this.tenantId,
-      paymentDetails,
-      'sending',
-      filterOptions?.transactionType
-    )?.PartitionKeyID
-    return partitionKeyId
-      ? this.getUserThinTransactionsCount(
-          partitionKeyId,
-          timeRange,
-          filterOptions
-        )
-      : { count: 0, scannedCount: 0 }
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) => {
+          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+            this.tenantId,
+            paymentDetails,
+            'sending',
+            transactionType
+          )?.PartitionKeyID
+          return partitionKeyId
+            ? this.getUserThinTransactionsCount(
+                partitionKeyId,
+                timeRange,
+                filterOptions
+              )
+            : { count: 0, scannedCount: 0 }
+        }
+      )
+    )
+    return results.reduce(
+      (prev, curr) => ({
+        count: prev.count + curr.count,
+        scannedCount: prev.scannedCount + curr.scannedCount,
+      }),
+      {
+        count: 0,
+        scannedCount: 0,
+      }
+    )
   }
 
   public async getNonUserReceivingTransactionsCount(
@@ -912,19 +1000,35 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<QueryCountResult> {
-    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-      this.tenantId,
-      paymentDetails,
-      'receiving',
-      filterOptions?.transactionType
-    )?.PartitionKeyID
-    return partitionKeyId
-      ? this.getUserThinTransactionsCount(
-          partitionKeyId,
-          timeRange,
-          filterOptions
-        )
-      : { count: 0, scannedCount: 0 }
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) => {
+          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+            this.tenantId,
+            paymentDetails,
+            'receiving',
+            transactionType
+          )?.PartitionKeyID
+          return partitionKeyId
+            ? this.getUserThinTransactionsCount(
+                partitionKeyId,
+                timeRange,
+                filterOptions
+              )
+            : { count: 0, scannedCount: 0 }
+        }
+      )
+    )
+    return results.reduce(
+      (prev, curr) => ({
+        count: prev.count + curr.count,
+        scannedCount: prev.scannedCount + curr.scannedCount,
+      }),
+      {
+        count: 0,
+        scannedCount: 0,
+      }
+    )
   }
 
   public async getNonUserSendingThinTransactions(
@@ -932,15 +1036,22 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-      this.tenantId,
-      paymentDetails,
-      'sending',
-      filterOptions?.transactionType
-    )?.PartitionKeyID
-    return partitionKeyId
-      ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
-      : []
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) => {
+          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+            this.tenantId,
+            paymentDetails,
+            'sending',
+            transactionType
+          )?.PartitionKeyID
+          return partitionKeyId
+            ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+            : []
+        }
+      )
+    )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
   public async getNonUserReceivingThinTransactions(
@@ -948,15 +1059,22 @@ export class TransactionRepository {
     timeRange: TimeRange,
     filterOptions?: ThinTransactionsFilterOptions
   ): Promise<Array<ThinTransaction>> {
-    const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
-      this.tenantId,
-      paymentDetails,
-      'receiving',
-      filterOptions?.transactionType
-    )?.PartitionKeyID
-    return partitionKeyId
-      ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
-      : []
+    const results = await Promise.all(
+      getTransactionTypes(filterOptions?.transactionTypes).map(
+        (transactionType) => {
+          const partitionKeyId = DynamoDbKeys.NON_USER_TRANSACTION(
+            this.tenantId,
+            paymentDetails,
+            'receiving',
+            transactionType
+          )?.PartitionKeyID
+          return partitionKeyId
+            ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+            : []
+        }
+      )
+    )
+    return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
   public async getIpAddressThinTransactions(
@@ -1049,4 +1167,19 @@ export class TransactionRepository {
       },
     }
   }
+}
+
+function sortTransactionsDescendingTimestamp(
+  transactions: ThinTransaction[]
+): ThinTransaction[] {
+  return transactions.sort(
+    (transaction1, transaction2) =>
+      transaction2.timestamp - transaction1.timestamp
+  )
+}
+
+function getTransactionTypes(
+  transactionTypes: TransactionType[] | undefined
+): (TransactionType | undefined)[] {
+  return transactionTypes || [undefined]
 }

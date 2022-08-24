@@ -25,7 +25,7 @@ describe('With transaction type', () => {
       defaultParameters: {
         userPairsThreshold: 1,
         timeWindowInSeconds: 86400,
-        transactionType: 'EXTERNAL_PAYMENT',
+        transactionTypes: ['EXTERNAL_PAYMENT'],
         excludedUserIds: ['5-1', '5-3'],
       } as UserTransactionPairsRuleParameters,
       defaultAction: 'FLAG',

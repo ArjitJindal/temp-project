@@ -18,7 +18,6 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
         },
       },
       required: ['merchantNames'],
-      additionalProperties: false,
     }
   }
 

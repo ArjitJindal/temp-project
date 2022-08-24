@@ -23,7 +23,6 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['uniqueUsersCountThreshold', 'timeWindowInDays'],
-      additionalProperties: false,
     }
   }
 

@@ -18,7 +18,6 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
         },
       },
       required: ['allowedCountries'],
-      additionalProperties: false,
     }
   }
 

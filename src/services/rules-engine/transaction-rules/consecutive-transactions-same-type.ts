@@ -1,14 +1,17 @@
 import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 export type ConsecutiveTransactionSameTypeRuleParameters =
   DefaultTransactionRuleParameters & {
     targetTransactionsThreshold: number
-    targetTransactionType: string
-    otherTransactionTypes: string[]
+    transactionTypes: TransactionType[]
+    otherTransactionTypes: TransactionType[]
     timeWindowInDays: number
   }
 
@@ -40,42 +43,49 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
           type: 'integer',
           title: 'Transactions Count Threshold',
         },
-        targetTransactionType: {
-          type: 'string',
-          title: 'Target Transaction Type',
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
+          nullable: true,
         },
         otherTransactionTypes: {
           type: 'array',
           title: 'Other Transaction Types',
           items: {
             type: 'string',
+            enum: TRANSACTION_TYPES,
           },
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: [
         'targetTransactionsThreshold',
-        'targetTransactionType',
+        'transactionTypes',
         'otherTransactionTypes',
         'timeWindowInDays',
       ],
-      additionalProperties: false,
     }
   }
 
   public getFilters() {
-    const { targetTransactionType } = this.parameters
+    const { transactionTypes } = this.parameters
     return super
       .getFilters()
       .concat([
-        () => this.transaction.type === targetTransactionType,
+        () =>
+          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
         () => this.transaction.originUserId !== undefined,
       ])
   }
 
   public async computeRule() {
     const {
-      targetTransactionType,
+      transactionTypes,
       otherTransactionTypes,
       targetTransactionsThreshold,
       timeWindowInDays,
@@ -89,14 +99,12 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       transactionRepository.getLastNUserSendingThinTransactions(
         this.transaction.originUserId as string,
         targetTransactionsThreshold,
-        { transactionType: targetTransactionType, transactionState }
+        { transactionTypes: transactionTypes, transactionState }
       ),
-      ...(otherTransactionTypes || []).map((transactionType) =>
-        transactionRepository.getLastNUserSendingThinTransactions(
-          this.transaction.originUserId as string,
-          1,
-          { transactionType, transactionState }
-        )
+      transactionRepository.getLastNUserSendingThinTransactions(
+        this.transaction.originUserId as string,
+        1,
+        { transactionTypes: otherTransactionTypes, transactionState }
       ),
     ])
 

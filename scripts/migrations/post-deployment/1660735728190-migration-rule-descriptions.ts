@@ -1,13 +1,7 @@
-import { exit } from 'process'
 import { TarponStackConstants } from '@cdk/constants'
-import { getDynamoDbClient, getMongoDbClient } from './utils/db'
-import { getConfig } from './utils/config'
-import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
-import {
-  AccountsService,
-  Tenant,
-} from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
+import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const changes = [
   {
@@ -21,16 +15,14 @@ const changes = [
   },
 ]
 
-const config = getConfig()
-
-async function migrateTenant(tenant: Tenant) {
-  console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
+async function migrateRules() {
+  console.info(`Starting to migrate`)
   const dynamodb = await getDynamoDbClient()
   const mongodb = await getMongoDbClient(
     TarponStackConstants.MONGO_DB_DATABASE_NAME
   )
 
-  const ruleRepo = new RuleRepository(tenant.id, {
+  const ruleRepo = new RuleRepository(FLAGRIGHT_TENANT_ID, {
     dynamoDb: dynamodb,
     mongoDb: mongodb,
   })
@@ -43,26 +35,7 @@ async function migrateTenant(tenant: Tenant) {
       await ruleRepo.createOrUpdateRule(rule)
     }
   }
-  console.info(`Tenant migrated: ${tenant.id}`)
+  console.info(`Migration completed`)
 }
 
-async function main() {
-  const accountsService = new AccountsService(
-    config.application as AccountsConfig
-  )
-  const tenants = await accountsService.getTenants()
-
-  for (const tenant of tenants) {
-    await migrateTenant(tenant)
-  }
-}
-
-main()
-  .then(() => {
-    console.info('Migration completed.')
-    exit(0)
-  })
-  .catch((e) => {
-    console.error(e)
-    exit(1)
-  })
+migrateRules()

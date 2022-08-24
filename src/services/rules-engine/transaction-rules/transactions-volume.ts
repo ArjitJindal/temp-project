@@ -101,7 +101,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         },
       },
       required: ['transactionVolumeThreshold', 'timeWindow'],
-      additionalProperties: false,
     }
   }
 

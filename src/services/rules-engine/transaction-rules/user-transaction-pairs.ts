@@ -1,14 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
+import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type UserTransactionPairsRuleParameters =
   DefaultTransactionRuleParameters & {
     userPairsThreshold: number
     timeWindowInSeconds: number
-    transactionType?: string
+    transactionTypes: TransactionType[]
     excludedUserIds?: string[]
   }
 
@@ -44,9 +47,14 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
           type: 'integer',
           title: 'Time Window (Seconds)',
         },
-        transactionType: {
-          type: 'string',
-          title: 'Target Transaction Type',
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
           nullable: true,
         },
         excludedUserIds: {
@@ -57,16 +65,16 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
         },
       },
       required: ['userPairsThreshold', 'timeWindowInSeconds'],
-      additionalProperties: false,
     }
   }
 
   public getFilters() {
-    const { transactionType, excludedUserIds } = this.parameters
+    const { transactionTypes, excludedUserIds } = this.parameters
     return super
       .getFilters()
       .concat([
-        () => !transactionType || this.transaction.type === transactionType,
+        () =>
+          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
         () =>
           this.transaction.originUserId !== undefined &&
           this.transaction.destinationUserId !== undefined,
@@ -89,13 +97,15 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
   }
 
   protected async getSenderSendingTransactions() {
-    const { timeWindowInSeconds, transactionType, transactionState } =
+    const { timeWindowInSeconds, transactionTypes, transactionState } =
       this.parameters
-    const receiverKeyId = getReceiverKeys(
-      this.tenantId,
-      this.transaction,
-      transactionType
-    )?.PartitionKeyID
+    const possibleReceiverKeyIds = new Set(
+      (transactionTypes || [undefined]).map(
+        (transactionType) =>
+          getReceiverKeys(this.tenantId, this.transaction, transactionType)
+            ?.PartitionKeyID
+      )
+    )
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -108,18 +118,22 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        { transactionType, transactionState }
+        { transactionTypes, transactionState }
       )
     ).concat([
       {
         transactionId: this.transaction.transactionId as string,
         timestamp: this.transaction.timestamp!,
-        receiverKeyId,
+        receiverKeyId: getReceiverKeys(
+          this.tenantId,
+          this.transaction,
+          this.transaction.type
+        )?.PartitionKeyID,
         senderKeyId: undefined,
       },
     ])
-    return sendingTransactions.filter(
-      (transaction) => transaction.receiverKeyId === receiverKeyId
+    return sendingTransactions.filter((transaction) =>
+      possibleReceiverKeyIds.has(transaction.receiverKeyId)
     )
   }
 }

@@ -25,7 +25,6 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
         },
       },
       required: ['keywords'],
-      additionalProperties: false,
     }
   }
 

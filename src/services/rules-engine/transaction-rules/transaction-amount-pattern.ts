@@ -23,7 +23,6 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
         },
       },
       required: ['patterns'],
-      additionalProperties: false,
     }
   }
 

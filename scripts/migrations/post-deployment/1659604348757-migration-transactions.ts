@@ -1,17 +1,10 @@
-import { exit } from 'process'
 import { TarponStackConstants } from '@cdk/constants'
-import { getDynamoDbClient, getMongoDbClient } from './utils/db'
-import { getConfig } from './utils/config'
+import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
+import { migrateAllTenants } from '../utils/tenant'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
-import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
-import {
-  AccountsService,
-  Tenant,
-} from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
+import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
 import { TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-
-const config = getConfig()
 
 async function migrateTenant(tenant: Tenant) {
   console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
@@ -50,23 +43,4 @@ async function migrateTenant(tenant: Tenant) {
   console.info(`Migrated ${migratedCount} transactions`)
 }
 
-async function main() {
-  const accountsService = new AccountsService(
-    config.application as AccountsConfig
-  )
-  const tenants = await accountsService.getTenants()
-
-  for (const tenant of tenants) {
-    await migrateTenant(tenant)
-  }
-}
-
-main()
-  .then(() => {
-    console.info('Migration completed.')
-    exit(0)
-  })
-  .catch((e) => {
-    console.error(e)
-    exit(1)
-  })
+migrateAllTenants(migrateTenant)

@@ -40,7 +40,6 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
-      additionalProperties: false,
     }
   }
 

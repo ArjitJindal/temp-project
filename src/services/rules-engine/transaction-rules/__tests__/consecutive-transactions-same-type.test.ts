@@ -25,7 +25,7 @@ describe('Core logic', () => {
       ruleImplementationName: 'consecutive-transactions-same-type',
       defaultParameters: {
         targetTransactionsThreshold: 2,
-        targetTransactionType: 'DEPOSIT',
+        transactionTypes: ['DEPOSIT'],
         otherTransactionTypes: ['EXTERNAL_PAYMENT', 'EXTERNAL_PAYMENT'],
         timeWindowInDays: 30,
       } as ConsecutiveTransactionSameTypeRuleParameters,
@@ -214,7 +214,7 @@ describe('Transaction State', () => {
       ruleImplementationName: 'consecutive-transactions-same-type',
       defaultParameters: {
         targetTransactionsThreshold: 2,
-        targetTransactionType: 'DEPOSIT',
+        transactionTypes: ['DEPOSIT'],
         otherTransactionTypes: ['EXTERNAL_PAYMENT'],
         timeWindowInDays: 30,
         transactionState: 'SUCCESSFUL',

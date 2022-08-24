@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
@@ -10,9 +11,11 @@ import { isUserType } from '@/services/rules-engine/utils/user-rule-utils'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type Filters = DefaultTransactionRuleParameters & {
-  transactionType?: string
+  transactionTypes?: TransactionType[]
   paymentMethod?: string
   userType?: UserType
 }
@@ -29,9 +32,14 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
     return {
       type: 'object',
       properties: {
-        transactionType: {
-          type: 'string',
-          title: 'Transaction type',
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
           nullable: true,
         },
         paymentMethod: {
@@ -73,17 +81,16 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
         },
       },
       required: ['timeWindowInDays', 'transactionsLimit'],
-      additionalProperties: false,
     }
   }
 
   public getFilters() {
     const filters = super.getFilters()
-    const { transactionType, paymentMethod, userType } = this.parameters
-    const result = [...filters]
-    if (transactionType != null) {
-      result.push(() => this.transaction.type === transactionType)
-    }
+    const { transactionTypes, paymentMethod, userType } = this.parameters
+    const result = [
+      ...filters,
+      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
+    ]
     if (paymentMethod != null) {
       result.push(
         () => this.transaction.originPaymentDetails?.method === paymentMethod
@@ -141,7 +148,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<Param
         },
         {
           transactionState: this.parameters.transactionState,
-          transactionType: this.parameters.transactionType,
+          transactionTypes: this.parameters.transactionTypes,
           receiverKeyId: getReceiverKeys(this.tenantId, transaction)
             ?.PartitionKeyID,
         }

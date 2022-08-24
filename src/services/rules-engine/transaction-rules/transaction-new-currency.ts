@@ -17,7 +17,6 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
         },
       },
       required: ['initialTransactions'],
-      additionalProperties: false,
     }
   }
 

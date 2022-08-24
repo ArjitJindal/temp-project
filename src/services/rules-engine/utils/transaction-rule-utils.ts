@@ -3,6 +3,16 @@ import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+
+export function isTransactionInTargetTypes(
+  transactionType: TransactionType | undefined,
+  targetTypes: TransactionType[] | undefined
+) {
+  return (
+    !targetTypes || targetTypes.includes(transactionType as TransactionType)
+  )
+}
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,

@@ -22,7 +22,6 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: ['uniqueCardsCountThreshold', 'timeWindowInDays'],
-      additionalProperties: false,
     }
   }
 

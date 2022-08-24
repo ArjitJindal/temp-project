@@ -8,7 +8,6 @@ import { AggregationRepository } from '../repositories/aggregation-repository'
 import { isUserType } from '../utils/user-rule-utils'
 import { TransactionRule } from './rule'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
@@ -20,8 +19,6 @@ export type TransactionsVolumeQuantilesRuleParameters = {
   }
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
-  transactionType?: string
-  paymentMethod?: PaymentMethod
   userType?: UserType
 }
 
@@ -74,17 +71,6 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
           title: 'Destination User Transaction Direction',
           enum: ['receiving', 'all', 'none'],
         },
-        transactionType: {
-          type: 'string',
-          title: 'Target Transaction Type',
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
-          nullable: true,
-        },
         userType: {
           type: 'string',
           title: 'Type of user',
@@ -93,19 +79,12 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         },
       },
       required: ['transactionVolumeThresholds'],
-      additionalProperties: false,
     }
   }
 
   public getFilters() {
-    const { transactionType, paymentMethod, userType } = this.parameters
-    return [
-      () => !transactionType || this.transaction.type === transactionType,
-      () =>
-        !paymentMethod ||
-        this.transaction.originPaymentDetails?.method === paymentMethod,
-      () => isUserType(this.senderUser, userType),
-    ]
+    const { userType } = this.parameters
+    return [() => isUserType(this.senderUser, userType)]
   }
 
   public async computeRule() {
