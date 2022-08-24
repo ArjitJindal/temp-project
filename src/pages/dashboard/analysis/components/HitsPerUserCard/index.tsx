@@ -80,11 +80,11 @@ export default function HitsPerUserCard(props: Props) {
       title: 'User ID',
       width: 175,
       render: (dom, entity) => {
-        const { user } = entity;
-        if (user == null) {
-          return dom;
+        const { user, userId } = entity;
+        if (!user) {
+          return userId;
         }
-        return <UserLink user={user}>{dom}</UserLink>;
+        return <UserLink user={user}>{userId}</UserLink>;
       },
     },
     {
@@ -104,8 +104,8 @@ export default function HitsPerUserCard(props: Props) {
       width: 80,
       render: (dom, entity) => {
         const { user } = entity;
-        if (user == null) {
-          return dom;
+        if (!user) {
+          return '-';
         }
         return (
           <div className={s.userType}>
@@ -119,8 +119,8 @@ export default function HitsPerUserCard(props: Props) {
       width: 80,
       render: (dom, entity) => {
         const { user } = entity;
-        if (user == null) {
-          return dom;
+        if (!user) {
+          return '-';
         }
         let startTimestamp;
         let endTimestamp;
@@ -196,8 +196,6 @@ export default function HitsPerUserCard(props: Props) {
   }, [api, dateRange, direction]);
 
   return (
-    <></>
-    /*
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Table<TableItem>
         form={{
@@ -215,7 +213,7 @@ export default function HitsPerUserCard(props: Props) {
             ? 'Top origin users (senders) by Transaction Hits'
             : 'Top destination users (receivers) by Transaction Hits',
         )}
-        rowKey={direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'}
+        rowKey="userId"
         tooltip={
           direction === 'ORIGIN'
             ? 'Origin is the Sender in a transaction'
@@ -232,6 +230,6 @@ export default function HitsPerUserCard(props: Props) {
           reload: true,
         }}
       />
-    </Card>*/
+    </Card>
   );
 }
