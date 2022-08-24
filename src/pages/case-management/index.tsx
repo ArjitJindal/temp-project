@@ -34,8 +34,8 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { TransactionType } from '@/apis/models/TransactionType';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
-import TransactionStatusButton from '@/pages/transactions/transactions-list/components/TransactionStatusButton';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import TransactionStatusButton from '@/pages/transactions/components/TransactionStatusButton';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;

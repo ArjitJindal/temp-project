@@ -6,7 +6,7 @@ import { useUsers } from '../helpers';
 import s from './style.module.less';
 import UserFillIcon from '@/components/ui/icons/Remix/user-fill.react.svg';
 import SearchLineIcon from '@/components/ui/icons/Remix/search-line.react.svg';
-import UserList from '@/pages/transactions/transactions-list/components/UserSearchButton/PopupContent/UserList';
+import UserList from '@/pages/transactions/components/UserSearchButton/PopupContent/UserList';
 
 interface Props {
   initialSearch: string;

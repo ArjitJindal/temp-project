@@ -8,8 +8,9 @@ import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-level';
 import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithm';
-import TransactionsTransactionsFilesPage from '@/pages/import/import-transactions';
-import TransactionsTransactionsListPage from '@/pages/transactions/transactions-list';
+import TransactionsFilesPage from '@/pages/import/import-transactions';
+import TransactionsListPage from '@/pages/transactions';
+import TransactionsItemPage from '@/pages/transactions-item';
 import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
 import RulesPage from '@/pages/rules';
@@ -69,29 +70,23 @@ export function useRoutes(): RouteItem[] {
         position: 'top',
         routes: [
           {
-            path: '/transactions',
-            redirect: '/transactions/transactions-list',
+            path: '/transactions/item/:id',
+            component: TransactionsItemPage,
+            name: 'transactions-item',
           },
           {
             name: 'transactions-list',
-            path: '/transactions/transactions-list',
-            hideChildrenInMenu: true,
-            routes: [
-              {
-                path: '/transactions/transactions-list',
-                redirect: '/transactions/transactions-list/all',
-              },
-              {
-                path: '/transactions/transactions-list/:id',
-                name: 'item',
-                component: TransactionsTransactionsListPage,
-              },
-            ],
+            component: TransactionsListPage,
+            path: '/transactions/list',
           },
           {
             name: 'transactions-files',
-            path: '/transactions/transactions-files',
-            component: TransactionsTransactionsFilesPage,
+            path: '/transactions/files',
+            component: TransactionsFilesPage,
+          },
+          {
+            path: '/transactions',
+            redirect: '/transactions/list',
           },
         ],
       },
@@ -202,7 +197,7 @@ export function useRoutes(): RouteItem[] {
                 {
                   name: 'import-transactions',
                   path: '/import/import-transactions',
-                  component: TransactionsTransactionsFilesPage,
+                  component: TransactionsFilesPage,
                 },
               ],
             },

@@ -1,5 +1,5 @@
 import s from './style.module.less';
-import StatusList from '@/pages/transactions/transactions-list/components/TransactionStatusButton/PopupContent/StatueList';
+import StatusList from '@/pages/transactions/components/TransactionStatusButton/PopupContent/StatueList';
 import { RuleAction } from '@/apis';
 
 interface Props {

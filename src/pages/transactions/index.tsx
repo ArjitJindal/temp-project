@@ -1,85 +1,32 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
-import { Drawer } from 'antd';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
-import { RouteMatch, useNavigate, useParams } from 'react-router';
-import CountryDisplay from 'src/components/ui/CountryDisplay/index';
-import { currencies } from '../../../utils/currencies';
+import CountryDisplay from '@/components/ui/CountryDisplay';
+import { currencies } from '@/utils/currencies';
 import { getUserName } from '@/utils/api/users';
-import { Table, RequestFunctionType } from '@/components/ui/Table';
-import { ApiException, TransactionCaseManagement, TransactionType } from '@/apis';
+import { RequestFunctionType, Table } from '@/components/ui/Table';
+import { TransactionCaseManagement, TransactionType } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import {
-  AsyncResource,
-  failed,
-  init,
-  isInit,
-  isSuccess,
-  loading,
-  success,
-} from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import { useI18n } from '@/locales';
-import '../../../components/ui/colors';
+import '../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import handleResize from '@/components/ui/Table/utils';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
-import UserSearchButton from '@/pages/transactions/transactions-list/components/UserSearchButton';
-import { TransactionDetails } from '@/pages/case-management-item/components/TransactionDetails';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import { makeUrl } from '@/utils/routing';
 
-const TableList = (props: RouteMatch<'id'>) => {
-  const { id: transactionId } = useParams<'id'>();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
+const TableList = () => {
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
   const api = useApi();
-
-  const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
-  useEffect(() => {
-    if (transactionId == null || transactionId === 'all') {
-      setCurrentItem(init());
-      return function () {};
-    }
-    if (currentTransactionId === transactionId) {
-      return function () {};
-    }
-    setCurrentItem(loading());
-    let isCanceled = false;
-    api
-      .getTransaction({
-        transactionId,
-      })
-      .then((transaction) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(transaction));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find transaction by id "${transactionId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [currentTransactionId, transactionId, api]);
 
   const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
     () => [
@@ -93,12 +40,8 @@ const TableList = (props: RouteMatch<'id'>) => {
           // todo: fix style
           return (
             <Link
-              to={`/transactions/transactions-list/${entity.transactionId}`}
-              onClick={() => {
-                setCurrentItem(success(entity));
-              }}
+              to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}
               style={{ color: '@fr-colors-brandBlue' }}
-              replace
             >
               {entity.transactionId}
             </Link>
@@ -357,7 +300,6 @@ const TableList = (props: RouteMatch<'id'>) => {
   );
 
   const i18n = useI18n();
-  const navigate = useNavigate();
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
       <Table<TransactionCaseManagement>
@@ -394,20 +336,6 @@ const TableList = (props: RouteMatch<'id'>) => {
           persistenceKey: 'transaction-list-table',
         }}
       />
-      <Drawer
-        width={736}
-        visible={!isInit(currentItem)}
-        onClose={() => {
-          navigate('/transactions/transactions-list/all', { replace: true });
-        }}
-        closable={false}
-      >
-        <AsyncResourceRenderer resource={currentItem}>
-          {(transaction) => (
-            <TransactionDetails transaction={transaction} isTransactionView={true} />
-          )}
-        </AsyncResourceRenderer>
-      </Drawer>
     </PageWrapper>
   );
 };

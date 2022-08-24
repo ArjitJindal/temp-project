@@ -179,7 +179,9 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
                     }}
                     isExpanded={isExpanded}
                   />
-                  <Link to={`/transactions/transactions-list/${entity.transactionId}`}>{dom}</Link>
+                  <Link to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}>
+                    {dom}
+                  </Link>
                 </div>
               );
             },
