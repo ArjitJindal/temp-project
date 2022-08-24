@@ -171,16 +171,16 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               extraInputs: [buildOutput],
               runOrder: 1,
             }),
-          ],
-        },
-        {
-          stageName: 'Deploy-Prod',
-          actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
               externalEntityLink: sandboxConfig.application.CONSOLE_URI,
               runOrder: 1,
             }),
+          ],
+        },
+        {
+          stageName: 'Deploy-Prod',
+          actions: [
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_asia-1',
               project: getDeployCodeBuildProject(
