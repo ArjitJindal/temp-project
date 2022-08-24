@@ -196,6 +196,8 @@ export default function HitsPerUserCard(props: Props) {
   }, [api, dateRange, direction]);
 
   return (
+    <></>
+    /*
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Table<TableItem>
         form={{
@@ -230,6 +232,6 @@ export default function HitsPerUserCard(props: Props) {
           reload: true,
         }}
       />
-    </Card>
+    </Card>*/
   );
 }
