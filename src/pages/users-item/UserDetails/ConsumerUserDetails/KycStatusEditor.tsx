@@ -12,7 +12,7 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
 }
 
-export const KycStatusEditor: React.FC<Props> = ({ user }) => {
+export default function KycStatusEditor({ user }: Props) {
   const api = useApi();
   const [kycStatusDetails, setKYCStatusDetails] = useState(
     updatedKYCStatusDetails[user.userId] || user.kycStatusDetails,
@@ -53,4 +53,4 @@ export const KycStatusEditor: React.FC<Props> = ({ user }) => {
       onChange={handleChangeKYCStatus}
     />
   );
-};
+}

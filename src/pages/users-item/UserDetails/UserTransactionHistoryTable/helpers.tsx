@@ -1,5 +1,5 @@
 import { TransactionCaseManagement } from '@/apis';
-import { DataItem } from '@/pages/users/users-list/components/UserTransactionHistoryTable/index';
+import { DataItem } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 
 export function prepareTableData(
   userId: string | undefined,

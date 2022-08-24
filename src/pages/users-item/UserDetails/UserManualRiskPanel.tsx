@@ -1,6 +1,6 @@
 import { Form, message } from 'antd';
 import { useEffect, useState } from 'react';
-import RiskLevelSwitch from './RiskLevelSwitch';
+import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { useApi } from '@/api';
 import { ManualRiskAssignmentUserState } from '@/apis';
 import { RiskLevel } from '@/utils/risk-levels';

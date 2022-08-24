@@ -8,9 +8,7 @@ const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
 };
 
-export function getBusinessUserColumns(
-  onUserIdClick: (user: InternalBusinessUser) => void = () => {},
-): ProColumns<InternalBusinessUser>[] {
+export function getBusinessUserColumns(): ProColumns<InternalBusinessUser>[] {
   return [
     {
       title: 'User ID',
@@ -22,9 +20,6 @@ export function getBusinessUserColumns(
         return (
           <Link
             to={`/users/list/business/${entity.userId}`}
-            onClick={() => {
-              onUserIdClick(entity);
-            }}
             style={{ color: '@fr-colors-brandBlue' }}
             replace
           >

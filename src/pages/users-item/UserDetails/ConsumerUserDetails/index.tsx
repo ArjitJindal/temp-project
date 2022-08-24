@@ -2,14 +2,14 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row, Typography } from 'antd';
 import { useCallback } from 'react';
-import { UserTransactionHistoryTable } from './UserTransactionHistoryTable';
-import { UserStateEditor } from './UserStateEditor';
-import { KycStatusEditor } from './KycStatusEditor';
+import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
+import KycStatusEditor from './KycStatusEditor';
+import UserManualRiskPanel from '@/pages/users-item/UserDetails/UserManualRiskPanel';
+import UserStateEditor from '@/pages/users-item/UserDetails/UserStateEditor';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalConsumerUser } from '@/apis';
-import UserManualRiskPanel from '@/pages/users/users-list/components/UserManualRiskPanel';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
@@ -18,7 +18,8 @@ interface Props {
   isEmbedded?: boolean;
 }
 
-export const ConsumerUserDetails: React.FC<Props> = ({ user, columns, isEmbedded }) => {
+export default function UserDetails(props: Props) {
+  const { user, columns, isEmbedded } = props;
   const api = useApi();
   const userId = user.userId;
   const request = useCallback(
@@ -79,4 +80,4 @@ export const ConsumerUserDetails: React.FC<Props> = ({ user, columns, isEmbedded
       />
     </>
   );
-};
+}

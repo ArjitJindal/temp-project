@@ -1,9 +1,7 @@
-import { Form, message } from 'antd';
-import { useEffect, useState } from 'react';
-import RiskLevelTag from './RiskLevelTag';
+import React, { useEffect, useState } from 'react';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { useApi } from '@/api';
 import { ManualRiskAssignmentUserState } from '@/apis';
-import { RiskLevel } from '@/utils/risk-levels';
 import { AsyncResource, failed, getOr, init, loading, map, success } from '@/utils/asyncResource';
 
 interface Props {
@@ -37,12 +35,10 @@ export default function UserRiskTag(props: Props) {
     };
   }, [userId, api]);
 
-  return (
-    <RiskLevelTag
-      current={getOr(
-        map(syncState, ({ riskLevel }) => riskLevel ?? null),
-        null,
-      )}
-    />
+  const level = getOr(
+    map(syncState, ({ riskLevel }) => riskLevel ?? null),
+    null,
   );
+
+  return level ? <RiskLevelTag level={level} /> : <>-</>;
 }

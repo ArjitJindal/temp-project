@@ -1,5 +1,5 @@
-import { Divider, Typography } from 'antd';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import s from './styles.module.less';
 
 interface Props {
@@ -14,7 +14,7 @@ export default function CollapsableSection(props: Props) {
   return (
     <div className={`${s.root} ${!isCollapsed && s.isOpen}`}>
       <a
-        href="#"
+        href="@/pages/users-item/UserDetails/CollapsableSection/index#"
         onClick={(e) => {
           e.preventDefault();
           onChangeCollapsed(!isCollapsed);

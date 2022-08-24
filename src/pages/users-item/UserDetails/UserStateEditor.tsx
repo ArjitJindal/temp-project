@@ -13,7 +13,7 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
 }
 
-export const UserStateEditor: React.FC<Props> = ({ user }) => {
+export default function UserStateEditor({ user }: Props) {
   const api = useApi();
   const [userStateDetails, setUserStateDetails] = useState(
     updatedUserStateDetails[user.userId] || user.userStateDetails,
@@ -55,4 +55,4 @@ export const UserStateEditor: React.FC<Props> = ({ user }) => {
       onChange={handleChangeUserState}
     />
   );
-};
+}

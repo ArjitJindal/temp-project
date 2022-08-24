@@ -1,7 +1,7 @@
-import { getBusinessUserColumns } from '../business-user-columns';
-import { getConsumerUserColumns } from '../consumer-users-columns';
-import { BusinessUserDetails } from './BusinessUserDetails';
-import { ConsumerUserDetails } from './ConsumerUserDetails';
+import BusinessUserDetails from './BusinessUserDetails';
+import ConsumerUserDetails from './ConsumerUserDetails';
+import { getBusinessUserColumns } from '@/pages/users/users-list/business-user-columns';
+import { getConsumerUserColumns } from '@/pages/users/users-list/consumer-users-columns';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   isEmbedded?: boolean;
 }
 
-export const UserDetails: React.FC<Props> = ({ user, isEmbedded }) => {
+export default function UserDetails({ user, isEmbedded }: Props) {
   return (
     <>
       {user?.type === 'BUSINESS' && user?.legalEntity && (
@@ -28,4 +28,4 @@ export const UserDetails: React.FC<Props> = ({ user, isEmbedded }) => {
       )}
     </>
   );
-};
+}

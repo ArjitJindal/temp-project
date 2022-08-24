@@ -3,7 +3,6 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import {
   Avatar,
-  Card,
   Col,
   Comment as AntComment,
   Input,
@@ -46,14 +45,14 @@ import { useAuth0User, useUsers } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import { getUserName } from '@/utils/api/users';
 import UserLink from '@/components/UserLink';
-import { UserDetails } from '@/pages/users/users-list/components/UserDetails';
-import { TransactionEventsTable } from '@/pages/users/users-list/components/UserTransactionHistoryTable/ExpandedRowRenderer';
+import UserDetails from '@/pages/users-item/UserDetails';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { RulesHitDetailsTable } from '@/pages/case-management/components/RulesHitDetailsTable';
+import { TransactionEventsTable } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable/ExpandedRowRenderer';
 
 const equal = require('fast-deep-equal');
 

@@ -2,12 +2,12 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row, Typography } from 'antd';
 import { useCallback, useState } from 'react';
-import { UserTransactionHistoryTable } from '../UserTransactionHistoryTable';
+import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
 import UserManualRiskPanel from '../UserManualRiskPanel';
-import CollapsableSection from '../CollapsableSection';
-import { UserStateEditor } from '../UserStateEditor';
 import s from './styles.module.less';
 import PersonsTable from './PersonsTable';
+import CollapsableSection from '@/pages/users-item/UserDetails/CollapsableSection';
+import UserStateEditor from '@/pages/users-item/UserDetails/UserStateEditor';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -20,7 +20,8 @@ interface Props {
   isEmbedded?: boolean;
 }
 
-export const BusinessUserDetails: React.FC<Props> = ({ user, columns, isEmbedded }) => {
+export default function BusinessUserDetails(props: Props) {
+  const { user, columns, isEmbedded } = props;
   const api = useApi();
   const userId = user.userId;
   const [isShareholdersCollapsed, setShareholdersCollapsed] = useState(true);
@@ -101,4 +102,4 @@ export const BusinessUserDetails: React.FC<Props> = ({ user, columns, isEmbedded
       />
     </>
   );
-};
+}

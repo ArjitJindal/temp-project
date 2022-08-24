@@ -13,6 +13,7 @@ import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
 import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
+import UsersItemPage from '@/pages/users-item';
 import RulesPage from '@/pages/rules';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem, TreeRouteItem } from '@/services/routing/types';
@@ -114,9 +115,14 @@ export function useRoutes(): RouteItem[] {
                     : '/users/list/business/all',
               },
               {
-                path: '/users/list/:list/:id',
+                path: '/users/list/:list/all',
                 name: 'list',
                 component: UsersUsersListPage,
+              },
+              {
+                path: '/users/list/:list/:id',
+                name: 'list',
+                component: UsersItemPage,
               },
             ],
           },

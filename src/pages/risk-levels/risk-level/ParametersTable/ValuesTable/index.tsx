@@ -5,7 +5,7 @@ import { ParameterName, ParameterValues, RiskLevelTableItem } from '../types';
 import { INPUT_RENDERERS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
-import RiskLevelSwitch from '@/pages/users/users-list/components/RiskLevelSwitch';
+import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { isEqual } from '@/utils/lang';
 

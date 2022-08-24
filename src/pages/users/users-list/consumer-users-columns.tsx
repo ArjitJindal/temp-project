@@ -10,9 +10,7 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 const convertToDateString = (createdTimestamp: number) =>
   moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
 
-export function getConsumerUserColumns(
-  onUserIdClick: (user: InternalConsumerUser) => void = () => {},
-): ProColumns<InternalConsumerUser>[] {
+export function getConsumerUserColumns(): ProColumns<InternalConsumerUser>[] {
   return [
     {
       title: 'User ID',
@@ -24,9 +22,6 @@ export function getConsumerUserColumns(
         return (
           <Link
             to={`/users/list/consumer/${entity.userId}`}
-            onClick={() => {
-              onUserIdClick(entity);
-            }}
             style={{ color: '@fr-colors-brandBlue' }}
             replace
           >

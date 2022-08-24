@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import style from './style.module.less';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
+import { prepareTableData } from './helpers';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import {
   RuleAction,
@@ -16,7 +17,6 @@ import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAP
 import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-import { prepareTableData } from '@/pages/users/users-list/components/UserTransactionHistoryTable/helpers';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -49,7 +49,7 @@ const createCurrencyStringFromTransactionAmount = (
   return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
 };
 
-export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
+export default function UserTransactionHistoryTable({ userId }: Props) {
   const api = useApi();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
@@ -328,4 +328,4 @@ export const UserTransactionHistoryTable: React.FC<Props> = ({ userId }) => {
       />
     </div>
   );
-};
+}

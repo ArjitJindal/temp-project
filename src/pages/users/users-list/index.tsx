@@ -1,4 +1,4 @@
-import { Drawer, Tabs } from 'antd';
+import { Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
 import { useCallback, useEffect, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
@@ -6,26 +6,14 @@ import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
 import type { TableListPagination } from './data.d';
 import styles from './UsersList.module.less';
-import UserRiskTag from './components/UserRiskTag';
-import { ConsumerUserDetails } from './components/ConsumerUserDetails';
-import { BusinessUserDetails } from './components/BusinessUserDetails';
+import UserRiskTag from './UserRiskTag';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { Table } from '@/components/ui/Table';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
-import {
-  AsyncResource,
-  failed,
-  init,
-  isInit,
-  isSuccess,
-  loading,
-  success,
-} from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
@@ -34,55 +22,12 @@ import { useI18n } from '@/locales';
 import handleResize from '@/components/ui/Table/utils';
 
 const BusinessUsersTab = (props: { id?: string }) => {
-  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalBusinessUser>>(init());
   const api = useApi();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
 
-  const { id: userId } = props;
-  const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
-  useEffect(() => {
-    if (userId == null || userId === 'all') {
-      setCurrentItem(init());
-      return function () {};
-    }
-    if (currentUserId === userId) {
-      return function () {};
-    }
-    setCurrentItem(loading());
-    let isCanceled = false;
-    api
-      .getBusinessUsersItem({
-        userId,
-      })
-      .then((user) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(user));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find user by id "${userId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [currentUserId, userId, api]);
-
-  const columns: ProColumns<InternalBusinessUser>[] = getBusinessUserColumns((user) =>
-    setCurrentItem(success(user)),
-  );
+  const columns: ProColumns<InternalBusinessUser>[] = getBusinessUserColumns();
 
   const mergeColumns: ProColumns<InternalBusinessUser>[] = columns.map((col, index) => ({
     ...col,
@@ -93,7 +38,6 @@ const BusinessUsersTab = (props: { id?: string }) => {
     }),
   }));
   const analytics = useAnalytics();
-  const navigate = useNavigate();
   const request = useCallback(
     async (params) => {
       const { pageSize, current, userId, createdTimestamp } = params;
@@ -144,73 +88,17 @@ const BusinessUsersTab = (props: { id?: string }) => {
           persistenceKey: 'users-list-table',
         }}
       />
-      <Drawer
-        width={960}
-        visible={!isInit(currentItem)}
-        onClose={() => {
-          navigate('/users/list/business/all', { replace: true });
-        }}
-        closable={false}
-      >
-        <AsyncResourceRenderer resource={currentItem}>
-          {(user) => user?.legalEntity && <BusinessUserDetails user={user} columns={columns} />}
-        </AsyncResourceRenderer>
-      </Drawer>
     </>
   );
 };
 
 const ConsumerUsersTab = (props: { id?: string }) => {
-  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalConsumerUser>>(init());
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
-  const { id: userId } = props;
-  const currentUserId = isSuccess(currentItem) ? currentItem.value.userId : null;
-  useEffect(() => {
-    if (userId == null || userId === 'all') {
-      setCurrentItem(init());
-      return function () {};
-    }
-    if (currentUserId === userId) {
-      return function () {};
-    }
-    setCurrentItem(loading());
-    let isCanceled = false;
-    api
-      .getConsumerUsersItem({
-        userId,
-      })
-      .then((user) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(user));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find user by id "${userId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [currentUserId, userId, api]);
-
-  const columns: ProColumns<InternalConsumerUser>[] = getConsumerUserColumns((user) =>
-    setCurrentItem(success(user)),
-  );
-
+  const columns: ProColumns<InternalConsumerUser>[] = getConsumerUserColumns();
   {
     if (isPulseEnabled) {
       columns.push({
@@ -235,7 +123,6 @@ const ConsumerUsersTab = (props: { id?: string }) => {
   }));
 
   const analytics = useAnalytics();
-  const navigate = useNavigate();
   const request = useCallback(
     async (params) => {
       const { pageSize, current, userId, createdTimestamp } = params;
@@ -285,23 +172,11 @@ const ConsumerUsersTab = (props: { id?: string }) => {
           persistenceKey: 'users-list',
         }}
       />
-      <Drawer
-        width={960}
-        visible={!isInit(currentItem)}
-        onClose={() => {
-          navigate('/users/list/consumer/all', { replace: true });
-        }}
-        closable={false}
-      >
-        <AsyncResourceRenderer resource={currentItem}>
-          {(user) => <ConsumerUserDetails user={user} columns={columns} />}
-        </AsyncResourceRenderer>
-      </Drawer>
     </>
   );
 };
 
-const TableList = () => {
+export default function UsersList() {
   const { list = 'consumer', id } = useParams<'list' | 'id'>();
   const navigate = useNavigate();
   const i18n = useI18n();
@@ -330,6 +205,4 @@ const TableList = () => {
       </div>
     </PageWrapper>
   );
-};
-
-export default TableList;
+}

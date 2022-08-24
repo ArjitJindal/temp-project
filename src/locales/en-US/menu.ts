@@ -25,6 +25,8 @@ export default {
   'menu.users': 'Users',
   'menu.users.lists': 'Users Lists',
   'menu.users.lists.list': 'Users Lists',
+  'menu.users.lists.consumer': 'Consumer Users',
+  'menu.users.lists.business': 'Business Users',
   'menu.rules': 'Rules',
   'menu.rules.create-rule': 'Rules Library',
   'menu.rules.my-rules': 'My Rules',
