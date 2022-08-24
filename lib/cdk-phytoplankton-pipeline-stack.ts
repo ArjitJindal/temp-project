@@ -156,21 +156,21 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
               input: sourceOutput,
               runOrder: 1,
             }),
+            new codepipeline_actions.ManualApprovalAction({
+              actionName: 'Approve',
+              externalEntityLink: `https://${sandboxConfig.SITE_DOMAIN}`,
+              runOrder: 2,
+            }),
           ],
         },
         {
           stageName: 'Deploy_Prod',
           actions: [
-            new codepipeline_actions.ManualApprovalAction({
-              actionName: 'Approve',
-              externalEntityLink: `https://${sandboxConfig.SITE_DOMAIN}`,
-              runOrder: 1,
-            }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy',
               project: getDeployCodeBuildProject('prod', PROD_CODE_DEPLOY_ROLE_ARN),
               input: sourceOutput,
-              runOrder: 2,
+              runOrder: 1,
             }),
           ],
         },
