@@ -303,10 +303,12 @@ export const dashboardStatsHandler = lambdaApi()(
     ) {
       const client = await connectToDB()
       const { principalId: tenantId } = event.requestContext.authorizer
-      const { startTimestamp, endTimestamp } = event.queryStringParameters as {
-        startTimestamp?: string
-        endTimestamp?: string
-      }
+      const { startTimestamp, endTimestamp, direction } =
+        event.queryStringParameters as {
+          startTimestamp?: string
+          endTimestamp?: string
+          direction: 'ORIGIN' | 'DESTINATION'
+        }
       const endTimestampNumber = endTimestamp
         ? parseInt(endTimestamp)
         : Number.NaN
@@ -330,7 +332,8 @@ export const dashboardStatsHandler = lambdaApi()(
       return {
         data: await dashboardStatsRepository.getHitsByUserStats(
           startTimestampNumber,
-          endTimestampNumber
+          endTimestampNumber,
+          direction
         ),
       }
     } else if (

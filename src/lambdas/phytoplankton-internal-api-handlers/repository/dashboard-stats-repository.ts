@@ -41,33 +41,40 @@ export class DashboardStatsRepository {
     this.tenantId = tenantId
   }
 
-  private async recalculateHitsByUser(db: Db) {
+  private async recalculateHitsByUser(
+    db: Db,
+    direction: 'ORIGIN' | 'DESTINATION'
+  ) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
+    const userFieldName =
+      direction === 'DESTINATION' ? 'destinationUserId' : 'originUserId'
 
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
-    await db.createIndex(
-      aggregationCollection,
+
+    await db.collection(aggregationCollection).createIndex(
       {
+        direction: 1,
         date: -1,
-        originUserId: -1,
+        userId: 1,
       },
       {
         unique: true,
       }
     )
+
     await transactionsCollection
       .aggregate([
         {
           $match: {
-            originUserId: { $exists: true },
+            [userFieldName]: { $exists: true },
           },
         },
         {
           $project: {
-            originUserId: true,
+            [userFieldName]: true,
             date: {
               $dateToString: {
                 format: HOUR_DATE_FORMAT,
@@ -87,7 +94,7 @@ export class DashboardStatsRepository {
           $group: {
             _id: {
               date: '$date',
-              originUserId: '$originUserId',
+              userId: `$${userFieldName}`,
             },
             rulesHit: { $sum: { $size: '$rulesHit' } },
             transactionsHit: {
@@ -109,7 +116,8 @@ export class DashboardStatsRepository {
           $project: {
             _id: false,
             date: '$_id.date',
-            originUserId: '$_id.originUserId',
+            userId: '$_id.userId',
+            direction: direction,
             rulesHit: '$rulesHit',
             transactionsHit: '$transactionsHit',
           },
@@ -117,7 +125,7 @@ export class DashboardStatsRepository {
         {
           $merge: {
             into: aggregationCollection,
-            on: ['date', 'originUserId'],
+            on: ['direction', 'date', 'userId'],
             whenMatched: 'merge',
           },
         },
@@ -587,7 +595,8 @@ export class DashboardStatsRepository {
     await Promise.all([
       this.recalculateTransactionsVolumeStats(db),
       this.recalculateRuleHitStats(db),
-      this.recalculateHitsByUser(db),
+      this.recalculateHitsByUser(db, 'ORIGIN'),
+      this.recalculateHitsByUser(db, 'DESTINATION'),
     ])
   }
 
@@ -662,10 +671,11 @@ export class DashboardStatsRepository {
 
   public async getHitsByUserStats(
     startTimestamp: number,
-    endTimestamp: number
+    endTimestamp: number,
+    direction: 'ORIGIN' | 'DESTINATION'
   ): Promise<
     {
-      originUserId: string
+      userId: string
       user: InternalConsumerUser | InternalBusinessUser | null
       transactionsHit: number
       rulesHit: number
@@ -688,6 +698,7 @@ export class DashboardStatsRepository {
       }>([
         {
           $match: {
+            direction,
             date: {
               $gte: startDate,
               $lte: endDate,
@@ -696,7 +707,7 @@ export class DashboardStatsRepository {
         },
         {
           $group: {
-            _id: '$originUserId',
+            _id: `$userId`,
             transactionsHit: { $sum: '$transactionsHit' },
             rulesHit: { $sum: '$rulesHit' },
           },
@@ -731,7 +742,7 @@ export class DashboardStatsRepository {
       .toArray()
 
     return result.map((x) => ({
-      originUserId: x._id,
+      userId: x._id,
       user: x.user ?? null,
       transactionsHit: x.transactionsHit,
       rulesHit: x.rulesHit,

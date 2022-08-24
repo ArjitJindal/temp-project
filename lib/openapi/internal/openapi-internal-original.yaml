@@ -853,6 +853,13 @@ paths:
             type: number
           in: query
           name: endTimestamp
+        - schema:
+            type: string
+            enum:
+              - ORIGIN
+              - DESTINATION
+          in: query
+          name: direction
   '/transactions/{transactionId}/comments':
     post:
       summary: Create a Transaction Comment
@@ -1610,7 +1617,7 @@ components:
           items:
             type: object
             properties:
-              originUserId:
+              userId:
                 type: string
               transactionsHit:
                 type: number
