@@ -137,7 +137,7 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
                 text: {
                   type: 'mrkdwn',
                   text:
-                    `<${process.env.CONSOLE_URI}/case-management/${transactionId}|${transactionId}>\n` +
+                    `<${process.env.CONSOLE_URI}/case-management/case/${transactionId}|${transactionId}>\n` +
                     '*status*\n' +
                     `${statusAlias || transaction?.status}`,
                 },
