@@ -409,6 +409,10 @@ paths:
           in: query
           name: filterStatus
         - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
             type: boolean
           in: query
           name: includeUsers

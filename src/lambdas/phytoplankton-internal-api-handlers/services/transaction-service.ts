@@ -53,6 +53,7 @@ export class TransactionService {
       assignments: updateRequest.assignments,
       status: updateRequest.status,
       statusChange: statusChange,
+      caseStatus: updateRequest.caseStatus,
     }
     await this.transactionRepository.updateTransactionCaseManagement(
       transactionId,

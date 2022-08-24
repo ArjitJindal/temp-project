@@ -92,6 +92,7 @@ export const transactionsViewHandler = lambdaApi()(
         includeUsers,
         includeEvents,
         filterStatus,
+        filterCaseStatus,
         filterOriginPaymentMethod,
         filterDestinationPaymentMethod,
       } = event.queryStringParameters as any
@@ -104,6 +105,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterOutCaseStatus,
         filterStatus,
+        filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')
           : undefined, // todo: need a proper parser for url

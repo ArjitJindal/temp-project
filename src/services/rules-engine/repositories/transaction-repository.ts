@@ -32,6 +32,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
+import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 type QueryCountResult = { count: number; scannedCount: number }
@@ -135,6 +136,9 @@ export class TransactionRepository {
     }
     if (params.filterStatus != null) {
       conditions.push({ status: { $eq: params.filterStatus } })
+    }
+    if (params.filterCaseStatus != null) {
+      conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
     }
     if (params.filterUserId != null) {
       conditions.push({
@@ -332,6 +336,7 @@ export class TransactionRepository {
       assignments?: Assignment[]
       status?: RuleAction
       statusChange?: TransactionStatusChange
+      caseStatus?: CaseStatus
     }
   ) {
     const db = this.mongoDb.db()
@@ -342,7 +347,11 @@ export class TransactionRepository {
       { transactionId },
       {
         $set: _.omitBy<Partial<TransactionCaseManagement>>(
-          { assignments: updates.assignments, status: updates.status },
+          {
+            assignments: updates.assignments,
+            status: updates.status,
+            caseStatus: updates.caseStatus,
+          },
           _.isNil
         ),
         ...(updates.statusChange
