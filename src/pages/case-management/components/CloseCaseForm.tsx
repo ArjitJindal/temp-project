@@ -45,7 +45,6 @@ export default function CloseCaseForm(props: Props) {
         await api.postTransactionsTransactionId({
           transactionId,
           TransactionUpdateRequest: {
-            status: 'ALLOW',
             caseStatus: 'CLOSED',
             reason: values.reasons.map((x) => {
               if (x === OTHER_REASON) {
