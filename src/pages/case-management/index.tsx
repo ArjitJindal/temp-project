@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
-import { message } from 'antd';
+import { message, Tabs } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router';
 import { TableSearchParams } from './types';
+import styles from './CaseManagement.module.less';
 import { AddToSlackButton } from './components/AddToSlackButton';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
@@ -54,6 +55,7 @@ function TableList() {
   const user = useAuth0User();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [lastSearchParams, setLastSearchParams] = useState<TableSearchParams>({});
+  const [isActiveTab, setIsActiveTab] = useState<boolean>(true);
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
   }>({});
@@ -137,7 +139,7 @@ function TableList() {
           // todo: fix style
           return (
             <Link
-              to={`/case-management/${entity.transactionId}`}
+              to={`/case-management/case/${entity.transactionId}`}
               onClick={() => {
                 setLastSearchParams(parsedParams);
                 setCurrentItem(success(entity));
@@ -514,6 +516,7 @@ function TableList() {
     }),
   }));
   const i18n = useI18n();
+
   const request: RequestFunctionType<CaseManagementItem, TableSearchParams> = useCallback(
     async (params, sorter) => {
       const {
@@ -544,7 +547,9 @@ function TableList() {
           filterId: transactionId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
-          filterOutStatus: 'ALLOW',
+          filterOutStatus: isActiveTab ? 'ALLOW' : undefined,
+          filterOutCaseStatus: isActiveTab ? 'CLOSED' : undefined,
+          filterCaseStatus: isActiveTab ? undefined : 'CLOSED',
           filterStatus: status,
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,
@@ -599,72 +604,149 @@ function TableList() {
         total: response.total,
       };
     },
-    [analytics, api, pushParamsToNavigation],
+    [analytics, api, pushParamsToNavigation, isActiveTab],
   );
+
   return (
     <PageWrapper title={i18n('menu.case-management')}>
-      <Table<CaseManagementItem, TableSearchParams>
-        actionsHeader={[
-          ({ params, setParams }) => (
-            <>
-              <TransactionStatusButton
-                status={params.params.status ?? undefined}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    params: { ...state.params, status: value ?? undefined },
-                  }));
-                }}
-              />
-              <UserSearchButton
-                userId={params.params.userId ?? null}
-                onConfirm={(userId) => {
-                  setParams((state) => ({
-                    ...state,
-                    params: { ...state.params, userId: userId ?? undefined },
-                  }));
-                }}
-              />
-            </>
-          ),
-        ]}
-        initialParams={{
-          page: parsedParams.current ?? 1,
-          params: parsedParams,
-          sort: {},
-        }}
-        form={{
-          labelWrap: true,
-        }}
-        bordered
-        isEvenRow={(item) => item.index % 2 === 0}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
-        }}
-        actionRef={actionRef}
-        formRef={formRef}
-        rowKey="rowKey"
-        search={{
-          labelWidth: 120,
-        }}
-        scroll={{ x: 1300 }}
-        request={request}
-        toolBarRender={() => [
-          <Feature name="SLACK_ALERTS">
-            <AddToSlackButton />
-          </Feature>,
-        ]}
-        columns={mergeColumns}
-        columnsState={{
-          persistenceType: 'localStorage',
-          persistenceKey: 'case-management-list',
-        }}
-        onReset={() => {
-          pushParamsToNavigation({});
-        }}
-      />
+      <div className={styles.tab}>
+        <Tabs
+          type="line"
+          destroyInactiveTabPane={true}
+          onChange={(key) => {
+            setIsActiveTab(key === 'active');
+          }}
+        >
+          <Tabs.TabPane tab="Active" key="active">
+            <Table<CaseManagementItem, TableSearchParams>
+              actionsHeader={[
+                ({ params, setParams }) => (
+                  <>
+                    <TransactionStatusButton
+                      status={params.params.status ?? undefined}
+                      onConfirm={(value) => {
+                        setParams((state) => ({
+                          ...state,
+                          params: { ...state.params, status: value ?? undefined },
+                        }));
+                      }}
+                    />
+                    <UserSearchButton
+                      userId={params.params.userId ?? null}
+                      onConfirm={(userId) => {
+                        setParams((state) => ({
+                          ...state,
+                          params: { ...state.params, userId: userId ?? undefined },
+                        }));
+                      }}
+                    />
+                  </>
+                ),
+              ]}
+              initialParams={{
+                page: parsedParams.current ?? 1,
+                params: parsedParams,
+                sort: {},
+              }}
+              form={{
+                labelWrap: true,
+              }}
+              bordered
+              isEvenRow={(item) => item.index % 2 === 0}
+              components={{
+                header: {
+                  cell: ResizableTitle,
+                },
+              }}
+              actionRef={actionRef}
+              formRef={formRef}
+              rowKey="rowKey"
+              search={{
+                labelWidth: 120,
+              }}
+              scroll={{ x: 1300 }}
+              request={request}
+              toolBarRender={() => [
+                <Feature name="SLACK_ALERTS">
+                  <AddToSlackButton />
+                </Feature>,
+              ]}
+              columns={mergeColumns}
+              columnsState={{
+                persistenceType: 'localStorage',
+                persistenceKey: 'case-management-list',
+              }}
+              onReset={() => {
+                pushParamsToNavigation({});
+              }}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Closed" key="closed">
+            <Table<CaseManagementItem, TableSearchParams>
+              actionsHeader={[
+                ({ params, setParams }) => (
+                  <>
+                    <TransactionStatusButton
+                      status={params.params.status ?? undefined}
+                      onConfirm={(value) => {
+                        setParams((state) => ({
+                          ...state,
+                          params: { ...state.params, status: value ?? undefined },
+                        }));
+                      }}
+                    />
+                    <UserSearchButton
+                      userId={params.params.userId ?? null}
+                      onConfirm={(userId) => {
+                        setParams((state) => ({
+                          ...state,
+                          params: { ...state.params, userId: userId ?? undefined },
+                        }));
+                      }}
+                    />
+                  </>
+                ),
+              ]}
+              initialParams={{
+                page: parsedParams.current ?? 1,
+                params: parsedParams,
+                sort: {},
+              }}
+              form={{
+                labelWrap: true,
+              }}
+              bordered
+              isEvenRow={(item) => item.index % 2 === 0}
+              components={{
+                header: {
+                  cell: ResizableTitle,
+                },
+              }}
+              actionRef={actionRef}
+              formRef={formRef}
+              rowKey="rowKey"
+              search={{
+                labelWidth: 120,
+              }}
+              scroll={{ x: 1300 }}
+              request={request}
+              toolBarRender={() => [
+                <Feature name="SLACK_ALERTS">
+                  <AddToSlackButton />
+                </Feature>,
+              ]}
+              columns={mergeColumns}
+              columnsState={{
+                persistenceType: 'localStorage',
+                persistenceKey: 'case-management-list',
+              }}
+              onReset={() => {
+                pushParamsToNavigation({});
+              }}
+            />
+          </Tabs.TabPane>
+        </Tabs>
+      </div>
     </PageWrapper>
   );
 }

@@ -299,7 +299,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
             render: (dom, entity) => {
               return (
                 <Link
-                  to={makeUrl(`/case-management/:id`, {
+                  to={makeUrl(`/case-management/case/:id`, {
                     id: entity.transactionId,
                   })}
                 >

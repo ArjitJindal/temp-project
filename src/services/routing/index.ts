@@ -52,12 +52,17 @@ export function useRoutes(): RouteItem[] {
         hideChildrenInMenu: true,
         routes: [
           {
-            path: '/case-management/:id',
+            path: '/case-management/case/:id',
             component: CaseManagementItemPage,
             name: 'item',
           },
           {
             path: '/case-management',
+            name: 'list',
+            component: CaseManagementPage,
+          },
+          {
+            path: '/case-management/closed',
             name: 'list',
             component: CaseManagementPage,
           },
