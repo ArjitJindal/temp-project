@@ -1258,7 +1258,7 @@ components:
         documentType:
           minLength: 1
           type: string
-          description: "User's identity document type such as passport, national ID etc."
+          description: 'User''s identity document type such as passport, national ID etc.'
         documentNumber:
           minLength: 1
           type: string
@@ -1279,7 +1279,7 @@ components:
           description: Additional information that can be added via tags
         nameOnDocument:
           $ref: '#/components/schemas/ConsumerName'
-      description: "LegalDocument model generalizes User's identity document type (ex: Passport)"
+      description: 'LegalDocument model generalizes User''s identity document type (ex: Passport)'
       example:
         documentType: passport
         documentNumber: Z9431P
@@ -1415,7 +1415,7 @@ components:
           description: UserId for where the transaction originates from
         destinationUserId:
           type: string
-          description: "UserId for transaction's destination. In other words, where the value is being transferred to."
+          description: 'UserId for transaction''s destination. In other words, where the value is being transferred to.'
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
         destinationAmountDetails:
@@ -1668,7 +1668,7 @@ components:
           $ref: '#/components/schemas/Tag'
         bankBranchCode:
           type: string
-          description: "Branch code of the bank. In some countries, this can be the same as the bank's SWIFT code"
+          description: 'Branch code of the bank. In some countries, this can be the same as the bank''s SWIFT code'
       required:
         - method
     WalletDetails:
@@ -2658,7 +2658,7 @@ components:
           description: Name of the bank
         bankCode:
           type: string
-          description: "Unique identifier of the bank. In some countries, this can be the same as the bank's SWIFT code"
+          description: 'Unique identifier of the bank. In some countries, this can be the same as the bank''s SWIFT code'
         name:
           type: string
           description: Name of the account holder

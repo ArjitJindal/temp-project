@@ -134,6 +134,11 @@ export class TransactionRepository {
     if (params.filterOutCaseStatus != null) {
       conditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
     }
+    if (params.filterTransactionState != null) {
+      conditions.push({
+        transactionState: { $eq: params.filterTransactionState },
+      })
+    }
     if (params.filterStatus != null) {
       conditions.push({ status: { $eq: params.filterStatus } })
     }

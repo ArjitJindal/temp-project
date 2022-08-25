@@ -428,6 +428,10 @@ paths:
             type: string
           in: query
           name: filterDestinationPaymentMethod
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
   /transactions/export:
     get:
       summary: Transaction - Export

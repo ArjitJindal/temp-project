@@ -79,6 +79,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
+        filterTransactionState,
         filterRulesHit,
         filterRulesExecuted,
         filterOriginCurrencies,
@@ -104,6 +105,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
+        filterTransactionState,
         filterStatus,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
