@@ -6,6 +6,7 @@ import {
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
+  isTransactionInTargetTypes,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
@@ -13,6 +14,8 @@ import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -32,6 +35,7 @@ export type TransactionsVolumeRuleParameters =
     transactionVolumeThreshold: {
       [currency: string]: number
     }
+    transactionTypes?: TransactionType[]
     timeWindow: TimeWindow
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
@@ -59,6 +63,16 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           title: 'Target Transaction State',
           description:
             'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
           nullable: true,
         },
         transactionVolumeThreshold: {
@@ -102,6 +116,16 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       },
       required: ['transactionVolumeThreshold', 'timeWindow'],
     }
+  }
+
+  public getFilters() {
+    const { transactionTypes } = this.parameters
+    return super
+      .getFilters()
+      .concat([
+        () =>
+          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
+      ])
   }
 
   private async computeHits(): Promise<{
@@ -328,7 +352,10 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
               afterTimestamp,
               beforeTimestamp: this.transaction.timestamp!,
             },
-            { transactionState: this.parameters.transactionState }
+            {
+              transactionState: this.parameters.transactionState,
+              transactionTypes: this.parameters.transactionTypes,
+            }
           )
         : Promise.resolve([]),
       checkType === 'receiving' || checkType === 'all'
@@ -339,7 +366,10 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
               afterTimestamp,
               beforeTimestamp: this.transaction.timestamp!,
             },
-            { transactionState: this.parameters.transactionState }
+            {
+              transactionState: this.parameters.transactionState,
+              transactionTypes: this.parameters.transactionTypes,
+            }
           )
         : Promise.resolve([]),
     ])

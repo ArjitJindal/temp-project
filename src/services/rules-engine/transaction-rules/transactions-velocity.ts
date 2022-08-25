@@ -50,7 +50,7 @@ export type TransactionsVelocityRuleParameters =
       from?: string // e.g 20:20:39+03:00
       to?: string
     }
-    transactionTypes: TransactionType[]
+    transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     userType?: UserType
     onlyCheckKnownUsers?: boolean

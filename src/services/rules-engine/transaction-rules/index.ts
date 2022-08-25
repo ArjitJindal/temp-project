@@ -32,90 +32,35 @@ import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 
 export const TRANSACTION_RULES = {
-  // R-114
   'card-issued-country': CardIssuedCountryRule,
-
-  // R-101
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
-
-  // R-5
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
-
-  // R-1
   'first-payment': FirstPaymentRule,
-
-  // R-6
   'high-risk-currency': HighRiskCurrencyRule,
-
-  // R-52
   'ip-address-multiple-users': IpAddressMultipleUsersRule,
-
-  // R-88
   'ip-address-unexpected-location': IpAddressUnexpectedLocationRule,
-
-  // R-7
   'low-value-incoming-transactions': LowValueIncomingTransactionsRule,
-
-  // R-8
   'low-value-outgoing-transactions': LowValueOutgoingTransactionsRule,
-
-  // R-10
   'multiple-counterparty-senders-within-time-period':
     MultipleCounterpartySendersWithinTimePeriodRule,
-
-  // R-9
   'multiple-user-senders-within-time-period':
     MultipleUserSendersWithinTimePeriodRule,
-
-  // R-113
   'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
-
-  // R-24
   'transaction-reference-keyword': TransactionReferenceKeywordRule,
-
-  // R-2
   'transaction-amount': TransactionAmountRule,
-
-  // R-99
   'transaction-amount-user-limit': TransactionAmountUserLimitRule,
-
-  // R-3
   'transaction-new-country': TransactionNewCountryRule,
-
-  // R-4
   'transaction-new-currency': TransactionNewCurrencyRule,
-
-  // R-84, R-85, R-86, R-87, R-89, R-90, R-91, R-92, R-95, R-30
   'transactions-velocity': TransactionsVelocityRule,
-
-  // R-68, R-69, R-109, R-110
   'transactions-volume': TransactionsVolumeRule,
-
-  // R-68, R-69
   'transactions-volume-quantiles': TransactionsVolumeQuantilesRule,
-
-  // R-111
   'user-transaction-pairs': UserTransactionPairsRule,
-
-  // R-117
   'transaction-amount-pattern': TransactionMatchesPatternRule,
-
-  // R-13
   'merchant-receiver-name': MerchantReceiverNameRule,
-
-  // R-22
   'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,
-
-  // R-119
   'high-traffic-between-same-parties': HighTrafficBetweenSameParties,
-
-  // R-118
   'card-holder-name-levensthein-distance': CardHolderNameRule,
-
-  // R-53
   'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
-
-  // R-54
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
 
   // TESTING-ONLY RULES

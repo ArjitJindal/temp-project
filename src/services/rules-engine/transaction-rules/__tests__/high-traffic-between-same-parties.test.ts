@@ -1,4 +1,4 @@
-import { Parameters } from '../high-traffic-between-same-parties'
+import { HighTrafficBetweenSamePartiesParameters } from '../high-traffic-between-same-parties'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -38,7 +38,7 @@ describe('R-119 description formatting', () => {
       defaultParameters: {
         timeWindowInDays: 1,
         transactionsLimit: 1,
-      } as Parameters,
+      } as HighTrafficBetweenSamePartiesParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -128,7 +128,7 @@ describe('Core logic', () => {
       defaultParameters: {
         timeWindowInDays: 1,
         transactionsLimit: 1,
-      } as Parameters,
+      } as HighTrafficBetweenSamePartiesParameters,
       defaultAction: 'FLAG',
     },
   ])

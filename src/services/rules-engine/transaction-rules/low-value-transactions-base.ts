@@ -7,15 +7,16 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
 
-type LowValueTransactionsRuleParameters = DefaultTransactionRuleParameters & {
-  lowTransactionValues: {
-    [currency: string]: {
-      max: number
-      min: number
+export type LowValueTransactionsRuleParameters =
+  DefaultTransactionRuleParameters & {
+    lowTransactionValues: {
+      [currency: string]: {
+        max: number
+        min: number
+      }
     }
+    lowTransactionCount: number
   }
-  lowTransactionCount: number
-}
 
 export default class LowValueTransactionsRule extends TransactionRule<LowValueTransactionsRuleParameters> {
   public static getSchema(): JSONSchemaType<LowValueTransactionsRuleParameters> {

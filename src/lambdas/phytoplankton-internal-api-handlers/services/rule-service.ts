@@ -51,7 +51,7 @@ export class RuleService {
       rule.defaultRiskLevelActions,
       rule.defaultRiskLevelParameters
     )
-    this.validateRuleParametersSchema(
+    RuleService.validateRuleParametersSchema(
       ALL_RULES[rule.ruleImplementationName].getSchema(),
       rule.defaultParameters,
       rule.defaultRiskLevelParameters
@@ -73,7 +73,7 @@ export class RuleService {
       ruleInstance.riskLevelActions,
       ruleInstance.riskLevelParameters
     )
-    this.validateRuleParametersSchema(
+    RuleService.validateRuleParametersSchema(
       ALL_RULES[rule.ruleImplementationName].getSchema(),
       ruleInstance.parameters,
       ruleInstance.riskLevelParameters
@@ -107,7 +107,7 @@ export class RuleService {
     }
   }
 
-  private validateRuleParametersSchema(
+  public static validateRuleParametersSchema(
     schema: object,
     parameters: object,
     riskLevelParameters?: RiskLevelRuleParameters

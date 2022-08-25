@@ -28,6 +28,7 @@ export type Tenant = {
   id: string
   name: string
   orgId: string
+  apiAudience: string
 }
 
 export class AccountsService {
@@ -50,6 +51,7 @@ export class AccountsService {
       id: tenantId,
       name: organization.display_name || tenantId,
       orgId: organization.id,
+      apiAudience: organization.metadata?.apiAudience,
     }
   }
 

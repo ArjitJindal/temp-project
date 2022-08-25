@@ -11,7 +11,7 @@ function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
 }
 
-async function getRulesById(): Promise<{ [key: string]: Rule }> {
+export async function getRulesById(): Promise<{ [key: string]: Rule }> {
   const dynamoDb = await getDynamoDbClient()
   const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
   const rules = await ruleRepository.getAllRules()

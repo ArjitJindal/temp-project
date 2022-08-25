@@ -14,21 +14,21 @@ import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
-export type Filters = DefaultTransactionRuleParameters & {
+type Filters = DefaultTransactionRuleParameters & {
   transactionTypes?: TransactionType[]
   paymentMethod?: string
   userType?: UserType
 }
 
-export type Parameters = Filters & {
+export type HighTrafficBetweenSamePartiesParameters = Filters & {
   timeWindowInDays: number
   transactionsLimit: number
 }
 
-export default class HighTrafficBetweenSameParties extends TransactionRule<Parameters> {
+export default class HighTrafficBetweenSameParties extends TransactionRule<HighTrafficBetweenSamePartiesParameters> {
   transactionRepository?: TransactionRepository
 
-  public static getSchema(): JSONSchemaType<Parameters> {
+  public static getSchema(): JSONSchemaType<HighTrafficBetweenSamePartiesParameters> {
     return {
       type: 'object',
       properties: {

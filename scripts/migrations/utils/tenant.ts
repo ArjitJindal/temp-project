@@ -16,9 +16,11 @@ export async function migrateAllTenants(
   const tenants = await accountsService.getTenants()
 
   for (const tenant of tenants) {
-    console.info(`Migrating tenant ${tenant.name} (ID: ${tenant.id})`)
-    await migrationCallback(tenant)
-    console.info(`Migrated tenant ${tenant.name} (ID: ${tenant.id})`)
+    if (tenant.apiAudience === config.application.AUTH0_AUDIENCE) {
+      console.info(`Migrating tenant ${tenant.name} (ID: ${tenant.id})`)
+      await migrationCallback(tenant)
+      console.info(`Migrated tenant ${tenant.name} (ID: ${tenant.id})`)
+    }
   }
 
   console.info('Migration completed.')
