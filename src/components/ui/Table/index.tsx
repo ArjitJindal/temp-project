@@ -24,6 +24,7 @@ import {
   success,
 } from '@/utils/asyncResource';
 import { getErrorMessage, isEqual } from '@/utils/lang';
+import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 
 export type TableActionType = {
   reload: () => void;
@@ -186,6 +187,13 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     );
   }, [handleRequest, paramsState.params, paramsState.page, paramsState.sort]);
 
+  const prevParams = usePrevious(paramsState.params);
+  useDeepEqualEffect(() => {
+    if (prevParams != null && !isEqual(prevParams, paramsState.params)) {
+      setParamsState((state) => ({ ...state, page: 1 }));
+    }
+  }, [prevParams, paramsState.params]);
+
   useEffect(() => {
     triggerRequest();
   }, [triggerRequest]);
@@ -223,8 +231,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
         onSubmit={(newParams) => {
           setParamsState((state) => ({
             ...state,
-            params: { ...paramsState.params, ...newParams },
-            page: isEqual(paramsState.params, newParams) ? state.page : 1,
+            params: { ...state.params, ...newParams },
           }));
         }}
         onChange={(pagination, filters, sorter) => {
