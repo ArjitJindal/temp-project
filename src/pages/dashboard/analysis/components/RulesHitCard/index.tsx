@@ -108,6 +108,8 @@ export default function RuleHitCard() {
   }, [api, dateRange]);
 
   return (
+    <></>
+    /* 
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
         <Col span={12}>
@@ -142,6 +144,6 @@ export default function RuleHitCard() {
           <RulesHitBreakdown loading={loading} data={rulesHitData} />{' '}
         </Col>
       </Row>
-    </Card>
+    </Card>*/
   );
 }
