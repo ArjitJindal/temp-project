@@ -5,6 +5,7 @@ import { Fragment, useCallback, useState } from 'react';
 import _ from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import { RuleActionTag } from './RuleActionTag';
+import styles from './style.module.less';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RiskLevelRuleActions, RuleAction } from '@/apis';
@@ -74,7 +75,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   );
 
   return (
-    <div>
+    <div className={styles.tab}>
       {isPulseEnabled ? (
         <Tabs activeKey={activeTab} type="line" onChange={handleChangeActiveRiskLevel}>
           {RISK_LEVELS.map((riskLevel) => (
