@@ -1,12 +1,22 @@
 import React, { useCallback, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
+import { CaseStatus } from '@/apis';
 import Button from '@/components/ui/Button';
 
 interface Props {
   transactionId: string;
+  newCaseStatus: CaseStatus;
   onSaved: () => void;
 }
+
+const caseStatusToOperationName = (caseStatus: CaseStatus) => {
+  if (caseStatus === 'REOPENED') {
+    return 'Re-Open';
+  } else if (caseStatus === 'CLOSED') {
+    return 'Close';
+  }
+};
 
 // todo: i18n
 const OTHER_REASON = 'Other';
@@ -29,13 +39,34 @@ interface FormValues {
   reasonOther: string | null;
 }
 
-export default function CloseCaseForm(props: Props) {
-  const { transactionId, onSaved } = props;
+export default function CaseStatusChangeForm(props: Props) {
+  const { transactionId, onSaved, newCaseStatus } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isSaving, setSaving] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const api = useApi();
+
+  const reopenCase = useCallback(async () => {
+    const hideMessage = message.loading(`Saving...`, 0);
+    try {
+      setSaving(true);
+      await api.postTransactionsTransactionId({
+        transactionId,
+        TransactionUpdateRequest: {
+          caseStatus: newCaseStatus,
+        },
+      });
+      message.success('Case Reopened');
+      setModalVisible(false);
+      onSaved();
+    } catch (e) {
+      message.error('Failed to save');
+    } finally {
+      hideMessage();
+      setSaving(false);
+    }
+  }, [onSaved, transactionId, api, newCaseStatus]);
 
   const handleUpdateTransaction = useCallback(
     async (values: FormValues) => {
@@ -45,7 +76,7 @@ export default function CloseCaseForm(props: Props) {
         await api.postTransactionsTransactionId({
           transactionId,
           TransactionUpdateRequest: {
-            caseStatus: 'CLOSED',
+            caseStatus: newCaseStatus,
             reason: values.reasons.map((x) => {
               if (x === OTHER_REASON) {
                 return values.reasonOther ?? '';
@@ -64,7 +95,7 @@ export default function CloseCaseForm(props: Props) {
         setSaving(false);
       }
     },
-    [onSaved, transactionId, api],
+    [onSaved, transactionId, api, newCaseStatus],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
@@ -72,15 +103,19 @@ export default function CloseCaseForm(props: Props) {
   return (
     <>
       <Button
-        analyticsName="CloseCase"
+        analyticsName="UpdateCaseStatus"
         onClick={() => {
-          setModalVisible(true);
+          if (newCaseStatus === 'CLOSED') {
+            setModalVisible(true);
+          } else {
+            reopenCase();
+          }
         }}
       >
-        Close
+        {caseStatusToOperationName(newCaseStatus)}
       </Button>
       <Modal
-        title="Close case"
+        title="Update case status"
         visible={isModalVisible}
         okButtonProps={{
           disabled: isSaving,

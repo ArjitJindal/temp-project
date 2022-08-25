@@ -17,7 +17,7 @@ import { RequestFunctionType, Table, TableActionType } from '@/components/ui/Tab
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
-import CloseCaseForm from '@/pages/case-management/components/CloseCaseForm';
+import CaseStatusChangeForm from '@/pages/case-management/components/CaseStatusChangeForm';
 import { AsyncResource, init, success } from '@/utils/asyncResource';
 import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
@@ -55,7 +55,7 @@ function TableList() {
   const user = useAuth0User();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const [lastSearchParams, setLastSearchParams] = useState<TableSearchParams>({});
-  const [isActiveTab, setIsActiveTab] = useState<boolean>(true);
+  const [isOpenTab, setIsOpenTab] = useState<boolean>(true);
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
   }>({});
@@ -398,7 +398,11 @@ function TableList() {
         }),
         render: (dom, entity) => {
           return (
-            <CloseCaseForm transactionId={entity.transactionId as string} onSaved={reloadTable} />
+            <CaseStatusChangeForm
+              transactionId={entity.transactionId as string}
+              newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
+              onSaved={reloadTable}
+            />
           );
         },
       },
@@ -504,7 +508,7 @@ function TableList() {
         },
       },
     ],
-    [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions],
+    [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions, isOpenTab],
   );
 
   const mergeColumns: ProColumns<CaseManagementItem>[] = columns.map((col, index) => ({
@@ -547,9 +551,9 @@ function TableList() {
           filterId: transactionId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
-          filterOutStatus: isActiveTab ? 'ALLOW' : undefined,
-          filterOutCaseStatus: isActiveTab ? 'CLOSED' : undefined,
-          filterCaseStatus: isActiveTab ? undefined : 'CLOSED',
+          filterOutStatus: isOpenTab ? 'ALLOW' : undefined,
+          filterOutCaseStatus: isOpenTab ? 'CLOSED' : undefined,
+          filterCaseStatus: isOpenTab ? undefined : 'CLOSED',
           filterStatus: status,
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,
@@ -604,7 +608,7 @@ function TableList() {
         total: response.total,
       };
     },
-    [analytics, api, pushParamsToNavigation, isActiveTab],
+    [analytics, api, pushParamsToNavigation, isOpenTab],
   );
 
   return (
@@ -614,10 +618,10 @@ function TableList() {
           type="line"
           destroyInactiveTabPane={true}
           onChange={(key) => {
-            setIsActiveTab(key === 'active');
+            setIsOpenTab(key === 'open');
           }}
         >
-          <Tabs.TabPane tab="Active" key="active">
+          <Tabs.TabPane tab="Open" key="open">
             <Table<CaseManagementItem, TableSearchParams>
               actionsHeader={[
                 ({ params, setParams }) => (
