@@ -304,10 +304,10 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
     return {
       id: 'R-30',
       type: 'TRANSACTION',
-      name: 'Too much transaction volume in a day',
-      description: 'Volume of transactions per day is >= x',
+      name: 'High velocity user',
+      description: 'If a user makes >= x transactions within time t',
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} has {{ if-sender 'sent' 'received' }} {{ transactionsDif }} transactions more than the daily limit of {{ parameters.transactionsLimit }}",
+        "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transactions above the limit of {{ parameters.transactionsLimit }} in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)",
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
