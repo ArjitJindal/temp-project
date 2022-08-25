@@ -11,7 +11,7 @@ interface Props {
   onClick?: () => void;
   onClear?: () => void;
   children: string;
-  color?: 'GREEN' | 'ORANGE' | 'BLUE';
+  color?: 'GREEN' | 'ORANGE' | 'BLUE' | 'TURQUOISE';
 }
 
 export default function ActionButton(props: Props) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { RuleAction } from '@/apis';
+import { RuleAction, TransactionState } from '@/apis';
 import '../../components/ui/colors';
 
 export type TableSearchParams = Partial<{
@@ -15,6 +15,7 @@ export type TableSearchParams = Partial<{
   destinationUserId: string;
   type: string;
   status: RuleAction;
+  transactionState: TransactionState;
   originMethodFilter: string;
   destinationMethodFilter: string;
 }>;
