@@ -26,6 +26,7 @@ export type TenantSettingName = 'features' | 'ruleActionAliases'
 export const TRANSACTION_PRIMARY_KEY_IDENTIFIER = 'transaction#primary'
 export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'
 export const CONSUMER_USER_EVENT_KEY_IDENTIFIER = 'consumer-user-event#'
+export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 
 export const DynamoDbKeys = {
@@ -221,6 +222,15 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${CONSUMER_USER_EVENT_KEY_IDENTIFIER}${USER_ID_PREFIX}${userId}`,
     SortKeyID: `${timestamp}`,
   }),
+  BUSINESS_USER_EVENT: (
+    tenantId: string,
+    userId: string,
+    timestamp?: number
+  ) => ({
+    PartitionKeyID: `${tenantId}#${BUSINESS_USER_EVENT_KEY_IDENTIFIER}${USER_ID_PREFIX}${userId}`,
+    SortKeyID: `${timestamp}`,
+  }),
+
   LIST: (tenantId: string, listName: string, indexName: string) => ({
     PartitionKeyID: `${tenantId}#list:${listName}`,
     SortKeyID: indexName,

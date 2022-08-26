@@ -793,13 +793,13 @@ paths:
     post:
       security:
         - x-api-key: []
-      summary: Create a User Event
+      summary: Create a Consumer User Event
       description: |
-        ## POST User Events
+        ## POST Consumer User Events
 
-        `/events/consumer/user` endpoint allows you to operate on the User Events entity.
+        `/events/consumer/user` endpoint allows you to operate on the Consumer User Events entity.
 
-        User events are created after the initial `POST /consumer/users` or `POST /business/users` call (which creates a user) and are used to:
+        User events are created after the initial `POST /consumer/users` call (which creates a user) and are used to:
 
         * Update the STATE and KYC Status of the user, using the `userStateDetails` or `kycStatusDetails` field
         * Update the user details, using the `updatedConsumerUserAttributes` field.
@@ -830,7 +830,60 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Business'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content: {}
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content: {}
+      deprecated: false
+      tags: []
+      x-internal: false
+  /events/business/user:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create a Business User Event
+      description: |
+        ## POST Business User Events
+
+        `/events/business/user` endpoint allows you to operate on the Business User Events entity.
+
+        User events are created after the initial `POST /business/users` call (which creates a user) and are used to:
+
+        * Update the STATE and KYC Status of the user, using the `userStateDetails` or `kycStatusDetails` field
+        * Update the user details, using the `updatedBusinessUserAttributes` field.
+
+        > If you have neither of the above two use cases, you do not need to use user events. 
+
+        ### Payload
+
+        Each user event needs three mandatory fields:
+
+        * `timestamp`- the timestamp of when the event was created or occured in your system
+        * `userId` - The ID of the transaction for which this event is generated. 
+
+        In order to make individual events retrievable, you also need to pass in a unique `eventId` to the request body.
+      operationId: post-business-user-event
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessUserEvent'
+        required: false
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Business'
         '401':
           description: Unauthorized
           headers: {}
@@ -2249,7 +2302,11 @@ components:
         - registrationIdentifier
         - registrationCountry
     Business:
-      title: Business
+      allOf:
+        - $ref: '#/components/schemas/BusinessOptional'
+        - $ref: '#/components/schemas/BusinessBase'
+    BusinessBase:
+      title: BusinessBase
       type: object
       example:
         createdTimestamp: 1641654664000
@@ -2481,7 +2538,7 @@ components:
           tags:
             - key: customKey
               value: customValue
-      description: Model for a business user
+      description: Model for a business user base fields
       properties:
         userId:
           minLength: 1
@@ -2493,6 +2550,247 @@ components:
           type: number
           minimum: 1262300400000
           description: Timestamp when the user was created
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - userId
+        - legalEntity
+        - createdTimestamp
+    BusinessOptional:
+      title: BusinessOptional
+      type: object
+      example:
+        createdTimestamp: 1641654664000
+        userId: 96647cfd9e8fe66ee0f3362e011e34e8
+        legalEntity:
+          companyGeneralDetails:
+            legalName: Ozkan Hazelnut Export JSC
+            businessIndustry:
+              - Farming
+            mainProductsServicesSold:
+              - Hazelnut
+          companyFinancialDetails:
+            expectedTransactionAmountPerMonth:
+              amountValue: 800
+              amountCurrency: GBP
+            expectedTurnoverPerMonth:
+              amountValue: 8000
+              amountCurrency: USD
+          companyRegistrationDetails:
+            registrationIdentifier: PSJ554342
+            registrationCountry: DE
+          reasonForAccountOpening:
+            - string
+          contactDetails:
+            addresses:
+              - addressLines:
+                  - Klara-Franke Str 20
+                postcode: '10557'
+                city: Berlin
+                state: Berlin
+                country: Germany
+                tags:
+                  - key: customKey
+                    value: customValue
+        shareHolders:
+          - generalDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: '1991-01-01'
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - +371 123132
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+        directors:
+          - generalDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: '1991-01-01'
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - +371 123132
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+        tags:
+          - key: customKey
+            value: customValue
+      x-examples:
+        example-1:
+          userId: 96647cfd9e8fe66ee0f3362e011e34e8
+          legalEntity:
+            companyGeneralDetails:
+              legalName: Ozkan Hazelnut Export JSC
+              businessIndustry:
+                - Farming
+              mainProductsServicesSold:
+                - Hazelnut
+            companyFinancialDetails:
+              expectedTransactionAmountPerMonth:
+                amountValue: 800
+                amountCurrency: GBP
+              expectedTurnoverPerMonth:
+                amountValue: 8000
+                amountCurrency: USD
+            companyRegistrationDetails:
+              registrationIdentifier: PSJ554342
+              registrationCountry: DE
+            reasonForAccountOpening:
+              - string
+            contactDetails:
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+          shareHolders:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth:
+                  day: 1
+                  month: 1
+                  year: 1990
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034000
+                  documentExpirationDate: 1839939034000
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          directors:
+            - generalDetails:
+                name:
+                  firstName: Baran
+                  middleName: Realblood
+                  lastName: Ozkan
+                dateOfBirth:
+                  day: 1
+                  month: 1
+                  year: 1990
+                countryOfResidence: US
+                countryOfNationality: DE
+              legalDocuments:
+                - documentType: passport
+                  documentNumber: Z9431P
+                  documentIssuedDate: 1639939034000
+                  documentExpirationDate: 1839939034000
+                  documentIssuedCountry: DE
+                  tags:
+                    - key: customerType
+                      value: wallet
+              contactDetails:
+                emailIds:
+                  - baran@flagright.com
+                contactNumbers:
+                  - +371 123132
+                websites:
+                  - flagright.com
+                addresses:
+                  - addressLines:
+                      - Klara-Franke Str 20
+                    postcode: '10557'
+                    city: Berlin
+                    state: Berlin
+                    country: Germany
+                    tags:
+                      - key: customKey
+                        value: customValue
+              tags:
+                - key: customKey
+                  value: customValue
+          tags:
+            - key: customKey
+              value: customValue
+      description: Model for a business user - optional fields
+      properties:
         userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
@@ -2516,10 +2814,6 @@ components:
           $ref: '#/components/schemas/TransactionLimits'
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-      required:
-        - userId
-        - legalEntity
-        - createdTimestamp
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
@@ -2908,6 +3202,88 @@ components:
           description: Employee ID the event pertains to. E.g. Employee login event on behalf of an end user
         updatedConsumerUserAttributes:
           $ref: '#/components/schemas/UserOptional'
+      required:
+        - timestamp
+        - userId
+    BusinessUserEvent:
+      description: Model for business user-related events
+      type: object
+      x-examples:
+        example-1:
+          timestamp: 1262300400000
+          userId: string
+          userStateDetails:
+            reason: string
+            state: UNACCEPTABLE
+          eventId: string
+          reason: string
+          eventDescription: string
+          employeeId: string
+          updatedConsumerUserAttributes:
+            createdTimestamp: 1641654664000
+            userId: 96647cfd9e8fe66ee0f3362e011e34e8
+            userDetails:
+              name:
+                firstName: Baran
+                middleName: Realblood
+                lastName: Ozkan
+              dateOfBirth: '1991-01-01'
+              countryOfResidence: US
+              countryOfNationality: DE
+            legalDocuments:
+              - documentType: passport
+                documentNumber: Z9431P
+                documentIssuedDate: 1639939034000
+                documentExpirationDate: 1839939034000
+                documentIssuedCountry: DE
+                tags:
+                  - key: customerType
+                    value: wallet
+            contactDetails:
+              emailIds:
+                - baran@flagright.com
+              contactNumbers:
+                - '+37112345432'
+              websites:
+                - flagright.com
+              addresses:
+                - addressLines:
+                    - Klara-Franke Str 20
+                  postcode: '10557'
+                  city: Berlin
+                  state: Berlin
+                  country: Germany
+                  tags:
+                    - key: customKey
+                      value: customValue
+            tags:
+              - key: customKey
+                value: customValue
+      title: BusinessUserEvent
+      properties:
+        timestamp:
+          type: number
+          minimum: 1262300400000
+          description: Timestamp of the event
+        userId:
+          type: string
+          minLength: 1
+          description: Transaction ID the event pertains to
+        eventId:
+          type: string
+          description: Unique event ID
+        reason:
+          type: string
+          description: Reason for the event or a state change
+        eventDescription:
+          type: string
+          description: Event description
+        employeeId:
+          type: string
+          minLength: 1
+          description: Employee ID the event pertains to. E.g. Employee login event on behalf of an end user
+        updatedBusinessUserAttributes:
+          $ref: '#/components/schemas/BusinessOptional'
       required:
         - timestamp
         - userId

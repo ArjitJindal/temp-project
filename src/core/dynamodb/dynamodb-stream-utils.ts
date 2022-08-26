@@ -10,6 +10,7 @@ import {
   TRANSACTION_PRIMARY_KEY_IDENTIFIER,
   CONSUMER_USER_EVENT_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
+  BUSINESS_USER_EVENT_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 
 type DynamoDbEntityType =
@@ -17,6 +18,7 @@ type DynamoDbEntityType =
   | 'USER'
   | 'TRANSACTION_EVENT'
   | 'CONSUMER_USER_EVENT'
+  | 'BUSINESS_USER_EVENT'
 
 type DynamoDbEntityUpdate = {
   tenantId: string
@@ -40,6 +42,8 @@ function getDynamoDbEntityType(
     return 'USER'
   } else if (partitionKeyId.includes(CONSUMER_USER_EVENT_KEY_IDENTIFIER)) {
     return 'CONSUMER_USER_EVENT'
+  } else if (partitionKeyId.includes(BUSINESS_USER_EVENT_KEY_IDENTIFIER)) {
+    return 'BUSINESS_USER_EVENT'
   } else if (partitionKeyId.includes(TRANSACTION_EVENT_KEY_IDENTIFIER)) {
     return 'TRANSACTION_EVENT'
   } else {

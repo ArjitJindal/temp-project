@@ -5,7 +5,7 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import {
   DuplicateTransactionReturnType,
   verifyTransaction,
-  verifyUserEvent,
+  verifyConsumerUserEvent,
 } from '@/services/rules-engine'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -101,7 +101,7 @@ export async function bulkVerifyUserEvents(
   const dynamoDb = getTestDynamoDbClient()
   const results = []
   for (const userEvent of userEvents) {
-    results.push(await verifyUserEvent(userEvent, tenantId, dynamoDb))
+    results.push(await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb))
   }
   return results
 }

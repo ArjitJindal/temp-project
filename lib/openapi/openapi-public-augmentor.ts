@@ -25,6 +25,7 @@ const PathToLambda: any = {
   '/events/transaction/{eventId}': TarponStackConstants.USER_FUNCTION_NAME,
   '/events/transaction': TarponStackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
   '/events/consumer/user': TarponStackConstants.USER_EVENT_FUNCTION_NAME,
+  '/events/business/user': TarponStackConstants.USER_EVENT_FUNCTION_NAME,
 }
 function assertValidLambdaMappings(openapi: any) {
   const pathsLocal = Object.keys(PathToLambda)
@@ -104,6 +105,10 @@ for (const path in openapi.paths) {
       type: 'aws_proxy',
       passthroughBehavior: 'never',
     }
+    console.log(
+      `path ${path} \n\n method: ${method} \n\nmethodSetting: ${methodSetting}`
+    )
+
     methodSetting['security'].push({ 'lambda-authorizer': [] })
   }
 

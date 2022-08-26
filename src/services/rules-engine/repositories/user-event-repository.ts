@@ -5,6 +5,8 @@ import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { UserType } from '@/@types/user/user-type'
 
 type TimeRange = {
   beforeTimestamp: number // exclusive
@@ -28,15 +30,25 @@ export class UserEventRepository {
     this.tenantId = tenantId
   }
 
-  public async saveConsumerUserEvent(
-    userEvent: ConsumerUserEvent
+  public async saveUserEvent(
+    userEvent: ConsumerUserEvent | BusinessUserEvent,
+    userType: UserType
   ): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()
-    const primaryKey = DynamoDbKeys.CONSUMER_USER_EVENT(
-      this.tenantId,
-      userEvent.userId,
-      userEvent.timestamp
-    )
+    let primaryKey
+    if (userType == 'CONSUMER') {
+      primaryKey = DynamoDbKeys.CONSUMER_USER_EVENT(
+        this.tenantId,
+        userEvent.userId,
+        userEvent.timestamp
+      )
+    } else {
+      primaryKey = DynamoDbKeys.BUSINESS_USER_EVENT(
+        this.tenantId,
+        userEvent.userId,
+        userEvent.timestamp
+      )
+    }
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {

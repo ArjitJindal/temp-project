@@ -6,12 +6,14 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
+  verifyBusinessUserEvent,
   verifyTransaction,
   verifyTransactionEvent,
-  verifyUserEvent,
+  verifyConsumerUserEvent,
 } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 export const transactionHandler = lambdaApi()(
   async (
@@ -57,7 +59,7 @@ export const transactionEventHandler = lambdaApi()(
   }
 )
 
-export const userEventHandler = lambdaApi()(
+export const userEventsHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
@@ -66,9 +68,21 @@ export const userEventHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClient(event)
 
-    if (event.httpMethod === 'POST' && event.body) {
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/events/consumer/user' &&
+      event.body
+    ) {
       const userEvent = JSON.parse(event.body) as ConsumerUserEvent
-      return await verifyUserEvent(userEvent, tenantId, dynamoDb)
+      return await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb)
+    }
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/events/business/user' &&
+      event.body
+    ) {
+      const userEvent = JSON.parse(event.body) as BusinessUserEvent
+      return await verifyBusinessUserEvent(userEvent, tenantId, dynamoDb)
     }
     throw new Error('Unhandled request')
   }

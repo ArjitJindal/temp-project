@@ -363,10 +363,10 @@ export class CdkTarponStack extends cdk.Stack {
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
 
-    /* User Event */
+    /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
       name: TarponStackConstants.USER_EVENT_FUNCTION_NAME,
-      handler: 'app.userEventHandler',
+      handler: 'app.userEventsHandler',
       codePath: 'dist/rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(userEventAlias)

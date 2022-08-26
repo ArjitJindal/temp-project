@@ -35,6 +35,7 @@ import {
 } from '@/services/rules-engine/utils/format-description'
 import { getErrorMessage } from '@/utils/lang'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -269,7 +270,7 @@ export async function updateAggregation(
   )
 }
 
-export async function verifyUserEvent(
+export async function verifyConsumerUserEvent(
   userEvent: ConsumerUserEvent,
   tenantId: string,
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -286,9 +287,31 @@ export async function verifyUserEvent(
     ...user,
     ...(userEvent.updatedConsumerUserAttributes || {}),
   }
-  await userEventRepository.saveConsumerUserEvent(userEvent)
+  await userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
   await userRepository.saveConsumerUser(updatedConsumerUser)
   return updatedConsumerUser
+}
+
+export async function verifyBusinessUserEvent(
+  userEvent: BusinessUserEvent,
+  tenantId: string,
+  dynamoDb: AWS.DynamoDB.DocumentClient
+): Promise<Business> {
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
+  const userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
+  const user = await userRepository.getBusinessUser(userEvent.userId)
+  if (!user) {
+    throw new NotFound(
+      `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
+    )
+  }
+  const updatedBusinessUser: Business = {
+    ...user,
+    ...(userEvent.updatedBusinessUserAttributes || {}),
+  }
+  await userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
+  await userRepository.saveBusinessUser(updatedBusinessUser)
+  return updatedBusinessUser
 }
 
 async function getRulesResult(

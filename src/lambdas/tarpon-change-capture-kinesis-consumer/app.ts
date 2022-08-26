@@ -19,6 +19,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 const sqs = new AWS.SQS()
 
@@ -82,17 +83,17 @@ async function userHandler(tenantId: string, user: Business | User) {
   })
 }
 
-async function consumerUserEventHandler(
+async function userEventHandler(
   tenantId: string,
-  userEvent: ConsumerUserEvent
+  userEvent: ConsumerUserEvent | BusinessUserEvent
 ) {
   logger.info(
     `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
   )
   const db = (await connectToDB()).db()
-  const userEventCollection = db.collection<ConsumerUserEvent>(
-    USER_EVENTS_COLLECTION(tenantId)
-  )
+  const userEventCollection = db.collection<
+    ConsumerUserEvent | BusinessUserEvent
+  >(USER_EVENTS_COLLECTION(tenantId))
 
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
   await userEventCollection.replaceOne(
@@ -135,8 +136,8 @@ const handler = new TarponStreamConsumerBuilder()
   .setUserHandler((tenantId, oldUser, newUser) =>
     userHandler(tenantId, newUser)
   )
-  .setConsumerUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
-    consumerUserEventHandler(tenantId, newUserEvent)
+  .setUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
+    userEventHandler(tenantId, newUserEvent)
   )
   .setTransactionEventHandler(
     (tenantId, oldTransactionEvent, newTransactionEvent) =>

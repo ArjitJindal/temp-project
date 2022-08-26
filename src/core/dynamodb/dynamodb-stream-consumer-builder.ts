@@ -4,6 +4,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { User } from '@/@types/openapi-public/User'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 type TransactionHandler = (
   tenantId: string,
@@ -20,7 +21,7 @@ type UserHanlder = (
   oldUser: User,
   newUser: User
 ) => Promise<void>
-type ConsumerUserEventHandler = (
+type UserEventHandler = (
   tenantId: string,
   oldUserEvent: ConsumerUserEvent,
   newUserEvent: ConsumerUserEvent
@@ -30,7 +31,7 @@ export class TarponStreamConsumerBuilder {
   transactionHandler?: TransactionHandler
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHanlder
-  consumerUserEventHandler?: ConsumerUserEventHandler
+  userEventHandler?: UserEventHandler
 
   public setTransactionHandler(
     transactionHandler: TransactionHandler
@@ -48,10 +49,10 @@ export class TarponStreamConsumerBuilder {
     this.userHandler = userHandler
     return this
   }
-  public setConsumerUserEventHandler(
-    userEventHandler: ConsumerUserEventHandler
+  public setUserEventHandler(
+    userEventHandler: UserEventHandler
   ): TarponStreamConsumerBuilder {
-    this.consumerUserEventHandler = userEventHandler
+    this.userEventHandler = userEventHandler
     return this
   }
 
@@ -80,13 +81,14 @@ export class TarponStreamConsumerBuilder {
             update.NewImage as User
           )
         } else if (
-          update.type === 'CONSUMER_USER_EVENT' &&
-          this.consumerUserEventHandler
+          (update.type === 'CONSUMER_USER_EVENT' ||
+            update.type === 'BUSINESS_USER_EVENT') &&
+          this.userEventHandler
         ) {
-          await this.consumerUserEventHandler(
+          await this.userEventHandler(
             update.tenantId,
-            update.OldImage as ConsumerUserEvent,
-            update.NewImage as ConsumerUserEvent
+            update.OldImage as ConsumerUserEvent | BusinessUserEvent,
+            update.NewImage as ConsumerUserEvent | BusinessUserEvent
           )
         }
       }

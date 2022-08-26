@@ -103,12 +103,15 @@ export class UserService {
       throw new NotFound('User not found')
     }
     await this.userRepository.saveConsumerUser({ ...user, ...updateRequest })
-    await this.userEventRepository.saveConsumerUserEvent({
-      timestamp: Date.now(),
-      userId,
-      reason: updateRequest.userStateDetails?.reason,
-      updatedConsumerUserAttributes: updateRequest,
-    })
+    await this.userEventRepository.saveUserEvent(
+      {
+        timestamp: Date.now(),
+        userId,
+        reason: updateRequest.userStateDetails?.reason,
+        updatedConsumerUserAttributes: updateRequest,
+      },
+      'CONSUMER'
+    )
     return 'OK'
   }
 
@@ -123,6 +126,15 @@ export class UserService {
 
     await this.userRepository.saveBusinessUser({ ...user, ...updateRequest })
     // TODO: FDT-45236. Save business user event
+    await this.userEventRepository.saveUserEvent(
+      {
+        timestamp: Date.now(),
+        userId,
+        reason: updateRequest.userStateDetails?.reason,
+        updatedBusinessUserAttributes: updateRequest,
+      },
+      'BUSINESS'
+    )
     return 'OK'
   }
 
