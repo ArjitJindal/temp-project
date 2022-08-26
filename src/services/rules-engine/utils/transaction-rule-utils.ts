@@ -55,7 +55,7 @@ export async function checkTransactionAmountBetweenThreshold(
     }
   }
 ): Promise<ThresholdHit | null> {
-  if (!transactionAmountDefails) {
+  if (!transactionAmountDefails || Object.keys(thresholds).length === 0) {
     return null
   }
 

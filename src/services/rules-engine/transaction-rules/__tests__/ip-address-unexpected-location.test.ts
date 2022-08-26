@@ -1,3 +1,4 @@
+import { IpAddressUnexpectedLocationRuleParameters } from '../ip-address-unexpected-location'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -21,6 +22,9 @@ setUpRulesHooks(TEST_TENANT_ID, [
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'ip-address-unexpected-location',
+    defaultParameters: {
+      transactionAmountThreshold: { EUR: 500 },
+    } as IpAddressUnexpectedLocationRuleParameters,
     defaultAction: 'FLAG',
   },
 ])
@@ -179,6 +183,78 @@ describe.each<TransactionRuleTestCase>([
     ],
     expectedHits: [false],
   },
+  {
+    name: 'Transaction amount is below the threshhold value with different IP address - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          // A Germany ip address
+          ipAddress: '18.184.45.226',
+        },
+        originAmountDetails: {
+          transactionCurrency: 'EUR',
+          transactionAmount: 250,
+        },
+      }),
+    ],
+    expectedHits: [false],
+  },
+  {
+    name: 'Transaction amount is below the threshhold value with same IP address - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          // A Tukey ip address
+          ipAddress: '109.228.192.0',
+        },
+        originAmountDetails: {
+          transactionCurrency: 'EUR',
+          transactionAmount: 250,
+        },
+      }),
+    ],
+    expectedHits: [false],
+  },
+  {
+    name: 'Transaction amount exceeds the threshhold value with different IP address - hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          // A Random ip address
+          ipAddress: '24.184.45.226',
+        },
+        originAmountDetails: {
+          transactionCurrency: 'EUR',
+          transactionAmount: 2500,
+        },
+      }),
+    ],
+    expectedHits: [true],
+  },
+  {
+    name: 'Transaction amount exceeds the threshhold value with same IP address - not hit',
+    transactions: [
+      getTestTransaction({
+        originUserId: '1',
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        deviceData: {
+          // A Tukey ip address
+          ipAddress: '109.228.192.0',
+        },
+        originAmountDetails: {
+          transactionCurrency: 'EUR',
+          transactionAmount: 2500,
+        },
+      }),
+    ],
+    expectedHits: [false],
+  },
 ])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(
     name,
@@ -186,4 +262,67 @@ describe.each<TransactionRuleTestCase>([
     transactions,
     expectedHits
   )
+})
+
+describe('Undefined Transaction Amount threshold', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'ip-address-unexpected-location',
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      userDetails: {
+        name: {
+          firstName: '1',
+        },
+        countryOfResidence: 'IN',
+        countryOfNationality: 'TR',
+      },
+    }),
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Undefined transaction amount threshold with random IP address  - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          deviceData: {
+            // A Random ip address
+            ipAddress: '14.228.192.0',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+    {
+      name: 'Undefined transaction amount threshold with same IP address  - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+          deviceData: {
+            // A Tukey ip address
+            ipAddress: '109.228.192.0',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
 })
