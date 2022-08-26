@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
+import StateSearchButton from './components/TransactionStateButton';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { currencies } from '@/utils/currencies';
 import { getUserName } from '@/utils/api/users';
@@ -72,6 +73,14 @@ const TableList = () => {
         render: (_, transaction) => {
           return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
+      },
+      {
+        title: 'Transaction State',
+        width: 130,
+        ellipsis: true,
+        dataIndex: 'transactionState',
+        hideInSearch: true,
+        sorter: true,
       },
       {
         title: 'Origin User ID',
@@ -257,6 +266,7 @@ const TableList = () => {
         timestamp,
         transactionId,
         type,
+        transactionState,
         originCurrenciesFilter,
         destinationCurrenciesFilter,
         userId,
@@ -279,6 +289,7 @@ const TableList = () => {
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,
           transactionType: type,
+          filterTransactionState: transactionState,
           sortField: sortField ?? undefined,
           sortOrder: sortOrder ?? undefined,
           includeUsers: true,
@@ -305,15 +316,26 @@ const TableList = () => {
       <Table<TransactionCaseManagement>
         actionsHeader={[
           ({ params, setParams }) => (
-            <UserSearchButton
-              userId={params.params.userId ?? null}
-              onConfirm={(userId) => {
-                setParams((state) => ({
-                  ...state,
-                  params: { ...state.params, userId: userId ?? undefined },
-                }));
-              }}
-            />
+            <>
+              <UserSearchButton
+                userId={params.params.userId ?? null}
+                onConfirm={(userId) => {
+                  setParams((state) => ({
+                    ...state,
+                    params: { ...state.params, userId: userId ?? undefined },
+                  }));
+                }}
+              />
+              <StateSearchButton
+                transactionState={params.params.transactionState ?? undefined}
+                onConfirm={(value) => {
+                  setParams((state) => ({
+                    ...state,
+                    params: { ...state.params, transactionState: value ?? undefined },
+                  }));
+                }}
+              />
+            </>
           ),
         ]}
         form={{

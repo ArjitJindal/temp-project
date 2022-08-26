@@ -201,6 +201,7 @@ function TableList() {
         width: 130,
         ellipsis: true,
         dataIndex: 'transactionState',
+        hideInSearch: true,
         sorter: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
@@ -208,6 +209,7 @@ function TableList() {
       },
       {
         title: 'Origin',
+        hideInSearch: true,
         children: [
           {
             title: 'Origin User ID',
@@ -293,6 +295,7 @@ function TableList() {
       },
       {
         title: 'Destination',
+        hideInSearch: true,
         children: [
           {
             title: 'Destination User ID',
@@ -384,7 +387,7 @@ function TableList() {
         title: 'Transaction Status',
         sorter: true,
         dataIndex: 'status',
-        hideInSearch: false,
+        hideInSearch: true,
         valueType: 'select',
         onCell: (_) => ({
           rowSpan: _.rowSpan,
