@@ -49,8 +49,8 @@ async function transactionHandler(
   // a single record in DB using transaction date
   await dashboardStatsRepository.refreshStats()
 
-  // Alerting
-  if (currentStatus !== newStatus && newStatus !== 'ALLOW') {
+  // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
+  if (!currentStatus && newStatus !== 'ALLOW') {
     const tenantRepository = new TenantRepository(tenantId, {
       mongoDb: await connectToDB(),
     })
