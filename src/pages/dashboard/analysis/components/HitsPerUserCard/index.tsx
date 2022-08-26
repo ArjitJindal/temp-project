@@ -97,7 +97,33 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Transactions hit',
       dataIndex: 'transactionsHit',
       width: 100,
-      render: (_, entity) => `${entity.transactionsHit} transactions`,
+      render: (dom, entity) => {
+        const { user } = entity;
+        if (user == null) {
+          return dom;
+        }
+        let startTimestamp;
+        let endTimestamp;
+        const [start, end] = dateRange ?? [];
+        if (start != null && end != null) {
+          startTimestamp = start.startOf('day').valueOf();
+          endTimestamp = end.endOf('day').valueOf();
+        }
+        return (
+          <Link
+            to={makeUrl(
+              '/case-management',
+              {},
+              {
+                originUserId: user.userId,
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              },
+            )}
+          >
+            {`${entity.transactionsHit} transactions`}
+          </Link>
+        );
+      },
     },
     {
       title: 'User Type',

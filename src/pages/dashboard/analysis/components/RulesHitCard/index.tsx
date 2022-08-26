@@ -49,6 +49,29 @@ export default function RuleHitCard() {
       title: 'Hit Count',
       dataIndex: 'hitCount',
       width: 50,
+      render: (_, entity) => {
+        let startTimestamp;
+        let endTimestamp;
+        const [start, end] = dateRange ?? [];
+        if (start != null && end != null) {
+          startTimestamp = start.startOf('day').valueOf();
+          endTimestamp = end.endOf('day').valueOf();
+        }
+        return (
+          <Link
+            to={makeUrl(
+              '/case-management',
+              {},
+              {
+                rulesHitFilter: rules[entity.ruleId].id,
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              },
+            )}
+          >
+            {entity.hitCount}
+          </Link>
+        );
+      },
     },
     {
       title: 'Actions',
