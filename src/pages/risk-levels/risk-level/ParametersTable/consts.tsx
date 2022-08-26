@@ -47,7 +47,7 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
         showSearch={true}
         disabled={disabled}
         filterOption={(input, option) => {
-          const optionValue = option?.value?.toString() ?? '';
+          const optionValue = option?.children?.toString() ?? '';
           return (
             optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
             optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -55,7 +55,7 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
         }}
       >
         {Object.entries(COUNTRIES).map(([code, title]) => (
-          <Select.Option key={code}>{title}</Select.Option>
+          <Select.Option value={code}>{title}</Select.Option>
         ))}
       </Select>
     );
