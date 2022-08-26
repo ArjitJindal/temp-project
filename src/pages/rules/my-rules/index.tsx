@@ -152,6 +152,9 @@ const MyRule = () => {
       {
         title: 'Created At',
         width: 120,
+        sorter: (a, b) =>
+          a.createdAt !== undefined && b.createdAt !== undefined ? a.createdAt - b.createdAt : -1,
+        defaultSortOrder: 'descend',
         dataIndex: 'createdAt',
         valueType: 'dateTime',
       },
