@@ -5,6 +5,7 @@ import Header from './Header';
 import Footer from './Footer';
 import s from './styles.module.less';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import StorybookPage from '@/pages/storybook';
 
 interface Props {
   children?: React.ReactNode;
@@ -14,7 +15,11 @@ export const THEME = 'light';
 
 export default function AppWrapper(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
-  // todo: migration: move background to variable
+
+  if (window.location.pathname === '/storybook') {
+    return <StorybookPage />;
+  }
+
   return (
     <Providers>
       <ErrorBoundary>

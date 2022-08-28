@@ -1,0 +1,62 @@
+@import 'src/components/ui/colors';
+
+@h-padding: 20px;
+@v-padding: 20px;
+
+.root {
+  background: white;
+  border: 1px solid @fr-colors-purpleGrayTint;
+  border-radius: 8px;
+}
+
+.title {
+  margin-bottom: 0;
+  color: @fr-colors-brandBlue;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.row {
+  display: flex;
+  flex-grow: 1;
+
+  > * {
+    &:not(:first-child) {
+      border-left: 1px solid @fr-colors-purpleGrayTint;
+    }
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  align-items: stretch;
+
+  > * {
+    &:not(:last-child) {
+      border-bottom: 1px solid @fr-colors-purpleGrayTint;
+    }
+  }
+}
+
+.section {
+  display: flex;
+  flex-grow: 1;
+  gap: 1rem;
+  padding: @v-padding @h-padding;
+
+  &.vertical {
+    flex-direction: column;
+  }
+
+  &.horizontal {
+    flex-direction: row;
+  }
+}
+
+.titleSection {
+  display: flex;
+  justify-content: space-between;
+}

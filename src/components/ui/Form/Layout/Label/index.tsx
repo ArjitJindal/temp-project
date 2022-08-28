@@ -1,0 +1,23 @@
+import React from 'react';
+import cn from 'clsx';
+import s from './index.module.less';
+
+interface Props {
+  icon?: React.ReactNode;
+  title: string;
+  variant?: 'default' | 'bold';
+  children: React.ReactNode;
+}
+
+export default function Label(props: Props) {
+  const { icon, title, variant = 'default', children } = props;
+  return (
+    <div className={cn(s.root, s[variant])}>
+      <div className={s.header}>
+        {icon && <div className={s.icon}>{icon}</div>}
+        <div className={s.title}>{title}</div>
+      </div>
+      <div className={s.content}>{children}</div>
+    </div>
+  );
+}
