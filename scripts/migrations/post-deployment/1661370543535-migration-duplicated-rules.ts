@@ -1,3 +1,4 @@
+import { TarponStackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '../utils/db'
 import { getRulesById } from '../utils/rule'
@@ -5,11 +6,67 @@ import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/a
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { paginateQueryGenerator } from '@/utils/dynamodb'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
-const R2_DUPLICATES = new Set(['R-112'])
-const R30_DUPLICATES = new Set(['R-84', 'R-95', 'R-96', 'R-103'])
-const R60_DUPLICATES = new Set(['R-109', 'R-110'])
-const RULES_TO_DELETE = [...R2_DUPLICATES, ...R30_DUPLICATES, ...R60_DUPLICATES]
+const RULES_MAPPING: { [key: string]: string } = {
+  'R-60': 'R-69',
+  'R-84': 'R-30',
+  'R-95': 'R-30',
+  'R-96': 'R-30',
+  'R-103': 'R-30',
+  'R-109': 'R-60',
+  'R-110': 'R-60',
+  'R-112': 'R-2',
+}
+
+async function migrateTransactions(tenant: Tenant) {
+  const dynamoDb = await getDynamoDbClient()
+  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+    KeyConditionExpression: 'PartitionKeyID = :pk',
+    ExpressionAttributeValues: {
+      ':pk': DynamoDbKeys.TRANSACTION(tenant.id).PartitionKeyID,
+    },
+    ReturnConsumedCapacity: 'TOTAL',
+  }
+  for await (const transactionsResult of paginateQueryGenerator(
+    dynamoDb,
+    queryInput
+  )) {
+    for (const transaction of (transactionsResult.Items ||
+      []) as TransactionWithRulesResult[]) {
+      let shouldSave = false
+      transaction.executedRules = transaction.executedRules?.map((rule) => {
+        const newRuleId = RULES_MAPPING[rule.ruleId]
+        if (newRuleId) {
+          shouldSave = true
+        }
+        return newRuleId ? { ...rule, ruleId: newRuleId } : rule
+      })
+      transaction.hitRules = transaction.hitRules?.map((rule) => {
+        const newRuleId = RULES_MAPPING[rule.ruleId]
+        if (newRuleId) {
+          shouldSave = true
+        }
+        return newRuleId ? { ...rule, ruleId: newRuleId } : rule
+      })
+      if (shouldSave && transaction.transactionId) {
+        console.info(`Updated transaction ${transaction.transactionId}`)
+        const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+          TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+          Item: {
+            ...DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
+            ...transaction,
+          },
+          ReturnConsumedCapacity: 'TOTAL',
+        }
+        await dynamoDb.put(putItemInput).promise()
+      }
+    }
+  }
+}
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = await getDynamoDbClient()
@@ -19,15 +76,7 @@ async function migrateTenant(tenant: Tenant) {
   const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
 
   for (const ruleInstance of ruleInstances) {
-    let newRuleId: string | null = null
-    if (R30_DUPLICATES.has(ruleInstance.ruleId)) {
-      newRuleId = 'R-30'
-    } else if (R60_DUPLICATES.has(ruleInstance.ruleId)) {
-      newRuleId = 'R-60'
-    } else if (R2_DUPLICATES.has(ruleInstance.ruleId)) {
-      newRuleId = 'R-2'
-    }
-
+    const newRuleId = RULES_MAPPING[ruleInstance.ruleId]
     if (newRuleId) {
       await ruleInstanceRepository.createOrUpdateRuleInstance({
         ...ruleInstance,
@@ -38,6 +87,8 @@ async function migrateTenant(tenant: Tenant) {
       )
     }
   }
+
+  await migrateTransactions(tenant)
 }
 
 async function deleteUnusedRules() {
@@ -47,7 +98,7 @@ async function deleteUnusedRules() {
     dynamoDb,
   })
 
-  for (const ruleId of RULES_TO_DELETE) {
+  for (const ruleId of Object.keys(RULES_MAPPING)) {
     if (rulesById[ruleId]) {
       await ruleRepository.deleteRule(ruleId)
       console.info(`Deleted rule ${ruleId}`)
