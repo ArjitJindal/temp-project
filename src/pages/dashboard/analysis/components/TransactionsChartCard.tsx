@@ -192,17 +192,17 @@ const TransactionsChartCard = () => {
     value.push({
       _id: item._id,
       value: item['stoppedTransactions'] ?? 0,
-      type: 'Stopped',
+      type: `${blockedAlias}`,
     });
     value.push({
       _id: item._id,
       value: item['suspendedTransactions'] ?? 0,
-      type: 'Suspended',
+      type: `${suspendedAlias}`,
     });
     value.push({
       _id: item._id,
       value: item['flaggedTransactions'] ?? 0,
-      type: 'Flagged',
+      type: `${flaggedAlias}`,
     });
     value.push({
       _id: item._id,
@@ -339,9 +339,9 @@ const TransactionsChartCard = () => {
                       yField={key !== 'totalTransactions' ? 'y' : 'value'}
                       color={({ type }) => {
                         if (key === 'totalTransactions') {
-                          if (type === 'Suspended') return '#F5E25A';
-                          if (type === 'Flagged') return '#F6A429';
-                          if (type === 'Stopped') return '#FF4D4F';
+                          if (type === `${suspendedAlias}`) return '#F5E25A';
+                          if (type === `${flaggedAlias}`) return '#F6A429';
+                          if (type === `${blockedAlias}`) return '#FF4D4F';
                           return '#1169F9';
                         } else if (key === 'flaggedTransactions') return '#F6A429';
                         else if (key === 'stoppedTransactions') return '#FF4D4F';
@@ -371,6 +371,11 @@ const TransactionsChartCard = () => {
                       }}
                       seriesField={key !== 'totalTransactions' ? '' : 'type'}
                       annotations={annotations}
+                      legend={{
+                        layout: 'horizontal',
+                        position: 'top-right',
+                        reversed: true,
+                      }}
                     />
                   )}
                 </div>
