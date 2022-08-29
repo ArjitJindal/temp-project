@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card } from 'antd';
 import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
-import { PageContainer } from '@ant-design/pro-layout';
 import styles from './style.module.less';
 
 const { Divider } = ProCard;

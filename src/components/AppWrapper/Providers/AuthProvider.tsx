@@ -8,7 +8,7 @@ const AuthenticationRequiredWrapper = withAuthenticationRequired(
   { onRedirecting: () => <PageLoading /> },
 );
 
-const onRedirectCallback = (appState: any) => {
+const onRedirectCallback = (_appState: any) => {
   // navigate(appState && appState.returnTo ? appState.returnTo : window.location.pathname)
 };
 

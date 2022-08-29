@@ -4,11 +4,11 @@ import { useCallback, useMemo, useState } from 'react';
 import equal from 'fast-deep-equal';
 import { DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import { WebhookDeliveryAttemptsTable } from './WebhookDeliveryAttemptsTable';
-import { WebhookConfiguration, WebhookEvent, WebhookSecrets } from '@/apis';
+import { WebhookConfiguration, WebhookEventType, WebhookSecrets } from '@/apis';
 import Button from '@/components/ui/Button';
 import { useApi } from '@/api';
 
-const WEBHOOK_EVENTS: WebhookEvent[] = ['USER_STATE_UPDATED'];
+const WEBHOOK_EVENTS: WebhookEventType[] = ['USER_STATE_UPDATED'];
 
 interface Props {
   webhook: WebhookConfiguration;
@@ -86,7 +86,7 @@ export const WebhookDetails: React.FC<Props> = ({
           />
         </ProDescriptions.Item>
         <ProDescriptions.Item label="Events">
-          <Select<WebhookEvent[]>
+          <Select<WebhookEventType[]>
             mode="multiple"
             style={{ width: '100%' }}
             options={WEBHOOK_EVENTS.map((event) => ({ label: event, value: event }))}

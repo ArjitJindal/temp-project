@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
 import { Table, TableActionType } from '@/components/ui/Table';
-import { WebhookConfiguration, WebhookEvent } from '@/apis';
+import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import Button from '@/components/ui/Button';
@@ -87,7 +87,7 @@ export const WebhookSettings: React.FC = () => {
         const webhook = updatedWebhooks[entity._id as string] ?? entity;
         return (
           <>
-            {webhook.events.map((event: WebhookEvent, index) => (
+            {webhook.events.map((event: WebhookEventType, index) => (
               <Tag color={'cyan'} key={index}>
                 {event}
               </Tag>

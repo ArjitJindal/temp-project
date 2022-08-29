@@ -56,20 +56,20 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
   // Using this hack to fix sticking dropdown on scroll
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const [params, setParams] = useState<DefaultApiGetTransactionsListRequest>({
+  const [params] = useState<DefaultApiGetTransactionsListRequest>({
     limit: DEFAULT_PAGE_SIZE,
     skip: 0,
     includeEvents: true,
     beforeTimestamp: Date.now(),
   });
-  const [responseRes, setResponseRes] = useState<
+  const [, setResponseRes] = useState<
     AsyncResource<{
       total: number;
       data: Array<TransactionCaseManagement>;
     }>
   >(init());
   const request: RequestFunctionType<DataItem> = useCallback(
-    async (params, sorter, filter) => {
+    async (params, sorter) => {
       const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
 
       const directionFilter = (params ?? {})['direction'] ?? [];

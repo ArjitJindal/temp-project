@@ -1,6 +1,5 @@
 import { Tag } from 'antd';
 import React from 'react';
-import _ from 'lodash';
 import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import { getRuleActionTitle, useRuleActionColor } from '../../utils/rules';
 import { RuleAction } from '@/apis';

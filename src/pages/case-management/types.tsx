@@ -1,4 +1,3 @@
-import React from 'react';
 import { RuleAction, TransactionState } from '@/apis';
 import '../../components/ui/colors';
 

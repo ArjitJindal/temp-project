@@ -54,8 +54,8 @@ function TableList() {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
-  const [lastSearchParams, setLastSearchParams] = useState<TableSearchParams>({});
+  const [, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
+  const [, setLastSearchParams] = useState<TableSearchParams>({});
   const [isOpenTab, setIsOpenTab] = useState<boolean>(true);
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;

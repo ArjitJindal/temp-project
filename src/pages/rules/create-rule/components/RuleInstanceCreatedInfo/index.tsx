@@ -1,5 +1,5 @@
 import { Descriptions, Result } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styles from './style.module.less';
 import { Rule } from '@/apis';
 import Button from '@/components/ui/Button';

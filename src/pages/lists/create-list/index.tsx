@@ -1,6 +1,5 @@
 import { Card } from 'antd';
 import type { FC } from 'react';
-import { PageContainer } from '@ant-design/pro-layout';
 import PageWrapper from '@/components/PageWrapper';
 import Button from '@/components/ui/Button';
 import { useI18n } from '@/locales';

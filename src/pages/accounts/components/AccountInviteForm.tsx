@@ -1,8 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { Form, message } from 'antd';
+import React, { useRef } from 'react';
+import { message } from 'antd';
 import { DrawerForm, ProFormInstance, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
-import defaultSettings from '@ant-design/pro-layout/lib/defaultSettings';
 import Button from '@/components/ui/Button';
 import { useApi } from '@/api';
 
@@ -79,7 +78,7 @@ export default function AccountInviteForm(props: Props) {
             message: 'Please enter the Password',
           },
           {
-            validator(rule, value, callback) {
+            validator(rule, value) {
               if (!value.match(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{10,}$/)) {
                 return Promise.reject(errorMessage);
               }

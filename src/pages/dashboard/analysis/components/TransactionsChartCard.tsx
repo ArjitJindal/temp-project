@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
-import type { RangePickerProps } from 'antd/es/date-picker/generatePicker';
 import moment, { Moment } from 'moment';
 import { Column } from '@ant-design/plots';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import { each, groupBy } from 'lodash';
@@ -35,12 +34,6 @@ import {
 import { DashboardStatsTransactionsCountData } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-// FIXME: import doesn't work
-// const toPng = require('html-to-image').toPng;
-// const autoTable = require('jspdf-autotable').default;
-// const jsPDF = require('jspdf');
-
-type RangePickerValue = RangePickerProps<moment.Moment>['value'];
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 const { TabPane } = Tabs;
 
@@ -50,53 +43,6 @@ export type TransactionsStats = {
   flaggedTransactions: number;
   stoppedTransactions: number;
 }[];
-
-// function saveToFile(blob: Blob, filename: string) {
-//   const a = document.createElement('a');
-//   const url = window.URL.createObjectURL(blob);
-//   a.href = url;
-//   a.download = filename;
-//   a.click();
-//   window.URL.revokeObjectURL(url);
-// }
-
-// function getDateRange(rangePickerValue: RangePickerValue) {
-//   if (!rangePickerValue) {
-//     return null;
-//   }
-//   const fromDate = rangePickerValue[0] as moment.Moment;
-//   const toDate = rangePickerValue[1] as moment.Moment;
-//   return `${fromDate.format('YYYYMMDD')}-${toDate.format('YYYYMMDD')}`;
-// }
-
-// function exportToCsv(header: string[], exportData: any[], rangePickerValue: RangePickerValue) {
-//   const data = [[header, ...exportData].map((row) => row.join(',')).join('\n')];
-//   saveToFile(
-//     new Blob(data, { type: 'octet/stream' }),
-//     `flagright-stopped-transactions-${getDateRange(rangePickerValue)}.csv`,
-//   );
-// }
-
-// async function exportToPdf(header: any[], exportData: any[], rangePickerValue: RangePickerValue) {
-//   const doc = new jsPDF.jsPDF();
-//   const chart = document.getElementById('sales-card')!;
-//   const ratio = chart.clientHeight / chart.clientWidth;
-//   const chartImage = await toPng(chart);
-//   const chartImageX = 10;
-//   const chartImageY = 10;
-//   const chartWidth = doc.internal.pageSize.getWidth() - 2 * chartImageX;
-//   const chartHeight = chartWidth * ratio;
-//   doc.addImage(chartImage, 'PNG', chartImageX, chartImageY, chartWidth, chartHeight);
-//   autoTable(doc, {
-//     startY: chartImageY + chartHeight + 10,
-//     headStyles: { fillColor: '#6294FA' },
-//     styles: { cellPadding: 1 },
-//     head: [header],
-//     body: exportData,
-//   });
-//
-//   doc.save(`flagright-stopped-transactions-${getDateRange(rangePickerValue)}.pdf`);
-// }
 
 const TransactionsChartCard = () => {
   const settings = useSettings();

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { LogoutOutlined } from '@ant-design/icons';
 import { Avatar, Menu, Spin } from 'antd';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -15,7 +15,7 @@ import {
 import HeaderDropdown from '../../../HeaderDropdown';
 import styles from './index.module.less';
 import { useAnalytics } from '@/utils/segment/context';
-import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -25,7 +25,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
   const { logout } = useAuth0();
   const analytics = useAnalytics();
   const user = useAuth0User();
-  const isAdmin = isAtLeastAdmin(user);
+
   const navigate = useNavigate();
 
   const onMenuClick = useCallback(

@@ -21,7 +21,7 @@ import ResizableTitle from '@/utils/table-utils';
 import { useI18n } from '@/locales';
 import handleResize from '@/components/ui/Table/utils';
 
-const BusinessUsersTab = (props: { id?: string }) => {
+const BusinessUsersTab = () => {
   const api = useApi();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
@@ -92,7 +92,7 @@ const BusinessUsersTab = (props: { id?: string }) => {
   );
 };
 
-const ConsumerUsersTab = (props: { id?: string }) => {
+const ConsumerUsersTab = () => {
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
@@ -177,7 +177,7 @@ const ConsumerUsersTab = (props: { id?: string }) => {
 };
 
 export default function UsersList() {
-  const { list = 'consumer', id } = useParams<'list' | 'id'>();
+  const { list = 'consumer' } = useParams<'list' | 'id'>();
   const navigate = useNavigate();
   const i18n = useI18n();
   const [_, setLocalStorageActiveTab] = useLocalStorageState('user-active-tab', list);
@@ -196,10 +196,10 @@ export default function UsersList() {
           }}
         >
           <Tabs.TabPane tab="Consumer Users" key="consumer">
-            <ConsumerUsersTab id={id} />
+            <ConsumerUsersTab />
           </Tabs.TabPane>
           <Tabs.TabPane tab="Business Users" key="business">
-            <BusinessUsersTab id={id} />
+            <BusinessUsersTab />
           </Tabs.TabPane>
         </Tabs>
       </div>

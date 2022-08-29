@@ -84,7 +84,7 @@ export function useUsers(): [{ [userId: string]: Account }, boolean] {
             'id',
           ),
         )
-        .catch((e) => ({}));
+        .catch(() => ({}));
     }
     cachedUsers.then((users) => {
       setUsers(users);

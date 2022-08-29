@@ -5,7 +5,7 @@ interface Props {
 }
 
 const removeMethod = (paymentDetails: any) => {
-  const { method, ...rest } = paymentDetails;
+  const { _method, ...rest } = paymentDetails;
   return rest;
 };
 

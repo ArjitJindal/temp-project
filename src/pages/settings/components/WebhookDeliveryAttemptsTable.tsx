@@ -1,7 +1,7 @@
 import { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { Divider, Modal, Tag } from 'antd';
+import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { WebhookDeliveryAttempt } from '@/apis';
 import { Table } from '@/components/ui/Table';

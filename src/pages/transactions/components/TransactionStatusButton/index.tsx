@@ -15,13 +15,6 @@ interface Props {
 export default function StatusSearchButton(props: Props) {
   const { status, onConfirm } = props;
   const [visible, setVisible] = useState(false);
-
-  const displayName = (status: RuleAction | undefined) => {
-    if (status === undefined) return 'All cases';
-    if (status === 'FLAG') return 'FLAGGED';
-    return `${status}ED`;
-  };
-
   return (
     <Popover
       overlayClassName={s.popover}

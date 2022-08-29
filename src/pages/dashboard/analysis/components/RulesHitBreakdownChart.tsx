@@ -1,7 +1,6 @@
 import { Card, Empty } from 'antd';
 import numeral from 'numeral';
 import { Pie, PieConfig } from '@ant-design/charts';
-import type { DataItem } from '../data';
 import styles from '../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
 

@@ -21,15 +21,8 @@ export type HeaderSearchProps = {
 };
 
 const HeaderSearch: React.FC<HeaderSearchProps> = (props) => {
-  const {
-    className,
-    defaultValue,
-    onVisibleChange,
-    placeholder,
-    visible,
-    defaultVisible,
-    ...restProps
-  } = props;
+  const { className, defaultValue, onVisibleChange, placeholder, defaultVisible, ...restProps } =
+    props;
 
   const inputRef = useRef<InputRef | null>(null);
 

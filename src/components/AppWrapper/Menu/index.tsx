@@ -1,17 +1,13 @@
 import { Menu as AntMenu } from 'antd';
 import {
   BarChartOutlined,
-  DashboardOutlined,
   FlagOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SmileOutlined,
-  TableOutlined,
   UsergroupAddOutlined,
   SettingOutlined,
   ImportOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
 } from '@ant-design/icons';
 
 import {

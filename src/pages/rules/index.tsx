@@ -11,7 +11,7 @@ import PageWrapper from '@/components/PageWrapper';
 const TableList = () => {
   const { rule = 'create-rule' } = useParams<'rule'>();
   const navigate = useNavigate();
-  const [_, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
+  const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
   useEffect(() => {
     setLocalStorageActiveTab(rule);
   }, [setLocalStorageActiveTab, rule]);

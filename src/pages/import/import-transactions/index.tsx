@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import React from 'react';
+import type { ProColumns } from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
