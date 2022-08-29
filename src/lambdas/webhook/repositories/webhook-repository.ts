@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { WEBHOOK_COLLECTION } from '@/utils/mongoDBUtils'
-import { WebhookEvent } from '@/@types/openapi-internal/WebhookEvent'
+import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 export class WebhookRepository {
   tenantId: string
@@ -13,9 +13,9 @@ export class WebhookRepository {
   }
 
   public async getWebhooksByEvents(
-    events: WebhookEvent[]
-  ): Promise<Map<WebhookEvent, WebhookConfiguration[]>> {
-    const result: Map<WebhookEvent, WebhookConfiguration[]> = new Map()
+    events: WebhookEventType[]
+  ): Promise<Map<WebhookEventType, WebhookConfiguration[]>> {
+    const result: Map<WebhookEventType, WebhookConfiguration[]> = new Map()
     const db = this.mongoDb.db()
     const collection = db.collection<WebhookConfiguration>(
       WEBHOOK_COLLECTION(this.tenantId)

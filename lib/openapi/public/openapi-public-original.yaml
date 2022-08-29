@@ -3458,6 +3458,8 @@ components:
       title: UserStateDetails
       type: object
       properties:
+        userId:
+          type: string
         reason:
           type: string
         state:
@@ -3485,6 +3487,34 @@ components:
         - TRANSFER
         - EXTERNAL_PAYMENT
         - WITHDRAWAL
+    WebhookEvent:
+      title: WebhookEvent
+      x-stoplight:
+        id: w7v0f2eqgzubk
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/WebhookEventType'
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/UserStateDetails'
+        createdTimestamp:
+          type: number
+          minimum: 1262300400000
+      required:
+        - id
+        - type
+        - data
+        - createdTimestamp
+    WebhookEventType:
+      type: string
+      title: WebhookEventType
+      x-stoplight:
+        id: 5rtg1zffpod4f
+      enum:
+        - USER_STATE_UPDATED
   securitySchemes:
     x-api-key:
       name: x-api-key

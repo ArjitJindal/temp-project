@@ -131,13 +131,17 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       'WebhookDeliveryDeadLetterQueue'
     )
+    const webhookDeliveryVisibilityTimeout = Duration.seconds(
+      DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+    )
     const webhookDeliveryQueue = new Queue(this, 'WebhookDeliveryQueue', {
-      visibilityTimeout: Duration.seconds(
-        DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
-      ),
+      visibilityTimeout: webhookDeliveryVisibilityTimeout,
       deadLetterQueue: {
         queue: webhookDeliveryDeadLetterQueue,
-        maxReceiveCount: 50,
+        // Retry up to 3 days
+        maxReceiveCount:
+          Duration.days(3).toSeconds() /
+          webhookDeliveryVisibilityTimeout.toSeconds(),
       },
     })
 

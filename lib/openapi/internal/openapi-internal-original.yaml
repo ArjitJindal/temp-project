@@ -2025,7 +2025,7 @@ components:
         events:
           type: array
           items:
-            $ref: '#/components/schemas/WebhookEvent'
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/WebhookEventType
         enabled:
           type: boolean
         secret:
@@ -2036,13 +2036,6 @@ components:
         - webhookUrl
         - events
         - enabled
-    WebhookEvent:
-      type: string
-      title: WebhookEvent
-      x-stoplight:
-        id: 09ap0wrs3h6tl
-      enum:
-        - USER_STATE_UPDATED
     WebhookSecrets:
       title: WebhookSecrets
       x-stoplight:
@@ -2076,7 +2069,7 @@ components:
         success:
           type: boolean
         event:
-          $ref: '#/components/schemas/WebhookEvent'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/WebhookEventType
         eventCreatedAt:
           type: number
         request:

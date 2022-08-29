@@ -71,7 +71,8 @@ describe('Create webhook delivery tasks', () => {
       event: 'USER_STATE_UPDATED',
       payload: {
         userId: user.userId,
-        userStateDetails: { reason: 'reason', state: 'DELETED' },
+        reason: 'reason',
+        state: 'DELETED',
       },
       _id: expect.any(String),
       tenantId: TEST_TENANT_ID,

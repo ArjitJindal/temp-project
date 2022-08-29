@@ -10,6 +10,7 @@ import { User } from '@/@types/openapi-public/User'
 import { WebhookDeliveryTask } from '@/@types/webhook'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
+import { UserStateDetails } from '@/@types/openapi-public/UserStateDetails'
 
 const sqs = new SQSClient({})
 
@@ -56,14 +57,14 @@ async function userHandler(
   const webhookTasks: ThinWebhookDeliveryTask[] = []
   const diffResult = diff(oldUser, newUser) as Partial<GenericUser>
 
-  if (diffResult.userStateDetails) {
-    const updatedUser: Partial<GenericUser> = {
+  if (diffResult.userStateDetails && newUser.userStateDetails) {
+    const payload: UserStateDetails = {
       userId: newUser.userId,
-      userStateDetails: newUser.userStateDetails,
+      ...newUser.userStateDetails,
     }
     webhookTasks.push({
       event: 'USER_STATE_UPDATED',
-      payload: updatedUser,
+      payload,
     })
   }
   await sendWebhookTasks(tenantId, webhookTasks)

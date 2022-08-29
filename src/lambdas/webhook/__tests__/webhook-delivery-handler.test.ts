@@ -8,6 +8,9 @@ import { WebhookRepository } from '../repositories/webhook-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
+import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
+import { WebhookDeliveryTask } from '@/@types/webhook'
+import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -40,6 +43,15 @@ function getExpectedRequestHeaders(payload: any) {
   return {
     'content-type': 'application/json',
     'x-flagright-signature': receiverCalculatedSignature,
+  }
+}
+
+function getExpectedPayload(deliveryTask: WebhookDeliveryTask): WebhookEvent {
+  return {
+    id: deliveryTask._id,
+    type: deliveryTask.event as WebhookEventType,
+    data: deliveryTask.payload,
+    createdTimestamp: deliveryTask.createdAt,
   }
 }
 
@@ -106,15 +118,15 @@ describe('Webhook delivery', () => {
         enabled: true,
       })
 
-      const expectedPayload = { statusReason: 'reason', status: 'DELETED' }
-      const deliveryTask = {
+      const deliveryTask: WebhookDeliveryTask = {
         event: 'USER_STATE_UPDATED',
-        payload: expectedPayload,
+        payload: { statusReason: 'reason', status: 'DELETED' },
         _id: 'task_id',
         tenantId: TEST_TENANT_ID,
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
       }
+      const expectedPayload = getExpectedPayload(deliveryTask)
       await webhookDeliveryHandler({
         Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
       })
@@ -170,7 +182,7 @@ describe('Webhook delivery', () => {
         enabled: true,
       })
 
-      const deliveryTask = {
+      const deliveryTask: WebhookDeliveryTask = {
         event: 'USER_STATE_UPDATED',
         payload: {},
         _id: 'task_id',
@@ -178,6 +190,7 @@ describe('Webhook delivery', () => {
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
       }
+      const expectedPayload = getExpectedPayload(deliveryTask)
       await expect(
         webhookDeliveryHandler({
           Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
@@ -196,8 +209,8 @@ describe('Webhook delivery', () => {
         requestStartedAt: expect.any(Number),
         requestFinishedAt: expect.any(Number),
         request: {
-          headers: getExpectedRequestHeaders({}),
-          body: JSON.stringify({}),
+          headers: getExpectedRequestHeaders(expectedPayload),
+          body: JSON.stringify(expectedPayload),
         },
         response: null,
       })
@@ -274,7 +287,7 @@ describe('Webhook delivery', () => {
       })
     })
 
-    test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should throw error', async () => {
+    test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should not throw error', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookUrl = await startTestWebhookServer(
         {
@@ -310,11 +323,9 @@ describe('Webhook delivery', () => {
         webhookUrl,
         createdAt: Date.now(),
       }
-      await expect(
-        webhookDeliveryHandler({
-          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-        })
-      ).rejects.toThrow()
+      await webhookDeliveryHandler({
+        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
+      })
     })
   })
   describe('Invalid webhook', () => {

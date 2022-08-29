@@ -15,6 +15,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
+import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 
 function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
   return Object.keys(keys).filter(
@@ -32,10 +33,16 @@ async function deliverWebhookEvent(
     await connectToDB()
   )
   const hmacs = secrets.map((secret) => createHmac('sha256', secret))
-  const payload = JSON.stringify(webhookDeliveryTask.payload)
+  const postPayload: WebhookEvent = {
+    id: webhookDeliveryTask._id,
+    type: webhookDeliveryTask.event,
+    data: webhookDeliveryTask.payload,
+    createdTimestamp: webhookDeliveryTask.createdAt,
+  }
+  const postPayloadString = JSON.stringify(postPayload)
   const hmacSignatures = hmacs
     .map((hmac) => {
-      hmac.update(payload)
+      hmac.update(postPayloadString)
       return hmac.digest('hex')
     })
     .join(',')
@@ -49,7 +56,7 @@ async function deliverWebhookEvent(
       'x-flagright-signature': hmacSignatures,
       'content-type': 'application/json',
     },
-    body: payload,
+    body: postPayloadString,
     signal: timeoutSignal(requestTimeoutSec * 1000),
   }
   const requestStartedAt = Date.now()
@@ -60,6 +67,13 @@ async function deliverWebhookEvent(
       throw new Error(
         `Client server returned status ${response.status}. Will retry`
       )
+    }
+  } catch (e) {
+    if ((e as any)?.type === 'aborted') {
+      // We don't retry if customer server fails to respond before the timeout
+      logger.error(`Request timeout after ${requestTimeoutSec} seconds`)
+    } else {
+      throw e
     }
   } finally {
     const requestFinishedAt = Date.now()

@@ -41,6 +41,27 @@
       "uri": "/docs/8.-sonar-faq.md"
     },
     {
+      "type": "group",
+      "title": "Webhooks",
+      "items": [
+        {
+          "type": "item",
+          "title": "Webhooks overview",
+          "uri": "/docs/webhooks-overview.md"
+        },
+        {
+          "type": "item",
+          "title": "Webhooks events",
+          "uri": "/docs/webhooks-events.md"
+        },
+        {
+          "type": "item",
+          "title": "Webhooks signatures",
+          "uri": "/docs/webhooks-signatures.md"
+        }
+      ]
+    },
+    {
       "type": "divider",
       "title": "APIS"
     },
