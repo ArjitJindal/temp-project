@@ -57,6 +57,12 @@ export const WebhookDetails: React.FC<Props> = ({
     <>
       <Row justify="end" style={{ paddingBottom: 10 }}>
         <Space>
+          <a
+            href="https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview"
+            target="_blank"
+          >
+            Learn more about webhooks
+          </a>
           <Button
             type="primary"
             size="small"
