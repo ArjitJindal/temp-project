@@ -14,7 +14,7 @@ export function isRuleAction(value: unknown): value is RuleAction {
   return neverReturn(asRuleAction, false);
 }
 
-export function useRuleActionTitle(ruleAction: RuleAction | string): string {
+export function getRuleActionTitle(ruleAction: RuleAction | string): string {
   if (ruleAction === 'ALLOW') {
     return 'Allowed';
   }

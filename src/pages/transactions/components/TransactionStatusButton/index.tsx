@@ -5,6 +5,7 @@ import s from './style.module.less';
 import PopupContent from './PopupContent';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { RuleAction } from '@/apis';
+import { getRuleActionTitle } from '@/utils/rules';
 
 interface Props {
   status: RuleAction | undefined;
@@ -14,6 +15,12 @@ interface Props {
 export default function StatusSearchButton(props: Props) {
   const { status, onConfirm } = props;
   const [visible, setVisible] = useState(false);
+
+  const displayName = (status: RuleAction | undefined) => {
+    if (status === undefined) return 'All cases';
+    if (status === 'FLAG') return 'FLAGGED';
+    return `${status}ED`;
+  };
 
   return (
     <Popover
@@ -42,7 +49,7 @@ export default function StatusSearchButton(props: Props) {
           onConfirm(undefined);
         }}
       >
-        {status ?? 'All cases'}
+        {status !== undefined ? getRuleActionTitle(status) : 'All cases'}
       </ActionButton>
     </Popover>
   );

@@ -18,7 +18,7 @@ import {
 } from 'react-device-detect';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
-import { useRuleActionTitle } from '../../../../utils/rules';
+import { getRuleActionTitle } from '../../../../utils/rules';
 import header from './dashboardutils';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -105,13 +105,13 @@ const TransactionsChartCard = () => {
   type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
   const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
-  const suspendedAlias = useRuleActionTitle(
+  const suspendedAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'SUSPEND')?.alias || 'SUSPEND',
   );
-  const blockedAlias = useRuleActionTitle(
+  const blockedAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'BLOCK')?.alias || 'BLOCK',
   );
-  const flaggedAlias = useRuleActionTitle(
+  const flaggedAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'FLAG')?.alias || 'FLAG',
   );
   const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
