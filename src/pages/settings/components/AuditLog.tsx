@@ -165,8 +165,11 @@ export const AuditLog: React.FC = () => {
       title: <Typography.Text strong>Time of Action</Typography.Text>,
       width: '200px',
       dataIndex: 'timeOfAction',
-      valueType: 'dateTimeRange',
-      sorter: true,
+      valueType: 'dateTime',
+      sorter: (a, b) =>
+        a.timeOfAction !== undefined && b.timeOfAction !== undefined
+          ? a.timeOfAction - b.timeOfAction
+          : -1,
       render: (_, auditLog) => {
         return moment(auditLog.timeOfAction).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
       },
@@ -176,7 +179,7 @@ export const AuditLog: React.FC = () => {
   return (
     <Table<TableItem>
       disableStripedColoring={true}
-      rowKey="action"
+      rowKey="id"
       headerTitle="Audit Log"
       search={false}
       columns={columns}
