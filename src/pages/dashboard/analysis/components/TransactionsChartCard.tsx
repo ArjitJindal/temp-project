@@ -298,9 +298,9 @@ const TransactionsChartCard = () => {
         >
           {[
             { title: 'Total Transactions', key: 'totalTransactions' },
+            { title: `${flaggedAlias} Transactions`, key: 'flaggedTransactions' },
             { title: `${suspendedAlias} Transactions`, key: 'suspendedTransactions' },
             { title: `${blockedAlias} Transactions`, key: 'stoppedTransactions' },
-            { title: `${flaggedAlias} Transactions`, key: 'flaggedTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
               <Spin spinning={isLoading(transactionsCountData)}>
