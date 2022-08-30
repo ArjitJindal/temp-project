@@ -75,13 +75,26 @@ export const createMongoDBCollections = async (
       TRANSACTIONS_COLLECTION(tenantId)
     )
     await transactionCollection.createIndex({
-      timestamp: 1,
+      caseStatus: 1,
       type: 1,
       status: 1,
+      timestamp: -1,
     })
     await transactionCollection.createIndex({ transactionId: 1 })
     await transactionCollection.createIndex({ destinationUserId: 1 })
     await transactionCollection.createIndex({ originUserId: 1 })
+    await transactionCollection.createIndex({
+      'destinationAmountDetails.transactionCurrency': 1,
+    })
+    await transactionCollection.createIndex({
+      'originAmountDetails.transactionCurrency': 1,
+    })
+    await transactionCollection.createIndex({
+      'destinationPaymentDetails.method': 1,
+    })
+    await transactionCollection.createIndex({
+      'originPaymentDetails.method': 1,
+    })
 
     try {
       await db.createCollection(USERS_COLLECTION(tenantId))
@@ -90,7 +103,7 @@ export const createMongoDBCollections = async (
     }
     const usersCollection = db.collection(USERS_COLLECTION(tenantId))
     await usersCollection.createIndex({
-      createdTimestamp: 1,
+      createdTimestamp: -1,
     })
     await usersCollection.createIndex({
       userId: 1,
@@ -118,8 +131,8 @@ export const createMongoDBCollections = async (
     )
     await transactionEventsCollection.createIndex({
       transactionId: 1,
-      timestamp: 1,
       transactionState: 1,
+      timestamp: -1,
     })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)
