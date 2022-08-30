@@ -150,6 +150,7 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const tarponStream = new Stream(this, 'tarponStream', {
       streamName: 'tarponDynamoChangeCaptureStream',
+      retentionPeriod: Duration.hours(72),
       shardCount: 1,
     })
     if (config.stage === 'dev') {
@@ -165,6 +166,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const hammerheadStream = new Stream(this, 'hammerheadStream', {
       streamName: 'hammerheadDynamoChangeCaptureStream',
+      retentionPeriod: Duration.hours(72),
       shardCount: 1,
     })
     if (config.stage === 'dev') {
