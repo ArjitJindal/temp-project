@@ -42,7 +42,7 @@ export class TransactionService {
     updateRequest: TransactionUpdateRequest
   ) {
     const statusChange: TransactionStatusChange | undefined =
-      updateRequest.status && {
+      (updateRequest.status || updateRequest.caseStatus) && {
         userId,
         status: updateRequest.status,
         timestamp: Date.now(),
