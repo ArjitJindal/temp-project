@@ -156,7 +156,6 @@ function TableList() {
         title: 'Transaction Type',
         dataIndex: 'type',
         width: 175,
-        ellipsis: true,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
@@ -405,7 +404,7 @@ function TableList() {
       {
         title: 'Operations',
         hideInSearch: true,
-        sorter: true,
+        fixed: 'right',
         width: 120,
         onCell: (_) => ({
           rowSpan: _.rowSpan,
@@ -423,8 +422,9 @@ function TableList() {
       {
         title: 'Assignees',
         hideInSearch: true,
-        width: 300,
+        width: 250,
         ellipsis: true,
+        fixed: 'right',
         onCell: (_) => ({
           rowSpan: _.rowSpan,
         }),
