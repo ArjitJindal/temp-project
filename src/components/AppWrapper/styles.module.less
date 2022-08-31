@@ -2,6 +2,11 @@
 @collapsed-menu-width: 80px;
 @open-menu-width: 250px;
 
+// header z-index shouldn't be greater than 1000 as it's the z-index of modal and drawer
+@header-z-index: 999;
+// popover should be lower than header
+@popover-z-index: 998;
+
 :root {
   .root {
     min-height: 100vh;
@@ -22,7 +27,7 @@
     top: 0;
     bottom: 0;
     left: 0;
-    z-index: 3;
+    z-index: @header-z-index;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -72,5 +77,11 @@
         padding-bottom: 40px !important;
       }
     }
+  }
+}
+
+:global {
+  .ant-popover {
+    z-index: @popover-z-index !important;
   }
 }
