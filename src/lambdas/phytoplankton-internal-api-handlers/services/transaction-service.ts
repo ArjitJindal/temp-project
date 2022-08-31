@@ -48,6 +48,7 @@ export class TransactionService {
         timestamp: Date.now(),
         reason: updateRequest.reason,
         caseStatus: updateRequest.caseStatus,
+        otherReason: updateRequest.otherReason,
       }
     const updates = {
       assignments: updateRequest.assignments,

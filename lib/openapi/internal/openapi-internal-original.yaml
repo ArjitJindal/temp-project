@@ -1699,11 +1699,13 @@ components:
         reason:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/CaseClosingReasons'
         timestamp:
           type: number
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
+        otherReason:
+          type: string
       required:
         - userId
         - timestamp
@@ -1720,9 +1722,11 @@ components:
         reason:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/CaseClosingReasons'
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
+        otherReason:
+          type: string
     TransactionsUpdateRequest:
       title: TransactionsUpdateRequest
       type: object
@@ -2099,6 +2103,20 @@ components:
         - event
         - eventCreatedAt
         - request
+    CaseClosingReasons:
+      type: string
+      title: CaseClosingReasons
+      x-stoplight:
+        id: 54xyfgwxvubyx
+      enum:
+        - Other
+        - False positive
+        - Documents collected
+        - Transaction Rejected
+        - Transaction Refunded
+        - Suspicious activity reported (SAR)
+        - Documents not collected
+        - Investigation completed
   securitySchemes:
     Authorization:
       type: http
