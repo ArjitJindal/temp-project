@@ -335,8 +335,8 @@ export class TransactionRepository {
     return { total, data: await cursor.toArray() }
   }
 
-  public async updateTransactionCaseManagement(
-    transactionId: string,
+  public async updateTransactionsCaseManagement(
+    transactionIds: string[],
     updates: {
       assignments?: Assignment[]
       status?: RuleAction
@@ -348,8 +348,8 @@ export class TransactionRepository {
     const collection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    await collection.updateOne(
-      { transactionId },
+    await collection.updateMany(
+      { transactionId: { $in: transactionIds } },
       {
         $set: _.omitBy<Partial<TransactionCaseManagement>>(
           {

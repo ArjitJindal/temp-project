@@ -36,9 +36,9 @@ export class TransactionService {
     return result
   }
 
-  public async updateTransaction(
+  public async updateTransactions(
     userId: string,
-    transactionId: string,
+    transactionIds: string[],
     updateRequest: TransactionUpdateRequest
   ) {
     const statusChange: TransactionStatusChange | undefined =
@@ -55,8 +55,8 @@ export class TransactionService {
       statusChange: statusChange,
       caseStatus: updateRequest.caseStatus,
     }
-    await this.transactionRepository.updateTransactionCaseManagement(
-      transactionId,
+    await this.transactionRepository.updateTransactionsCaseManagement(
+      transactionIds,
       updates
     )
     return 'OK'

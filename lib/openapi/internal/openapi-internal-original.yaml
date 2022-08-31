@@ -432,6 +432,17 @@ paths:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
+    post:
+      summary: Transactions - Update
+      operationId: post-transactions
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionsUpdateRequest'
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -524,17 +535,6 @@ paths:
         name: transactionId
         in: path
         required: true
-    post:
-      summary: Transaction - Update
-      operationId: post-transactions-transactionId
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TransactionUpdateRequest'
     get:
       summary: Transaction - Get
       operationId: get-transaction
@@ -1723,6 +1723,19 @@ components:
             type: string
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
+    TransactionsUpdateRequest:
+      title: TransactionsUpdateRequest
+      type: object
+      properties:
+        transactionIds:
+          type: array
+          items:
+            type: string
+        transactionUpdates:
+          $ref: '#/components/schemas/TransactionUpdateRequest'
+      required:
+        - transactionIds
+        - transactionUpdates
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object

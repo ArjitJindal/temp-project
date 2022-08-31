@@ -20,7 +20,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { connectToDB } from '@/utils/mongoDBUtils'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
-import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
+import { TransactionsUpdateRequest } from '@/@types/openapi-internal/TransactionsUpdateRequest'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -206,15 +206,15 @@ export const transactionsViewHandler = lambdaApi()(
       )
     } else if (
       event.httpMethod === 'POST' &&
-      event.resource === '/transactions/{transactionId}' &&
-      event.pathParameters?.transactionId &&
+      event.path.endsWith('/transactions') &&
       event.body
     ) {
-      const updateRequest = JSON.parse(event.body) as TransactionUpdateRequest
-      return transactionService.updateTransaction(
+      const updateRequest = JSON.parse(event.body) as TransactionsUpdateRequest
+      const transactionIds = updateRequest?.transactionIds || []
+      return transactionService.updateTransactions(
         userId,
-        event.pathParameters.transactionId,
-        updateRequest
+        transactionIds,
+        updateRequest.transactionUpdates
       )
     } else if (
       event.httpMethod === 'GET' &&
