@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useState,
+  Key,
 } from 'react';
 import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
@@ -66,6 +67,17 @@ type ActionRenderer<Params extends object = ParamsType> = (
   props: ActionRendererProps<Params>,
 ) => React.ReactNode;
 
+interface EntityRowSelection<T> {
+  selectedEntities: string[];
+  onChange: (selectedRows: Key[]) => void;
+  renderCell: (
+    value: boolean,
+    record: T,
+    index: number,
+    originNode: React.ReactNode,
+  ) => React.ReactNode;
+}
+
 interface Props<T, Params extends object, ValueType>
   extends Omit<ProTableProps<T, Params, ValueType>, keyof OverridenProps<T, Params>>,
     OverridenProps<T, Params> {
@@ -75,6 +87,7 @@ interface Props<T, Params extends object, ValueType>
   disableExpandedRowPadding?: boolean;
   data?: ResponsePayload<T>;
   actionsHeader?: ActionRenderer<Params>[];
+  entitySelection?: EntityRowSelection<T>;
 }
 
 const TABLE_LOCALE = {
@@ -125,6 +138,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     actionRef,
     headerTitle,
     actionsHeader,
+    entitySelection,
     ...rest
   } = props;
 
@@ -144,6 +158,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
 
   useImperativeHandle<TableActionType, TableActionType>(actionRef, () => ({
     reload() {
+      onSelectChange([]);
       setParamsState(_.cloneDeep(paramsState));
     },
   }));
@@ -190,6 +205,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
   const prevParams = usePrevious(paramsState.params);
   useDeepEqualEffect(() => {
     if (prevParams != null && !isEqual(prevParams, paramsState.params)) {
+      onSelectChange([]);
       setParamsState((state) => ({ ...state, page: 1 }));
     }
   }, [prevParams, paramsState.params]);
@@ -197,6 +213,13 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
   useEffect(() => {
     triggerRequest();
   }, [triggerRequest]);
+
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
+    setSelectedRowKeys(newSelectedRowKeys);
+    entitySelection?.onChange(newSelectedRowKeys);
+  };
 
   return (
     <div className={style.root}>
@@ -233,6 +256,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
             ...state,
             params: { ...state.params, ...newParams },
           }));
+          onSelectChange([]);
         }}
         onChange={(pagination, filters, sorter) => {
           const sort: Record<string, SortOrder> = (
@@ -253,6 +277,19 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
         options={{
           ...(options || {}),
           reload: !options || options.reload != false ? triggerRequest : false,
+        }}
+        rowSelection={
+          entitySelection
+            ? {
+                selectedRowKeys,
+                onChange: onSelectChange,
+                renderCell: entitySelection?.renderCell,
+              }
+            : undefined
+        }
+        tableAlertRender={() => false}
+        tableAlertOptionRender={() => {
+          return false;
         }}
       />
       {pagination !== false && (

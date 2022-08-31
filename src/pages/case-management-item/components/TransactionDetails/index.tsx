@@ -233,11 +233,13 @@ export const TransactionDetails: React.FC<Props> = ({
     const hideMessage = message.loading(`Saving...`, 0);
     try {
       setSaving(true);
-      await api.postTransactionsTransactionId({
-        transactionId: transaction.transactionId as string,
-        TransactionUpdateRequest: {
-          status: status === transaction.status ? undefined : status,
-          assignments,
+      await api.postTransactions({
+        TransactionsUpdateRequest: {
+          transactionIds: [transaction.transactionId as string],
+          transactionUpdates: {
+            status: status === transaction.status ? undefined : status,
+            assignments,
+          },
         },
       });
       if (onTransactionUpdate) {

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { ProColumns } from '@ant-design/pro-table';
-import { message, Tabs } from 'antd';
+import { Divider, message, Tabs } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
 import { Link } from 'react-router-dom';
@@ -18,7 +18,10 @@ import { RequestFunctionType, Table, TableActionType } from '@/components/ui/Tab
 import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
-import CaseStatusChangeForm from '@/pages/case-management/components/CaseStatusChangeForm';
+import {
+  CaseStatusChangeForm,
+  CasesStatusChangeForm,
+} from '@/pages/case-management/components/CaseStatusChangeForm';
 import { AsyncResource, init, success } from '@/utils/asyncResource';
 import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
@@ -84,10 +87,12 @@ function TableList() {
           ...transaction,
           assignments,
         });
-        await api.postTransactionsTransactionId({
-          transactionId: transaction.transactionId as string,
-          TransactionUpdateRequest: {
-            assignments,
+        await api.postTransactions({
+          TransactionsUpdateRequest: {
+            transactionIds: [transaction.transactionId as string],
+            transactionUpdates: {
+              assignments,
+            },
           },
         });
         message.success('Saved');
@@ -627,6 +632,34 @@ function TableList() {
     [analytics, api, pushParamsToNavigation, isOpenTab],
   );
 
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+
+  const onSelectEntityChange = (newSelectedRowKeys: React.Key[]) => {
+    const newSelectedKeySet = new Set<string>();
+    newSelectedRowKeys.forEach((key) => {
+      const splitKey = (key as string).split('#');
+      if (splitKey.length) {
+        splitKey.pop();
+      }
+      newSelectedKeySet.add(splitKey.join('#'));
+    });
+    setSelectedEntities(Array.from(newSelectedKeySet));
+  };
+
+  const onCheckBoxRender = (
+    value: boolean,
+    record: CaseManagementItem,
+    index: number,
+    originNode: React.ReactNode,
+  ): React.ReactNode => {
+    return {
+      props: {
+        rowSpan: record.rowSpan,
+      },
+      children: originNode,
+    };
+  };
+
   return (
     <PageWrapper title={i18n('menu.case-management')}>
       <div className={styles.tab}>
@@ -635,6 +668,7 @@ function TableList() {
           destroyInactiveTabPane={true}
           onChange={(key) => {
             setIsOpenTab(key === 'open');
+            setSelectedEntities([]);
           }}
         >
           <Tabs.TabPane tab="Open" key="open">
@@ -668,6 +702,12 @@ function TableList() {
                           params: { ...state.params, transactionState: value ?? undefined },
                         }));
                       }}
+                    />
+                    <Divider type="vertical" style={{ height: '32px' }} />
+                    <CasesStatusChangeForm
+                      transactionIds={selectedEntities}
+                      onSaved={reloadTable}
+                      newCaseStatus="CLOSED"
                     />
                   </>
                 ),
@@ -707,6 +747,11 @@ function TableList() {
               }}
               onReset={() => {
                 pushParamsToNavigation({});
+              }}
+              entitySelection={{
+                selectedEntities,
+                onChange: onSelectEntityChange,
+                renderCell: onCheckBoxRender,
               }}
             />
           </Tabs.TabPane>
@@ -742,6 +787,12 @@ function TableList() {
                         }));
                       }}
                     />
+                    <Divider type="vertical" style={{ height: '32px' }} />
+                    <CasesStatusChangeForm
+                      transactionIds={selectedEntities}
+                      onSaved={reloadTable}
+                      newCaseStatus="REOPENED"
+                    />
                   </>
                 ),
               ]}
@@ -780,6 +831,11 @@ function TableList() {
               }}
               onReset={() => {
                 pushParamsToNavigation({});
+              }}
+              entitySelection={{
+                selectedEntities,
+                onChange: onSelectEntityChange,
+                renderCell: onCheckBoxRender,
               }}
             />
           </Tabs.TabPane>
