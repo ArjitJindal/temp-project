@@ -8,23 +8,23 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 type TransactionHandler = (
   tenantId: string,
-  oldTransaction: TransactionWithRulesResult,
-  newTransaction: TransactionWithRulesResult
+  oldTransaction: TransactionWithRulesResult | undefined,
+  newTransaction: TransactionWithRulesResult | undefined
 ) => Promise<void>
 type TransactionEventHandler = (
   tenantId: string,
-  oldTransactionEvent: TransactionEvent,
-  newTransactionEvent: TransactionEvent
+  oldTransactionEvent: TransactionEvent | undefined,
+  newTransactionEvent: TransactionEvent | undefined
 ) => Promise<void>
 type UserHanlder = (
   tenantId: string,
-  oldUser: User,
-  newUser: User
+  oldUser: User | undefined,
+  newUser: User | undefined
 ) => Promise<void>
 type UserEventHandler = (
   tenantId: string,
-  oldUserEvent: ConsumerUserEvent,
-  newUserEvent: ConsumerUserEvent
+  oldUserEvent: ConsumerUserEvent | undefined,
+  newUserEvent: ConsumerUserEvent | undefined
 ) => Promise<void>
 
 export class TarponStreamConsumerBuilder {

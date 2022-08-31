@@ -25,8 +25,12 @@ const sqs = new AWS.SQS()
 
 async function transactionHandler(
   tenantId: string,
-  transaction: TransactionWithRulesResult
+  transaction: TransactionWithRulesResult | undefined
 ) {
+  if (!transaction) {
+    return
+  }
+
   logger.info(`Processing transaction ${transaction.transactionId}`)
   const mongoDb = await connectToDB()
   const transactionsRepo = new TransactionRepository(tenantId, {
@@ -72,7 +76,14 @@ async function transactionHandler(
   }
 }
 
-async function userHandler(tenantId: string, user: Business | User) {
+async function userHandler(
+  tenantId: string,
+  user: Business | User | undefined
+) {
+  if (!user) {
+    return
+  }
+
   logger.info(`Processing user ${user.userId}`)
   const db = (await connectToDB()).db()
   const userCollection = db.collection<Business | User>(
@@ -85,8 +96,12 @@ async function userHandler(tenantId: string, user: Business | User) {
 
 async function userEventHandler(
   tenantId: string,
-  userEvent: ConsumerUserEvent | BusinessUserEvent
+  userEvent: ConsumerUserEvent | BusinessUserEvent | undefined
 ) {
+  if (!userEvent) {
+    return
+  }
+
   logger.info(
     `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
   )
@@ -109,8 +124,12 @@ async function userEventHandler(
 
 async function transactionEventHandler(
   tenantId: string,
-  transactionEvent: TransactionEvent
+  transactionEvent: TransactionEvent | undefined
 ) {
+  if (!transactionEvent) {
+    return
+  }
+
   logger.info(
     `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
   )

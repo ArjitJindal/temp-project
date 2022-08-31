@@ -51,13 +51,13 @@ async function sendWebhookTasks(
 
 async function userHandler(
   tenantId: string,
-  oldUser: GenericUser,
-  newUser: GenericUser
+  oldUser: GenericUser | undefined,
+  newUser: GenericUser | undefined
 ) {
   const webhookTasks: ThinWebhookDeliveryTask[] = []
-  const diffResult = diff(oldUser, newUser) as Partial<GenericUser>
+  const diffResult = diff(oldUser || {}, newUser || {}) as Partial<GenericUser>
 
-  if (diffResult.userStateDetails && newUser.userStateDetails) {
+  if (diffResult?.userStateDetails && newUser?.userStateDetails) {
     const payload: UserStateDetails = {
       userId: newUser.userId,
       ...newUser.userStateDetails,
