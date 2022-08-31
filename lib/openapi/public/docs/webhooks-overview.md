@@ -29,7 +29,7 @@ Creating a webhook endpoint is no different from creating any other page on your
 
 ### Step 1: Identify the events to subscribe
 
-Check [Webhooks Events](<(./webhooks-events.md)>) for the complete list of events.
+Check [Webhooks Events](https://docs.flagright.com/docs/flagright-api/295118b92ce19-webhook-events) for the complete list of events.
 
 ### Step 2: Create a webhook endpoint
 
@@ -37,7 +37,7 @@ Set up an HTTP endpoint that can accept unauthenticated webhook requests with a 
 
 ### Step 3: Handle requests from Flagright
 
-Your endpoint must be configured to read [event objects](<(./webhooks-events.md)>) for the type of events you want to receive. Flagright sends events to your webhook endpoint as part of a POST request with a JSON payload.
+Your endpoint must be configured to read [event objects](https://docs.flagright.com/docs/flagright-api/295118b92ce19-webhook-events) for the type of events you want to receive. Flagright sends events to your webhook endpoint as part of a POST request with a JSON payload.
 
 #### Check event objects
 
@@ -62,7 +62,7 @@ Flagright webhooks have built-in retry methods for 3xx, 4xx, or 5xx response sta
 
 ### Step 4: Secure your webhooks (recommended)
 
-Use [webhook signatures](<(./webhooks-signatures.md)>) to verify that Flagright generated a webhook request and that it didn’t come from a server acting like Flagright.
+Use [webhook signatures](https://docs.flagright.com/docs/flagright-api/5f9800707ca91-check-the-webhook-signatures) to verify that Flagright generated a webhook request and that it didn’t come from a server acting like Flagright.
 
 ### Sample code
 
