@@ -8,6 +8,7 @@ import s from './styles.module.less';
 import PersonsTable from './PersonsTable';
 import CollapsableSection from '@/pages/users-item/UserDetails/CollapsableSection';
 import UserStateEditor from '@/pages/users-item/UserDetails/UserStateEditor';
+import KycStatusEditor from '@/pages/users-item/UserDetails/KycStatusEditor';
 import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
@@ -49,6 +50,9 @@ export default function BusinessUserDetails(props: Props) {
       <ProDescriptions column={2}>
         <ProDescriptions.Item label="User Status" style={{ paddingBottom: 0 }}>
           <UserStateEditor user={user} />
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label="KYC Status" style={{ paddingBottom: 0 }}>
+          <KycStatusEditor user={user} />
         </ProDescriptions.Item>
       </ProDescriptions>
       <Divider />
