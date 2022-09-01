@@ -4,8 +4,8 @@ import { useDebounce } from 'ahooks';
 import { User } from '../types';
 import { useUsers } from '../helpers';
 import s from './style.module.less';
-import UserFillIcon from '@/components/ui/icons/Remix/user-fill.react.svg';
-import SearchLineIcon from '@/components/ui/icons/Remix/search-line.react.svg';
+import UserFillIcon from '@/components/ui/icons/Remix/user/user-fill.react.svg';
+import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import UserList from '@/pages/transactions/components/UserSearchButton/PopupContent/UserList';
 
 interface Props {

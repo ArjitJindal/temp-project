@@ -7,7 +7,7 @@ import { copyTextToClipboard } from '@/utils/browser';
 
 interface ExtraProps {
   to?: string;
-  children: string;
+  children?: string;
 }
 
 export default function Id(props: ButtonProps & ExtraProps) {
@@ -28,13 +28,15 @@ export default function Id(props: ButtonProps & ExtraProps) {
       onClick={(e) => {
         e.preventDefault();
         // todo: i18n
-        copyTextToClipboard(children)
-          .then(() => {
-            message.success('Copied to clipboard');
-          })
-          .catch((e) => {
-            message.warn(`Unable copy to clipboard; ${e.message ?? 'Unknown error'}`);
-          });
+        if (children) {
+          copyTextToClipboard(children)
+            .then(() => {
+              message.success('Copied to clipboard');
+            })
+            .catch((e) => {
+              message.warn(`Unable copy to clipboard; ${e.message ?? 'Unknown error'}`);
+            });
+        }
       }}
     >
       {children}

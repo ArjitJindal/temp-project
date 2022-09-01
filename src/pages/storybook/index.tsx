@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
-import FontSizeIcon from '@/components/ui/icons/Remix/font-size.react.svg';
+import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
 
 function Component(props: { title: string; children: React.ReactNode }) {
   return (

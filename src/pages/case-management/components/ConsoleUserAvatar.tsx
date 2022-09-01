@@ -1,7 +1,6 @@
 import { Avatar, Space, Tag } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Account } from '@/apis';
-//import { colorSchema } from './utils';
 
 interface Props {
   userId: string;
@@ -10,10 +9,6 @@ interface Props {
 }
 
 export const ConsoleUserAvatar: React.FC<Props> = ({ userId, users, loadingUsers }) => {
-  console.log(`userID: ${userId}`);
-  console.log(`users: ${JSON.stringify(users)}`);
-  console.log(`user: ${JSON.stringify(users[userId])}`);
-
   return (
     <Tag key={userId}>
       <Space size="small">

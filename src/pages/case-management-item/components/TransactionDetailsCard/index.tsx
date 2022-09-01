@@ -1,0 +1,34 @@
+import * as Card from '@/components/ui/Card';
+import UserDetails from '@/pages/transactions-item/UserDetails';
+import { TransactionCaseManagement } from '@/apis';
+import TransactionInfoCard from '@/pages/case-management-item/components/TransactionDetailsCard/TransactionInfoCard';
+
+interface Props {
+  transaction: TransactionCaseManagement;
+}
+
+export default function TransactionDetails(props: Props) {
+  const { transaction } = props;
+  return (
+    <Card.Root>
+      <Card.Section>
+        <Card.Title>Transaction Details</Card.Title>
+      </Card.Section>
+      <Card.Section direction="horizontal" align="start">
+        <TransactionInfoCard transaction={transaction} />
+        <UserDetails
+          type="ORIGIN"
+          user={transaction.originUser}
+          amountDetails={transaction.originAmountDetails}
+          paymentDetails={transaction.originPaymentDetails}
+        />
+        <UserDetails
+          type="DESTINATION"
+          user={transaction.destinationUser}
+          amountDetails={transaction.destinationAmountDetails}
+          paymentDetails={transaction.destinationPaymentDetails}
+        />
+      </Card.Section>
+    </Card.Root>
+  );
+}

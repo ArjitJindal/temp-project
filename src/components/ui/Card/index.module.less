@@ -44,15 +44,42 @@
 .section {
   display: flex;
   flex-grow: 1;
-  gap: 1rem;
   padding: @v-padding @h-padding;
 
-  &.vertical {
+  &.direction-vertical {
     flex-direction: column;
   }
 
-  &.horizontal {
+  &.direction-horizontal {
     flex-direction: row;
+  }
+
+  &.justify-start {
+    justify-content: flex-start;
+  }
+  &.justify-end {
+    justify-content: flex-end;
+  }
+  &.justify-space-between {
+    justify-content: space-between;
+  }
+
+  &.align-start {
+    align-items: flex-start;
+  }
+  &.align-end {
+    align-items: flex-end;
+  }
+  &.align-stretch {
+    align-items: stretch;
+  }
+
+  &.spacing-default {
+    gap: 1rem;
+  }
+
+  &.spacing-double {
+    gap: 2rem;
   }
 }
 

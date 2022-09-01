@@ -13,7 +13,7 @@ import ErrorBoundary from '../ErrorBoundary';
 import s from './styles.module.less';
 import { useAnalytics } from '@/utils/segment/context';
 import { useAuth0User } from '@/utils/user-utils';
-import ArrowLeftSLine from '@/components/ui/icons/Remix/arrow-left-s-line.react.svg';
+import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 
 interface Props {
   title?: string;

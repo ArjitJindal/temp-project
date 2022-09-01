@@ -12,6 +12,7 @@ import React, {
 import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
 import _ from 'lodash';
+import cn from 'clsx';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
 import {
@@ -20,7 +21,7 @@ import {
   getOr,
   init,
   isLoading,
-  loading,
+  loading as makeLoading,
   map,
   success,
 } from '@/utils/asyncResource';
@@ -85,6 +86,7 @@ interface Props<T, Params extends object, ValueType>
   isEvenRow?: (item: T) => boolean;
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
+  disableInternalPadding?: boolean;
   data?: ResponsePayload<T>;
   actionsHeader?: ActionRenderer<Params>[];
   entitySelection?: EntityRowSelection<T>;
@@ -128,6 +130,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
   const {
     disableStripedColoring = false,
     disableExpandedRowPadding = false,
+    disableInternalPadding = false,
     className,
     isEvenRow,
     request,
@@ -138,6 +141,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     actionRef,
     headerTitle,
     actionsHeader,
+    loading,
     entitySelection,
     ...rest
   } = props;
@@ -155,6 +159,12 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
       items: T[];
     }>
   >(dataSource ? success({ total: dataSource.length, items: [...dataSource] }) : init());
+
+  useDeepEqualEffect(() => {
+    if (dataSource != null) {
+      setResponseData(success({ total: dataSource.length, items: [...dataSource] }));
+    }
+  }, [dataSource]);
 
   useImperativeHandle<TableActionType, TableActionType>(actionRef, () => ({
     reload() {
@@ -174,7 +184,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
       filter: Record<string, React.ReactText[] | null>,
     ) => {
       if (request != null) {
-        setResponseData((state) => loading(getOr(state, null)));
+        setResponseData((state) => makeLoading(getOr(state, null)));
         request(params, sort, filter)
           .then((results) => {
             setResponseData(
@@ -232,20 +242,17 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
               })
             : headerTitle
         }
-        className={[
-          style.table,
-          className,
-          disableExpandedRowPadding && style.disableExpandedRowPadding,
-        ]
-          .filter((x) => !!x)
-          .join(' ')}
+        className={cn(style.table, className, {
+          [style.disableExpandedRowPadding]: disableExpandedRowPadding,
+          [style.disableInternalPadding]: disableInternalPadding,
+        })}
         locale={TABLE_LOCALE}
         rowClassName={(_, index) => {
           const isEven = isEvenRow ? isEvenRow(_) : index % 2 === 0;
           return disableStripedColoring || isEven ? style.tableRowLight : style.tableRowDark;
         }}
         {...rest}
-        loading={isLoading(responseData)}
+        loading={isLoading(responseData) || loading}
         dataSource={getOr(
           map(responseData, ({ items }) => items),
           [],

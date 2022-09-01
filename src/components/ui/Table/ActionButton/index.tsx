@@ -2,7 +2,7 @@ import React, { ReactSVGElement } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
 import { useAnalytics } from '@/utils/segment/context';
-import CloseCircleFillIcon from '@/components/ui/icons/Remix/close-circle-fill.react.svg';
+import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 
 interface Props {
   isActive?: boolean;

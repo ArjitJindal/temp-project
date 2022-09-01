@@ -2,8 +2,8 @@ import { Button } from 'antd';
 import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import style from './style.module.less';
-import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { prepareTableData } from './helpers';
+import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import {
   RuleAction,
@@ -317,7 +317,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
         expandable={{
           showExpandColumn: false,
           expandedRowKeys: expandedRows,
-          expandedRowRender: (item) => <ExpandedRowRenderer events={item.events} />,
+          expandedRowRender: (item) => <TransactionEventsTable events={item.events} />,
         }}
         isEvenRow={(item) => item.index % 2 === 0}
         scroll={{ x: 1300 }}

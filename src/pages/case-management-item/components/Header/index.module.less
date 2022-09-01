@@ -1,0 +1,23 @@
+@import 'src/components/ui/colors';
+
+.items {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: minmax(150px, 300px) minmax(120px, min-content) auto minmax(
+      120px,
+      min-content
+    ) 100px;
+  gap: 2rem;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.caseStatusTag {
+  margin-bottom: 5px !important;
+  margin-right: 5px !important;
+}

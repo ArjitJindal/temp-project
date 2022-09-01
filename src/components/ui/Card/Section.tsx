@@ -4,10 +4,32 @@ import s from './index.module.less';
 
 interface Props {
   direction?: 'horizontal' | 'vertical';
+  justify?: 'start' | 'end' | 'space-between';
+  align?: 'start' | 'end' | 'stretch';
+  spacing?: 'default' | 'double';
   children?: React.ReactNode;
+  className?: string;
 }
 
 export default function Section(props: Props) {
-  const { direction = 'vertical', children } = props;
-  return <div className={cn(s.section, s[direction])}>{children}</div>;
+  const {
+    direction = 'vertical',
+    justify = 'start',
+    align = 'stretch',
+    spacing = 'default',
+    children,
+  } = props;
+  return (
+    <div
+      className={cn(
+        s.section,
+        s[`direction-${direction}`],
+        s[`justify-${justify}`],
+        s[`align-${align}`],
+        s[`spacing-${spacing}`],
+      )}
+    >
+      {children}
+    </div>
+  );
 }

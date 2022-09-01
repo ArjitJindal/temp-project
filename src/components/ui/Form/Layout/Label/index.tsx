@@ -6,7 +6,7 @@ interface Props {
   icon?: React.ReactNode;
   title: string;
   variant?: 'default' | 'bold';
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function Label(props: Props) {
@@ -17,7 +17,7 @@ export default function Label(props: Props) {
         {icon && <div className={s.icon}>{icon}</div>}
         <div className={s.title}>{title}</div>
       </div>
-      <div className={s.content}>{children}</div>
+      {children && <div className={s.content}>{children}</div>}
     </div>
   );
 }

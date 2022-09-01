@@ -1,14 +1,25 @@
-import { Card } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import moment from 'moment';
+import SenderReceiverDetails from './SenderReceiverDetails';
 import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { TransactionDetails } from '@/pages/case-management-item/components/TransactionDetails';
 import { AsyncResource, failed, init, isSuccess, loading, success } from '@/utils/asyncResource';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import * as Card from '@/components/ui/Card';
+import * as Form from '@/components/ui/Form';
+import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
+import RestartLineIcon from '@/components/ui/icons/Remix/device/restart-line.react.svg';
+import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import TransactionState from '@/components/ui/TransactionState';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
+import EntityHeader from '@/components/ui/entityPage/EntityHeader';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 
 export default function TransactionsItem() {
   const i18n = useI18n();
@@ -63,13 +74,34 @@ export default function TransactionsItem() {
         url: makeUrl('/transactions/list'),
       }}
     >
-      <Card>
+      <Card.Root>
         <AsyncResourceRenderer resource={currentItem}>
           {(transaction) => (
-            <TransactionDetails transaction={transaction} isTransactionView={true} />
+            <>
+              <Card.Section direction="horizontal" spacing="double">
+                <EntityHeader id={transaction.transactionId} idTitle="Transaction ID">
+                  <Form.Layout.Label icon={<TimerLineIcon />} title="Transaction Time">
+                    {moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction State">
+                    <TransactionState transactionState={transaction.transactionState} />
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction Status">
+                    <RuleActionStatus ruleAction={transaction.status} />
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
+                    <TransactionTypeTag transactionType={transaction.type} />
+                  </Form.Layout.Label>
+                </EntityHeader>
+              </Card.Section>
+              <Card.Section>
+                <SenderReceiverDetails transaction={transaction} />
+                <TransactionEventsCard events={transaction.events ?? []} />
+              </Card.Section>
+            </>
           )}
         </AsyncResourceRenderer>
-      </Card>
+      </Card.Root>
     </PageWrapper>
   );
 }

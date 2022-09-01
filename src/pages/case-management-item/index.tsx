@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import { Card } from 'antd';
-import { TransactionDetails } from './components/TransactionDetails';
+import TransactionDetailsCard from './components/TransactionDetailsCard';
+import Header from './components/Header';
+import RulesHitCard from './components/RulesHitCard';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
@@ -9,6 +10,9 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
+import * as Card from '@/components/ui/Card';
+import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
+import UserDetailsCard from '@/pages/case-management-item/components/UserDetailsCard';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -21,27 +25,17 @@ export type CaseManagementItem = TransactionCaseManagement & {
   rowKey: string;
 };
 
-function TableList() {
+function CaseManagementItemPage() {
   const { id: transactionId } = useParams<'id'>();
-  const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
-  const [updatedTransactions, setUpdatedTransactions] = useState<{
-    [key: string]: TransactionCaseManagement;
-  }>({});
-  const handleTransactionUpdate = useCallback(async (newTransaction: TransactionCaseManagement) => {
-    const transactionId = newTransaction.transactionId as string;
-    setUpdatedTransactions((prev) => ({
-      ...prev,
-      [transactionId]: newTransaction,
-    }));
-  }, []);
+  const [currentCase, setCurrentCase] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const api = useApi();
-  // const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
+
   useEffect(() => {
     if (transactionId == null) {
-      setCurrentItem(failed(`Transaction id is not specified`));
+      setCurrentCase(failed(`Transaction id is not specified`));
       return;
     }
-    setCurrentItem(loading());
+    setCurrentCase(loading());
     let isCanceled = false;
     api
       .getTransaction({
@@ -51,7 +45,7 @@ function TableList() {
         if (isCanceled) {
           return;
         }
-        setCurrentItem(success(transaction));
+        setCurrentCase(success(transaction));
       })
       .catch((e) => {
         if (isCanceled) {
@@ -64,7 +58,7 @@ function TableList() {
         } else if (e instanceof Error && e.message) {
           message = e.message;
         }
-        setCurrentItem(failed(message));
+        setCurrentCase(failed(message));
       });
     return () => {
       isCanceled = true;
@@ -80,21 +74,31 @@ function TableList() {
         url: makeUrl('/case-management'),
       }}
     >
-      <Card>
-        <AsyncResourceRenderer resource={currentItem}>
+      <Card.Root>
+        <AsyncResourceRenderer resource={currentCase}>
           {(transaction) => (
-            <TransactionDetails
-              transaction={
-                (transaction.transactionId
-                  ? updatedTransactions[transaction.transactionId]
-                  : null) ?? transaction
-              }
-              onTransactionUpdate={handleTransactionUpdate}
-            />
+            <>
+              <Card.Section>
+                <Header transaction={transaction} />
+              </Card.Section>
+              <Card.Section>
+                <TransactionDetailsCard transaction={transaction} />
+                <RulesHitCard rulesHit={transaction.hitRules} />
+                <TransactionEventsCard events={transaction.events ?? []} />
+                <UserDetailsCard
+                  title="Origin (Sender) User Details"
+                  user={transaction.originUser}
+                />
+                <UserDetailsCard
+                  title="Destination (Receiver) User Details"
+                  user={transaction.destinationUser}
+                />
+              </Card.Section>
+            </>
           )}
         </AsyncResourceRenderer>
-      </Card>
+      </Card.Root>
     </PageWrapper>
   );
 }
-export default TableList;
+export default CaseManagementItemPage;

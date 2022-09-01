@@ -8,7 +8,7 @@ interface Props {
 
 export const ClosingReasonTag: React.FC<Props> = ({ closingReasons }) => {
   if (!closingReasons) {
-    return <>-</>;
+    return <></>;
   }
   const tagColor = '#ebf2ff';
 

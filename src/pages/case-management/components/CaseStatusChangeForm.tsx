@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
-import { CaseStatus } from '@/apis';
+import { CaseClosingReasons, CaseStatus } from '@/apis';
 import Button from '@/components/ui/Button';
 
 interface Props {
@@ -41,7 +41,7 @@ const CLOSING_REASONS = [
 ];
 
 interface FormValues {
-  reasons: string[];
+  reasons: CaseClosingReasons[];
   reasonOther: string | null;
 }
 
@@ -86,12 +86,9 @@ export function CaseStatusChangeForm(props: Props) {
             transactionIds: [transactionId],
             transactionUpdates: {
               caseStatus: newCaseStatus,
-              reason: values.reasons.map((x) => {
-                if (x === OTHER_REASON) {
-                  return values.reasonOther ?? '';
-                }
-                return x;
-              }),
+              otherReason:
+                values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
+              reason: values.reasons,
             },
           },
         });
@@ -232,12 +229,9 @@ export function CasesStatusChangeForm(props: CasesProps) {
             transactionIds,
             transactionUpdates: {
               caseStatus: newCaseStatus,
-              reason: values.reasons.map((x) => {
-                if (x === OTHER_REASON) {
-                  return values.reasonOther ?? '';
-                }
-                return x;
-              }),
+              otherReason:
+                values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
+              reason: values.reasons,
             },
           },
         });
