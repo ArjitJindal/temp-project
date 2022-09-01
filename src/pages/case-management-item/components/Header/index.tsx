@@ -156,16 +156,16 @@ export default function Header(props: { transaction: TransactionCaseManagement }
           )}
         </div>
       </EntityHeader>
-      <div className={s.closingReason}>
-        <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
-          {transaction.caseStatus === 'CLOSED' && statusChanges.length > 0 && (
+      {transaction.caseStatus === 'CLOSED' && statusChanges.length > 0 && (
+        <div className={s.closingReason}>
+          <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
             <ClosingReasonTag
               closingReasons={statusChanges[statusChanges.length - 1].reason}
               otherReason={statusChanges[statusChanges.length - 1].otherReason}
             />
-          )}
-        </Form.Layout.Label>
-      </div>
+          </Form.Layout.Label>
+        </div>
+      )}
     </>
   );
 }
