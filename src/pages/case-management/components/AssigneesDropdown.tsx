@@ -1,6 +1,8 @@
 import React from 'react';
 import { Avatar, Select, Space, Tag } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
+
+import { colorSchema } from './utils';
 import { useUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
 
@@ -9,13 +11,6 @@ interface Props {
   assignments: Array<Assignment>;
   onChange: (assignees: string[]) => void;
 }
-
-const colorSchema = [
-  { text: '#FF4D4F', background: '#FFE5E6' },
-  { text: '#1AB0A1', background: '#EBFCFB' },
-  { text: '#063075', background: '#EBF2FF' },
-  { text: '#7284A3', background: '#DFE6F2' },
-];
 
 export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onChange }) => {
   const [users, loadingUsers] = useUsers();

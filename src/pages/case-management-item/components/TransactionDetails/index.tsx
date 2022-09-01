@@ -22,7 +22,9 @@ import {
   AimOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
+  DatabaseOutlined,
   EditOutlined,
+  FieldTimeOutlined,
   HistoryOutlined,
   PaperClipOutlined,
   ScanOutlined,
@@ -49,6 +51,8 @@ import UserDetails from '@/pages/users-item/UserDetails';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
+import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { RulesHitDetailsTable } from '@/pages/case-management/components/RulesHitDetailsTable';
@@ -176,7 +180,7 @@ export const TransactionDetails: React.FC<Props> = ({
 }) => {
   const user = useAuth0User();
   const api = useApi();
-  const [users] = useUsers();
+  const [users, loadingUsers] = useUsers();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
@@ -299,7 +303,7 @@ export const TransactionDetails: React.FC<Props> = ({
             </Typography.Title>
           </ProDescriptions.Item>
         </ProDescriptions>
-        <ProDescriptions size="small" column={2} colon={false}>
+        <ProDescriptions size="small" column={3} colon={false}>
           <ProDescriptions.Item
             label={
               <b>
@@ -373,6 +377,60 @@ export const TransactionDetails: React.FC<Props> = ({
           >
             <TransactionTypeTag transactionType={transaction.type} />
           </ProDescriptions.Item>
+          {!isTransactionView && transaction.caseStatus === 'CLOSED' && (
+            <ProDescriptions.Item
+              label={
+                <b>
+                  <UserOutlined /> Closed By:
+                </b>
+              }
+            >
+              {transaction?.statusChanges?.length ? (
+                <ConsoleUserAvatar
+                  userId={transaction.statusChanges[transaction.statusChanges.length - 1].userId}
+                  users={users}
+                  loadingUsers={loadingUsers}
+                />
+              ) : (
+                <>-</>
+              )}
+            </ProDescriptions.Item>
+          )}
+          {!isTransactionView &&
+            transaction?.statusChanges?.length &&
+            transaction.caseStatus === 'CLOSED' && (
+              <ProDescriptions.Item
+                label={
+                  <b>
+                    <FieldTimeOutlined /> Last Update Time:
+                  </b>
+                }
+                valueType="dateTime"
+              >
+                {transaction.statusChanges[transaction.statusChanges.length - 1].timestamp}
+              </ProDescriptions.Item>
+            )}
+        </ProDescriptions>
+        <ProDescriptions size="small" column={3} colon={false}>
+          {!isTransactionView && transaction.caseStatus === 'CLOSED' && (
+            <ProDescriptions.Item
+              label={
+                <b>
+                  <DatabaseOutlined /> Closing Reasons:
+                </b>
+              }
+            >
+              {transaction?.statusChanges?.length ? (
+                <ClosingReasonTag
+                  closingReasons={
+                    transaction.statusChanges[transaction.statusChanges.length - 1].reason
+                  }
+                />
+              ) : (
+                <>-</>
+              )}
+            </ProDescriptions.Item>
+          )}
         </ProDescriptions>
 
         <br />

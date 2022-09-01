@@ -10,6 +10,8 @@ import { TableSearchParams } from './types';
 import styles from './CaseManagement.module.less';
 import { AddToSlackButton } from './components/AddToSlackButton';
 import { AssigneesDropdown } from './components/AssigneesDropdown';
+import { ClosingReasonTag } from './components/ClosingReasonTag';
+import { ConsoleUserAvatar } from './components/ConsoleUserAvatar';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -29,7 +31,7 @@ import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ResizableTitle from '@/utils/table-utils';
-import { useAuth0User } from '@/utils/user-utils';
+import { useUsers, useAuth0User } from '@/utils/user-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
@@ -110,6 +112,8 @@ function TableList() {
   const analytics = useAnalytics();
   const navigate = useNavigate();
 
+  const [users, loadingUsers] = useUsers();
+
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
 
   useDeepEqualEffect(() => {
@@ -130,8 +134,8 @@ function TableList() {
   );
 
   // todo: i18n
-  const columns: ProColumns<CaseManagementItem>[] = useMemo(
-    () => [
+  const columns: ProColumns<CaseManagementItem>[] = useMemo(() => {
+    const mergedColumns: ProColumns<CaseManagementItem>[] = [
       {
         title: 'Transaction ID',
         dataIndex: 'transactionId',
@@ -526,9 +530,79 @@ function TableList() {
           allowClear: true,
         },
       },
-    ],
-    [parsedParams, api, handleUpdateAssignments, reloadTable, updatedTransactions, isOpenTab],
-  );
+    ];
+    if (!isOpenTab) {
+      mergedColumns.push(
+        ...([
+          {
+            title: 'Closing reason',
+            tooltip: 'Reason provided for closing a case',
+            width: 300,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return entity.statusChanges?.length ? (
+                <ClosingReasonTag
+                  closingReasons={entity.statusChanges[entity.statusChanges.length - 1].reason}
+                />
+              ) : (
+                '-'
+              );
+            },
+          },
+          {
+            title: 'Closed By',
+            width: 250,
+            hideInSearch: true,
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return entity.statusChanges?.length ? (
+                <ConsoleUserAvatar
+                  userId={entity.statusChanges[entity.statusChanges.length - 1].userId}
+                  users={users}
+                  loadingUsers={loadingUsers}
+                />
+              ) : (
+                '-'
+              );
+            },
+          },
+          {
+            title: 'Last Update Time',
+            width: 160,
+            hideInSearch: true,
+            valueType: 'dateTimeRange',
+            onCell: (_) => ({
+              rowSpan: _.rowSpan,
+            }),
+            render: (dom, entity) => {
+              return entity.statusChanges?.length ? (
+                <TimestampDisplay
+                  timestamp={entity.statusChanges[entity.statusChanges.length - 1].timestamp}
+                />
+              ) : (
+                '-'
+              );
+            },
+          },
+        ] as ProColumns<CaseManagementItem>[]),
+      );
+    }
+    return mergedColumns;
+  }, [
+    parsedParams,
+    api,
+    handleUpdateAssignments,
+    reloadTable,
+    updatedTransactions,
+    isOpenTab,
+    users,
+    loadingUsers,
+  ]);
 
   const mergeColumns: ProColumns<CaseManagementItem>[] = columns.map((col, index) => ({
     ...col,
