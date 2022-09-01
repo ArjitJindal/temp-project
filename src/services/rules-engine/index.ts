@@ -12,7 +12,10 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase, RuleResult } from './rule'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
-import { RiskRepository } from './repositories/risk-repository'
+import {
+  DEFAULT_DRS_RISK_ITEM,
+  RiskRepository,
+} from './repositories/risk-repository'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -419,14 +422,12 @@ function getUserSpecificParameters(
   parameters: object
   action: RuleAction
 } {
-  if (
-    hasFeature('PULSE') &&
-    userRiskLevel &&
-    ruleInstance.riskLevelParameters
-  ) {
+  if (hasFeature('PULSE') && ruleInstance.riskLevelParameters) {
+    const riskLevel =
+      userRiskLevel || (DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel)
     return {
-      parameters: ruleInstance.riskLevelParameters[userRiskLevel],
-      action: ruleInstance.riskLevelActions?.[userRiskLevel] as RuleAction,
+      parameters: ruleInstance.riskLevelParameters[riskLevel],
+      action: ruleInstance.riskLevelActions?.[riskLevel] as RuleAction,
     }
   }
   return {

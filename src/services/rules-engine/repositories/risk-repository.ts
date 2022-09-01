@@ -36,7 +36,7 @@ const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   },
 ]
 
-const DEFAULT_DRS_RISK_ITEM: ManualRiskAssignmentUserState = {
+export const DEFAULT_DRS_RISK_ITEM: ManualRiskAssignmentUserState = {
   riskLevel: 'HIGH',
   isManualOverride: false,
   isUpdatable: true,

@@ -1,6 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '@cdk/constants'
+import { DEFAULT_DRS_RISK_ITEM } from './risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,
@@ -8,6 +9,7 @@ import {
 } from '@/@types/openapi-internal/RuleInstance'
 import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
+import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -102,7 +104,9 @@ export class RuleInstanceRepository {
         type: item.type,
         ruleId: item.ruleId,
         parameters: item.riskLevelParameters
-          ? item.riskLevelParameters['HIGH']
+          ? item.riskLevelParameters[
+              DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel
+            ]
           : item.parameters,
         riskLevelParameters: item.riskLevelParameters,
         action: item.action,
