@@ -546,6 +546,7 @@ function TableList() {
               return entity.statusChanges?.length ? (
                 <ClosingReasonTag
                   closingReasons={entity.statusChanges[entity.statusChanges.length - 1].reason}
+                  otherReason={entity.statusChanges[entity.statusChanges.length - 1].otherReason}
                 />
               ) : (
                 '-'

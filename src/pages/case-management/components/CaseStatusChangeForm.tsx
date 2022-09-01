@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
-import { CaseClosingReasons, CaseStatus } from '@/apis';
+import { CaseStatus } from '@/apis';
 import Button from '@/components/ui/Button';
+import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 
 interface Props {
   transactionId: string;
@@ -175,7 +176,7 @@ export function CaseStatusChangeForm(props: Props) {
             <Form.Item
               name="reasonOther"
               label="Describe the reason"
-              rules={[{ required: true, message: 'Please describe the reason', max: 50 }]}
+              rules={[{ required: true, message: 'Please describe the reason', max: 150 }]}
             >
               <Input />
             </Form.Item>
