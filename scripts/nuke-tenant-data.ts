@@ -3,12 +3,19 @@ import AWS from 'aws-sdk'
 import { program } from 'commander'
 import { TarponStackConstants } from '@cdk/constants'
 import { Db } from 'mongodb'
+import { getDynamoDbClient, getMongoDbClient } from './migrations/utils/db'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQueryGenerator } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getReceiverKeys, getSenderKeys } from '@/services/rules-engine/utils'
 import {
-  connectToDB,
+  getNonUserReceiverKeys,
+  getNonUserSenderKeys,
+  getReceiverKeys,
+  getSenderKeys,
+  getUserReceiverKeys,
+  getUserSenderKeys,
+} from '@/services/rules-engine/utils'
+import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
@@ -20,12 +27,6 @@ import {
 import { logger } from '@/core/logger'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }
-
-const ENV_TO_PROFILE: { [key: string]: string } = {
-  dev: 'AWSAdministratorAccess-911899431626',
-  sandbox: 'AWSAdministratorAccess-293986822825',
-  prod: 'AWSAdministratorAccess-870721492449',
-}
 
 type TYPES = 'transaction' | 'user' | 'rule-instance' | 'dashboard' | 'import'
 const TYPES: TYPES[] = [
@@ -40,29 +41,13 @@ let allMongoDbCollections: string[] = []
 program
   .argument('tenant ID')
   .option('--types <string...>', TYPES.join(' | '))
-  .option('--env <string>', 'local | dev | sandbox | prod', 'local')
-  .option('--region <string>', 'AWS region', 'dummy')
   .parse()
 
 const tenantId = program.args[0]
-const { env, region, types } = program.opts()
-
-if (env === 'local') {
-  process.env.MONGO_URI = 'mongodb://localhost:27017'
-  process.env.ENV = 'local'
-}
+const { types } = program.opts()
 
 let mongoDb: Db
-const dynamoDb = new AWS.DynamoDB.DocumentClient({
-  region,
-  credentials:
-    env === 'local'
-      ? undefined
-      : new AWS.SharedIniFileCredentials({
-          profile: ENV_TO_PROFILE[env],
-        }),
-  endpoint: env === 'local' ? 'http://localhost:8000' : undefined,
-})
+let dynamoDb: AWS.DynamoDB.DocumentClient
 const deletedUserAggregationUserIds = new Set()
 
 async function dropMongoDbCollection(collectionName: string) {
@@ -75,12 +60,27 @@ async function dropMongoDbCollection(collectionName: string) {
 async function deleteTransaction(transaction: Transaction) {
   await deleteUserAggregation(transaction.originUserId)
   await deleteUserAggregation(transaction.destinationUserId)
+  await deletePartition(
+    'transaction event',
+    DynamoDbKeys.TRANSACTION_EVENT(
+      tenantId,
+      transaction.transactionId as string
+    ).PartitionKeyID
+  )
 
   const keysToDelete = [
     getSenderKeys(tenantId, transaction),
     getSenderKeys(tenantId, transaction, transaction.type),
+    getUserSenderKeys(tenantId, transaction),
+    getUserSenderKeys(tenantId, transaction, transaction.type),
+    getNonUserSenderKeys(tenantId, transaction),
+    getNonUserSenderKeys(tenantId, transaction, transaction.type),
     getReceiverKeys(tenantId, transaction),
     getReceiverKeys(tenantId, transaction, transaction.type),
+    getUserReceiverKeys(tenantId, transaction),
+    getUserReceiverKeys(tenantId, transaction, transaction.type),
+    getNonUserReceiverKeys(tenantId, transaction),
+    getNonUserReceiverKeys(tenantId, transaction, transaction.type),
     transaction?.deviceData?.ipAddress &&
       DynamoDbKeys.IP_ADDRESS_TRANSACTION(
         tenantId,
@@ -172,6 +172,14 @@ async function deleteUserAggregation(userId: string | undefined) {
 
 async function deleteUser(userId: string) {
   await deleteUserAggregation(userId)
+  await deletePartition(
+    'consumer user event',
+    DynamoDbKeys.CONSUMER_USER_EVENT(tenantId, userId).PartitionKeyID
+  )
+  await deletePartition(
+    'business user event',
+    DynamoDbKeys.BUSINESS_USER_EVENT(tenantId, userId).PartitionKeyID
+  )
   await deletePartitionKey(
     'user',
     DynamoDbKeys.USER(tenantId, userId) as DynamoDbKey
@@ -230,9 +238,12 @@ async function nukeTenantData(tenantId: string) {
   logger.info(
     `Starting to nuke data for tenant ${tenantId} (${typesToDelete.join(
       ','
-    )})... (${env}: ${region})`
+    )})...`
   )
-  mongoDb = (await connectToDB()).db()
+  dynamoDb = await getDynamoDbClient()
+  mongoDb = (
+    await getMongoDbClient(TarponStackConstants.MONGO_DB_DATABASE_NAME)
+  ).db()
   allMongoDbCollections = (await mongoDb.listCollections().toArray()).map(
     (collection) => collection.name
   )

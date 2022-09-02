@@ -450,7 +450,6 @@ export class TransactionRepository {
       `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
     transaction.timestamp = transaction.timestamp || Date.now()
 
-    // Important: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,
       transaction.transactionId
@@ -525,6 +524,8 @@ export class TransactionRepository {
       originUserId: transaction.originUserId,
       destinationUserId: transaction.destinationUserId,
     }
+
+    // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     return [
       userSenderKeys && {
         ...userSenderKeys,
