@@ -5,7 +5,8 @@ import Header from './components/Header';
 import RulesHitCard from './components/RulesHitCard';
 import { ApiException, TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
-import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
+import { Comment } from '@/apis/models/Comment';
+import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -13,6 +14,7 @@ import { makeUrl } from '@/utils/routing';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 import UserDetailsCard from '@/pages/case-management-item/components/UserDetailsCard';
+import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -67,6 +69,18 @@ function CaseManagementItemPage() {
 
   const i18n = useI18n();
 
+  const handleCommentsUpdate = (newComments: Comment[]) => {
+    setCurrentCase((prevState) => {
+      return map(
+        prevState,
+        (transaction): TransactionCaseManagement => ({
+          ...transaction,
+          comments: newComments,
+        }),
+      );
+    });
+  };
+
   return (
     <PageWrapper
       backButton={{
@@ -92,6 +106,11 @@ function CaseManagementItemPage() {
                 <UserDetailsCard
                   title="Destination (Receiver) User Details"
                   user={transaction.destinationUser}
+                />
+                <CommentsCard
+                  transactionId={transactionId}
+                  comments={transaction.comments ?? []}
+                  onCommentsUpdate={handleCommentsUpdate}
                 />
               </Card.Section>
             </>

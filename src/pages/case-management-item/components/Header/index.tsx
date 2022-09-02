@@ -75,7 +75,6 @@ export default function Header(props: { transaction: TransactionCaseManagement }
   );
 
   const statusChanges = transaction.statusChanges ?? [];
-  console.log('statusChanges', statusChanges);
   return (
     <>
       <EntityHeader idTitle={'Case ID'} id={transaction.transactionId}>
