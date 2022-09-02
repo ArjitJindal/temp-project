@@ -17,6 +17,7 @@ import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
+import { CaseStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
 
 export default function Header(props: { transaction: TransactionCaseManagement }) {
   const { transaction } = props;
@@ -28,6 +29,7 @@ export default function Header(props: { transaction: TransactionCaseManagement }
   const [users] = useUsers();
 
   const [status, setStatus] = useState(transaction.status);
+  const [caseStatus, setCaseStatus] = useState(transaction.caseStatus);
   const [assignments, setAssignments] = useState(transaction.assignments || []);
 
   const [editing, setEditing] = useState(false);
@@ -123,11 +125,16 @@ export default function Header(props: { transaction: TransactionCaseManagement }
           <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
             <Tag
               className={s.caseStatusTag}
-              color={transaction.caseStatus === 'CLOSED' ? 'warning' : 'success'}
+              color={caseStatus === 'CLOSED' ? 'warning' : 'success'}
             >
-              {transaction.caseStatus}
+              {caseStatus}
             </Tag>
           </Form.Layout.Label>
+          <CaseStatusChangeForm
+            transactionId={transaction.transactionId as string}
+            newCaseStatus={caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
+            onSaved={() => setCaseStatus(caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED')}
+          />
           {editing ? (
             <div className={s.buttons}>
               <Button analyticsName="Cancel" onClick={handleCancelEditing} size="small">
@@ -149,13 +156,11 @@ export default function Header(props: { transaction: TransactionCaseManagement }
               icon={<EditOutlined />}
               onClick={() => setEditing(true)}
               size="small"
-            >
-              Edit
-            </Button>
+            ></Button>
           )}
         </div>
       </EntityHeader>
-      {transaction.caseStatus === 'CLOSED' && statusChanges.length > 0 && (
+      {caseStatus === 'CLOSED' && statusChanges.length > 0 && (
         <div className={s.closingReason}>
           <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
             <ClosingReasonTag
