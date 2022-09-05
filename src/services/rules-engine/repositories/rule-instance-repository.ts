@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
 import { TarponStackConstants } from '@cdk/constants'
+import { customAlphabet } from 'nanoid'
 import { DEFAULT_DRS_RISK_ITEM } from './risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
@@ -10,6 +10,8 @@ import {
 import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
+
+const nanoId = customAlphabet('1234567890abcdef', 8)
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -28,10 +30,24 @@ export class RuleInstanceRepository {
     this.tenantId = tenantId
   }
 
+  private async getNewRuleInstanceId(): Promise<string> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const newRuleInstanceId = nanoId()
+      const existingRuleInstance = await this.getRuleInstanceById(
+        newRuleInstanceId
+      )
+      if (!existingRuleInstance) {
+        return newRuleInstanceId
+      }
+    }
+  }
+
   public async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance
   ): Promise<RuleInstance> {
-    const ruleInstanceId = ruleInstance.id || uuidv4()
+    const ruleInstanceId =
+      ruleInstance.id || (await this.getNewRuleInstanceId())
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
@@ -84,6 +100,16 @@ export class RuleInstanceRepository {
     return this.getRuleInstances({})
   }
 
+  private async getRuleInstanceById(ruleInstanceId: string) {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    const result = await this.dynamoDb.get(getItemInput).promise()
+    return result.Item as RuleInstance
+  }
+
   private async getRuleInstances(
     query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
   ): Promise<ReadonlyArray<RuleInstance>> {
@@ -103,6 +129,7 @@ export class RuleInstanceRepository {
         id: item.id,
         type: item.type,
         ruleId: item.ruleId,
+        ruleNameAlias: item.ruleNameAlias,
         parameters: item.riskLevelParameters
           ? item.riskLevelParameters[
               DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel

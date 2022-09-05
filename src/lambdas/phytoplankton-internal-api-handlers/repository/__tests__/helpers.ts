@@ -11,6 +11,7 @@ export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
     ruleAction: ruleAction,
     ruleHit: true,
     ruleId: 'R-1',
+    ruleInstanceId: '1',
     ruleDescription: 'Test rule which always hit',
   }
 }
@@ -23,6 +24,7 @@ export function notHitRule(
     ruleAction: ruleAction,
     ruleHit: false,
     ruleId: 'R-2',
+    ruleInstanceId: '2',
     ruleDescription: 'Test rule which never hit',
   }
 }

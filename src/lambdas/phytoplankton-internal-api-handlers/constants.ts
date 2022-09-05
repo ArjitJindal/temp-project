@@ -8,19 +8,6 @@ export const timeFrameValues = {
   DAY: 'DAY',
 }
 
-export type TransactionDashboardStats = {
-  _id: string
-  totalTransactions: number
-  flaggedTransactions: number
-  stoppedTransactions: number
-  suspendedTransactions: number
-}
-
-export type RuleDashboardStats = {
-  ruleId: string
-  hitCount: number
-}
-
 export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionCaseManagement> =
   {
     type: 'INCLUDE',

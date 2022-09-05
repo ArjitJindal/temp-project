@@ -363,7 +363,8 @@ async function getRulesResult(
 
           return {
             ruleId: ruleInstance.ruleId,
-            ruleName: ruleInfo.name,
+            ruleInstanceId: ruleInstance.id,
+            ruleName: ruleInstance.ruleNameAlias || ruleInfo.name,
             ruleDescription: await getRuleDescription(
               rule,
               ruleInfo,
@@ -392,6 +393,7 @@ async function getRulesResult(
     .filter((result) => result.ruleAction && result.ruleHit)
     .map((result) => ({
       ruleId: result.ruleId,
+      ruleInstanceId: result.ruleInstanceId,
       ruleName: result.ruleName,
       ruleDescription: result.ruleDescription,
       ruleAction: result.ruleAction,

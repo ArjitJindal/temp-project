@@ -1963,6 +1963,8 @@ components:
           minLength: 1
           type: string
           description: Unique rule identifier
+        ruleInstanceId:
+          type: string
         ruleName:
           minLength: 1
           type: string
@@ -1977,6 +1979,7 @@ components:
           type: boolean
       required:
         - ruleId
+        - ruleInstanceId
         - ruleName
         - ruleDescription
         - ruleAction
@@ -1996,6 +1999,8 @@ components:
           minLength: 1
           type: string
           description: Unique rule identifier
+        ruleInstanceId:
+          type: string
         ruleName:
           minLength: 1
           type: string
@@ -2008,6 +2013,7 @@ components:
           $ref: '#/components/schemas/RuleAction'
       required:
         - ruleId
+        - ruleInstanceId
         - ruleName
         - ruleDescription
         - ruleAction

@@ -1353,6 +1353,8 @@ components:
             - USER
         ruleId:
           type: string
+        ruleNameAlias:
+          type: string
         parameters:
           type: object
         riskLevelParameters:
@@ -1374,6 +1376,8 @@ components:
           type: number
         hitCount:
           type: number
+        '':
+          type: string
       required:
         - ruleId
         - parameters
@@ -1574,6 +1578,8 @@ components:
             type: object
             properties:
               ruleId:
+                type: string
+              ruleInstanceId:
                 type: string
               hitCount:
                 type: number

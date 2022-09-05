@@ -1,6 +1,5 @@
 import { Db, MongoClient } from 'mongodb'
 import _ from 'lodash'
-import { RuleDashboardStats, TransactionDashboardStats } from '../constants'
 import { getTimeLabels } from './dashboard-stats-utils'
 import dayjs from '@/utils/dayjs'
 import {
@@ -23,6 +22,8 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { logger } from '@/core/logger'
+import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
+import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -162,6 +163,7 @@ export class DashboardStatsRepository {
                 },
               },
               ruleId: '$hitRules.ruleId',
+              ruleInstanceId: '$hitRules.ruleInstanceId',
             },
             hitCount: {
               $sum: 1,
@@ -174,6 +176,7 @@ export class DashboardStatsRepository {
             rulesStats: {
               $push: {
                 ruleId: '$_id.ruleId',
+                ruleInstanceId: '$_id.ruleInstanceId',
                 hitCount: '$hitCount',
               },
             },
@@ -604,7 +607,7 @@ export class DashboardStatsRepository {
     startTimestamp: number,
     endTimestamp: number,
     granularity?: GranularityValuesType
-  ): Promise<TransactionDashboardStats[]> {
+  ): Promise<DashboardStatsTransactionsCountData[]> {
     const tenantId = this.tenantId
     const db = this.mongoDb.db()
 
@@ -612,7 +615,7 @@ export class DashboardStatsRepository {
     let timeLabels: string[]
 
     if (granularity === granularityValues.DAY) {
-      collection = db.collection<TransactionDashboardStats>(
+      collection = db.collection<DashboardStatsTransactionsCountData>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY(tenantId)
       )
       timeLabels = getTimeLabels(
@@ -622,7 +625,7 @@ export class DashboardStatsRepository {
         'day'
       )
     } else if (granularity === granularityValues.MONTH) {
-      collection = db.collection<TransactionDashboardStats>(
+      collection = db.collection<DashboardStatsTransactionsCountData>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId)
       )
       timeLabels = getTimeLabels(
@@ -632,7 +635,7 @@ export class DashboardStatsRepository {
         'month'
       )
     } else {
-      collection = db.collection<TransactionDashboardStats>(
+      collection = db.collection<DashboardStatsTransactionsCountData>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
       )
       timeLabels = getTimeLabels(
@@ -682,7 +685,7 @@ export class DashboardStatsRepository {
     }[]
   > {
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionDashboardStats>(
+    const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
     )
 
@@ -753,9 +756,9 @@ export class DashboardStatsRepository {
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number
-  ): Promise<RuleDashboardStats[]> {
+  ): Promise<DashboardStatsRulesCountData[]> {
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionDashboardStats>(
+    const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     )
 
@@ -766,7 +769,7 @@ export class DashboardStatsRepository {
 
     const result = await collection
       .aggregate<{
-        _id: string
+        _id: { ruleId: string; ruleInstanceId: string }
         hitCount: number
       }>([
         {
@@ -780,7 +783,10 @@ export class DashboardStatsRepository {
         { $unwind: { path: '$rulesStats' } },
         {
           $group: {
-            _id: '$rulesStats.ruleId',
+            _id: {
+              ruleId: '$rulesStats.ruleId',
+              ruleInstanceId: '$rulesStats.ruleInstanceId',
+            },
             hitCount: { $sum: '$rulesStats.hitCount' },
           },
         },
@@ -789,7 +795,8 @@ export class DashboardStatsRepository {
       .toArray()
 
     return result.map((x) => ({
-      ruleId: x._id,
+      ruleId: x._id.ruleId,
+      ruleInstanceId: x._id.ruleInstanceId,
       hitCount: x.hitCount,
     }))
   }

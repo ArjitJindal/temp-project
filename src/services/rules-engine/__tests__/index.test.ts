@@ -17,6 +17,8 @@ import {
   setUpConsumerUsersHooks,
 } from '@/test-utils/user-test-utils'
 
+const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
+
 const dynamoDb = getTestDynamoDbClient()
 
 dynamoDbSetupHook()
@@ -58,6 +60,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
@@ -67,6 +70,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
@@ -98,6 +102,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
@@ -274,6 +279,7 @@ describe('Verify Transaction Event', () => {
           executedRules: [
             {
               ruleId: 'R-1',
+              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
               ruleDescription: 'test rule description',
               ruleAction: 'BLOCK',
@@ -283,6 +289,7 @@ describe('Verify Transaction Event', () => {
           hitRules: [
             {
               ruleId: 'R-1',
+              ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
               ruleDescription: 'test rule description',
               ruleAction: 'BLOCK',
@@ -304,6 +311,7 @@ describe('Verify Transaction Event', () => {
         executedRules: [
           {
             ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
@@ -313,6 +321,7 @@ describe('Verify Transaction Event', () => {
         hitRules: [
           {
             ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',

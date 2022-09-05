@@ -52,7 +52,8 @@ for (let i = 0; i < 40; i += 1) {
       {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
-        ruleId: 'R-109',
+        ruleId: 'R-69',
+        ruleInstanceId: '69',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       },
@@ -62,7 +63,8 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleHit: false,
-        ruleId: 'R-109',
+        ruleId: 'R-69',
+        ruleInstanceId: '69',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       },
@@ -82,18 +84,21 @@ data.push({
       ruleName: 'Nothing to see here',
       ruleAction: 'ALLOW',
       ruleId: 'R-4',
+      ruleInstanceId: '4',
       ruleDescription: 'No description',
     },
     {
       ruleName: 'Receiver is bad',
       ruleAction: 'FLAG',
       ruleId: 'R-2',
+      ruleInstanceId: '2',
       ruleDescription: 'Receiver is bad',
     },
     {
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-10',
+      ruleInstanceId: '10',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
     },
@@ -101,6 +106,7 @@ data.push({
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-1',
+      ruleInstanceId: '1',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
     },
@@ -108,6 +114,7 @@ data.push({
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-3',
+      ruleInstanceId: '3',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
     },
@@ -117,6 +124,7 @@ data.push({
       ruleName: 'Nothing to see here',
       ruleAction: 'ALLOW',
       ruleId: 'R-4',
+      ruleInstanceId: '4',
       ruleDescription: 'No description',
       ruleHit: true,
     },
@@ -124,6 +132,7 @@ data.push({
       ruleName: 'Receiver is bad',
       ruleAction: 'FLAG',
       ruleId: 'R-2',
+      ruleInstanceId: '2',
       ruleDescription: 'Receiver is bad',
       ruleHit: true,
     },
@@ -131,6 +140,7 @@ data.push({
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-10',
+      ruleInstanceId: '10',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       ruleHit: true,
@@ -139,6 +149,7 @@ data.push({
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-1',
+      ruleInstanceId: '1',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       ruleHit: true,
@@ -147,6 +158,7 @@ data.push({
       ruleName: 'High volume receiver in hours',
       ruleAction: 'BLOCK',
       ruleId: 'R-3',
+      ruleInstanceId: '3',
       ruleDescription:
         'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       ruleHit: true,
@@ -167,18 +179,21 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'Nothing to see here',
         ruleAction: 'ALLOW',
         ruleId: 'R-4',
+        ruleInstanceId: '4',
         ruleDescription: 'No description',
       },
       {
         ruleName: 'Receiver is bad',
         ruleAction: 'FLAG',
         ruleId: 'R-2',
+        ruleInstanceId: '2',
         ruleDescription: 'Receiver is bad',
       },
       {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-10',
+        ruleInstanceId: '10',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       },
@@ -186,6 +201,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-1',
+        ruleInstanceId: '1',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       },
@@ -193,6 +209,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-3',
+        ruleInstanceId: '3',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
       },
@@ -202,6 +219,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'Nothing to see here',
         ruleAction: 'ALLOW',
         ruleId: 'R-4',
+        ruleInstanceId: '4',
         ruleDescription: 'No description',
         ruleHit: true,
       },
@@ -209,6 +227,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'Receiver is bad',
         ruleAction: 'FLAG',
         ruleId: 'R-2',
+        ruleInstanceId: '2',
         ruleDescription: 'Receiver is bad',
         ruleHit: true,
       },
@@ -216,6 +235,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-10',
+        ruleInstanceId: '10',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
         ruleHit: true,
@@ -224,6 +244,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-1',
+        ruleInstanceId: '1',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
         ruleHit: true,
@@ -232,6 +253,7 @@ for (let i = 0; i < 40; i += 1) {
         ruleName: 'High volume receiver in hours',
         ruleAction: 'BLOCK',
         ruleId: 'R-3',
+        ruleInstanceId: '3',
         ruleDescription:
           'Receiver is receiving >= USD x or equivalent amount in total within time t hours',
         ruleHit: true,
