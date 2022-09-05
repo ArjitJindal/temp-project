@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -299,18 +299,158 @@ paths:
                 $ref: '#/components/schemas/PresignedUrlResponse'
               examples: {}
       description: Get a presigned URL for uploading a file
-  /lists:
-    post:
-      summary: List Import
-      operationId: post-lists
+  '/lists/{listType}':
+    parameters:
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
+        name: listType
+        in: path
+        required: true
+    get:
+      summary: Lists - Get All
+      tags: []
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+      operationId: get-lists
+    post:
+      summary: Lists - Post
+      tags: []
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListImportRequest'
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+      operationId: post-list
+  '/lists/{listType}/{listId}':
+    parameters:
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
+        name: listType
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    delete:
+      summary: Lists - Delete
+      tags: []
+      responses:
+        '200':
+          description: OK
+      operationId: delete-list
+    patch:
+      summary: Lists - Path
+      tags: []
+      operationId: patch-list
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+    get:
+      summary: Lists - Item header
+      tags: []
+      operationId: get-list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+        '404':
+          description: Not found
+  '/lists/{listType}/{listId}/items':
+    parameters:
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
+        name: listType
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    get:
+      summary: Lists - Items
+      tags: []
+      operationId: get-list-items
+      parameters:
+        - schema:
+            type: number
+          name: page
+          in: query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+        '404':
+          description: Not found
+    post:
+      summary: Lists - Post Item
+      tags: []
+      operationId: post-list-item
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+      responses:
+        '200':
+          description: OK
+  '/lists/{listType}/{listId}/items/{key}':
+    parameters:
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
+        name: listType
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: key
+        in: path
+        required: true
+    delete:
+      summary: Lists - Items - delete
+      tags: []
+      operationId: delete-list-item
+      responses:
+        '200':
+          description: OK
   /transactions:
     get:
       summary: Transaction - List
@@ -1542,7 +1682,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -2006,6 +2146,7 @@ components:
         - SLACK_ALERTS
         - IMPORT_FILES
         - DASHBOARD_BLOCK_USER
+        - LISTS
       description: ''
     AccountRole:
       type: string

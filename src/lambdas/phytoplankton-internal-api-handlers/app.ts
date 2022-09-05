@@ -43,6 +43,10 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
+import { ListRepository } from '@/lambdas/list-importer/repositories/list-repository'
+import { ListExisted } from '@/@types/openapi-public/ListExisted'
+import { ListData } from '@/@types/openapi-public/ListData'
+import { ListItem } from '@/@types/openapi-public/ListItem'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -932,6 +936,113 @@ export const manualRiskAssignmentHandler = lambdaApi({
       event.resource === '/pulse/manual-risk-assignment'
     ) {
       return riskRepository.getManualDRSRiskItem(userId)
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+export const listsHandler = lambdaApi({
+  requiredFeatures: ['LISTS'],
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+
+    const dynamoDb = getDynamoDbClient(event)
+    const listRepository = new ListRepository(tenantId, dynamoDb)
+
+    if (event.resource === '/lists/{listType}') {
+      const { listType } = event.pathParameters as any
+      if (event.httpMethod === 'GET') {
+        return await listRepository.getListHeaders(listType)
+      } else if (event.httpMethod === 'POST') {
+        if (!event.body) {
+          throw new BadRequest('Empty body')
+        }
+        let body: ListData
+        try {
+          body = JSON.parse(event.body)
+        } catch (e) {
+          throw new BadRequest('Invalid Request')
+        }
+        const newList: ListExisted = await listRepository.createList(
+          listType,
+          body
+        )
+        return newList
+      }
+    } else if (event.resource === '/lists/{listType}/{listId}') {
+      const { listId, listType } = event.pathParameters as any
+      if (event.httpMethod === 'GET') {
+        const list = await listRepository.getListHeader(listType, listId)
+        if (list == null) {
+          throw new NotFound(`List with id "${listId}" not found`)
+        }
+        return list
+      } else if (event.httpMethod === 'DELETE') {
+        await listRepository.deleteList(listType, listId)
+        return null
+      } else if (event.httpMethod === 'PATCH') {
+        if (!event.body) {
+          throw new BadRequest('Empty body')
+        }
+        let body: ListData
+        try {
+          body = JSON.parse(event.body)
+        } catch (e) {
+          throw new BadRequest('Unable to parse list from request body')
+        }
+        const list = await listRepository.getListHeader(listType, listId)
+        if (list == null) {
+          throw new NotFound(`List with id "${listId}" not found`)
+        }
+        if (body.metadata != null) {
+          await listRepository.updateListHeader({
+            ...list,
+            metadata: body.metadata,
+          })
+        }
+        if (body.items) {
+          await listRepository.updateListItems(listType, listId, body.items)
+        }
+        return null
+      }
+    } else if (event.resource === '/lists/{listType}/{listId}/items') {
+      const { listId, listType } = event.pathParameters as any
+      if (event.httpMethod === 'GET') {
+        const { page = 1 } = (event.queryStringParameters as any) ?? {}
+        let response: any = undefined
+        for (let i = 0; i < page; i += 1) {
+          response = await listRepository.getListItems(listType, listId, {
+            cursor: response?.cursor,
+          })
+          if (response == null) {
+            break
+          }
+        }
+        return response?.items
+      } else if (event.httpMethod === 'POST') {
+        if (!event.body) {
+          throw new BadRequest('Empty body')
+        }
+        let body: ListItem
+        try {
+          body = JSON.parse(event.body)
+        } catch (e) {
+          throw new BadRequest('Unable to parse list from request body')
+        }
+        await listRepository.setListItem(listType, listId, body)
+        return null
+      }
+    } else if (event.resource === '/lists/{listType}/{listId}/items/{key}') {
+      const { listType, listId, key } = event.pathParameters as any
+      if (event.httpMethod === 'DELETE') {
+        await listRepository.deleteListItem(listType, listId, key)
+        return null
+      }
     }
     throw new BadRequest('Unhandled request')
   }

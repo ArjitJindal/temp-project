@@ -34,7 +34,11 @@ const PathToLambda: any = {
   '/import/{importId}': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
   '/files/getPresignedUrl':
     TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
-  '/lists': TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
+  '/lists/{listType}': TarponStackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}': TarponStackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}/items': TarponStackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}/items/{key}':
+    TarponStackConstants.LISTS_FUNCTION_NAME,
   '/transactions': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/export': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}':

@@ -8,6 +8,9 @@ import {
   ExpressionAttributeValueMap,
   UpdateExpression,
 } from 'aws-sdk/clients/dynamodb'
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
+import { chunk } from 'lodash'
+import { TarponStackConstants } from '@cdk/constants'
 import { getCredentialsFromEvent } from './credentials'
 
 export function getDynamoDbClient(
@@ -86,6 +89,22 @@ export async function* paginateQueryGenerator(
   }
 }
 
+export async function batchWrite(
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  requests: DocumentClient.WriteRequest[],
+  table: string = TarponStackConstants.DYNAMODB_TABLE_NAME
+): Promise<void> {
+  for (const nextChunk of chunk(requests, 25)) {
+    await dynamoDb
+      .batchWrite({
+        RequestItems: {
+          [table]: nextChunk,
+        },
+      })
+      .promise()
+  }
+}
+
 export function getUpdateAttributesUpdateItemInput(attributes: {
   [key: string]: any
 }): {
@@ -102,4 +121,9 @@ export function getUpdateAttributesUpdateItemInput(attributes: {
     UpdateExpression: `SET ${updateExpressions.join(' ,')}`,
     ExpressionAttributeValues: expresssionValues,
   }
+}
+
+export type CursorPaginatedResponse<Item> = {
+  items: Item[]
+  cursor?: string
 }

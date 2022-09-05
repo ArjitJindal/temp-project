@@ -71,7 +71,7 @@ export const TarponStackConstants = {
   GET_PRESIGNED_URL_FUNCTION_NAME: getResourceNameForTarpon(
     'GetPresignedUrlFunction'
   ),
-  LIST_IMPORTER_FUNCTION_NAME: getResourceNameForTarpon('ListImporterFunction'),
+  LISTS_FUNCTION_NAME: getResourceNameForTarpon('ListsFunction'),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
   SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon('SlackAppFunction'),

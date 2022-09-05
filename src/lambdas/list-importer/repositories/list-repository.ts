@@ -1,6 +1,18 @@
 import { TarponStackConstants } from '@cdk/constants'
-import { chunk } from 'lodash'
+import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
+import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { ListExisted } from '@/@types/openapi-public/ListExisted'
+import { ListHeader } from '@/@types/openapi-public/ListHeader'
+import { ListData } from '@/@types/openapi-public/ListData'
+import {
+  batchWrite,
+  CursorPaginatedResponse,
+  paginateQuery,
+} from '@/utils/dynamodb'
+import { ListItem } from '@/@types/openapi-public/ListItem'
+import { neverReturn } from '@/utils/lang'
+import { ListType } from '@/@types/openapi-public/ListType'
 
 export class ListRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
@@ -11,33 +23,294 @@ export class ListRepository {
     this.tenantId = tenantId
   }
 
+  async createList(
+    listType: ListType,
+    newList: ListData = {}
+  ): Promise<ListExisted> {
+    const listId = uuidv4()
+    const { items = [], metadata } = newList
+    const header = {
+      metadata,
+      listId,
+      listType,
+      createdTimestamp: Date.now(),
+      size: items.length,
+    }
+    await this.updateListHeader(header)
+    await this.updateListItems(listType, listId, items)
+    return {
+      listId,
+      header,
+      items,
+    }
+  }
+
+  async deleteList(listType: ListType, listId: string) {
+    const header = await this.getListHeader(listType, listId)
+    if (header == null) {
+      throw new Error(`List not find by id "${listId}"`)
+    }
+    await this.dynamoDb
+      .put({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Item: {
+          ...DynamoDbKeys.LIST_DELETED(this.tenantId, header.listType, listId),
+          header,
+        },
+      })
+      .promise()
+    await this.dynamoDb
+      .delete({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
+      })
+      .promise()
+  }
+
+  async getListHeaders(
+    listType: ListType | null = null
+  ): Promise<ListHeader[]> {
+    const primaryKey = DynamoDbKeys.LIST_HEADER(
+      this.tenantId,
+      listType ?? '',
+      ''
+    )
+    const { Items = [] } = await paginateQuery(this.dynamoDb, {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression:
+        listType == null
+          ? 'PartitionKeyID = :pk'
+          : 'PartitionKeyID = :pk AND begins_with(SortKeyID, :sk)',
+      ExpressionAttributeValues:
+        listType == null
+          ? {
+              ':pk': primaryKey.PartitionKeyID,
+            }
+          : {
+              ':pk': primaryKey.PartitionKeyID,
+              ':sk': primaryKey.SortKeyID,
+            },
+    })
+    return Items.map(({ header }) => header)
+  }
+
+  async getListHeader(
+    listType: ListType,
+    listId: string
+  ): Promise<ListHeader | null> {
+    const { Item } = await this.dynamoDb
+      .get({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
+      })
+      .promise()
+    if (Item == null) {
+      return null
+    }
+    const { header } = Item
+    return header
+  }
+
+  async updateListHeader(listHeader: ListHeader): Promise<void> {
+    await this.dynamoDb
+      .put({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Item: {
+          ...DynamoDbKeys.LIST_HEADER(
+            this.tenantId,
+            listHeader.listType,
+            listHeader.listId
+          ),
+          header: listHeader,
+        },
+      })
+      .promise()
+  }
+
+  async refreshListHeader(listHeader: ListHeader): Promise<void> {
+    await this.updateListHeader({
+      ...listHeader,
+      size: await this.countListValues(listHeader.listType, listHeader.listId),
+    })
+  }
+
+  async getListItem(
+    listType: ListType,
+    listId: string,
+    key: string
+  ): Promise<ListItem | null> {
+    const header = await this.getListHeader(listType, listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
+    const { Item } = await this.dynamoDb
+      .get({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
+      })
+      .promise()
+    if (Item == null) {
+      return null
+    }
+    return { key: Item.key, metadata: Item.metadata }
+  }
+
+  async setListItem(listType: ListType, listId: string, listItem: ListItem) {
+    const header = await this.getListHeader(listType, listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
+    await this.dynamoDb
+      .put({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Item: {
+          ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, listItem.key),
+          ...listItem,
+        },
+      })
+      .promise()
+    await this.refreshListHeader(header)
+  }
+
+  async deleteListItem(listType: ListType, listId: string, key: string) {
+    const header = await this.getListHeader(listType, listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
+    await this.dynamoDb
+      .delete({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
+      })
+      .promise()
+    await this.refreshListHeader(header)
+  }
+
+  async updateListItems(
+    listType: ListType,
+    listId: string,
+    listItems: ListItem[]
+  ) {
+    const header = await this.getListHeader(listType, listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
+    const map: { [key: string]: DocumentClient.WriteRequest } = {}
+    for (const item of listItems) {
+      map[item.key] = {
+        PutRequest: {
+          Item: {
+            ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, item.key),
+            ...item,
+          },
+        },
+      }
+    }
+
+    await batchWrite(
+      this.dynamoDb,
+      Object.values(map),
+      TarponStackConstants.DYNAMODB_TABLE_NAME
+    )
+    await this.refreshListHeader(header)
+  }
+
+  async getListItems(
+    listType: ListType,
+    listId: string,
+    params?: {
+      cursor?: string
+    }
+  ): Promise<CursorPaginatedResponse<ListItem>> {
+    const { Items = [], LastEvaluatedKey } = await this.dynamoDb
+      .query({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '')
+            .PartitionKeyID,
+        },
+        ExclusiveStartKey: params?.cursor
+          ? DynamoDbKeys.LIST_ITEM(this.tenantId, listId, params?.cursor)
+          : undefined,
+        Limit: 20,
+      })
+      .promise()
+    const items: ListItem[] = Items.map(({ key, metadata }) => ({
+      key,
+      metadata,
+    }))
+    return {
+      items,
+      cursor:
+        LastEvaluatedKey != null && items.length > 0
+          ? items[items.length - 1].key
+          : undefined,
+    }
+  }
+
+  async countListValues(listType: ListType, listId: string): Promise<number> {
+    const { Count } = await paginateQuery(this.dynamoDb, {
+      Select: 'COUNT',
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '').PartitionKeyID,
+      },
+    })
+    return Count ?? 0
+  }
+
+  async match(
+    listId: string,
+    value: string,
+    method: 'EXACT' | 'PREFIX'
+  ): Promise<boolean> {
+    const key = DynamoDbKeys.LIST_ITEM(this.tenantId, listId, value)
+
+    let KeyConditionExpression: string
+    if (method === 'EXACT') {
+      KeyConditionExpression = 'PartitionKeyID = :pk AND SortKeyID = :sk'
+    } else if (method === 'PREFIX') {
+      KeyConditionExpression =
+        'PartitionKeyID = :pk AND begins_with ( SortKeyID, :sk )'
+    } else {
+      KeyConditionExpression = neverReturn(method, 'PartitionKeyID = :pk')
+    }
+
+    const { Items = [] } = await this.dynamoDb
+      .query({
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression,
+        ExpressionAttributeValues: {
+          ':pk': key.PartitionKeyID,
+          ':sk': key.SortKeyID,
+        },
+        Limit: 1,
+      })
+      .promise()
+    return Items.length > 0
+  }
+
   async importList(
-    listName: string,
+    listType: ListType,
+    listId: string,
     indexName: string,
     rows: Array<{ [key: string]: string }>
   ): Promise<void> {
-    for (const rowsChunk of chunk(rows, 25)) {
-      const putRequests = rowsChunk.map((row) => {
-        if (!row[indexName]) {
+    await this.updateListItems(
+      listType,
+      listId,
+      rows.map((row) => {
+        const key = row[indexName]
+        if (!key) {
           throw new Error(`row: ${row} has missing '${indexName}' field!`)
         }
         return {
-          PutRequest: {
-            Item: {
-              ...DynamoDbKeys.LIST(this.tenantId, listName, row[indexName]),
-              ...row,
-            },
-          },
+          key,
+          metadata: row,
         }
       })
-      const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
-        {
-          RequestItems: {
-            [TarponStackConstants.DYNAMODB_TABLE_NAME]: putRequests,
-          },
-          ReturnConsumedCapacity: 'TOTAL',
-        }
-      await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
-    }
+    )
   }
 }

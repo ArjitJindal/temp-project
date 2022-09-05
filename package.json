@@ -47,7 +47,7 @@
     "generate-local-data": "ts-node ./init_local_db/all.ts",
     "openapi:build": "scripts/openapi/openapi_generate_sdk.ts",
     "openapi:format": "scripts/openapi/openapi_format.js",
-    "openapi:publish": "scripts/openapi/openapi_publish.js",
+    "openapi:publish": "npm run openapi:build && npm run openapi:format && scripts/openapi/openapi_publish.js",
     "openapi:augment": "lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
     "start-local-api": "sam local start-api -t cdk.out/local-tarpon.template.json",
     "recreate-local-ddb": "npm run delete-local-ddb --table=$npm_config_table; npm run create-local-ddb --table=$npm_config_table",

@@ -22,7 +22,7 @@ export const listImporterHandler = lambdaApi()(
     const dynamoDb = getDynamoDbClient(event)
     const listRepository = new ListRepository(tenantId, dynamoDb)
 
-    const { listName, indexName, data } = JSON.parse(event.body)
+    const { listType, listName, indexName, data } = JSON.parse(event.body)
     const rows = await new Promise<Array<{ [key: string]: string }>>(
       (resolve, reject) => {
         const rows: Array<{ [key: string]: string }> = []
@@ -34,7 +34,7 @@ export const listImporterHandler = lambdaApi()(
         stream.end()
       }
     )
-    await listRepository.importList(listName, indexName, rows)
+    await listRepository.importList(listType, listName, indexName, rows)
 
     return 'OK'
   }

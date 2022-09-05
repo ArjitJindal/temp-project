@@ -544,12 +544,12 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(userAlias)
 
     /* List Importer */
-    const { alias: listImporterAlias } = this.createFunction({
-      name: TarponStackConstants.LIST_IMPORTER_FUNCTION_NAME,
-      handler: 'app.listImporterHandler',
-      codePath: 'dist/list-importer',
+    const { alias: listsAlias } = this.createFunction({
+      name: TarponStackConstants.LISTS_FUNCTION_NAME,
+      handler: 'app.listsHandler',
+      codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
-    tarponDynamoDbTable.grantReadWriteData(listImporterAlias)
+    tarponDynamoDbTable.grantReadWriteData(listsAlias)
 
     /* Slack App */
     const { alias: slackAppAlias } = this.createFunction(

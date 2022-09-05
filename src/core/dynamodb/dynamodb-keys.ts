@@ -230,10 +230,17 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${BUSINESS_USER_EVENT_KEY_IDENTIFIER}${USER_ID_PREFIX}${userId}`,
     SortKeyID: `${timestamp}`,
   }),
-
-  LIST: (tenantId: string, listName: string, indexName: string) => ({
-    PartitionKeyID: `${tenantId}#list:${listName}`,
-    SortKeyID: indexName,
+  LIST_HEADER: (tenantId: string, listType: string, listId: string) => ({
+    PartitionKeyID: `${tenantId}#lists`,
+    SortKeyID: `${listType}:${listId}`,
+  }),
+  LIST_DELETED: (tenantId: string, listType: string, listId: string) => ({
+    PartitionKeyID: `${tenantId}#deleted#lists`,
+    SortKeyID: `${listType}:${listId}`,
+  }),
+  LIST_ITEM: (tenantId: string, listId: string, key: string) => ({
+    PartitionKeyID: `${tenantId}#list-item#${listId}`,
+    SortKeyID: key,
   }),
   TENANT_SETTINGS: (tenantId: string) => ({
     PartitionKeyID: `${tenantId}#settings`,
