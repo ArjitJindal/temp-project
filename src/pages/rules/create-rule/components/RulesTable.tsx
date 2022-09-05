@@ -68,6 +68,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       {
         title: 'Default Action',
         width: 150,
+        sorter: (a, b) => a.defaultAction.localeCompare(b.defaultAction),
         render: (_, rule) => {
           return (
             <span>

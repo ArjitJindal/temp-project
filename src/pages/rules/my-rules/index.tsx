@@ -68,6 +68,7 @@ const MyRule = () => {
       {
         title: 'Rule ID',
         width: 50,
+        sorter: (a, b) => parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]),
         render: (_, entity) => {
           return (
             <a
@@ -84,6 +85,7 @@ const MyRule = () => {
       {
         title: 'Rule Name',
         width: 150,
+        sorter: (a, b) => rules[a.ruleId].name.localeCompare(rules[b.ruleId].name),
         render: (_, ruleInstance) => {
           return (
             <Popover content={rules[ruleInstance.ruleId].description}>
@@ -95,6 +97,9 @@ const MyRule = () => {
       {
         title: 'Rule Hit Rate',
         width: 100,
+        sorter: (a, b) =>
+          (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
+          (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0),
         render: (_, ruleInstance) => {
           return (
             <Tooltip title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}>
@@ -140,6 +145,7 @@ const MyRule = () => {
         title: 'Action',
         align: 'center',
         width: 30,
+        sorter: (a, b) => a.action.localeCompare(b.action),
         render: (_, entity) => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
@@ -204,6 +210,7 @@ const MyRule = () => {
         }}
         columns={columns}
         request={request}
+        pagination={false}
         search={false}
         rowKey="id"
         columnsState={{

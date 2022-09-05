@@ -13,6 +13,7 @@ import { message, Pagination } from 'antd';
 import { SortOrder } from 'antd/es/table/interface';
 import _ from 'lodash';
 import cn from 'clsx';
+import equal from 'fast-deep-equal';
 import style from './style.module.less';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
 import {
@@ -47,7 +48,6 @@ export type RequestFunctionType<T, Params extends object = ParamsType> = (
   sort: Record<string, SortOrder>,
   filter: Record<string, React.ReactText[] | null>,
 ) => Promise<ResponsePayload<T>>;
-
 interface OverridenProps<T, Params extends object = ParamsType> {
   request?: RequestFunctionType<T, Params>;
   pagination?: boolean;
@@ -124,6 +124,12 @@ function prepareDataSource<T>(data: Array<T | T[]>): T[] {
   return result;
 }
 
+const DEFAULT_PARAMS_STATE = {
+  page: 1,
+  params: {} as any,
+  sort: {},
+};
+
 export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>(
   props: Props<T, Params, ValueType>,
 ) => {
@@ -135,7 +141,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     isEvenRow,
     request,
     dataSource,
-    pagination,
+    pagination = true,
     options = undefined,
     initialParams,
     actionRef,
@@ -147,11 +153,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
   } = props;
 
   const [paramsState, setParamsState] = useState<ParamsState<Params>>(
-    initialParams ?? {
-      page: 1,
-      params: {} as Params,
-      sort: {},
-    },
+    initialParams ?? DEFAULT_PARAMS_STATE,
   );
   const [responseData, setResponseData] = useState<
     AsyncResource<{
@@ -204,25 +206,35 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
     [request],
   );
 
-  const triggerRequest = useCallback(() => {
+  const handleReload = useCallback(() => {
     handleRequest(
       { ...paramsState.params, pageSize: DEFAULT_PAGE_SIZE, current: paramsState.page },
       paramsState.sort,
       {},
     );
-  }, [handleRequest, paramsState.params, paramsState.page, paramsState.sort]);
+  }, [handleRequest, paramsState.page, paramsState.params, paramsState.sort]);
 
-  const prevParams = usePrevious(paramsState.params);
+  const prevState = usePrevious(paramsState);
   useDeepEqualEffect(() => {
-    if (prevParams != null && !isEqual(prevParams, paramsState.params)) {
+    if (prevState != null && !isEqual(prevState?.params, paramsState.params)) {
       onSelectChange([]);
       setParamsState((state) => ({ ...state, page: 1 }));
     }
-  }, [prevParams, paramsState.params]);
+  }, [prevState, paramsState.params]);
 
   useEffect(() => {
-    triggerRequest();
-  }, [triggerRequest]);
+    if (pagination && !equal(prevState, paramsState)) {
+      handleReload();
+    }
+  }, [handleReload, pagination, paramsState, prevState]);
+
+  // Load data only once if pagination is disabled
+  useEffect(() => {
+    if (!pagination) {
+      handleReload();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
@@ -265,6 +277,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
           }));
           onSelectChange([]);
         }}
+        onReset={() => setParamsState(DEFAULT_PARAMS_STATE)}
         onChange={(pagination, filters, sorter) => {
           const sort: Record<string, SortOrder> = (
             Array.isArray(sorter) ? sorter : [sorter]
@@ -283,7 +296,7 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
         }}
         options={{
           ...(options || {}),
-          reload: !options || options.reload != false ? triggerRequest : false,
+          reload: !options || options.reload != false ? handleReload : false,
         }}
         rowSelection={
           entitySelection
