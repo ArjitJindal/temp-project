@@ -47,6 +47,7 @@ import { ListRepository } from '@/lambdas/list-importer/repositories/list-reposi
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListData } from '@/@types/openapi-public/ListData'
 import { ListItem } from '@/@types/openapi-public/ListItem'
+import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -886,9 +887,8 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       event.httpMethod === 'GET' &&
       event.resource === '/pulse/risk-parameter'
     ) {
-      const { parameter } = (event.queryStringParameters || {}) as {
-        [key: string]: string
-      }
+      const parameter = (event.queryStringParameters || {})
+        .parameter as ParameterAttributeRiskValuesParameterEnum
 
       if (parameter == null) {
         throw new BadRequest(`"parameter" is a requred query parameter`)

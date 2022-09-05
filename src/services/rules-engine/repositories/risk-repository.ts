@@ -4,7 +4,10 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesParameterEnum,
+} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
 import { logger } from '@/core/logger'
 
@@ -165,7 +168,9 @@ export class RiskRepository {
     return parameterRiskLevels
   }
 
-  async getParameterRiskItem(parameter?: string) {
+  async getParameterRiskItem(
+    parameter?: ParameterAttributeRiskValuesParameterEnum
+  ) {
     let keyConditionExpr, expressionAttributeVals
     if (parameter) {
       keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
