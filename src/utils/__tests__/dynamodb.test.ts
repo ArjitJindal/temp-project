@@ -1,0 +1,206 @@
+import { TarponStackConstants } from '@cdk/constants'
+import _, { chunk } from 'lodash'
+import { paginateQuery } from '../dynamodb'
+import {
+  dynamoDbSetupHook,
+  getTestDynamoDbClient,
+} from '@/test-utils/dynamodb-test-utils'
+
+const MOCK_RECORDS_COUNT = 250
+const MOCK_ATTRIBUTES = {
+  attribute1: new Array(1000).fill(0),
+  attribute2: new Array(1000).fill(0),
+  attribute3: new Array(1000).fill(0),
+}
+const MOCK_ITEMS = _.range(0, MOCK_RECORDS_COUNT)
+  .map((i) => ({
+    ...MOCK_ATTRIBUTES,
+    PartitionKeyID: 'partition',
+    SortKeyID: `${i}`,
+  }))
+  .sort((a, b) => a.SortKeyID.localeCompare(b.SortKeyID))
+
+const dynamoDb = getTestDynamoDbClient()
+
+dynamoDbSetupHook()
+
+describe('paginateQuery', () => {
+  beforeAll(async () => {
+    // We need enough data to make query response paginated. Currently it'll result in 2 pages
+    for (const ck of chunk(_.range(0, MOCK_RECORDS_COUNT), 25)) {
+      const putRequests = ck.map((i) => ({
+        PutRequest: {
+          Item: {
+            PartitionKeyID: 'partition',
+            SortKeyID: `${i}`,
+            ...MOCK_ATTRIBUTES,
+          },
+        },
+      }))
+      await dynamoDb
+        .batchWrite({
+          RequestItems: {
+            [TarponStackConstants.DYNAMODB_TABLE_NAME]: putRequests,
+          },
+          ReturnConsumedCapacity: 'TOTAL',
+        })
+        .promise()
+    }
+  })
+  test('Returns all items - paginated', async () => {
+    const result = await paginateQuery(dynamoDb, {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'partition',
+      },
+    })
+    expect(result).toEqual({
+      Count: MOCK_RECORDS_COUNT,
+      ScannedCount: MOCK_RECORDS_COUNT,
+      Items: MOCK_ITEMS,
+    })
+  })
+
+  test('Returns all items - not paginated', async () => {
+    const result = await paginateQuery(dynamoDb, {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID = :sk',
+      ExpressionAttributeValues: {
+        ':pk': 'partition',
+        ':sk': '100',
+      },
+    })
+    expect(result).toEqual({
+      Count: 1,
+      ScannedCount: 1,
+      Items: [
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `100`,
+        },
+      ],
+    })
+  })
+
+  test('Returns all items - with Limit', async () => {
+    const result = await paginateQuery(dynamoDb, {
+      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': 'partition',
+      },
+      Limit: 249,
+    })
+    expect(result).toEqual({
+      Count: 249,
+      ScannedCount: 249,
+      Items: MOCK_ITEMS.slice(0, 249),
+    })
+  })
+
+  test('Pagination - skip across multiple pages', async () => {
+    const result = await paginateQuery(
+      dynamoDb,
+      {
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'partition',
+        },
+      },
+      { skip: 249 }
+    )
+    expect(result).toEqual({
+      Count: 1,
+      ScannedCount: 1,
+      Items: [
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `99`,
+        },
+      ],
+    })
+  })
+
+  test('Pagination - skip in the first page', async () => {
+    const result = await paginateQuery(
+      dynamoDb,
+      {
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'partition',
+        },
+      },
+      { skip: 1, limit: 1 }
+    )
+    expect(result).toEqual({
+      Count: 1,
+      ScannedCount: 1,
+      Items: [
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `1`,
+        },
+      ],
+    })
+  })
+
+  test('Pagination - limit accross multiple pages', async () => {
+    const result = await paginateQuery(
+      dynamoDb,
+      {
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'partition',
+        },
+      },
+      { limit: 249 }
+    )
+    expect(result).toEqual({
+      Count: 249,
+      ScannedCount: 249,
+      Items: MOCK_ITEMS.slice(0, 249),
+    })
+  })
+
+  test('Pagination - skip + limit', async () => {
+    const result = await paginateQuery(
+      dynamoDb,
+      {
+        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': 'partition',
+        },
+      },
+      { skip: 239, limit: 3 }
+    )
+    expect(result).toEqual({
+      Count: 3,
+      ScannedCount: 3,
+      Items: [
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `9`,
+        },
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `90`,
+        },
+        {
+          ...MOCK_ATTRIBUTES,
+          PartitionKeyID: 'partition',
+          SortKeyID: `91`,
+        },
+      ],
+    })
+  })
+})

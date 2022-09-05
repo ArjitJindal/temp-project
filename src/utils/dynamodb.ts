@@ -30,30 +30,90 @@ export function getDynamoDbClient(
   })
 }
 
+async function getLastEvaluatedKey(
+  dynamoDb: AWS.DynamoDB.DocumentClient,
+  query: AWS.DynamoDB.DocumentClient.QueryInput,
+  count = 0
+): Promise<{ PartitionKeyID: string; SortKeyID: string } | undefined> {
+  const newQuery = {
+    ...query,
+    ProjectionExpression: 'PartitionKeyID,SortKeyID',
+  }
+  const result = await dynamoDb.query(newQuery).promise()
+
+  if (
+    result.LastEvaluatedKey &&
+    query.Limit &&
+    (result.Count as number) + count < query.Limit
+  ) {
+    return getLastEvaluatedKey(
+      dynamoDb,
+      {
+        ...newQuery,
+        ExclusiveStartKey: result.LastEvaluatedKey,
+        Limit: (newQuery.Limit as number) - (result.Count as number),
+      },
+      result.Count as number
+    )
+  }
+  return result.Items?.pop() as {
+    PartitionKeyID: string
+    SortKeyID: string
+  }
+}
+
 export async function paginateQuery(
   dynamoDb: AWS.DynamoDB.DocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
-  pagesLimit?: number
+  options?: { skip?: number; limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
-  return paginateQueryInternal(dynamoDb, query, 0, pagesLimit)
+  let newQuery = query
+  if (options?.skip) {
+    const skipQuery: AWS.DynamoDB.DocumentClient.QueryInput = {
+      ...query,
+      Limit: options.skip,
+    }
+    const lastEvaluatedKey = await getLastEvaluatedKey(dynamoDb, skipQuery)
+    newQuery = {
+      ...newQuery,
+      ExclusiveStartKey: lastEvaluatedKey,
+    }
+  }
+  if (options?.limit) {
+    newQuery = {
+      ...newQuery,
+      Limit: options?.limit,
+    }
+  }
+  return paginateQueryInternal(dynamoDb, newQuery, 0, {
+    limit: options?.limit,
+    pagesLimit: options?.pagesLimit,
+  })
 }
 
 async function paginateQueryInternal(
   dynamoDb: AWS.DynamoDB.DocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   currentPage: number,
-  pagesLimit = Infinity
+  options: { limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
   const result = await dynamoDb.query(query).promise()
-  if (result.LastEvaluatedKey && currentPage + 1 < pagesLimit) {
+  const limit = query.Limit || options.limit
+  const leftLimit = limit ? limit - (result.Count as number) : Infinity
+  if (
+    result.LastEvaluatedKey &&
+    currentPage + 1 < (options.pagesLimit || Infinity) &&
+    leftLimit > 0
+  ) {
     const nextResult = await paginateQueryInternal(
       dynamoDb,
       {
         ...query,
         ExclusiveStartKey: result.LastEvaluatedKey,
+        Limit: leftLimit,
       },
       currentPage + 1,
-      pagesLimit
+      { limit: leftLimit, pagesLimit: options.pagesLimit }
     )
     return {
       Items: result.Items?.concat(nextResult.Items || []),
@@ -66,6 +126,7 @@ async function paginateQueryInternal(
           (nextResult.ScannedCount ? nextResult.ScannedCount : 0),
     }
   }
+  delete result.LastEvaluatedKey
   return result
 }
 
