@@ -9,8 +9,6 @@ import {
 import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 
-export const API_KEY_AUTHORIZER_CACHE_TTL_SECONDS = 3600
-
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
   '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -32,7 +30,8 @@ async function getTenantScopeCredentials(
           .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
           .build()
       ),
-      DurationSeconds: API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
+      DurationSeconds:
+        TarponStackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
     })
     .promise()
   if (!assumeRoleResult.Credentials) {

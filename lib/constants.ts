@@ -87,6 +87,8 @@ export const TarponStackConstants = {
       'WebhookTarponChangeCaptureKinesisConsumerFunction'
     ),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
+  JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
+  API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
 }
 
 export const HammerheadStackConstants = {
