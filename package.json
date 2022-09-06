@@ -86,6 +86,7 @@
     "i18n-iso-countries": "^7.5.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.5.23",
+    "jwt-decode": "^3.1.2",
     "lodash": "^4.17.11",
     "moment": "^2.25.3",
     "nanoid": "^4.0.0",

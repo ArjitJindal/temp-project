@@ -1,5 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMemo } from 'react';
+import jwt_decode from 'jwt-decode';
+import { useLocalStorageState } from 'ahooks';
 import {
   AuthorizationAuthentication,
   Configuration,
@@ -32,25 +34,46 @@ class AuthorizationMiddleware implements Middleware {
 }
 export function useAuth(): SecurityAuthentication {
   const user = useAuth0User();
+  const userIdentityKey = JSON.stringify(user);
+  const [jwt, setJwt] = useLocalStorageState<{ [key: string]: string }>('jwt', {});
   const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
   return useMemo(() => {
     const audience = AUTH0_AUDIENCE ?? user.tenantApiAudience;
     return new AuthorizationAuthentication({
       getToken: async () => {
+        const cachedJwt = jwt[userIdentityKey];
+        if (cachedJwt) {
+          const decodedJwt = jwt_decode<{ exp: number }>(cachedJwt);
+          if (decodedJwt.exp > Date.now() / 1000) {
+            return cachedJwt;
+          }
+        }
+        let token;
         try {
-          return await getAccessTokenSilently({
+          token = await getAccessTokenSilently({
             scope: 'openid profile email',
             audience,
           });
         } catch (e) {
-          return await getAccessTokenWithPopup({
+          token = await getAccessTokenWithPopup({
             scope: 'openid profile email',
             audience,
           });
         }
+        setJwt({
+          [userIdentityKey]: token,
+        });
+        return token;
       },
     });
-  }, [user, getAccessTokenSilently, getAccessTokenWithPopup]);
+  }, [
+    user.tenantApiAudience,
+    jwt,
+    userIdentityKey,
+    setJwt,
+    getAccessTokenSilently,
+    getAccessTokenWithPopup,
+  ]);
 }
 
 export function useApi(): FlagrightApi {
