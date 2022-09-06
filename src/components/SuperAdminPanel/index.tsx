@@ -22,6 +22,7 @@ const FEATURES: Feature[] = [
   'SLACK_ALERTS',
   'AUDIT_LOGS',
   'IMPORT_FILES',
+  'LISTS',
 ];
 
 export default function SuperAdminPanel() {

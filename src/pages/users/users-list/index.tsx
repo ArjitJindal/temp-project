@@ -20,6 +20,8 @@ import '../../../components/ui/colors';
 import ResizableTitle from '@/utils/table-utils';
 import { useI18n } from '@/locales';
 import handleResize from '@/components/ui/Table/utils';
+import PageTabs from '@/components/ui/PageTabs';
+import { makeUrl } from '@/utils/routing';
 
 const BusinessUsersTab = () => {
   const api = useApi();
@@ -186,23 +188,20 @@ export default function UsersList() {
   }, [setLocalStorageActiveTab, list]);
   return (
     <PageWrapper title={i18n('menu.users.lists')}>
-      <div className={styles.tab}>
-        <Tabs
-          type="line"
-          activeKey={list}
-          destroyInactiveTabPane={true}
-          onChange={(key) => {
-            navigate(`/users/list/${key}/all`, { replace: true });
-          }}
-        >
-          <Tabs.TabPane tab="Consumer Users" key="consumer">
-            <ConsumerUsersTab />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Business Users" key="business">
-            <BusinessUsersTab />
-          </Tabs.TabPane>
-        </Tabs>
-      </div>
+      <PageTabs
+        activeKey={list}
+        destroyInactiveTabPane={true}
+        onChange={(key) => {
+          navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
+        }}
+      >
+        <Tabs.TabPane tab="Consumer Users" key="consumer">
+          <ConsumerUsersTab />
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Business Users" key="business">
+          <BusinessUsersTab />
+        </Tabs.TabPane>
+      </PageTabs>
     </PageWrapper>
   );
 }

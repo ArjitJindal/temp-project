@@ -15,7 +15,7 @@ export default {
   'menu.case-management.item.back-button': 'Back to Case Management',
   'menu.lists': 'Lists',
   'menu.lists.create-list': 'Create List',
-  'menu.lists.created-lists': 'Created Lists',
+  'menu.lists.created-lists': 'Lists',
   'menu.transactions': 'Transactions',
   'menu.transactions.transactions-list': 'Transactions',
   'menu.transactions.transactions-list.item': 'Transactions',

@@ -2,21 +2,22 @@ import { Menu as AntMenu } from 'antd';
 import {
   BarChartOutlined,
   FlagOutlined,
+  ImportOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  SmileOutlined,
-  UsergroupAddOutlined,
   SettingOutlined,
-  ImportOutlined,
+  SmileOutlined,
+  UnorderedListOutlined,
+  UsergroupAddOutlined,
 } from '@ant-design/icons';
 
 import {
   browserName,
-  deviceType,
   browserVersion,
-  osName,
+  deviceType,
   mobileModel,
   mobileVendor,
+  osName,
 } from 'react-device-detect';
 import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
@@ -24,7 +25,7 @@ import { matchPath, useLocation } from 'react-router';
 import TeamOutlined from './Team_Outlined.react.svg';
 import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
-import UnorderedListOutlined from './Unordered_List_Outlined.react.svg';
+import GavelIcon from './gavel.react.svg';
 import s from './styles.module.less';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -40,6 +41,7 @@ const icons = {
   ),
   UsergroupAddOutlined: <UsergroupAddOutlined />,
   UnorderedListOutlined: <UnorderedListOutlined />,
+  Gavel: <GavelIcon />,
   TeamOutlined: <TeamOutlined />,
   BarChartOutlined: <BarChartOutlined />,
   SettingOutlined: <SettingOutlined />,

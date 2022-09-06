@@ -88,6 +88,7 @@
     "jspdf-autotable": "^3.5.23",
     "lodash": "^4.17.11",
     "moment": "^2.25.3",
+    "nanoid": "^4.0.0",
     "numeral": "^2.0.6",
     "pluralize": "^8.0.0",
     "rc-resize-observer": "^1.2.0",

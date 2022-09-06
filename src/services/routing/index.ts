@@ -14,18 +14,22 @@ import TransactionsItemPage from '@/pages/transactions-item';
 import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
 import UsersItemPage from '@/pages/users-item';
+import CreatedListsPage from '@/pages/lists';
+import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { RouteItem, TreeRouteItem } from '@/services/routing/types';
+import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
   const isImportFilesEnabled = useFeature('IMPORT_FILES');
+  const isListsFeatureEnabled = useFeature('LISTS');
   const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab, __] = useLocalStorageState('rule-active-tab', 'create-rule');
-  return useMemo(
-    () => [
+
+  return useMemo((): RouteItem[] => {
+    const routes: (RouteItem | boolean)[] = [
       {
         path: '/dashboard',
         name: 'dashboard',
@@ -109,7 +113,7 @@ export function useRoutes(): RouteItem[] {
           },
           {
             path: '/users/list',
-            name: 'lists',
+            name: 'user-lists',
             hideChildrenInMenu: true,
             routes: [
               {
@@ -121,12 +125,12 @@ export function useRoutes(): RouteItem[] {
               },
               {
                 path: '/users/list/:list/all',
-                name: 'list',
+                name: 'user-lists-all',
                 component: UsersUsersListPage,
               },
               {
                 path: '/users/list/:list/:id',
-                name: 'list',
+                name: 'user-lists-item',
                 component: UsersItemPage,
               },
             ],
@@ -141,7 +145,7 @@ export function useRoutes(): RouteItem[] {
       {
         path: '/rules',
         name: 'rules',
-        icon: 'UnorderedListOutlined',
+        icon: 'Gavel',
         hideChildrenInMenu: true,
         position: 'top',
         routes: [
@@ -161,59 +165,74 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      ...((isRiskLevelsEnabled
-        ? [
-            {
-              path: '/risk-levels',
-              icon: 'BarChartOutlined',
-              name: 'risk-levels',
-              position: 'top',
-              routes: [
-                {
-                  path: '/risk-levels',
-                  redirect: '/risk-levels/risk-level',
-                },
-                {
-                  name: 'risk-level',
-                  path: '/risk-levels/risk-level',
-                  component: RiskLevelPage,
-                },
-                {
-                  name: 'configure',
-                  path: '/risk-levels/configure',
-                  component: RiskLevelsConfigurePage,
-                },
-                {
-                  name: 'risk-algorithm',
-                  path: '/risk-levels/risk-algorithm',
-                  component: RiskAlgorithmTable,
-                },
-              ],
-            },
-          ]
-        : []) as TreeRouteItem[]),
-      ...((isImportFilesEnabled
-        ? [
-            {
-              path: '/import',
-              name: 'import',
-              icon: 'ImportOutlined',
-              position: 'top',
-              routes: [
-                {
-                  name: 'import-users',
-                  path: '/import/import-users',
-                  component: UsersUsersFilesPage,
-                },
-                {
-                  name: 'import-transactions',
-                  path: '/import/import-transactions',
-                  component: TransactionsFilesPage,
-                },
-              ],
-            },
-          ]
-        : []) as TreeRouteItem[]),
+      isRiskLevelsEnabled && {
+        path: '/risk-levels',
+        icon: 'BarChartOutlined',
+        name: 'risk-levels',
+        position: 'top',
+        routes: [
+          {
+            path: '/risk-levels',
+            redirect: '/risk-levels/risk-level',
+          },
+          {
+            name: 'risk-level',
+            path: '/risk-levels/risk-level',
+            component: RiskLevelPage,
+          },
+          {
+            name: 'configure',
+            path: '/risk-levels/configure',
+            component: RiskLevelsConfigurePage,
+          },
+          {
+            name: 'risk-algorithm',
+            path: '/risk-levels/risk-algorithm',
+            component: RiskAlgorithmTable,
+          },
+        ],
+      },
+      isImportFilesEnabled && {
+        path: '/import',
+        name: 'import',
+        icon: 'ImportOutlined',
+        position: 'top',
+        routes: [
+          {
+            name: 'import-users',
+            path: '/import/import-users',
+            component: UsersUsersFilesPage,
+          },
+          {
+            name: 'import-transactions',
+            path: '/import/import-transactions',
+            component: TransactionsFilesPage,
+          },
+        ],
+      },
+      isListsFeatureEnabled && {
+        name: 'lists',
+        path: '/lists',
+        icon: 'UnorderedListOutlined',
+        position: 'top',
+        hideChildrenInMenu: true,
+        routes: [
+          {
+            path: '/lists/:type',
+            name: 'lists-type',
+            component: CreatedListsPage,
+          },
+          {
+            path: '/lists/:type/:id',
+            name: 'lists-item',
+            component: ListsItemPage,
+          },
+          {
+            path: '/lists',
+            redirect: '/lists/users-whitelists',
+          },
+        ],
+      },
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -238,7 +257,14 @@ export function useRoutes(): RouteItem[] {
         component: Page404,
         hideInMenu: true,
       },
-    ],
-    [isImportFilesEnabled, isRiskLevelsEnabled, lastActiveRuleTab, lastActiveTab],
-  );
+    ];
+
+    return routes.filter((x): x is RouteItem => x !== false);
+  }, [
+    isImportFilesEnabled,
+    isRiskLevelsEnabled,
+    isListsFeatureEnabled,
+    lastActiveRuleTab,
+    lastActiveTab,
+  ]);
 }

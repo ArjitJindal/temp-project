@@ -3,9 +3,9 @@ import pluralize from 'pluralize';
 import { List, Spin } from 'antd';
 import { User } from '../../types';
 import s from './style.module.less';
+import UserItem from './UserItem';
 import { AsyncResource } from '@/utils/asyncResource';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import UserItem from '@/pages/transactions/components/UserSearchButton/PopupContent/UserList/UserItem';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 
 interface Props {
