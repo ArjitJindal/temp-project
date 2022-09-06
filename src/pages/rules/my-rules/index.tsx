@@ -3,6 +3,7 @@ import type { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
+import { getRuleInstanceDisplayId } from '../utils';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
@@ -77,7 +78,7 @@ const MyRule = () => {
                 setShowDetail(true);
               }}
             >
-              {entity.ruleId}
+              {getRuleInstanceDisplayId(entity.ruleId, entity.id)}
             </a>
           );
         },
@@ -89,7 +90,7 @@ const MyRule = () => {
         render: (_, ruleInstance) => {
           return (
             <Popover content={rules[ruleInstance.ruleId].description}>
-              {rules[ruleInstance.ruleId].name}
+              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId].name}
             </Popover>
           );
         },

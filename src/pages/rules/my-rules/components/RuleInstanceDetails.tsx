@@ -161,7 +161,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           {`${ruleInstance.ruleId} (${ruleInstance.id})`}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Name:</b>} valueType="text">
-          {rule.name}
+          {ruleInstance.ruleNameAlias || rule.name}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Description:</b>} valueType="text">
           {rule.description}

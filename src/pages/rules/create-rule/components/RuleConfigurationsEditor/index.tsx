@@ -1,4 +1,4 @@
-import { Descriptions, Divider, message, Row, Space } from 'antd';
+import { Descriptions, Divider, Input, message, Row, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { AjvError } from '@rjsf/core';
@@ -28,6 +28,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
 }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
+  const [ruleNameAlias, setRuleNameAlias] = useState<string>();
   const [ruleAction, setRuleAction] = useState<RuleAction>(rule.defaultAction);
   const [riskLevelRuleActions, setRiskLevelRuleActions] = useState(
     isPulseEnabled
@@ -84,6 +85,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
         await api.postRuleInstances({
           RuleInstance: {
             ruleId: rule.id as string,
+            ruleNameAlias,
             parameters,
             riskLevelParameters,
             action,
@@ -97,7 +99,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
         setActivating(false);
       }
     },
-    [api, onActivated],
+    [api, onActivated, ruleNameAlias],
   );
 
   return (
@@ -105,7 +107,12 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
       <Row justify="center" className={styles.section}>
         <Descriptions column={1} bordered style={{ width: 800 }}>
           <Descriptions.Item label="Rule ID"> {rule.id}</Descriptions.Item>
-          <Descriptions.Item label="Rule Name"> {rule.name}</Descriptions.Item>
+          <Descriptions.Item label="Rule Name">
+            <Input
+              value={ruleNameAlias || rule.name}
+              onChange={(event) => setRuleNameAlias(event.target.value)}
+            />
+          </Descriptions.Item>
           <Descriptions.Item label="Rule Description"> {rule.description}</Descriptions.Item>
         </Descriptions>
       </Row>

@@ -9,13 +9,14 @@ import { Link } from 'react-router-dom';
 import RulesHitBreakdown from '../RulesHitBreakdownChart';
 import header from '../dashboardutils';
 import style from '../../style.module.less';
-import { DashboardStatsRulesCountData, Rule } from '@/apis';
+import { DashboardStatsRulesCountData, Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { Table, ResponsePayload } from '@/components/ui/Table';
 import ResizableTitle from '@/utils/table-utils';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
 import handleResize from '@/components/ui/Table/utils';
+import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -25,6 +26,7 @@ export default function RuleHitCard() {
     moment(),
   ]);
   const [rules, setRules] = useState<{ [key: string]: Rule }>({});
+  const [ruleInstances, setRuleInstances] = useState<{ [key: string]: RuleInstance }>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
 
@@ -35,13 +37,19 @@ export default function RuleHitCard() {
   const columns: ProColumns<DashboardStatsRulesCountData>[] = [
     {
       title: 'Rule ID',
-      dataIndex: 'ruleId',
+      render: (_, stat) => {
+        return <div>{getRuleInstanceDisplayId(stat.ruleId, stat.ruleInstanceId)}</div>;
+      },
       width: 50,
     },
     {
       title: 'Rule Name',
       render: (_, stat) => {
-        return <div>{rules[stat.ruleId].name}</div>;
+        return (
+          <div>
+            {ruleInstances[stat.ruleInstanceId as string]?.ruleNameAlias || rules[stat.ruleId].name}
+          </div>
+        );
       },
       width: 150,
     },
@@ -105,8 +113,9 @@ export default function RuleHitCard() {
     }),
   }));
   const request = useCallback(async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
-    const [rules] = await Promise.all([api.getRules({})]);
+    const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances()]);
     setRules(_.keyBy(rules, 'id'));
+    setRuleInstances(_.keyBy(ruleInstances, 'id'));
     let startTimestamp = moment().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 

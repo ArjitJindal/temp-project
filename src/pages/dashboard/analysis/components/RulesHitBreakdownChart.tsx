@@ -3,11 +3,12 @@ import numeral from 'numeral';
 import { Pie, PieConfig } from '@ant-design/charts';
 import styles from '../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
+import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
 
 const transformData = (data: DashboardStatsRulesCountData[] | []) => {
   return data.map((item: DashboardStatsRulesCountData) => {
     return {
-      x: item.ruleId,
+      x: getRuleInstanceDisplayId(item.ruleId, item.ruleInstanceId),
       y: item.hitCount,
     };
   });
