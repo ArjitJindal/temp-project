@@ -10,6 +10,7 @@ import * as yaml from 'js-yaml'
 import _ from 'lodash'
 import mkdirp from 'mkdirp'
 import { HammerheadStackConstants, TarponStackConstants } from '../constants'
+import { JWT_AUTHORIZER_CACHE_TTL_SECONDS } from '@/lambdas/jwt-authorizer/app'
 
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
@@ -148,7 +149,7 @@ openapi['components']['securitySchemes']['lambda-authorizer'] = {
     authorizerUri: {
       'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
     },
-    authorizerResultTtlInSeconds: 600,
+    authorizerResultTtlInSeconds: JWT_AUTHORIZER_CACHE_TTL_SECONDS,
     enableSimpleResponses: false,
   },
   'x-amazon-apigateway-authtype': 'Custom scheme with tenant claims',

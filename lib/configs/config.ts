@@ -1,5 +1,12 @@
-import { Environment } from 'aws-cdk-lib'
+import { Duration, Environment } from 'aws-cdk-lib'
 import { BillingMode } from 'aws-cdk-lib/aws-dynamodb'
+
+type ApiGatewayConfig = {
+  CACHE?: {
+    CAPACITY: '0.5' | '1.6' | '6.1' | '13.5' | '28.4' | '58.2' | '118' | '237'
+    TTL: Duration
+  }
+}
 
 export type Config = {
   stage: 'local' | 'dev' | 'sandbox' | 'prod'
@@ -10,10 +17,17 @@ export type Config = {
       WRITE_CAPACITY?: number
       BILLING_MODE?: BillingMode
     }
+    PUBLIC_API_GATEWAY: ApiGatewayConfig
+    CONSOLE_API_GATEWAY: ApiGatewayConfig
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: number
     }
+    // API Key authorizer result is cached for 3600 seconds
     API_KEY_AUTHORIZER_LAMBDA: {
+      PROVISIONED_CONCURRENCY: number
+    }
+    // JWT authorizer result is cached for 600 seconds
+    JWT_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
     }
     TRANSACTION_LAMBDA: {
@@ -24,9 +38,21 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
-    TRANSACTIONS_VIEW_LAMBDA?: {
+    TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
-      MEMORY_SIZE: number
+      MEMORY_SIZE?: number
+    }
+    USERS_VIEW_LAMBDA: {
+      PROVISIONED_CONCURRENCY: number
+      MEMORY_SIZE?: number
+    }
+    TENANT_LAMBDA: {
+      PROVISIONED_CONCURRENCY: number
+      MEMORY_SIZE?: number
+    }
+    DASHBOARD_LAMBDA: {
+      PROVISIONED_CONCURRENCY: number
+      MEMORY_SIZE?: number
     }
   }
   application: {

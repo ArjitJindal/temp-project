@@ -12,6 +12,8 @@ import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
 
+export const JWT_AUTHORIZER_CACHE_TTL_SECONDS = 3600
+
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
 const jwtOptions = {
@@ -44,6 +46,7 @@ async function getTenantScopeCredentials(
           .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
           .build()
       ),
+      DurationSeconds: JWT_AUTHORIZER_CACHE_TTL_SECONDS,
     })
     .promise()
   if (!assumeRoleResult.Credentials) {
