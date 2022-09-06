@@ -17,7 +17,7 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
   async initialize(): Promise<void> {
     const openapiYaml = await (
       await fetch(
-        'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/reference/Flagright-API.yaml'
+        'https://stoplight.io/api/v1/projects/flagright/flagright-api/nodes/openapi-public-original.yaml'
       )
     ).text()
     const openapi = yaml.load(openapiYaml) as any
