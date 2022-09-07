@@ -1,5 +1,5 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
 
 export default class PolicyBuilder {
@@ -52,9 +52,9 @@ export default class PolicyBuilder {
       Action: ['s3:*'],
       Effect: 'Allow',
       Resource: [
-        `arn:aws:s3:::${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}*/${this.tenantId}/*`,
-        `arn:aws:s3:::${TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX}*/${this.tenantId}/*`,
-        `arn:aws:s3:::${TarponStackConstants.S3_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${StackConstants.S3_IMPORT_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${StackConstants.S3_DOCUMENT_BUCKET_PREFIX}*/${this.tenantId}/*`,
+        `arn:aws:s3:::${StackConstants.S3_TMP_BUCKET_PREFIX}*/${this.tenantId}/*`,
       ],
     })
     return this

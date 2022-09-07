@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest, InternalServerError, NotFound } from 'http-errors'
-import { HammerheadStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { TransactionService } from './services/transaction-service'
 import { RuleService } from './services/rule-service'
 import {
@@ -839,10 +839,7 @@ export const riskClassificationHandler = lambdaApi({
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
 ) => {
-  if (
-    classificationValues.length !=
-    HammerheadStackConstants.NUMBER_OF_RISK_LEVELS
-  ) {
+  if (classificationValues.length != StackConstants.NUMBER_OF_RISK_LEVELS) {
     throw new BadRequest('Invalid Request - Please provide 5 risk levels')
   }
   const unique = new Set()

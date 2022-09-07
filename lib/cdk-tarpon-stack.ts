@@ -48,8 +48,7 @@ import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import {
   getNameForGlobalResource,
   getResourceNameForTarpon,
-  HammerheadStackConstants,
-  TarponStackConstants,
+  StackConstants,
 } from './constants'
 import { Config } from './configs/config'
 import {
@@ -91,6 +90,7 @@ export class CdkTarponStack extends cdk.Stack {
       env: config.env,
     })
     this.config = config
+    const isDevUserStack = process.env.ENV === 'dev:user'
 
     /* Cloudwatch Insights Layer (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Lambda-Insights-extension-versionsx86-64.html) */
     const cwInsightsLayerArn = `arn:aws:lambda:${this.config.env.region}:580247275435:layer:LambdaInsightsExtension:18`
@@ -106,15 +106,15 @@ export class CdkTarponStack extends cdk.Stack {
 
     const BetterUptimeCloudWatchTopic = new Topic(
       this,
-      'BetterUptimeCloudWatchTopic',
+      StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
       {
-        displayName: 'BetterUptimeCloudWatchTopic',
-        topicName: 'BetterUptimeCloudWatchTopic',
+        displayName: StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
+        topicName: StackConstants.BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME,
       }
     )
     this.betterUptimeCloudWatchTopic = BetterUptimeCloudWatchTopic
 
-    new Subscription(this, 'Subscription', {
+    new Subscription(this, StackConstants.BETTER_UPTIME_SUBSCRIPTION_NAME, {
       topic: this.betterUptimeCloudWatchTopic,
       endpoint: config.application.BETTERUPTIME_HOOK_URL
         ? config.application.BETTERUPTIME_HOOK_URL
@@ -122,107 +122,159 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
-    const slackAlertQueue = new Queue(this, 'SlackAlertQueue', {
-      visibilityTimeout: Duration.seconds(
-        DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
-      ),
-    })
+    const slackAlertQueue = new Queue(
+      this,
+      StackConstants.SLACK_ALERT_QUEUE_NAME,
+      {
+        visibilityTimeout: Duration.seconds(
+          DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+        ),
+      }
+    )
 
     const webhookDeliveryDeadLetterQueue = new Queue(
       this,
-      'WebhookDeliveryDeadLetterQueue'
+      StackConstants.WEBHOOK_DELIVERY_DLQ_NAME
     )
     const webhookDeliveryVisibilityTimeout = Duration.seconds(
       DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
     )
-    const webhookDeliveryQueue = new Queue(this, 'WebhookDeliveryQueue', {
-      visibilityTimeout: webhookDeliveryVisibilityTimeout,
-      deadLetterQueue: {
-        queue: webhookDeliveryDeadLetterQueue,
-        // Retry up to 3 days
-        maxReceiveCount:
-          Duration.days(3).toSeconds() /
-          webhookDeliveryVisibilityTimeout.toSeconds(),
-      },
-    })
+    const webhookDeliveryQueue = new Queue(
+      this,
+      StackConstants.WEBHOOK_DELIVERY_QUEUE_NAME,
+      {
+        visibilityTimeout: webhookDeliveryVisibilityTimeout,
+        deadLetterQueue: {
+          queue: webhookDeliveryDeadLetterQueue,
+          // Retry up to 3 days
+          maxReceiveCount:
+            Duration.days(3).toSeconds() /
+            webhookDeliveryVisibilityTimeout.toSeconds(),
+        },
+      }
+    )
 
     /*
      * Kinesis Data Streams
      */
-    const tarponStream = new Stream(this, 'tarponStream', {
-      streamName: 'tarponDynamoChangeCaptureStream',
-      retentionPeriod: Duration.hours(72),
-      shardCount: 1,
-    })
-    if (config.stage === 'dev') {
-      tarponStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+    let tarponStream
+    if (!isDevUserStack) {
+      tarponStream = new Stream(this, StackConstants.TARPON_STREAM_ID, {
+        streamName: StackConstants.TARPON_STREAM_NAME,
+        retentionPeriod: Duration.hours(72),
+        shardCount: 1,
+      })
+      if (config.stage === 'dev') {
+        tarponStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+      }
+
+      createKinesisAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        `TarponChangeCaptureKinesisPutRecordErrorRate`,
+        tarponStream.streamName
+      )
+    } else {
+      const streamArn = `arn:aws:kinesis:${config.env.region}:${config.env.account}:stream/${StackConstants.TARPON_STREAM_NAME}`
+      tarponStream = Stream.fromStreamArn(
+        this,
+        StackConstants.TARPON_STREAM_ID,
+        streamArn
+      )
     }
 
-    createKinesisAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      `TarponChangeCaptureKinesisPutRecordErrorRate`,
-      tarponStream.streamName
-    )
+    let hammerheadStream
+    if (!isDevUserStack) {
+      hammerheadStream = new Stream(this, StackConstants.HAMMERHEAD_STREAM_ID, {
+        streamName: StackConstants.HAMMERHEAD_STREAM_NAME,
+        retentionPeriod: Duration.hours(72),
+        shardCount: 1,
+      })
+      if (config.stage === 'dev') {
+        hammerheadStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+      }
 
-    const hammerheadStream = new Stream(this, 'hammerheadStream', {
-      streamName: 'hammerheadDynamoChangeCaptureStream',
-      retentionPeriod: Duration.hours(72),
-      shardCount: 1,
-    })
-    if (config.stage === 'dev') {
-      hammerheadStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+      createKinesisAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        `HammerheadChangeCaptureKinesisPutRecordErrorRate`,
+        hammerheadStream.streamName
+      )
+    } else {
+      const streamArn = `arn:aws:kinesis:${config.env.region}:${config.env.account}:stream/${StackConstants.HAMMERHEAD_STREAM_NAME}`
+      hammerheadStream = Stream.fromStreamArn(
+        this,
+        StackConstants.HAMMERHEAD_STREAM_ID,
+        streamArn
+      )
     }
-
-    createKinesisAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      `HammerheadChangeCaptureKinesisPutRecordErrorRate`,
-      hammerheadStream.streamName
-    )
 
     /**
      * DynamoDB
      */
-    const tarponDynamoDbTable = new Table(
-      this,
-      TarponStackConstants.DYNAMODB_TABLE_NAME,
-      {
-        tableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
-        partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-        sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-        readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
-        writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
-        billingMode: config.resource.DYNAMODB.BILLING_MODE,
-        kinesisStream: tarponStream,
-        removalPolicy:
-          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      }
-    )
-    this.createDynamoDbAlarms(TarponStackConstants.DYNAMODB_TABLE_NAME)
+    let tarponDynamoDbTable
+    let hammerheadDynamoDbTable
 
-    const hammerheadDynamoDbTable = new Table(
-      this,
-      HammerheadStackConstants.DYNAMODB_TABLE_NAME,
-      {
-        tableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
-        partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-        sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-        readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
-        writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
-        billingMode: config.resource.DYNAMODB.BILLING_MODE,
-        kinesisStream: hammerheadStream,
-        removalPolicy:
-          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      }
-    )
-    this.createDynamoDbAlarms(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
+    if (!isDevUserStack) {
+      tarponDynamoDbTable = new Table(
+        this,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        {
+          tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+          partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
+          sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
+          readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
+          writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
+          billingMode: config.resource.DYNAMODB.BILLING_MODE,
+          kinesisStream: tarponStream,
+          removalPolicy:
+            config.stage === 'dev'
+              ? RemovalPolicy.DESTROY
+              : RemovalPolicy.RETAIN,
+        }
+      )
+      this.createDynamoDbAlarms(StackConstants.TARPON_DYNAMODB_TABLE_NAME)
+
+      hammerheadDynamoDbTable = new Table(
+        this,
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        {
+          tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+          partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
+          sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
+          readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
+          writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
+          billingMode: config.resource.DYNAMODB.BILLING_MODE,
+          kinesisStream: hammerheadStream,
+          removalPolicy:
+            config.stage === 'dev'
+              ? RemovalPolicy.DESTROY
+              : RemovalPolicy.RETAIN,
+        }
+      )
+      this.createDynamoDbAlarms(StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME)
+    } else {
+      tarponDynamoDbTable = Table.fromTableName(
+        this,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      )
+      hammerheadDynamoDbTable = Table.fromTableName(
+        this,
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+      )
+    }
 
     /**
      * S3 Buckets
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
      * logical bucket name.
      */
+    let s3ImportBucket
+    let s3DocumentBucket
+    let s3TmpBucket
+
     const s3BucketCors = [
       {
         allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT],
@@ -231,57 +283,77 @@ export class CdkTarponStack extends cdk.Stack {
       },
     ]
     const importBucketName = getNameForGlobalResource(
-      TarponStackConstants.S3_IMPORT_BUCKET_PREFIX,
+      StackConstants.S3_IMPORT_BUCKET_PREFIX,
       config
     )
-    const s3ImportBucket = new s3.Bucket(this, importBucketName, {
-      bucketName: importBucketName,
-      cors: s3BucketCors,
-      removalPolicy:
-        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: config.stage === 'dev',
-      encryption: s3.BucketEncryption.S3_MANAGED,
-    })
     const documentBucketName = getNameForGlobalResource(
-      TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX,
+      StackConstants.S3_DOCUMENT_BUCKET_PREFIX,
       config
     )
-    const s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
-      bucketName: documentBucketName,
-      cors: s3BucketCors,
-      removalPolicy:
-        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: config.stage === 'dev',
-      encryption: s3.BucketEncryption.S3_MANAGED,
-    })
     const tmpBucketName = getNameForGlobalResource(
-      TarponStackConstants.S3_TMP_BUCKET_PREFIX,
+      StackConstants.S3_TMP_BUCKET_PREFIX,
       config
     )
-    const s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
-      bucketName: tmpBucketName,
-      cors: s3BucketCors,
-      removalPolicy:
-        config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      autoDeleteObjects: config.stage === 'dev',
-      encryption: s3.BucketEncryption.S3_MANAGED,
-      lifecycleRules: [
-        {
-          abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
-          expiration: cdk.Duration.days(1),
-        },
-      ],
-    })
+    if (!isDevUserStack) {
+      s3ImportBucket = new s3.Bucket(this, importBucketName, {
+        bucketName: importBucketName,
+        cors: s3BucketCors,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        autoDeleteObjects: config.stage === 'dev',
+        encryption: s3.BucketEncryption.S3_MANAGED,
+      })
+
+      s3DocumentBucket = new s3.Bucket(this, documentBucketName, {
+        bucketName: documentBucketName,
+        cors: s3BucketCors,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        autoDeleteObjects: config.stage === 'dev',
+        encryption: s3.BucketEncryption.S3_MANAGED,
+      })
+
+      s3TmpBucket = new s3.Bucket(this, tmpBucketName, {
+        bucketName: tmpBucketName,
+        cors: s3BucketCors,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        autoDeleteObjects: config.stage === 'dev',
+        encryption: s3.BucketEncryption.S3_MANAGED,
+        lifecycleRules: [
+          {
+            abortIncompleteMultipartUploadAfter: cdk.Duration.days(1),
+            expiration: cdk.Duration.days(1),
+          },
+        ],
+      })
+    } else {
+      s3ImportBucket = s3.Bucket.fromBucketName(
+        this,
+        importBucketName,
+        importBucketName
+      )
+      s3DocumentBucket = s3.Bucket.fromBucketName(
+        this,
+        documentBucketName,
+        documentBucketName
+      )
+      s3TmpBucket = s3.Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
+    }
 
     /**
      * Lambda Layers
      */
 
-    const fastGeoIpLayer = new LayerVersion(this, 'fast-geoip-layer', {
-      compatibleRuntimes: [Runtime.NODEJS_16_X],
-      code: Code.fromAsset('dist/layers/fast-geoip'),
-      description: 'fast-geoip npm module',
-    })
+    const fastGeoIpLayer = new LayerVersion(
+      this,
+      StackConstants.FAST_GEOIP_LAYER_NAME,
+      {
+        compatibleRuntimes: [Runtime.NODEJS_16_X],
+        code: Code.fromAsset('dist/layers/fast-geoip'),
+        description: 'fast-geoip npm module',
+      }
+    )
 
     /**
      * Lambda Functions
@@ -299,7 +371,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* API Key Generator */
     const { alias: apiKeyGeneratorAlias } = this.createFunction(
       {
-        name: TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+        name: StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
         handler: 'app.apiKeyGeneratorHandler',
         codePath: 'dist/api-key-generator',
       },
@@ -325,7 +397,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* API Key Authorizer */
     const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
       this.createFunction({
-        name: TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
+        name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
         handler: 'app.apiKeyAuthorizer',
         codePath: 'dist/api-key-authorizer',
         provisionedConcurrency:
@@ -336,7 +408,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: jwtAuthorizerAlias, func: jwtAuthorizerFunction } =
       this.createFunction(
         {
-          name: TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
+          name: StackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
           handler: 'app.jwtAuthorizer',
           codePath: 'dist/jwt-authorizer',
           provisionedConcurrency:
@@ -353,7 +425,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Transaction */
     const { alias: transactionAlias } = this.createFunction({
-      name: TarponStackConstants.TRANSACTION_FUNCTION_NAME,
+      name: StackConstants.TRANSACTION_FUNCTION_NAME,
       handler: 'app.transactionHandler',
       codePath: 'dist/rules-engine',
       provisionedConcurrency:
@@ -366,7 +438,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
-      name: TarponStackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
+      name: StackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
       handler: 'app.transactionEventHandler',
       codePath: 'dist/rules-engine',
     })
@@ -374,7 +446,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
-      name: TarponStackConstants.USER_EVENT_FUNCTION_NAME,
+      name: StackConstants.USER_EVENT_FUNCTION_NAME,
       handler: 'app.userEventsHandler',
       codePath: 'dist/rules-engine',
     })
@@ -383,7 +455,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* File Import */
     const { alias: fileImportAlias } = this.createFunction(
       {
-        name: TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
+        name: StackConstants.FILE_IMPORT_FUNCTION_NAME,
         handler: 'app.fileImportHandler',
         codePath: 'dist/file-import/',
       },
@@ -404,7 +476,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: getPresignedUrlAlias } = this.createFunction(
       {
-        name: TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
+        name: StackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
         handler: 'app.getPresignedUrlHandler',
         codePath: 'dist/file-import/',
       },
@@ -419,7 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Rule Template */
     const { alias: ruleAlias } = this.createFunction(
       {
-        name: TarponStackConstants.RULE_FUNCTION_NAME,
+        name: StackConstants.RULE_FUNCTION_NAME,
         handler: 'app.ruleHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
@@ -431,7 +503,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Rule Instance */
     const { alias: ruleInstanceAlias } = this.createFunction(
       {
-        name: TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
+        name: StackConstants.RULE_INSTANCE_FUNCTION_NAME,
         handler: 'app.ruleInstanceHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
@@ -443,7 +515,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
       {
-        name: TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+        name: StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
         handler: 'app.transactionsViewHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
         memorySize: config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
@@ -467,7 +539,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Accounts */
     this.createFunction(
       {
-        name: TarponStackConstants.ACCOUNT_FUNCTION_NAME,
+        name: StackConstants.ACCOUNT_FUNCTION_NAME,
         handler: 'app.accountsHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
@@ -477,7 +549,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Accounts */
     this.createFunction(
       {
-        name: TarponStackConstants.TENANT_FUNCTION_NAME,
+        name: StackConstants.TENANT_FUNCTION_NAME,
         handler: 'app.tenantsHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
@@ -487,7 +559,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Business users view */
     const { alias: businessUsersViewAlias } = this.createFunction(
       {
-        name: TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+        name: StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.businessUsersViewHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
         provisionedConcurrency:
@@ -510,7 +582,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Consumer users view */
     const { alias: consumerUsersViewAlias } = this.createFunction(
       {
-        name: TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+        name: StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.consumerUsersViewHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
         provisionedConcurrency:
@@ -533,7 +605,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(
       {
-        name: TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+        name: StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
         handler: 'app.dashboardStatsHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
         provisionedConcurrency:
@@ -546,7 +618,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* User */
     const { alias: userAlias } = this.createFunction({
-      name: TarponStackConstants.USER_FUNCTION_NAME,
+      name: StackConstants.USER_FUNCTION_NAME,
       handler: 'app.userHandler',
       codePath: 'dist/user-management',
       provisionedConcurrency:
@@ -557,7 +629,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* List Importer */
     const { alias: listsAlias } = this.createFunction({
-      name: TarponStackConstants.LISTS_FUNCTION_NAME,
+      name: StackConstants.LISTS_FUNCTION_NAME,
       handler: 'app.listsHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
@@ -566,7 +638,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Slack App */
     const { alias: slackAppAlias } = this.createFunction(
       {
-        name: TarponStackConstants.SLACK_APP_FUNCTION_NAME,
+        name: StackConstants.SLACK_APP_FUNCTION_NAME,
         handler: 'app.slackAppHandler',
         codePath: 'dist/slack-app',
       },
@@ -584,7 +656,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: slackAlertAlias } = this.createFunction(
       {
-        name: TarponStackConstants.SLACK_ALERT_FUNCTION_NAME,
+        name: StackConstants.SLACK_ALERT_FUNCTION_NAME,
         handler: 'app.slackAlertHandler',
         codePath: 'dist/slack-app',
       },
@@ -609,7 +681,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: webhookDelivererAlias } = this.createFunction(
       {
-        name: TarponStackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
+        name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
         handler: 'app.webhookDeliveryHandler',
         codePath: 'dist/webhook',
       },
@@ -624,7 +696,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: webhookConfigurationHandlerAlias } = this.createFunction(
       {
-        name: TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+        name: StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
         handler: 'app.webhookConfigurationHandler',
         codePath: 'dist/webhook',
       },
@@ -643,7 +715,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Risk Classification function */
     const { alias: riskClassificationAlias } = this.createFunction(
       {
-        name: HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
+        name: StackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
         handler: 'app.riskClassificationHandler',
         codePath: 'dist/phytoplankton-internal-api-handlers/',
       },
@@ -653,7 +725,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Manual User Risk Assignment function */
     const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
-      name: HammerheadStackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      name: StackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.manualRiskAssignmentHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
@@ -661,7 +733,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Parameter risk level assignment function */
     const { alias: parameterRiskAssignmentAlias } = this.createFunction({
-      name: HammerheadStackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      name: StackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.parameterRiskAssignmentHandler',
       codePath: 'dist/phytoplankton-internal-api-handlers/',
     })
@@ -673,7 +745,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: tarponChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
         {
-          name: TarponStackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           handler: 'app.tarponChangeCaptureHandler',
           codePath: 'dist/tarpon-change-capture-kinesis-consumer',
         },
@@ -699,7 +771,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: webhookTarponChangeCaptureHandlerAlias } =
       this.createFunction(
         {
-          name: TarponStackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           handler: 'app.webhookTarponChangeCaptureHandler',
           codePath: 'dist/webhook',
         },
@@ -728,7 +800,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
         {
-          name: HammerheadStackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           handler: 'app.hammerheadChangeCaptureHandler',
           codePath: 'dist/hammerhead-change-capture-kinesis-consumer',
         },
@@ -757,20 +829,28 @@ export class CdkTarponStack extends cdk.Stack {
     if (config.stage === 'local') {
       apiDefinition = ApiDefinition.fromAsset(PUBLIC_API_OPENAPI_PATH)
     } else {
-      const publicOpenApiAsset = new Asset(this, 'PublicOpenApiAsset', {
-        path: PUBLIC_API_OPENAPI_PATH,
-      })
+      const publicOpenApiAsset = new Asset(
+        this,
+        StackConstants.PUBLIC_OPENAPI_ASSET_NAME,
+        {
+          path: PUBLIC_API_OPENAPI_PATH,
+        }
+      )
       const publicOpenApiData = Fn.transform('AWS::Include', {
         Location: publicOpenApiAsset.s3ObjectUrl,
       })
       apiDefinition = AssetApiDefinition.fromInline(publicOpenApiData)
     }
 
-    const publicApiLogGroup = new LogGroup(this, 'LogGroupPublicApi', {
-      logGroupName: `API-Gateway-Execution-Logs_TarponAPI`,
-    })
-    const publicApi = new SpecRestApi(this, 'TarponAPI', {
-      restApiName: 'TarponAPI',
+    const publicApiLogGroup = new LogGroup(
+      this,
+      StackConstants.LOG_GROUP_PUBLIC_API_NAME,
+      {
+        logGroupName: StackConstants.TARPON_API_LOG_GROUP_NAME,
+      }
+    )
+    const publicApi = new SpecRestApi(this, StackConstants.TARPON_API_NAME, {
+      restApiName: StackConstants.TARPON_API_NAME,
       apiDefinition,
       deployOptions: {
         loggingLevel: MethodLoggingLevel.INFO,
@@ -798,7 +878,7 @@ export class CdkTarponStack extends cdk.Stack {
     createAPIGatewayAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
-      `TarponApiErrorPercentage`,
+      StackConstants.TARPON_API_GATEWAY_ALARM_NAME,
       publicApi.restApiName
     )
 
@@ -806,7 +886,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       this.betterUptimeCloudWatchTopic,
       publicApiLogGroup,
-      `TarponApiThrottlingCount`,
+      StackConstants.TARPON_API_GATEWAY_THROTTLING_ALARM_NAME,
       publicApi.restApiName
     )
 
@@ -815,19 +895,27 @@ export class CdkTarponStack extends cdk.Stack {
     if (config.stage === 'local') {
       apiDefinition = ApiDefinition.fromAsset(CONSOLE_API_OPENAPI_PATH)
     } else {
-      const internalOpenApiAsset = new Asset(this, 'InternalOpenApiAsset', {
-        path: CONSOLE_API_OPENAPI_PATH,
-      })
+      const internalOpenApiAsset = new Asset(
+        this,
+        StackConstants.CONSOLE_OPENAPI_ASSET_NAME,
+        {
+          path: CONSOLE_API_OPENAPI_PATH,
+        }
+      )
       const internalOpenApiData = Fn.transform('AWS::Include', {
         Location: internalOpenApiAsset.s3ObjectUrl,
       })
       apiDefinition = AssetApiDefinition.fromInline(internalOpenApiData)
     }
-    const consoleApiLogGroup = new LogGroup(this, 'LogGroupConsoleApi', {
-      logGroupName: `API-Gateway-Execution-Logs_ConsoleTarponAPI`,
-    })
-    const consoleApi = new SpecRestApi(this, 'TarponAPI-console', {
-      restApiName: 'TarponAPI-console',
+    const consoleApiLogGroup = new LogGroup(
+      this,
+      StackConstants.LOG_GROUP_CONSOLE_API_NAME,
+      {
+        logGroupName: StackConstants.CONSOLE_API_LOG_GROUP_NAME,
+      }
+    )
+    const consoleApi = new SpecRestApi(this, StackConstants.CONSOLE_API_NAME, {
+      restApiName: StackConstants.CONSOLE_API_NAME,
       apiDefinition,
       deployOptions: {
         loggingLevel: MethodLoggingLevel.INFO,
@@ -845,7 +933,7 @@ export class CdkTarponStack extends cdk.Stack {
     createAPIGatewayAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
-      `ConsoleTarponApiErrorPercentage`,
+      StackConstants.CONSOLE_API_GATEWAY_ALARM_NAME,
       consoleApi.restApiName
     )
 
@@ -853,7 +941,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       this.betterUptimeCloudWatchTopic,
       consoleApiLogGroup,
-      `ConsoleApiThrottlingCount`,
+      StackConstants.CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME,
       consoleApi.restApiName
     )
 
@@ -861,7 +949,7 @@ export class CdkTarponStack extends cdk.Stack {
      * IAM roles
      */
     const apiKeyAuthorizerBaseRoleName = getNameForGlobalResource(
-      TarponStackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME,
+      StackConstants.API_KEY_AUTHORIZER_BASE_ROLE_NAME,
       config
     )
     const apiKeyAuthorizerBaseRole = new Role(
@@ -895,7 +983,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     const jwtAuthorizerBaseRoleName = getNameForGlobalResource(
-      TarponStackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME,
+      StackConstants.JWT_AUTHORIZER_BASE_ROLE_NAME,
       config
     )
     const jwtAuthorizerBaseRole = new Role(this, jwtAuthorizerBaseRoleName, {
@@ -922,7 +1010,9 @@ export class CdkTarponStack extends cdk.Stack {
       jwtAuthorizerBaseRole.roleArn
     )
 
-    createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
+    if (!isDevUserStack) {
+      createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
+    }
 
     /**
      * Outputs
@@ -1017,9 +1107,9 @@ export class CdkTarponStack extends cdk.Stack {
     // an alias for a lambda even it has no provisioned concurrency.
     const alias = new Alias(
       this,
-      `${name}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}`,
+      `${name}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}`,
       {
-        aliasName: TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME,
+        aliasName: StackConstants.LAMBDA_LATEST_ALIAS_NAME,
         version: func.currentVersion,
         provisionedConcurrentExecutions: provisionedConcurrency,
       }

@@ -1,14 +1,34 @@
 import { Config } from './configs/config'
 
-export function getResourceNameForTarpon(resourceName: string, dash = false) {
-  return `tarpon${dash ? '-' : ''}${resourceName}`
+function getSuffix(): string {
+  let suffix = ''
+  if (process.env.ENV === 'dev:user' && process.env.GITHUB_USER) {
+    suffix = process.env.GITHUB_USER
+  }
+  return suffix
+}
+
+export function getResourceName(resourceName: string) {
+  const suffix = getSuffix()
+  return `${resourceName}${suffix}`
+}
+
+export function getResourceNameForTarpon(
+  resourceName: string,
+  dash = false,
+  ignoreSuffix = false
+) {
+  const suffix = ignoreSuffix ? '' : getSuffix()
+  return `tarpon${dash ? '-' : ''}${resourceName}${suffix}`
 }
 
 export function getResourceNameForHammerhead(
   resourceName: string,
-  dash = false
+  dash = false,
+  ignoreSuffix = false
 ) {
-  return `hammerhead${dash ? '-' : ''}${resourceName}`
+  const suffix = ignoreSuffix ? '' : getSuffix()
+  return `hammerhead${dash ? '-' : ''}${resourceName}${suffix}`
 }
 
 export function getNameForGlobalResource(name: string, config: Config) {
@@ -17,8 +37,8 @@ export function getNameForGlobalResource(name: string, config: Config) {
   }`
 }
 
-export const TarponStackConstants = {
-  DYNAMODB_TABLE_NAME: 'Tarpon',
+export const StackConstants = {
+  TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
   MONGO_DB_SECURITY_GROUP_NAME: 'atlas-lambda-sg',
@@ -28,9 +48,9 @@ export const TarponStackConstants = {
   JWT_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
     'JwtAuthorizerBaseRole'
   ),
-  S3_IMPORT_BUCKET_PREFIX: getResourceNameForTarpon('import', true),
-  S3_DOCUMENT_BUCKET_PREFIX: getResourceNameForTarpon('document', true),
-  S3_TMP_BUCKET_PREFIX: getResourceNameForTarpon('tmp', true),
+  S3_IMPORT_BUCKET_PREFIX: getResourceNameForTarpon('import', true, true),
+  S3_DOCUMENT_BUCKET_PREFIX: getResourceNameForTarpon('document', true, true),
+  S3_TMP_BUCKET_PREFIX: getResourceNameForTarpon('tmp', true, true),
 
   // Lambda names
   ACCOUNT_FUNCTION_NAME: getResourceNameForTarpon('AccountFunction'),
@@ -89,10 +109,37 @@ export const TarponStackConstants = {
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
-}
-
-export const HammerheadStackConstants = {
-  DYNAMODB_TABLE_NAME: 'Hammerhead',
+  BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME: getResourceName(
+    'BetterUptimeCloudWatchTopic'
+  ),
+  BETTER_UPTIME_SUBSCRIPTION_NAME: getResourceName('Subscription'),
+  SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
+  WEBHOOK_DELIVERY_DLQ_NAME: getResourceName('webhookDeliveryDeadLetterQueue'),
+  WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
+  FAST_GEOIP_LAYER_NAME: getResourceName('fast-geoip-layer'),
+  PUBLIC_OPENAPI_ASSET_NAME: getResourceName('PublicOpenApiAsset'),
+  LOG_GROUP_PUBLIC_API_NAME: getResourceName('LogGroupPublicApi'),
+  TARPON_API_NAME: getResourceName('TarponAPI'),
+  TARPON_API_GATEWAY_ALARM_NAME: getResourceName('TarponApiErrorPercentage'),
+  TARPON_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
+    'TarponApiThrottlingCount'
+  ),
+  CONSOLE_OPENAPI_ASSET_NAME: getResourceName('InternalOpenApiAsset'),
+  LOG_GROUP_CONSOLE_API_NAME: getResourceName('LogGroupConsoleApi'),
+  CONSOLE_API_NAME: getResourceName('TarponAPI-console'),
+  CONSOLE_API_GATEWAY_ALARM_NAME: getResourceName(
+    'ConsoleTarponApiErrorPercentage'
+  ),
+  CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
+    'ConsoleApiThrottlingCount'
+  ),
+  TARPON_API_LOG_GROUP_NAME: getResourceName(
+    `API-Gateway-Execution-Logs_TarponAPI`
+  ),
+  CONSOLE_API_LOG_GROUP_NAME: getResourceName(
+    `API-Gateway-Execution-Logs_ConsoleTarponAPI`
+  ),
+  HAMMERHEAD_DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
   RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
@@ -105,4 +152,8 @@ export const HammerheadStackConstants = {
     'ParameterRiskAssignmentFunction'
   ),
   NUMBER_OF_RISK_LEVELS: 5,
+  TARPON_STREAM_ID: 'tarponStream',
+  TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
+  HAMMERHEAD_STREAM_ID: 'hammerheadStream',
+  HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
 }

@@ -9,23 +9,22 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import _ from 'lodash'
 import mkdirp from 'mkdirp'
-import { TarponStackConstants } from '../constants'
+import { StackConstants } from '../constants'
 
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
 
 const PathToLambda: any = {
-  '/transactions': TarponStackConstants.TRANSACTION_FUNCTION_NAME,
-  '/transactions/{transactionId}':
-    TarponStackConstants.TRANSACTION_FUNCTION_NAME,
-  '/consumer/users': TarponStackConstants.USER_FUNCTION_NAME,
-  '/consumer/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
-  '/business/users': TarponStackConstants.USER_FUNCTION_NAME,
-  '/business/users/{userId}': TarponStackConstants.USER_FUNCTION_NAME,
-  '/events/transaction/{eventId}': TarponStackConstants.USER_FUNCTION_NAME,
-  '/events/transaction': TarponStackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
-  '/events/consumer/user': TarponStackConstants.USER_EVENT_FUNCTION_NAME,
-  '/events/business/user': TarponStackConstants.USER_EVENT_FUNCTION_NAME,
+  '/transactions': StackConstants.TRANSACTION_FUNCTION_NAME,
+  '/transactions/{transactionId}': StackConstants.TRANSACTION_FUNCTION_NAME,
+  '/consumer/users': StackConstants.USER_FUNCTION_NAME,
+  '/consumer/users/{userId}': StackConstants.USER_FUNCTION_NAME,
+  '/business/users': StackConstants.USER_FUNCTION_NAME,
+  '/business/users/{userId}': StackConstants.USER_FUNCTION_NAME,
+  '/events/transaction/{eventId}': StackConstants.USER_FUNCTION_NAME,
+  '/events/transaction': StackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
+  '/events/consumer/user': StackConstants.USER_EVENT_FUNCTION_NAME,
+  '/events/business/user': StackConstants.USER_EVENT_FUNCTION_NAME,
 }
 function assertValidLambdaMappings(openapi: any) {
   const pathsLocal = Object.keys(PathToLambda)
@@ -82,10 +81,10 @@ openapi['components']['securitySchemes']['lambda-authorizer'] = {
     type: 'request',
     identitySource: 'method.request.header.x-api-key',
     authorizerUri: {
-      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${TarponStackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
+      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
     },
     authorizerResultTtlInSeconds:
-      TarponStackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
+      StackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
     enableSimpleResponses: false,
   },
   'x-amazon-apigateway-authtype': 'Custom scheme with tenant claims',
@@ -100,7 +99,7 @@ for (const path in openapi.paths) {
     methodSetting['x-amazon-apigateway-request-validator'] = 'all'
     methodSetting['x-amazon-apigateway-integration'] = {
       uri: {
-        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
+        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
       },
       httpMethod: 'POST',
       type: 'aws_proxy',

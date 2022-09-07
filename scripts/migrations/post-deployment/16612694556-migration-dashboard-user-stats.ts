@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { getMongoDbClient } from '../utils/db'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
@@ -6,9 +6,7 @@ import { DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY } from '@/utils/mongoDBU
 
 async function migrateTenant(tenant: Tenant) {
   console.log(`Migrate ${tenant.name} (#${tenant.id})`)
-  const mongodb = await getMongoDbClient(
-    TarponStackConstants.MONGO_DB_DATABASE_NAME
-  )
+  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const aggregationCollection = mongodb
     .db()
     .collection(DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenant.id))

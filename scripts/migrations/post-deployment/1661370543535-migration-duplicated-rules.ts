@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '../utils/db'
 import { getRulesById } from '../utils/rule'
@@ -24,7 +24,7 @@ const RULES_MAPPING: { [key: string]: string } = {
 async function migrateTransactions(tenant: Tenant) {
   const dynamoDb = await getDynamoDbClient()
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.TRANSACTION(tenant.id).PartitionKeyID,
@@ -55,7 +55,7 @@ async function migrateTransactions(tenant: Tenant) {
       if (shouldSave && transaction.transactionId) {
         console.info(`Updated transaction ${transaction.transactionId}`)
         const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-          TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
           Item: {
             ...DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
             ...transaction,

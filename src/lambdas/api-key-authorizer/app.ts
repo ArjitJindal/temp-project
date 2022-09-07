@@ -6,7 +6,7 @@ import {
   APIGatewayAuthorizerResultContext,
   APIGatewayRequestAuthorizerEvent,
 } from 'aws-lambda'
-import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -26,12 +26,11 @@ async function getTenantScopeCredentials(
       RoleSessionName: requestId,
       Policy: JSON.stringify(
         new PolicyBuilder(tenantId)
-          .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
-          .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
+          .dynamoDb(StackConstants.TARPON_DYNAMODB_TABLE_NAME)
+          .dynamoDb(StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME)
           .build()
       ),
-      DurationSeconds:
-        TarponStackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
+      DurationSeconds: StackConstants.API_KEY_AUTHORIZER_CACHE_TTL_SECONDS,
     })
     .promise()
   if (!assumeRoleResult.Credentials) {

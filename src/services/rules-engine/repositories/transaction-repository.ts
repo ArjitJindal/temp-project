@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import _, { chunk } from 'lodash'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   getNonUserReceiverKeys,
@@ -457,7 +457,7 @@ export class TransactionRepository {
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
-          [TarponStackConstants.DYNAMODB_TABLE_NAME]: [
+          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
             {
               PutRequest: {
                 Item: {
@@ -591,7 +591,7 @@ export class TransactionRepository {
     transactionId: string
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -637,7 +637,7 @@ export class TransactionRepository {
     )
     const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
       RequestItems: {
-        [TarponStackConstants.DYNAMODB_TABLE_NAME]: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
           Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
             DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
           ),
@@ -654,7 +654,7 @@ export class TransactionRepository {
     const result = await this.dynamoDb.batchGet(batchGetItemInput).promise()
     return (
       (result.Responses?.[
-        TarponStackConstants.DYNAMODB_TABLE_NAME
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME
       ] as Transaction[]) || []
     )
   }
@@ -683,7 +683,7 @@ export class TransactionRepository {
     const transactionFilterQuery =
       this.getThinTransactionFilterQueryInput(filterOptions)
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
@@ -756,7 +756,7 @@ export class TransactionRepository {
     const transactionFilterQuery =
       this.getThinTransactionFilterQueryInput(filterOptions)
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
@@ -1111,7 +1111,7 @@ export class TransactionRepository {
     const transactionFilterQuery =
       this.getThinTransactionFilterQueryInput(filterOptions)
     return {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression:
         'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
       FilterExpression: transactionFilterQuery.FilterExpression,

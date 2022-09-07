@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Filter, MongoClient } from 'mongodb'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -229,7 +229,7 @@ export class UserRepository {
 
   public async getUser<T>(userId: string): Promise<T | undefined> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -266,7 +266,7 @@ export class UserRepository {
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
         type,
@@ -287,7 +287,7 @@ export class UserRepository {
 
   async deleteUser(userId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
       ReturnConsumedCapacity: 'TOTAL',
     }

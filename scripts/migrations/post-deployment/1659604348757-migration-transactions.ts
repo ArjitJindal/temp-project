@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
 import { migrateAllTenants } from '../utils/tenant'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
@@ -9,9 +9,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 async function migrateTenant(tenant: Tenant) {
   console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
   const dynamodb = await getDynamoDbClient()
-  const mongodb = await getMongoDbClient(
-    TarponStackConstants.MONGO_DB_DATABASE_NAME
-  )
+  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const transactionCollection = mongodb
     .db()
     .collection<TransactionCaseManagement>(TRANSACTIONS_COLLECTION(tenant.id))
@@ -29,7 +27,7 @@ async function migrateTenant(tenant: Tenant) {
       }))
     await dynamodb
       .update({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
         UpdateExpression: `SET hitRules = :hitRules`,
         ExpressionAttributeValues: {

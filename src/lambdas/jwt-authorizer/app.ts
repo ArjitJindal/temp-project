@@ -8,7 +8,7 @@ import {
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
-import { HammerheadStackConstants, TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
 
@@ -40,11 +40,11 @@ async function getTenantScopeCredentials(
         new PolicyBuilder(tenantId)
           .s3()
           .secretsManager()
-          .dynamoDb(TarponStackConstants.DYNAMODB_TABLE_NAME)
-          .dynamoDb(HammerheadStackConstants.DYNAMODB_TABLE_NAME)
+          .dynamoDb(StackConstants.TARPON_DYNAMODB_TABLE_NAME)
+          .dynamoDb(StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME)
           .build()
       ),
-      DurationSeconds: TarponStackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
+      DurationSeconds: StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
     })
     .promise()
   if (!assumeRoleResult.Credentials) {

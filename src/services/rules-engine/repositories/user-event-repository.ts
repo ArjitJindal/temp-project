@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -52,7 +52,7 @@ export class UserEventRepository {
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
-          [TarponStackConstants.DYNAMODB_TABLE_NAME]: [
+          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
             {
               PutRequest: {
                 Item: {
@@ -106,7 +106,7 @@ export class UserEventRepository {
       (attribute) => attribute.name
     )
     return {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression:
         'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
       ExpressionAttributeValues: {

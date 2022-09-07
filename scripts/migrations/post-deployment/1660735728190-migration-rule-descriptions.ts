@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
@@ -18,9 +18,7 @@ const changes = [
 async function migrateRules() {
   console.info(`Starting to migrate`)
   const dynamodb = await getDynamoDbClient()
-  const mongodb = await getMongoDbClient(
-    TarponStackConstants.MONGO_DB_DATABASE_NAME
-  )
+  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
 
   const ruleRepo = new RuleRepository(FLAGRIGHT_TENANT_ID, {
     dynamoDb: dynamodb,

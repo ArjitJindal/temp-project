@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -52,7 +52,7 @@ export class ListRepository {
     }
     await this.dynamoDb
       .put({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_DELETED(this.tenantId, header.listType, listId),
           header,
@@ -61,7 +61,7 @@ export class ListRepository {
       .promise()
     await this.dynamoDb
       .delete({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
       })
       .promise()
@@ -76,7 +76,7 @@ export class ListRepository {
       ''
     )
     const { Items = [] } = await paginateQuery(this.dynamoDb, {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression:
         listType == null
           ? 'PartitionKeyID = :pk'
@@ -100,7 +100,7 @@ export class ListRepository {
   ): Promise<ListHeader | null> {
     const { Item } = await this.dynamoDb
       .get({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
       })
       .promise()
@@ -114,7 +114,7 @@ export class ListRepository {
   async updateListHeader(listHeader: ListHeader): Promise<void> {
     await this.dynamoDb
       .put({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_HEADER(
             this.tenantId,
@@ -145,7 +145,7 @@ export class ListRepository {
     }
     const { Item } = await this.dynamoDb
       .get({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
       })
       .promise()
@@ -162,7 +162,7 @@ export class ListRepository {
     }
     await this.dynamoDb
       .put({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, listItem.key),
           ...listItem,
@@ -179,7 +179,7 @@ export class ListRepository {
     }
     await this.dynamoDb
       .delete({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
       })
       .promise()
@@ -210,7 +210,7 @@ export class ListRepository {
     await batchWrite(
       this.dynamoDb,
       Object.values(map),
-      TarponStackConstants.DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
     await this.refreshListHeader(header)
   }
@@ -224,7 +224,7 @@ export class ListRepository {
   ): Promise<CursorPaginatedResponse<ListItem>> {
     const { Items = [], LastEvaluatedKey } = await this.dynamoDb
       .query({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '')
@@ -252,7 +252,7 @@ export class ListRepository {
   async countListValues(listType: ListType, listId: string): Promise<number> {
     const { Count } = await paginateQuery(this.dynamoDb, {
       Select: 'COUNT',
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '').PartitionKeyID,
@@ -280,7 +280,7 @@ export class ListRepository {
 
     const { Items = [] } = await this.dynamoDb
       .query({
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression,
         ExpressionAttributeValues: {
           ':pk': key.PartitionKeyID,

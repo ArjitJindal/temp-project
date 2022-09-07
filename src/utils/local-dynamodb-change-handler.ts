@@ -3,7 +3,7 @@ import {
   KinesisStreamRecordPayload,
   KinesisStreamRecord,
 } from 'aws-lambda'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { DynamoDB } from 'aws-sdk'
 import { getDynamoDbClient } from './dynamodb'
 import { tarponChangeCaptureHandler } from '@/lambdas/tarpon-change-capture-kinesis-consumer/app'
@@ -48,7 +48,7 @@ export async function localTarponChangeCaptureHandler(key: {
   const dynamoDb = getDynamoDbClient(null as any)
   const entity = await dynamoDb
     .get({
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: key,
     })
     .promise()

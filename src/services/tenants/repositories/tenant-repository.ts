@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { MongoClient } from 'mongodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
@@ -29,7 +29,7 @@ export class TenantRepository {
     settingNames?: TenantSettingName[]
   ): Promise<Partial<TenantSettings>> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ProjectionExpression: settingNames?.join(','),
       ReturnConsumedCapacity: 'TOTAL',
@@ -42,7 +42,7 @@ export class TenantRepository {
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
       ReturnConsumedCapacity: 'TOTAL',

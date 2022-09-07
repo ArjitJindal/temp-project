@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys, TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -41,7 +41,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Countries`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :countries`,
       ExpressionAttributeValues: {
@@ -71,7 +71,7 @@ export class AggregationRepository {
       'sendingToCountries',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
@@ -104,7 +104,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Currencies`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :currencies`,
       ExpressionAttributeValues: {
@@ -126,7 +126,7 @@ export class AggregationRepository {
       'sendingCurrencies',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
@@ -150,7 +150,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}TransactionsCount`
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `SET ${attribute} = if_not_exists(${attribute}, :start) + :inc`,
       ExpressionAttributeValues: {
@@ -176,7 +176,7 @@ export class AggregationRepository {
       'sendingTransactionsCount',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
       ReturnConsumedCapacity: 'TOTAL',
@@ -222,7 +222,7 @@ export class AggregationRepository {
     }
 
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
@@ -251,7 +251,7 @@ export class AggregationRepository {
       'sendingTransactionsVolume',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,

@@ -1,4 +1,4 @@
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import _, { chunk } from 'lodash'
 import { paginateQuery } from '../dynamodb'
 import {
@@ -40,7 +40,7 @@ describe('paginateQuery', () => {
       await dynamoDb
         .batchWrite({
           RequestItems: {
-            [TarponStackConstants.DYNAMODB_TABLE_NAME]: putRequests,
+            [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: putRequests,
           },
           ReturnConsumedCapacity: 'TOTAL',
         })
@@ -49,7 +49,7 @@ describe('paginateQuery', () => {
   })
   test('Returns all items - paginated', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -64,7 +64,7 @@ describe('paginateQuery', () => {
 
   test('Returns all items - not paginated', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID = :sk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -86,7 +86,7 @@ describe('paginateQuery', () => {
 
   test('Returns all items - with Limit', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -104,7 +104,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -129,7 +129,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -154,7 +154,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -173,7 +173,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',

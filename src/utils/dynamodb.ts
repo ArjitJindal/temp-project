@@ -10,7 +10,7 @@ import {
 } from 'aws-sdk/clients/dynamodb'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { chunk } from 'lodash'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { getCredentialsFromEvent } from './credentials'
 
 export function getDynamoDbClient(
@@ -153,7 +153,7 @@ export async function* paginateQueryGenerator(
 export async function batchWrite(
   dynamoDb: AWS.DynamoDB.DocumentClient,
   requests: DocumentClient.WriteRequest[],
-  table: string = TarponStackConstants.DYNAMODB_TABLE_NAME
+  table: string = StackConstants.TARPON_DYNAMODB_TABLE_NAME
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
     await dynamoDb

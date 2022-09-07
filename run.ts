@@ -9,16 +9,12 @@ import { APIGatewayProxyResult } from 'aws-lambda'
 import commandLineArgs from 'command-line-args'
 import mkdirp from 'mkdirp'
 import { config } from './lib/configs/config-dev'
-import { TarponStackConstants } from './lib/constants'
+import { StackConstants } from './lib/constants'
 
 async function setUpMockS3() {
-  await mkdirp(`/tmp/flagright/s3/${TarponStackConstants.S3_TMP_BUCKET_PREFIX}`)
-  await mkdirp(
-    `/tmp/flagright/s3/${TarponStackConstants.S3_IMPORT_BUCKET_PREFIX}`
-  )
-  await mkdirp(
-    `/tmp/flagright/s3/${TarponStackConstants.S3_DOCUMENT_BUCKET_PREFIX}`
-  )
+  await mkdirp(`/tmp/flagright/s3/${StackConstants.S3_TMP_BUCKET_PREFIX}`)
+  await mkdirp(`/tmp/flagright/s3/${StackConstants.S3_IMPORT_BUCKET_PREFIX}`)
+  await mkdirp(`/tmp/flagright/s3/${StackConstants.S3_DOCUMENT_BUCKET_PREFIX}`)
 }
 
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'

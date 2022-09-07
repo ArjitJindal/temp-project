@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { HammerheadStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -64,7 +64,7 @@ export class RiskRepository {
 
   async getRiskClassification(): Promise<Array<any>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
@@ -93,7 +93,7 @@ export class RiskRepository {
       updatedAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
         ...newRiskClassificationValues,
@@ -108,7 +108,7 @@ export class RiskRepository {
     userId: string
   ): Promise<ManualRiskAssignmentUserState | null> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
@@ -136,7 +136,7 @@ export class RiskRepository {
       createdAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId, 'LATEST'), // Version it later
         ...newDRSRiskItem,
@@ -154,7 +154,7 @@ export class RiskRepository {
     logger.info(`PARAMETER: \n\n ${parameter}`)
     logger.info(`Meta deets: \n\n ${JSON.stringify(paramMetaDetails)}`)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(
           this.tenantId,
@@ -187,7 +187,7 @@ export class RiskRepository {
       }
     }
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: HammerheadStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: expressionAttributeVals,

@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
@@ -41,7 +41,7 @@ export class TransactionEventRepository {
     const batchWriteItemParams: AWS.DynamoDB.DocumentClient.BatchWriteItemInput =
       {
         RequestItems: {
-          [TarponStackConstants.DYNAMODB_TABLE_NAME]: [
+          [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
             {
               PutRequest: {
                 Item: {

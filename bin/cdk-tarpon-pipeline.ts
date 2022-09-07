@@ -21,6 +21,11 @@ if (process.env.ENV === 'dev') {
   new CdkTarponStack(app, `${devConfig.stage}-tarpon`, devConfig)
 }
 
+if (process.env.ENV === 'dev:user') {
+  const githubUser = process.env.GITHUB_USER
+  new CdkTarponStack(app, `${devConfig.stage}-tarpon-${githubUser}`, devConfig)
+}
+
 if (process.env.ENV === 'sandbox') {
   new CdkTarponStack(app, `${sandboxConfig.stage}-tarpon`, sandboxConfig)
 }

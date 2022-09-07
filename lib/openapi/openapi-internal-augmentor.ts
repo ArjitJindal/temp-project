@@ -9,78 +9,72 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import _ from 'lodash'
 import mkdirp from 'mkdirp'
-import { HammerheadStackConstants, TarponStackConstants } from '../constants'
+import { StackConstants } from '../constants'
 
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
 
 const PathToLambda: any = {
-  '/tenants': TarponStackConstants.TENANT_FUNCTION_NAME,
-  '/tenants/settings': TarponStackConstants.TENANT_FUNCTION_NAME,
-  '/accounts': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
-  '/accounts/{userId}/change_tenant':
-    TarponStackConstants.ACCOUNT_FUNCTION_NAME,
-  '/accounts/{userId}': TarponStackConstants.ACCOUNT_FUNCTION_NAME,
-  '/apikey': TarponStackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
-  '/rule_implementations': TarponStackConstants.RULE_FUNCTION_NAME,
-  '/iam/rules': TarponStackConstants.RULE_FUNCTION_NAME,
-  '/rules': TarponStackConstants.RULE_FUNCTION_NAME,
-  '/rules/{ruleId}': TarponStackConstants.RULE_FUNCTION_NAME,
-  '/iam/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
-  '/rule_instances': TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
+  '/tenants': StackConstants.TENANT_FUNCTION_NAME,
+  '/tenants/settings': StackConstants.TENANT_FUNCTION_NAME,
+  '/accounts': StackConstants.ACCOUNT_FUNCTION_NAME,
+  '/accounts/{userId}/change_tenant': StackConstants.ACCOUNT_FUNCTION_NAME,
+  '/accounts/{userId}': StackConstants.ACCOUNT_FUNCTION_NAME,
+  '/apikey': StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+  '/rule_implementations': StackConstants.RULE_FUNCTION_NAME,
+  '/iam/rules': StackConstants.RULE_FUNCTION_NAME,
+  '/rules': StackConstants.RULE_FUNCTION_NAME,
+  '/rules/{ruleId}': StackConstants.RULE_FUNCTION_NAME,
+  '/iam/rule_instances': StackConstants.RULE_INSTANCE_FUNCTION_NAME,
+  '/rule_instances': StackConstants.RULE_INSTANCE_FUNCTION_NAME,
   '/rule_instances/{ruleInstanceId}':
-    TarponStackConstants.RULE_INSTANCE_FUNCTION_NAME,
-  '/import': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
-  '/import/{importId}': TarponStackConstants.FILE_IMPORT_FUNCTION_NAME,
-  '/files/getPresignedUrl':
-    TarponStackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
-  '/lists/{listType}': TarponStackConstants.LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}': TarponStackConstants.LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}/items': TarponStackConstants.LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}/items/{key}':
-    TarponStackConstants.LISTS_FUNCTION_NAME,
-  '/transactions': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/transactions/export': TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+    StackConstants.RULE_INSTANCE_FUNCTION_NAME,
+  '/import': StackConstants.FILE_IMPORT_FUNCTION_NAME,
+  '/import/{importId}': StackConstants.FILE_IMPORT_FUNCTION_NAME,
+  '/files/getPresignedUrl': StackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
+  '/lists/{listType}': StackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}': StackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}/items': StackConstants.LISTS_FUNCTION_NAME,
+  '/lists/{listType}/{listId}/items/{key}': StackConstants.LISTS_FUNCTION_NAME,
+  '/transactions': StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/export': StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}':
-    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
-  '/consumer/users': TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
-  '/consumer/users/{userId}':
-    TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/consumer/users': StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/consumer/users/{userId}': StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}/files':
-    TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}/files/{fileId}':
-    TarponStackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
-  '/business/users': TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/business/users/{userId}':
-    TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/business/users': StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+  '/business/users/{userId}': StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}/files':
-    TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}/files/{fileId}':
-    TarponStackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
-    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+    StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
   '/dashboard_stats/hits_per_user':
-    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+    StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
   '/transactions/{transactionId}/comments':
-    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+    StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}/comments/{commentId}':
-    TarponStackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+    StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/rule_hit':
-    TarponStackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
-  '/slack/oauth_redirect': TarponStackConstants.SLACK_APP_FUNCTION_NAME,
-  '/webhooks': TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
-  '/webhooks/{webhookId}':
-    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+    StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+  '/slack/oauth_redirect': StackConstants.SLACK_APP_FUNCTION_NAME,
+  '/webhooks': StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+  '/webhooks/{webhookId}': StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/webhooks/{webhookId}/secret':
-    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+    StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/webhooks/{webhookId}/deliveries':
-    TarponStackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+    StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/pulse/risk-classification':
-    HammerheadStackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
+    StackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
   '/pulse/manual-risk-assignment':
-    HammerheadStackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+    StackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-parameter':
-    HammerheadStackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+    StackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
 }
 
 function assertValidLambdaMappings(openapi: any) {
@@ -146,10 +140,10 @@ openapi['components']['securitySchemes']['lambda-authorizer'] = {
     type: 'request',
     identitySource: 'method.request.header.authorization',
     authorizerUri: {
-      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${TarponStackConstants.JWT_AUTHORIZER_FUNCTION_NAME}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
+      'Fn::Sub': `arn:aws:apigateway:\${AWS::Region}:lambda:path/2015-03-31/functions/\${${StackConstants.JWT_AUTHORIZER_FUNCTION_NAME}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
     },
     authorizerResultTtlInSeconds:
-      TarponStackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
+      StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
     enableSimpleResponses: false,
   },
   'x-amazon-apigateway-authtype': 'Custom scheme with tenant claims',
@@ -164,7 +158,7 @@ for (const path in openapi.paths) {
     methodSetting['x-amazon-apigateway-request-validator'] = 'all'
     methodSetting['x-amazon-apigateway-integration'] = {
       uri: {
-        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${TarponStackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
+        'Fn::Sub': `arn:aws:apigateway:$\{AWS::Region}:lambda:path/2015-03-31/functions/$\{${lambdaFunctionName}.Arn}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
       },
       httpMethod: 'POST',
       type: 'aws_proxy',

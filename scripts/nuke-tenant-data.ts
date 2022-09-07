@@ -1,7 +1,7 @@
 import { exit } from 'process'
 import AWS from 'aws-sdk'
 import { program } from 'commander'
-import { TarponStackConstants } from '@cdk/constants'
+import { StackConstants } from '@cdk/constants'
 import { Db } from 'mongodb'
 import { getDynamoDbClient, getMongoDbClient } from './migrations/utils/db'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -98,7 +98,7 @@ async function deleteTransaction(transaction: Transaction) {
 
 async function deleteTransactions() {
   const transactionsQueryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.TRANSACTION(tenantId).PartitionKeyID,
@@ -127,7 +127,7 @@ async function deleteTransactions() {
 async function deletePartitionKey(entityName: string, key: DynamoDbKey) {
   await dynamoDb
     .delete({
-      TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: key,
     })
     .promise()
@@ -136,7 +136,7 @@ async function deletePartitionKey(entityName: string, key: DynamoDbKey) {
 
 async function deletePartition(entityName: string, partitionKeyId: string) {
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': partitionKeyId,
@@ -188,7 +188,7 @@ async function deleteUser(userId: string) {
 
 async function deleteUsers() {
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: TarponStackConstants.DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.USER(tenantId).PartitionKeyID,
@@ -241,9 +241,7 @@ async function nukeTenantData(tenantId: string) {
     )})...`
   )
   dynamoDb = await getDynamoDbClient()
-  mongoDb = (
-    await getMongoDbClient(TarponStackConstants.MONGO_DB_DATABASE_NAME)
-  ).db()
+  mongoDb = (await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)).db()
   allMongoDbCollections = (await mongoDb.listCollections().toArray()).map(
     (collection) => collection.name
   )
