@@ -169,12 +169,15 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 1,
             }),
+          ],
+        },
+        {
+          stageName: 'Approve',
+          actions: [
             new codepipeline_actions.ManualApprovalAction({
               actionName: 'Approve',
               externalEntityLink: sandboxConfig.application.CONSOLE_URI,
-              runOrder: 2,
             }),
           ],
         },
@@ -189,7 +192,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 1,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_asia-2',
@@ -199,7 +201,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 1,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_eu-1',
@@ -209,7 +210,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 1,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_us-1',
@@ -219,7 +219,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               ),
               input: sourceOutput,
               extraInputs: [buildOutput],
-              runOrder: 1,
             }),
           ],
         },
