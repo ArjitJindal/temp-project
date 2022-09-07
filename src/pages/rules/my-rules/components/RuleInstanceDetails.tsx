@@ -1,5 +1,5 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { message, Row, Space } from 'antd';
+import { Input, message, Row, Space } from 'antd';
 import { AjvError } from '@rjsf/core';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
@@ -30,6 +30,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [ruleNameAlias, setRuleNameAlias] = useState(ruleInstance.ruleNameAlias);
   const [parameters, setParameters] = useState(ruleInstance.parameters);
   const [riskLevelParameters, setRiskLevelParameters] = useState(
     ruleInstance.riskLevelParameters ||
@@ -84,6 +85,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       setSaving(true);
       await onRuleInstanceUpdate({
         ...ruleInstance,
+        // We don't save rule name alias if it's the same as the rule name
+        ruleNameAlias: ruleNameAlias === rule.name ? undefined : ruleNameAlias,
         parameters,
         riskLevelParameters,
         action: ruleAction,
@@ -103,8 +106,10 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     riskLevelActions,
     riskLevelParameters,
     rule.id,
+    rule.name,
     ruleAction,
     ruleInstance,
+    ruleNameAlias,
   ]);
   const handleDeleteRuleInstance = useCallback(async () => {
     setDeleting(true);
@@ -161,7 +166,14 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           {`${ruleInstance.ruleId} (${ruleInstance.id})`}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Name:</b>} valueType="text">
-          {ruleInstance.ruleNameAlias || rule.name}
+          {editing ? (
+            <Input
+              value={ruleNameAlias || rule.name}
+              onChange={(event) => setRuleNameAlias(event.target.value)}
+            />
+          ) : (
+            ruleInstance.ruleNameAlias || rule.name
+          )}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Description:</b>} valueType="text">
           {rule.description}

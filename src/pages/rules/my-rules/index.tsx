@@ -87,7 +87,8 @@ const MyRule = () => {
         title: 'Rule Name',
         width: 150,
         sorter: (a, b) => rules[a.ruleId].name.localeCompare(rules[b.ruleId].name),
-        render: (_, ruleInstance) => {
+        render: (_, entity) => {
+          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
             <Popover content={rules[ruleInstance.ruleId].description}>
               {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId].name}
