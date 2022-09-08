@@ -17,6 +17,10 @@ async function setUpMockS3() {
   await mkdirp(`/tmp/flagright/s3/${StackConstants.S3_DOCUMENT_BUCKET_PREFIX}`)
 }
 
+Object.entries(config.application).forEach((entry) => {
+  process.env[entry[0]] = `${entry[1]}`
+})
+
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 process.env['ENV'] = 'local'
 process.env['EXEC_SOURCE'] = 'cli'
@@ -126,12 +130,12 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.transactions || 100,
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
+  'create-account': () => {
+    return require('./src/lambdas/phytoplankton-internal-api-handlers/app').accountsHandler(
+      require('./events/create-account').event
+    )
+  },
   'get-accounts': () => {
-    process.env['AUTH0_DOMAIN'] = config.application.AUTH0_DOMAIN
-    process.env['AUTH0_MANAGEMENT_CLIENT_ID'] =
-      config.application.AUTH0_MANAGEMENT_CLIENT_ID
-    process.env['AUTH0_MANAGEMENT_CLIENT_SECRET'] =
-      config.application.AUTH0_MANAGEMENT_CLIENT_SECRET
     return require('./src/lambdas/phytoplankton-internal-api-handlers/app').accountsHandler(
       require('./events/get-accounts').event
     )

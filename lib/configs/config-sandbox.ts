@@ -53,6 +53,7 @@ export const config: Config = {
     AUTH0_MANAGEMENT_CLIENT_ID: 'zJZSQU0P4P1XRwUR1p5QItFFmJQ9moul',
     AUTH0_MANAGEMENT_CLIENT_SECRET:
       'z3U6yCyd08ge8Yk2VkQA8_H5u0-Q_xRyjVASOGoTh7axJB6z2jFIKDteTwA_J52f',
+    AUTH0_CONSOLE_CLIENT_ID: 'dbinWZ63vFLquTEcbvg56o32HpVpuEJU',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-suQQec`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:

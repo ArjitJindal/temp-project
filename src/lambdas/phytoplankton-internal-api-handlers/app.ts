@@ -663,6 +663,7 @@ export type AccountsConfig = {
   AUTH0_DOMAIN: string
   AUTH0_MANAGEMENT_CLIENT_ID: string
   AUTH0_MANAGEMENT_CLIENT_SECRET: string
+  AUTH0_CONSOLE_CLIENT_ID: string
 }
 
 export const accountsHandler = lambdaApi()(
@@ -690,14 +691,13 @@ export const accountsHandler = lambdaApi()(
         throw new Error(`Body should not be empty`)
       }
       // todo: validate
-      const { email, password } = JSON.parse(event.body)
+      const { email } = JSON.parse(event.body)
 
       const organization = await accountsService.getAccountTenant(userId)
       const user = await accountsService.createAccountInOrganization(
         organization,
         {
           email,
-          password,
           role: 'user',
         }
       )

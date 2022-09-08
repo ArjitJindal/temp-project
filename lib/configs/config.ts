@@ -61,6 +61,7 @@ export type Config = {
     AUTH0_TOKEN_ISSUER: string
     AUTH0_JWKS_URI: string
     AUTH0_MANAGEMENT_CLIENT_ID: string
+    AUTH0_CONSOLE_CLIENT_ID: string
     // TODO: Save/Retrieve secrets from AWS Secret Manager (Need to rotate the secrets after it's done)
     AUTH0_MANAGEMENT_CLIENT_SECRET: string
     ATLAS_CREDENTIALS_SECRET_ARN: string

@@ -50,6 +50,7 @@ export const config: Config = {
     AUTH0_MANAGEMENT_CLIENT_ID: 'O5XVh8xujWiL7Ij7gFCNbQdLrS5UPS6F',
     AUTH0_MANAGEMENT_CLIENT_SECRET:
       'RrqgajkOImtw1ugT-32DiFzYsqMAMa7dwhiLhEJcQeSLnCkcR-GvYr1jLy9xv2U6',
+    AUTH0_CONSOLE_CLIENT_ID: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
     CONSOLE_URI: 'https://dev.console.flagright.com',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,

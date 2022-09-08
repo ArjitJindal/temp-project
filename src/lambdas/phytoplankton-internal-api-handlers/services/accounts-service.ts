@@ -1,8 +1,16 @@
+import { v4 as uuidv4 } from 'uuid'
 import { BadRequest, Conflict } from 'http-errors'
-import { ManagementClient, Organization, User } from 'auth0'
+import {
+  ManagementClient,
+  Organization,
+  User,
+  AuthenticationClient,
+} from 'auth0'
+import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
 import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { logger } from '@/core/logger'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -32,14 +40,19 @@ export type Tenant = {
 }
 
 export class AccountsService {
+  private authenticationClient: AuthenticationClient
   private managementClient: ManagementClient<AppMetadata>
+  private config: AccountsConfig
 
   constructor(config: AccountsConfig) {
-    this.managementClient = new ManagementClient({
+    this.config = config
+    const options = {
       domain: config.AUTH0_DOMAIN,
       clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
       clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
-    })
+    }
+    this.authenticationClient = new AuthenticationClient(options)
+    this.managementClient = new ManagementClient(options)
   }
 
   private static organizationToTenant(organization: Organization): Tenant {
@@ -96,25 +109,61 @@ export class AccountsService {
     tenant: Tenant,
     params: {
       email: string
-      password: string
       role: AccountRole
     }
   ): Promise<Account> {
-    const user = await this.managementClient.createUser({
+    let user: User<AppMetadata, UserMetadata> | null = null
+    let account: Account | null = null
+    try {
+      user = await this.managementClient.createUser({
+        connection: CONNECTION_NAME,
+        email: params.email,
+        // NOTE: We need at least one upper case character
+        password: `P-${uuidv4()}`,
+        app_metadata: {
+          role: params.role,
+        },
+        verify_email: false,
+      })
+      logger.info('Created user', {
+        email: params.email,
+      })
+      account = AccountsService.userToAccount(user)
+      await this.managementClient.organizations.addMembers(
+        { id: tenant.orgId },
+        {
+          members: [account.id],
+        }
+      )
+      logger.info(`Added user to orginization ${tenant.orgId}`, {
+        email: params.email,
+        account: account.id,
+      })
+    } catch (e) {
+      if (user) {
+        await this.managementClient.deleteUser({ id: user.user_id as string })
+        logger.info('Deleted user', {
+          email: params.email,
+        })
+      }
+      throw e
+    }
+
+    await this.managementClient.sendEmailVerification({
+      user_id: user.user_id as string,
+      client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
+    })
+    logger.info(`Sent verification email`, {
+      email: params.email,
+    })
+    await this.authenticationClient.requestChangePasswordEmail({
+      client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
       connection: CONNECTION_NAME,
       email: params.email,
-      password: params.password,
-      app_metadata: {
-        role: params.role,
-      },
     })
-    const account = AccountsService.userToAccount(user)
-    await this.managementClient.organizations.addMembers(
-      { id: tenant.orgId },
-      {
-        members: [account.id],
-      }
-    )
+    logger.info(`Sent password reset email`, {
+      email: params.email,
+    })
     return account
   }
 
