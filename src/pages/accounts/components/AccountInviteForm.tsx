@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { message } from 'antd';
 import { DrawerForm, ProFormInstance, ProFormText } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
@@ -12,8 +12,6 @@ export default function AccountInviteForm(props: Props) {
   const { onClose } = props;
   const api = useApi();
   const formRef = useRef<ProFormInstance>();
-  const errorMessage =
-    'Password must be 10-14 characters and should have at least 1 symbol (-,_,__,@#$%^&*!), one uppercase character, one lowercase character and one number';
   // todo: i18n
   return (
     <DrawerForm
@@ -43,7 +41,6 @@ export default function AccountInviteForm(props: Props) {
           await api.accountsInvite({
             AccountInvitePayload: {
               email: values.email.trim(),
-              password: values.password.trim(),
             },
           });
           message.success('User invited!');
@@ -65,25 +62,6 @@ export default function AccountInviteForm(props: Props) {
             required: true,
             type: 'email',
             message: 'Please enter the E-mail',
-          },
-        ]}
-      />
-      <ProFormText.Password
-        width="md"
-        name="password"
-        label="Password"
-        rules={[
-          {
-            required: true,
-            message: 'Please enter the Password',
-          },
-          {
-            validator(rule, value) {
-              if (!value.match(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{10,}$/)) {
-                return Promise.reject(errorMessage);
-              }
-              return Promise.resolve();
-            },
           },
         ]}
       />
