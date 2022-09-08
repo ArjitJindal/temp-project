@@ -124,35 +124,41 @@ export class UserRepository {
       })
     }
     if (params.filterName != null) {
-      // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
-      filterConditions.push({
-        $or: [
-          {
-            'userDetails.name.firstName': {
-              $regex: params.filterName,
-              $options: 'i',
+      const filterNameConditions: Filter<
+        InternalBusinessUser | InternalConsumerUser
+      >[] = []
+      for (const part of params.filterName.split(/\s+/)) {
+        // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
+        filterNameConditions.push({
+          $or: [
+            {
+              'userDetails.name.firstName': {
+                $regex: part,
+                $options: 'i',
+              },
             },
-          },
-          {
-            'userDetails.name.middleName': {
-              $regex: params.filterName,
-              $options: 'i',
+            {
+              'userDetails.name.middleName': {
+                $regex: part,
+                $options: 'i',
+              },
             },
-          },
-          {
-            'userDetails.name.lastName': {
-              $regex: params.filterName,
-              $options: 'i',
+            {
+              'userDetails.name.lastName': {
+                $regex: part,
+                $options: 'i',
+              },
             },
-          },
-          {
-            'legalEntity.companyGeneralDetails.legalName': {
-              $regex: params.filterName,
-              $options: 'i',
+            {
+              'legalEntity.companyGeneralDetails.legalName': {
+                $regex: part,
+                $options: 'i',
+              },
             },
-          },
-        ],
-      })
+          ],
+        })
+      }
+      filterConditions.push({ $and: filterNameConditions })
     }
 
     const queryConditions: Filter<
