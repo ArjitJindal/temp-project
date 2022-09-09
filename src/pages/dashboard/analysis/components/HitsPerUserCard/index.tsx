@@ -109,17 +109,18 @@ export default function HitsPerUserCard(props: Props) {
           startTimestamp = start.startOf('day').valueOf();
           endTimestamp = end.endOf('day').valueOf();
         }
-        return (
-          <Link
-            to={makeUrl(
-              '/case-management',
-              {},
-              {
+        const viewCasesLinkDetails =
+          direction === 'ORIGIN'
+            ? {
                 originUserId: user.userId,
                 timestamp: `${startTimestamp},${endTimestamp}`,
-              },
-            )}
-          >
+              }
+            : {
+                destinationUserId: user.userId,
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              };
+        return (
+          <Link to={makeUrl('/case-management', {}, viewCasesLinkDetails)}>
             {`${entity.transactionsHit} transactions`}
           </Link>
         );
@@ -157,19 +158,19 @@ export default function HitsPerUserCard(props: Props) {
           startTimestamp = start.startOf('day').valueOf();
           endTimestamp = end.endOf('day').valueOf();
         }
+        const viewCasesLinkDetails =
+          direction === 'ORIGIN'
+            ? {
+                originUserId: user.userId,
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              }
+            : {
+                destinationUserId: user.userId,
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              };
         return (
           <Space>
-            <Link
-              key="view-cases"
-              to={makeUrl(
-                '/case-management',
-                {},
-                {
-                  originUserId: user.userId,
-                  timestamp: `${startTimestamp},${endTimestamp}`,
-                },
-              )}
-            >
+            <Link key="view-cases" to={makeUrl('/case-management', {}, viewCasesLinkDetails)}>
               <Button analyticsName="View user cases" size="small" type="ghost">
                 View Cases
               </Button>
