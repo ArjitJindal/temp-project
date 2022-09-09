@@ -7,7 +7,6 @@ import { Card, DatePicker, message, Space } from 'antd';
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import style from '../../style.module.less';
-import header from '../dashboardutils';
 import s from './styles.module.less';
 import { TableItem } from './types';
 import { useApi } from '@/api';
@@ -24,7 +23,7 @@ import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectPar
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
-  direction: 'ORIGIN' | 'DESTINATION';
+  direction?: 'ORIGIN' | 'DESTINATION';
 }
 
 export default function HitsPerUserCard(props: Props) {
@@ -235,17 +234,7 @@ export default function HitsPerUserCard(props: Props) {
         }}
         className={style.table}
         scroll={{ x: 1300 }}
-        headerTitle={header(
-          direction === 'ORIGIN'
-            ? 'Top origin users (senders) by Transaction Hits'
-            : 'Top destination users (receivers) by Transaction Hits',
-        )}
         rowKey="userId"
-        tooltip={
-          direction === 'ORIGIN'
-            ? 'Origin is the Sender in a transaction'
-            : 'Destination is the Receiver in a transaction'
-        }
         search={false}
         columns={mergeColumns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}

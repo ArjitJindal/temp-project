@@ -1,7 +1,7 @@
 import { Col, Row } from 'antd';
 import TransactionsChartCard from './components/TransactionsChartCard';
-import HitsPerUserCard from './components/HitsPerUserCard';
 import RuleHitCard from './components/RulesHitCard';
+import TopUsersHitCard from './components/TopUsersHitCard';
 import PageWrapper from '@/components/PageWrapper';
 
 function Analysis() {
@@ -12,10 +12,7 @@ function Analysis() {
           <TransactionsChartCard />
         </Col>
         <Col span={24}>
-          <HitsPerUserCard direction="ORIGIN" />
-        </Col>
-        <Col span={24}>
-          <HitsPerUserCard direction="DESTINATION" />
+          <TopUsersHitCard />
         </Col>
         <Col span={24}>
           <RuleHitCard />
