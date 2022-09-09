@@ -2114,7 +2114,7 @@ components:
           type: string
           enum:
             - userDetails.countryOfResidence
-            - userDetails.countryOfOrigin
+            - userDetails.countryOfNationality
         isActive:
           type: boolean
         riskValueType:
