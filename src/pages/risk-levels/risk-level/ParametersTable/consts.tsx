@@ -21,9 +21,9 @@ export const PARAMETERS: RiskLevelTable = [
     dataType: 'COUNTRY',
   },
   {
-    parameter: 'userDetails.countryOfOrigin',
+    parameter: 'userDetails.countryOfNationality',
     title: 'Origin country',
-    description: 'Risk based on customer origin country',
+    description: 'Risk based on customer nationality country',
     type: 'ENUMERATION',
     dataType: 'COUNTRY',
   },
