@@ -675,7 +675,7 @@ export class DashboardStatsRepository {
   public async getHitsByUserStats(
     startTimestamp: number,
     endTimestamp: number,
-    direction: 'ORIGIN' | 'DESTINATION'
+    direction?: 'ORIGIN' | 'DESTINATION'
   ): Promise<
     {
       userId: string
@@ -701,7 +701,7 @@ export class DashboardStatsRepository {
       }>([
         {
           $match: {
-            direction,
+            ...(direction ? { direction } : {}),
             date: {
               $gte: startDate,
               $lte: endDate,
