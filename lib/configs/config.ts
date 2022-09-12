@@ -10,6 +10,7 @@ type ApiGatewayConfig = {
 
 export type Config = {
   stage: 'local' | 'dev' | 'sandbox' | 'prod'
+  region?: 'eu-1' | 'asia-1' | 'asia-2' | 'us-1'
   env: Environment
   resource: {
     DYNAMODB: {

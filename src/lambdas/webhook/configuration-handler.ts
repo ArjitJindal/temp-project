@@ -13,7 +13,7 @@ import {
 import { WebhookDeliveryRepository } from './repositories/webhook-delivery-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookSecrets } from '@/@types/openapi-internal/WebhookSecrets'
 
@@ -25,7 +25,7 @@ export const configurationHandler = lambdaApi()(
   ) => {
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
-    const mongoClient = await connectToDB()
+    const mongoClient = await getMongoDbClient()
     const webhookRepository = new WebhookRepository(tenantId, mongoClient)
     const webhookDeliveryRepository = new WebhookDeliveryRepository(
       tenantId,

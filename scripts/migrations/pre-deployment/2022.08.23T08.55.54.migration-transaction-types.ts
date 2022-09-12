@@ -1,7 +1,8 @@
+import { MigrationFn } from 'umzug'
 import { renameRuleParameter } from '../utils/rule'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
-async function main() {
+export const up: MigrationFn = async () => {
   await renameRuleParameter(
     undefined,
     'transactionType',
@@ -15,5 +16,6 @@ async function main() {
     (transactionType: TransactionType) => [transactionType]
   )
 }
-
-main()
+export const down: MigrationFn = async () => {
+  // skip
+}

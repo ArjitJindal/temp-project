@@ -1,3 +1,4 @@
+import { MigrationFn } from 'umzug'
 import { deleteUnusedRuleParameter } from '../utils/rule'
 
 async function main() {
@@ -13,4 +14,10 @@ async function main() {
   )
 }
 
-main()
+export const up: MigrationFn = async () => {
+  await main()
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

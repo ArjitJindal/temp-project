@@ -1,13 +1,13 @@
+import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
-import { getDynamoDbClient } from '../utils/db'
 import { getRulesById } from '../utils/rule'
 import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { paginateQueryGenerator } from '@/utils/dynamodb'
+import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 const RULES_MAPPING: { [key: string]: string } = {
@@ -106,4 +106,11 @@ async function deleteUnusedRules() {
   }
 }
 
-migrateAllTenants(migrateTenant).then(deleteUnusedRules)
+export const up: MigrationFn = async () => {
+  await migrateAllTenants(migrateTenant)
+  await deleteUnusedRules()
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

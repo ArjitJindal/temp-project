@@ -1,8 +1,9 @@
 import * as cdk from 'aws-cdk-lib'
-import { CfnOutput, Duration, Fn, RemovalPolicy } from 'aws-cdk-lib'
+import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import {
   ArnPrincipal,
   Effect,
+  IRole,
   ManagedPolicy,
   Policy,
   PolicyStatement,
@@ -1125,9 +1126,9 @@ export class CdkTarponStack extends cdk.Stack {
     return { alias, func }
   }
 
-  private grantMongoDbAccess(alias: Alias) {
-    const aliasIdentifier = alias.node.id.replace(/:/g, '-')
-    alias.role?.attachInlinePolicy(
+  private grantMongoDbAccess(resource: Resource & { role?: IRole }) {
+    const aliasIdentifier = resource.node.id.replace(/:/g, '-')
+    resource.role?.attachInlinePolicy(
       new Policy(this, `${aliasIdentifier}-MongoDbPolicy`, {
         policyName: `${aliasIdentifier}-MongoDbPolicy`,
         statements: [

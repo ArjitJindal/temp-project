@@ -5,7 +5,7 @@ import {
 } from 'aws-lambda'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
 import { User } from '@/@types/openapi-public/User'
@@ -31,7 +31,7 @@ export const userHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const userRepository = new UserRepository(tenantId, {
       dynamoDb: dynamoDb,
     })

@@ -11,7 +11,8 @@ const region = 'us-west-2'
 
 export const config: Config = {
   stage: 'prod',
-  env: { account: account, region: region },
+  region: 'us-1',
+  env: { account, region },
   resource: {
     DYNAMODB: {
       BILLING_MODE: BillingMode.PAY_PER_REQUEST,

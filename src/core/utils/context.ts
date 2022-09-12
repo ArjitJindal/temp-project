@@ -6,7 +6,7 @@ import {
 import { Logger } from 'winston'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 type LogMetaData = {
@@ -27,7 +27,7 @@ export async function getInitialContext(
 ): Promise<Context> {
   try {
     const tenantId = event.requestContext.authorizer?.principalId
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     const settings = await tenantRepository.getTenantSettings(['features'])
     const logMetaData: LogMetaData = { tenantId: tenantId }

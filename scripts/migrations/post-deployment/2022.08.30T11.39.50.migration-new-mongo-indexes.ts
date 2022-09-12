@@ -1,8 +1,9 @@
+import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
-import { getMongoDbClient } from '../utils/db'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
 import {
+  getMongoDbClient,
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
@@ -40,4 +41,10 @@ async function migrateTenant(tenant: Tenant) {
   }
 }
 
-migrateAllTenants(migrateTenant)
+export const up: MigrationFn = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

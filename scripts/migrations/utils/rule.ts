@@ -1,11 +1,11 @@
 import _ from 'lodash'
-import { getDynamoDbClient } from './db'
 import { migrateAllTenants } from './tenant'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters

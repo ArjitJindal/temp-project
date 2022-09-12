@@ -1,10 +1,11 @@
+import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
-import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
 import { migrateAllTenants } from '../utils/tenant'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
+import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
@@ -41,4 +42,10 @@ async function migrateTenant(tenant: Tenant) {
   console.info(`Migrated ${migratedCount} transactions`)
 }
 
-migrateAllTenants(migrateTenant)
+export const up: MigrationFn = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

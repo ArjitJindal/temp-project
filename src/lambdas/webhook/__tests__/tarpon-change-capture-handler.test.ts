@@ -3,7 +3,7 @@ import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { WebhookRepository } from '../repositories/webhook-repository'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { createKinesisStreamEvent } from '@/utils/local-dynamodb-change-handler'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 
@@ -37,7 +37,7 @@ describe('Create webhook delivery tasks', () => {
     const TEST_TENANT_ID = getTestTenantId()
     const webhookRepository = new WebhookRepository(
       TEST_TENANT_ID,
-      await connectToDB()
+      await getMongoDbClient()
     )
     const user = getTestUser()
     const event = createKinesisStreamEvent(
@@ -106,7 +106,7 @@ describe('Create webhook delivery tasks', () => {
     const TEST_TENANT_ID = getTestTenantId()
     const webhookRepository = new WebhookRepository(
       TEST_TENANT_ID,
-      await connectToDB()
+      await getMongoDbClient()
     )
     const webhook: WebhookConfiguration = {
       _id: 'webhook_id',

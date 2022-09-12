@@ -9,7 +9,7 @@ import { logger } from '@/core/logger'
 
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
-  connectToDB,
+  getMongoDbClient,
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
@@ -147,7 +147,7 @@ export const apiKeyGeneratorHandler = lambdaApi()(
   ) => {
     const { tenantId, usagePlanId } =
       event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-    await createMongoDBCollections(await connectToDB(), tenantId)
+    await createMongoDBCollections(await getMongoDbClient(), tenantId)
     return createNewApiKeyForTenant(tenantId, usagePlanId)
   }
 )

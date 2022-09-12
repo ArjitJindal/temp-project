@@ -1,9 +1,10 @@
 import os from 'os'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AWS = require('aws-sdk')
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager'
 
 interface DBCredentials {
   username: string
@@ -11,12 +12,15 @@ interface DBCredentials {
   host: string
 }
 
-const secretsmanager = new AWS.SecretsManager()
+const secretsmanager = new SecretsManagerClient({
+  endpoint: process.env.ENV === 'local' ? 'https://0.0.0.0:4566' : undefined,
+  region: process.env.AWS_REGION,
+})
 const SM_SECRET_ARN = process.env.SM_SECRET_ARN as string
 
 let cacheClient: MongoClient
 
-export async function connectToDB(
+export async function getMongoDbClient(
   dbName = StackConstants.MONGO_DB_DATABASE_NAME
 ) {
   if (cacheClient) {
@@ -58,12 +62,12 @@ export function notFound(body: object): object {
 }
 
 async function getCredentials(): Promise<DBCredentials> {
-  const smRes = await secretsmanager
-    .getSecretValue({
+  const secretsResponse = await secretsmanager.send(
+    new GetSecretValueCommand({
       SecretId: SM_SECRET_ARN,
     })
-    .promise()
-  return JSON.parse(smRes.SecretString)
+  )
+  return JSON.parse(secretsResponse.SecretString as string)
 }
 
 function buildResponse(statusCode: number, body: object): object {

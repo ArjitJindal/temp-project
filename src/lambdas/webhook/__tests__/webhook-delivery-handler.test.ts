@@ -6,7 +6,7 @@ import bodyParser from 'body-parser'
 import { WebhookDeliveryRepository } from '../repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../repositories/webhook-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { WebhookDeliveryTask } from '@/@types/webhook'
@@ -90,7 +90,7 @@ describe('Webhook delivery', () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       let receivedPayload = undefined
       let receivedHeaders = undefined
@@ -109,7 +109,7 @@ describe('Webhook delivery', () => {
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
@@ -169,11 +169,11 @@ describe('Webhook delivery', () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
@@ -228,7 +228,7 @@ describe('Webhook delivery', () => {
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
@@ -263,7 +263,7 @@ describe('Webhook delivery', () => {
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
@@ -306,7 +306,7 @@ describe('Webhook delivery', () => {
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
@@ -333,7 +333,7 @@ describe('Webhook delivery', () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
@@ -357,11 +357,11 @@ describe('Webhook delivery', () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: INACTIVE_WEBHOOK_ID,
@@ -391,11 +391,11 @@ describe('Webhook delivery', () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       const webhookRepository = new WebhookRepository(
         TEST_TENANT_ID,
-        await connectToDB()
+        await getMongoDbClient()
       )
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,

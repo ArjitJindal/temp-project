@@ -145,6 +145,58 @@ To delete the sample application that you created, use the AWS CLI. Assuming you
 aws cloudformation delete-stack --stack-name tarpon
 ```
 
+## Data Migration
+
+### Creata a new migration script
+
+Create a new migration script to be run before deployment
+
+```bash
+npm run migration:pre:create --name=<migration_name>
+```
+
+A new migration file will be created in `scripts/migrations/pre-deployment`
+
+Create a new migration script to be run after deployment
+
+```bash
+npm run migration:post:create --name=<migration_name>
+```
+
+A new migration file will be created in `scripts/migrations/post-deployment`
+
+### Run migrations locally
+
+```bash
+ENV=local npm run migration:pre:up
+ENV=local npm run migration:post:up
+```
+
+### Run migrations in Dev/Sandbox/Prod manually
+
+1. Refresh aws credentials
+
+```
+npm run aws-sso-login:dev
+```
+
+2. Copy and paste the credentials printed from the previous step to the terminal
+
+```bash
+AWS Credentials:
+====================================
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_SESSION_TOKEN=...
+====================================
+```
+
+3. Run the migration with env vars `ENV`, `AWS_REGION`, `SM_SECRET_ARN` being set
+
+```bash
+ENV=dev AWS_REGION=eu-central-1 SM_SECRET_ARN='arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI' npm run migration:pre:up
+```
+
 ## Resources
 
 See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.

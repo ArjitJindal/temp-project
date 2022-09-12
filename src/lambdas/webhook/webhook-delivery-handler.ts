@@ -13,7 +13,7 @@ import {
 } from '@/@types/webhook'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 
@@ -30,7 +30,7 @@ async function deliverWebhookEvent(
 ) {
   const webhookDeliveryRepository = new WebhookDeliveryRepository(
     webhookDeliveryTask.tenantId,
-    await connectToDB()
+    await getMongoDbClient()
   )
   const hmacs = secrets.map((secret) => createHmac('sha256', secret))
   const postPayload: WebhookEvent = {
@@ -110,7 +110,7 @@ async function deliverWebhookEvent(
 
 async function handleWebhookDeliveryTask(record: SQSRecord) {
   const webhookDeliveryTask = JSON.parse(record.body) as WebhookDeliveryTask
-  const mongoClient = await connectToDB()
+  const mongoClient = await getMongoDbClient()
   const webhookRepository = new WebhookRepository(
     webhookDeliveryTask.tenantId,
     mongoClient

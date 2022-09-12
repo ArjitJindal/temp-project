@@ -1,7 +1,9 @@
+import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
-import { getDynamoDbClient, getMongoDbClient } from '../utils/db'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const changes = [
   {
@@ -96,4 +98,10 @@ async function migrateRules() {
   console.info(`Migration completed`)
 }
 
-migrateRules()
+export const up: MigrationFn = async () => {
+  await migrateRules()
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

@@ -17,11 +17,11 @@ import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/
 
 import { getS3Client } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 import { TransactionsUpdateRequest } from '@/@types/openapi-internal/TransactionsUpdateRequest'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -65,7 +65,7 @@ export const transactionsViewHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
     const s3 = getS3Client(event)
-    const client = await connectToDB()
+    const client = await getMongoDbClient()
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
@@ -269,7 +269,7 @@ export const dashboardStatsHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.path.endsWith('/dashboard_stats/transactions')
     ) {
-      const client = await connectToDB()
+      const client = await getMongoDbClient()
       const { principalId: tenantId } = event.requestContext.authorizer
       const { startTimestamp, endTimestamp, granularity } =
         event.queryStringParameters as {
@@ -308,7 +308,7 @@ export const dashboardStatsHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.path.endsWith('/dashboard_stats/hits_per_user')
     ) {
-      const client = await connectToDB()
+      const client = await getMongoDbClient()
       const { principalId: tenantId } = event.requestContext.authorizer
       const { startTimestamp, endTimestamp, direction } =
         event.queryStringParameters as {
@@ -347,7 +347,7 @@ export const dashboardStatsHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.path.endsWith('/dashboard_stats/rule_hit')
     ) {
-      const client = await connectToDB()
+      const client = await getMongoDbClient()
       const { principalId: tenantId } = event.requestContext.authorizer
       const { startTimestamp, endTimestamp } = event.queryStringParameters as {
         startTimestamp?: string
@@ -397,8 +397,8 @@ export const businessUsersViewHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
-    const client = await connectToDB()
-    const dynamoDb = getDynamoDbClient(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
       tenantId,
       {
@@ -485,8 +485,8 @@ export const consumerUsersViewHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
-    const client = await connectToDB()
-    const dynamoDb = getDynamoDbClient(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
       tenantId,
       {
@@ -571,7 +571,7 @@ export const ruleHandler = lambdaApi()(
   ) => {
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
@@ -620,7 +620,7 @@ export const ruleInstanceHandler = lambdaApi()(
   ) => {
     const tenantId = (event.requestContext.authorizer?.principalId ||
       event.queryStringParameters?.tenantId) as string
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const ruleRepository = new RuleRepository(tenantId, { dynamoDb })
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
@@ -773,7 +773,7 @@ export const tenantsHandler = lambdaApi()(
       )
       return tenants
     } else if (event.resource === '/tenants/settings') {
-      const dynamoDb = getDynamoDbClient(event)
+      const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       if (event.httpMethod === 'GET') {
         return tenantRepository.getTenantSettings()
@@ -805,7 +805,7 @@ export const riskClassificationHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
 
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
 
     if (
@@ -862,7 +862,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     const { principalId: tenantId } = event.requestContext.authorizer
     logger.info('tenantId', tenantId)
 
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     if (
       event.httpMethod === 'POST' &&
@@ -909,7 +909,7 @@ export const manualRiskAssignmentHandler = lambdaApi({
     const { userId } = event.queryStringParameters as any
 
     // todo: need to assert that user has this feature enabled
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     if (
       event.httpMethod === 'POST' &&
@@ -948,7 +948,7 @@ export const listsHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
 
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const listRepository = new ListRepository(tenantId, dynamoDb)
 
     if (event.resource === '/lists/{listType}') {

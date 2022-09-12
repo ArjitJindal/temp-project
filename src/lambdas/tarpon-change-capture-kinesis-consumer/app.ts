@@ -1,7 +1,7 @@
 import { KinesisStreamEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
 import {
-  connectToDB,
+  getMongoDbClient,
   USER_EVENTS_COLLECTION,
   USERS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
@@ -32,7 +32,7 @@ async function transactionHandler(
   }
 
   logger.info(`Processing transaction ${transaction.transactionId}`)
-  const mongoDb = await connectToDB()
+  const mongoDb = await getMongoDbClient()
   const transactionsRepo = new TransactionRepository(tenantId, {
     mongoDb,
   })
@@ -57,7 +57,7 @@ async function transactionHandler(
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
   if (!currentStatus && newStatus !== 'ALLOW') {
     const tenantRepository = new TenantRepository(tenantId, {
-      mongoDb: await connectToDB(),
+      mongoDb: await getMongoDbClient(),
     })
     if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
       logger.info(
@@ -85,7 +85,7 @@ async function userHandler(
   }
 
   logger.info(`Processing user ${user.userId}`)
-  const db = (await connectToDB()).db()
+  const db = (await getMongoDbClient()).db()
   const userCollection = db.collection<Business | User>(
     USERS_COLLECTION(tenantId)
   )
@@ -105,7 +105,7 @@ async function userEventHandler(
   logger.info(
     `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
   )
-  const db = (await connectToDB()).db()
+  const db = (await getMongoDbClient()).db()
   const userEventCollection = db.collection<
     ConsumerUserEvent | BusinessUserEvent
   >(USER_EVENTS_COLLECTION(tenantId))
@@ -133,7 +133,7 @@ async function transactionEventHandler(
   logger.info(
     `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
   )
-  const db = (await connectToDB()).db()
+  const db = (await getMongoDbClient()).db()
   const transactionEventCollection = db.collection<TransactionEvent>(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
   )

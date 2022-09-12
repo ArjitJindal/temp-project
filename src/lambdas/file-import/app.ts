@@ -7,13 +7,13 @@ import {
 import * as createError from 'http-errors'
 import { Importer } from './importer'
 import { ImportRepository } from './import-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3Client } from '@/utils/s3'
 import { PresignedUrlResponse } from '@/@types/openapi-internal/PresignedUrlResponse'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
@@ -30,9 +30,9 @@ export const fileImportHandler = lambdaApi()(
     const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
     const { principalId: tenantId, tenantName } =
       event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const s3 = getS3Client(event)
-    const mongoDb = await connectToDB()
+    const mongoDb = await getMongoDbClient()
     const importRepository = new ImportRepository(tenantId, {
       mongoDb,
     })

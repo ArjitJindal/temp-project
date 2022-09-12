@@ -156,4 +156,5 @@ export const StackConstants = {
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
   HAMMERHEAD_STREAM_ID: 'hammerheadStream',
   HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
+  DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
 }

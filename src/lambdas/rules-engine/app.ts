@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
@@ -22,7 +22,7 @@ export const transactionHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const transactionId = event.pathParameters?.transactionId
 
     if (event.httpMethod === 'POST' && event.body) {
@@ -49,7 +49,7 @@ export const transactionEventHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
@@ -66,7 +66,7 @@ export const userEventsHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     if (
       event.httpMethod === 'POST' &&

@@ -6,12 +6,12 @@
   "scripts": {
     "all": "npm-run-all -l -s",
     "parallel": "npm-run-all -l -p",
-    "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile",
+    "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile && echo '\nAWS Credentials:\n====================================' && echo export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile $npm_config_profile) && echo export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile $npm_config_profile) && echo export AWS_SESSION_TOKEN=$(aws configure get aws_session_token --profile $npm_config_profile) && echo '===================================='",
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",
     "aws-sso-login:sandbox": "npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825",
     "aws-sso-login:prod": "npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449",
     "aws-sso-login:all": "npm run aws-sso-login:dev && npm run aws-sso-login:sandbox && npm run aws-sso-login:prod",
-    "build": "npm run openapi:build && NODE_OPTIONS='--max-old-space-size=4096' webpack",
+    "build": "npm run openapi:build && NODE_OPTIONS='--max-old-space-size=7000' webpack",
     "build:watch": "npm run openapi:build && ENV=local webpack --watch --progress",
     "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth",
@@ -62,7 +62,14 @@
     "dev:databases": "npm run parallel start-local-ddb start-local-mongodb",
     "dev:api": "ENV=local npm run build && npm run synth:local && npm run start-local-api",
     "dev": "npm run parallel dev:databases dev:api",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "_migrator": "ts-node scripts/migrations/migrator.ts",
+    "migration:pre:create": "MIGRATION_TYPE=PRE_DEPLOYMENT ENV=local npm run _migrator create -- --name $npm_config_name.ts --allow-extension .ts",
+    "migration:pre:up": "MIGRATION_TYPE=PRE_DEPLOYMENT npm run _migrator up",
+    "migration:pre:down": "MIGRATION_TYPE=PRE_DEPLOYMENT npm run _migrator down",
+    "migration:post:create": "MIGRATION_TYPE=POST_DEPLOYMENT ENV=local npm run _migrator create -- --name $npm_config_name.ts --allow-extension .ts",
+    "migration:post:up": "MIGRATION_TYPE=POST_DEPLOYMENT npm run _migrator up",
+    "migration:post:down": "MIGRATION_TYPE=POST_DEPLOYMENT npm run _migrator down"
   },
   "repository": {
     "type": "git",
@@ -169,6 +176,7 @@
     "node-fetch": "^2.6.7",
     "superagent-proxy": "^3.0.0",
     "timeout-signal": "^1.1.0",
+    "umzug": "^3.2.1",
     "unique-names-generator": "^4.6.0",
     "uuid": "^8.3.2",
     "winston": "^3.8.1"

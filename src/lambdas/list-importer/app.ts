@@ -6,7 +6,7 @@ import {
 import { parse } from '@fast-csv/parse'
 import { ListRepository } from './repositories/list-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export const listImporterHandler = lambdaApi()(
   async (
@@ -19,7 +19,7 @@ export const listImporterHandler = lambdaApi()(
     }
 
     const { principalId: tenantId } = event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClient(event)
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const listRepository = new ListRepository(tenantId, dynamoDb)
 
     const { listType, listName, indexName, data } = JSON.parse(event.body)

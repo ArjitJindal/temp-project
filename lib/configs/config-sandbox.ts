@@ -5,7 +5,7 @@ const region = 'eu-central-1'
 
 export const config: Config = {
   stage: 'sandbox',
-  env: { account: account, region: region },
+  env: { account, region },
   resource: {
     DYNAMODB: {
       READ_CAPACITY: 10,

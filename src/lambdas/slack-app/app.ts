@@ -12,7 +12,7 @@ import { IncomingWebhook } from '@slack/webhook'
 import AWS from 'aws-sdk'
 import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
@@ -49,7 +49,7 @@ export const slackAppHandler = lambdaApi()(
           throw Error('Missing webhook url')
         }
 
-        const mongoDb = await connectToDB()
+        const mongoDb = await getMongoDbClient()
         const tenantRepository = new TenantRepository(tenantId, { mongoDb })
         await tenantRepository.createOrUpdateTenantMetadata('SLACK_WEBHOOK', {
           slackWebhookURL,
@@ -91,7 +91,7 @@ export const slackAppHandler = lambdaApi()(
 const DANGER_COLOR_STATUSES: RuleAction[] = ['BLOCK', 'SUSPEND']
 
 export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
-  const mongoDb = await connectToDB()
+  const mongoDb = await getMongoDbClient()
   const dynamoDb = new AWS.DynamoDB.DocumentClient()
   for (const record of event.Records) {
     const { tenantId, transactionId } = JSON.parse(record.body) as AlertPayload

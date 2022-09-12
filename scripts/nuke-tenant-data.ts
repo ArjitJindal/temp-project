@@ -3,9 +3,8 @@ import AWS from 'aws-sdk'
 import { program } from 'commander'
 import { StackConstants } from '@cdk/constants'
 import { Db } from 'mongodb'
-import { getDynamoDbClient, getMongoDbClient } from './migrations/utils/db'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { paginateQueryGenerator } from '@/utils/dynamodb'
+import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import {
   getNonUserReceiverKeys,
@@ -19,6 +18,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
+  getMongoDbClient,
   IMPORT_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,

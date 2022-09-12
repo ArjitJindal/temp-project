@@ -1,9 +1,9 @@
-import { getDynamoDbClient } from './utils/db'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { TRANSACTION_RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
-async function syncRulesLibrary() {
+export async function syncRulesLibrary() {
   const dynamoDb = await getDynamoDbClient()
   const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
   for (const getRule of TRANSACTION_RULES_LIBRARY) {
@@ -13,4 +13,6 @@ async function syncRulesLibrary() {
   }
 }
 
-syncRulesLibrary()
+if (require.main === module) {
+  syncRulesLibrary()
+}

@@ -1,8 +1,11 @@
+import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
-import { getMongoDbClient } from '../utils/db'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
-import { DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY } from '@/utils/mongoDBUtils'
+import {
+  DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
+  getMongoDbClient,
+} from '@/utils/mongoDBUtils'
 
 async function migrateTenant(tenant: Tenant) {
   console.log(`Migrate ${tenant.name} (#${tenant.id})`)
@@ -34,4 +37,10 @@ async function migrateTenant(tenant: Tenant) {
   )
 }
 
-migrateAllTenants(migrateTenant)
+export const up: MigrationFn = async () => {
+  await migrateAllTenants(migrateTenant)
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

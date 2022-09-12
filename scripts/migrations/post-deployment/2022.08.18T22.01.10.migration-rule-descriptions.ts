@@ -1,6 +1,7 @@
-import { getDynamoDbClient } from '../utils/db'
+import { MigrationFn } from 'umzug'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const changes = [
   {
@@ -146,4 +147,10 @@ async function main() {
   console.info('Migration completed.')
 }
 
-main()
+export const up: MigrationFn = async () => {
+  await main()
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}

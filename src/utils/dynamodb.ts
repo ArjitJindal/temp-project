@@ -11,16 +11,25 @@ import {
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { chunk } from 'lodash'
 import { StackConstants } from '@cdk/constants'
+import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials'
 import { getCredentialsFromEvent } from './credentials'
 
-export function getDynamoDbClient(
+export function getDynamoDbClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
 ): AWS.DynamoDB.DocumentClient {
   const isLocal = process.env.ENV === 'local'
+  return getDynamoDbClient(isLocal ? undefined : getCredentialsFromEvent(event))
+}
+
+export function getDynamoDbClient(
+  credentials?: Credentials | CredentialsOptions
+): AWS.DynamoDB.DocumentClient {
+  const isLocal = process.env.ENV === 'local'
   return new AWS.DynamoDB.DocumentClient({
-    credentials: isLocal ? undefined : getCredentialsFromEvent(event),
+    credentials,
+    region: process.env.AWS_REGION,
     endpoint: isLocal
       ? process.env.DYNAMODB_URI ||
         `http://${

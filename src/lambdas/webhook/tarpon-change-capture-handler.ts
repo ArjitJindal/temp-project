@@ -8,7 +8,7 @@ import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-con
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { WebhookDeliveryTask } from '@/@types/webhook'
-import { connectToDB } from '@/utils/mongoDBUtils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { logger } from '@/core/logger'
 import { UserStateDetails } from '@/@types/openapi-public/UserStateDetails'
 
@@ -22,7 +22,10 @@ async function sendWebhookTasks(
   webhookTasks: ThinWebhookDeliveryTask[]
 ) {
   const createdAt = Date.now()
-  const webhookRepository = new WebhookRepository(tenantId, await connectToDB())
+  const webhookRepository = new WebhookRepository(
+    tenantId,
+    await getMongoDbClient()
+  )
   const webhooksByEvent = await webhookRepository.getWebhooksByEvents(
     webhookTasks.map((task) => task.event)
   )

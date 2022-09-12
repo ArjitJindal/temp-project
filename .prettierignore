@@ -1,4 +1,3 @@
 node_modules
 cdk.out
 dist
-**/*.js
