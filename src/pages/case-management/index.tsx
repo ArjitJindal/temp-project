@@ -3,7 +3,6 @@ import type { ProColumns } from '@ant-design/pro-table';
 import { Divider, message, Tabs } from 'antd';
 import moment from 'moment';
 import { ProFormInstance } from '@ant-design/pro-form';
-import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router';
 import StateSearchButton from '../transactions/components/TransactionStateButton';
 import { TableSearchParams } from './types';
@@ -21,17 +20,16 @@ import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import {
-  CaseStatusChangeForm,
   CasesStatusChangeForm,
+  CaseStatusChangeForm,
 } from '@/pages/case-management/components/CaseStatusChangeForm';
-import { AsyncResource, init, success } from '@/utils/asyncResource';
 import PageWrapper from '@/components/PageWrapper';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import ResizableTitle from '@/utils/table-utils';
-import { useUsers, useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
@@ -43,6 +41,8 @@ import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TransactionStatusButton from '@/pages/transactions/components/TransactionStatusButton';
+import Id from '@/components/ui/Id';
+import { addBackUrlToRoute } from '@/utils/backUrl';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -59,8 +59,6 @@ function TableList() {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const [, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
-  const [, setLastSearchParams] = useState<TableSearchParams>({});
   const [isOpenTab, setIsOpenTab] = useState<boolean>(true);
   const [updatedTransactions, setUpdatedTransactions] = useState<{
     [key: string]: TransactionCaseManagement;
@@ -148,16 +146,12 @@ function TableList() {
         render: (dom, entity) => {
           // todo: fix style
           return (
-            <Link
-              to={`/case-management/case/${entity.transactionId}`}
-              onClick={() => {
-                setLastSearchParams(parsedParams);
-                setCurrentItem(success(entity));
-              }}
-              style={{ color: '@fr-colors-brandBlue' }}
+            <Id
+              id={entity.transactionId}
+              to={addBackUrlToRoute(`/case-management/case/${entity.transactionId}`)}
             >
               {entity.transactionId}
-            </Link>
+            </Id>
           );
         },
       },
@@ -595,7 +589,6 @@ function TableList() {
     }
     return mergedColumns;
   }, [
-    parsedParams,
     api,
     handleUpdateAssignments,
     reloadTable,

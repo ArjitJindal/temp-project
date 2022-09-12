@@ -53,3 +53,16 @@ export function parseQueryString(queryString: string): RawParsedQuery {
       {},
     );
 }
+
+export function parseRoute(route: string): {
+  pathname: string;
+  queryParams: RawParsedQuery;
+} {
+  const index = route.indexOf('?');
+  if (index !== -1) {
+    const pathname = route.substring(0, index);
+    const queryParams = parseQueryString(route.substring(index));
+    return { pathname, queryParams };
+  }
+  return { pathname: route, queryParams: {} };
+}

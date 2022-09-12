@@ -15,6 +15,7 @@ import * as Card from '@/components/ui/Card';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 import UserDetailsCard from '@/pages/case-management-item/components/UserDetailsCard';
 import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
+import { useBackUrl } from '@/utils/backUrl';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -69,6 +70,8 @@ function CaseManagementItemPage() {
 
   const i18n = useI18n();
 
+  const backUrl = useBackUrl();
+
   const handleCommentsUpdate = (newComments: Comment[]) => {
     setCurrentCase((prevState) => {
       return map(
@@ -85,7 +88,7 @@ function CaseManagementItemPage() {
     <PageWrapper
       backButton={{
         title: i18n('menu.case-management.item.back-button'),
-        url: makeUrl('/case-management'),
+        url: backUrl ?? makeUrl('/case-management'),
       }}
     >
       <Card.Root>
