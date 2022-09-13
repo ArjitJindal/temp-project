@@ -7,9 +7,11 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { RiskRepository } from '@/services/rules-engine/repositories/risk-repository'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { calculateKRS } from '@/services/risk-scoring'
+import { hasFeature } from '@/core/utils/context'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -46,6 +48,7 @@ export const userHandler = lambdaApi()(
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)
+
       if ((userPayload as User).userId) {
         const user = isConsumerUser
           ? await userRepository.getConsumerUser(userPayload.userId)
@@ -61,12 +64,17 @@ export const userHandler = lambdaApi()(
         }
       }
 
-      if (userPayload.riskLevel) {
-        handleRiskLevelParam(tenantId, dynamoDb, userPayload)
-      }
       const user = isConsumerUser
         ? await userRepository.saveConsumerUser(userPayload)
         : await userRepository.saveBusinessUser(userPayload)
+      if (hasFeature('PULSE')) {
+        if (hasFeature('PULSE_KRS_CALCULATION')) {
+          await calculateKRS(tenantId, dynamoDb, user)
+        }
+        if (userPayload.riskLevel) {
+          await handleRiskLevelParam(tenantId, dynamoDb, user)
+        }
+      }
       return {
         userId: user.userId,
         // TODO: Implement risk score

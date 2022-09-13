@@ -4,6 +4,10 @@
 import * as _ from 'lodash'
 import { NotFound } from 'http-errors'
 import { UserRepository } from '../users/repositories/user-repository'
+import {
+  DEFAULT_DRS_RISK_ITEM,
+  RiskRepository,
+} from '../risk-scoring/repositories/risk-repository'
 import { Aggregators } from './aggregator'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -12,10 +16,6 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase, RuleResult } from './rule'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
-import {
-  DEFAULT_DRS_RISK_ITEM,
-  RiskRepository,
-} from './repositories/risk-repository'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'

@@ -2165,6 +2165,7 @@ components:
       enum:
         - PULSE
         - PULSE_MANUAL_USER_RISK_LEVEL
+        - PULSE_KRS_CALCULATION
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES

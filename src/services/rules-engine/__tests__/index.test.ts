@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { verifyTransaction, verifyTransactionEvent } from '..'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { RiskRepository } from '../repositories/risk-repository'
+import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import {
   dynamoDbSetupHook,
   getTestDynamoDbClient,

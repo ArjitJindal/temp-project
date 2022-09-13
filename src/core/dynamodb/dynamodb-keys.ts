@@ -28,6 +28,7 @@ export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'
 export const CONSUMER_USER_EVENT_KEY_IDENTIFIER = 'consumer-user-event#'
 export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
+export const KRS_KEY_IDENTIFIER = '#krs-value'
 
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
@@ -256,12 +257,13 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#userId#${userId}#drs-value`,
     SortKeyID: version,
   }),
-  RULE_PARAMETER_RISK_SCORES_DETAILS: (
-    tenantId: string,
-    parameter?: string
-  ) => ({
-    PartitionKeyID: `${tenantId}#rule-parameter-scores`,
+  PARAMETER_RISK_SCORES_DETAILS: (tenantId: string, parameter?: string) => ({
+    PartitionKeyID: `${tenantId}#provided-parameter-risk-values`,
     SortKeyID: parameter,
+  }),
+  KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
+    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#krs-value`,
+    SortKeyID: version,
   }),
 }
 

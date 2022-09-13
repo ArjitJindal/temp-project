@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { customAlphabet } from 'nanoid'
-import { DEFAULT_DRS_RISK_ITEM } from './risk-repository'
+import { DEFAULT_DRS_RISK_ITEM } from '../../risk-scoring/repositories/risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,

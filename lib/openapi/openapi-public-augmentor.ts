@@ -105,9 +105,6 @@ for (const path in openapi.paths) {
       type: 'aws_proxy',
       passthroughBehavior: 'never',
     }
-    console.log(
-      `path ${path} \n\n method: ${method} \n\nmethodSetting: ${methodSetting}`
-    )
 
     methodSetting['security'].push({ 'lambda-authorizer': [] })
   }

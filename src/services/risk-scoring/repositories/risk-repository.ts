@@ -62,6 +62,46 @@ export class RiskRepository {
     this.tenantId = tenantId
   }
 
+  async getKrsScore(userId: string): Promise<any> {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    const result = await this.dynamoDb.get(getItemInput).promise()
+
+    if (!result.Item) {
+      return null
+    }
+
+    const krsScoreItem = {
+      ...result.Item,
+    }
+    delete krsScoreItem.PartitionKeyID
+    delete krsScoreItem.SortKeyID
+    return krsScoreItem
+  }
+
+  async createOrUpdateKrsScore(userId: string, score: number): Promise<any> {
+    const newKrsScoreItem: any = {
+      krsScore: score,
+      createdAt: Date.now(),
+    }
+
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'),
+        ...newKrsScoreItem,
+      },
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+
+    await this.dynamoDb.put(putItemInput).promise()
+
+    return score
+  }
+
   async getRiskClassification(): Promise<Array<any>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
@@ -151,15 +191,10 @@ export class RiskRepository {
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
     const { parameter, ...paramMetaDetails } = parameterRiskLevels
-    logger.info(`PARAMETER: \n\n ${parameter}`)
-    logger.info(`Meta deets: \n\n ${JSON.stringify(paramMetaDetails)}`)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(
-          this.tenantId,
-          parameter
-        ), // Version it later
+        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId, parameter), // Version it later
         schemaAttributes: paramMetaDetails,
       },
       ReturnConsumedCapacity: 'TOTAL',
@@ -169,23 +204,15 @@ export class RiskRepository {
   }
 
   async getParameterRiskItem(
-    parameter?: ParameterAttributeRiskValuesParameterEnum
+    parameter: ParameterAttributeRiskValuesParameterEnum
   ) {
-    let keyConditionExpr, expressionAttributeVals
-    if (parameter) {
-      keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
-      expressionAttributeVals = {
-        ':pk': DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
-          .PartitionKeyID,
-        ':sk': parameter,
-      }
-    } else {
-      keyConditionExpr = 'PartitionKeyID = :pk'
-      expressionAttributeVals = {
-        ':pk': DynamoDbKeys.RULE_PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
-          .PartitionKeyID,
-      }
+    const keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
+    const expressionAttributeVals = {
+      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
+        .PartitionKeyID,
+      ':sk': parameter,
     }
+
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
@@ -197,6 +224,27 @@ export class RiskRepository {
       return result.Items && result.Items.length > 0
         ? result.Items[0].schemaAttributes
         : null
+    } catch (e) {
+      logger.error(e)
+      return null
+    }
+  }
+  async getParameterRiskItems() {
+    const keyConditionExpr = 'PartitionKeyID = :pk'
+    const expressionAttributeVals = {
+      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
+        .PartitionKeyID,
+    }
+
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: keyConditionExpr,
+      ReturnConsumedCapacity: 'TOTAL',
+      ExpressionAttributeValues: expressionAttributeVals,
+    }
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0 ? result.Items : null
     } catch (e) {
       logger.error(e)
       return null

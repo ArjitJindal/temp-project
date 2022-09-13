@@ -127,6 +127,11 @@ export const DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY = (
   return `${tenantId}-dashboard-hits-by-user-stats-hourly`
 }
 
+// Pulse
+export const KRS_SCORES_HISTORIC = (tenantId: string) => {
+  return `${tenantId}-risk-values-historic`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }
