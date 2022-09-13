@@ -1,9 +1,10 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
-import { Col, Divider, Row, Typography } from 'antd';
+import { Col, Divider, Row } from 'antd';
 import { useCallback, useState } from 'react';
 import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
 import UserManualRiskPanel from '../UserManualRiskPanel';
+import Avatar from '../../../transactions-item/UserDetails/Avatar';
 import s from './styles.module.less';
 import PersonsTable from './PersonsTable';
 import CollapsableSection from '@/pages/users-item/UserDetails/CollapsableSection';
@@ -14,6 +15,8 @@ import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalBusinessUser } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Id from '@/components/ui/Id';
+import { makeUrl } from '@/utils/routing';
 
 interface Props {
   user: InternalBusinessUser;
@@ -37,9 +40,20 @@ export default function BusinessUserDetails(props: Props) {
     <>
       <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
         <Col>
-          <Typography.Title level={3} style={{ margin: 0 }}>
-            {getUserName(user)}
-          </Typography.Title>
+          <div className={s.user}>
+            <Avatar name={user ? getUserName(user) : undefined} />
+            <div className={s.name}>{user ? getUserName(user) : 'User undefined'}</div>
+            {user && (
+              <Id
+                to={makeUrl('/users/list/:list/:id', {
+                  list: 'business',
+                  id: user.userId,
+                })}
+              >
+                {user.userId}
+              </Id>
+            )}
+          </div>
         </Col>
         <Feature name="PULSE_MANUAL_USER_RISK_LEVEL">
           <Col>
