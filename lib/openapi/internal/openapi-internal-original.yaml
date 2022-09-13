@@ -1471,6 +1471,10 @@ components:
           type: array
           items:
             type: string
+        defaultCaseCreationType:
+          $ref: '#/components/schemas/CaseType'
+        defaultCasePriority:
+          $ref: '#/components/schemas/CasePriority'
       required:
         - id
         - type
@@ -1480,6 +1484,8 @@ components:
         - defaultAction
         - ruleImplementationName
         - labels
+        - defaultCaseCreationType
+        - defaultCasePriority
     RuleInstance:
       title: RuleInstance
       type: object
@@ -1518,10 +1524,16 @@ components:
           type: number
         '':
           type: string
+        caseCreationType:
+          $ref: '#/components/schemas/CaseType'
+        casePriority:
+          $ref: '#/components/schemas/CasePriority'
       required:
         - ruleId
         - parameters
         - action
+        - caseCreationType
+        - casePriority
     RuleAction:
       type: string
       title: RuleAction
@@ -1542,6 +1554,20 @@ components:
       required:
         - action
         - alias
+    CaseType:
+      type: string
+      title: CaseType
+      enum:
+        - USER
+        - TRANSACTION
+    CasePriority:
+      type: string
+      title: CasePriority
+      enum:
+        - P1
+        - P2
+        - P3
+        - P4
     ImportRequest:
       title: ImportRequest
       type: object
@@ -2144,6 +2170,7 @@ components:
         - IMPORT_FILES
         - DASHBOARD_BLOCK_USER
         - LISTS
+        - CASE_CREATION_TYPE
       description: ''
     AccountRole:
       type: string

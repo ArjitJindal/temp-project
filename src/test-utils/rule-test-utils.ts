@@ -12,6 +12,8 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { UserMonitoringResult } from '@/@types/openapi-public/UserMonitoringResult'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { User } from '@/@types/openapi-public/User'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 
 export async function createRule(testTenantId: string, rule: Partial<Rule>) {
   const dynamoDb = getTestDynamoDbClient()
@@ -30,6 +32,8 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
     labels: [],
+    defaultCaseCreationType: 'TRANSACTION',
+    defaultCasePriority: 'P1',
     ...rule,
   })
   const createdRuleInstance =
@@ -41,6 +45,8 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
       action: createdRule.defaultAction,
       riskLevelActions: createdRule.defaultRiskLevelActions,
       status: 'ACTIVE',
+      caseCreationType: createdRule.defaultCaseCreationType as CaseType,
+      casePriority: createdRule.defaultCasePriority as CasePriority,
     })
 
   return async () => {

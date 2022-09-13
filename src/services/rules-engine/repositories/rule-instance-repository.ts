@@ -143,6 +143,8 @@ export class RuleInstanceRepository {
         updatedAt: item.updatedAt,
         runCount: item.runCount,
         hitCount: item.hitCount,
+        casePriority: item.casePriority,
+        caseCreationType: item.caseCreationType,
       })) || []
     )
   }

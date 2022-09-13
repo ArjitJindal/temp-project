@@ -39,6 +39,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
     labels: ['AML'],
+    defaultCasePriority: 'P1',
+    defaultCaseCreationType: 'TRANSACTION',
   }),
   () => {
     const defaultParameters: TransactionAmountRuleParameters = {
@@ -57,6 +59,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'transaction-amount',
       labels: ['AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -75,6 +79,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-new-country',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -93,6 +99,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-new-currency',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -111,6 +119,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'first-activity-after-time-period',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -129,6 +139,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-risk-currency',
       labels: ['AML', 'Sanctions', 'List'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -153,6 +165,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'low-value-incoming-transactions',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -175,6 +189,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'low-value-outgoing-transactions',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -194,6 +210,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'multiple-user-senders-within-time-period',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -214,6 +232,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       ruleImplementationName:
         'multiple-counterparty-senders-within-time-period',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -230,6 +250,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'merchant-receiver-name',
       labels: ['AML', 'Risk Appetite', 'List'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -257,6 +279,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'blacklist-card-issued-country',
       labels: ['AML', 'Risk Appetite', 'List'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -289,6 +313,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-reference-keyword',
       labels: ['AML', 'Risk Appetite', 'List'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -312,6 +338,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
       labels: ['Internal Fraud', 'AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -330,6 +358,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'ip-address-multiple-users',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -348,6 +378,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'too-many-users-for-same-card',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -367,6 +399,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'same-user-using-too-many-cards',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -393,6 +427,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-volume',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -414,6 +450,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-amount',
       labels: ['AML'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -429,6 +467,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'ip-address-unexpected-location',
       labels: ['AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -444,6 +484,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-amount-user-limit',
       labels: ['AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -465,6 +507,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'consecutive-transactions-same-type',
       labels: ['AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -483,6 +527,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'sender-location-changes-frequency',
       labels: ['AML', 'Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -501,6 +547,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'BLOCK',
       ruleImplementationName: 'card-issued-country',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -519,6 +567,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'transaction-amount-pattern',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -537,6 +587,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'card-holder-name-levensthein-distance',
       labels: ['Fraud'],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
   () => {
@@ -556,6 +608,8 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-between-same-parties',
       labels: [],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
     }
   },
 ]
