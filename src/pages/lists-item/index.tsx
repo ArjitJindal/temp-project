@@ -63,7 +63,7 @@ export default function CreatedLists() {
                         <div className={s.listId}>{listHeader.listId}</div>
                       </Form.Layout.Label>
                       <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
-                        {listType === 'users-blacklists' ? 'Blacklist' : 'Whitelist'}
+                        {listType === 'USERS-BLACKLISTS' ? 'Blacklist' : 'Whitelist'}
                       </Form.Layout.Label>
                       <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
                         {listHeader.metadata?.name}

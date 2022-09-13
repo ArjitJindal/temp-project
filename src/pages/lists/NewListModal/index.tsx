@@ -71,7 +71,7 @@ export default function NewListModal(props: Props) {
   return (
     <Modal
       icon={<Icon />}
-      title={'Add a New Whitelist'}
+      title={listType === 'USERS-WHITELISTS' ? `Add a New Whitelist` : `Add a New Blacklist`}
       isOpen={isOpen}
       onCancel={onCancel}
       okText={'Create'}

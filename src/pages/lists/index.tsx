@@ -59,7 +59,13 @@ export default function CreatedLists() {
               )}
               {listType === 'USERS-BLACKLISTS' && (
                 <>
-                  <Button type="skeleton" size="large">
+                  <Button
+                    type="skeleton"
+                    size="large"
+                    onClick={() => {
+                      setNewModalOpen(true);
+                    }}
+                  >
                     Add New Blacklist
                   </Button>
                   {/*<Button type="skeleton" size="large">*/}
@@ -73,7 +79,7 @@ export default function CreatedLists() {
           <Tabs.TabPane tab="Whitelists" key="users-whitelists">
             <ListTable ref={whitelistsTableRef} listType="USERS-WHITELISTS" />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Blacklists" key="users-blacklists" disabled={true}>
+          <Tabs.TabPane tab="Blacklists" key="users-blacklists">
             <ListTable ref={blacklistsTableRef} listType="USERS-BLACKLISTS" />
           </Tabs.TabPane>
         </PageTabs>

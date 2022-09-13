@@ -27,6 +27,7 @@ export function useRoutes(): RouteItem[] {
   const isListsFeatureEnabled = useFeature('LISTS');
   const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab, __] = useLocalStorageState('rule-active-tab', 'create-rule');
+  const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -229,7 +230,10 @@ export function useRoutes(): RouteItem[] {
           },
           {
             path: '/lists',
-            redirect: '/lists/users-whitelists',
+            redirect:
+              lastActiveList === 'whitelist'
+                ? '/lists/users-whitelists'
+                : '/lists/users-blacklists',
           },
         ],
       },
@@ -261,10 +265,11 @@ export function useRoutes(): RouteItem[] {
 
     return routes.filter((x): x is RouteItem => x !== false);
   }, [
-    isImportFilesEnabled,
-    isRiskLevelsEnabled,
-    isListsFeatureEnabled,
-    lastActiveRuleTab,
     lastActiveTab,
+    lastActiveRuleTab,
+    isRiskLevelsEnabled,
+    isImportFilesEnabled,
+    isListsFeatureEnabled,
+    lastActiveList,
   ]);
 }
