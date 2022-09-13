@@ -19,6 +19,7 @@ import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider'
 const FEATURES: Feature[] = [
   'PULSE',
   'PULSE_MANUAL_USER_RISK_LEVEL',
+  'PULSE_KRS_CALCULATION',
   'SLACK_ALERTS',
   'AUDIT_LOGS',
   'IMPORT_FILES',
