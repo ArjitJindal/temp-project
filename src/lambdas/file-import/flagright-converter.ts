@@ -29,16 +29,17 @@ export class FlagrightConverter<T> implements ConverterInterface<T> {
 
     for (const key in schemas) {
       schemas[key]['$id'] = `#/components/schemas/${key}`
-      schemas[key]['additionalProperties'] = false
     }
-    const schema = JSON.parse(JSON.stringify(schemas[this.schemaName]))
-    schema['$defs'] = schemas
-    schema['additionalProperties'] = false
     const ajv = new Ajv({
       keywords: ['example', 'x-examples', 'x-stoplight'],
       coerceTypes: true,
+      schemas: Object.values(schemas).map((schema) =>
+        JSON.parse(JSON.stringify(schema))
+      ),
     })
-    this.schemaValidate = ajv.compile(schema)
+    this.schemaValidate = ajv.getSchema(
+      `#/components/schemas/${this.schemaName}`
+    )
   }
   getCsvParserOptions() {
     return { headers: true }
