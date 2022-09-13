@@ -42,10 +42,11 @@ export default function () {
           </Card.Root>
         </Case>
         <Case title="With title">
-          <Card.Root>
-            <Card.Section>
-              <Card.Title>Card title</Card.Title>
-            </Card.Section>
+          <Card.Root
+            header={{
+              title: 'Card title',
+            }}
+          >
             <Card.Section>Section 2</Card.Section>
             <Card.Section>Section 3</Card.Section>
             <Card.Section>Section 4</Card.Section>

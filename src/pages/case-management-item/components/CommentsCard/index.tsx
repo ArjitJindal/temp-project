@@ -45,10 +45,13 @@ export default function CommentsCard(props: Props) {
   );
 
   return (
-    <Card.Root>
-      <Card.Section>
-        <Card.Title>{`Comments (${comments.length})`}</Card.Title>
-      </Card.Section>
+    <Card.Root
+      header={{
+        title: `Comments (${comments.length})`,
+        collapsable: true,
+        collapsedByDefault: true,
+      }}
+    >
       <Card.Section>
         {comments.length > 0 && (
           <List<TransactionComment>

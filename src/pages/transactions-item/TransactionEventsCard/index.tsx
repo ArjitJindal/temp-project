@@ -10,10 +10,11 @@ interface Props {
 export default function TransactionEventsCard(props: Props) {
   const { events } = props;
   return (
-    <Card.Root>
-      <Card.Section>
-        <Card.Title>Transaction Events</Card.Title>
-      </Card.Section>
+    <Card.Root
+      header={{
+        title: 'Transaction Events',
+      }}
+    >
       <Card.Section>
         <TransactionEventsTable events={events} />
       </Card.Section>

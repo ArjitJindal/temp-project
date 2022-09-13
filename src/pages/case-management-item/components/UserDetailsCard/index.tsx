@@ -11,10 +11,13 @@ interface Props {
 export default function UserDetailsCard(props: Props) {
   const { title, user } = props;
   return (
-    <Card.Root>
-      <Card.Section>
-        <Card.Title>{title}</Card.Title>
-      </Card.Section>
+    <Card.Root
+      header={{
+        title,
+        collapsable: true,
+        collapsedByDefault: true,
+      }}
+    >
       <Card.Section>
         <UserDetails user={user} isEmbedded={true} />
       </Card.Section>

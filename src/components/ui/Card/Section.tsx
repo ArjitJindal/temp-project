@@ -17,6 +17,7 @@ export default function Section(props: Props) {
     justify = 'start',
     align = 'stretch',
     spacing = 'default',
+    className,
     children,
   } = props;
   return (
@@ -27,6 +28,7 @@ export default function Section(props: Props) {
         s[`justify-${justify}`],
         s[`align-${align}`],
         s[`spacing-${spacing}`],
+        className,
       )}
     >
       {children}

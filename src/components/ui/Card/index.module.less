@@ -9,12 +9,35 @@
   border-radius: 8px;
 }
 
-.title {
-  margin-bottom: 0;
-  color: @fr-colors-brandBlue;
-  font-weight: 600;
-  font-size: 20px;
-  line-height: 28px;
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .title {
+    margin-bottom: 0;
+    color: @fr-colors-brandBlue;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  &.isCollapsable {
+    cursor: pointer;
+  }
+
+  .collapseIcon {
+    display: flex;
+    align-items: center;
+    width: 20px;
+    color: @fr-colors-brandBlue;
+    transition: transform 300ms;
+    transform: rotate(180deg);
+
+    &.isCollapsed {
+      transform: none;
+    }
+  }
 }
 
 .row {

@@ -7,13 +7,14 @@ interface Props {
   transaction: TransactionCaseManagement;
 }
 
-export default function TransactionDetails(props: Props) {
+export default function TransactionDetailsCard(props: Props) {
   const { transaction } = props;
   return (
-    <Card.Root>
-      <Card.Section>
-        <Card.Title>Transaction Details</Card.Title>
-      </Card.Section>
+    <Card.Root
+      header={{
+        title: 'Transaction Details',
+      }}
+    >
       <Card.Section direction="horizontal" align="start">
         <TransactionInfoCard transaction={transaction} />
         <UserDetails

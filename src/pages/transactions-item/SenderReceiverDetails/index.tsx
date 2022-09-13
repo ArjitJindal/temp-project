@@ -12,10 +12,11 @@ export default function SenderReceiverDetails(props: Props) {
   const { transaction } = props;
   return (
     <>
-      <Card.Root>
-        <Card.Section>
-          <Card.Title>Origin (Sender) and Destination (Receiver) Details</Card.Title>
-        </Card.Section>
+      <Card.Root
+        header={{
+          title: 'Origin (Sender) and Destination (Receiver) Details',
+        }}
+      >
         <Card.Section direction="horizontal">
           <UserDetails
             type="ORIGIN"

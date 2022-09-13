@@ -11,10 +11,13 @@ interface Props {
 export default function UserDetailsCard(props: Props) {
   const { rulesHit } = props;
   return (
-    <Card.Root>
-      <Card.Section>
-        <Card.Title>Rules Hit</Card.Title>
-      </Card.Section>
+    <Card.Root
+      header={{
+        title: 'Rules Hit',
+        collapsable: true,
+        collapsedByDefault: false,
+      }}
+    >
       <Card.Section>
         <Table
           rowKey="ruleId"

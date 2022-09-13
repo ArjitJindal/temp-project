@@ -79,10 +79,11 @@ export default function CreatedLists() {
                     </div>
                   </Card.Section>
                   <Card.Section>
-                    <Card.Root>
-                      <Card.Section direction="horizontal" justify="space-between">
-                        <Card.Title>Users list</Card.Title>
-                      </Card.Section>
+                    <Card.Root
+                      header={{
+                        title: 'Users list',
+                      }}
+                    >
                       <Card.Section>
                         <UserListTable listHeader={listHeader} />
                       </Card.Section>
