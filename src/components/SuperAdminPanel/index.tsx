@@ -23,6 +23,7 @@ const FEATURES: Feature[] = [
   'AUDIT_LOGS',
   'IMPORT_FILES',
   'LISTS',
+  'CASE_CREATION_TYPE',
 ];
 
 export default function SuperAdminPanel() {

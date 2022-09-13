@@ -11,6 +11,7 @@ import { Table } from '@/components/ui/Table';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import ResizableTitle from '@/utils/table-utils';
 import handleResize from '@/components/ui/Table/utils';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -20,11 +21,24 @@ interface Props {
 export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule }) => {
   const user = useAuth0User();
   const api = useApi();
+  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
   }>({});
-  const columns: ProColumns<Rule>[] = useMemo(
-    () => [
+  const columns: ProColumns<Rule>[] = useMemo(() => {
+    const caseCreationHeaders: ProColumns<Rule>[] = [
+      {
+        title: 'Rule Case Creation Type',
+        width: 150,
+        dataIndex: 'defaultCaseCreationType',
+      },
+      {
+        title: 'Rule Case Priority',
+        width: 100,
+        dataIndex: 'defaultCasePriority',
+      },
+    ];
+    return [
       {
         title: 'Rule ID',
         width: 100,
@@ -55,6 +69,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         width: 500,
         dataIndex: 'description',
       },
+      ...(isCaseCreationTypeEnabled ? caseCreationHeaders : []),
       {
         title: 'Default Parameters',
         width: 250,
@@ -97,9 +112,8 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
           );
         },
       },
-    ],
-    [onSelectRule, ruleImplementations, user],
-  );
+    ];
+  }, [onSelectRule, ruleImplementations, user, isCaseCreationTypeEnabled]);
 
   const mergeColumns: ProColumns<Rule>[] = columns.map((col, index) => ({
     ...col,

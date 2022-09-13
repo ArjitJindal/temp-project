@@ -9,11 +9,16 @@ import {
   ProFormSelect,
 } from '@ant-design/pro-form';
 import { PlusOutlined } from '@ant-design/icons';
-import { RULE_ACTION_OPTIONS } from '../../utils';
+import {
+  RULE_ACTION_OPTIONS,
+  RULE_CASE_CREATION_TYPE_OPTIONS,
+  RULE_CASE_PRIORITY,
+} from '../../utils';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import { Rule } from '@/apis';
 import Button from '@/components/ui/Button';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface RuleCreationFormProps {
   rule?: Rule;
@@ -22,6 +27,7 @@ interface RuleCreationFormProps {
 export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, children }) => {
   const api = useApi();
   const restFormRef = useRef<ProFormInstance>();
+  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const [ruleImplementations, setRuleImplementations] = useState<RuleImplementation[]>([]);
   useEffect(() => {
     api
@@ -82,6 +88,8 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
             tenantIds: values.tenantIds && values.tenantIds.split(','),
             // TODO: Implement assigning labels
             labels: rule?.labels || [],
+            defaultCaseCreationType: values.defaultCaseCreationType || 'TRANSACTION',
+            defaultCasePriority: values.defaultCasePriority || 'P1',
           };
           if (rule) {
             await api.putRuleRuleId({
@@ -187,6 +195,36 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
         ]}
         initialValue={rule?.defaultAction}
       />
+      {isCaseCreationTypeEnabled && (
+        <div>
+          <ProFormRadio.Group
+            name="defaultCaseCreationType"
+            label="Default Case Creation Type"
+            radioType="button"
+            options={RULE_CASE_CREATION_TYPE_OPTIONS}
+            rules={[
+              {
+                required: true,
+                message: 'Please enter case creation type',
+              },
+            ]}
+            initialValue={rule?.defaultCaseCreationType}
+          />
+          <ProFormRadio.Group
+            name="defaultCasePriority"
+            label="Default Case Priority"
+            radioType="button"
+            options={RULE_CASE_PRIORITY}
+            rules={[
+              {
+                required: true,
+                message: 'Please enter case priority',
+              },
+            ]}
+            initialValue={rule?.defaultCasePriority}
+          />
+        </div>
+      )}
       <ProFormTextArea
         width="xl"
         name="defaultParameters"

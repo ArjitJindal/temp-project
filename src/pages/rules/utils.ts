@@ -1,3 +1,4 @@
+import { CaseType, CasePriority } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
@@ -10,3 +11,15 @@ export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
 export function getRuleInstanceDisplayId(ruleId: string, ruleInstanceId: string | undefined) {
   return `${ruleId} (${ruleInstanceId || 'N/A'})`;
 }
+
+export const RULE_CASE_CREATION_TYPE_OPTIONS: { label: string; value: CaseType }[] = [
+  { label: 'Transaction', value: 'TRANSACTION' },
+  { label: 'User', value: 'USER' },
+];
+
+export const RULE_CASE_PRIORITY: { label: string; value: CasePriority }[] = [
+  { label: 'P1', value: 'P1' },
+  { label: 'P2', value: 'P2' },
+  { label: 'P3', value: 'P3' },
+  { label: 'P4', value: 'P4' },
+];

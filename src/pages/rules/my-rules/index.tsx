@@ -16,6 +16,7 @@ import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
+  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
@@ -64,8 +65,20 @@ const MyRule = () => {
     },
     [handleRuleInstanceUpdate],
   );
-  const columns: ProColumns<RuleInstance>[] = useMemo(
-    () => [
+  const columns: ProColumns<RuleInstance>[] = useMemo(() => {
+    const caseCreationHeaders: ProColumns<RuleInstance>[] = [
+      {
+        title: 'Rule Case Creation Type',
+        width: 100,
+        dataIndex: 'caseCreationType',
+      },
+      {
+        title: 'Rule Case Priority',
+        width: 50,
+        dataIndex: 'casePriority',
+      },
+    ];
+    return [
       {
         title: 'Rule ID',
         width: 50,
@@ -143,6 +156,7 @@ const MyRule = () => {
           );
         },
       },
+      ...(isCaseCreationTypeEnabled ? caseCreationHeaders : []),
       {
         title: 'Action',
         align: 'center',
@@ -182,9 +196,15 @@ const MyRule = () => {
           );
         },
       },
-    ],
-    [handleActivationChange, ruleImplementations, rules, updatedRuleInstances, isPulseEnabled],
-  );
+    ];
+  }, [
+    handleActivationChange,
+    ruleImplementations,
+    rules,
+    updatedRuleInstances,
+    isPulseEnabled,
+    isCaseCreationTypeEnabled,
+  ]);
   const request = useCallback(async () => {
     const [rules, ruleInstances, ruleImplementations] = await Promise.all([
       api.getRules({}),

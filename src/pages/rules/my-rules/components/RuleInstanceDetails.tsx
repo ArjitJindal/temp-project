@@ -1,8 +1,9 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Input, message, Row, Space } from 'antd';
+import { Input, message, Radio, Row, Space } from 'antd';
 import { AjvError } from '@rjsf/core';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
+import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '../../utils';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
@@ -27,6 +28,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
 }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
+  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -58,11 +60,21 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         : undefined),
   );
   const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
+  const [caseCreationType, setCaseCreationType] = useState(ruleInstance.caseCreationType);
+  const [casePriority, setCasePriority] = useState(ruleInstance.casePriority);
   const handleCancelEditing = useCallback(() => {
     setEditing(false);
     setParameters(ruleInstance.parameters);
     setRuleAction(ruleInstance.action);
-  }, [ruleInstance.action, ruleInstance.parameters]);
+    setCaseCreationType(ruleInstance.caseCreationType);
+    setCasePriority(ruleInstance.casePriority);
+    console.log('done cancel');
+  }, [
+    ruleInstance.action,
+    ruleInstance.parameters,
+    ruleInstance.caseCreationType,
+    ruleInstance.casePriority,
+  ]);
   const handleParametersChange = useCallback((newParameters: object, errors: AjvError[]) => {
     setParameters(newParameters);
     setValidationErrors(errors);
@@ -91,6 +103,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         riskLevelParameters,
         action: ruleAction,
         riskLevelActions,
+        caseCreationType,
+        casePriority,
       });
       message.success(`Successfully updated rule ${rule.id}`);
       setEditing(false);
@@ -110,6 +124,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     ruleAction,
     ruleInstance,
     ruleNameAlias,
+    caseCreationType,
+    casePriority,
   ]);
   const handleDeleteRuleInstance = useCallback(async () => {
     setDeleting(true);
@@ -166,7 +182,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           {`${ruleInstance.ruleId} (${ruleInstance.id})`}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Name:</b>} valueType="text">
-          {editing ? (
+          {editing && !saving ? (
             <Input
               value={ruleNameAlias || rule.name}
               onChange={(event) => setRuleNameAlias(event.target.value)}
@@ -184,6 +200,30 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         <ProDescriptions.Item label={<b>Updated At:</b>} valueType="dateTime">
           {ruleInstance.createdAt}
         </ProDescriptions.Item>
+        {isCaseCreationTypeEnabled && (
+          <ProDescriptions.Item label={<b>Case Creation Type</b>}>
+            <Radio.Group
+              name="caseCreationType"
+              options={RULE_CASE_CREATION_TYPE_OPTIONS}
+              onChange={(event) => setCaseCreationType(event.target.value)}
+              optionType="button"
+              disabled={!editing || saving}
+              value={caseCreationType}
+            ></Radio.Group>
+          </ProDescriptions.Item>
+        )}
+        {isCaseCreationTypeEnabled && (
+          <ProDescriptions.Item label={<b>Case Priority</b>}>
+            <Radio.Group
+              name="casePriority"
+              options={RULE_CASE_PRIORITY}
+              onChange={(event) => setCasePriority(event.target.value)}
+              optionType="button"
+              disabled={!editing || saving}
+              value={casePriority}
+            ></Radio.Group>
+          </ProDescriptions.Item>
+        )}
         <ProDescriptions.Item label={<b>Parameters:</b>} valueType="text">
           <RuleParametersEditor
             parametersSchema={ruleParametersSchema}
@@ -191,7 +231,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             action={ruleAction}
             riskLevelActions={riskLevelActions}
             riskLevelParameters={riskLevelParameters}
-            readonly={!editing}
+            readonly={!editing || saving}
             onActionChange={setRuleAction}
             onRiskLevelActionChange={(riskLevel, newAction) =>
               riskLevelActions &&
