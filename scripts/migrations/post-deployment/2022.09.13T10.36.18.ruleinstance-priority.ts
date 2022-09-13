@@ -17,6 +17,7 @@ async function migrateTenant(tenant: Tenant) {
     console.log(`Migrate ruleInstance ${ruleInstance.id}`)
     ruleInstance.casePriority = 'P1'
     ruleInstance.caseCreationType = 'TRANSACTION'
+    await ruleInstanceRepo.createOrUpdateRuleInstance(ruleInstance)
   }
 }
 
