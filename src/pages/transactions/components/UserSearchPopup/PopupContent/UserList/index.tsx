@@ -70,7 +70,7 @@ function renderMessage(users: User[], total: number, search: string) {
   if (length === 0) {
     return (
       <div className={s.nothingFound}>
-        We would not find a user with ID or name <b>{search}</b>
+        We could not find a user with ID or name <b>{search}</b>
       </div>
     );
   }

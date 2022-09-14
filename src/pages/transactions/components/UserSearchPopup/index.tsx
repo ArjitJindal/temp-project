@@ -23,6 +23,7 @@ export default function UserSearchPopup(props: Props) {
       content={
         <PopupContent
           initialSearch={initialSearch ?? ''}
+          isVisible={visible}
           key={`${visible}`}
           onConfirm={(user) => {
             onConfirm(user);

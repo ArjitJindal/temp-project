@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useDebounceEffect } from 'ahooks';
+import { useCallback, useState } from 'react';
+import { useDebounceEffect, useLocalStorageState } from 'ahooks';
 import { User } from './types';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { useApi } from '@/api';
@@ -10,11 +10,41 @@ type UsersResponse = {
   users: User[];
 };
 
+const LOCAL_STORAGE_KEY = 'FIND_USER_LAST_SEARCHES';
+
+export function useLastSearches(): {
+  items: string[];
+  onAdd: (item: string) => void;
+} {
+  const [items, setItems] = useLocalStorageState<string[]>(LOCAL_STORAGE_KEY, []);
+  const onAdd = useCallback(
+    (item) => {
+      setItems((previousState) =>
+        [item, ...(previousState ?? []).filter((x) => x !== item)].slice(0, 3),
+      );
+    },
+    [setItems],
+  );
+  return {
+    items,
+    onAdd,
+  };
+}
+
 export function useUsers(search: string): AsyncResource<UsersResponse> {
   const api = useApi();
   const [state, setState] = useState<AsyncResource<UsersResponse>>(init());
   useDebounceEffect(
     () => {
+      if (search === '') {
+        setState(
+          success({
+            total: 0,
+            users: [],
+          }),
+        );
+        return;
+      }
       let isCancelled = false;
       setState((lastState) => loading(getOr(lastState, null)));
       // todo: implement cancelation
