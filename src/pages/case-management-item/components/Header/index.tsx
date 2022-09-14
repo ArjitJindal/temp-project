@@ -125,9 +125,9 @@ export default function Header(props: { transaction: TransactionCaseManagement }
           <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
             <Tag
               className={s.caseStatusTag}
-              color={caseStatus === 'CLOSED' ? 'warning' : 'success'}
+              color={caseStatus === 'CLOSED' ? 'success' : 'warning'}
             >
-              {caseStatus}
+              {caseStatus ? caseStatus : 'OPEN'}
             </Tag>
           </Form.Layout.Label>
           <CaseStatusChangeForm

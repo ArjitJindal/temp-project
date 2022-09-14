@@ -15,14 +15,14 @@ export type ValueRenderer = (props: { value: string | null }) => React.ReactNode
 export const PARAMETERS: RiskLevelTable = [
   {
     parameter: 'userDetails.countryOfResidence',
-    title: 'Residence country',
+    title: 'Country of Residence',
     description: 'Risk based on customer residence country',
     type: 'ENUMERATION',
     dataType: 'COUNTRY',
   },
   {
     parameter: 'userDetails.countryOfNationality',
-    title: 'Origin country',
+    title: 'Country of Nationality',
     description: 'Risk based on customer nationality country',
     type: 'ENUMERATION',
     dataType: 'COUNTRY',
