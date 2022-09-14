@@ -386,7 +386,7 @@ function TableList() {
         ],
       },
       {
-        title: 'Transaction Status',
+        title: 'Rule Action',
         sorter: true,
         dataIndex: 'status',
         hideInSearch: true,
@@ -395,7 +395,7 @@ function TableList() {
           rowSpan: _.rowSpan,
         }),
         fieldProps: {
-          options: ['FLAGGED', 'BLOCKED', 'SUSPENDED', 'WHITELISTED'],
+          options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
           allowClear: true,
         },
         width: 200,

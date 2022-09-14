@@ -42,7 +42,7 @@ export default function StatusSearchButton(props: Props) {
           onConfirm(undefined);
         }}
       >
-        {status !== undefined ? getRuleActionTitle(status) : 'All cases'}
+        {status !== undefined ? getRuleActionTitle(status) : 'Rule action'}
       </ActionButton>
     </Popover>
   );

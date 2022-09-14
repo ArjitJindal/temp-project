@@ -238,7 +238,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
                 text: 'SUSPEND',
               },
             },
-            key: 'status',
+            key: 'ruleAction',
             width: 120,
             onCell: (_) => ({
               rowSpan: _.rowSpan,

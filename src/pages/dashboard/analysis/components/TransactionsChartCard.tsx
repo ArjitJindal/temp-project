@@ -37,13 +37,6 @@ import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider'
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 const { TabPane } = Tabs;
 
-export type TransactionsStats = {
-  id: string;
-  totalTransactions: number;
-  flaggedTransactions: number;
-  stoppedTransactions: number;
-}[];
-
 const TransactionsChartCard = () => {
   const settings = useSettings();
   const analytics = useAnalytics();
@@ -51,13 +44,13 @@ const TransactionsChartCard = () => {
   type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
   const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
-  const suspendedAlias = getRuleActionTitle(
+  const suspendAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'SUSPEND')?.alias || 'SUSPEND',
   );
-  const blockedAlias = getRuleActionTitle(
+  const blockAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'BLOCK')?.alias || 'BLOCK',
   );
-  const flaggedAlias = getRuleActionTitle(
+  const flagAlias = getRuleActionTitle(
     settings.ruleActionAliases?.find((item) => item.action === 'FLAG')?.alias || 'FLAG',
   );
   const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
@@ -137,27 +130,27 @@ const TransactionsChartCard = () => {
   data.map((item) => {
     value.push({
       _id: item._id,
-      value: item['stoppedTransactions'] ?? 0,
-      type: `${blockedAlias}`,
+      value: item.stoppedTransactions ?? 0,
+      type: `${blockAlias}`,
     });
     value.push({
       _id: item._id,
-      value: item['suspendedTransactions'] ?? 0,
-      type: `${suspendedAlias}`,
+      value: item.suspendedTransactions ?? 0,
+      type: `${suspendAlias}`,
     });
     value.push({
       _id: item._id,
-      value: item['flaggedTransactions'] ?? 0,
-      type: `${flaggedAlias}`,
+      value: item.flaggedTransactions ?? 0,
+      type: `${flagAlias}`,
     });
     value.push({
       _id: item._id,
       value:
-        (item['totalTransactions'] ?? 0) -
-        (item['stoppedTransactions'] ?? 0) -
-        (item['suspendedTransactions'] ?? 0) -
-        (item['flaggedTransactions'] ?? 0),
-      type: 'Allowed',
+        (item.totalTransactions ?? 0) -
+        (item.stoppedTransactions ?? 0) -
+        (item.suspendedTransactions ?? 0) -
+        (item.flaggedTransactions ?? 0),
+      type: 'Allow',
     });
   });
   const annotations: Annotation[] | undefined = [];
@@ -178,8 +171,8 @@ const TransactionsChartCard = () => {
 
   const titleName = (activeTab: string) => {
     if (activeTab === 'totalTransactions') return 'Clicked on Total Transactions';
-    if (activeTab === 'suspendedTransactions') return 'Clicked on Suspended Transactions';
-    if (activeTab === 'stoppedTransactions') return 'Clicked on Stopped Transactions';
+    if (activeTab === 'suspendTransactions') return 'Clicked on Suspended Transactions';
+    if (activeTab === 'stopTransactions') return 'Clicked on Stopped Transactions';
     return 'Clicked on Flagged Transactions';
   };
 
@@ -199,7 +192,7 @@ const TransactionsChartCard = () => {
 
   return (
     <Card
-      title={header('Transaction Breakdown')}
+      title={header('Transaction Breakdown by Rule Action')}
       extra={
         <div className={styles.salesExtraWrap}>
           <div className={styles.salesExtra}>
@@ -243,10 +236,10 @@ const TransactionsChartCard = () => {
           tabBarStyle={{ marginBottom: 24 }}
         >
           {[
-            { title: 'Total Transactions', key: 'totalTransactions' },
-            { title: `${flaggedAlias} Transactions`, key: 'flaggedTransactions' },
-            { title: `${suspendedAlias} Transactions`, key: 'suspendedTransactions' },
-            { title: `${blockedAlias} Transactions`, key: 'stoppedTransactions' },
+            { title: 'All', key: 'totalTransactions' },
+            { title: `${flagAlias}`, key: 'flagTransactions' },
+            { title: `${suspendAlias}`, key: 'suspendTransactions' },
+            { title: `${blockAlias}`, key: 'stopTransactions' },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
               <Spin spinning={isLoading(transactionsCountData)}>
@@ -285,12 +278,12 @@ const TransactionsChartCard = () => {
                       yField={key !== 'totalTransactions' ? 'y' : 'value'}
                       color={({ type }) => {
                         if (key === 'totalTransactions') {
-                          if (type === `${suspendedAlias}`) return '#F5E25A';
-                          if (type === `${flaggedAlias}`) return '#F6A429';
-                          if (type === `${blockedAlias}`) return '#FF4D4F';
+                          if (type === `${suspendAlias}`) return '#F5E25A';
+                          if (type === `${flagAlias}`) return '#F6A429';
+                          if (type === `${blockAlias}`) return '#FF4D4F';
                           return '#1169F9';
-                        } else if (key === 'flaggedTransactions') return '#F6A429';
-                        else if (key === 'stoppedTransactions') return '#FF4D4F';
+                        } else if (key === 'flagTransactions') return '#F6A429';
+                        else if (key === 'stopTransactions') return '#FF4D4F';
                         return '#F5E25A';
                       }}
                       xAxis={{

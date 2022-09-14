@@ -30,7 +30,7 @@ export default function TransactionInfoCard(props: Props) {
           </Id>
           <Form.Layout.Label icon={<TimerLineIcon />} title={'Transaction Time'} />
           <div>{moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}</div>
-          <Form.Layout.Label icon={<PulseLineIcon />} title={'Transaction Status'} />
+          <Form.Layout.Label icon={<PulseLineIcon />} title={'Rule action'} />
           <RuleActionStatus ruleAction={transaction.status} />
           <Form.Layout.Label icon={<TransactionIcon />} title={'Transaction Type'} />
           <TransactionTypeTag transactionType={transaction.type} />

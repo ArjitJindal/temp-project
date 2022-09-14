@@ -88,7 +88,7 @@ export default function Header(props: { transaction: TransactionCaseManagement }
               onChange={handleUpdateAssignments}
             />
           </Form.Layout.Label>
-          <Form.Layout.Label icon={<PulseLineIcon />} title={'Status'}>
+          <Form.Layout.Label icon={<PulseLineIcon />} title={'Rule action'}>
             {editing ? (
               <Select
                 disabled={!editing}

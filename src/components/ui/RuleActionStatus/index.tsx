@@ -2,6 +2,7 @@ import { Badge } from 'antd';
 import _ from 'lodash';
 import { RuleAction } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getRuleActionTitle } from '@/utils/rules';
 
 function getActionBadgeStatus(ruleAction: RuleAction) {
   if (ruleAction === 'ALLOW' || ruleAction === 'WHITELIST') {
@@ -15,25 +16,6 @@ function getActionBadgeStatus(ruleAction: RuleAction) {
   }
 }
 
-function getActionTitle(ruleAction: RuleAction | string): string {
-  if (ruleAction === 'ALLOW') {
-    return 'Allowed';
-  }
-  if (ruleAction === 'FLAG') {
-    return 'Flagged';
-  }
-  if (ruleAction === 'BLOCK') {
-    return 'Blocked';
-  }
-  if (ruleAction === 'WHITELIST') {
-    return 'Whitelisted';
-  }
-  if (ruleAction === 'SUSPEND') {
-    return 'Suspended';
-  }
-  return _.capitalize(ruleAction);
-}
-
 interface Props {
   ruleAction: RuleAction;
 }
@@ -44,7 +26,7 @@ export const RuleActionStatus: React.FC<Props> = ({ ruleAction }) => {
   return (
     <span>
       <Badge status={getActionBadgeStatus(ruleAction)} />
-      {getActionTitle(alias || ruleAction)}
+      {getRuleActionTitle(alias || ruleAction)}
     </span>
   );
 };

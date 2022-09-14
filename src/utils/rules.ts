@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { RuleAction } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
@@ -15,24 +16,7 @@ export function isRuleAction(value: unknown): value is RuleAction {
 }
 
 export function getRuleActionTitle(ruleAction: RuleAction | string): string {
-  if (ruleAction === 'ALLOW') {
-    return 'Allowed';
-  }
-  if (ruleAction === 'FLAG') {
-    return 'Flagged';
-  }
-  if (ruleAction === 'BLOCK') {
-    return 'Blocked';
-  }
-  if (ruleAction === 'WHITELIST') {
-    return 'Whitelisted';
-  }
-  if (ruleAction === 'SUSPEND') {
-    return 'Suspended';
-  }
-  const ruleActionSmall = ruleAction.toLowerCase();
-  const ruleActionUse = ruleActionSmall.charAt(0).toUpperCase() + ruleActionSmall.slice(1) + 'ed';
-  return ruleActionUse;
+  return _.capitalize(ruleAction);
 }
 
 export function useRuleActionColor(ruleAction: RuleAction): string {

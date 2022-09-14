@@ -86,7 +86,7 @@ export default function TransactionsItem() {
                   <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction State">
                     <TransactionState transactionState={transaction.transactionState} />
                   </Form.Layout.Label>
-                  <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction Status">
+                  <Form.Layout.Label icon={<RestartLineIcon />} title="Rule action">
                     <RuleActionStatus ruleAction={transaction.status} />
                   </Form.Layout.Label>
                   <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
