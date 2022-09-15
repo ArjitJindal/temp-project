@@ -83,7 +83,7 @@ export const DynamoDbKeys = {
       case 'IBAN': {
         const { BIC, IBAN } = paymentDetails as IBANDetails
         if (!BIC || !IBAN) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: BIC or IBAN')
           return null
         }
         return {
@@ -94,7 +94,7 @@ export const DynamoDbKeys = {
       case 'CARD': {
         const { cardFingerprint } = paymentDetails as CardDetails
         if (!cardFingerprint) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: Card fingerprint')
           return null
         }
         return {
@@ -105,7 +105,7 @@ export const DynamoDbKeys = {
       case 'ACH': {
         const { routingNumber, accountNumber } = paymentDetails as ACHDetails
         if (!routingNumber || !accountNumber) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: Routing or account number')
           return null
         }
         return {
@@ -116,7 +116,7 @@ export const DynamoDbKeys = {
       case 'UPI': {
         const { upiID } = paymentDetails as UPIDetails
         if (!upiID) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: UPI ID')
           return null
         }
         return {
@@ -127,7 +127,7 @@ export const DynamoDbKeys = {
       case 'WALLET': {
         const { walletId } = paymentDetails as WalletDetails
         if (!walletId) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: WalletID')
           return null
         }
         return {
@@ -139,7 +139,7 @@ export const DynamoDbKeys = {
         const { accountNumber, accountType } =
           paymentDetails as GenericBankAccountDetails
         if (!accountNumber || !accountType) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: Account number or type')
           return null
         }
         return {
@@ -150,7 +150,7 @@ export const DynamoDbKeys = {
       case 'SWIFT': {
         const { accountNumber, swiftCode } = paymentDetails as SWIFTDetails
         if (!accountNumber || !swiftCode) {
-          logger.warn('Unable to identify the anonymous user')
+          logger.warn('Payment identifier not found: Acc number ot SWIFT Code')
           return null
         }
         return {

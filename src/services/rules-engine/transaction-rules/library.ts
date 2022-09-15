@@ -25,6 +25,7 @@ import { CardIssuedCountryRuleParameters } from './card-issued-country'
 import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pattern'
 import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
+import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
@@ -607,6 +608,32 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-between-same-parties',
+      labels: [],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
+    }
+  },
+  () => {
+    const defaultParameters: HighTrafficVolumeBetweenSameUsersParameters = {
+      timeWindow: {
+        units: 1,
+        granularity: 'hour',
+      },
+      transactionVolumeThreshold: {
+        USD: 10000,
+      },
+    }
+    return {
+      id: 'R-126',
+      type: 'TRANSACTION',
+      name: 'High volume between same parties',
+      description:
+        'Same receiver and destination details are used for transactions in the amount of >= x in time t',
+      descriptionTemplate:
+        'Transaction volume {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }} between two users in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)',
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'high-traffic-volume-between-same-users',
       labels: [],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',

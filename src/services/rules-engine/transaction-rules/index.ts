@@ -28,6 +28,7 @@ import MerchantReceiverNameRule from './merchant-receiver-name'
 import BlacklistCardIssuedCountryRule from './blacklist-card-issued-country'
 import CardHolderNameRule from './card-holder-name-levensthein-distance'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
+import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-between-same-users'
 import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 
@@ -59,6 +60,8 @@ export const TRANSACTION_RULES = {
   'merchant-receiver-name': MerchantReceiverNameRule,
   'blacklist-card-issued-country': BlacklistCardIssuedCountryRule,
   'high-traffic-between-same-parties': HighTrafficBetweenSameParties,
+  'high-traffic-volume-between-same-users':
+    HighTrafficVolumeBetweenSameUsersParameters,
   'card-holder-name-levensthein-distance': CardHolderNameRule,
   'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
