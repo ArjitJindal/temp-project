@@ -34,6 +34,12 @@ import {
 import { DashboardStatsTransactionsCountData } from '@/apis';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
+type StatsKey = keyof DashboardStatsTransactionsCountData;
+const TOTAL_TRANSACTIONS_KEY: StatsKey = 'totalTransactions';
+const FLAGGED_TRANSACTIONS_KEY: StatsKey = 'flaggedTransactions';
+const STOPPED_TRANSACTIONS_KEY: StatsKey = 'stoppedTransactions';
+const SUSPENDED_TRANSACTIONS_KEY: StatsKey = 'suspendedTransactions';
+
 export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 const { TabPane } = Tabs;
 
@@ -236,10 +242,10 @@ const TransactionsChartCard = () => {
           tabBarStyle={{ marginBottom: 24 }}
         >
           {[
-            { title: 'All', key: 'totalTransactions' },
-            { title: `${flagAlias}`, key: 'flagTransactions' },
-            { title: `${suspendAlias}`, key: 'suspendTransactions' },
-            { title: `${blockAlias}`, key: 'stopTransactions' },
+            { title: 'All', key: TOTAL_TRANSACTIONS_KEY },
+            { title: `${flagAlias}`, key: FLAGGED_TRANSACTIONS_KEY },
+            { title: `${suspendAlias}`, key: SUSPENDED_TRANSACTIONS_KEY },
+            { title: `${blockAlias}`, key: STOPPED_TRANSACTIONS_KEY },
           ].map(({ title, key }) => (
             <TabPane tab={title} key={key}>
               <Spin spinning={isLoading(transactionsCountData)}>
@@ -282,8 +288,8 @@ const TransactionsChartCard = () => {
                           if (type === `${flagAlias}`) return '#F6A429';
                           if (type === `${blockAlias}`) return '#FF4D4F';
                           return '#1169F9';
-                        } else if (key === 'flagTransactions') return '#F6A429';
-                        else if (key === 'stopTransactions') return '#FF4D4F';
+                        } else if (key === FLAGGED_TRANSACTIONS_KEY) return '#F6A429';
+                        else if (key === STOPPED_TRANSACTIONS_KEY) return '#FF4D4F';
                         return '#F5E25A';
                       }}
                       xAxis={{
