@@ -1,14 +1,14 @@
-import { ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { Amount, InternalBusinessUser } from '@/apis';
+import { TableColumn } from '@/components/ui/Table/types';
 
 const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
   return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
 };
 
-export function getBusinessUserColumns(): ProColumns<InternalBusinessUser>[] {
+export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   return [
     {
       title: 'User ID',

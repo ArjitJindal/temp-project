@@ -1,8 +1,8 @@
-import { ProColumns } from '@ant-design/pro-table';
 import { Typography } from 'antd';
 import moment from 'moment';
-import { Table } from '@/components/ui/Table';
+import Table from '@/components/ui/Table';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { TableColumn } from '@/components/ui/Table/types';
 
 interface TableItem {
   id: string;
@@ -126,7 +126,7 @@ export const AuditLog: React.FC = () => {
     },
   ];
 
-  const columns: ProColumns<TableItem>[] = [
+  const columns: TableColumn<TableItem>[] = [
     {
       title: <Typography.Text strong>ID</Typography.Text>,
       width: '160px',
@@ -184,7 +184,9 @@ export const AuditLog: React.FC = () => {
       search={false}
       columns={columns}
       pagination={false}
-      dataSource={tableData}
+      data={{
+        items: tableData,
+      }}
       options={{
         setting: false,
         density: false,

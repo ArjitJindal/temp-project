@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Card from '@/components/ui/Card';
-import { Table } from '@/components/ui/Table';
+import Table from '@/components/ui/Table';
 import { HitRulesResult } from '@/apis';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 
@@ -37,7 +37,7 @@ export default function UserDetailsCard(props: Props) {
               render: (_, entity) => <RuleActionStatus ruleAction={entity.ruleAction} />,
             },
           ]}
-          dataSource={rulesHit}
+          data={{ items: rulesHit }}
         />
       </Card.Section>
     </Card.Root>

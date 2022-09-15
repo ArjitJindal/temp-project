@@ -1,11 +1,12 @@
 import { TransactionCaseManagement } from '@/apis';
 import { DataItem } from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
+import { TableDataItem } from '@/components/ui/Table/types';
 
 export function prepareTableData(
   userId: string | undefined,
   transactions: Array<TransactionCaseManagement>,
-): Array<DataItem[]> {
-  return transactions.map((item, index): DataItem[] => {
+): TableDataItem<DataItem>[] {
+  return transactions.map((item, index): TableDataItem<DataItem> => {
     const lastRowKey = `${item.transactionId}_last_row`;
     const dataItem: DataItem = {
       index,
@@ -18,26 +19,23 @@ export function prepareTableData(
       direction: item.originUserId === userId ? 'Outgoing' : 'Incoming',
       status: item.status,
       events: item.events ?? [],
-      isFirstRow: true,
-      isLastRow: true,
       ruleName: null,
       ruleDescription: null,
-      rowSpan: 1,
     };
     if (item.hitRules.length === 0) {
-      return [dataItem];
+      return dataItem;
     }
-    return item.hitRules.map((rule, i): DataItem => {
-      const isLastRow = i === item.hitRules.length - 1;
-      return {
-        ...dataItem,
-        rowSpan: i === 0 ? item.hitRules.length : 0,
-        isFirstRow: i === 0,
-        isLastRow: isLastRow,
-        rowKey: isLastRow ? lastRowKey : `${item.transactionId}#${i}`,
-        ruleName: rule.ruleName,
-        ruleDescription: rule.ruleDescription,
-      };
-    });
+    return {
+      item: dataItem,
+      rows: item.hitRules.map((rule, i): DataItem => {
+        const isLastRow = i === item.hitRules.length - 1;
+        return {
+          ...dataItem,
+          rowKey: isLastRow ? lastRowKey : `${item.transactionId}#${i}`,
+          ruleName: rule.ruleName,
+          ruleDescription: rule.ruleDescription,
+        };
+      }),
+    };
   });
 }

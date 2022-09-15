@@ -1,8 +1,9 @@
 import { RuleAction, TransactionState } from '@/apis';
-import '../../components/ui/colors';
+import { SortOrder } from '@/components/ui/Table/types';
 
 export type TableSearchParams = Partial<{
-  current: number;
+  page: number;
+  sort: [string, SortOrder][];
   timestamp: string[];
   transactionId: string;
   rulesHitFilter: Array<string>;

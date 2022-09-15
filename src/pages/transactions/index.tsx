@@ -1,12 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import type { ProColumns } from '@ant-design/pro-table';
+import React, { useCallback, useMemo } from 'react';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import StateSearchButton from './components/TransactionStateButton';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { currencies } from '@/utils/currencies';
 import { getUserName } from '@/utils/api/users';
-import { RequestFunctionType, Table } from '@/components/ui/Table';
+import { RequestFunctionType, RequestTable } from '@/components/RequestTable';
 import { TransactionCaseManagement, TransactionType } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
@@ -15,21 +14,17 @@ import { useAnalytics } from '@/utils/segment/context';
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import ResizableTitle from '@/utils/table-utils';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { paymentMethod, transactionType } from '@/utils/tags';
-import handleResize from '@/components/ui/Table/utils';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { makeUrl } from '@/utils/routing';
+import { TableColumn } from '@/components/ui/Table/types';
 
 const TableList = () => {
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
   const api = useApi();
 
-  const columns: ProColumns<TransactionCaseManagement>[] = useMemo(
+  const columns: TableColumn<TransactionCaseManagement>[] = useMemo(
     () => [
       {
         title: 'Transaction ID',
@@ -248,15 +243,6 @@ const TableList = () => {
     [],
   );
 
-  const mergeColumns: ProColumns<TransactionCaseManagement>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<TransactionCaseManagement>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
-
   const analytics = useAnalytics();
   const request: RequestFunctionType<TransactionCaseManagement> = useCallback(
     async (params, sorter) => {
@@ -302,7 +288,7 @@ const TableList = () => {
         time,
       });
       return {
-        data: response.data,
+        items: response.data,
         success: true,
         total: response.total,
       };
@@ -313,7 +299,7 @@ const TableList = () => {
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.transactions.transactions-list')}>
-      <Table<TransactionCaseManagement>
+      <RequestTable<TransactionCaseManagement>
         actionsHeader={[
           ({ params, setParams }) => (
             <>
@@ -341,18 +327,13 @@ const TableList = () => {
         form={{
           labelWrap: true,
         }}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
-        }}
         rowKey="transactionId"
         search={{
           labelWidth: 120,
         }}
         scroll={{ x: 1300 }}
         request={request}
-        columns={mergeColumns}
+        columns={columns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'transaction-list-table',

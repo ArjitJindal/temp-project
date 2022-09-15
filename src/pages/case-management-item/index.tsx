@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import TransactionDetailsCard from './components/TransactionDetailsCard';
 import Header from './components/Header';
 import RulesHitCard from './components/RulesHitCard';
-import { ApiException, TransactionCaseManagement } from '@/apis';
+import { TransactionCaseManagement } from '@/apis';
 import { useApi } from '@/api';
-import { Comment } from '@/apis/models/Comment';
-import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
@@ -16,6 +14,9 @@ import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCa
 import UserDetailsCard from '@/pages/case-management-item/components/UserDetailsCard';
 import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
 import { useBackUrl } from '@/utils/backUrl';
+import { useQuery } from '@/utils/queries/hooks';
+import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { CASES_ITEM } from '@/utils/queries/keys';
 
 export type CaseManagementItem = TransactionCaseManagement & {
   index: number;
@@ -29,59 +30,22 @@ export type CaseManagementItem = TransactionCaseManagement & {
 };
 
 function CaseManagementItemPage() {
-  const { id: transactionId } = useParams<'id'>();
-  const [currentCase, setCurrentCase] = useState<AsyncResource<TransactionCaseManagement>>(init());
-  const api = useApi();
-
-  useEffect(() => {
-    if (transactionId == null) {
-      setCurrentCase(failed(`Transaction id is not specified`));
-      return;
-    }
-    setCurrentCase(loading());
-    let isCanceled = false;
-    api
-      .getTransaction({
-        transactionId,
-      })
-      .then((transaction) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentCase(success(transaction));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find transaction by id "${transactionId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentCase(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [transactionId, api]);
-
+  const { id: transactionId } = useParams<'id'>() as { id: string };
   const i18n = useI18n();
-
+  const api = useApi();
+  const queryClient = useQueryClient();
   const backUrl = useBackUrl();
 
-  const handleCommentsUpdate = (newComments: Comment[]) => {
-    setCurrentCase((prevState) => {
-      return map(
-        prevState,
-        (transaction): TransactionCaseManagement => ({
-          ...transaction,
-          comments: newComments,
-        }),
-      );
-    });
+  const queryResults = useQuery(
+    CASES_ITEM(transactionId),
+    (): Promise<TransactionCaseManagement> =>
+      api.getTransaction({
+        transactionId,
+      }),
+  );
+
+  const handleTransactionUpdate = (transaction: TransactionCaseManagement) => {
+    queryClient.setQueryData(CASES_ITEM(transactionId), transaction);
   };
 
   return (
@@ -92,7 +56,7 @@ function CaseManagementItemPage() {
       }}
     >
       <Card.Root>
-        <AsyncResourceRenderer resource={currentCase}>
+        <AsyncResourceRenderer resource={queryResults.data}>
           {(transaction) => (
             <>
               <Card.Section>
@@ -113,7 +77,9 @@ function CaseManagementItemPage() {
                 <CommentsCard
                   transactionId={transactionId}
                   comments={transaction.comments ?? []}
-                  onCommentsUpdate={handleCommentsUpdate}
+                  onCommentsUpdate={(newComments) => {
+                    handleTransactionUpdate({ ...transaction, comments: newComments });
+                  }}
                 />
               </Card.Section>
             </>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Popover } from 'antd';
+import _ from 'lodash';
 import HealthLineIcon from './health-line.react.svg';
 import s from './style.module.less';
 import PopupContent from './PopupContent';
@@ -42,7 +43,7 @@ export default function StateSearchButton(props: Props) {
           onConfirm(undefined);
         }}
       >
-        {transactionState ?? 'Transaction State'}
+        {transactionState ? _.capitalize(transactionState) : 'Transaction State'}
       </ActionButton>
     </Popover>
   );

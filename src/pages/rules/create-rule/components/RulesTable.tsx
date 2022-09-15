@@ -1,5 +1,4 @@
-import type { ProColumns } from '@ant-design/pro-table';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import style from '../style.module.less';
 import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
@@ -7,10 +6,9 @@ import { Rule, RuleImplementation } from '@/apis';
 import { useApi } from '@/api';
 import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
-import { Table } from '@/components/ui/Table';
+import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
-import ResizableTitle from '@/utils/table-utils';
-import handleResize from '@/components/ui/Table/utils';
+import { TableColumn } from '@/components/ui/Table/types';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
@@ -22,11 +20,8 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
   const user = useAuth0User();
   const api = useApi();
   const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
-  const columns: ProColumns<Rule>[] = useMemo(() => {
-    const caseCreationHeaders: ProColumns<Rule>[] = [
+  const columns: TableColumn<Rule>[] = useMemo(() => {
+    const caseCreationHeaders: TableColumn<Rule>[] = [
       {
         title: 'Rule Case Creation Type',
         width: 150,
@@ -115,45 +110,29 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
     ];
   }, [onSelectRule, ruleImplementations, user, isCaseCreationTypeEnabled]);
 
-  const mergeColumns: ProColumns<Rule>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<Rule>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
   const request = useCallback(async () => {
     const rules = await api.getRules({});
     return {
-      data: rules,
+      items: rules,
       success: true,
       total: rules.length,
     };
   }, [api]);
 
   return (
-    <Table<Rule>
+    <RequestTable<Rule>
       form={{
         labelWrap: true,
       }}
       headerTitle="Select Rule"
-      components={{
-        header: {
-          cell: ResizableTitle,
-        },
-      }}
       className={style.table}
-      rowClassName={(_, index) => {
-        return index % 2 === 0 ? style.tableRowLight : `${style.tableRowDark} ${style.rowDark}`;
-      }}
       scroll={{ x: 1300 }}
       pagination={false}
       rowKey="id"
       search={false}
       toolBarRender={() => (isAtLeast(user, UserRole.ROOT) ? [<RuleCreationForm />] : [])}
       request={request}
-      columns={mergeColumns}
+      columns={columns}
     />
   );
 };

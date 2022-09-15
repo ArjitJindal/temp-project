@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { ActionType, ProColumns } from '@ant-design/pro-table';
+import { ActionType } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
@@ -10,9 +10,7 @@ import style from '../../style.module.less';
 import s from './styles.module.less';
 import { TableItem } from './types';
 import { useApi } from '@/api';
-import { Table, ResponsePayload } from '@/components/ui/Table';
-import ResizableTitle from '@/utils/table-utils';
-import handleResize from '@/components/ui/Table/utils';
+import { RequestTable } from '@/components/RequestTable';
 import Button from '@/components/ui/Button';
 import { makeUrl } from '@/utils/routing';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
@@ -21,6 +19,7 @@ import { getUserName } from '@/utils/api/users';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { TableColumn, TableData } from '@/components/ui/Table/types';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -35,10 +34,6 @@ export default function HitsPerUserCard(props: Props) {
     moment(),
   ]);
   const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
-
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
 
   const actionRef = useRef<ActionType>();
   useEffect(() => {
@@ -74,7 +69,7 @@ export default function HitsPerUserCard(props: Props) {
     [api],
   );
 
-  const columns: ProColumns<TableItem>[] = [
+  const columns: TableColumn<TableItem>[] = [
     {
       title: 'User ID',
       width: 175,
@@ -190,15 +185,8 @@ export default function HitsPerUserCard(props: Props) {
       },
     },
   ];
-  const mergeColumns: ProColumns<TableItem>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<TableItem>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
-  const request = useCallback(async (): Promise<ResponsePayload<TableItem>> => {
+
+  const request = useCallback(async (): Promise<TableData<TableItem>> => {
     let startTimestamp = moment().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 
@@ -217,26 +205,21 @@ export default function HitsPerUserCard(props: Props) {
     return {
       success: true,
       total: result.data.length,
-      data: result.data,
+      items: result.data,
     };
   }, [api, dateRange, direction]);
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
-      <Table<TableItem>
+      <RequestTable<TableItem>
         form={{
           labelWrap: true,
-        }}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
         }}
         className={style.table}
         scroll={{ x: 1300 }}
         rowKey="userId"
         search={false}
-        columns={mergeColumns}
+        columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
         request={request}
         pagination={false}

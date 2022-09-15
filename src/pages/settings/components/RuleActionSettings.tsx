@@ -1,11 +1,11 @@
-import { ProColumns } from '@ant-design/pro-table';
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Button, Input, message, Space, Tooltip, Typography } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { Table } from '@/components/ui/Table';
+import Table from '@/components/ui/Table';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleAction, RuleActionAlias } from '@/apis';
 import { useApi } from '@/api';
+import { TableColumn } from '@/components/ui/Table/types';
 
 interface TableItem {
   action: RuleAction;
@@ -86,7 +86,7 @@ export const RuleActionSettings: React.FC = () => {
     [actionToAlias],
   );
 
-  const columns: ProColumns<TableItem>[] = [
+  const columns: TableColumn<TableItem>[] = [
     {
       title: <Typography.Text strong>Action</Typography.Text>,
       width: '100px',
@@ -147,7 +147,9 @@ export const RuleActionSettings: React.FC = () => {
       search={false}
       columns={columns}
       pagination={false}
-      dataSource={tableData}
+      data={{
+        items: tableData,
+      }}
       options={{
         setting: false,
         density: false,

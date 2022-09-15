@@ -1,5 +1,4 @@
 import { Drawer, message, Popover, Progress, Switch, Tooltip } from 'antd';
-import type { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
@@ -9,10 +8,11 @@ import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
-import { Table } from '@/components/ui/Table';
+import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { TableColumn } from '@/components/ui/Table/types';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
@@ -65,8 +65,8 @@ const MyRule = () => {
     },
     [handleRuleInstanceUpdate],
   );
-  const columns: ProColumns<RuleInstance>[] = useMemo(() => {
-    const caseCreationHeaders: ProColumns<RuleInstance>[] = [
+  const columns: TableColumn<RuleInstance>[] = useMemo(() => {
+    const caseCreationHeaders: TableColumn<RuleInstance>[] = [
       {
         title: 'Rule Case Creation Type',
         width: 100,
@@ -214,7 +214,7 @@ const MyRule = () => {
     setRules(_.keyBy(rules, 'id'));
     setRuleImplementations(_.keyBy(ruleImplementations, 'name'));
     return {
-      data: ruleInstances,
+      items: ruleInstances,
       success: true,
       total: ruleInstances.length,
     };
@@ -226,7 +226,7 @@ const MyRule = () => {
       title={i18n('menu.rules.my-rules')}
       description="List of all your rules. Activate/deactivate them in one click"
     >
-      <Table<RuleInstance>
+      <RequestTable<RuleInstance>
         form={{
           labelWrap: true,
         }}

@@ -1,7 +1,6 @@
-import { ProColumns } from '@ant-design/pro-table';
-import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, { useImperativeHandle, useState } from 'react';
 import { message, Switch } from 'antd';
-import { Table } from '@/components/ui/Table';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListHeader, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
@@ -10,16 +9,11 @@ import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { getErrorMessage } from '@/utils/lang';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isLoading,
-  isSuccess,
-  loading,
-  success,
-} from '@/utils/asyncResource';
+import { TableColumn } from '@/components/ui/Table/types';
+import { useQuery } from '@/utils/queries/hooks';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { LISTS_OF_TYPE } from '@/utils/queries/keys';
+import { map } from '@/utils/asyncResource';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -33,77 +27,64 @@ function ListTable(props: Props, ref: ListTableRef) {
   const { listType } = props;
   const api = useApi();
   const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
+  const queryClient = useQueryClient();
 
-  const [dataRes, setDataRes] = useState<AsyncResource<ListHeader[]>>(init());
-  const triggerFetch = useCallback(() => {
-    let isCanceled = false;
-    setDataRes((prevState) => loading(getOr(prevState, [])));
-    api.getLists({ listType }).then(
-      (lists) => {
-        if (isCanceled) {
-          return;
-        }
-        setDataRes(success(lists));
-      },
-      (e) => {
-        if (isCanceled) {
-          return;
-        }
-        const errorMsg = `Failed to load lists! ${getErrorMessage(e)}`;
-        message.error(errorMsg);
-        setDataRes(failed(errorMsg));
-      },
-    );
-    return () => {
-      isCanceled = true;
-    };
-  }, [api, listType]);
-
-  useEffect(() => {
-    triggerFetch();
-  }, [triggerFetch]);
+  const queryResults = useQuery(LISTS_OF_TYPE(listType), () => api.getLists({ listType }));
 
   useImperativeHandle(ref, () => ({
-    reload: triggerFetch,
+    reload: queryResults.refetch,
   }));
 
-  const handleChangeList = (listId: string, metadata: ListMetadata) => {
-    // Optimistically update current state
-    setDataRes((prevState) =>
-      isSuccess(prevState)
-        ? success(
-            prevState.value.map((listHeader) =>
-              listHeader.listId === listId
-                ? {
-                    ...listHeader,
-                    metadata,
-                  }
-                : listHeader,
-            ),
-          )
-        : prevState,
-    );
-    const hideMessage = message.loading('Updating list...', 0);
-    api
-      .patchList({
-        listType,
-        listId,
-        ListData: {
-          metadata,
-        },
-      })
-      .then(() => {
-        hideMessage();
+  const changeListMutation = useMutation<
+    unknown,
+    unknown,
+    { listId: string; metadata: ListMetadata },
+    { previousList: ListHeader[] | undefined }
+  >(
+    async (event) => {
+      const { listId, metadata } = event;
+      const hideMessage = message.loading('Updating list...', 0);
+      try {
+        await api.patchList({
+          listType,
+          listId,
+          ListData: {
+            metadata,
+          },
+        });
         message.success('List state saved!');
-      })
-      .catch((e) => {
+      } catch (e) {
+        message.error(`Unable to save list! ${getErrorMessage(e)}`);
+        throw e;
+      } finally {
         hideMessage();
-        message.error(`Unable to save user! ${getErrorMessage(e)}`);
-        triggerFetch();
-      });
-  };
+      }
+    },
+    {
+      onMutate: async (event) => {
+        const { listId, metadata } = event;
+        const listsOfTypeKey = LISTS_OF_TYPE(listType);
+        const previousList = queryClient.getQueryData<ListHeader[]>(listsOfTypeKey);
+        queryClient.setQueryData<ListHeader[]>(listsOfTypeKey, (prevState) =>
+          prevState?.map((listHeader) =>
+            listHeader.listId === listId
+              ? {
+                  ...listHeader,
+                  metadata,
+                }
+              : listHeader,
+          ),
+        );
+        return { previousList };
+      },
+      // If the mutation fails, use the context we returned above
+      onError: (err, event, context) => {
+        queryClient.setQueryData(LISTS_OF_TYPE(listType), context?.previousList);
+      },
+    },
+  );
 
-  const columns: ProColumns<ListHeader>[] = [
+  const columns: TableColumn<ListHeader>[] = [
     {
       title: 'List ID',
       width: 50,
@@ -151,9 +132,12 @@ function ListTable(props: Props, ref: ListTableRef) {
         <Switch
           checked={entity.metadata?.status ?? false}
           onChange={(value) => {
-            handleChangeList(entity.listId, {
-              ...entity.metadata,
-              status: value,
+            changeListMutation.mutate({
+              listId: entity.listId,
+              metadata: {
+                ...entity.metadata,
+                status: value,
+              },
             });
           }}
         />
@@ -180,16 +164,15 @@ function ListTable(props: Props, ref: ListTableRef) {
 
   return (
     <>
-      <Table<ListHeader>
-        options={{
-          reload: false,
+      <QueryResultsTable
+        queryResults={{
+          data: map(queryResults.data, (items) => ({ items })),
+          refetch: queryResults.refetch,
         }}
-        loading={isLoading(dataRes)}
         rowKey="listId"
         search={false}
         columns={columns}
         pagination={false}
-        dataSource={getOr(dataRes, [])}
       />
       <DeleteListModal
         listType={listType}
@@ -199,7 +182,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         }}
         onSuccess={() => {
           setListToDelete(null);
-          triggerFetch();
+          queryResults.refetch();
         }}
       />
     </>

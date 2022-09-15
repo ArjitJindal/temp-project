@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { RuleAction } from '@/apis';
+import { RuleAction, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
 export function isRuleAction(value: unknown): value is RuleAction {
@@ -13,6 +13,22 @@ export function isRuleAction(value: unknown): value is RuleAction {
       return true;
   }
   return neverReturn(asRuleAction, false);
+}
+
+export function isTransactionState(value: unknown): value is TransactionState {
+  const asState = value as TransactionState;
+  switch (asState) {
+    case 'CREATED':
+    case 'PROCESSING':
+    case 'SENT':
+    case 'EXPIRED':
+    case 'DECLINED':
+    case 'SUSPENDED':
+    case 'REFUNDED':
+    case 'SUCCESSFUL':
+      return true;
+  }
+  return neverReturn(asState, false);
 }
 
 export function getRuleActionTitle(ruleAction: RuleAction | string): string {

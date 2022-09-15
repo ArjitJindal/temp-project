@@ -1,4 +1,3 @@
-import { ProColumns } from '@ant-design/pro-table';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
@@ -6,11 +5,12 @@ import { DEFAULT_DATE_TIME_DISPLAY_FORMAT, DEFAULT_DATE_DISPLAY_FORMAT } from '@
 import { InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import { TableColumn } from '@/components/ui/Table/types';
 
 const convertToDateString = (createdTimestamp: number) =>
   moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
 
-export function getConsumerUserColumns(): ProColumns<InternalConsumerUser>[] {
+export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
   return [
     {
       title: 'User ID',

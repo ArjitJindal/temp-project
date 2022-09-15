@@ -1,5 +1,6 @@
 import { List } from 'antd';
 import cn from 'clsx';
+import _ from 'lodash';
 import s from './style.module.less';
 import { TransactionState } from '@/apis';
 
@@ -62,7 +63,7 @@ export default function StateList(props: Props) {
               <List.Item.Meta
                 title={
                   <span className={s.userName}>
-                    {value.State !== undefined ? value.State : <></>}
+                    {value.State !== undefined ? _.capitalize(value.State) : <></>}
                   </span>
                 }
               />

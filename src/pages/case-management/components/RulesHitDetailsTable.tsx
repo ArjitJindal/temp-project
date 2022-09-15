@@ -1,6 +1,6 @@
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { Table } from '@/components/ui/Table';
 import { TransactionCaseManagement } from '@/apis';
+import Table from '@/components/ui/Table';
 
 interface Props {
   transaction: TransactionCaseManagement;
@@ -9,6 +9,7 @@ interface Props {
 export const RulesHitDetailsTable: React.FC<Props> = ({ transaction }) => {
   return (
     <Table
+      rowKey={'ruleInstanceId'}
       columns={[
         {
           title: 'Rule Name',
@@ -30,7 +31,9 @@ export const RulesHitDetailsTable: React.FC<Props> = ({ transaction }) => {
           tooltip: 'Describes the conditions required for this rule to be hit.',
         },
       ]}
-      dataSource={transaction.executedRules.filter((executedRule) => executedRule.ruleHit)}
+      data={{
+        items: transaction.executedRules.filter((executedRule) => executedRule.ruleHit),
+      }}
       pagination={false}
       search={false}
       toolBarRender={false}

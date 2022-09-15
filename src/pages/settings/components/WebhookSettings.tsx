@@ -1,14 +1,14 @@
-import { ProColumns } from '@ant-design/pro-table';
 import { Drawer, message, Switch, Tag } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
-import { Table, TableActionType } from '@/components/ui/Table';
+import { RequestTable, TableActionType } from '@/components/RequestTable';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import Button from '@/components/ui/Button';
+import { TableColumn } from '@/components/ui/Table/types';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
@@ -63,7 +63,7 @@ export const WebhookSettings: React.FC = () => {
     [api],
   );
 
-  const columns: ProColumns<WebhookConfiguration>[] = [
+  const columns: TableColumn<WebhookConfiguration>[] = [
     {
       title: 'Endpoint URL',
       width: 200,
@@ -117,7 +117,7 @@ export const WebhookSettings: React.FC = () => {
   const request = useCallback(async () => {
     const webhooks = await api.getWebhooks(100);
     return {
-      data: webhooks,
+      items: webhooks,
       success: true,
       total: webhooks.length,
     };
@@ -125,7 +125,7 @@ export const WebhookSettings: React.FC = () => {
 
   return (
     <>
-      <Table<WebhookConfiguration>
+      <RequestTable<WebhookConfiguration>
         actionRef={actionRef}
         disableStripedColoring={true}
         rowKey="action"

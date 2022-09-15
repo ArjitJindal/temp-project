@@ -1,5 +1,4 @@
 import React, { useCallback, useRef } from 'react';
-import { ProColumns } from '@ant-design/pro-table';
 import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import AccountInviteForm from './components/AccountInviteForm';
@@ -10,9 +9,10 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
-import { Table, TableActionType } from '@/components/ui/Table';
+import { RequestTable, TableActionType } from '@/components/RequestTable';
 import { useI18n } from '@/locales';
 import COLORS from '@/components/ui/colors';
+import { TableColumn } from '@/components/ui/Table/types';
 
 export default function () {
   const api = useApi();
@@ -26,7 +26,7 @@ export default function () {
   }
 
   // todo: i18n
-  const columns: ProColumns<Account>[] = [
+  const columns: TableColumn<Account>[] = [
     {
       title: 'ID',
       width: 10,
@@ -104,7 +104,7 @@ export default function () {
       (account) => parseUserRole(account.role) !== UserRole.ROOT,
     );
     return {
-      data: filteredAccounts,
+      items: filteredAccounts,
       success: true,
       total: filteredAccounts.length,
     };
@@ -114,7 +114,7 @@ export default function () {
   // todo: i18n
   return (
     <PageWrapper title={i18n('menu.accounts')}>
-      <Table<Account>
+      <RequestTable<Account>
         actionRef={actionRef}
         form={{
           labelWrap: true,

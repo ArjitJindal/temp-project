@@ -1,28 +1,23 @@
 import { Button } from 'antd';
 import { Link } from 'react-router-dom';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import {
-  RuleAction,
-  TransactionAmountDetails,
-  TransactionCaseManagement,
-  TransactionEvent,
-} from '@/apis';
+import { RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
-import { RequestFunctionType, Table } from '@/components/ui/Table';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { makeUrl } from '@/utils/routing';
 import ExpandIcon from '@/components/ui/Table/ExpandIcon';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { getErrorMessage } from '@/utils/lang';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { useQuery } from '@/utils/queries/hooks';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 
 interface Props {
-  userId?: string;
+  userId: string;
 }
 
 export type DataItem = {
@@ -36,9 +31,6 @@ export type DataItem = {
   destinationAmountDetails?: TransactionAmountDetails;
   direction?: 'Incoming' | 'Outgoing';
   events: Array<TransactionEvent>;
-  isFirstRow: boolean;
-  isLastRow: boolean;
-  rowSpan: number;
   ruleName: string | null;
   ruleDescription: string | null;
 };
@@ -56,101 +48,71 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
   // Using this hack to fix sticking dropdown on scroll
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  const [params] = useState<DefaultApiGetTransactionsListRequest>({
-    limit: DEFAULT_PAGE_SIZE,
-    skip: 0,
+  const [params, setParams] = useState<AllParams<DefaultApiGetTransactionsListRequest>>({
+    ...DEFAULT_PARAMS_STATE,
+    limit: -1,
+    skip: -1,
     includeEvents: true,
     beforeTimestamp: Date.now(),
   });
-  const [, setResponseRes] = useState<
-    AsyncResource<{
-      total: number;
-      data: Array<TransactionCaseManagement>;
-    }>
-  >(init());
-  const request: RequestFunctionType<DataItem> = useCallback(
-    async (params, sorter) => {
-      const [sortField, sortOrder] = Object.entries(sorter)[0] ?? [];
 
-      const directionFilter = (params ?? {})['direction'] ?? [];
-      const showIncoming = directionFilter.indexOf('incoming') !== -1;
-      const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
+  const responseRes = useQuery(USERS_ITEM_TRANSACTIONS_HISTORY(userId, params), async () => {
+    const [sortField, sortOrder] = params.sort[0] ?? [];
 
-      const statusFilter = (params ?? {})['status'] ?? [];
+    const directionFilter = (params ?? {})['direction'] ?? [];
+    const showIncoming = directionFilter.indexOf('incoming') !== -1;
+    const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
 
-      const newParams: DefaultApiGetTransactionsListRequest = {
-        ...params,
-        skip: ((params.current ?? 1) - 1) * DEFAULT_PAGE_SIZE,
-        limit: DEFAULT_PAGE_SIZE,
-        beforeTimestamp: Date.now(),
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        includeEvents: true,
-      };
+    const statusFilter = (params ?? {})['status'] ?? [];
 
-      if (showOutgoing) {
-        newParams.filterOriginUserId = userId;
-      } else if (showIncoming) {
-        newParams.filterDestinationUserId = userId;
-      } else {
-        newParams.filterUserId = userId;
-      }
-
-      if (statusFilter.indexOf('ALLOW') !== -1) {
-        newParams.filterStatus = 'ALLOW';
-      } else if (statusFilter.indexOf('FLAG') !== -1) {
-        newParams.filterStatus = 'FLAG';
-      } else if (statusFilter.indexOf('BLOCK') !== -1) {
-        newParams.filterStatus = 'BLOCK';
-      } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-        newParams.filterStatus = 'SUSPEND';
-      } else if (statusFilter.indexOf('WHITELIST') !== -1) {
-        newParams.filterStatus = 'WHITELIST';
-      }
-
-      return api.getTransactionsList(newParams).then((result) => ({
-        total: result.total,
-        data: prepareTableData(userId, result.data),
-      }));
-    },
-    [api, userId],
-  );
-
-  useEffect(() => {
-    let isCanceled = false;
-    setResponseRes((res) => loading(getOr(res, null)));
-    api
-      .getTransactionsList(params)
-      .then((result) => {
-        if (!isCanceled) {
-          setResponseRes(
-            success({
-              total: result.total,
-              data: result.data,
-            }),
-          );
-        }
-      })
-      .catch((e) => {
-        if (!isCanceled) {
-          setResponseRes(failed(getErrorMessage(e)));
-        }
-      });
-
-    return () => {
-      isCanceled = true;
+    const newParams: DefaultApiGetTransactionsListRequest = {
+      ...params,
+      skip: ((params.page ?? 1) - 1) * params.pageSize,
+      limit: params.pageSize,
+      beforeTimestamp: Date.now(),
+      sortField: sortField ?? undefined,
+      sortOrder: sortOrder ?? undefined,
+      includeEvents: true,
     };
-  }, [api, params]);
+
+    if (showOutgoing) {
+      newParams.filterOriginUserId = userId;
+    } else if (showIncoming) {
+      newParams.filterDestinationUserId = userId;
+    } else {
+      newParams.filterUserId = userId;
+    }
+
+    if (statusFilter.indexOf('ALLOW') !== -1) {
+      newParams.filterStatus = 'ALLOW';
+    } else if (statusFilter.indexOf('FLAG') !== -1) {
+      newParams.filterStatus = 'FLAG';
+    } else if (statusFilter.indexOf('BLOCK') !== -1) {
+      newParams.filterStatus = 'BLOCK';
+    } else if (statusFilter.indexOf('SUSPEND') !== -1) {
+      newParams.filterStatus = 'SUSPEND';
+    } else if (statusFilter.indexOf('WHITELIST') !== -1) {
+      newParams.filterStatus = 'WHITELIST';
+    }
+
+    return api.getTransactionsList(newParams).then((result) => ({
+      total: result.total,
+      items: prepareTableData(userId, result.data),
+    }));
+  });
 
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
-      <Table<DataItem>
+      <QueryResultsTable
         search={false}
         rowKey="rowKey"
         form={{
           labelWrap: true,
         }}
         className={style.tablePadding}
+        params={params}
+        onChangeParams={setParams}
+        queryResults={responseRes}
         getPopupContainer={() => {
           if (rootRef.current) {
             return rootRef.current;
@@ -164,7 +126,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
             hideInSearch: true,
             key: 'transactionId',
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
             render: (dom, entity) => {
               const { lastRowKey } = entity;
@@ -203,7 +165,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
             key: 'transactionTime',
             width: 180,
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
             render: (_, transaction) => {
               return <TimestampDisplay timestamp={transaction.timestamp} />;
@@ -241,7 +203,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
             key: 'ruleAction',
             width: 120,
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
             render: (dom, entity) => {
               return <RuleActionStatus ruleAction={entity.status} />;
@@ -267,7 +229,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
               },
             },
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
           },
           {
@@ -278,7 +240,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
               return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
             },
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
           },
           {
@@ -291,7 +253,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
               )}`;
             },
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
           },
           {
@@ -310,7 +272,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
               );
             },
             onCell: (_) => ({
-              rowSpan: _.rowSpan,
+              rowSpan: _.isFirstRow ? _.rowsCount : 0,
             }),
           },
         ]}
@@ -324,7 +286,6 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
         options={{
           reload: false,
         }}
-        request={request}
       />
     </div>
   );

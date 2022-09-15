@@ -22,6 +22,11 @@ declare module 'numeral';
 declare module 'mockjs';
 declare module 'bizcharts-plugin-slider';
 declare module '@rjsf/antd';
+declare module 'esbuild:source-file-meta' {
+  declare const relativeResolveDir: string;
+  declare const dirId: string;
+  declare const fileId: string;
+}
 
 // preview.pro.ant.design only do not use in your production ;
 // preview.pro.ant.design Dedicated environment variable, please do not use it in your project.

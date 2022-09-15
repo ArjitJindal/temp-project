@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Input, message } from 'antd';
 import s from './index.module.less';
-import { Table, TableActionType } from '@/components/ui/Table';
+import { RequestTable, TableActionType } from '@/components/RequestTable';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
@@ -167,7 +167,7 @@ function UserListTable(props: Props) {
         },
       ];
       return {
-        data: data,
+        items: data,
         success: true,
         total: size + 1,
       };
@@ -177,7 +177,7 @@ function UserListTable(props: Props) {
 
   return (
     <div className={s.root}>
-      <Table<TableItem>
+      <RequestTable<TableItem>
         rowKey="userId"
         actionRef={tableRef}
         options={{

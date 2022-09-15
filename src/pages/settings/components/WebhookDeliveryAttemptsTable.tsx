@@ -1,13 +1,13 @@
-import { ProColumns } from '@ant-design/pro-table';
 import { useCallback, useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { WebhookDeliveryAttempt } from '@/apis';
-import { Table } from '@/components/ui/Table';
+import { RequestTable } from '@/components/RequestTable';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
+import { TableColumn } from '@/components/ui/Table/types';
 
 interface Props {
   webhookId: string;
@@ -24,10 +24,10 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
     return {
       success: true,
       total: attempts.length,
-      data: attempts,
+      items: attempts,
     };
   }, [api, webhookId]);
-  const columns: ProColumns<WebhookDeliveryAttempt>[] = [
+  const columns: TableColumn<WebhookDeliveryAttempt>[] = [
     {
       title: 'Status',
       width: 30,
@@ -64,7 +64,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
   ];
   return (
     <>
-      <Table<WebhookDeliveryAttempt>
+      <RequestTable<WebhookDeliveryAttempt>
         headerTitle={`last ${QUERY_LIMIT} attempts`}
         columns={columns}
         request={request}

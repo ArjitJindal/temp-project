@@ -1,5 +1,5 @@
-import { Table } from 'antd';
 import styles from './style.module.less';
+import Table from '@/components/ui/Table';
 
 interface Props {
   parameters: object;
@@ -9,12 +9,15 @@ interface Props {
 export const RuleParametersTable: React.FC<Props> = ({ parameters, schema }) => {
   return (
     <Table
+      rowKey="key"
       className={styles.parametersTable}
       pagination={false}
-      dataSource={Object.entries(parameters).map((entry) => ({
-        key: entry[0],
-        value: entry[1],
-      }))}
+      data={{
+        items: Object.entries(parameters).map((entry) => ({
+          key: entry[0],
+          value: entry[1],
+        })),
+      }}
       columns={[
         {
           title: 'Parameter',

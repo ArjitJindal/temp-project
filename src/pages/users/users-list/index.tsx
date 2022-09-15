@@ -1,7 +1,6 @@
 import { Tabs } from 'antd';
 import { useLocalStorageState } from 'ahooks';
-import { useCallback, useEffect, useState } from 'react';
-import type { ProColumns } from '@ant-design/pro-table';
+import { useCallback, useEffect } from 'react';
 import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
 import type { TableListPagination } from './data.d';
@@ -9,7 +8,7 @@ import styles from './UsersList.module.less';
 import UserRiskTag from './UserRiskTag';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
-import { Table } from '@/components/ui/Table';
+import { RequestTable } from '@/components/RequestTable';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
@@ -17,28 +16,16 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
-import ResizableTitle from '@/utils/table-utils';
 import { useI18n } from '@/locales';
-import handleResize from '@/components/ui/Table/utils';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
+import { TableColumn, TableRow } from '@/components/ui/Table/types';
 
 const BusinessUsersTab = () => {
   const api = useApi();
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
 
-  const columns: ProColumns<InternalBusinessUser>[] = getBusinessUserColumns();
+  const columns: TableColumn<TableRow<InternalBusinessUser>>[] = getBusinessUserColumns();
 
-  const mergeColumns: ProColumns<InternalBusinessUser>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<InternalBusinessUser>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
   const analytics = useAnalytics();
   const request = useCallback(
     async (params) => {
@@ -57,7 +44,7 @@ const BusinessUsersTab = () => {
         time,
       });
       return {
-        data: response.data,
+        items: response.data,
         success: true,
         total: response.total,
       };
@@ -67,7 +54,7 @@ const BusinessUsersTab = () => {
 
   return (
     <>
-      <Table<InternalBusinessUser, TableListPagination>
+      <RequestTable<InternalBusinessUser, TableListPagination>
         form={{
           labelWrap: true,
         }}
@@ -75,16 +62,10 @@ const BusinessUsersTab = () => {
         search={{
           labelWidth: 120,
         }}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
-        }}
         className={styles.table}
-        style={{ tableLayout: 'fixed' }}
         scroll={{ x: 1300 }}
         request={request}
-        columns={mergeColumns}
+        columns={columns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list-table',
@@ -97,10 +78,7 @@ const BusinessUsersTab = () => {
 const ConsumerUsersTab = () => {
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
-  const columns: ProColumns<InternalConsumerUser>[] = getConsumerUserColumns();
+  const columns: TableColumn<InternalConsumerUser>[] = getConsumerUserColumns();
   {
     if (isPulseEnabled) {
       columns.push({
@@ -114,15 +92,6 @@ const ConsumerUsersTab = () => {
       });
     }
   }
-
-  const mergeColumns: ProColumns<InternalConsumerUser>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<InternalConsumerUser>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
 
   const analytics = useAnalytics();
   const request = useCallback(
@@ -142,7 +111,7 @@ const ConsumerUsersTab = () => {
         time,
       });
       return {
-        data: response.data,
+        items: response.data,
         success: true,
         total: response.total,
       };
@@ -152,7 +121,7 @@ const ConsumerUsersTab = () => {
 
   return (
     <>
-      <Table<InternalConsumerUser, TableListPagination>
+      <RequestTable<InternalConsumerUser, TableListPagination>
         form={{
           labelWrap: true,
         }}
@@ -160,15 +129,10 @@ const ConsumerUsersTab = () => {
         search={{
           labelWidth: 120,
         }}
-        components={{
-          header: {
-            cell: ResizableTitle,
-          },
-        }}
         className={styles.table}
         scroll={{ x: 500 }}
         request={request}
-        columns={mergeColumns}
+        columns={columns}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',

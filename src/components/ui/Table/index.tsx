@@ -1,256 +1,241 @@
-import ProTable, { ProTableProps } from '@ant-design/pro-table';
-import type { ParamsType } from '@ant-design/pro-provider';
-import React, {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useState,
-  Key,
-} from 'react';
-import { message, Pagination } from 'antd';
-import { SortOrder } from 'antd/es/table/interface';
+import ProTable, { ProColumns, ProTableProps } from '@ant-design/pro-table';
+import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import { Checkbox, Pagination } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
-import equal from 'fast-deep-equal';
 import style from './style.module.less';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/constants';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isLoading,
-  loading as makeLoading,
-  map,
-  success,
-} from '@/utils/asyncResource';
-import { getErrorMessage, isEqual } from '@/utils/lang';
-import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
+import { flatItems, handleResize, TABLE_LOCALE } from './utils';
+import { DEFAULT_PAGE_SIZE } from './consts';
+import { isMultiRows, SortOrder, TableColumn, TableData, TableRow } from './types';
+import { isEqual } from '@/utils/lang';
+import { usePrevious } from '@/utils/hooks';
+import ResizableTitle from '@/utils/table-utils';
+import { TransactionCaseManagement } from '@/apis';
 
 export type TableActionType = {
   reload: () => void;
 };
 
-export type ResponsePayload<T> = {
-  success?: boolean;
-  total?: number;
-  data: Array<T | T[]>;
-};
-
-export type RequestFunctionType<T, Params extends object = ParamsType> = (
-  params: Params & {
-    pageSize?: number;
-    current?: number;
-    keyword?: string;
-  },
-  sort: Record<string, SortOrder>,
-  filter: Record<string, React.ReactText[] | null>,
-) => Promise<ResponsePayload<T>>;
-interface OverridenProps<T, Params extends object = ParamsType> {
-  request?: RequestFunctionType<T, Params>;
-  pagination?: boolean;
-  actionRef?: React.Ref<TableActionType>;
+export interface CommonParams {
+  page: number;
+  pageSize: number;
+  sort: [string, SortOrder][];
 }
 
-type ParamsState<Params extends object = ParamsType> = {
-  page: number;
+export type AllParams<Params> = Params & CommonParams;
+
+export type ActionRendererProps<Params extends object> = {
   params: Params;
-  sort: Record<string, SortOrder>;
+  setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) => void;
 };
 
-type ActionRendererProps<Params extends object = ParamsType> = {
-  params: ParamsState<Params>;
-  setParams: Dispatch<SetStateAction<ParamsState<Params>>>;
-};
-type ActionRenderer<Params extends object = ParamsType> = (
+export type ActionRenderer<Params extends object> = (
   props: ActionRendererProps<Params>,
 ) => React.ReactNode;
 
-interface EntityRowSelection<T> {
-  selectedEntities: string[];
-  onChange: (selectedRows: Key[]) => void;
-  renderCell: (
-    value: boolean,
-    record: T,
-    index: number,
-    originNode: React.ReactNode,
-  ) => React.ReactNode;
+export interface RowSelection {
+  selectedKeys: string[];
+  onChange: (selectedIds: string[]) => void;
 }
 
-interface Props<T, Params extends object, ValueType>
-  extends Omit<ProTableProps<T, Params, ValueType>, keyof OverridenProps<T, Params>>,
-    OverridenProps<T, Params> {
-  initialParams?: ParamsState<Params>;
-  isEvenRow?: (item: T) => boolean;
+export const DEFAULT_PARAMS_STATE: CommonParams = {
+  page: 1,
+  sort: [],
+  pageSize: DEFAULT_PAGE_SIZE,
+};
+
+type PickUpProps<T, Params, ValueType> = Pick<
+  ProTableProps<T, Params, ValueType>,
+  | 'options'
+  | 'search'
+  | 'expandable'
+  | 'form'
+  | 'getPopupContainer'
+  | 'scroll'
+  | 'bordered'
+  | 'formRef'
+  | 'toolBarRender'
+  | 'columnsState'
+  | 'defaultSize'
+  | 'tooltip'
+  | 'headerTitle'
+>;
+
+export interface Props<T extends object, Params extends object, ValueType>
+  extends PickUpProps<TableRow<T>, Params, ValueType> {
+  rowKey: string;
+  className?: string;
+  cardBordered?: boolean;
   disableStripedColoring?: boolean;
   disableExpandedRowPadding?: boolean;
   disableInternalPadding?: boolean;
-  data?: ResponsePayload<T>;
+  actionRef?: React.Ref<TableActionType>;
+  loading?: boolean;
+  data: TableData<T>;
+  pagination?: boolean;
+  rowSelection?: RowSelection;
+  params?: AllParams<Params>;
+  isEvenRow?: (item: T) => boolean;
   actionsHeader?: ActionRenderer<Params>[];
-  entitySelection?: EntityRowSelection<T>;
+  onChangeParams?: (newState: AllParams<Params>) => void;
+  columns: TableColumn<T>[];
+  onReload?: () => void;
+  onReset?: () => void;
 }
 
-const TABLE_LOCALE = {
-  emptyText: 'No data',
-  sortTitle: 'Sort by this column',
-  triggerDesc: 'Sort descending',
-  triggerAsc: 'Sort ascending',
-  filterTitle: 'Filtering',
-  filterConfirm: 'Confirm',
-  filterReset: 'Reset',
-  filterEmptyText: 'Empty',
-  filterCheckall: 'Check all',
-  filterSearchPlaceholder: 'Search...',
-  selectAll: 'All',
-  selectNone: 'None',
-  selectInvert: 'Invert',
-  selectionAll: 'All',
-  expand: 'Expand',
-  collapse: 'Collapse',
-  cancelSort: 'Cancel',
-};
-
-function prepareDataSource<T>(data: Array<T | T[]>): T[] {
-  const result = [];
-  for (const datum of data) {
-    if (Array.isArray(datum)) {
-      result.push(...datum);
-    } else {
-      result.push(datum);
-    }
-  }
-  return result;
-}
-
-const DEFAULT_PARAMS_STATE = {
-  page: 1,
-  params: {} as any,
-  sort: {},
-};
-
-export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>(
-  props: Props<T, Params, ValueType>,
-) => {
+export default function Table<
+  T extends object,
+  Params extends object = CommonParams,
+  ValueType = 'text',
+>(props: Props<T, Params, ValueType>) {
   const {
     disableStripedColoring = false,
     disableExpandedRowPadding = false,
     disableInternalPadding = false,
     className,
     isEvenRow,
-    request,
-    dataSource,
-    pagination = true,
-    options = undefined,
-    initialParams,
+    options,
     actionRef,
     headerTitle,
     actionsHeader,
+    rowSelection,
     loading,
-    entitySelection,
-    ...rest
+    pagination,
+    data,
+    params,
+    columns,
+    rowKey,
+    expandable,
+    search,
+    form,
+    getPopupContainer,
+    scroll,
+    toolBarRender,
+    columnsState,
+    cardBordered,
+    onChangeParams = () => {
+      throw new Error(
+        `This is a stub handle for changing table parameters. You need to pass proper onChangeParams handler to make it work properly`,
+      );
+    },
+    onReset,
+    onReload,
   } = props;
 
-  const [paramsState, setParamsState] = useState<ParamsState<Params>>(
-    initialParams ?? DEFAULT_PARAMS_STATE,
-  );
-  const [responseData, setResponseData] = useState<
-    AsyncResource<{
-      total: number;
-      items: T[];
-    }>
-  >(dataSource ? success({ total: dataSource.length, items: [...dataSource] }) : init());
-
-  useDeepEqualEffect(() => {
-    if (dataSource != null) {
-      setResponseData(success({ total: dataSource.length, items: [...dataSource] }));
-    }
-  }, [dataSource]);
-
-  useImperativeHandle<TableActionType, TableActionType>(actionRef, () => ({
-    reload() {
-      onSelectChange([]);
-      setParamsState(_.cloneDeep(paramsState));
-    },
-  }));
-
-  // todo: implement cancelation
-  const handleRequest = useCallback(
-    (
-      params: Params & {
-        pageSize: number;
-        current: number;
-      },
-      sort: Record<string, SortOrder>,
-      filter: Record<string, React.ReactText[] | null>,
-    ) => {
-      if (request != null) {
-        setResponseData((state) => makeLoading(getOr(state, null)));
-        request(params, sort, filter)
-          .then((results) => {
-            setResponseData(
-              success({
-                total: results.total ?? 0,
-                items: prepareDataSource(results.data ?? []),
-              }),
-            );
-          })
-          .catch((e) => {
-            console.log(e);
-            message.error(`Unable to load table data! ${getErrorMessage(e)}`);
-            setResponseData((state) => failed(getErrorMessage(e), getOr(state, null)));
-          });
-      }
-    },
-    [request],
-  );
+  const handleResetSelection = useCallback(() => {
+    rowSelection?.onChange([]);
+  }, [rowSelection]);
 
   const handleReload = useCallback(() => {
-    handleRequest(
-      { ...paramsState.params, pageSize: DEFAULT_PAGE_SIZE, current: paramsState.page },
-      paramsState.sort,
-      {},
-    );
-  }, [handleRequest, paramsState.page, paramsState.params, paramsState.sort]);
-
-  const prevState = usePrevious(paramsState);
-  useDeepEqualEffect(() => {
-    if (prevState != null && !isEqual(prevState?.params, paramsState.params)) {
-      onSelectChange([]);
-      setParamsState((state) => ({ ...state, page: 1 }));
+    handleResetSelection();
+    if (params != null) {
+      onChangeParams(_.cloneDeep(params));
     }
-  }, [prevState, paramsState.params]);
-
-  useEffect(() => {
-    if (pagination && !equal(prevState, paramsState)) {
-      handleReload();
+    if (onReload) {
+      onReload();
     }
-  }, [handleReload, pagination, paramsState, prevState]);
+  }, [onReload, onChangeParams, params, handleResetSelection]);
 
-  // Load data only once if pagination is disabled
+  useImperativeHandle<TableActionType, TableActionType>(
+    actionRef,
+    () => ({
+      reload: handleReload,
+    }),
+    [handleReload],
+  );
+
+  // Reset page if any parameters besides of page changes
+  const prevParams = usePrevious(params);
   useEffect(() => {
-    if (!pagination) {
-      handleReload();
+    if (prevParams != null && params != null) {
+      const { page: _page1, ..._prevParams } = prevParams;
+      const { page: _page2, ..._params } = params;
+      if (!isEqual(_prevParams, _params)) {
+        handleResetSelection();
+        onChangeParams({ ...params, page: 1 });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleResetSelection, prevParams, params]);
 
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const dataKeys = data.items.map((x) => (isMultiRows(x) ? x.item[rowKey] : x[rowKey]));
 
-  const onSelectChange = (newSelectedRowKeys: React.Key[]) => {
-    setSelectedRowKeys(newSelectedRowKeys);
-    entitySelection?.onChange(newSelectedRowKeys);
+  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
+    [key: number]: number;
+  }>({});
+
+  const adjustedColumns: TableColumn<T>[] = (columns ?? []).map((col, index) => ({
+    ...col,
+    width: updatedColumnWidth[index] || col.width,
+    onHeaderCell: (column) => ({
+      width: (column as ProColumns<TransactionCaseManagement>).width,
+      onResize: handleResize(index, setUpdatedColumnWidth),
+    }),
+  }));
+
+  if (rowSelection != null) {
+    const allSelected =
+      dataKeys.length > 0 &&
+      dataKeys.every((key) => rowSelection?.selectedKeys.indexOf(key) !== -1);
+
+    const someSelected =
+      dataKeys.length > 0 && dataKeys.some((key) => rowSelection?.selectedKeys.indexOf(key) !== -1);
+
+    adjustedColumns.unshift({
+      search: false,
+      title: (
+        <Checkbox
+          checked={allSelected}
+          indeterminate={someSelected && !allSelected}
+          onChange={(e) => {
+            rowSelection.onChange(e.target.checked ? dataKeys : []);
+          }}
+        />
+      ),
+      width: 32,
+      onCell: (_) => ({
+        rowSpan: _.isFirstRow ? _.rowsCount : 0,
+      }),
+      render: (_, row) => {
+        const key = row.entityKey;
+        const isSelected = rowSelection?.selectedKeys.indexOf(key) != -1;
+        return (
+          <Checkbox
+            checked={isSelected}
+            onChange={(e) => {
+              const currentSelection = (rowSelection?.selectedKeys ?? []).filter((x) => x !== key);
+              rowSelection?.onChange(
+                e.target.checked ? [...currentSelection, key] : currentSelection,
+              );
+            }}
+          />
+        );
+      },
+    });
+  }
+  const handleReset = () => {
+    if (onReset != null) {
+      onReset();
+    } else if (onChangeParams) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      onChangeParams(DEFAULT_PARAMS_STATE);
+    }
   };
 
   return (
     <div className={style.root}>
-      <ProTable<T, Params, ValueType>
+      <ProTable<TableRow<T>, Params>
+        toolBarRender={toolBarRender}
+        columnsState={columnsState}
+        columns={adjustedColumns}
+        rowKey={rowKey}
         headerTitle={
-          actionsHeader != null
+          actionsHeader != null && params != null
             ? renderActionHeader<Params>(actionsHeader, {
-                params: paramsState,
-                setParams: setParamsState,
+                params,
+                setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
+                  onChangeParams(cb(params)),
               })
             : headerTitle
         }
@@ -263,34 +248,28 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
           const isEven = isEvenRow ? isEvenRow(_) : index % 2 === 0;
           return disableStripedColoring || isEven ? style.tableRowLight : style.tableRowDark;
         }}
-        {...rest}
-        loading={isLoading(responseData) || loading}
-        dataSource={getOr(
-          map(responseData, ({ items }) => items),
-          [],
-        )}
+        loading={loading}
+        dataSource={flatItems(data.items, rowKey)}
         pagination={false}
         onSubmit={(newParams) => {
-          setParamsState((state) => ({
-            ...state,
-            params: { ...state.params, ...newParams },
-          }));
-          onSelectChange([]);
+          if (onChangeParams != null) {
+            onChangeParams({
+              ...DEFAULT_PARAMS_STATE,
+              ...(params ?? {}),
+              ...newParams,
+            });
+            handleResetSelection();
+          }
         }}
-        onReset={() => setParamsState(DEFAULT_PARAMS_STATE)}
+        onReset={handleReset}
         onChange={(pagination, filters, sorter) => {
-          const sort: Record<string, SortOrder> = (
-            Array.isArray(sorter) ? sorter : [sorter]
-          ).reduce(
-            (acc, { field, order }) => ({
-              ...acc,
-              [`${field}`]: order ?? 'ascend',
-            }),
-            {} as Record<string, SortOrder>,
+          const sort: [string, SortOrder][] = (Array.isArray(sorter) ? sorter : [sorter]).map(
+            ({ field, order }) => [field as string, order ?? 'ascend'],
           );
-          setParamsState({
+          onChangeParams({
+            ...DEFAULT_PARAMS_STATE,
+            ...(filters as unknown as Params),
             page: 1,
-            params: filters as unknown as Params,
             sort: sort,
           });
         }}
@@ -298,43 +277,44 @@ export const Table = <T, Params extends object = ParamsType, ValueType = 'text'>
           ...(options || {}),
           reload: !options || options.reload != false ? handleReload : false,
         }}
-        rowSelection={
-          entitySelection
-            ? {
-                selectedRowKeys,
-                onChange: onSelectChange,
-                renderCell: entitySelection?.renderCell,
-              }
-            : undefined
-        }
         tableAlertRender={() => false}
         tableAlertOptionRender={() => {
           return false;
         }}
+        expandable={expandable}
+        search={search}
+        form={form}
+        getPopupContainer={getPopupContainer}
+        scroll={scroll}
+        cardBordered={cardBordered}
+        components={{
+          header: {
+            cell: ResizableTitle,
+          },
+        }}
       />
       {pagination !== false && (
         <Pagination
-          disabled={isLoading(responseData)}
+          disabled={loading}
           className={style.pagination}
           size="small"
           showSizeChanger={false}
           pageSize={DEFAULT_PAGE_SIZE}
           showTitle={true}
-          total={getOr(
-            map(responseData, ({ total }) => total),
-            1,
-          )}
-          current={paramsState.page}
+          total={data.total ?? data.items.length}
+          current={params?.page}
           onChange={(page) => {
-            setParamsState((state) => ({ ...state, page }));
+            if (params != null) {
+              onChangeParams({ ...params, page });
+            }
           }}
         />
       )}
     </div>
   );
-};
+}
 
-function renderActionHeader<Params extends object = ParamsType>(
+function renderActionHeader<Params extends object>(
   actionsHeader: ActionRenderer<Params>[],
   props: ActionRendererProps<Params>,
 ) {

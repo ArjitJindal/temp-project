@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { message, Slider } from 'antd';
-import { ProColumns } from '@ant-design/pro-table/es/typing';
 import style from './style.module.less';
-import { Table } from '@/components/ui/Table';
+import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import {
   AsyncResource,
@@ -18,6 +17,7 @@ import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { RISK_LEVEL_LABELS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { useApi } from '@/api';
 import { RiskClassificationScore } from '@/apis';
+import { TableColumn } from '@/components/ui/Table/types';
 
 interface TableItem {
   key: RiskLevel;
@@ -106,7 +106,7 @@ export default function RiskQualification() {
       message.error(error);
     }
   }
-  const columns: ProColumns<TableItem>[] = [
+  const columns: TableColumn<TableItem>[] = [
     {
       title: 'Title',
       width: '200px',
@@ -189,7 +189,9 @@ export default function RiskQualification() {
       search={false}
       columns={columns}
       pagination={false}
-      dataSource={LEVEL_ENTRIES}
+      data={{
+        items: LEVEL_ENTRIES,
+      }}
       toolBarRender={() => [
         <Button type="primary" onClick={handleSave} disabled={isLoading(syncRes)}>
           Save

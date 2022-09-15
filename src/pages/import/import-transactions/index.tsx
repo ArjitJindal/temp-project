@@ -1,12 +1,12 @@
 import React from 'react';
-import type { ProColumns } from '@ant-design/pro-table';
 import { Tag } from 'antd';
 import { files } from './service';
 import type { TableListItem, TableListPagination } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
-import { Table } from '@/components/ui/Table';
+import { RequestTable } from '@/components/RequestTable';
 import { useI18n } from '@/locales';
+import { TableColumn } from '@/components/ui/Table/types';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -21,7 +21,7 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
-  const columns: ProColumns<TableListItem>[] = [
+  const columns: TableColumn<TableListItem>[] = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -67,7 +67,7 @@ const TableList: React.FC = () => {
   const i18n = useI18n();
   return (
     <PageWrapper title={i18n('menu.import.import-transactions')}>
-      <Table<TableListItem, TableListPagination>
+      <RequestTable<TableListItem, TableListPagination>
         form={{
           labelWrap: true,
         }}

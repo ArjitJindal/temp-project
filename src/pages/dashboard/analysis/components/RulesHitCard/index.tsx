@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, DatePicker, Row, Col } from 'antd';
+import { Card, Col, DatePicker, Row } from 'antd';
 import { useCallback, useState } from 'react';
-import { ProColumns } from '@ant-design/pro-table/lib/typing';
 import { RangeValue } from 'rc-picker/lib/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
@@ -11,12 +10,11 @@ import header from '../dashboardutils';
 import style from '../../style.module.less';
 import { DashboardStatsRulesCountData, Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import { Table, ResponsePayload } from '@/components/ui/Table';
-import ResizableTitle from '@/utils/table-utils';
+import { RequestTable } from '@/components/RequestTable';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
-import handleResize from '@/components/ui/Table/utils';
 import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
+import { TableColumn, TableData } from '@/components/ui/Table/types';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -30,11 +28,7 @@ export default function RuleHitCard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
 
-  const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
-  }>({});
-
-  const columns: ProColumns<DashboardStatsRulesCountData>[] = [
+  const columns: TableColumn<DashboardStatsRulesCountData>[] = [
     {
       title: 'Rule ID',
       render: (_, stat) => {
@@ -104,15 +98,7 @@ export default function RuleHitCard() {
     },
   ];
 
-  const mergeColumns: ProColumns<DashboardStatsRulesCountData>[] = columns.map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<DashboardStatsRulesCountData>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
-  const request = useCallback(async (): Promise<ResponsePayload<DashboardStatsRulesCountData>> => {
+  const request = useCallback(async (): Promise<TableData<DashboardStatsRulesCountData>> => {
     const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances()]);
     setRules(_.keyBy(rules, 'id'));
     setRuleInstances(_.keyBy(ruleInstances, 'id'));
@@ -135,7 +121,7 @@ export default function RuleHitCard() {
     return {
       success: true,
       total: result.data.length,
-      data: result.data,
+      items: result.data,
     };
   }, [api, dateRange]);
 
@@ -143,18 +129,13 @@ export default function RuleHitCard() {
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
         <Col span={12}>
-          <Table<DashboardStatsRulesCountData>
+          <RequestTable<DashboardStatsRulesCountData>
             form={{
               labelWrap: true,
             }}
-            components={{
-              header: {
-                cell: ResizableTitle,
-              },
-            }}
             headerTitle={header('Top Rule Hits by Count')}
             search={false}
-            columns={mergeColumns}
+            columns={columns}
             className={style.table}
             scroll={{ x: 1300 }}
             toolBarRender={() => [

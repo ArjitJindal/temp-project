@@ -1,6 +1,6 @@
 import React from 'react';
 import { TransactionEvent } from '@/apis';
-import { Table } from '@/components/ui/Table';
+import Table from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
@@ -48,7 +48,9 @@ export default function TransactionEventsTable({ events }: Props) {
           width: 100,
         },
       ]}
-      dataSource={events}
+      data={{
+        items: events,
+      }}
       pagination={false}
       options={{
         density: false,

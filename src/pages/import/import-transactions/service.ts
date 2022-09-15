@@ -9,7 +9,7 @@ export async function files(
   },
   options?: { [key: string]: any },
 ) {
-  return request<{
+  const result = await request<{
     data: TableListItem[];
     total?: number;
     success?: boolean;
@@ -20,4 +20,9 @@ export async function files(
     },
     ...(options || {}),
   });
+  return {
+    items: result.data,
+    total: result.total,
+    success: result.success,
+  };
 }
