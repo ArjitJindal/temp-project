@@ -1,6 +1,13 @@
 import React, { useCallback, useState } from 'react';
-import { message } from 'antd';
+import { message, Tabs } from 'antd';
+import { useNavigate, useParams } from 'react-router';
 import ParametersTable from './ParametersTable';
+import {
+  ALL_RISK_PARAMETERS,
+  TRANSACTION_RISK_PARAMETERS,
+  USER_RISK_PARAMETERS,
+} from './ParametersTable/consts';
+import { RiskLevelTableItem } from './ParametersTable/types';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -13,6 +20,8 @@ import {
 import { ParameterAttributeRiskValues } from '@/apis';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { getErrorMessage } from '@/utils/lang';
+import PageTabs from '@/components/ui/PageTabs';
+import { makeUrl } from '@/utils/routing';
 
 export default function () {
   const i18n = useI18n();
@@ -20,6 +29,8 @@ export default function () {
   const [valuesResources, setValuesResources] = useState<{
     [key in ParameterName]?: AsyncResource<ParameterSettings>;
   }>({});
+  const { type = 'user' } = useParams<'type'>();
+  const navigate = useNavigate();
 
   const onUpdateParameter = useCallback(
     async (parameter: ParameterName, settings: ParameterSettings) => {
@@ -32,12 +43,17 @@ export default function () {
       const hideSavingMessage = message.loading('Saving...', 0);
 
       try {
+        const riskLevelTableItem = ALL_RISK_PARAMETERS.find(
+          (param) => param.parameter === parameter,
+        ) as RiskLevelTableItem;
         const response = await api.postPulseRiskParameter({
           PostPulseRiskParameters: {
             parameterAttributeRiskValues: {
               isActive: settings.isActive,
-              parameter: parameter,
-              riskValueType: 'DISCRETE',
+              isDerived: riskLevelTableItem.isDerived,
+              parameter,
+              riskEntityType: riskLevelTableItem.entity,
+              riskValueType: riskLevelTableItem.type,
               riskLevelAssignmentValues: settings.values,
             },
           },
@@ -136,12 +152,31 @@ export default function () {
         title={i18n('menu.risk-levels.risk-level')}
         description={i18n('menu.risk-levels.risk-level.description')}
       >
-        <ParametersTable
-          parameterSettings={valuesResources}
-          onRefresh={onRefresh}
-          onSaveValues={onSaveValues}
-          onActivate={onActivate}
-        />
+        <PageTabs
+          activeKey={type}
+          onChange={(key) => {
+            navigate(makeUrl(`/risk-levels/risk-level/:type`, { type: key }), { replace: true });
+          }}
+        >
+          <Tabs.TabPane tab="User" key="user">
+            <ParametersTable
+              parameters={USER_RISK_PARAMETERS}
+              parameterSettings={valuesResources}
+              onRefresh={onRefresh}
+              onSaveValues={onSaveValues}
+              onActivate={onActivate}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Transaction" key="transaction">
+            <ParametersTable
+              parameters={TRANSACTION_RISK_PARAMETERS}
+              parameterSettings={valuesResources}
+              onRefresh={onRefresh}
+              onSaveValues={onSaveValues}
+              onActivate={onActivate}
+            />
+          </Tabs.TabPane>
+        </PageTabs>
       </PageWrapper>
     </Feature>
   );

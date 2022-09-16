@@ -174,12 +174,18 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/risk-levels',
-            redirect: '/risk-levels/risk-level',
+            redirect: '/risk-levels/risk-level/user',
           },
           {
             name: 'risk-level',
-            path: '/risk-levels/risk-level',
+            path: '/risk-levels/risk-level/',
             component: RiskLevelPage,
+          },
+          {
+            name: 'risk-level',
+            path: '/risk-levels/risk-level/:type',
+            component: RiskLevelPage,
+            hideInMenu: true,
           },
           {
             name: 'configure',

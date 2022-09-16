@@ -1,4 +1,9 @@
-import { ParameterAttributeRiskValuesParameterEnum, RiskParameterLevelKeyValue } from '@/apis';
+import {
+  ParameterAttributeRiskValuesParameterEnum,
+  ParameterAttributeRiskValuesRiskValueTypeEnum,
+  ParameterAttributeRiskValuesRiskEntityTypeEnum,
+  RiskParameterLevelKeyValue,
+} from '@/apis';
 
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
 export type ParameterValues = RiskParameterLevelKeyValue[];
@@ -11,8 +16,10 @@ export interface RiskLevelTableItem {
   parameter: ParameterName;
   title: string;
   description: string;
-  type: 'ENUMERATION' | 'RANGE';
+  type: ParameterAttributeRiskValuesRiskValueTypeEnum;
+  entity: ParameterAttributeRiskValuesRiskEntityTypeEnum;
+  isDerived: boolean;
   dataType: DataTypes;
 }
 export type RiskLevelTable = RiskLevelTableItem[];
-export type DataTypes = 'STRING' | 'COUNTRY';
+export type DataTypes = 'STRING' | 'COUNTRY' | 'CURRENCY' | 'PAYMENT_METHOD';

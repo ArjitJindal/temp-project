@@ -2,32 +2,133 @@ import React from 'react';
 import { Input, Select } from 'antd';
 import { DataTypes, RiskLevelTable } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
+import { PAYMENT_METHODS } from '@/utils/payments';
+import { currencies } from '@/utils/currencies';
 
-export type InputRenderer = (props: {
+type InputRendererProps = {
   disabled?: boolean;
   values: string[];
   onChange: (values: string[]) => void;
-}) => React.ReactNode;
+};
+export type InputRenderer = (props: InputRendererProps) => React.ReactNode;
 
 export type ValueRenderer = (props: { value: string | null }) => React.ReactNode;
 
 // todo: i18n
-export const PARAMETERS: RiskLevelTable = [
+export const USER_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'userDetails.countryOfResidence',
     title: 'Country of Residence',
     description: 'Risk based on customer residence country',
-    type: 'ENUMERATION',
+    type: 'DISCRETE',
+    entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
+    isDerived: false,
   },
   {
     parameter: 'userDetails.countryOfNationality',
     title: 'Country of Nationality',
     description: 'Risk based on customer nationality country',
-    type: 'ENUMERATION',
+    type: 'DISCRETE',
+    entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
+    isDerived: false,
   },
 ];
+
+export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
+  {
+    parameter: 'originPaymentDetails.method',
+    title: 'Origin Payment Method',
+    description: 'Risk based on transaction origin payment method',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'PAYMENT_METHOD',
+    isDerived: false,
+  },
+  {
+    parameter: 'destinationPaymentDetails.method',
+    title: 'Destination Payment Method',
+    description: 'Risk based on transaction destination payment method',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'PAYMENT_METHOD',
+    isDerived: false,
+  },
+  {
+    parameter: 'originAmountDetails.country',
+    title: 'Origin Country',
+    description: 'Risk based on transaction origin country',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'COUNTRY',
+    isDerived: false,
+  },
+  {
+    parameter: 'destinationAmountDetails.country',
+    title: 'Destination Country',
+    description: 'Risk based on transaction destination country',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'COUNTRY',
+    isDerived: false,
+  },
+  {
+    parameter: 'originAmountDetails.transactionCurrency',
+    title: 'Origin Currency',
+    description: 'Risk based on transaction origin currency',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'CURRENCY',
+    isDerived: false,
+  },
+  {
+    parameter: 'destinationAmountDetails.transactionCurrency',
+    title: 'Destination Currency',
+    description: 'Risk based on transaction destination currency',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'CURRENCY',
+    isDerived: false,
+  },
+  {
+    parameter: 'ipAddressCountry',
+    title: 'IP Address Country',
+    description: 'Risk based on IP address country',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'COUNTRY',
+    isDerived: true,
+  },
+];
+
+export const ALL_RISK_PARAMETERS = [...USER_RISK_PARAMETERS, ...TRANSACTION_RISK_PARAMETERS];
+
+const MultipleSelect: React.FC<
+  InputRendererProps & { options: Array<{ value: string; label: string }> }
+> = ({ values, disabled, onChange, options }) => {
+  return (
+    <Select<string[]>
+      mode="multiple"
+      style={{ width: '100%' }}
+      value={values}
+      onChange={onChange}
+      showSearch={true}
+      disabled={disabled}
+      filterOption={(input, option) => {
+        const optionValue = option?.children?.toString() ?? '';
+        return (
+          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
+          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        );
+      }}
+    >
+      {options.map(({ value, label }) => (
+        <Select.Option value={value}>{label}</Select.Option>
+      ))}
+    </Select>
+  );
+};
 
 export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
   STRING: ({ disabled, values, onChange }) => (
@@ -37,37 +138,37 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
       onChange={(e) => onChange([e.target.value])}
     />
   ),
-  COUNTRY: ({ disabled, values, onChange }) => {
+  COUNTRY: (props) => {
     return (
-      <Select<string[]>
-        mode="multiple"
-        style={{ width: '100%' }}
-        value={values}
-        onChange={onChange}
-        showSearch={true}
-        disabled={disabled}
-        filterOption={(input, option) => {
-          const optionValue = option?.children?.toString() ?? '';
-          return (
-            optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
-            optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
-          );
-        }}
-      >
-        {Object.entries(COUNTRIES).map(([code, title]) => (
-          <Select.Option value={code}>{title}</Select.Option>
-        ))}
-      </Select>
+      <MultipleSelect
+        options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
+        {...props}
+      />
+    );
+  },
+  CURRENCY: (props) => {
+    return <MultipleSelect options={currencies} {...props} />;
+  },
+  PAYMENT_METHOD: (props) => {
+    return (
+      <MultipleSelect
+        options={PAYMENT_METHODS.map((method) => ({ value: method, label: method }))}
+        {...props}
+      />
     );
   },
 };
 
 export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
   STRING: ({ value }) => <span>{value}</span>,
+  CURRENCY: ({ value }) => (
+    <span>{currencies.find((currency) => currency.value === value)?.label}</span>
+  ),
   COUNTRY: ({ value }) => {
     if (value == null) {
       return null;
     }
     return <span>{COUNTRIES[value]}</span>;
   },
+  PAYMENT_METHOD: ({ value }) => <span>{value}</span>,
 };

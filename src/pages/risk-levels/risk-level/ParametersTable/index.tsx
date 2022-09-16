@@ -1,7 +1,12 @@
 import React, { useEffect } from 'react';
 import { Button, Tag } from 'antd';
-import { ParameterName, ParameterSettings, ParameterValues, RiskLevelTableItem } from './types';
-import { PARAMETERS } from './consts';
+import {
+  ParameterName,
+  ParameterSettings,
+  ParameterValues,
+  RiskLevelTable,
+  RiskLevelTableItem,
+} from './types';
 import style from './style.module.less';
 import ValuesTable from './ValuesTable';
 import { AsyncResource, getOr, init, isLoading, map } from '@/utils/asyncResource';
@@ -10,6 +15,7 @@ import ActivityIndicator from '@/pages/risk-levels/risk-level/ParametersTable/Ac
 import Table from '@/components/ui/Table';
 
 interface Props {
+  parameters: RiskLevelTable;
   parameterSettings: {
     [key in ParameterName]?: AsyncResource<ParameterSettings>;
   };
@@ -19,13 +25,13 @@ interface Props {
 }
 
 export default function ParametersTable(props: Props) {
-  const { parameterSettings, onRefresh, onSaveValues, onActivate } = props;
+  const { parameters, parameterSettings, onRefresh, onSaveValues, onActivate } = props;
 
   useEffect(() => {
-    for (const parameter of PARAMETERS) {
+    for (const parameter of parameters) {
       onRefresh(parameter.parameter);
     }
-  }, [onRefresh]);
+  }, [onRefresh, parameters]);
 
   // todo: i18n
   return (
@@ -44,7 +50,7 @@ export default function ParametersTable(props: Props) {
           dataIndex: 'type',
           render: (_, item) => {
             switch (item.type) {
-              case 'ENUMERATION':
+              case 'DISCRETE':
                 return <Tag color="success">{item.type}</Tag>;
               case 'RANGE':
                 return <Tag color="processing">{item.type}</Tag>;
@@ -89,7 +95,7 @@ export default function ParametersTable(props: Props) {
         },
       ]}
       data={{
-        items: PARAMETERS,
+        items: parameters,
       }}
       expandable={{
         expandedRowRender: (item: RiskLevelTableItem) => (
