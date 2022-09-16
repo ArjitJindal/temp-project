@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
+import _ from 'lodash'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -190,12 +191,14 @@ export class RiskRepository {
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
-    const { parameter, ...paramMetaDetails } = parameterRiskLevels
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId, parameter), // Version it later
-        schemaAttributes: paramMetaDetails,
+        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
+          this.tenantId,
+          parameterRiskLevels.parameter
+        ), // Version it later
+        ...parameterRiskLevels,
       },
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -222,14 +225,16 @@ export class RiskRepository {
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
       return result.Items && result.Items.length > 0
-        ? result.Items[0].schemaAttributes
+        ? _.omit(result.Items[0], ['PartitionKeyID', 'SortKeyID'])
         : null
     } catch (e) {
       logger.error(e)
       return null
     }
   }
-  async getParameterRiskItems() {
+  async getParameterRiskItems(): Promise<
+    ParameterAttributeRiskValues[] | null
+  > {
     const keyConditionExpr = 'PartitionKeyID = :pk'
     const expressionAttributeVals = {
       ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
@@ -244,7 +249,9 @@ export class RiskRepository {
     }
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0 ? result.Items : null
+      return result.Items && result.Items.length > 0
+        ? (result.Items as ParameterAttributeRiskValues[])
+        : null
     } catch (e) {
       logger.error(e)
       return null

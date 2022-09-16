@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: http://localhost:3000
+  - url: 'http://localhost:3000'
 paths:
   /apikey:
     parameters: []
@@ -1708,7 +1708,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: 2020-01-04
+            - _id: '2020-01-04'
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -2131,6 +2131,7 @@ components:
       x-examples:
         example-1:
           parameter: userDetails.countryOfResidence
+          riskEntityType: CONSUMER_USER
           riskValueType: DISCRETE
           riskLevelAssignmentValues:
             DE: LOW
@@ -2141,8 +2142,22 @@ components:
           enum:
             - userDetails.countryOfResidence
             - userDetails.countryOfNationality
+            - originPaymentDetails.method
+            - destinationPaymentDetails.method
+            - originAmountDetails.country
+            - destinationAmountDetails.country
+            - originAmountDetails.transactionCurrency
+            - destinationAmountDetails.transactionCurrency
+            - ipAddressCountry
         isActive:
           type: boolean
+        isDerived:
+          type: boolean
+        riskEntityType:
+          type: string
+          enum:
+            - CONSUMER_USER
+            - TRANSACTION
         riskValueType:
           type: string
           enum:
@@ -2155,6 +2170,8 @@ components:
       required:
         - parameter
         - isActive
+        - isDerived
+        - riskEntityType
         - riskValueType
         - riskLevelAssignmentValues
     Feature:

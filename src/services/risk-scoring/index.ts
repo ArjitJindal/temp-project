@@ -5,7 +5,6 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 
-const SCHEMA_ATTRIBUTE_IDENTIFIER = 'schemaAttributes'
 const DEFAULT_RISK_LEVEL = 'HIGH' // defaults to high risk for now - will be configurable in the future
 
 export const calculateKRS = async (
@@ -19,15 +18,18 @@ export const calculateKRS = async (
 
   const riskScoresList: number[] = []
 
-  parameterRiskScores?.map((parameterAttributeDetails) => {
-    if (
-      SCHEMA_ATTRIBUTE_IDENTIFIER in parameterAttributeDetails &&
-      parameterAttributeDetails[SCHEMA_ATTRIBUTE_IDENTIFIER].isActive
-    ) {
+  parameterRiskScores
+    ?.filter(
+      (parameterAttributeDetails) =>
+        parameterAttributeDetails.isActive &&
+        !parameterAttributeDetails.isDerived &&
+        parameterAttributeDetails.riskEntityType === 'CONSUMER_USER'
+    )
+    .forEach((parameterAttributeDetails) => {
       const riskLevel: RiskLevel = getSchemaAttributeValues(
-        parameterAttributeDetails.SortKeyID,
+        parameterAttributeDetails.parameter,
         user,
-        parameterAttributeDetails[SCHEMA_ATTRIBUTE_IDENTIFIER]
+        parameterAttributeDetails
       )
       riskClassificationValues.map((value) => {
         if (riskLevel == value.riskLevel) {
@@ -38,8 +40,7 @@ export const calculateKRS = async (
           riskScoresList.push(riskScore)
         }
       })
-    }
-  })
+    })
   const krsScore = _.mean(riskScoresList)
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
 }
