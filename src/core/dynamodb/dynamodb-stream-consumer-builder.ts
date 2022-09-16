@@ -45,10 +45,6 @@ export class TarponStreamConsumerBuilder {
   userEventHandler?: UserEventHandler
 
   constructor(retryStreamName: string) {
-    if (!retryStreamName) {
-      throw new Error(`Retry stream is not set!`)
-    }
-
     this.retryStreamName = retryStreamName
     this.transientRepository = new TransientRepository(getDynamoDbClient())
   }
@@ -151,10 +147,7 @@ export class TarponStreamConsumerBuilder {
   }
 
   private isFromRetryStream(event: KinesisStreamEvent) {
-    return (
-      this.retryStreamName &&
-      event.Records[0]?.eventSourceARN?.includes(this.retryStreamName)
-    )
+    return event.Records[0]?.eventSourceARN?.includes(this.retryStreamName)
   }
 
   private getRetryItemKey(update: DynamoDbEntityUpdate): string {
@@ -163,6 +156,10 @@ export class TarponStreamConsumerBuilder {
 
   public build() {
     return async (event: KinesisStreamEvent) => {
+      if (!this.retryStreamName) {
+        throw new Error(`Retry stream is not set!`)
+      }
+
       const isFromRetryStream = this.isFromRetryStream(event)
 
       if (isFromRetryStream) {
