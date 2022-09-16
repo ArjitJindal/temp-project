@@ -1,4 +1,4 @@
-import { TimeWindow } from '../transaction-rules/transactions-volume'
+import { TimeWindow } from '../rule'
 import { Dayjs } from '@/utils/dayjs'
 
 export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {

@@ -1,9 +1,17 @@
 import * as _ from 'lodash'
+import {
+  ThinTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
+import { TimeWindow } from '../rule'
+import { subtractTime } from './time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 export function isTransactionInTargetTypes(
   transactionType: TransactionType | undefined,
@@ -138,5 +146,163 @@ export function sumTransactionAmountDetails(
       transactionAmountDetails1.transactionAmount +
       transactionAmountDetails2.transactionAmount,
     transactionCurrency: transactionAmountDetails1.transactionCurrency,
+  }
+}
+
+async function getTransactions(
+  userId: string | undefined,
+  paymentDetails: PaymentDetails | undefined,
+  transactionRepository: TransactionRepository,
+  options: {
+    afterTimestamp: number
+    beforeTimestamp: number
+    checkType: 'sending' | 'receiving' | 'all' | 'none'
+    transactionState?: TransactionState
+    transactionTypes?: TransactionType[]
+  }
+): Promise<{
+  sendingTransactions: ThinTransaction[]
+  receivingTransactions: ThinTransaction[]
+}> {
+  const {
+    checkType,
+    beforeTimestamp,
+    afterTimestamp,
+    transactionState,
+    transactionTypes,
+  } = options
+  const [sendingTransactions, receivingTransactions] = await Promise.all([
+    checkType === 'sending' || checkType === 'all'
+      ? transactionRepository.getGenericUserSendingThinTransactions(
+          userId,
+          paymentDetails,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+          },
+          {
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve([]),
+    checkType === 'receiving' || checkType === 'all'
+      ? transactionRepository.getGenericUserReceivingThinTransactions(
+          userId,
+          paymentDetails,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+          },
+          {
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve([]),
+  ])
+  return {
+    sendingTransactions,
+    receivingTransactions,
+  }
+}
+
+export async function getTransactionUserPastTransactions(
+  transaction: Transaction,
+  transactionRepository: TransactionRepository,
+  options: {
+    timeWindow: TimeWindow
+    checkSender: 'sending' | 'all' | 'none'
+    checkReceiver: 'receiving' | 'all' | 'none'
+    transactionState?: TransactionState
+    transactionTypes?: TransactionType[]
+  }
+): Promise<{
+  senderSendingTransactions: Transaction[]
+  senderReceivingTransactions: Transaction[]
+  receiverSendingTransactions: Transaction[]
+  receiverReceivingTransactions: Transaction[]
+}> {
+  const {
+    checkSender,
+    checkReceiver,
+    timeWindow,
+    transactionState,
+    transactionTypes,
+  } = options
+  const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
+  const beforeTimestamp = transaction.timestamp!
+  const senderTransactionsPromise =
+    checkSender !== 'none'
+      ? getTransactions(
+          transaction.originUserId,
+          transaction.originPaymentDetails,
+          transactionRepository,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+            checkType: checkSender,
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve({
+          sendingTransactions: [],
+          receivingTransactions: [],
+        })
+  const receiverTransactionsPromise =
+    checkReceiver !== 'none'
+      ? getTransactions(
+          transaction.destinationUserId,
+          transaction.destinationPaymentDetails,
+          transactionRepository,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+            checkType: checkReceiver,
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve({
+          sendingTransactions: [],
+          receivingTransactions: [],
+        })
+  const [senderThinTransactions, receiverThinTransactions] = await Promise.all([
+    senderTransactionsPromise,
+    receiverTransactionsPromise,
+  ])
+  const [
+    senderSendingTransactions,
+    senderReceivingTransactions,
+    receiverSendingTransactions,
+    receiverReceivingTransactions,
+  ] = await Promise.all([
+    transactionRepository.getTransactionsByIds(
+      senderThinTransactions.sendingTransactions.map(
+        (transaction) => transaction.transactionId
+      )
+    ),
+    transactionRepository.getTransactionsByIds(
+      senderThinTransactions.receivingTransactions.map(
+        (transaction) => transaction.transactionId
+      )
+    ),
+    transactionRepository.getTransactionsByIds(
+      receiverThinTransactions.sendingTransactions.map(
+        (transaction) => transaction.transactionId
+      )
+    ),
+    transactionRepository.getTransactionsByIds(
+      receiverThinTransactions.receivingTransactions.map(
+        (transaction) => transaction.transactionId
+      )
+    ),
+  ])
+  return {
+    senderSendingTransactions,
+    senderReceivingTransactions,
+    receiverSendingTransactions,
+    receiverReceivingTransactions,
   }
 }

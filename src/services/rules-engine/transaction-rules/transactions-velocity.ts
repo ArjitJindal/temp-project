@@ -11,6 +11,7 @@ import {
   isTransactionWithinTimeWindow,
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
+import { TimeWindow } from '../rule'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import {
@@ -21,20 +22,6 @@ import { UserType } from '@/@types/user/user-type'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
-
-export type TimeWindowGranularity =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month'
-
-export type TimeWindow = {
-  units: number
-  granularity: TimeWindowGranularity
-  rollingBasis?: boolean
-}
 
 export type TransactionsVelocityRuleParameters =
   DefaultTransactionRuleParameters & {

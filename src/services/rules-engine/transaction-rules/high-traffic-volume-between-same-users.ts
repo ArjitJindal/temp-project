@@ -6,9 +6,8 @@ import {
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
-import { TimeWindow } from './transactions-volume'
 import dayjs from '@/utils/dayjs'
-import { RuleResult } from '@/services/rules-engine/rule'
+import { RuleResult, TimeWindow } from '@/services/rules-engine/rule'
 import {
   DefaultTransactionRuleParameters,
   TransactionRule,

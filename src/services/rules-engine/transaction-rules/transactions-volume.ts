@@ -5,31 +5,18 @@ import {
 } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
+  getTransactionUserPastTransactions,
   isTransactionAmountAboveThreshold,
   isTransactionInTargetTypes,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
-import { subtractTime } from '../utils/time-utils'
+import { TimeWindow } from '../rule'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import dayjs from '@/utils/dayjs'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
-export type TimeWindowGranularity =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month'
-
-export type TimeWindow = {
-  units: number
-  granularity: TimeWindowGranularity
-  rollingBasis?: boolean
-}
 export type TransactionsVolumeRuleParameters =
   DefaultTransactionRuleParameters & {
     transactionVolumeThreshold: {
@@ -138,74 +125,30 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       checkReceiver,
       transactionVolumeThreshold,
       timeWindow,
+      transactionState,
+      transactionTypes,
     } = this.parameters
 
     this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
-    // Retrieve all the transactions during the target time window
-    const afterTimestamp = subtractTime(
-      dayjs(this.transaction.timestamp),
-      timeWindow
-    )
-
-    const senderTransactionsPromise =
-      checkSender !== 'none'
-        ? this.getTransactions(
-            this.transaction.originUserId,
-            this.transaction.originPaymentDetails,
-            afterTimestamp,
-            checkSender
-          )
-        : Promise.resolve({
-            sendingTransactions: [],
-            receivingTransactions: [],
-          })
-    const receiverTransactionsPromise =
-      checkReceiver !== 'none'
-        ? this.getTransactions(
-            this.transaction.destinationUserId,
-            this.transaction.destinationPaymentDetails,
-            afterTimestamp,
-            checkReceiver
-          )
-        : Promise.resolve({
-            sendingTransactions: [],
-            receivingTransactions: [],
-          })
-    const [senderThinTransactions, receiverThinTransactions] =
-      await Promise.all([
-        senderTransactionsPromise,
-        receiverTransactionsPromise,
-      ])
-    const [
+    const {
       senderSendingTransactions,
       senderReceivingTransactions,
       receiverSendingTransactions,
       receiverReceivingTransactions,
-    ] = await Promise.all([
-      this.transactionRepository.getTransactionsByIds(
-        senderThinTransactions.sendingTransactions.map(
-          (transaction) => transaction.transactionId
-        )
-      ),
-      this.transactionRepository.getTransactionsByIds(
-        senderThinTransactions.receivingTransactions.map(
-          (transaction) => transaction.transactionId
-        )
-      ),
-      this.transactionRepository.getTransactionsByIds(
-        receiverThinTransactions.sendingTransactions.map(
-          (transaction) => transaction.transactionId
-        )
-      ),
-      this.transactionRepository.getTransactionsByIds(
-        receiverThinTransactions.receivingTransactions.map(
-          (transaction) => transaction.transactionId
-        )
-      ),
-    ])
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkSender,
+        checkReceiver,
+        transactionState,
+        transactionTypes,
+      }
+    )
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
