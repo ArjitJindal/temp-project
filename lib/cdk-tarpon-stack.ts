@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
+import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import {
   ArnPrincipal,
   Effect,
@@ -10,7 +11,6 @@ import {
   Role,
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam'
-import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import {
   ApiDefinition,
   AssetApiDefinition,
@@ -39,7 +39,7 @@ import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 import { Construct } from 'constructs'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 
-import { Stream } from 'aws-cdk-lib/aws-kinesis'
+import { IStream, Stream } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
   SqsEventSource,
@@ -158,114 +158,41 @@ export class CdkTarponStack extends cdk.Stack {
     /*
      * Kinesis Data Streams
      */
-    let tarponStream
-    if (!isDevUserStack) {
-      tarponStream = new Stream(this, StackConstants.TARPON_STREAM_ID, {
-        streamName: StackConstants.TARPON_STREAM_NAME,
-        retentionPeriod: Duration.hours(72),
-        shardCount: 1,
-      })
-      if (config.stage === 'dev') {
-        tarponStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
-      }
-
-      createKinesisAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        `TarponChangeCaptureKinesisPutRecordErrorRate`,
-        tarponStream.streamName
-      )
-    } else {
-      const streamArn = `arn:aws:kinesis:${config.env.region}:${config.env.account}:stream/${StackConstants.TARPON_STREAM_NAME}`
-      tarponStream = Stream.fromStreamArn(
-        this,
-        StackConstants.TARPON_STREAM_ID,
-        streamArn
-      )
-    }
-
-    let hammerheadStream
-    if (!isDevUserStack) {
-      hammerheadStream = new Stream(this, StackConstants.HAMMERHEAD_STREAM_ID, {
-        streamName: StackConstants.HAMMERHEAD_STREAM_NAME,
-        retentionPeriod: Duration.hours(72),
-        shardCount: 1,
-      })
-      if (config.stage === 'dev') {
-        hammerheadStream.applyRemovalPolicy(RemovalPolicy.DESTROY)
-      }
-
-      createKinesisAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        `HammerheadChangeCaptureKinesisPutRecordErrorRate`,
-        hammerheadStream.streamName
-      )
-    } else {
-      const streamArn = `arn:aws:kinesis:${config.env.region}:${config.env.account}:stream/${StackConstants.HAMMERHEAD_STREAM_NAME}`
-      hammerheadStream = Stream.fromStreamArn(
-        this,
-        StackConstants.HAMMERHEAD_STREAM_ID,
-        streamArn
-      )
-    }
+    const tarponStream = this.createKinesisStream(
+      StackConstants.TARPON_STREAM_ID,
+      StackConstants.TARPON_STREAM_NAME,
+      Duration.days(3)
+    )
+    const tarponMongoDbRetryStream = this.createKinesisStream(
+      StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
+      StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
+      Duration.days(7)
+    )
+    const tarponWebhookRetryStream = this.createKinesisStream(
+      StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
+      StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
+      Duration.days(3)
+    )
+    const hammerheadStream = this.createKinesisStream(
+      StackConstants.HAMMERHEAD_STREAM_ID,
+      StackConstants.HAMMERHEAD_STREAM_NAME,
+      Duration.days(3)
+    )
 
     /**
      * DynamoDB
      */
-    let tarponDynamoDbTable
-    let hammerheadDynamoDbTable
-
-    if (!isDevUserStack) {
-      tarponDynamoDbTable = new Table(
-        this,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        {
-          tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-          partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-          sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-          readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
-          writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
-          billingMode: config.resource.DYNAMODB.BILLING_MODE,
-          kinesisStream: tarponStream,
-          removalPolicy:
-            config.stage === 'dev'
-              ? RemovalPolicy.DESTROY
-              : RemovalPolicy.RETAIN,
-        }
-      )
-      this.createDynamoDbAlarms(StackConstants.TARPON_DYNAMODB_TABLE_NAME)
-
-      hammerheadDynamoDbTable = new Table(
-        this,
-        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-        {
-          tableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-          partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
-          sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
-          readCapacity: config.resource.DYNAMODB.READ_CAPACITY,
-          writeCapacity: config.resource.DYNAMODB.WRITE_CAPACITY,
-          billingMode: config.resource.DYNAMODB.BILLING_MODE,
-          kinesisStream: hammerheadStream,
-          removalPolicy:
-            config.stage === 'dev'
-              ? RemovalPolicy.DESTROY
-              : RemovalPolicy.RETAIN,
-        }
-      )
-      this.createDynamoDbAlarms(StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME)
-    } else {
-      tarponDynamoDbTable = Table.fromTableName(
-        this,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME
-      )
-      hammerheadDynamoDbTable = Table.fromTableName(
-        this,
-        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
-      )
-    }
+    const tarponDynamoDbTable = this.createDynamodbTable(
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      tarponStream
+    )
+    const hammerheadDynamoDbTable = this.createDynamodbTable(
+      StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      hammerheadStream
+    )
+    const transientDynamoDbTable = this.createDynamodbTable(
+      StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME
+    )
 
     /**
      * S3 Buckets
@@ -755,6 +682,7 @@ export class CdkTarponStack extends cdk.Stack {
           environment: {
             ...atlasFunctionProps.environment,
             SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
+            RETRY_KINESIS_STREAM_NAME: tarponMongoDbRetryStream.streamName,
           },
           timeout: Duration.minutes(15),
         }
@@ -764,6 +692,18 @@ export class CdkTarponStack extends cdk.Stack {
         batchSize: 1,
         startingPosition: StartingPosition.TRIM_HORIZON,
       })
+    )
+    tarponChangeCaptureKinesisConsumerAlias.addEventSource(
+      new KinesisEventSource(tarponMongoDbRetryStream, {
+        batchSize: 1,
+        startingPosition: StartingPosition.LATEST,
+      })
+    )
+    tarponMongoDbRetryStream.grantReadWrite(
+      tarponChangeCaptureKinesisConsumerAlias
+    )
+    transientDynamoDbTable.grantReadWriteData(
+      tarponChangeCaptureKinesisConsumerAlias
     )
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
     slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
@@ -781,6 +721,7 @@ export class CdkTarponStack extends cdk.Stack {
           environment: {
             ...atlasFunctionProps.environment,
             WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+            RETRY_KINESIS_STREAM_NAME: tarponWebhookRetryStream.streamName,
           },
           timeout: Duration.minutes(15),
         }
@@ -791,7 +732,19 @@ export class CdkTarponStack extends cdk.Stack {
         startingPosition: StartingPosition.LATEST,
       })
     )
+    webhookTarponChangeCaptureHandlerAlias.addEventSource(
+      new KinesisEventSource(tarponWebhookRetryStream, {
+        batchSize: 1,
+        startingPosition: StartingPosition.LATEST,
+      })
+    )
+    tarponWebhookRetryStream.grantReadWrite(
+      webhookTarponChangeCaptureHandlerAlias
+    )
     webhookDeliveryQueue.grantSendMessages(
+      webhookTarponChangeCaptureHandlerAlias
+    )
+    transientDynamoDbTable.grantReadWriteData(
       webhookTarponChangeCaptureHandlerAlias
     )
     this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerAlias)
@@ -848,6 +801,8 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.LOG_GROUP_PUBLIC_API_NAME,
       {
         logGroupName: StackConstants.TARPON_API_LOG_GROUP_NAME,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
     const publicApi = new SpecRestApi(this, StackConstants.TARPON_API_NAME, {
@@ -913,6 +868,8 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.LOG_GROUP_CONSOLE_API_NAME,
       {
         logGroupName: StackConstants.CONSOLE_API_LOG_GROUP_NAME,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
       }
     )
     const consoleApi = new SpecRestApi(this, StackConstants.CONSOLE_API_NAME, {
@@ -1217,5 +1174,54 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
     }
+  }
+
+  private createDynamodbTable(tableName: string, kinesisStream?: IStream) {
+    const isDevUserStack = process.env.ENV === 'dev:user'
+    if (isDevUserStack) {
+      return Table.fromTableName(this, tableName, tableName)
+    }
+    return new Table(this, tableName, {
+      tableName: tableName,
+      partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
+      sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
+      readCapacity: this.config.resource.DYNAMODB.READ_CAPACITY,
+      writeCapacity: this.config.resource.DYNAMODB.WRITE_CAPACITY,
+      billingMode: this.config.resource.DYNAMODB.BILLING_MODE,
+      kinesisStream,
+      removalPolicy:
+        this.config.stage === 'dev'
+          ? RemovalPolicy.DESTROY
+          : RemovalPolicy.RETAIN,
+    })
+  }
+
+  private createKinesisStream(
+    streamId: string,
+    streamName: string,
+    retentionPeriod: Duration,
+    shardCount = 1
+  ): IStream {
+    const isDevUserStack = process.env.ENV === 'dev:user'
+    if (isDevUserStack) {
+      const streamArn = `arn:aws:kinesis:${this.config.env.region}:${this.config.env.account}:stream/${streamName}`
+      return Stream.fromStreamArn(this, streamId, streamArn)
+    }
+    const stream = new Stream(this, streamId, {
+      streamName,
+      retentionPeriod: retentionPeriod,
+      shardCount,
+    })
+    if (this.config.stage === 'dev') {
+      stream.applyRemovalPolicy(RemovalPolicy.DESTROY)
+    }
+
+    createKinesisAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      `${streamId}PutRecordErrorRate`,
+      stream.streamName
+    )
+    return stream
   }
 }

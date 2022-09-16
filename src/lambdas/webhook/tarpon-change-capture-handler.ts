@@ -73,7 +73,9 @@ async function userHandler(
   await sendWebhookTasks(tenantId, webhookTasks)
 }
 
-const handler = new TarponStreamConsumerBuilder()
+const handler = new TarponStreamConsumerBuilder(
+  process.env.RETRY_KINESIS_STREAM_NAME as string
+)
   .setUserHandler((tenantId, oldUser, newUser) =>
     userHandler(tenantId, oldUser, newUser)
   )

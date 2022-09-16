@@ -6,7 +6,6 @@ import {
 import { StackConstants } from '@cdk/constants'
 import { DynamoDB } from 'aws-sdk'
 import { getDynamoDbClientByEvent } from './dynamodb'
-import { tarponChangeCaptureHandler } from '@/lambdas/tarpon-change-capture-kinesis-consumer/app'
 
 export function createKinesisStreamEvent<T>(
   partitionKeyId: string,
@@ -57,6 +56,9 @@ export async function localTarponChangeCaptureHandler(key: {
     key.SortKeyID,
     undefined,
     entity.Item
+  )
+  const { tarponChangeCaptureHandler } = await import(
+    '@/lambdas/tarpon-change-capture-kinesis-consumer/app'
   )
   await (
     tarponChangeCaptureHandler as any as (

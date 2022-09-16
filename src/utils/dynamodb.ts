@@ -28,7 +28,12 @@ export function getDynamoDbClient(
 ): AWS.DynamoDB.DocumentClient {
   const isLocal = process.env.ENV === 'local'
   return new AWS.DynamoDB.DocumentClient({
-    credentials,
+    credentials: isLocal
+      ? {
+          accessKeyId: 'fake',
+          secretAccessKey: 'fake',
+        }
+      : credentials,
     region: isLocal ? 'local' : process.env.AWS_REGION,
     endpoint: isLocal
       ? process.env.DYNAMODB_URI ||

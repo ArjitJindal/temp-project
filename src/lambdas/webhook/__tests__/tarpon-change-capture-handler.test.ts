@@ -1,15 +1,20 @@
 import { KinesisStreamEvent } from 'aws-lambda'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { PutRecordCommand } from '@aws-sdk/client-kinesis'
 import { WebhookRepository } from '../repositories/webhook-repository'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { createKinesisStreamEvent } from '@/utils/local-dynamodb-change-handler'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+
+dynamoDbSetupHook()
 
 describe('Create webhook delivery tasks', () => {
   let tarponChangeCaptureHandler: (event: KinesisStreamEvent) => void
-  const mockSqsSend = jest.fn()
+  let mockSqsSend = jest.fn()
+  const mockKinesisSend = jest.fn()
   const MOCK_WEBHOOK_DELIVERY_QUEUE_URL = 'mock-sqs-queue-url'
 
   beforeAll(async () => {
@@ -20,6 +25,17 @@ describe('Create webhook delivery tasks', () => {
         SQSClient: class {
           send(command: SendMessageCommand) {
             mockSqsSend(command)
+          }
+        },
+      }
+    })
+    jest.mock('@aws-sdk/client-kinesis', () => {
+      return {
+        ...jest.requireActual('@aws-sdk/client-kinesis'),
+        KinesisClient: class {
+          send(command: PutRecordCommand) {
+            mockKinesisSend(command)
+            return { SequenceNumber: 'mock-sequence-number' }
           }
         },
       }
@@ -152,5 +168,45 @@ describe('Create webhook delivery tasks', () => {
     await tarponChangeCaptureHandler(event)
 
     expect(mockSqsSend).toHaveBeenCalledTimes(0)
+  })
+
+  test('Send to retry stream in case of failure', async () => {
+    mockSqsSend = jest.fn().mockImplementation(() => {
+      throw new Error('Intentional Error')
+    })
+    const TEST_TENANT_ID = getTestTenantId()
+    const webhookRepository = new WebhookRepository(
+      TEST_TENANT_ID,
+      await getMongoDbClient()
+    )
+    const webhook: WebhookConfiguration = {
+      _id: 'webhook_id',
+      createdAt: Date.now(),
+      webhookUrl: 'https://example.com',
+      events: ['USER_STATE_UPDATED'],
+      enabled: true,
+    }
+    await webhookRepository.saveWebhook(webhook)
+    const user = getTestUser({
+      userStateDetails: {
+        reason: 'reason',
+        state: 'DELETED',
+      },
+    })
+    const event = createKinesisStreamEvent(
+      `${TEST_TENANT_ID}#user#primary`,
+      user.userId,
+      null,
+      user
+    )
+
+    await tarponChangeCaptureHandler(event)
+
+    expect(mockKinesisSend).toHaveBeenCalledTimes(1)
+    const command = mockKinesisSend.mock.calls[0][0] as PutRecordCommand
+    expect(command.input.StreamName).toEqual('mock-retry-stream')
+    expect(command.input.Data).toEqual(
+      Buffer.from(event.Records[0].kinesis.data, 'base64')
+    )
   })
 })

@@ -1,5 +1,6 @@
 import {
   KinesisStreamEvent,
+  KinesisStreamRecord,
   KinesisStreamRecordPayload,
   StreamRecord,
 } from 'aws-lambda'
@@ -12,6 +13,11 @@ import {
   USER_PRIMARY_KEY_IDENTIFIER,
   BUSINESS_USER_EVENT_KEY_IDENTIFIER,
 } from './dynamodb-keys'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { User } from '@/@types/openapi-public/User'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 
 type DynamoDbEntityType =
   | 'TRANSACTION'
@@ -20,11 +26,14 @@ type DynamoDbEntityType =
   | 'CONSUMER_USER_EVENT'
   | 'BUSINESS_USER_EVENT'
 
-type DynamoDbEntityUpdate = {
+export type DynamoDbEntityUpdate = {
   tenantId: string
   type: DynamoDbEntityType
+  entityId: string
+  sequenceNumber?: string
   NewImage?: { [key: string]: any }
   OldImage?: { [key: string]: any }
+  rawRecord?: KinesisStreamRecord
 }
 
 function unMarshallDynamoDBStream(dataString: string) {
@@ -33,22 +42,39 @@ function unMarshallDynamoDBStream(dataString: string) {
   return DynamoDB.Converter.unmarshall(parserd_json)
 }
 
-function getDynamoDbEntityType(
-  partitionKeyId: string
-): DynamoDbEntityType | null {
+function getDynamoDbEntityMetadata(
+  partitionKeyId: string,
+  entity: any
+): { type: DynamoDbEntityType; entityId: string } | null {
   if (partitionKeyId.includes(TRANSACTION_PRIMARY_KEY_IDENTIFIER)) {
-    return 'TRANSACTION'
+    return {
+      type: 'TRANSACTION',
+      entityId: `TRANSACTION:${
+        (entity as TransactionWithRulesResult).transactionId
+      }`,
+    }
   } else if (partitionKeyId.includes(USER_PRIMARY_KEY_IDENTIFIER)) {
-    return 'USER'
+    return {
+      type: 'USER',
+      entityId: `USER:${(entity as User).userId}`,
+    }
   } else if (partitionKeyId.includes(CONSUMER_USER_EVENT_KEY_IDENTIFIER)) {
-    return 'CONSUMER_USER_EVENT'
+    return {
+      type: 'CONSUMER_USER_EVENT',
+      entityId: `USER:${(entity as ConsumerUserEvent).userId}`,
+    }
   } else if (partitionKeyId.includes(BUSINESS_USER_EVENT_KEY_IDENTIFIER)) {
-    return 'BUSINESS_USER_EVENT'
+    return {
+      type: 'BUSINESS_USER_EVENT',
+      entityId: `USER:${(entity as BusinessUserEvent).userId}`,
+    }
   } else if (partitionKeyId.includes(TRANSACTION_EVENT_KEY_IDENTIFIER)) {
-    return 'TRANSACTION_EVENT'
-  } else {
-    return null
+    return {
+      type: 'TRANSACTION_EVENT',
+      entityId: `TRANSACTION:${(entity as TransactionEvent).transactionId}`,
+    }
   }
+  return null
 }
 
 function getDynamoDbEntity(
@@ -56,25 +82,31 @@ function getDynamoDbEntity(
 ): DynamoDbEntityUpdate | null {
   const partitionKeyId = dynamoDBStreamRecord.Keys?.PartitionKeyID?.S
   const tenantId = partitionKeyId?.split('#')[0]
+  const NewImage =
+    dynamoDBStreamRecord.NewImage &&
+    unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.NewImage))
+  const OldImage =
+    dynamoDBStreamRecord.OldImage &&
+    unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.OldImage))
   if (!tenantId) {
     logger.error(
       `Cannot get tenant ID from partition key ID: ${partitionKeyId}`
     )
     return null
   }
-  const type = getDynamoDbEntityType(partitionKeyId)
-  if (!type) {
+  const metadata = getDynamoDbEntityMetadata(
+    partitionKeyId,
+    OldImage || NewImage
+  )
+  if (!metadata) {
     return null
   }
   return {
     tenantId,
-    type,
-    NewImage:
-      dynamoDBStreamRecord.NewImage &&
-      unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.NewImage)),
-    OldImage:
-      dynamoDBStreamRecord.OldImage &&
-      unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.OldImage)),
+    type: metadata.type,
+    entityId: metadata.entityId,
+    NewImage,
+    OldImage,
   }
 }
 
@@ -87,6 +119,10 @@ export function getDynamoDbUpdates(
 
     const dynamoDBStreamRecord = JSON.parse(message).dynamodb as StreamRecord
 
-    return getDynamoDbEntity(dynamoDBStreamRecord)
+    return {
+      ...getDynamoDbEntity(dynamoDBStreamRecord),
+      rawRecord: record,
+      sequenceNumber: payload.sequenceNumber,
+    }
   }).filter(Boolean) as DynamoDbEntityUpdate[]
 }

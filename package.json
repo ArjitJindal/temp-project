@@ -145,6 +145,7 @@
     "yaml": "^2.1.1"
   },
   "dependencies": {
+    "@aws-sdk/client-kinesis": "^3.168.0",
     "@aws-sdk/client-secrets-manager": "^3.145.0",
     "@aws-sdk/client-sqs": "^3.145.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",

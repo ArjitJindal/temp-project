@@ -39,6 +39,8 @@ export function getNameForGlobalResource(name: string, config: Config) {
 
 export const StackConstants = {
   TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
+  TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',
+  DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
   MONGO_DB_SECURITY_GROUP_NAME: 'atlas-lambda-sg',
@@ -154,7 +156,10 @@ export const StackConstants = {
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
+  TARPON_MONGODB_RETRY_STREAM_ID: 'tarponMongoDbRetryStream',
+  TARPON_WEBHOOK_RETRY_STREAM_ID: 'tarponWebhookRetryStream',
   HAMMERHEAD_STREAM_ID: 'hammerheadStream',
   HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
+  HAMMERHEAD_RETRY_STREAM_ID: 'hammerheadRetryStream',
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
 }

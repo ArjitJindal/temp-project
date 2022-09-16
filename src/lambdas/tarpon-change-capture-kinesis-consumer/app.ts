@@ -148,7 +148,9 @@ async function transactionEventHandler(
   )
 }
 
-const handler = new TarponStreamConsumerBuilder()
+const handler = new TarponStreamConsumerBuilder(
+  process.env.RETRY_KINESIS_STREAM_NAME as string
+)
   .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
     transactionHandler(tenantId, newTransaction)
   )
@@ -168,11 +170,6 @@ const handler = new TarponStreamConsumerBuilder()
 
 export const tarponChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    try {
-      await handler(event)
-    } catch (err) {
-      logger.error(err)
-      return 'Internal error'
-    }
+    await handler(event)
   }
 )
