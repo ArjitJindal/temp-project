@@ -49,6 +49,19 @@ Handlebars.registerHelper('format-country', function (value) {
   return formatCountry(value)
 })
 
+Handlebars.registerHelper('to-fixed', function (value, options) {
+  if (value == null || Number.isNaN(value)) {
+    return value
+  }
+  const { fractionDigits = 2 } = options.hash
+  return value.toFixed(fractionDigits || 2)
+})
+
+Handlebars.registerHelper('format-time-window', function (timeWindow) {
+  const { units, granularity } = timeWindow
+  return `${units} ${granularity}${units > 1 ? 's' : ''}`
+})
+
 export type Vars = {
   [key: string]: unknown // todo: improve types
 }

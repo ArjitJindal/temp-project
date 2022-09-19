@@ -16,6 +16,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
+import { TIME_WINDOW_SCHEMA } from '@/services/rules-engine/utils'
 
 export type TransactionsVolumeRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -70,26 +71,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           },
           required: [],
         },
-        timeWindow: {
-          type: 'object',
-          title: 'Time Window',
-          properties: {
-            units: { type: 'integer', title: 'Number of time unit' },
-            granularity: {
-              type: 'string',
-              title: 'Time granularity',
-              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
-            },
-            rollingBasis: {
-              type: 'boolean',
-              title: 'Rolling basis',
-              description:
-                'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
-              nullable: true,
-            },
-          },
-          required: ['units', 'granularity'],
-        },
+        timeWindow: TIME_WINDOW_SCHEMA,
         checkSender: {
           type: 'string',
           title: 'Origin User Transaction Direction',

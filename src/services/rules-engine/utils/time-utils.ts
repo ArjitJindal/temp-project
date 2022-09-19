@@ -1,5 +1,5 @@
-import { TimeWindow } from '../rule'
 import { Dayjs } from '@/utils/dayjs'
+import { TimeWindow } from '@/services/rules-engine/rule'
 
 export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
   let afterTimestamp = timeStamp

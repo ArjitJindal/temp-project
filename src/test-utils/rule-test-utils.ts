@@ -203,7 +203,9 @@ export function testRuleDescriptionFormatting(
           expect(expectedDescription).toEqual(null)
           expect(rule.ruleDescription).toEqual(DEFAULT_DESCRIPTION)
         } else if (expectedDescription === null) {
-          expect(rule.ruleDescription).toEqual(DEFAULT_DESCRIPTION)
+          throw new Error(
+            `Rule hit, so expected description should not be empty, but it's empty because it's expected to not be hit`
+          )
         } else {
           expect(rule.ruleDescription).toEqual(expectedDescription)
         }

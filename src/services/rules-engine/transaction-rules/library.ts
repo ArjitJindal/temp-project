@@ -27,6 +27,7 @@ import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-dist
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
 import { TransactionsPatternPercentageRuleParameters } from './transactions-pattern-percentage-base'
+import { TransactionsAverageExceededParameters } from './transactions-average-exceeded'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
@@ -609,6 +610,37 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-between-same-parties',
+      labels: [],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
+    }
+  },
+  () => {
+    const defaultParameters: TransactionsAverageExceededParameters = {
+      period1: {
+        units: 1,
+        granularity: 'day',
+      },
+      period2: {
+        units: 1,
+        granularity: 'day',
+      },
+      multiplierThresholds: {
+        EUR: 2,
+      },
+      checkSender: 'sending',
+      checkReceiver: 'receiving',
+    }
+    return {
+      id: 'R-122',
+      type: 'TRANSACTION',
+      name: 'Average transactions exceed past period average',
+      description:
+        'The average daily amount of transactions of a user in the first period, is >= X times higher than avg. amount of transactions in the second periods',
+      descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. amount of transactions in last {{ format-time-window period1 }} than avg. amount of transactions in last {{ format-time-window period2 }}`,
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transactions-average-exceeded',
       labels: [],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',
