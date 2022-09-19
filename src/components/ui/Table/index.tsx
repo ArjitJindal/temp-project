@@ -158,7 +158,8 @@ export default function Table<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleResetSelection, prevParams, params]);
 
-  const dataKeys = data.items.map((x) => (isMultiRows(x) ? x.item[rowKey] : x[rowKey]));
+  const dataItems = data.items || [];
+  const dataKeys = dataItems.map((x) => (isMultiRows(x) ? x.item[rowKey] : x[rowKey]));
 
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
     [key: number]: number;
@@ -249,7 +250,7 @@ export default function Table<
           return disableStripedColoring || isEven ? style.tableRowLight : style.tableRowDark;
         }}
         loading={loading}
-        dataSource={flatItems(data.items, rowKey)}
+        dataSource={flatItems(dataItems, rowKey)}
         pagination={false}
         onSubmit={(newParams) => {
           if (onChangeParams != null) {
@@ -301,7 +302,7 @@ export default function Table<
           showSizeChanger={false}
           pageSize={DEFAULT_PAGE_SIZE}
           showTitle={true}
-          total={data.total ?? data.items.length}
+          total={data.total ?? dataItems.length}
           current={params?.page}
           onChange={(page) => {
             if (params != null) {
