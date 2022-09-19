@@ -31,6 +31,7 @@ import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import HighTrafficVolumeBetweenSameUsersParameters from './high-traffic-volume-between-same-users'
 import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
+import TransactionsRoundValuePercentageRule from './transactions-round-value-percentage'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -65,6 +66,7 @@ export const TRANSACTION_RULES = {
   'card-holder-name-levensthein-distance': CardHolderNameRule,
   'too-many-users-for-same-card': ToomanyUsersForSameCardRule,
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
+  'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

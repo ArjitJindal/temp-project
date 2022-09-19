@@ -26,6 +26,7 @@ import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pa
 import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
+import { TransactionsPatternPercentageRuleParameters } from './transactions-pattern-percentage-base'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
@@ -634,6 +635,31 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-volume-between-same-users',
+      labels: [],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
+    }
+  },
+  () => {
+    const defaultParameters: TransactionsPatternPercentageRuleParameters = {
+      timeWindow: {
+        units: 7,
+        granularity: 'day',
+      },
+      patternPercentageLimit: 50,
+      initialTransactions: 10,
+    }
+    return {
+      id: 'R-124',
+      type: 'TRANSACTION',
+      name: 'Too many round transactions',
+      description:
+        'Same user ID receives or sends >= X % of all of their receiving or sending transactions as round values ending in 00.00 (hundreds without cents) in time t. The rule kicks in after user has y transactions for any specific direction.',
+      descriptionTemplate:
+        "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds with more than {{ parameters.patternPercentageLimit }}% of transactions as round values ending in 00.00 (hundreds without cents) within time {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s). Rule should hit after the user has initiaited {{ parameters.initialTransactions }} transactions (doesn't have to be successful)",
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transactions-round-value-percentage',
       labels: [],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',
