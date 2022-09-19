@@ -2,9 +2,7 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { ProColumns } from '@ant-design/pro-table';
 import { Col, Divider, Row } from 'antd';
 import { useCallback } from 'react';
-import s from 'index.module.less';
 import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
-import Avatar from '../../../transactions-item/UserDetails/Avatar';
 import UserManualRiskPanel from '@/pages/users-item/UserDetails/UserManualRiskPanel';
 import UserStateEditor from '@/pages/users-item/UserDetails/UserStateEditor';
 import KycStatusEditor from '@/pages/users-item/UserDetails/KycStatusEditor';
@@ -13,8 +11,7 @@ import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalConsumerUser } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import Id from '@/components/ui/Id';
-import { makeUrl } from '@/utils/routing';
+import UserIdNameCard from '@/components/ui/UserIdNameCard';
 
 interface Props {
   user: InternalConsumerUser;
@@ -36,21 +33,8 @@ export default function UserDetails(props: Props) {
   return (
     <>
       <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
-        <Col>
-          <div className={s.user}>
-            <Avatar name={user ? getUserName(user) : undefined} />
-            <div className={s.name}>{user ? getUserName(user) : 'User undefined'}</div>
-            {user && (
-              <Id
-                to={makeUrl('/users/list/:list/:id', {
-                  list: 'consumer',
-                  id: user.userId,
-                })}
-              >
-                {user.userId}
-              </Id>
-            )}
-          </div>
+        <Col span={6}>
+          <UserIdNameCard user={user as InternalConsumerUser} />
         </Col>
         <Feature name="PULSE_MANUAL_USER_RISK_LEVEL">
           <Col>

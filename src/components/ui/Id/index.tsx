@@ -3,6 +3,7 @@ import { ButtonProps } from 'antd/es/button/button';
 import { Link } from 'react-router-dom';
 import { message } from 'antd';
 import style from './style.module.less';
+import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { copyTextToClipboard } from '@/utils/browser';
 
 interface ExtraProps {
@@ -39,7 +40,12 @@ export default function Id(props: ButtonProps & ExtraProps) {
         }
       }}
     >
-      {children}
+      <div className={style.inner}>
+        <span className={style.id}>{children}</span>
+        <div>
+          <FileCopyLineIcon className={style.icon} />
+        </div>
+      </div>
     </a>
   );
 }
