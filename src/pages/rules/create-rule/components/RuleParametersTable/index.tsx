@@ -18,6 +18,12 @@ export const RuleParametersTable: React.FC<Props> = ({ parameters, schema }) => 
           value: entry[1],
         })),
       }}
+      search={false}
+      options={{
+        reload: false,
+        setting: false,
+        density: false,
+      }}
       columns={[
         {
           title: 'Parameter',
