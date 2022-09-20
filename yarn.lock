@@ -6070,6 +6070,11 @@ dedent@^0.7.0:
   resolved "https://registry.yarnpkg.com/dedent/-/dedent-0.7.0.tgz#2495ddbaf6eb874abb0e1be9df22d2e5a544326c"
   integrity sha1-JJXduvbrh0q7Dhvp3yLS5aVEMmw=
 
+dedupe@^3.0.2:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/dedupe/-/dedupe-3.0.3.tgz#7ae7b55ca01028bc7d5714cd57a5bdf5e4aeea6e"
+  integrity sha512-ZSCmu4uLkBWTAPSz9LXtrTNusY2P6BoghZhokPBLzpQpLiBtU0B4QXNxVnwpy7yaqFc1jN30V5BkKMr/uXqf/w==
+
 deep-equal@~1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/deep-equal/-/deep-equal-1.1.1.tgz#b5c98c942ceffaf7cb051e24e1434a25a2e6076a"
@@ -8686,6 +8691,14 @@ json-stringify-safe@~5.0.1:
   resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
   integrity sha1-Epai1Y/UXxmg9s4B1lcB4sc1tus=
 
+json-templates@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/json-templates/-/json-templates-4.2.0.tgz#34fdd6fedbe6955e934d86812a89d30d1df87415"
+  integrity sha512-NX0r9SEI2bsz17DJpKhZPymvlw/vcMcRqjqRC0jl7pofLwcpaSsfjweatMFt9QXaUv+dR5EBzInBp8y5lzluIQ==
+  dependencies:
+    dedupe "^3.0.2"
+    object-path "^0.11.8"
+
 json2module@^0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/json2module/-/json2module-0.0.3.tgz#00fb5f4a9b7adfc3f0647c29cb17bcd1979be9b2"
@@ -9799,6 +9812,11 @@ object-keys@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/object-keys/-/object-keys-1.1.1.tgz#1c47f272df277f3b1daf061677d9c82e2322c60e"
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
+
+object-path@^0.11.8:
+  version "0.11.8"
+  resolved "https://registry.yarnpkg.com/object-path/-/object-path-0.11.8.tgz#ed002c02bbdd0070b78a27455e8ae01fc14d4742"
+  integrity sha512-YJjNZrlXJFM42wTBn6zgOJVar9KFJvzx6sTWDte8sWZF//cnjl0BxHNpfZx+ZffXX63A9q0b1zsFiBX4g4X5KA==
 
 object.assign@^4.1.0, object.assign@^4.1.2:
   version "4.1.2"

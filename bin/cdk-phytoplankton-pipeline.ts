@@ -2,6 +2,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { config as deployConfig } from '../lib/configs/config-deployment';
 import { config as devConfig } from '../lib/configs/config-dev';
+import { config as devUserConfig } from '../lib/configs/config-dev-user';
 import { config as sandboxConfig } from '../lib/configs/config-sandbox';
 import { config as prodConfig } from '../lib/configs/config-prod';
 import { CdkPhytoplanktonStack } from '../lib/cdk-phytoplankton-stack';
@@ -11,6 +12,22 @@ const app = new cdk.App();
 
 if (process.env.ENV === 'dev') {
   new CdkPhytoplanktonStack(app, `${devConfig.stage}-phytoplankton`, devConfig);
+}
+
+if (process.env.ENV === 'dev:user') {
+  const GITHUB_USER = process.env.GITHUB_USER || '';
+  const S_NO = process.env.S_NO || '';
+  const userRegex = /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i;
+  const numberRegex = /^[1-3]$/;
+  if (userRegex.test(GITHUB_USER) && numberRegex.test(S_NO)) {
+    new CdkPhytoplanktonStack(
+      app,
+      `${devUserConfig.stage}-phytoplankton-${GITHUB_USER}-${S_NO}`,
+      devUserConfig,
+    );
+  } else {
+    throw new Error('GITHUB_USER or S_NO not set correctly');
+  }
 }
 
 if (process.env.ENV === 'sandbox') {

@@ -9,6 +9,7 @@ const svgrPlugin = require('./esbuild-plugin-svgr.js');
 const cssModulesPlugin = require('./esbuild-plugin-css-modules.js');
 const resolveVirtuals = require('./esbuild-plugin-resolve-virtuals.js');
 const { log, error, notify } = require('./helpers.js');
+const parse = require("json-templates");
 
 async function prepare(env) {
   await fs.rm(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER), { recursive: true, force: true });
@@ -17,6 +18,13 @@ async function prepare(env) {
 }
 
 async function readConfig(env) {
+  if(env.ENV === "dev" && process.env.GITHUB_USER) {
+    const stringConfig = await fs.readFile(path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}-user.json`), {encoding: 'utf-8'});
+    const template = parse(stringConfig);
+    const githubUser = process.env.GITHUB_USER.toLowerCase();
+    const serialNumber = process.env.S_NO || '1';
+    return JSON.parse(template({githubUser, serialNumber}));
+  }
   return await fs.readJson(path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}.json`));
 }
 
