@@ -2,8 +2,10 @@ import { Config } from './configs/config'
 
 function getSuffix(): string {
   let suffix = ''
-  if (process.env.ENV === 'dev:user' && process.env.GITHUB_USER) {
-    suffix = process.env.GITHUB_USER
+  if (process.env.ENV === 'dev:user') {
+    suffix =
+      (process.env.GITHUB_USER || '').replace(/-/g, '') +
+      (process.env.S_NO || '1')
   }
   return suffix
 }
@@ -105,9 +107,7 @@ export const StackConstants = {
     'WebhookDelivererFunction'
   ),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
-    getResourceNameForTarpon(
-      'WebhookTarponChangeCaptureKinesisConsumerFunction'
-    ),
+    getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

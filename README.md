@@ -114,7 +114,7 @@ npm run deploy:dev
 To deploy to your stack for dev:
 
 ```bash
-GITHUB_USER=<username> npm run deploy:dev:user:clean
+GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
 ```
 
 ### Fixing common deploy errors by clean deploy
