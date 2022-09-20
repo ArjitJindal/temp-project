@@ -3,8 +3,7 @@ import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { TimeWindow } from '../rule'
-import { subtractTime } from './time-utils'
+import { subtractTime, TimeWindow } from './time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'

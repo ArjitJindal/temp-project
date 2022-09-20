@@ -5,13 +5,13 @@ import {
   getTransactionUserPastTransactions,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
-import { TimeWindow } from '../rule'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TimeWindow } from '@/services/rules-engine/utils/time-utils'
 
 export type TransactionsPatternPercentageRuleParameters =
   DefaultTransactionRuleParameters & {

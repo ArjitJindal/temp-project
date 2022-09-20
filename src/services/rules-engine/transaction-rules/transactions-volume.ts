@@ -10,13 +10,15 @@ import {
   isTransactionInTargetTypes,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
-import { TimeWindow } from '../rule'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
-import { TIME_WINDOW_SCHEMA } from '@/services/rules-engine/utils'
+import {
+  TIME_WINDOW_SCHEMA,
+  TimeWindow,
+} from '@/services/rules-engine/utils/time-utils'
 
 export type TransactionsVolumeRuleParameters =
   DefaultTransactionRuleParameters & {

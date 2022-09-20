@@ -5,9 +5,9 @@ import {
   isTransactionAmountAboveThreshold,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
-import { subtractTime } from '../utils/time-utils'
+import { subtractTime, TimeWindow } from '../utils/time-utils'
 import dayjs from '@/utils/dayjs'
-import { RuleResult, TimeWindow } from '@/services/rules-engine/rule'
+import { RuleResult } from '@/services/rules-engine/rule'
 import {
   DefaultTransactionRuleParameters,
   TransactionRule,

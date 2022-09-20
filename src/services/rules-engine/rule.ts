@@ -1,20 +1,6 @@
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Vars } from '@/services/rules-engine/utils/format-description'
 
-export type TimeWindowGranularity =
-  | 'second'
-  | 'minute'
-  | 'hour'
-  | 'day'
-  | 'week'
-  | 'month'
-
-export type TimeWindow = {
-  units: number
-  granularity: TimeWindowGranularity
-  rollingBasis?: boolean
-}
-
 export type RuleResult = {
   action: RuleAction
   vars?: Vars

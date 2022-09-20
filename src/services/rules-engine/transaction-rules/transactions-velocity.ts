@@ -10,8 +10,7 @@ import {
   isTransactionInTargetTypes,
   isTransactionWithinTimeWindow,
 } from '../utils/transaction-rule-utils'
-import { subtractTime } from '../utils/time-utils'
-import { TimeWindow } from '../rule'
+import { subtractTime, TimeWindow } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import {

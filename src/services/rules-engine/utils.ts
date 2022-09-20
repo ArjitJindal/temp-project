@@ -118,24 +118,3 @@ export function getNonUserReceiverKeys(
       )
     : null
 }
-
-export const TIME_WINDOW_SCHEMA = {
-  type: 'object',
-  title: 'Time Window',
-  properties: {
-    units: { type: 'integer', title: 'Number of time unit' },
-    granularity: {
-      type: 'string',
-      title: 'Time granularity',
-      enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
-    },
-    rollingBasis: {
-      type: 'boolean',
-      title: 'Rolling basis',
-      description:
-        'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
-      nullable: true,
-    },
-  },
-  required: ['units', 'granularity'],
-} as const

@@ -8,32 +8,20 @@ import {
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { subtractTime } from '@/services/rules-engine/utils/time-utils'
+import {
+  subtractTime,
+  TIME_WINDOW_SCHEMA,
+  TimeWindow,
+} from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { RuleResult, TimeWindow } from '@/services/rules-engine/rule'
+import { RuleResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import { TIME_WINDOW_SCHEMA } from '@/services/rules-engine/utils'
+import { neverThrow } from '@/utils/lang'
 
-async function avgTransactionAmount(
-  details: TransactionAmountDetails[],
-  currency: string,
-  timeUnits: number
-): Promise<number> {
-  if (details.length === 0) {
-    return 0
-  }
-
-  const normalizedAmounts = await Promise.all(
-    details.map((amountDetails) =>
-      getTargetCurrencyAmount(amountDetails, currency)
-    )
-  )
-
-  const sum = normalizedAmounts.reduce((acc, x) => acc + x.transactionAmount, 0)
-  return sum / timeUnits
-}
+type AvgMethod = 'amount' | 'number'
+type User = 'origin' | 'destination'
+type Direction = 'sending' | 'receiving'
 
 export type TransactionsAverageExceededParameters =
   DefaultTransactionRuleParameters & {
@@ -46,6 +34,7 @@ export type TransactionsAverageExceededParameters =
     paymentMethod?: PaymentMethod
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
+    avgMethod?: AvgMethod
   }
 
 export default class TransactionAverageExceededRule extends TransactionRule<TransactionsAverageExceededParameters> {
@@ -112,6 +101,12 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
           enum: ['receiving', 'all', 'none'],
           nullable: false,
         },
+        avgMethod: {
+          type: 'string',
+          title: 'Calculation method',
+          enum: ['amount', 'number'],
+          nullable: true,
+        },
       },
       required: [
         'period1',
@@ -120,6 +115,96 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
         'checkSender',
         'checkReceiver',
       ],
+    }
+  }
+
+  private async avg(
+    avgMethod: AvgMethod,
+    user: User,
+    direction: Direction,
+    currency: string,
+    period1: TimeWindow,
+    period2: TimeWindow
+  ): Promise<[number, number]> {
+    const repo = this.transactionRepository as TransactionRepository
+
+    const afterTimestamp1 = subtractTime(
+      dayjs(this.transaction.timestamp),
+      period1
+    )
+    const afterTimestamp2 = subtractTime(
+      dayjs(this.transaction.timestamp),
+      period2
+    )
+
+    const userId =
+      user === 'origin'
+        ? this.transaction.originUserId
+        : this.transaction.destinationUserId
+    const paymentDetails =
+      user === 'origin'
+        ? this.transaction.originPaymentDetails
+        : this.transaction.destinationPaymentDetails
+
+    const [ids1, ids2] = await Promise.all([
+      this.getTransactionsInTimeWindow(
+        userId,
+        paymentDetails,
+        afterTimestamp1,
+        direction
+      ),
+      this.getTransactionsInTimeWindow(
+        userId,
+        paymentDetails,
+        afterTimestamp2,
+        direction
+      ),
+    ])
+
+    const checkOriginSending = user === 'origin' && direction === 'sending'
+    const checkDestinationReceiving =
+      user === 'destination' && direction === 'receiving'
+    const includeCurrentTransaction =
+      checkOriginSending || checkDestinationReceiving
+
+    if (avgMethod === 'amount') {
+      const [transactions1, transactions2] = await Promise.all([
+        repo.getTransactionsByIds(ids1),
+        repo.getTransactionsByIds(ids2),
+      ])
+
+      if (includeCurrentTransaction) {
+        transactions1.push(this.transaction)
+        transactions2.push(this.transaction)
+      }
+
+      const amountDetails1 = transactions1
+        .map((x) =>
+          direction === 'sending'
+            ? x.originAmountDetails
+            : x.destinationAmountDetails
+        )
+        .filter((x): x is TransactionAmountDetails => x != null)
+      const amountDetails2 = transactions2
+        .map((x) =>
+          direction === 'sending'
+            ? x.originAmountDetails
+            : x.destinationAmountDetails
+        )
+        .filter((x): x is TransactionAmountDetails => x != null)
+
+      return await Promise.all([
+        avgTransactionAmount(amountDetails1, currency, period1.units),
+        avgTransactionAmount(amountDetails2, currency, period2.units),
+      ])
+    } else if (avgMethod === 'number') {
+      if (includeCurrentTransaction && this.transaction.transactionId) {
+        ids1.push(this.transaction.transactionId)
+        ids2.push(this.transaction.transactionId)
+      }
+      return [ids1.length / period1.units, ids2.length / period2.units]
+    } else {
+      throw neverThrow(avgMethod, `Method not supported: ${avgMethod}`)
     }
   }
 
@@ -134,13 +219,12 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     ]
   }
 
-  // todo: move to utils
   private async getTransactionsInTimeWindow(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     afterTimestamp: number,
-    direction: 'sending' | 'receiving'
-  ): Promise<Transaction[]> {
+    direction: Direction
+  ): Promise<string[]> {
     const repo = this.transactionRepository as TransactionRepository
 
     const timeRange = {
@@ -167,9 +251,7 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
             filterOptions
           )
 
-    return repo.getTransactionsByIds(
-      result.map(({ transactionId }) => transactionId)
-    )
+    return result.map(({ transactionId }) => transactionId)
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
@@ -183,18 +265,10 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       multiplierThresholds,
       checkSender,
       checkReceiver,
+      avgMethod = 'amount',
     } = this.parameters
 
-    const afterTimestamp1 = subtractTime(
-      dayjs(this.transaction.timestamp),
-      period1
-    )
-    const afterTimestamp2 = subtractTime(
-      dayjs(this.transaction.timestamp),
-      period2
-    )
-
-    const toCheck: ['origin' | 'destination', 'sending' | 'receiving'][] = []
+    const toCheck: [User, Direction][] = []
     if (checkSender !== 'none') {
       toCheck.push(['origin', 'sending'])
       if (checkSender === 'all') {
@@ -212,63 +286,14 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       multiplierThresholds
     )) {
       for (const [user, direction] of toCheck) {
-        const userId =
-          user === 'origin'
-            ? this.transaction.originUserId
-            : this.transaction.destinationUserId
-        const paymentDetails =
-          user === 'origin'
-            ? this.transaction.originPaymentDetails
-            : this.transaction.destinationPaymentDetails
-        const [transactions1, transactions2] = await Promise.all([
-          this.getTransactionsInTimeWindow(
-            userId,
-            paymentDetails,
-            afterTimestamp1,
-            direction
-          ),
-          this.getTransactionsInTimeWindow(
-            userId,
-            paymentDetails,
-            afterTimestamp2,
-            direction
-          ),
-        ])
-
-        const checkOriginSending = user === 'origin' && direction === 'sending'
-        const checkDestinationReceiving =
-          user === 'destination' && direction === 'receiving'
-        const includeCurrentTransaction =
-          checkOriginSending || checkDestinationReceiving
-        if (includeCurrentTransaction) {
-          transactions1.push(this.transaction)
-          transactions2.push(this.transaction)
-        }
-
-        const [avg1, avg2] = await Promise.all([
-          avgTransactionAmount(
-            transactions1
-              .map((x) =>
-                direction === 'sending'
-                  ? x.originAmountDetails
-                  : x.destinationAmountDetails
-              )
-              .filter((x): x is TransactionAmountDetails => x != null),
-            currency,
-            period1.units
-          ),
-          avgTransactionAmount(
-            transactions2
-              .map((x) =>
-                direction === 'sending'
-                  ? x.originAmountDetails
-                  : x.destinationAmountDetails
-              )
-              .filter((x): x is TransactionAmountDetails => x != null),
-            currency,
-            period2.units
-          ),
-        ])
+        const [avg1, avg2] = await this.avg(
+          avgMethod,
+          user,
+          direction,
+          currency,
+          period1,
+          period2
+        )
 
         const multiplier = avg1 / avg2
         const result = multiplier > maxMultiplier
@@ -292,4 +317,23 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
 
     return undefined
   }
+}
+
+async function avgTransactionAmount(
+  details: TransactionAmountDetails[],
+  currency: string,
+  timeUnits: number
+): Promise<number> {
+  if (details.length === 0) {
+    return 0
+  }
+
+  const normalizedAmounts = await Promise.all(
+    details.map((amountDetails) =>
+      getTargetCurrencyAmount(amountDetails, currency)
+    )
+  )
+
+  const sum = normalizedAmounts.reduce((acc, x) => acc + x.transactionAmount, 0)
+  return sum / timeUnits
 }
