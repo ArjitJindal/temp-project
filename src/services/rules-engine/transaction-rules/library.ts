@@ -26,8 +26,8 @@ import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pa
 import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
-import { TransactionsPatternPercentageRuleParameters } from './transactions-pattern-percentage-base'
 import { TransactionsAverageExceededParameters } from './transactions-average-exceeded'
+import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
@@ -706,7 +706,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
     }
   },
   () => {
-    const defaultParameters: TransactionsPatternPercentageRuleParameters = {
+    const defaultParameters: TransactionsRoundValuePercentageRuleParameters = {
       timeWindow: {
         units: 7,
         granularity: 'day',

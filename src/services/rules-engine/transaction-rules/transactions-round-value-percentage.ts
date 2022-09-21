@@ -1,7 +1,17 @@
-import TransactionsPatternPercentageBaseRule from './transactions-pattern-percentage-base'
+import { JSONSchemaType } from 'ajv'
+import TransactionsPatternPercentageBaseRule, {
+  TransactionsPatternPercentageRuleParameters,
+} from './transactions-pattern-percentage-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
-export default class TransactionsRoundValuePercentageRule extends TransactionsPatternPercentageBaseRule {
+export type TransactionsRoundValuePercentageRuleParameters =
+  TransactionsPatternPercentageRuleParameters
+
+export default class TransactionsRoundValuePercentageRule extends TransactionsPatternPercentageBaseRule<TransactionsRoundValuePercentageRuleParameters> {
+  public static getSchema(): JSONSchemaType<TransactionsRoundValuePercentageRuleParameters> {
+    return TransactionsPatternPercentageBaseRule.getBaseSchema()
+  }
+
   protected matchPattern(
     transaction: Transaction,
     direction?: 'origin' | 'destination'

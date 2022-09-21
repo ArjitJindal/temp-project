@@ -1,5 +1,5 @@
-import { TransactionsPatternPercentageRuleParameters } from '../transactions-pattern-percentage-base'
 import { TRANSACTION_RULES_LIBRARY } from '../library'
+import { TransactionsRoundValuePercentageRuleParameters } from '../transactions-round-value-percentage'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -44,7 +44,7 @@ describe('R-124 description formatting', () => {
         },
         initialTransactions: 1,
         patternPercentageLimit: 50,
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -100,7 +100,7 @@ describe('Core logic without filters', () => {
         },
         initialTransactions: 2,
         patternPercentageLimit: 50,
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -172,7 +172,7 @@ describe('Core logic with optional filters - paymentMethod', () => {
         initialTransactions: 0,
         patternPercentageLimit: 30,
         paymentMethod: 'ACH',
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -231,7 +231,7 @@ describe('Core logic with optional filters - transactionState', () => {
         initialTransactions: 0,
         patternPercentageLimit: 30,
         transactionState: 'DECLINED',
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -283,7 +283,7 @@ describe('Core logic with optional filters - transactionTypes', () => {
         initialTransactions: 0,
         patternPercentageLimit: 30,
         transactionTypes: ['WITHDRAWAL'],
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])
@@ -336,7 +336,7 @@ describe('Core logic with optional filters - userType', () => {
         initialTransactions: 0,
         patternPercentageLimit: 30,
         userType: 'CONSUMER',
-      } as TransactionsPatternPercentageRuleParameters,
+      } as TransactionsRoundValuePercentageRuleParameters,
       defaultAction: 'FLAG',
     },
   ])

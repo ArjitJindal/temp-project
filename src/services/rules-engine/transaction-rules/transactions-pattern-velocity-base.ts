@@ -5,37 +5,34 @@ import {
   getTransactionUserPastTransactions,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
+import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import {
-  TimeWindow,
-  TIME_WINDOW_SCHEMA,
-} from '@/services/rules-engine/utils/time-utils'
 
-export type TransactionsPatternPercentageRuleParameters =
+export type TransactionsPatternVelocityRuleParameters =
   DefaultTransactionRuleParameters & {
-    patternPercentageLimit: number
+    transactionsLimit: number
     timeWindow: TimeWindow
-    initialTransactions: number
 
     // Optional parameters
     checkSender?: 'sending' | 'all' | 'none'
     checkReceiver?: 'receiving' | 'all' | 'none'
+    initialTransactions?: number
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     userType?: UserType
   }
 
-export default class TransactionsPatternPercentageBaseRule<
-  T extends TransactionsPatternPercentageRuleParameters
+export default class TransactionsPatternVelocityBaseRule<
+  T extends TransactionsPatternVelocityRuleParameters
 > extends TransactionRule<T> {
   transactionRepository?: TransactionRepository
 
-  public static getBaseSchema(): JSONSchemaType<TransactionsPatternPercentageRuleParameters> {
+  public static getBaseSchema(): JSONSchemaType<TransactionsPatternVelocityRuleParameters> {
     return {
       type: 'object',
       properties: {
@@ -56,15 +53,14 @@ export default class TransactionsPatternPercentageBaseRule<
             'If not specified, all transactions regardless of the state will be used for running the rule',
           nullable: true,
         },
-        patternPercentageLimit: {
-          type: 'number',
-          title: 'Threshold percentage limit',
-          minimum: 0,
-          maximum: 100,
+        transactionsLimit: {
+          type: 'integer',
+          title: 'Transactions Limit',
         },
         initialTransactions: {
           type: 'integer',
           title: 'Initial Transactions Count Threshold',
+          nullable: true,
         },
         timeWindow: TIME_WINDOW_SCHEMA,
         transactionTypes: {
@@ -102,9 +98,10 @@ export default class TransactionsPatternPercentageBaseRule<
           nullable: true,
         },
       },
-      required: ['initialTransactions', 'patternPercentageLimit', 'timeWindow'],
+      required: ['transactionsLimit', 'timeWindow'],
     }
   }
+
   public getFilters() {
     const { transactionTypes, paymentMethod, userType } = this.parameters
     return super
@@ -124,7 +121,7 @@ export default class TransactionsPatternPercentageBaseRule<
       timeWindow,
       transactionState,
       transactionTypes,
-      patternPercentageLimit,
+      transactionsLimit,
       initialTransactions,
       checkSender = 'all',
       checkReceiver = 'all',
@@ -149,9 +146,6 @@ export default class TransactionsPatternPercentageBaseRule<
       }
     )
 
-    const senderTransactions = senderSendingTransactions
-      .concat(senderReceivingTransactions)
-      .concat(this.transaction)
     const senderMatchedTransactions = [
       ...senderSendingTransactions
         .concat(this.transaction)
@@ -160,11 +154,6 @@ export default class TransactionsPatternPercentageBaseRule<
         this.matchPattern(transaction, 'destination')
       ),
     ]
-    const senderMatchPercentage =
-      (senderMatchedTransactions.length / senderTransactions.length) * 100
-    const receiverTransactions = receiverSendingTransactions
-      .concat(receiverReceivingTransactions)
-      .concat(this.transaction)
     const receiverMatchedTransactions = [
       ...receiverSendingTransactions.filter((transaction) =>
         this.matchPattern(transaction, 'origin')
@@ -173,12 +162,11 @@ export default class TransactionsPatternPercentageBaseRule<
         .concat(this.transaction)
         .filter((transaction) => this.matchPattern(transaction, 'destination')),
     ]
-    const receiverMatchPercentage =
-      (receiverMatchedTransactions.length / receiverTransactions.length) * 100
 
     if (
-      senderTransactions.length > initialTransactions &&
-      senderMatchPercentage > patternPercentageLimit
+      (!initialTransactions ||
+        senderMatchedTransactions.length > initialTransactions) &&
+      senderMatchedTransactions.length > transactionsLimit
     ) {
       return {
         action: this.action,
@@ -187,8 +175,9 @@ export default class TransactionsPatternPercentageBaseRule<
         },
       }
     } else if (
-      receiverTransactions.length > initialTransactions &&
-      receiverMatchPercentage > patternPercentageLimit
+      (!initialTransactions ||
+        receiverMatchedTransactions.length > initialTransactions) &&
+      receiverMatchedTransactions.length > transactionsLimit
     ) {
       return {
         action: this.action,
