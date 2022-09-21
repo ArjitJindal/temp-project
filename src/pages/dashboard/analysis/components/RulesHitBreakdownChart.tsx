@@ -3,12 +3,22 @@ import numeral from 'numeral';
 import { Pie, PieConfig } from '@ant-design/charts';
 import styles from '../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
-import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
+import { getRuleInstanceDisplay, RuleInstanceMap, RulesMap } from '@/pages/rules/utils';
 
-const transformData = (data: DashboardStatsRulesCountData[] | []) => {
+const transformData = (
+  data: DashboardStatsRulesCountData[] | [],
+  ruleInstances: RuleInstanceMap,
+  rules: RulesMap,
+) => {
   return data.map((item: DashboardStatsRulesCountData) => {
     return {
-      x: getRuleInstanceDisplayId(item.ruleId, item.ruleInstanceId),
+      x: `${item.ruleId}: ${getRuleInstanceDisplay(
+        item.ruleId,
+        item.ruleInstanceId,
+        rules,
+        ruleInstances,
+      )}`,
+
       y: item.hitCount,
     };
   });
@@ -17,9 +27,13 @@ const transformData = (data: DashboardStatsRulesCountData[] | []) => {
 const RulesHitBreakdownChart = ({
   loading,
   data,
+  ruleInstances,
+  rules,
 }: {
   loading: boolean;
   data: DashboardStatsRulesCountData[];
+  ruleInstances: RuleInstanceMap;
+  rules: RulesMap;
 }) => {
   return (
     <Card
@@ -48,7 +62,7 @@ const RulesHitBreakdownChart = ({
                 type: 'element-active',
               },
             ]}
-            data={transformData(data) as any}
+            data={transformData(data, ruleInstances, rules) as any}
             legend={{
               visible: false,
             }}

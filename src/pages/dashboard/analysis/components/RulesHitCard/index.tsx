@@ -8,12 +8,17 @@ import { Link } from 'react-router-dom';
 import RulesHitBreakdown from '../RulesHitBreakdownChart';
 import header from '../dashboardutils';
 import style from '../../style.module.less';
-import { DashboardStatsRulesCountData, Rule, RuleInstance } from '@/apis';
+import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
 import { RequestTable } from '@/components/RequestTable';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
-import { getRuleInstanceDisplayId } from '@/pages/rules/utils';
+import {
+  getRuleInstanceDisplay,
+  getRuleInstanceDisplayId,
+  RuleInstanceMap,
+  RulesMap,
+} from '@/pages/rules/utils';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 
 export default function RuleHitCard() {
@@ -23,8 +28,8 @@ export default function RuleHitCard() {
     moment().subtract(1, 'week'),
     moment(),
   ]);
-  const [rules, setRules] = useState<{ [key: string]: Rule }>({});
-  const [ruleInstances, setRuleInstances] = useState<{ [key: string]: RuleInstance }>({});
+  const [rules, setRules] = useState<RulesMap>({});
+  const [ruleInstances, setRuleInstances] = useState<RuleInstanceMap>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
 
@@ -41,7 +46,7 @@ export default function RuleHitCard() {
       render: (_, stat) => {
         return (
           <div>
-            {ruleInstances[stat.ruleInstanceId as string]?.ruleNameAlias || rules[stat.ruleId].name}
+            {getRuleInstanceDisplay(stat.ruleId, stat.ruleInstanceId, rules, ruleInstances)}
           </div>
         );
       },
@@ -152,7 +157,12 @@ export default function RuleHitCard() {
           />
         </Col>
         <Col span={12}>
-          <RulesHitBreakdown loading={loading} data={rulesHitData} />{' '}
+          <RulesHitBreakdown
+            loading={loading}
+            data={rulesHitData}
+            ruleInstances={ruleInstances}
+            rules={rules}
+          />{' '}
         </Col>
       </Row>
     </Card>

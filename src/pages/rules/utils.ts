@@ -1,5 +1,8 @@
-import { CaseType, CasePriority } from '@/apis';
+import { CaseType, CasePriority, RuleInstance, Rule } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
+
+export type RuleInstanceMap = { [key: string]: RuleInstance };
+export type RulesMap = { [key: string]: Rule };
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
@@ -10,6 +13,15 @@ export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
 
 export function getRuleInstanceDisplayId(ruleId: string, ruleInstanceId: string | undefined) {
   return `${ruleId} (${ruleInstanceId || 'N/A'})`;
+}
+
+export function getRuleInstanceDisplay(
+  ruleId: string,
+  ruleInstanceId: string | undefined,
+  rules: RulesMap,
+  ruleInstances: RuleInstanceMap,
+) {
+  return ruleInstances[ruleInstanceId as string]?.ruleNameAlias || rules[ruleId].name;
 }
 
 export const RULE_CASE_CREATION_TYPE_OPTIONS: { label: string; value: CaseType }[] = [
