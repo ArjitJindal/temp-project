@@ -206,6 +206,65 @@ async function getTransactions(
   }
 }
 
+async function getTransactionsCount(
+  userId: string | undefined,
+  paymentDetails: PaymentDetails | undefined,
+  transactionRepository: TransactionRepository,
+  options: {
+    afterTimestamp: number
+    beforeTimestamp: number
+    checkType: 'sending' | 'receiving' | 'all' | 'none'
+    transactionState?: TransactionState
+    transactionTypes?: TransactionType[]
+  }
+): Promise<{
+  sendingTransactionsCount: number | null
+  receivingTransactionsCount: number | null
+}> {
+  const {
+    checkType,
+    beforeTimestamp,
+    afterTimestamp,
+    transactionState,
+    transactionTypes,
+  } = options
+  const [sendingTransactionsCount, receivingTransactionsCount] =
+    await Promise.all([
+      checkType === 'sending' || checkType === 'all'
+        ? transactionRepository.getGenericUserSendingTransactionsCount(
+            userId,
+            paymentDetails,
+            {
+              afterTimestamp,
+              beforeTimestamp,
+            },
+            {
+              transactionState,
+              transactionTypes,
+            }
+          )
+        : Promise.resolve(null),
+      checkType === 'receiving' || checkType === 'all'
+        ? transactionRepository.getGenericUserReceivingTransactionsCount(
+            userId,
+            paymentDetails,
+            {
+              afterTimestamp,
+              beforeTimestamp,
+            },
+            {
+              transactionState,
+              transactionTypes,
+            }
+          )
+        : Promise.resolve(null),
+    ])
+  return {
+    sendingTransactionsCount,
+    receivingTransactionsCount,
+  }
+}
+
 export async function getTransactionUserPastTransactions(
   transaction: Transaction,
   transactionRepository: TransactionRepository,
@@ -303,5 +362,84 @@ export async function getTransactionUserPastTransactions(
     senderReceivingTransactions,
     receiverSendingTransactions,
     receiverReceivingTransactions,
+  }
+}
+
+export async function getTransactionUserPastTransactionsCount(
+  transaction: Transaction,
+  transactionRepository: TransactionRepository,
+  options: {
+    timeWindow: TimeWindow
+    checkSender: 'sending' | 'all' | 'none'
+    checkReceiver: 'receiving' | 'all' | 'none'
+    transactionState?: TransactionState
+    transactionTypes?: TransactionType[]
+  }
+): Promise<{
+  senderSendingTransactionsCount: number | null
+  senderReceivingTransactionsCount: number | null
+  receiverSendingTransactionsCount: number | null
+  receiverReceivingTransactionsCount: number | null
+}> {
+  const {
+    checkSender,
+    checkReceiver,
+    timeWindow,
+    transactionState,
+    transactionTypes,
+  } = options
+  const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
+  const beforeTimestamp = transaction.timestamp!
+  const senderTransactionsCountPromise =
+    checkSender !== 'none'
+      ? getTransactionsCount(
+          transaction.originUserId,
+          transaction.originPaymentDetails,
+          transactionRepository,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+            checkType: checkSender,
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve({
+          sendingTransactionsCount: null,
+          receivingTransactionsCount: null,
+        })
+  const receiverTransactionsCountPromise =
+    checkReceiver !== 'none'
+      ? getTransactionsCount(
+          transaction.destinationUserId,
+          transaction.destinationPaymentDetails,
+          transactionRepository,
+          {
+            afterTimestamp,
+            beforeTimestamp,
+            checkType: checkReceiver,
+            transactionState,
+            transactionTypes,
+          }
+        )
+      : Promise.resolve({
+          sendingTransactionsCount: null,
+          receivingTransactionsCount: null,
+        })
+  const [senderTransactionsCount, receiverTransactionsCount] =
+    await Promise.all([
+      senderTransactionsCountPromise,
+      receiverTransactionsCountPromise,
+    ])
+
+  return {
+    senderSendingTransactionsCount:
+      senderTransactionsCount.sendingTransactionsCount,
+    senderReceivingTransactionsCount:
+      senderTransactionsCount.receivingTransactionsCount,
+    receiverSendingTransactionsCount:
+      receiverTransactionsCount.sendingTransactionsCount,
+    receiverReceivingTransactionsCount:
+      receiverTransactionsCount.receivingTransactionsCount,
   }
 }
