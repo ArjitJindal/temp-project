@@ -33,6 +33,7 @@ import ToomanyUsersForSameCardRule from './too-many-users-for-same-card'
 import SameUserUsingTooManyCardsRule from './same-user-using-too-many-cards'
 import TransactionsAverageExceededRule from './transactions-average-exceeded'
 import TransactionsRoundValuePercentageRule from './transactions-round-value-percentage'
+import TooManyTransactionsToHighRiskCountryRule from './too-many-transactions-to-high-risk-country'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -69,6 +70,8 @@ export const TRANSACTION_RULES = {
   'same-user-using-too-many-cards': SameUserUsingTooManyCardsRule,
   'transactions-round-value-percentage': TransactionsRoundValuePercentageRule,
   'transactions-average-exceeded': TransactionsAverageExceededRule,
+  'too-many-transactions-to-high-risk-country':
+    TooManyTransactionsToHighRiskCountryRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

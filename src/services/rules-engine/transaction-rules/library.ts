@@ -28,6 +28,7 @@ import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
 import { TransactionsAverageExceededParameters } from './transactions-average-exceeded'
 import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
+import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
@@ -725,6 +726,35 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-round-value-percentage',
+      labels: [],
+      defaultCasePriority: 'P1',
+      defaultCaseCreationType: 'TRANSACTION',
+    }
+  },
+  () => {
+    const defaultParameters: TooManyTransactionsToHighRiskCountryRuleParameters =
+      {
+        timeWindow: {
+          units: 1,
+          granularity: 'hour',
+        },
+        transactionsLimit: 2,
+        highRiskCountries: [],
+        transactionTypes: ['DEPOSIT'],
+        checkSender: 'all',
+        checkReceiver: 'all',
+      }
+    return {
+      id: 'R-77',
+      type: 'TRANSACTION',
+      name: 'Too Many Transactions To High Risk Country',
+      description:
+        'User receives or send >= x transactions in time t from/to high risk country',
+      descriptionTemplate:
+        '<Sender | Receiver> performed <x> or more transactions with <sender | receiver country> which is a high risk country within <t> <time granularity>',
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'too-many-transactions-to-high-risk-country',
       labels: [],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',
