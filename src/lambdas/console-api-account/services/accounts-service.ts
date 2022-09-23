@@ -11,6 +11,8 @@ import { AccountsConfig } from '../app'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { logger } from '@/core/logger'
+import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { isValidRole } from '@/@types/jwt'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -69,16 +71,21 @@ export class AccountsService {
   }
 
   private static userToAccount(user: User<AppMetadata>): Account {
-    if (user.user_id == null) {
+    const { app_metadata, user_id, email } = user
+    if (user_id == null) {
       throw new Conflict('User id can not be null')
     }
-    if (user.email == null) {
+    if (email == null) {
       throw new Conflict('User email can not be null')
     }
+    const role: AccountRole =
+      app_metadata && isValidRole(app_metadata.role)
+        ? app_metadata.role
+        : 'user'
     return {
-      id: user.user_id,
-      role: user.app_metadata?.role ?? 'USER',
-      email: user.email,
+      id: user_id,
+      role: role,
+      email: email,
       emailVerified: user.email_verified ?? false,
       name: user.name ?? '',
       picture: user.picture,
@@ -223,5 +230,36 @@ export class AccountsService {
       )
     }
     await this.managementClient.deleteUser({ id: idToDelete })
+  }
+
+  async patchUser(
+    tenant: Tenant,
+    accountId: string,
+    patch: AccountPatchPayload
+  ): Promise<Account> {
+    const userTenant = await this.getAccountTenant(accountId)
+
+    if (userTenant == null || userTenant.id !== tenant.id) {
+      throw new BadRequest(
+        `Unable to find user "${accountId}" in the tenant |${tenant.id}|`
+      )
+    }
+
+    const user = await this.managementClient.getUser({
+      id: accountId,
+    })
+
+    const patchedUser = await this.managementClient.updateUser(
+      {
+        id: accountId,
+      },
+      {
+        app_metadata: {
+          ...user.app_metadata,
+          role: patch.role,
+        },
+      }
+    )
+    return AccountsService.userToAccount(patchedUser)
   }
 }

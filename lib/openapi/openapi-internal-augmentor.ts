@@ -19,9 +19,9 @@ const PathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
-  '/accounts/{userId}/change_tenant':
+  '/accounts/{accountId}/change_tenant':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
-  '/accounts/{userId}': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/accounts/{accountId}': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/apikey': StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/rule_implementations': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/iam/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,

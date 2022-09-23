@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -1084,11 +1084,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TenantSettings'
-  '/accounts/{userId}/change_tenant':
+  '/accounts/{accountId}/change_tenant':
     parameters:
       - schema:
           type: string
-        name: userId
+        name: accountId
         in: path
         required: true
     post:
@@ -1114,19 +1114,38 @@ paths:
                 $ref: '#/components/schemas/ManualRiskAssignmentUserState'
         '403':
           description: Not enough privileges
-  '/accounts/{userId}':
+  '/accounts/{accountId}':
     parameters:
       - schema:
           type: string
-        name: userId
+        name: accountId
         in: path
         required: true
+    patch:
+      summary: Account - Patch
+      operationId: accounts-patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountPatchPayload'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '403':
+          description: Not enough privileges
     delete:
       summary: Account - Delete
       operationId: accounts-delete
       responses:
         '200':
           description: OK
+        '403':
+          description: Not enough privileges
   /accounts:
     post:
       summary: Account - Invite
@@ -1708,7 +1727,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -1989,7 +2008,7 @@ components:
         id:
           type: string
         role:
-          type: string
+          $ref: '#/components/schemas/AccountRole'
         email:
           type: string
         emailVerified:
@@ -2010,8 +2029,16 @@ components:
       properties:
         email:
           type: string
+        role:
+          $ref: '#/components/schemas/AccountRole'
       required:
         - email
+    AccountPatchPayload:
+      title: AccountPatchPayload
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/AccountRole'
     Tenant:
       title: Tenant
       type: object

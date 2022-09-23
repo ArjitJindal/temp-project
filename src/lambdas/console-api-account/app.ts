@@ -2,13 +2,15 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
+import { BadRequest, Forbidden } from 'http-errors'
 import { AccountsService } from './services/accounts-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { assertRole, isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Account } from '@/@types/openapi-internal/Account'
-import { logger } from '@/core/logger'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
+import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
+import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 
 export type AccountsConfig = {
   AUTH0_DOMAIN: string
@@ -27,64 +29,66 @@ export const accountsHandler = lambdaApi()(
     const config = process.env as AccountsConfig
 
     const accountsService = new AccountsService(config)
+    const organization = await accountsService.getAccountTenant(userId)
 
     if (event.httpMethod === 'GET' && event.resource === '/accounts') {
-      const tenant = await accountsService.getAccountTenant(userId)
-
       // todo: this call can only return up to 1000 users, need to handle this
       const accounts: Account[] = await accountsService.getTenantAccounts(
-        tenant
+        organization
       )
       return accounts
     } else if (event.httpMethod === 'POST' && event.resource === '/accounts') {
       assertRole({ role, verifiedEmail }, 'admin')
       if (event.body == null) {
-        throw new Error(`Body should not be empty`)
+        throw new BadRequest(`Body should not be empty`)
       }
-      // todo: validate
-      const { email } = JSON.parse(event.body)
+      const body: AccountInvitePayload = JSON.parse(event.body)
+      const inviteRole: AccountRole = body.role ?? 'user'
+      if (!isValidRole(inviteRole)) {
+        throw new BadRequest(`User role is not valid`)
+      }
+      if (inviteRole === 'root') {
+        throw new Forbidden(`It's not possible to create a root user`)
+      }
 
-      const organization = await accountsService.getAccountTenant(userId)
       const user = await accountsService.createAccountInOrganization(
         organization,
         {
-          email,
-          role: 'user',
+          email: body.email,
+          role: inviteRole,
         }
       )
 
       return user
     } else if (
       event.httpMethod === 'POST' &&
-      event.resource === '/accounts/{userId}/change_tenant'
+      event.resource === '/accounts/{accountId}/change_tenant'
     ) {
       assertRole({ role, verifiedEmail }, 'root')
       const { pathParameters } = event
-      const idToChange = pathParameters?.userId
+      const idToChange = pathParameters?.accountId
       if (!idToChange) {
-        throw new Error(`userId is not provided`)
+        throw new BadRequest(`accountId is not provided`)
       }
       if (event.body == null) {
-        throw new Error(`Body should not be empty`)
+        throw new BadRequest(`Body should not be empty`)
       }
       const { newTenantId } = JSON.parse(event.body) as ChangeTenantPayload
       const oldTenant = await accountsService.getAccountTenant(idToChange)
-      logger.info('oldTenant', JSON.stringify(oldTenant))
       const newTenant = await accountsService.getTenantById(newTenantId)
       if (newTenant == null) {
         throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
       }
-      logger.info('newTenant', JSON.stringify(newTenant))
       await accountsService.changeUserTenant(oldTenant, newTenant, userId)
       return true
     } else if (
       event.httpMethod === 'DELETE' &&
-      event.resource === '/accounts/{userId}'
+      event.resource === '/accounts/{accountId}'
     ) {
       const { pathParameters } = event
       assertRole({ role, verifiedEmail }, 'admin')
 
-      const idToDelete = pathParameters?.userId
+      const idToDelete = pathParameters?.accountId
       if (!idToDelete) {
         throw new Error(`userId is not provided`)
       }
@@ -92,6 +96,36 @@ export const accountsHandler = lambdaApi()(
       const organization = await accountsService.getAccountTenant(userId)
       await accountsService.deleteUser(organization, idToDelete)
       return true
+    } else if (event.resource === '/accounts/{accountId}') {
+      const { pathParameters } = event
+      const accountId = pathParameters?.accountId
+      if (!accountId) {
+        throw new BadRequest(`accountId is not provided`)
+      }
+      if (event.httpMethod === 'DELETE') {
+        assertRole({ role, verifiedEmail }, 'admin')
+
+        await accountsService.deleteUser(organization, accountId)
+        return true
+      } else if (event.httpMethod === 'PATCH') {
+        assertRole({ role, verifiedEmail }, 'admin')
+        if (event.body == null) {
+          throw new BadRequest(`Body should not be empty`)
+        }
+        const patchPayload = JSON.parse(event.body) as AccountPatchPayload
+        if (!isValidRole(patchPayload.role)) {
+          throw new BadRequest(`User role is not valid`)
+        }
+        if (patchPayload.role === 'root') {
+          throw new Forbidden(`It's not possible to create a root user`)
+        }
+
+        return await accountsService.patchUser(
+          organization,
+          accountId,
+          patchPayload
+        )
+      }
     }
 
     throw new BadRequest('Unhandled request')

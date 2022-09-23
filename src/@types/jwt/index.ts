@@ -4,7 +4,10 @@ import { AccountRole } from '../openapi-internal/AccountRole'
 
 export const ROLES: AccountRole[] = ['root', 'admin', 'user']
 
-export function isValidRole(role: string): role is AccountRole {
+export function isValidRole(role: unknown): role is AccountRole {
+  if (role == null || typeof role !== 'string') {
+    return false
+  }
   return ROLES.indexOf(role as AccountRole) !== -1
 }
 
