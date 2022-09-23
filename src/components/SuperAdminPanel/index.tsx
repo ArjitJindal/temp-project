@@ -25,6 +25,7 @@ const FEATURES: Feature[] = [
   'IMPORT_FILES',
   'LISTS',
   'CASE_CREATION_TYPE',
+  'HELP_CENTER',
 ];
 
 export default function SuperAdminPanel() {
