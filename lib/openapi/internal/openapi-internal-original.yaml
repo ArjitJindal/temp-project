@@ -2189,6 +2189,7 @@ components:
         - DASHBOARD_BLOCK_USER
         - LISTS
         - CASE_CREATION_TYPE
+        - HELP_CENTER
       description: ''
     AccountRole:
       type: string
