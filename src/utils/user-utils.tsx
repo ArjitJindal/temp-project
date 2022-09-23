@@ -9,10 +9,12 @@ import { Account } from '@/apis';
 
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
-  ROOT,
-  ADMIN,
-  USER,
+  ROOT = 'root',
+  ADMIN = 'admin',
+  USER = 'user',
 }
+
+export const ROLES_ORDER = ['root', 'admin', 'user'];
 
 export interface FlagrightAuth0User {
   name: string | null;
@@ -38,6 +40,11 @@ export function useAuth0User(): FlagrightAuth0User {
   return context.user;
 }
 
+export function useAccountRole(): UserRole {
+  const user = useAuth0User();
+  return parseUserRole(user?.role ?? null);
+}
+
 export function parseUserRole(role: string | null): UserRole {
   switch (role) {
     case 'root':
@@ -54,7 +61,7 @@ export function getUserRole(user: FlagrightAuth0User | null): UserRole {
 }
 
 export function isAtLeast(user: FlagrightAuth0User | null, role: UserRole) {
-  if (getUserRole(user).valueOf() > role.valueOf()) {
+  if (ROLES_ORDER.indexOf(getUserRole(user)) > ROLES_ORDER.indexOf(role)) {
     return false;
   }
   if (role === UserRole.ROOT) {

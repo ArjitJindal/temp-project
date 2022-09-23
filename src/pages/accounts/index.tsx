@@ -1,7 +1,8 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { message, Popconfirm } from 'antd';
 import { CheckCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
-import AccountInviteForm from './components/AccountInviteForm';
+import AccountForm from './components/AccountForm';
+import s from './index.module.less';
 import { useApi } from '@/api';
 import { Account } from '@/apis';
 import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
@@ -9,10 +10,14 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
-import { RequestTable, TableActionType } from '@/components/RequestTable';
+import { TableActionType } from '@/components/RequestTable';
 import { useI18n } from '@/locales';
 import COLORS from '@/components/ui/colors';
 import { TableColumn } from '@/components/ui/Table/types';
+import { useQuery } from '@/utils/queries/hooks';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { ACCOUNT_LIST } from '@/utils/queries/keys';
+import RoleTag from '@/components/ui/RoleTag';
 
 export default function () {
   const api = useApi();
@@ -38,6 +43,11 @@ export default function () {
       width: 300,
       dataIndex: 'email',
       sorter: true,
+    },
+    {
+      title: 'Role',
+      width: 100,
+      render: (_, item) => <RoleTag role={item.role} />,
     },
     {
       title: 'Verified',
@@ -71,30 +81,34 @@ export default function () {
 
         // todo: i18n
         return (
-          <Popconfirm
-            title="Are you sure that you want to delete this user?"
-            onConfirm={async () => {
-              try {
-                await api.accountsDelete({ userId: item.id });
-                message.success('User deleted!');
-                refreshTable();
-              } catch (e) {
-                const error = e instanceof Response ? (await e.json())?.message : e;
-                message.error(`Failed to delete user - ${error}`, 10);
-              }
-            }}
-          >
-            <Button analyticsName="Delete account" danger>
-              Delete
-            </Button>
-          </Popconfirm>
+          <div className={s.buttons}>
+            <Popconfirm
+              title="Are you sure that you want to delete this user?"
+              onConfirm={async () => {
+                try {
+                  await api.accountsDelete({ accountId: item.id });
+                  message.success('User deleted!');
+                  refreshTable();
+                } catch (e) {
+                  const error = e instanceof Response ? (await e.json())?.message : e;
+                  message.error(`Failed to delete user - ${error}`, 10);
+                }
+              }}
+            >
+              <Button analyticsName="Delete account" danger>
+                Delete
+              </Button>
+            </Popconfirm>
+            <AccountForm editAccount={item} onClose={refreshTable} />
+          </div>
         );
       },
     });
   }
 
   const analytics = useAnalytics();
-  const request = useCallback(async () => {
+
+  const accountsResult = useQuery(ACCOUNT_LIST(), async () => {
     const [accounts, time] = await measure(() => api.getAccounts());
     analytics.event({
       title: 'Table Loaded',
@@ -108,13 +122,13 @@ export default function () {
       success: true,
       total: filteredAccounts.length,
     };
-  }, [analytics, api]);
+  });
 
   const i18n = useI18n();
   // todo: i18n
   return (
     <PageWrapper title={i18n('menu.accounts')}>
-      <RequestTable<Account>
+      <QueryResultsTable<Account>
         actionRef={actionRef}
         form={{
           labelWrap: true,
@@ -123,9 +137,11 @@ export default function () {
         headerTitle="Team accounts"
         rowKey="id"
         toolBarRender={() => {
-          return isAtLeastAdmin(user) ? [<AccountInviteForm onClose={refreshTable} />] : [];
+          return isAtLeastAdmin(user)
+            ? [<AccountForm editAccount={null} onClose={refreshTable} />]
+            : [];
         }}
-        request={request}
+        queryResults={accountsResult}
         columns={columns}
         columnsState={{
           persistenceType: 'localStorage',

@@ -56,10 +56,10 @@ export default function SuperAdminPanel() {
 
   const handleChangeTenant = async (newTenantId: string) => {
     setChangeTenantRes(loading());
+    const hideMessage = message.loading('Changing Tenant...', 10000);
     try {
-      message.loading('Changing Tenant...', 10000);
       await api.accountsChangeTenant({
-        userId: user.userId,
+        accountId: user.userId,
         ChangeTenantPayload: {
           newTenantId,
         },
@@ -68,6 +68,8 @@ export default function SuperAdminPanel() {
       window.location.reload();
     } catch (e) {
       setChangeTenantRes(failed(e instanceof Error ? e.message : 'Unknown error'));
+    } finally {
+      hideMessage();
     }
   };
   const handleChangeFeatures = async (newFeatures: Feature[]) => {
