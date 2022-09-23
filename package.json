@@ -52,7 +52,7 @@
     "openapi:build": "scripts/openapi/openapi_generate_sdk.ts",
     "openapi:format": "scripts/openapi/openapi_format.js",
     "openapi:publish": "npm run openapi:build && npm run openapi:format && scripts/openapi/openapi_publish.js",
-    "openapi:augment": "lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
+    "openapi:augment": "lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-public-management-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
     "start-local-api": "sam local start-api -t cdk.out/local-tarpon.template.json",
     "recreate-local-ddb": "npm run delete-local-ddb --table=$npm_config_table; npm run create-local-ddb --table=$npm_config_table",
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region=us-east-2",

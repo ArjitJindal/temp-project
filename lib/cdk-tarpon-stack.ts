@@ -46,8 +46,10 @@ import {
 } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { LogGroup } from 'aws-cdk-lib/aws-logs'
 
+import _ from 'lodash'
 import {
   getNameForGlobalResource,
+  getResourceName,
   getResourceNameForTarpon,
   StackConstants,
 } from './constants'
@@ -351,7 +353,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Transaction */
     const { alias: transactionAlias } = this.createFunction({
-      name: StackConstants.TRANSACTION_FUNCTION_NAME,
+      name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
       handler: 'app.transactionHandler',
       codePath: 'dist/public-api-rules-engine',
       provisionedConcurrency:
@@ -364,7 +366,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
-      name: StackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
+      name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
       handler: 'app.transactionEventHandler',
       codePath: 'dist/public-api-rules-engine',
     })
@@ -372,7 +374,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
-      name: StackConstants.USER_EVENT_FUNCTION_NAME,
+      name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
       handler: 'app.userEventsHandler',
       codePath: 'dist/public-api-rules-engine',
     })
@@ -381,7 +383,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* File Import */
     const { alias: fileImportAlias } = this.createFunction(
       {
-        name: StackConstants.FILE_IMPORT_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
         handler: 'app.fileImportHandler',
         codePath: 'dist/console-api-file-import/',
       },
@@ -402,7 +404,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: getPresignedUrlAlias } = this.createFunction(
       {
-        name: StackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
         handler: 'app.getPresignedUrlHandler',
         codePath: 'dist/console-api-file-import/',
       },
@@ -417,7 +419,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Rule Template */
     const { alias: ruleAlias } = this.createFunction(
       {
-        name: StackConstants.RULE_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
         handler: 'app.ruleHandler',
         codePath: 'dist/console-api-rule/',
       },
@@ -429,7 +431,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Rule Instance */
     const { alias: ruleInstanceAlias } = this.createFunction(
       {
-        name: StackConstants.RULE_INSTANCE_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
         handler: 'app.ruleInstanceHandler',
         codePath: 'dist/console-api-rule/',
       },
@@ -441,7 +443,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
       {
-        name: StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
         handler: 'app.transactionsViewHandler',
         codePath: 'dist/console-api-transaction/',
         memorySize: config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
@@ -465,17 +467,17 @@ export class CdkTarponStack extends cdk.Stack {
     /* Accounts */
     this.createFunction(
       {
-        name: StackConstants.ACCOUNT_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
         handler: 'app.accountsHandler',
         codePath: 'dist/console-api-account/',
       },
       atlasFunctionProps
     )
 
-    /* Accounts */
+    /* Tenants */
     this.createFunction(
       {
-        name: StackConstants.TENANT_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
         handler: 'app.tenantsHandler',
         codePath: 'dist/console-api-tenant/',
       },
@@ -485,7 +487,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Business users view */
     const { alias: businessUsersViewAlias } = this.createFunction(
       {
-        name: StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.businessUsersViewHandler',
         codePath: 'dist/console-api-user/',
         provisionedConcurrency:
@@ -508,7 +510,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Consumer users view */
     const { alias: consumerUsersViewAlias } = this.createFunction(
       {
-        name: StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.consumerUsersViewHandler',
         codePath: 'dist/console-api-user/',
         provisionedConcurrency:
@@ -531,7 +533,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(
       {
-        name: StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
         handler: 'app.dashboardStatsHandler',
         codePath: 'dist/console-api-dashboard/',
         provisionedConcurrency:
@@ -544,7 +546,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* User */
     const { alias: userAlias } = this.createFunction({
-      name: StackConstants.USER_FUNCTION_NAME,
+      name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
       handler: 'app.userHandler',
       codePath: 'dist/public-api-user-management',
       provisionedConcurrency:
@@ -555,7 +557,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* List Importer */
     const { alias: listsAlias } = this.createFunction({
-      name: StackConstants.LISTS_FUNCTION_NAME,
+      name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
       handler: 'app.listsHandler',
       codePath: 'dist/console-api-list-importer/',
     })
@@ -622,7 +624,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const { alias: webhookConfigurationHandlerAlias } = this.createFunction(
       {
-        name: StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
         handler: 'app.webhookConfigurationHandler',
         codePath: 'dist/console-api-webhook',
       },
@@ -641,7 +643,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Risk Classification function */
     const { alias: riskClassificationAlias } = this.createFunction(
       {
-        name: StackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
         handler: 'app.riskClassificationHandler',
         codePath: 'dist/console-api-pulse/',
       },
@@ -651,7 +653,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Manual User Risk Assignment function */
     const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
-      name: StackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.manualRiskAssignmentHandler',
       codePath: 'dist/console-api-pulse/',
     })
@@ -659,7 +661,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     /* Parameter risk level assignment function */
     const { alias: parameterRiskAssignmentAlias } = this.createFunction({
-      name: StackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+      name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.parameterRiskAssignmentHandler',
       codePath: 'dist/console-api-pulse/',
     })
@@ -781,60 +783,10 @@ export class CdkTarponStack extends cdk.Stack {
      * Open Issue: CDK+OpenAPI proper integration - https://github.com/aws/aws-cdk/issues/1461
      */
 
-    // Public APIs
-    const PUBLIC_API_OPENAPI_PATH = `./dist/openapi/openapi-public-autogenerated-${config.stage}.yaml`
-    let apiDefinition: ApiDefinition
-    if (config.stage === 'local') {
-      apiDefinition = ApiDefinition.fromAsset(PUBLIC_API_OPENAPI_PATH)
-    } else {
-      const publicOpenApiAsset = new Asset(
-        this,
-        StackConstants.PUBLIC_OPENAPI_ASSET_NAME,
-        {
-          path: PUBLIC_API_OPENAPI_PATH,
-        }
-      )
-      const publicOpenApiData = Fn.transform('AWS::Include', {
-        Location: publicOpenApiAsset.s3ObjectUrl,
-      })
-      apiDefinition = AssetApiDefinition.fromInline(publicOpenApiData)
-    }
+    // Public API
+    const { api: publicApi, logGroup: publicApiLogGroup } =
+      this.createApiGateway(StackConstants.TARPON_API_NAME)
 
-    const publicApiLogGroup = new LogGroup(
-      this,
-      StackConstants.LOG_GROUP_PUBLIC_API_NAME,
-      {
-        logGroupName: StackConstants.TARPON_API_LOG_GROUP_NAME,
-        removalPolicy:
-          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      }
-    )
-    const publicApi = new SpecRestApi(this, StackConstants.TARPON_API_NAME, {
-      restApiName: StackConstants.TARPON_API_NAME,
-      apiDefinition,
-      deployOptions: {
-        loggingLevel: MethodLoggingLevel.INFO,
-        tracingEnabled: true,
-        accessLogDestination: new LogGroupLogDestination(publicApiLogGroup),
-      },
-    })
-    const apiValidationErrorTemplate = {
-      'application/json': '{ "errors": $context.error.validationErrorString }',
-    }
-    publicApi.addGatewayResponse('BadRequestBodyValidationResponse', {
-      type: ResponseType.BAD_REQUEST_BODY,
-      statusCode: '400',
-      templates: apiValidationErrorTemplate,
-    })
-    publicApi.addGatewayResponse('BadRequestParametersValidationResponse', {
-      type: ResponseType.BAD_REQUEST_PARAMETERS,
-      statusCode: '400',
-      templates: apiValidationErrorTemplate,
-    })
-
-    /**
-     * Public API Gateway Alarm
-     */
     createAPIGatewayAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
@@ -850,47 +802,28 @@ export class CdkTarponStack extends cdk.Stack {
       publicApi.restApiName
     )
 
-    // Console APIs
-    const CONSOLE_API_OPENAPI_PATH = `./dist/openapi/openapi-internal-autogenerated-${config.stage}.yaml`
-    if (config.stage === 'local') {
-      apiDefinition = ApiDefinition.fromAsset(CONSOLE_API_OPENAPI_PATH)
-    } else {
-      const internalOpenApiAsset = new Asset(
-        this,
-        StackConstants.CONSOLE_OPENAPI_ASSET_NAME,
-        {
-          path: CONSOLE_API_OPENAPI_PATH,
-        }
-      )
-      const internalOpenApiData = Fn.transform('AWS::Include', {
-        Location: internalOpenApiAsset.s3ObjectUrl,
-      })
-      apiDefinition = AssetApiDefinition.fromInline(internalOpenApiData)
-    }
-    const consoleApiLogGroup = new LogGroup(
+    // Public Console API
+    const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
+      this.createApiGateway(StackConstants.TARPON_MANAGEMENT_API_NAME)
+
+    createAPIGatewayAlarm(
       this,
-      StackConstants.LOG_GROUP_CONSOLE_API_NAME,
-      {
-        logGroupName: StackConstants.CONSOLE_API_LOG_GROUP_NAME,
-        removalPolicy:
-          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
-      }
+      this.betterUptimeCloudWatchTopic,
+      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_ALARM_NAME,
+      publicConsoleApi.restApiName
     )
-    const consoleApi = new SpecRestApi(this, StackConstants.CONSOLE_API_NAME, {
-      restApiName: StackConstants.CONSOLE_API_NAME,
-      apiDefinition,
-      deployOptions: {
-        loggingLevel: MethodLoggingLevel.INFO,
-        tracingEnabled: true,
-        accessLogDestination: new LogGroupLogDestination(consoleApiLogGroup),
-        cacheClusterEnabled: !!config.resource.CONSOLE_API_GATEWAY.CACHE,
-        cacheClusterSize: config.resource.CONSOLE_API_GATEWAY.CACHE?.CAPACITY,
-        cacheTtl: config.resource.CONSOLE_API_GATEWAY.CACHE?.TTL,
-      },
-    })
-    /**
-     * Console API Gateway Alarm
-     */
+
+    createAPIGatewayThrottlingAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      publicConsoleApiLogGroup,
+      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME,
+      publicConsoleApi.restApiName
+    )
+
+    // Console API
+    const { api: consoleApi, logGroup: consoleApiLogGroup } =
+      this.createApiGateway(StackConstants.CONSOLE_API_NAME)
 
     createAPIGatewayAlarm(
       this,
@@ -1007,7 +940,7 @@ export class CdkTarponStack extends cdk.Stack {
   // IMPORTANT: We should use the returned `alias` for granting further roles.
   // We should only use the returned `func` to do the things that alias cannot do
   // (e.g add environment variables)
-  createFunction(
+  private createFunction(
     internalFunctionProps: InternalFunctionProps,
     props: Partial<FunctionProps> = {}
   ): { alias: Alias; func: LambdaFunction } {
@@ -1185,7 +1118,7 @@ export class CdkTarponStack extends cdk.Stack {
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
     }
-    return new Table(this, tableName, {
+    const table = new Table(this, tableName, {
       tableName: tableName,
       partitionKey: { name: 'PartitionKeyID', type: AttributeType.STRING },
       sortKey: { name: 'SortKeyID', type: AttributeType.STRING },
@@ -1198,6 +1131,8 @@ export class CdkTarponStack extends cdk.Stack {
           ? RemovalPolicy.DESTROY
           : RemovalPolicy.RETAIN,
     })
+    this.createDynamoDbAlarms(tableName)
+    return table
   }
 
   private createKinesisStream(
@@ -1227,5 +1162,71 @@ export class CdkTarponStack extends cdk.Stack {
       stream.streamName
     )
     return stream
+  }
+
+  private createApiGateway(apiName: string): {
+    api: SpecRestApi
+    logGroup: LogGroup
+  } {
+    let openapiName: 'public' | 'public-management' | 'internal'
+    if (apiName === StackConstants.TARPON_API_NAME) {
+      openapiName = 'public'
+    } else if (apiName === StackConstants.TARPON_MANAGEMENT_API_NAME) {
+      openapiName = 'public-management'
+    } else if (apiName === StackConstants.CONSOLE_API_NAME) {
+      openapiName = 'internal'
+    } else {
+      throw new Error(`Cannot find openapi for ${apiName}`)
+    }
+
+    const OPENAPI_PATH = `./dist/openapi/openapi-${openapiName}-autogenerated-${this.config.stage}.yaml`
+    let apiDefinition: ApiDefinition
+    if (this.config.stage === 'local') {
+      apiDefinition = ApiDefinition.fromAsset(OPENAPI_PATH)
+    } else {
+      const openApiAsset = new Asset(this, `${openapiName}-openapi-asset`, {
+        path: OPENAPI_PATH,
+      })
+      const openApiData = Fn.transform('AWS::Include', {
+        Location: openApiAsset.s3ObjectUrl,
+      })
+      apiDefinition = AssetApiDefinition.fromInline(openApiData)
+    }
+    const logGroupName = getResourceName(
+      `API-Gateway-Execution-Logs_${apiName}`
+    )
+    const apiLogGroup = new LogGroup(this, logGroupName, {
+      logGroupName,
+      removalPolicy:
+        this.config.stage === 'dev'
+          ? RemovalPolicy.DESTROY
+          : RemovalPolicy.RETAIN,
+    })
+    const restApi = new SpecRestApi(this, apiName, {
+      restApiName: apiName,
+      apiDefinition,
+      deployOptions: {
+        loggingLevel: MethodLoggingLevel.INFO,
+        tracingEnabled: true,
+        accessLogDestination: new LogGroupLogDestination(apiLogGroup),
+      },
+    })
+    const apiValidationErrorTemplate = {
+      'application/json': '{ "errors": $context.error.validationErrorString }',
+    }
+    restApi.addGatewayResponse('BadRequestBodyValidationResponse', {
+      type: ResponseType.BAD_REQUEST_BODY,
+      statusCode: '400',
+      templates: apiValidationErrorTemplate,
+    })
+    restApi.addGatewayResponse('BadRequestParametersValidationResponse', {
+      type: ResponseType.BAD_REQUEST_PARAMETERS,
+      statusCode: '400',
+      templates: apiValidationErrorTemplate,
+    })
+    return {
+      api: restApi,
+      logGroup: apiLogGroup,
+    }
   }
 }

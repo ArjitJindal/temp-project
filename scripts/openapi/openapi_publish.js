@@ -1,17 +1,22 @@
 #!/usr/bin/env node
-const os = require("os");
-const fs = require("fs-extra");
+const os = require('os')
+const fs = require('fs-extra')
 const path = require('path')
 const yaml = require('yaml')
 const { execSync: exec } = require('child_process')
 require('dotenv').config()
 
-const { PROJECT_DIR, parse, stringify, localizeRefs } = require('./openapi_helpers.js')
+const {
+  PROJECT_DIR,
+  parse,
+  stringify,
+  localizeRefs,
+} = require('./openapi_helpers.js')
 
 async function prepareSchemas(OUTPUT_DIR) {
   try {
-    const internalDir = path.resolve(PROJECT_DIR, "lib", "openapi", "internal")
-    const publicDir = path.resolve(PROJECT_DIR, "lib", "openapi", "public")
+    const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
+    const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
 
     const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
     const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
@@ -19,12 +24,20 @@ async function prepareSchemas(OUTPUT_DIR) {
     await fs.ensureDir(internalDirOutput)
     await fs.ensureDir(publicDirOutput)
 
-    const publicSchemaFile = path.resolve(publicDir, "openapi-public-original.yaml")
+    const publicSchemaFile = path.resolve(
+      publicDir,
+      'openapi-public-original.yaml'
+    )
     const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
-    const publicSchemaYaml = parse(publicSchemaText);
+    const publicSchemaYaml = parse(publicSchemaText)
 
-    const internalSchemaFile = path.resolve(internalDir, "openapi-internal-original.yaml")
-    const internalSchemaText = (await fs.readFile(internalSchemaFile)).toString()
+    const internalSchemaFile = path.resolve(
+      internalDir,
+      'openapi-internal-original.yaml'
+    )
+    const internalSchemaText = (
+      await fs.readFile(internalSchemaFile)
+    ).toString()
     {
       /*
         todo: this is just a temporal solution, we need a proper way to
@@ -32,8 +45,8 @@ async function prepareSchemas(OUTPUT_DIR) {
        */
 
       // Replace all refs to public schema to internal
-      let internalSchemaYaml = parse(internalSchemaText);
-      internalSchemaYaml = await localizeRefs(internalSchemaYaml);
+      let internalSchemaYaml = parse(internalSchemaText)
+      internalSchemaYaml = await localizeRefs(internalSchemaYaml)
 
       // Merge all models from public schema to internal schema
       // todo: check for override
@@ -41,55 +54,89 @@ async function prepareSchemas(OUTPUT_DIR) {
         ...internalSchemaYaml.components.schemas,
         ...publicSchemaYaml.components.schemas,
       }
-      await fs.copy(internalDir, internalDirOutput);
-      await fs.writeFile(path.resolve(internalDirOutput, 'openapi-internal-original.yaml'), stringify(internalSchemaYaml));
+      await fs.copy(internalDir, internalDirOutput)
+      await fs.writeFile(
+        path.resolve(internalDirOutput, 'openapi-internal-original.yaml'),
+        stringify(internalSchemaYaml)
+      )
     }
     {
-      await fs.copy(publicDir, publicDirOutput);
-      await fs.writeFile(path.resolve(publicDirOutput, 'openapi-public-original.yaml'), await stringify(publicSchemaYaml));
+      await fs.copy(publicDir, publicDirOutput)
+      await fs.writeFile(
+        path.resolve(publicDirOutput, 'openapi-public-original.yaml'),
+        await stringify(publicSchemaYaml)
+      )
     }
-  }
-  catch(err) {
-    console.error(err);
+  } catch (err) {
+    console.error(err)
   }
 }
 
 async function main() {
-  const OUTPUT_DIR = await fs.mkdtemp(path.resolve(os.tmpdir(), 'tarpon-openapi-publish'))
+  const OUTPUT_DIR = await fs.mkdtemp(
+    path.resolve(os.tmpdir(), 'tarpon-openapi-publish')
+  )
   await fs.emptyDir(OUTPUT_DIR)
 
   await prepareSchemas(OUTPUT_DIR)
 
-  let { BRANCH_NAME, CONFIRM_PUSH_MAIN, PUBLIC_PROJECT_TOKEN, INTERNAL_PROJECT_TOKEN } = process.env
+  let {
+    BRANCH_NAME,
+    CONFIRM_PUSH_MAIN,
+    PUBLIC_PROJECT_TOKEN,
+    PUBLIC_MANAGEMENT_PROJECT_TOKEN,
+    INTERNAL_PROJECT_TOKEN,
+  } = process.env
 
   if (!BRANCH_NAME) {
-    BRANCH_NAME = exec("git symbolic-ref --short -q HEAD 2>/dev/null | tr / -").toString().trim()
+    BRANCH_NAME = exec('git symbolic-ref --short -q HEAD 2>/dev/null | tr / -')
+      .toString()
+      .trim()
   }
 
   if (!BRANCH_NAME) {
-    console.error("ERROR: Please set the BRANCH_NAME environment variables");
+    console.error('ERROR: Please set the BRANCH_NAME environment variables')
     process.exit(1)
   }
 
-  console.log("BRANCH_NAME", BRANCH_NAME)
+  console.log('BRANCH_NAME', BRANCH_NAME)
   if (BRANCH_NAME === 'main' && CONFIRM_PUSH_MAIN !== 'true') {
-    console.error("ERROR: To push to main branch, please, also provide CONFIRM_PUSH_MAIN=true environment variable");
+    console.error(
+      'ERROR: To push to main branch, please, also provide CONFIRM_PUSH_MAIN=true environment variable'
+    )
     process.exit(1)
   }
 
   if (!PUBLIC_PROJECT_TOKEN) {
-    console.error("ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables");
+    console.error(
+      'ERROR: Please set the PUBLIC_PROJECT_TOKEN environment variables'
+    )
+    process.exit(1)
+  }
+  if (!PUBLIC_MANAGEMENT_PROJECT_TOKEN) {
+    console.error(
+      'ERROR: Please set the PUBLIC_MANAGEMENT_PROJECT_TOKEN environment variables'
+    )
     process.exit(1)
   }
   if (!INTERNAL_PROJECT_TOKEN) {
-    console.error("ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables");
+    console.error(
+      'ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables'
+    )
     process.exit(1)
   }
 
-  exec(`./node_modules/.bin/stoplight push --ci-token ${PUBLIC_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public --branch ${BRANCH_NAME}`)
-  exec(`./node_modules/.bin/stoplight push --ci-token ${INTERNAL_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/internal --branch ${BRANCH_NAME}`)
+  exec(
+    `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public --branch ${BRANCH_NAME}`
+  )
+  exec(
+    `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_MANAGEMENT_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public-management --branch ${BRANCH_NAME}`
+  )
+  exec(
+    `./node_modules/.bin/stoplight push --ci-token ${INTERNAL_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/internal --branch ${BRANCH_NAME}`
+  )
 
-  await fs.remove(OUTPUT_DIR);
+  await fs.remove(OUTPUT_DIR)
 }
 
 main().catch((e) => {

@@ -1,0 +1,408 @@
+openapi: 3.0.0
+info:
+  title: Flagright Management API
+  version: '1.0'
+  description: 'Flagright is a fully-managed, API-first compliance-as-a-service solution. This API provides for programmatic access to the Flagright no-code back office portal. The Flagright Management API is organized around REST. Our API has predictable resource-oriented URLs, accepts JSON-encoded request bodies, returns JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs.  API keys are used to authenticate the requests. Your API keys carry many privileges, so be sure to keep them secure! Do not share your secret API keys in publicly accessible areas such as GitHub, client-side code, and so forth.'
+servers:
+  - url: 'https://sandbox.api.flagright.com/management'
+paths:
+  /rules:
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rule'
+              examples:
+                example-1:
+                  value:
+                    - id: R-1
+                      type: TRANSACTION
+                      name: First payment by customer
+                      description: First Payment by customer
+                      defaultParameters: {}
+                      defaultRiskLevelParameters:
+                        VERY_HIGH: {}
+                        HIGH: {}
+                        MEDIUM: {}
+                        LOW: {}
+                        VERY_LOW: {}
+                      defaultAction: FLAG
+                      defaultRiskLevelActions:
+                        VERY_HIGH: FLAG
+                        HIGH: FLAG
+                        MEDIUM: FLAG
+                        LOW: FLAG
+                        VERY_LOW: FLAG
+                      labels:
+                        - string
+                      defaultCaseCreationType: USER
+                      defaultCasePriority: P1
+      operationId: get-rules
+      description: |-
+        ### Rules List
+
+        `GET /rules` endpoint returns a lot of all rule templates supported by flagright. You can use [GET /rules/{ruleId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/a29012dabded6-rule-get) endpoint to fetch the details of any particular rule. 
+
+        Each rule is identified by the unique `id` which is of the form `R-{X}` where `X` is an integer. 
+
+        Rules have a `parametersSchema` which is a [JSON Schema](https://json-schema.org/) that contains the schema of the parameters supported by the rule. When you create a [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f112abcc9788b-rule-instance-create), you need to provide the values in accordance with the `parametersSchema`. 
+
+        All the rules come with default values for all required attributes. 
+
+        Rules come with default `name`, `description`. Each rule may take multiple rule parameters, by default they have a `defaultParameters` attribute that contains all the required fields. For use cases where the rule parameters are forked based on customer dynamic risk score, `defaultRiskLevelParameters` are set. 
+
+        Rules also come with a `defaultAction` and `defaultRiskLevelActions` for rule actions for the rule. 
+
+        All of the above should be configured at the [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f227b99b51274-rule-instance) level when creating a rule instance. Rules are read only and provided by flagright. You can only manipulate rules instances, not rule templates themselves. 
+
+        If you need an update to a rule or a new rule, you can always contact the Flagright team.
+      parameters: []
+  '/rules/{ruleId}':
+    parameters:
+      - schema:
+          type: string
+        name: ruleId
+        in: path
+        required: true
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule - Get
+      operationId: get-rules-ruleId
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rule'
+        '404':
+          description: Not Found
+      description: |-
+        ### Retrieve a Rule 
+
+        `GET /rules/{ruleId}` endpoint returns a rule template supported by flagright.
+  /rule-instances:
+    post:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Create
+      operationId: post-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    type: TRANSACTION
+                    ruleId: string
+                    action: FLAG
+                    parameters: {}
+                    status: ACTIVE
+                    caseCreationType: TRANSACTION
+                    casePriority: P1
+                    createdAt: 0
+                    updatedAt: 0
+                    runCount: 0
+                    hitCount: 0
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstanceUpdatable'
+      description: |-
+        ### Create Rule Instance
+
+        `POST /rule-instances` endpoint is used to create a new rule instance. A rule instance can be thought of as a live entity, that runs checks for for transactions. Rule instances use `Rule` templates as the blueprint. 
+
+        Every rule instance has an associated `ruleId` of the rule from which it is derived. The details of the rule and the required parameters is found by `GET /rules` endpoint. 
+
+        Once a rule instance is created, flagright generates an ID for the rule instance and also stores related metadata like:
+
+        - `id` - unique identifier for the rule instance
+        - `runCount` - how many times the rule instance was run
+        - `hitCount` - how many times a rule was hit
+        - `createdAt` & `updatedAt` - timestamps
+
+        They are generated and maintained by the flagright system and are not updatable by the API.
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - List
+      operationId: get-rule_instances
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleInstance'
+      description: |-
+        ### Retrieve Rule Instances
+
+        `GET /rule-instances` endpoint returns a list of all rule instances created by your account on flagright.
+  '/rule-instances/{ruleInstanceId}':
+    parameters:
+      - schema:
+          type: string
+        name: ruleInstanceId
+        in: path
+        required: true
+    delete:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Delete
+      operationId: delete-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+      description: 'You can *permanently* delete a rule instance using the `DELETE /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a rule instance, you can update the status on the rule instance using the [PUT /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update) endpoint'
+    put:
+      security:
+        - x-api-key: []
+      summary: Rule Instance - Update
+      operationId: put-rule_instances-ruleInstanceId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleInstance'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleInstanceUpdatable'
+            examples: {}
+      description: |
+        ### Update Rule Instance
+
+        Created rule instances can be idempotently updated with the `PUT /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
+components:
+  schemas:
+    RuleInstance:
+      title: RuleInstance
+      allOf:
+        - $ref: '#/components/schemas/RuleInstanceBase'
+        - $ref: '#/components/schemas/RuleInstanceUpdatable'
+    RuleInstanceBase:
+      title: RuleInstanceBase
+      type: object
+      description: ''
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+        ruleId:
+          type: string
+        runCount:
+          type: number
+        hitCount:
+          type: integer
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - type
+        - ruleId
+    RuleInstanceUpdatable:
+      title: RuleInstanceUpdatable
+      type: object
+      properties:
+        ruleId:
+          type: string
+        parameters:
+          type: object
+        ruleNameAlias:
+          type: string
+        riskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        riskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+        caseCreationType:
+          $ref: '#/components/schemas/CaseType'
+        casePriority:
+          $ref: '#/components/schemas/CasePriority'
+      required:
+        - ruleId
+        - parameters
+    RuleAction:
+      type: string
+      title: RuleAction
+      enum:
+        - ALLOW
+        - WHITELIST
+        - FLAG
+        - BLOCK
+        - SUSPEND
+      x-examples:
+        example-1: SUSPEND
+      description: Model for rule action if a rule is hit. This is returned in the API response and can be configured on Console by operational accounts like a Compliance Analyst
+    RuleActionAlias:
+      type: object
+      title: RuleActionAlias
+      properties:
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        alias:
+          type: string
+      required:
+        - action
+        - alias
+    CaseType:
+      type: string
+      title: CaseType
+      enum:
+        - USER
+        - TRANSACTION
+    CasePriority:
+      type: string
+      title: CasePriority
+      enum:
+        - P1
+        - P2
+        - P3
+        - P4
+    RiskLevelRuleActions:
+      title: RiskLevelRuleActions
+      x-stoplight:
+        id: 9sj5fz98k6tlb
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        HIGH:
+          $ref: '#/components/schemas/RuleAction'
+        MEDIUM:
+          $ref: '#/components/schemas/RuleAction'
+        LOW:
+          $ref: '#/components/schemas/RuleAction'
+        VERY_LOW:
+          $ref: '#/components/schemas/RuleAction'
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    RiskLevelRuleParameters:
+      title: RiskLevelRuleParameters
+      x-stoplight:
+        id: xpbk3cprby4j6
+      type: object
+      properties:
+        VERY_HIGH:
+          type: object
+        HIGH:
+          type: object
+        MEDIUM:
+          type: object
+        LOW:
+          type: object
+        VERY_LOW:
+          type: object
+      required:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+    Rule:
+      title: Rule
+      type: object
+      x-examples:
+        example-1:
+          id: R-1
+          name: Rule name
+          description: Rule description
+          defaultParameters:
+            threshold: 3
+          defaultAction: FLAG
+          ruleImplementationName: code-filename
+          createdAt: 0
+          updatedAt: 0
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+        name:
+          type: string
+        description:
+          type: string
+        parametersSchema:
+          type: object
+        defaultParameters:
+          type: object
+        defaultRiskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
+        defaultAction:
+          $ref: '#/components/schemas/RuleAction'
+        defaultRiskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
+        labels:
+          type: array
+          items:
+            type: string
+        defaultCaseCreationType:
+          $ref: '#/components/schemas/CaseType'
+        defaultCasePriority:
+          $ref: '#/components/schemas/CasePriority'
+      required:
+        - id
+        - type
+        - name
+        - description
+        - defaultParameters
+        - defaultAction
+        - labels
+        - defaultCaseCreationType
+        - defaultCasePriority
+  securitySchemes:
+    x-api-key:
+      name: x-api-key
+      type: apiKey
+      in: header
+      description: API keys are used to authenticate the requests.
