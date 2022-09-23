@@ -256,8 +256,7 @@ const TableList = () => {
         originCurrenciesFilter,
         destinationCurrenciesFilter,
         userId,
-        originUserId,
-        destinationUserId,
+        userFilterMode,
         originMethodFilter,
         destinationMethodFilter,
       } = params;
@@ -269,9 +268,9 @@ const TableList = () => {
           afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
           beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
           filterId: transactionId,
-          filterUserId: userId,
-          filterOriginUserId: originUserId,
-          filterDestinationUserId: destinationUserId,
+          filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+          filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+          filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
           filterOriginCurrencies: originCurrenciesFilter,
           filterDestinationCurrencies: destinationCurrenciesFilter,
           transactionType: type,
@@ -304,11 +303,16 @@ const TableList = () => {
           ({ params, setParams }) => (
             <>
               <UserSearchButton
+                initialMode={params.params.userFilterMode ?? 'ALL'}
                 userId={params.params.userId ?? null}
-                onConfirm={(userId) => {
+                onConfirm={(userId, mode) => {
                   setParams((state) => ({
                     ...state,
-                    params: { ...state.params, userId: userId ?? undefined },
+                    params: {
+                      ...state.params,
+                      userId: userId,
+                      userFilterMode: mode,
+                    },
                   }));
                 }}
               />

@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
-import { useDebounceEffect, useLocalStorageState } from 'ahooks';
+import { useCallback } from 'react';
+import { useLocalStorageState } from 'ahooks';
 import { User } from './types';
-import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
 import { useApi } from '@/api';
-import { getErrorMessage } from '@/utils/lang';
+import { useQuery } from '@/utils/queries/hooks';
+import { USERS_FIND } from '@/utils/queries/keys';
+import { QueryResult } from '@/utils/queries/types';
 
 type UsersResponse = {
   total: number;
@@ -31,68 +32,39 @@ export function useLastSearches(): {
   };
 }
 
-export function useUsers(search: string): AsyncResource<UsersResponse> {
+export function useUsers(search: string): QueryResult<UsersResponse> {
   const api = useApi();
-  const [state, setState] = useState<AsyncResource<UsersResponse>>(init());
-  useDebounceEffect(
-    () => {
-      if (search === '') {
-        setState(
-          success({
-            total: 0,
-            users: [],
-          }),
-        );
-        return;
-      }
-      let isCancelled = false;
-      setState((lastState) => loading(getOr(lastState, null)));
-      // todo: implement cancelation
-      Promise.all([
-        api.getConsumerUsersList({
-          limit: 10,
-          skip: 0,
-          beforeTimestamp: Date.now(),
-          filterId: search,
-          filterName: search,
-          filterOperator: 'OR',
-        }),
-        api.getBusinessUsersList({
-          limit: 10,
-          skip: 0,
-          beforeTimestamp: Date.now(),
-          filterId: search,
-          filterName: search,
-          filterOperator: 'OR',
-        }),
-      ])
-        .then(([consumerUsers, businessUsers]) => {
-          if (isCancelled) {
-            return;
-          }
-          setState(
-            success({
-              total: consumerUsers.total + businessUsers.total,
-              users: [...consumerUsers.data, ...businessUsers.data],
-            }),
-          );
-        })
-        .catch((e) => {
-          if (isCancelled) {
-            return;
-          }
-          setState(failed(getErrorMessage(e)));
-        });
 
-      return () => {
-        isCancelled = true;
+  return useQuery(USERS_FIND(search), async (): Promise<UsersResponse> => {
+    if (search === '') {
+      return {
+        total: 0,
+        users: [],
       };
-    },
-    [search, api],
-    {
-      wait: 300,
-    },
-  );
+    }
 
-  return state;
+    const [consumerUsers, businessUsers] = await Promise.all([
+      api.getConsumerUsersList({
+        limit: 10,
+        skip: 0,
+        beforeTimestamp: Date.now(),
+        filterId: search,
+        filterName: search,
+        filterOperator: 'OR',
+      }),
+      api.getBusinessUsersList({
+        limit: 10,
+        skip: 0,
+        beforeTimestamp: Date.now(),
+        filterId: search,
+        filterName: search,
+        filterOperator: 'OR',
+      }),
+    ]);
+
+    return {
+      total: consumerUsers.total + businessUsers.total,
+      users: [...consumerUsers.data, ...businessUsers.data],
+    };
+  });
 }

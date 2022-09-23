@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Input } from 'antd';
+import { Radio, Input } from 'antd';
 import { useDebounce } from 'ahooks';
-import { User } from '../types';
+import { Mode, User } from '../types';
 import { useLastSearches, useUsers } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
@@ -12,20 +12,23 @@ import { isSuccess } from '@/utils/asyncResource';
 
 interface Props {
   initialSearch: string;
+  initialMode: Mode | null;
   isVisible: boolean;
-  onConfirm: (user: User) => void;
+  onConfirm: (user: User, mode: Mode | null) => void;
   onCancel: () => void;
 }
 
 export default function PopupContent(props: Props) {
-  const { isVisible, initialSearch, onConfirm } = props;
+  const { isVisible, initialSearch, initialMode, onConfirm } = props;
 
   const [search, setSearch] = useState(initialSearch);
+  const [mode, setMode] = useState<Mode | null>(initialMode ?? null);
+
   const debouncedSearch = useDebounce(search, { wait: 500 });
   const usersRes = useUsers(debouncedSearch);
   const { onAdd } = useLastSearches();
 
-  const usersCount = isSuccess(usersRes) ? usersRes.value.total : null;
+  const usersCount = isSuccess(usersRes.data) ? usersRes.data.value.total : null;
   useEffect(() => {
     if (!isVisible) {
       if (debouncedSearch !== '' && usersCount != null && usersCount > 0) {
@@ -34,10 +37,18 @@ export default function PopupContent(props: Props) {
     }
   }, [onAdd, isVisible, usersCount, debouncedSearch]);
 
+  useEffect(() => {
+    if (!isVisible) {
+      setSearch(initialSearch);
+      setMode(initialMode);
+    }
+  }, [isVisible, initialSearch, initialMode]);
+
   function handleSelectUser(user: User) {
-    onConfirm(user);
+    onConfirm(user, mode);
     onAdd(debouncedSearch);
     setSearch('');
+    setMode(null);
   }
 
   // todo: i18n
@@ -55,11 +66,23 @@ export default function PopupContent(props: Props) {
           onChange={(e) => setSearch(e.currentTarget.value)}
           allowClear
         />
+        {initialMode != null && (
+          <Radio.Group
+            onChange={(e) => {
+              setMode(e.target.value);
+            }}
+            value={mode}
+          >
+            <Radio value={'ALL'}>All users</Radio>
+            <Radio value={'ORIGIN'}>Origin (Sender)</Radio>
+            <Radio value={'DESTINATION'}>Destination (Receiver)</Radio>
+          </Radio.Group>
+        )}
       </div>
       {search !== '' ? (
         <div className={s.content}>
           <UserList
-            usersRes={usersRes}
+            usersRes={usersRes.data}
             selectedUser={null}
             search={debouncedSearch}
             onSelectUser={handleSelectUser}

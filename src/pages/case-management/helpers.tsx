@@ -4,6 +4,7 @@ import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
+import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -16,8 +17,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       originCurrenciesFilter: params.originCurrenciesFilter?.join(','),
       destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(','),
       userId: params.userId,
-      originUserId: params.originUserId,
-      destinationUserId: params.destinationUserId,
+      userFilterMode: params.userFilterMode,
       type: params.type,
       status: params.status,
       originMethodFilter: params.originMethodFilter,
@@ -48,8 +48,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
       destinationCurrenciesFilter: raw.destinationCurrenciesFilter?.split(','),
       userId: raw.userId,
-      originUserId: raw.originUserId,
-      destinationUserId: raw.destinationUserId,
+      userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
       type: raw.type,
       status: isRuleAction(raw.status) ? raw.status : undefined,
       originMethodFilter: raw.originMethodFilter,

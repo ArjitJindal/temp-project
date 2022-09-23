@@ -20,6 +20,7 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { DefaultApiPostConsumerUsersUserIdRequest } from '@/apis/types/ObjectParamAPI';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -103,18 +104,18 @@ export default function HitsPerUserCard(props: Props) {
           startTimestamp = start.startOf('day').valueOf();
           endTimestamp = end.endOf('day').valueOf();
         }
-        const viewCasesLinkDetails =
-          direction === 'ORIGIN'
-            ? {
-                originUserId: user.userId,
-                timestamp: `${startTimestamp},${endTimestamp}`,
-              }
-            : {
-                destinationUserId: user.userId,
-                timestamp: `${startTimestamp},${endTimestamp}`,
-              };
         return (
-          <Link to={makeUrl('/case-management', {}, viewCasesLinkDetails)}>
+          <Link
+            to={makeUrl(
+              '/case-management',
+              {},
+              {
+                userId: user.userId,
+                userFilterMode: isMode(direction) ? direction : 'ALL',
+                timestamp: `${startTimestamp},${endTimestamp}`,
+              },
+            )}
+          >
             {`${entity.transactionsHit} transactions`}
           </Link>
         );
@@ -152,19 +153,21 @@ export default function HitsPerUserCard(props: Props) {
           startTimestamp = start.startOf('day').valueOf();
           endTimestamp = end.endOf('day').valueOf();
         }
-        const viewCasesLinkDetails =
-          direction === 'ORIGIN'
-            ? {
-                originUserId: user.userId,
-                timestamp: `${startTimestamp},${endTimestamp}`,
-              }
-            : {
-                destinationUserId: user.userId,
-                timestamp: `${startTimestamp},${endTimestamp}`,
-              };
+
         return (
           <Space>
-            <Link key="view-cases" to={makeUrl('/case-management', {}, viewCasesLinkDetails)}>
+            <Link
+              key="view-cases"
+              to={makeUrl(
+                '/case-management',
+                {},
+                {
+                  userId: user.userId,
+                  userFilterMode: isMode(direction) ? direction : 'ALL',
+                  timestamp: `${startTimestamp},${endTimestamp}`,
+                },
+              )}
+            >
               <Button analyticsName="View user cases" size="small" type="ghost">
                 View Cases
               </Button>

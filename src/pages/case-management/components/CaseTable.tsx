@@ -154,9 +154,8 @@ export default function CaseTable(props: Props) {
       rulesExecutedFilter,
       originCurrenciesFilter,
       destinationCurrenciesFilter,
-      originUserId,
-      destinationUserId,
       userId,
+      userFilterMode,
       type,
       status,
       transactionState,
@@ -181,9 +180,9 @@ export default function CaseTable(props: Props) {
         filterStatus: status,
         filterOriginCurrencies: originCurrenciesFilter,
         filterDestinationCurrencies: destinationCurrenciesFilter,
-        filterUserId: userId,
-        filterOriginUserId: originUserId,
-        filterDestinationUserId: destinationUserId,
+        filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+        filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+        filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
         transactionType: type,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
@@ -716,11 +715,13 @@ export default function CaseTable(props: Props) {
               }}
             />
             <UserSearchButton
+              initialMode={params.userFilterMode ?? 'ALL'}
               userId={params.userId ?? null}
-              onConfirm={(userId) => {
+              onConfirm={(userId, mode) => {
                 setParams((state) => ({
                   ...state,
                   userId: userId ?? undefined,
+                  userFilterMode: mode ?? 'ALL',
                 }));
               }}
             />

@@ -3,17 +3,24 @@ import { Popover } from 'antd';
 import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
-import { User } from './types';
+import { Mode, User } from './types';
 
 interface Props {
   children: React.ReactNode;
   placement?: TooltipPlacement;
   initialSearch: string | null;
-  onConfirm: (user: User) => void;
+  initialMode?: Mode | null;
+  onConfirm: (user: User, mode: Mode | null) => void;
 }
 
 export default function UserSearchPopup(props: Props) {
-  const { children, initialSearch, placement = 'bottomLeft', onConfirm } = props;
+  const {
+    children,
+    initialSearch,
+    initialMode = null,
+    placement = 'bottomLeft',
+    onConfirm,
+  } = props;
   const [visible, setVisible] = useState(false);
 
   return (
@@ -23,10 +30,11 @@ export default function UserSearchPopup(props: Props) {
       content={
         <PopupContent
           initialSearch={initialSearch ?? ''}
+          initialMode={initialMode}
           isVisible={visible}
           key={`${visible}`}
-          onConfirm={(user) => {
-            onConfirm(user);
+          onConfirm={(user, mode) => {
+            onConfirm(user, mode);
             setVisible(false);
           }}
           onCancel={() => {

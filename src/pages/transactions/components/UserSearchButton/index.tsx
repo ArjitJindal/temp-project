@@ -7,14 +7,16 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { getErrorMessage } from '@/utils/lang';
+import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 interface Props {
   userId: string | null;
-  onConfirm: (userId: string | null) => void;
+  initialMode?: Mode;
+  onConfirm: (userId: string | null, mode: Mode | null) => void;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { userId, onConfirm } = props;
+  const { initialMode, userId, onConfirm } = props;
   const [userRest, setUserRest] = useState<
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
@@ -53,10 +55,11 @@ export default function UserSearchButton(props: Props) {
 
   return (
     <UserSearchPopup
+      initialMode={initialMode ?? null}
       initialSearch={userId ?? ''}
-      onConfirm={(user) => {
+      onConfirm={(user, mode) => {
         setUserRest(success(user));
-        onConfirm(user?.userId ?? null);
+        onConfirm(user?.userId ?? null, mode ?? null);
       }}
     >
       <ActionButton
@@ -65,7 +68,7 @@ export default function UserSearchButton(props: Props) {
         analyticsName="user-filter"
         isActive={userId != null}
         onClear={() => {
-          onConfirm(null);
+          onConfirm(null, null);
         }}
       >
         {user ? getUserName(user) : userId || 'Find user'}
