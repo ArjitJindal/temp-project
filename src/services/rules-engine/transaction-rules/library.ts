@@ -337,7 +337,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       name: 'High velocity user',
       description: 'If a user makes >= x transactions within time t',
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transactions above the limit of {{ parameters.transactionsLimit }} in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)",
+        "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transactions above the limit of {{ parameters.transactionsLimit }} in {{ format-time-window parameters.timeWindow }}",
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-velocity',
@@ -697,7 +697,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       description:
         'Same receiver and destination details are used for transactions in the amount of >= x in time t',
       descriptionTemplate:
-        'Transaction volume {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }} between two users in {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)',
+        'Transaction volume {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }} between two users in {{ format-time-window parameters.timeWindow }}',
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-traffic-volume-between-same-users',
@@ -722,7 +722,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       description:
         'Same user ID receives or sends >= X % of all of their receiving or sending transactions as round values ending in 00.00 (hundreds without cents) in time t. The rule kicks in after user has y transactions for any specific direction.',
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds with more than {{ parameters.patternPercentageLimit }}% of transactions as round values ending in 00.00 (hundreds without cents) within time {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s). Rule should hit after the user has initiaited {{ parameters.initialTransactions }} transactions (doesn't have to be successful)",
+        "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds with more than {{ parameters.patternPercentageLimit }}% of transactions as round values ending in 00.00 (hundreds without cents) within time {{ format-time-window parameters.timeWindow }}. Rule should hit after the user has initiaited {{ parameters.initialTransactions }} transactions (doesn't have to be successful)",
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'transactions-round-value-percentage',
