@@ -57,11 +57,11 @@ export async function localTarponChangeCaptureHandler(key: {
     undefined,
     entity.Item
   )
-  const { tarponChangeCaptureHandler } = await import(
-    '@/lambdas/tarpon-change-capture-kinesis-consumer/app'
+  const { tarponChangeMongodbHandler } = await import(
+    '@/lambdas/tarpon-change-mongodb-consumer/app'
   )
   await (
-    tarponChangeCaptureHandler as any as (
+    tarponChangeMongodbHandler as any as (
       event: KinesisStreamEvent
     ) => Promise<void>
   )(kinesisEvent)

@@ -2,8 +2,8 @@ import { getConfig } from './config'
 import {
   AccountsService,
   Tenant,
-} from '@/lambdas/phytoplankton-internal-api-handlers/services/accounts-service'
-import { AccountsConfig } from '@/lambdas/phytoplankton-internal-api-handlers/app'
+} from '@/lambdas/console-api-account/services/accounts-service'
+import { AccountsConfig } from '@/lambdas/console-api-account/app'
 
 const config = getConfig()
 

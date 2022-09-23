@@ -1,0 +1,158 @@
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { BadRequest } from 'http-errors'
+import { StackConstants } from '@cdk/constants'
+import { logger } from '@/core/logger'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
+import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+
+export const riskClassificationHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+
+    if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/risk-classification'
+    ) {
+      try {
+        return riskRepository.getRiskClassification()
+      } catch (e) {
+        logger.error(e)
+        return e
+      }
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/risk-classification' &&
+      event.body
+    ) {
+      const classificationValues = JSON.parse(
+        event.body
+      ) as RiskClassificationScore[]
+      validateClassificationRequest(classificationValues)
+      const result = await riskRepository.createOrUpdateRiskClassification(
+        classificationValues
+      )
+      return result.classificationValues
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+const validateClassificationRequest = (
+  classificationValues: Array<RiskClassificationScore>
+) => {
+  if (classificationValues.length != StackConstants.NUMBER_OF_RISK_LEVELS) {
+    throw new BadRequest('Invalid Request - Please provide 5 risk levels')
+  }
+  const unique = new Set()
+  const hasDuplicate = classificationValues.some(
+    (element) => unique.size === unique.add(element.riskLevel).size
+  )
+  if (hasDuplicate) {
+    throw new BadRequest('Invalid request - duplicate risk levels')
+  }
+}
+
+export const parameterRiskAssignmentHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    logger.info('tenantId', tenantId)
+
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/risk-parameter'
+    ) {
+      if (!event.body) {
+        throw new BadRequest('Empty body')
+      }
+      let parameterRiskLevels: PostPulseRiskParameters
+      try {
+        parameterRiskLevels = JSON.parse(event.body)
+      } catch (e) {
+        throw new BadRequest('Invalid Request')
+      }
+      return riskRepository.createOrUpdateParameterRiskItem(
+        parameterRiskLevels.parameterAttributeRiskValues
+      )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/risk-parameter'
+    ) {
+      const parameter = (event.queryStringParameters || {})
+        .parameter as ParameterAttributeRiskValuesParameterEnum
+
+      if (parameter == null) {
+        throw new BadRequest(`"parameter" is a requred query parameter`)
+      }
+
+      return riskRepository.getParameterRiskItem(parameter)
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+export const manualRiskAssignmentHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { userId } = event.queryStringParameters as any
+
+    // todo: need to assert that user has this feature enabled
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/pulse/manual-risk-assignment'
+    ) {
+      if (!event.body) {
+        throw new BadRequest('Empty body')
+      }
+      let body
+      try {
+        body = JSON.parse(event.body)
+      } catch (e) {
+        throw new BadRequest('Invalid Request')
+      }
+      return riskRepository.createOrUpdateManualDRSRiskItem(
+        userId,
+        body.riskLevel
+      )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/pulse/manual-risk-assignment'
+    ) {
+      return riskRepository.getManualDRSRiskItem(userId)
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)

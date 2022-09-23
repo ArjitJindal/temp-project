@@ -66,11 +66,9 @@ import {
 import {
   FileImportConfig,
   GetPresignedUrlConfig,
-} from '@/lambdas/file-import/app'
-import {
-  TransactionViewConfig,
-  UserViewConfig,
-} from '@/lambdas/phytoplankton-internal-api-handlers/app'
+} from '@/lambdas/console-api-file-import/app'
+import { TransactionViewConfig } from '@/lambdas/console-api-transaction/app'
+import { UserViewConfig } from '@/lambdas/console-api-user/app'
 
 const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 
@@ -355,7 +353,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: transactionAlias } = this.createFunction({
       name: StackConstants.TRANSACTION_FUNCTION_NAME,
       handler: 'app.transactionHandler',
-      codePath: 'dist/rules-engine',
+      codePath: 'dist/public-api-rules-engine',
       provisionedConcurrency:
         config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
       layers: [fastGeoIpLayer],
@@ -368,7 +366,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: transactionEventAlias } = this.createFunction({
       name: StackConstants.TRANSACTION_EVENT_FUNCTION_NAME,
       handler: 'app.transactionEventHandler',
-      codePath: 'dist/rules-engine',
+      codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
 
@@ -376,7 +374,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: userEventAlias } = this.createFunction({
       name: StackConstants.USER_EVENT_FUNCTION_NAME,
       handler: 'app.userEventsHandler',
-      codePath: 'dist/rules-engine',
+      codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(userEventAlias)
 
@@ -385,7 +383,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.FILE_IMPORT_FUNCTION_NAME,
         handler: 'app.fileImportHandler',
-        codePath: 'dist/file-import/',
+        codePath: 'dist/console-api-file-import/',
       },
       {
         ...atlasFunctionProps,
@@ -406,7 +404,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.GET_PRESIGNED_URL_FUNCTION_NAME,
         handler: 'app.getPresignedUrlHandler',
-        codePath: 'dist/file-import/',
+        codePath: 'dist/console-api-file-import/',
       },
       {
         environment: {
@@ -421,7 +419,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.RULE_FUNCTION_NAME,
         handler: 'app.ruleHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-rule/',
       },
       atlasFunctionProps
     )
@@ -433,7 +431,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.RULE_INSTANCE_FUNCTION_NAME,
         handler: 'app.ruleInstanceHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-rule/',
       },
       atlasFunctionProps
     )
@@ -445,7 +443,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.TRANSACTIONS_VIEW_FUNCTION_NAME,
         handler: 'app.transactionsViewHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-transaction/',
         memorySize: config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
       },
       {
@@ -469,7 +467,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.ACCOUNT_FUNCTION_NAME,
         handler: 'app.accountsHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-account/',
       },
       atlasFunctionProps
     )
@@ -479,7 +477,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.TENANT_FUNCTION_NAME,
         handler: 'app.tenantsHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-tenant/',
       },
       atlasFunctionProps
     )
@@ -489,7 +487,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.BUSINESS_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.businessUsersViewHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-user/',
         provisionedConcurrency:
           config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
@@ -512,7 +510,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.CONSUMER_USERS_VIEW_FUNCTION_NAME,
         handler: 'app.consumerUsersViewHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-user/',
         provisionedConcurrency:
           config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
@@ -535,7 +533,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
         handler: 'app.dashboardStatsHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-dashboard/',
         provisionedConcurrency:
           config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
@@ -548,7 +546,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: userAlias } = this.createFunction({
       name: StackConstants.USER_FUNCTION_NAME,
       handler: 'app.userHandler',
-      codePath: 'dist/user-management',
+      codePath: 'dist/public-api-user-management',
       provisionedConcurrency:
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
@@ -559,7 +557,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: listsAlias } = this.createFunction({
       name: StackConstants.LISTS_FUNCTION_NAME,
       handler: 'app.listsHandler',
-      codePath: 'dist/phytoplankton-internal-api-handlers/',
+      codePath: 'dist/console-api-list-importer/',
     })
     tarponDynamoDbTable.grantReadWriteData(listsAlias)
 
@@ -611,7 +609,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
         handler: 'app.webhookDeliveryHandler',
-        codePath: 'dist/webhook',
+        codePath: 'dist/webhook-deliverer',
       },
       atlasFunctionProps
     )
@@ -626,7 +624,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.WEBHOOK_CONFIGURATION_FUNCTION_NAME,
         handler: 'app.webhookConfigurationHandler',
-        codePath: 'dist/webhook',
+        codePath: 'dist/console-api-webhook',
       },
       atlasFunctionProps
     )
@@ -645,7 +643,7 @@ export class CdkTarponStack extends cdk.Stack {
       {
         name: StackConstants.RISK_CLASSIFICATION_FUNCTION_NAME,
         handler: 'app.riskClassificationHandler',
-        codePath: 'dist/phytoplankton-internal-api-handlers/',
+        codePath: 'dist/console-api-pulse/',
       },
       atlasFunctionProps
     )
@@ -655,7 +653,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
       name: StackConstants.MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.manualRiskAssignmentHandler',
-      codePath: 'dist/phytoplankton-internal-api-handlers/',
+      codePath: 'dist/console-api-pulse/',
     })
     hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)
 
@@ -663,7 +661,7 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: parameterRiskAssignmentAlias } = this.createFunction({
       name: StackConstants.PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
       handler: 'app.parameterRiskAssignmentHandler',
-      codePath: 'dist/phytoplankton-internal-api-handlers/',
+      codePath: 'dist/console-api-pulse/',
     })
     hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
@@ -674,8 +672,8 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          handler: 'app.tarponChangeCaptureHandler',
-          codePath: 'dist/tarpon-change-capture-kinesis-consumer',
+          handler: 'app.tarponChangeMongodbHandler',
+          codePath: 'dist/tarpon-change-mongodb-consumer',
         },
         {
           ...atlasFunctionProps,
@@ -687,18 +685,20 @@ export class CdkTarponStack extends cdk.Stack {
           timeout: Duration.minutes(15),
         }
       )
-    tarponChangeCaptureKinesisConsumerAlias.addEventSource(
-      new KinesisEventSource(tarponStream, {
-        batchSize: 1,
-        startingPosition: StartingPosition.TRIM_HORIZON,
-      })
-    )
-    tarponChangeCaptureKinesisConsumerAlias.addEventSource(
-      new KinesisEventSource(tarponMongoDbRetryStream, {
-        batchSize: 1,
-        startingPosition: StartingPosition.LATEST,
-      })
-    )
+    if (!isDevUserStack) {
+      tarponChangeCaptureKinesisConsumerAlias.addEventSource(
+        new KinesisEventSource(tarponStream, {
+          batchSize: 1,
+          startingPosition: StartingPosition.TRIM_HORIZON,
+        })
+      )
+      tarponChangeCaptureKinesisConsumerAlias.addEventSource(
+        new KinesisEventSource(tarponMongoDbRetryStream, {
+          batchSize: 1,
+          startingPosition: StartingPosition.LATEST,
+        })
+      )
+    }
     tarponMongoDbRetryStream.grantReadWrite(
       tarponChangeCaptureKinesisConsumerAlias
     )
@@ -713,8 +713,8 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          handler: 'app.webhookTarponChangeCaptureHandler',
-          codePath: 'dist/webhook',
+          handler: 'app.tarponChangeWebhookHandler',
+          codePath: 'dist/tarpon-change-webhook-consumer',
         },
         {
           ...atlasFunctionProps,
@@ -726,18 +726,20 @@ export class CdkTarponStack extends cdk.Stack {
           timeout: Duration.minutes(15),
         }
       )
-    webhookTarponChangeCaptureHandlerAlias.addEventSource(
-      new KinesisEventSource(tarponStream, {
-        batchSize: 1,
-        startingPosition: StartingPosition.LATEST,
-      })
-    )
-    webhookTarponChangeCaptureHandlerAlias.addEventSource(
-      new KinesisEventSource(tarponWebhookRetryStream, {
-        batchSize: 1,
-        startingPosition: StartingPosition.LATEST,
-      })
-    )
+    if (!isDevUserStack) {
+      webhookTarponChangeCaptureHandlerAlias.addEventSource(
+        new KinesisEventSource(tarponStream, {
+          batchSize: 1,
+          startingPosition: StartingPosition.LATEST,
+        })
+      )
+      webhookTarponChangeCaptureHandlerAlias.addEventSource(
+        new KinesisEventSource(tarponWebhookRetryStream, {
+          batchSize: 1,
+          startingPosition: StartingPosition.LATEST,
+        })
+      )
+    }
     tarponWebhookRetryStream.grantReadWrite(
       webhookTarponChangeCaptureHandlerAlias
     )
@@ -764,12 +766,14 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
 
-    hammerheadChangeCaptureKinesisConsumerAlias.addEventSource(
-      new KinesisEventSource(hammerheadStream, {
-        batchSize: 10,
-        startingPosition: StartingPosition.TRIM_HORIZON,
-      })
-    )
+    if (!isDevUserStack) {
+      hammerheadChangeCaptureKinesisConsumerAlias.addEventSource(
+        new KinesisEventSource(hammerheadStream, {
+          batchSize: 10,
+          startingPosition: StartingPosition.TRIM_HORIZON,
+        })
+      )
+    }
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
 
     /**

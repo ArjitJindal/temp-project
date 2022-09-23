@@ -38,71 +38,71 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions)
 const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
   'create-user': () =>
-    require('./src/lambdas/user-management/app').userHandler(
+    require('./src/lambdas/public-api-user-management/app').userHandler(
       require('./events/create-user').event
     ),
   'get-user': () =>
-    require('./src/lambdas/user-management/app').userHandler(
+    require('./src/lambdas/public-api-user-management/app').userHandler(
       require('./events/get-user').event
     ),
   'create-rule': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+    require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/create-rule').event
     ),
   'delete-rule': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+    require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/delete-rule').event
     ),
   'update-rule': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+    require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/update-rule').event
     ),
   'get-rules': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+    require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/get-rules').event
     ),
   'get-rule-implementations': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleHandler(
+    require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/get-rule-implementations').event
     ),
   'create-rule-instance': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+    require('./src/lambdas/console-api-rule/app').ruleInstanceHandler(
       require('./events/create-rule-instance').event
     ),
   'update-rule-instance': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+    require('./src/lambdas/console-api-rule/app').ruleInstanceHandler(
       require('./events/update-rule-instance').event
     ),
   'get-rule-instances': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').ruleInstanceHandler(
+    require('./src/lambdas/console-api-rule/app').ruleInstanceHandler(
       require('./events/get-rule-instances').event
     ),
   'view-transactions': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+    require('./src/lambdas/console-api-transaction/app').transactionsViewHandler(
       require('./events/view-transactions').event
     ),
   'view-business-users': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').businessUsersViewHandler(
+    require('./src/lambdas/console-api-user/app').businessUsersViewHandler(
       require('./events/view-business-users').event
     ),
   'view-consumer-users': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').consumerUsersViewHandler(
+    require('./src/lambdas/console-api-user/app').consumerUsersViewHandler(
       require('./events/view-consumer-users').event
     ),
   'create-transaction-comment': () =>
-    require('./src/lambdas/phytoplankton-internal-api-handlers/app').transactionsViewHandler(
+    require('./src/lambdas/console-api-transaction/app').transactionsViewHandler(
       require('./events/create-transaction-comment').event
     ),
   'verify-transaction': () =>
-    require('./src/lambdas/rules-engine/app').transactionHandler(
+    require('./src/lambdas/public-api-rules-engine/app').transactionHandler(
       require('./events/verify-transaction').event
     ),
   'verify-transaction-event': () =>
-    require('./src/lambdas/rules-engine/app').transactionEventHandler(
+    require('./src/lambdas/public-api-rules-engine/app').transactionEventHandler(
       require('./events/verify-transaction-event').event
     ),
   'get-transaction': () =>
-    require('./src/lambdas/rules-engine/app').transactionHandler(
+    require('./src/lambdas/public-api-rules-engine/app').transactionHandler(
       require('./events/get-transaction').event
     ),
   'import-list': () =>
@@ -114,12 +114,12 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     process.env['IMPORT_BUCKET'] = 'tarpon-import'
     process.env['DOCUMENT_BUCKET'] = 'tarpon-document'
     await setUpMockS3()
-    return require('./src/lambdas/file-import/app').fileImportHandler(
+    return require('./src/lambdas/console-api-file-import/app').fileImportHandler(
       require('./events/import').event
     )
   },
   'get-presigned-url': async () => {
-    return require('./src/lambdas/file-import/app').getPresignedUrlHandler(
+    return require('./src/lambdas/console-api-file-import/app').getPresignedUrlHandler(
       require('./events/get-presigned-url').event
     )
   },
@@ -131,12 +131,12 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       options.profileName || 'AWSAdministratorAccess-911899431626'
     ),
   'create-account': () => {
-    return require('./src/lambdas/phytoplankton-internal-api-handlers/app').accountsHandler(
+    return require('./src/lambdas/console-api-account/app').accountsHandler(
       require('./events/create-account').event
     )
   },
   'get-accounts': () => {
-    return require('./src/lambdas/phytoplankton-internal-api-handlers/app').accountsHandler(
+    return require('./src/lambdas/console-api-account/app').accountsHandler(
       require('./events/get-accounts').event
     )
   },

@@ -4,7 +4,7 @@ import { simpleGit } from 'simple-git'
 import _ from 'lodash'
 import { TRANSACTION_RULES } from '..'
 import { TRANSACTION_RULES_LIBRARY } from '../library'
-import { RuleService } from '@/lambdas/phytoplankton-internal-api-handlers/services/rule-service'
+import { RuleService } from '@/lambdas/console-api-rule/services/rule-service'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 const git = simpleGit()
