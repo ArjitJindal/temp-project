@@ -1168,13 +1168,18 @@ export class CdkTarponStack extends cdk.Stack {
     api: SpecRestApi
     logGroup: LogGroup
   } {
+    // Log group ID cannot be changed
+    let logGroupId: string
     let openapiName: 'public' | 'public-management' | 'internal'
     if (apiName === StackConstants.TARPON_API_NAME) {
       openapiName = 'public'
+      logGroupId = 'LogGroupPublicApi'
     } else if (apiName === StackConstants.TARPON_MANAGEMENT_API_NAME) {
       openapiName = 'public-management'
+      logGroupId = 'LogGroupPublicManagementApi'
     } else if (apiName === StackConstants.CONSOLE_API_NAME) {
       openapiName = 'internal'
+      logGroupId = 'LogGroupConsoleApi'
     } else {
       throw new Error(`Cannot find openapi for ${apiName}`)
     }
@@ -1195,7 +1200,7 @@ export class CdkTarponStack extends cdk.Stack {
     const logGroupName = getResourceName(
       `API-Gateway-Execution-Logs_${apiName}`
     )
-    const apiLogGroup = new LogGroup(this, logGroupName, {
+    const apiLogGroup = new LogGroup(this, logGroupId, {
       logGroupName,
       removalPolicy:
         this.config.stage === 'dev'
