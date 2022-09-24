@@ -1559,6 +1559,7 @@ components:
             - $ref: '#/components/schemas/IBANDetails'
             - $ref: '#/components/schemas/ACHDetails'
             - $ref: '#/components/schemas/SWIFTDetails'
+            - $ref: '#/components/schemas/MpesaDetails'
             - $ref: '#/components/schemas/UPIDetails'
             - $ref: '#/components/schemas/WalletDetails'
           description: Payment details of the origin. It can be a bank account number,
@@ -1572,6 +1573,7 @@ components:
             - $ref: '#/components/schemas/UPIDetails'
             - $ref: '#/components/schemas/WalletDetails'
             - $ref: '#/components/schemas/SWIFTDetails'
+            - $ref: '#/components/schemas/MpesaDetails'
           example:
             method: CARD
             cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
@@ -3047,6 +3049,35 @@ components:
           description: Special instructions if any
       required:
         - method
+    MpesaDetails:
+      description: Model for Mpesa payment method
+      type: object
+      x-examples: {}
+      title: MpesaDetails
+      properties:
+        method:
+          $ref: '#/components/schemas/MpesaPaymentMethod'
+        businessShortCode:
+          type: string
+          minLength: 1
+          description: Business code
+        transactionType:
+          type: string
+          enum:
+            - CustomerPayBillOnline
+            - CustomerBuyGoodsOnline
+            - SalaryPayment
+            - BusinessPayment
+            - PromotionPayment
+          description: Type of transaction
+        phoneNumber:
+          type: string
+          description: Contact Number of the account holder
+      required:
+        - method
+        - businessShortCode
+        - transactionType
+        - phoneNumber
     GenericBankAccountDetails:
       description: Model for any generic bank account
       type: object
@@ -3533,6 +3564,12 @@ components:
       enum:
         - SWIFT
       description: Classify the method of payment as "SWIFT" for SWIFTDetails
+    MpesaPaymentMethod:
+      type: string
+      title: MpesaPaymentMethod
+      enum:
+        - MPESA
+      description: Classify the method of payment as "Mpesa" for MpesaDetails
     GeneralBankAccountPaymentMethod:
       type: string
       title: GeneralBankAccountPaymentMethod

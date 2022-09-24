@@ -15,6 +15,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
+import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -155,6 +156,20 @@ export const DynamoDbKeys = {
         }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#accountNumber:${accountNumber}#swiftCode:${swiftCode}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'MPESA': {
+        const { businessShortCode, phoneNumber } =
+          paymentDetails as MpesaDetails
+        if (!businessShortCode || !phoneNumber) {
+          logger.warn(
+            'Payment identifier not found: Phone number or Business Code'
+          )
+          return null
+        }
+        return {
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#phoneNumber:${phoneNumber}#businessShortCode:${businessShortCode}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }

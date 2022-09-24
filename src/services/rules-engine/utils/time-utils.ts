@@ -52,3 +52,13 @@ export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
   }
   return afterTimestamp
 }
+
+export const PAYMENT_METHODS = [
+  'ACH',
+  'CARD',
+  'IBAN',
+  'SWIFT',
+  'UPI',
+  'WALLET',
+  'MPESA',
+]

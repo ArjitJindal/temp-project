@@ -5,9 +5,12 @@ import {
   getTransactionUserPastTransactions,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
-import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/time-utils'
+import {
+  PAYMENT_METHODS,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+} from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
@@ -23,7 +26,7 @@ export type TransactionsPatternVelocityRuleParameters =
     checkReceiver?: 'receiving' | 'all' | 'none'
     initialTransactions?: number
     transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
+    paymentMethod?: string
     userType?: UserType
   }
 
@@ -76,7 +79,7 @@ export default class TransactionsPatternVelocityBaseRule<
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {

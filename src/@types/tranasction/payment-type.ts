@@ -11,6 +11,8 @@ import { UPIDetails } from '../openapi-public/UPIDetails'
 import { UPIPaymentMethod } from '../openapi-public/UPIPaymentMethod'
 import { WalletDetails } from '../openapi-public/WalletDetails'
 import { WalletPaymentMethod } from '../openapi-public/WalletPaymentMethod'
+import { MpesaPaymentMethod } from '../openapi-public/MpesaPaymentMethod'
+import { MpesaDetails } from '../openapi-public/MpesaDetails'
 
 export type PaymentDetails =
   | CardDetails
@@ -20,6 +22,7 @@ export type PaymentDetails =
   | SWIFTDetails
   | UPIDetails
   | WalletDetails
+  | MpesaDetails
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -29,3 +32,4 @@ export type PaymentMethod =
   | SWIFTPaymentMethod
   | UPIPaymentMethod
   | WalletPaymentMethod
+  | MpesaPaymentMethod

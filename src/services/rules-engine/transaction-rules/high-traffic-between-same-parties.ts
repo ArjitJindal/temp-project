@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
+import { PAYMENT_METHODS } from '../utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
@@ -45,7 +46,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {

@@ -10,13 +10,10 @@ import {
   isTransactionInTargetTypes,
   isTransactionWithinTimeWindow,
 } from '../utils/transaction-rule-utils'
-import { subtractTime, TimeWindow } from '../utils/time-utils'
+import { PAYMENT_METHODS, subtractTime, TimeWindow } from '../utils/time-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
@@ -37,7 +34,7 @@ export type TransactionsVelocityRuleParameters =
       to?: string
     }
     transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
+    paymentMethod?: string
     userType?: UserType
     onlyCheckKnownUsers?: boolean
   }
@@ -138,7 +135,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {

@@ -5,8 +5,8 @@ import {
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import { isUserBetweenAge, isUserType } from '../utils/user-rule-utils'
+import { PAYMENT_METHODS } from '../utils/time-utils'
 import { TransactionRule } from './rule'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
@@ -21,7 +21,7 @@ export type TransactionAmountRuleParameters = {
   }
   // optional parameter
   transactionTypes?: TransactionType[]
-  paymentMethod?: PaymentMethod
+  paymentMethod?: string
   userType?: UserType
 }
 
@@ -61,7 +61,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {

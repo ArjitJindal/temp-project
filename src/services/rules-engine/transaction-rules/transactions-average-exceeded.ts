@@ -1,10 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -12,6 +9,7 @@ import {
   subtractTime,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
+  PAYMENT_METHODS,
 } from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -31,7 +29,7 @@ export type TransactionsAverageExceededParameters =
       [currency: string]: number
     }
     transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
+    paymentMethod?: string
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
     avgMethod?: AvgMethod
@@ -59,7 +57,7 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         transactionState: {

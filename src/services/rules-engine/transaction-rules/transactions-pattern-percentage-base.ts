@@ -6,12 +6,12 @@ import {
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import {
+  PAYMENT_METHODS,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
 } from '@/services/rules-engine/utils/time-utils'
@@ -26,7 +26,7 @@ export type TransactionsPatternPercentageRuleParameters =
     checkSender?: 'sending' | 'all' | 'none'
     checkReceiver?: 'receiving' | 'all' | 'none'
     transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
+    paymentMethod?: string
     userType?: UserType
   }
 
@@ -80,7 +80,7 @@ export default class TransactionsPatternPercentageBaseRule<
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {

@@ -5,7 +5,7 @@ import {
   isTransactionAmountAboveThreshold,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
-import { subtractTime, TimeWindow } from '../utils/time-utils'
+import { PAYMENT_METHODS, subtractTime, TimeWindow } from '../utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
@@ -52,7 +52,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
         paymentMethod: {
           type: 'string',
           title: 'Method of payment',
-          enum: ['ACH', 'CARD', 'IBAN', 'SWIFT', 'UPI', 'WALLET'],
+          enum: PAYMENT_METHODS,
           nullable: true,
         },
         userType: {
