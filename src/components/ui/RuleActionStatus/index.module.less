@@ -1,0 +1,31 @@
+@import 'src/components/ui/colors';
+
+.badge {
+  display: flex;
+  flex-direction: row;
+  position: relative;
+}
+
+.icon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 8px;
+  margin-top: 8px;
+
+  &.ruleAction-ALLOW {
+    background-color: @fr-colors-brandBlue;
+  }
+  &.ruleAction-SUSPEND {
+    background-color: @fr-colors-orange;
+  }
+  &.ruleAction-BLOCK {
+    background-color: @fr-colors-red;
+  }
+  &.ruleAction-WHITELIST {
+    background-color: @fr-colors-brandBlue;
+  }
+  &.ruleAction-FLAG {
+    background-color: @fr-colors-purpleGrayTint;
+  }
+}
