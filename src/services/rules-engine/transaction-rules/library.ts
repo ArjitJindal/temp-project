@@ -631,7 +631,6 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       },
       checkSender: 'sending',
       checkReceiver: 'receiving',
-      avgMethod: 'number',
     }
     return {
       id: 'R-121',
@@ -642,7 +641,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. number of transactions in last {{ format-time-window period1 }} than avg. number of transactions in last {{ format-time-window period2 }}`,
       defaultParameters,
       defaultAction: 'FLAG',
-      ruleImplementationName: 'transactions-average-exceeded',
+      ruleImplementationName: 'transactions-average-number-exceeded',
       labels: ['Fraud'],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',
@@ -663,7 +662,6 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       },
       checkSender: 'sending',
       checkReceiver: 'receiving',
-      avgMethod: 'amount',
     }
     return {
       id: 'R-122',
@@ -674,7 +672,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<() => Rule> = [
       descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. amount of transactions in last {{ format-time-window period1 }} than avg. amount of transactions in last {{ format-time-window period2 }}`,
       defaultParameters,
       defaultAction: 'FLAG',
-      ruleImplementationName: 'transactions-average-exceeded',
+      ruleImplementationName: 'transactions-average-amount-exceeded',
       labels: ['Fraud'],
       defaultCasePriority: 'P1',
       defaultCaseCreationType: 'TRANSACTION',

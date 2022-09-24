@@ -6,19 +6,22 @@ import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
+  PAYMENT_METHODS,
   subtractTime,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
-  PAYMENT_METHODS,
 } from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
+import { Business } from '@/@types/openapi-public/Business'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { User } from '@/@types/openapi-public/User'
 
-type AvgMethod = 'amount' | 'number'
-type User = 'origin' | 'destination'
+type UserType = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
 
 export type TransactionsAverageExceededParameters =
@@ -32,11 +35,30 @@ export type TransactionsAverageExceededParameters =
     paymentMethod?: string
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
-    avgMethod?: AvgMethod
   }
 
 export default class TransactionAverageExceededRule extends TransactionRule<TransactionsAverageExceededParameters> {
   transactionRepository?: TransactionRepository
+
+  private avgMethod: 'AMOUNT' | 'NUMBER'
+
+  constructor(
+    tenantId: string,
+    data: {
+      transaction: Transaction
+      senderUser?: User | Business
+      receiverUser?: User | Business
+    },
+    params: {
+      parameters: TransactionsAverageExceededParameters
+      action: RuleAction
+    },
+    dynamoDb: AWS.DynamoDB.DocumentClient,
+    avgMethod: 'AMOUNT' | 'NUMBER'
+  ) {
+    super(tenantId, data, params, dynamoDb)
+    this.avgMethod = avgMethod
+  }
 
   public static getSchema(): JSONSchemaType<TransactionsAverageExceededParameters> {
     return {
@@ -99,12 +121,6 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
           enum: ['receiving', 'all', 'none'],
           nullable: false,
         },
-        avgMethod: {
-          type: 'string',
-          title: 'Calculation method',
-          enum: ['amount', 'number'],
-          nullable: true,
-        },
       },
       required: [
         'period1',
@@ -117,8 +133,7 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
   }
 
   private async avg(
-    avgMethod: AvgMethod,
-    user: User,
+    user: UserType,
     direction: Direction,
     currency: string,
     period1: TimeWindow,
@@ -165,7 +180,7 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     const includeCurrentTransaction =
       checkOriginSending || checkDestinationReceiving
 
-    if (avgMethod === 'amount') {
+    if (this.avgMethod === 'AMOUNT') {
       const [transactions1, transactions2] = await Promise.all([
         repo.getTransactionsByIds(ids1),
         repo.getTransactionsByIds(ids2),
@@ -195,14 +210,17 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
         avgTransactionAmount(amountDetails1, currency, period1.units),
         avgTransactionAmount(amountDetails2, currency, period2.units),
       ])
-    } else if (avgMethod === 'number') {
+    } else if (this.avgMethod === 'NUMBER') {
       if (includeCurrentTransaction && this.transaction.transactionId) {
         ids1.push(this.transaction.transactionId)
         ids2.push(this.transaction.transactionId)
       }
       return [ids1.length / period1.units, ids2.length / period2.units]
     } else {
-      throw neverThrow(avgMethod, `Method not supported: ${avgMethod}`)
+      throw neverThrow(
+        this.avgMethod,
+        `Method not supported: ${this.avgMethod}`
+      )
     }
   }
 
@@ -263,10 +281,9 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       multiplierThresholds,
       checkSender,
       checkReceiver,
-      avgMethod = 'amount',
     } = this.parameters
 
-    const toCheck: [User, Direction][] = []
+    const toCheck: [UserType, Direction][] = []
     if (checkSender !== 'none') {
       toCheck.push(['origin', 'sending'])
       if (checkSender === 'all') {
@@ -285,7 +302,6 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     )) {
       for (const [user, direction] of toCheck) {
         const [avg1, avg2] = await this.avg(
-          avgMethod,
           user,
           direction,
           currency,
