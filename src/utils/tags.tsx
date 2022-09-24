@@ -31,6 +31,10 @@ export const paymentMethod: { value: string; label: any }[] = [
     value: 'SWIFT',
     label: <PaymentMethodTag paymentMethod="SWIFT" />,
   },
+  {
+    value: 'MPESA',
+    label: <PaymentMethodTag paymentMethod="MPESA" />,
+  },
 ];
 
 export const transactionType: { value: string; label: any }[] = [

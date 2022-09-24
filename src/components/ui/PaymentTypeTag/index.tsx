@@ -39,6 +39,10 @@ export const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
     paymentMethodDisplay = 'Card';
     tagColor = 'volcano';
     paymentIcon = <CreditCardOutlined />;
+  } else if (paymentMethod === 'MPESA') {
+    paymentMethodDisplay = 'Mpesa';
+    paymentIcon = <MobileOutlined />;
+    tagColor = 'red';
   } else {
     paymentMethodDisplay = paymentMethod;
   }

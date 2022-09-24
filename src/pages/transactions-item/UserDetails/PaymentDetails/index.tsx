@@ -12,6 +12,7 @@ import {
   SWIFTDetails,
   UPIDetails,
   WalletDetails,
+  MpesaDetails,
 } from '@/apis';
 
 export type PaymentDetails =
@@ -21,7 +22,8 @@ export type PaymentDetails =
   | ACHDetails
   | UPIDetails
   | WalletDetails
-  | SWIFTDetails;
+  | SWIFTDetails
+  | MpesaDetails;
 
 interface Props {
   paymentDetails: PaymentDetails | undefined;

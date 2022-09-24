@@ -6,6 +6,7 @@ import {
   IBANPaymentMethod,
   ACHPaymentMethod,
   SWIFTPaymentMethod,
+  MpesaPaymentMethod,
 } from '@/apis';
 
 type PaymentMethod =
@@ -15,7 +16,8 @@ type PaymentMethod =
   | UPIPaymentMethod
   | IBANPaymentMethod
   | ACHPaymentMethod
-  | SWIFTPaymentMethod;
+  | SWIFTPaymentMethod
+  | MpesaPaymentMethod;
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
   'ACH',
@@ -25,4 +27,5 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   'SWIFT',
   'UPI',
   'WALLET',
+  'MPESA',
 ];
