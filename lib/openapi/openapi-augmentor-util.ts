@@ -101,6 +101,9 @@ export function getAugmentedOpenapi(
   // Labmda integrations
   for (const path in openapi.paths) {
     for (const method in openapi.paths[path]) {
+      if (!['get', 'post', 'put', 'delete'].includes(method)) {
+        continue
+      }
       const methodSetting = openapi.paths[path][method]
       const lambdaFunctionName = pathToLambda[path]
 
@@ -118,7 +121,20 @@ export function getAugmentedOpenapi(
         methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }
         methodSetting['security'] = [{ sigv4: [] }]
       } else if (!options?.publicPaths?.includes(path)) {
-        methodSetting['security'] = [{ 'lambda-authorizer': [] }]
+        if (
+          authorization === 'API_KEY' &&
+          !methodSetting['security']?.find(
+            (security: any) => security['x-api-key']
+          )
+        ) {
+          throw new Error(
+            `${path} ${method} has missing x-api-key security setting!`
+          )
+        }
+        if (!methodSetting['security']) {
+          methodSetting['security'] = []
+        }
+        methodSetting['security'].push({ 'lambda-authorizer': [] })
       }
     }
 
