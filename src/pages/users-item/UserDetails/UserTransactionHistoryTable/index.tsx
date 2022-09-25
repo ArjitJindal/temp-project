@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
+import * as Card from '@/components/ui/Card';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
@@ -15,7 +16,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
-
 interface Props {
   userId: string;
 }
@@ -102,191 +102,231 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
   });
 
   return (
-    <div ref={rootRef} style={{ position: 'relative' }}>
-      <QueryResultsTable
-        search={false}
-        rowKey="rowKey"
-        form={{
-          labelWrap: true,
-        }}
-        className={style.tablePadding}
-        params={params}
-        onChangeParams={setParams}
-        queryResults={responseRes}
-        getPopupContainer={() => {
-          if (rootRef.current) {
-            return rootRef.current;
-          }
-          return document.body;
-        }}
-        columns={[
-          {
-            title: 'Transaction ID',
-            dataIndex: 'transactionId',
-            hideInSearch: true,
-            key: 'transactionId',
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-            render: (dom, entity) => {
-              const { lastRowKey } = entity;
-              const isExpanded = expandedRows.indexOf(lastRowKey) !== -1;
-              return (
-                <div className={style.idColumn}>
-                  <ExpandIcon
-                    onClick={() => {
-                      setExpandedRows((keys) =>
-                        isExpanded ? keys.filter((x) => x !== lastRowKey) : [lastRowKey],
-                      );
-                    }}
-                    isExpanded={isExpanded}
-                  />
-                  <Link to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}>
-                    {dom}
+    <Card.Root
+      header={{
+        title: 'Transaction History',
+      }}
+    >
+      <div ref={rootRef} style={{ position: 'relative' }} className={style.expandedRow}>
+        <QueryResultsTable
+          search={false}
+          rowKey="rowKey"
+          form={{
+            labelWrap: true,
+          }}
+          className={style.tablePadding}
+          params={params}
+          onChangeParams={setParams}
+          queryResults={responseRes}
+          getPopupContainer={() => {
+            if (rootRef.current) {
+              return rootRef.current;
+            }
+            return document.body;
+          }}
+          columns={[
+            {
+              title: 'Transaction ID',
+              dataIndex: 'transactionId',
+              hideInSearch: true,
+              key: 'transactionId',
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
+              render: (dom, entity) => {
+                const { lastRowKey } = entity;
+                const isExpanded = expandedRows.indexOf(lastRowKey) !== -1;
+                return (
+                  <div className={style.idColumn}>
+                    <ExpandIcon
+                      onClick={() => {
+                        setExpandedRows((keys) =>
+                          isExpanded ? keys.filter((x) => x !== lastRowKey) : [lastRowKey],
+                        );
+                      }}
+                      isExpanded={isExpanded}
+                    />
+                    <Link to={makeUrl(`/transactions/item/:id`, { id: entity.transactionId })}>
+                      {dom}
+                    </Link>
+                  </div>
+                );
+              },
+            },
+            {
+              title: 'Rules Hit',
+              dataIndex: 'ruleName',
+            },
+            {
+              title: 'Rules Description',
+              tooltip: 'Describes the conditions required for this rule to be hit.',
+              dataIndex: 'ruleDescription',
+            },
+            {
+              title: 'Transaction Time',
+              dataIndex: 'timestamp',
+              hideInSearch: true,
+              valueType: 'dateTime',
+              key: 'transactionTime',
+              width: 180,
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
+              render: (_, transaction) => {
+                return <TimestampDisplay timestamp={transaction.timestamp} />;
+              },
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              sorter: true,
+              filters: true,
+              onFilter: false,
+              filterMultiple: false,
+              hideInSearch: true,
+              valueType: 'select',
+              valueEnum: {
+                all: {
+                  text: 'All',
+                },
+                ALLOW: {
+                  text: 'ALLOW',
+                },
+                FLAG: {
+                  text: 'FLAG',
+                },
+                BLOCK: {
+                  text: 'BLOCK',
+                },
+                WHITELIST: {
+                  text: 'WHITELIST',
+                },
+                SUSPEND: {
+                  text: 'SUSPEND',
+                },
+              },
+              key: 'ruleAction',
+              width: 120,
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
+              render: (dom, entity) => {
+                return <RuleActionStatus ruleAction={entity.status} />;
+              },
+            },
+            {
+              title: 'Transaction Direction',
+              dataIndex: 'direction',
+              filters: true,
+              onFilter: false,
+              filterMultiple: false,
+              hideInSearch: true,
+              valueType: 'select',
+              valueEnum: {
+                all: {
+                  text: 'All',
+                },
+                incoming: {
+                  text: 'Incoming',
+                },
+                outgoing: {
+                  text: 'Outgoing',
+                },
+              },
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
+            },
+            {
+              title: 'Origin',
+              hideInSearch: true,
+              tooltip: 'Origin is the Sender in a transaction',
+              children: [
+                {
+                  title: 'Origin Amount',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.originAmountDetails,
+                    )}`;
+                  },
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                },
+                {
+                  title: 'Origin Country',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return entity.originAmountDetails?.country;
+                  },
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                },
+              ],
+            },
+            {
+              title: 'Destination',
+              hideInSearch: true,
+              tooltip: 'Destination is the Receiver in a transaction',
+              children: [
+                {
+                  title: 'Destination Amount',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return `${createCurrencyStringFromTransactionAmount(
+                      entity.destinationAmountDetails,
+                    )}`;
+                  },
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                },
+                {
+                  title: 'Destination Country',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return entity.destinationAmountDetails?.country;
+                  },
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                },
+              ],
+            },
+            {
+              title: 'Actions',
+              render: (dom, entity) => {
+                return (
+                  <Link
+                    to={makeUrl(`/case-management/case/:id`, {
+                      id: entity.transactionId,
+                    })}
+                  >
+                    <Button size="small" type="ghost">
+                      View Case
+                    </Button>
                   </Link>
-                </div>
-              );
+                );
+              },
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
             },
-          },
-          {
-            title: 'Rules Hit',
-            dataIndex: 'ruleName',
-          },
-          {
-            title: 'Rules Description',
-            tooltip: 'Describes the conditions required for this rule to be hit.',
-            dataIndex: 'ruleDescription',
-          },
-          {
-            title: 'Transaction Time',
-            dataIndex: 'timestamp',
-            hideInSearch: true,
-            valueType: 'dateTime',
-            key: 'transactionTime',
-            width: 180,
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-            render: (_, transaction) => {
-              return <TimestampDisplay timestamp={transaction.timestamp} />;
-            },
-          },
-          {
-            title: 'Status',
-            dataIndex: 'status',
-            sorter: true,
-            filters: true,
-            onFilter: false,
-            filterMultiple: false,
-            hideInSearch: true,
-            valueType: 'select',
-            valueEnum: {
-              all: {
-                text: 'All',
-              },
-              ALLOW: {
-                text: 'ALLOW',
-              },
-              FLAG: {
-                text: 'FLAG',
-              },
-              BLOCK: {
-                text: 'BLOCK',
-              },
-              WHITELIST: {
-                text: 'WHITELIST',
-              },
-              SUSPEND: {
-                text: 'SUSPEND',
-              },
-            },
-            key: 'ruleAction',
-            width: 120,
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-            render: (dom, entity) => {
-              return <RuleActionStatus ruleAction={entity.status} />;
-            },
-          },
-          {
-            title: 'Transaction Direction',
-            dataIndex: 'direction',
-            filters: true,
-            onFilter: false,
-            filterMultiple: false,
-            hideInSearch: true,
-            valueType: 'select',
-            valueEnum: {
-              all: {
-                text: 'All',
-              },
-              incoming: {
-                text: 'Incoming',
-              },
-              outgoing: {
-                text: 'Outgoing',
-              },
-            },
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-          },
-          {
-            title: 'Origin Amount',
-            tooltip: 'Origin is the Sender in a transaction',
-            hideInSearch: true,
-            render: (dom, entity) => {
-              return `${createCurrencyStringFromTransactionAmount(entity.originAmountDetails)}`;
-            },
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-          },
-          {
-            title: 'Destination Amount',
-            tooltip: 'Destination is the Receiver in a transaction',
-            hideInSearch: true,
-            render: (dom, entity) => {
-              return `${createCurrencyStringFromTransactionAmount(
-                entity.destinationAmountDetails,
-              )}`;
-            },
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-          },
-          {
-            title: 'Actions',
-            render: (dom, entity) => {
-              return (
-                <Link
-                  to={makeUrl(`/case-management/case/:id`, {
-                    id: entity.transactionId,
-                  })}
-                >
-                  <Button size="small" type="ghost">
-                    View Case
-                  </Button>
-                </Link>
-              );
-            },
-            onCell: (_) => ({
-              rowSpan: _.isFirstRow ? _.rowsCount : 0,
-            }),
-          },
-        ]}
-        expandable={{
-          showExpandColumn: false,
-          expandedRowKeys: expandedRows,
-          expandedRowRender: (item) => <TransactionEventsTable events={item.events} />,
-        }}
-        isEvenRow={(item) => item.index % 2 === 0}
-        scroll={{ x: 1300 }}
-        options={{
-          reload: false,
-        }}
-      />
-    </div>
+          ]}
+          expandable={{
+            showExpandColumn: false,
+            expandedRowKeys: expandedRows,
+            expandedRowRender: (item) => <TransactionEventsTable events={item.events} />,
+          }}
+          isEvenRow={(item) => item.index % 2 === 0}
+          scroll={{ x: 1300 }}
+          options={{
+            reload: false,
+          }}
+        />
+      </div>
+    </Card.Root>
   );
 }

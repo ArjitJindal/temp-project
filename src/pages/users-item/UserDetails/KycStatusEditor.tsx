@@ -51,6 +51,8 @@ export default function KycStatusEditor({ user }: Props) {
       options={KYC_STATUSES.map((status) => ({ value: status, label: status }))}
       value={kycStatusDetails?.status}
       onChange={handleChangeKYCStatus}
+      allowClear
+      placeholder="Please select"
     />
   );
 }

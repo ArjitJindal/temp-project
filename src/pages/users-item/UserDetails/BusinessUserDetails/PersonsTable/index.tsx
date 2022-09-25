@@ -5,8 +5,9 @@ import { Address, LegalDocument, Person } from '@/apis';
 import { formatConsumerName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Table from '@/components/ui/Table';
+import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 
-function expandedRowRender(person: Person) {
+export function expandedRowRender(person: Person) {
   return (
     <div className={s.expandedRow}>
       <Typography.Title level={5}>Legal documents</Typography.Title>
@@ -65,21 +66,55 @@ function expandedRowRender(person: Person) {
   );
 }
 
-function renderWebsite(website: string, i: number) {
+export function renderWebsite(website: string, i: number) {
   return (
-    <p key={i}>
+    <div>
       <a key={i} href={website} target="_blank">
         {website}
       </a>
-    </p>
+    </div>
   );
 }
 
-function renderEmail(email: string, i: number) {
+export function renderEmail(email: string, i: number) {
   return (
-    <a key={i} href={`mailto:${email}`}>
-      {email}
-    </a>
+    <div className={s.mail}>
+      <a key={i} href={`mailto:${email}`}>
+        {email}
+      </a>
+      <div className={s.icon}>
+        <FileCopyLineIcon />
+      </div>
+    </div>
+  );
+}
+
+export function renderWeb(website: string, i: number) {
+  return (
+    <div>
+      <a key={i} href={`webto:${website}`}>
+        {website}
+      </a>
+    </div>
+  );
+}
+export function renderTel(tel: string, i: number) {
+  return (
+    <div>
+      <a key={i}>
+        <b className={s.all}>{tel}</b>
+      </a>
+    </div>
+  );
+}
+
+export function renderFax(fax: string, i: number) {
+  return (
+    <div>
+      <a key={i}>
+        <b className={s.all}>{fax}</b>
+      </a>
+    </div>
   );
 }
 

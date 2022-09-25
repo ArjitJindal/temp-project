@@ -43,12 +43,6 @@
 .row {
   display: flex;
   flex-grow: 1;
-
-  > * {
-    &:not(:first-child) {
-      border-left: 1px solid @fr-colors-purpleGrayTint;
-    }
-  }
 }
 
 .column {
@@ -109,4 +103,32 @@
 .titleSection {
   display: flex;
   justify-content: space-between;
+}
+
+.subtitle {
+  .item {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #dfe6f2;
+    align-items: center;
+    height: 60px;
+  }
+
+  .name {
+    display: flex;
+    color: @fr-colors-purpleGray;
+    font-weight: 200px !important;
+    size: 17px !important;
+    line-height: 27px !important;
+    align-items: center;
+  }
+
+  .icon {
+    height: 17px !important;
+    width: 17px !important;
+    margin-right: 5px !important;
+    color: @fr-colors-purpleGray;
+    margin-left: 25px !important;
+    align-items: center;
+  }
 }

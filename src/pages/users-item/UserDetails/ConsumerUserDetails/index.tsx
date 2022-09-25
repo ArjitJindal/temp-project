@@ -1,62 +1,25 @@
-import ProDescriptions from '@ant-design/pro-descriptions';
-import { ProColumns } from '@ant-design/pro-table';
-import { Col, Divider, Row } from 'antd';
-import { useCallback } from 'react';
+import { Divider } from 'antd';
+import UserDetails from '../ConsumerUserDetails/UserDetails/index';
 import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
-import UserManualRiskPanel from '@/pages/users-item/UserDetails/UserManualRiskPanel';
-import UserStateEditor from '@/pages/users-item/UserDetails/UserStateEditor';
-import KycStatusEditor from '@/pages/users-item/UserDetails/KycStatusEditor';
-import { getUserName } from '@/utils/api/users';
-import { useApi } from '@/api';
-import { UploadFilesList } from '@/components/files/UploadFilesList';
+import { LegalDocumentsTable } from './LegalDocuments';
 import { InternalConsumerUser } from '@/apis';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import UserIdNameCard from '@/components/ui/UserIdNameCard';
+import * as Card from '@/components/ui/Card';
+import { UploadFilesList } from '@/components/files/UploadFilesList';
+import { useApi } from '@/api';
 
 interface Props {
   user: InternalConsumerUser;
-  columns: ProColumns<InternalConsumerUser>[];
   isEmbedded?: boolean;
 }
 
-export default function UserDetails(props: Props) {
-  const { user, columns, isEmbedded } = props;
+export default function ConsumerUserDetails(props: Props) {
+  const { user, isEmbedded } = props;
   const api = useApi();
   const userId = user.userId;
-  const request = useCallback(
-    async () => ({
-      data: user || {},
-    }),
-    [user],
-  );
-
   return (
-    <>
-      <Row justify="space-between" align="middle" style={{ paddingBottom: 24 }}>
-        <Col span={6}>
-          <UserIdNameCard user={user as InternalConsumerUser} />
-        </Col>
-        <Feature name="PULSE_MANUAL_USER_RISK_LEVEL">
-          <Col>
-            <UserManualRiskPanel userId={userId} />
-          </Col>
-        </Feature>
-      </Row>
-      <ProDescriptions column={2}>
-        <ProDescriptions.Item label="User State" style={{ paddingBottom: 0 }}>
-          <UserStateEditor user={user} />
-        </ProDescriptions.Item>
-        <ProDescriptions.Item label="KYC Status" style={{ paddingBottom: 0 }}>
-          <KycStatusEditor user={user} />
-        </ProDescriptions.Item>
-      </ProDescriptions>
-      <Divider />
-      <ProDescriptions<InternalConsumerUser>
-        column={2}
-        request={request}
-        params={{ id: getUserName(user) }}
-        columns={columns}
-      />
+    <Card.Section>
+      <UserDetails user={user} />
+      <LegalDocumentsTable person={user} />
       <UserTransactionHistoryTable userId={userId} />
       <Divider orientation="left" orientationMargin="0">
         Documents
@@ -77,6 +40,6 @@ export default function UserDetails(props: Props) {
           });
         }}
       />
-    </>
+    </Card.Section>
   );
 }

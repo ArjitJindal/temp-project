@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Card } from 'antd';
 import { useParams } from 'react-router';
 import UserDetails from './UserDetails';
+import Header from './Header';
 import { useI18n } from '@/locales';
 import PageWrapper from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
@@ -9,6 +9,7 @@ import { AsyncResource, failed, init, loading, success } from '@/utils/asyncReso
 import { ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import * as Card from '@/components/ui/Card';
 
 export default function UserItem() {
   const i18n = useI18n();
@@ -66,11 +67,20 @@ export default function UserItem() {
         url: makeUrl('/users/list/:list/all', { list }),
       }}
     >
-      <Card>
+      <Card.Root>
         <AsyncResourceRenderer resource={currentItem}>
-          {(user) => <UserDetails user={user} />}
+          {(user) => (
+            <>
+              <Card.Section>
+                <Header user={user} />
+              </Card.Section>
+              <Card.Section>
+                <UserDetails user={user} />
+              </Card.Section>
+            </>
+          )}
         </AsyncResourceRenderer>
-      </Card>
+      </Card.Root>
     </PageWrapper>
   );
 }

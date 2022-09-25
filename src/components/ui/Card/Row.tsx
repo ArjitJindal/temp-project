@@ -5,9 +5,10 @@ import s from './index.module.less';
 interface Props {
   direction?: 'horizontal' | 'vertical';
   children?: React.ReactNode;
+  className?: string;
 }
 
 export default function Row(props: Props) {
-  const { children } = props;
-  return <div className={cn(s.row)}>{children}</div>;
+  const { children, className } = props;
+  return <div className={cn(s.row, className)}>{children}</div>;
 }

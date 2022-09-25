@@ -1,0 +1,40 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.items {
+  display: flex;
+  gap: 32px;
+}
+
+.name {
+  color: @fr-colors-brandBlue;
+  font-weight: 600 !important;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: 0.01em;
+}
+
+.id {
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.user {
+  display: grid;
+  grid-template-columns: min-content 1fr;
+  gap: 4px 12px;
+  align-items: center;
+  > *:nth-child(1) {
+    grid-row: span 2;
+  }
+  > *:nth-child(3) {
+    grid-column-start: 2;
+  }
+}

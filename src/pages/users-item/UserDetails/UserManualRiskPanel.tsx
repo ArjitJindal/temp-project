@@ -72,7 +72,7 @@ export default function UserManualRiskPanel(props: Props) {
   };
 
   return (
-    <Form.Item label="Risk:" name="field" style={{ margin: 0 }}>
+    <Form.Item name="field" style={{ margin: 0 }}>
       <RiskLevelSwitch
         disabled={isLoading(syncState) || isFailed(syncState)}
         current={getOr(

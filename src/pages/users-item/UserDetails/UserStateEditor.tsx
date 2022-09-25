@@ -50,9 +50,11 @@ export default function UserStateEditor({ user }: Props) {
   return (
     <Select
       style={{ width: 300 }}
+      allowClear
       options={USER_STATES.map((state) => ({ value: state, label: state }))}
       value={userStateDetails?.state}
       onChange={handleChangeUserState}
+      placeholder="Please select"
     />
   );
 }
