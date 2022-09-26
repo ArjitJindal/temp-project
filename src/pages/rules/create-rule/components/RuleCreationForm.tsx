@@ -90,6 +90,7 @@ export const RuleCreationForm: React.FC<RuleCreationFormProps> = ({ rule, childr
             labels: rule?.labels || [],
             defaultCaseCreationType: values.defaultCaseCreationType || 'TRANSACTION',
             defaultCasePriority: values.defaultCasePriority || 'P1',
+            parametersSchema: {},
           };
           if (rule) {
             await api.putRuleRuleId({

@@ -298,7 +298,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
             {
               title: 'Actions',
               render: (dom, entity) => {
-                return (
+                return entity.ruleName ? (
                   <Link
                     to={makeUrl(`/case-management/case/:id`, {
                       id: entity.transactionId,
@@ -308,6 +308,8 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
                       View Case
                     </Button>
                   </Link>
+                ) : (
+                  '-'
                 );
               },
               onCell: (_) => ({
