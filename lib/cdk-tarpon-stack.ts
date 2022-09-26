@@ -440,6 +440,28 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
     this.grantMongoDbAccess(ruleInstanceAlias)
 
+    /* Rule Template (Public) */
+    const { alias: publicRuleAlias } = this.createFunction(
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+        handler: 'app.ruleHandler',
+        codePath: 'dist/public-management-api-rule/',
+      },
+      atlasFunctionProps
+    )
+    tarponDynamoDbTable.grantReadData(publicRuleAlias)
+
+    /* Rule Instance (Public) */
+    const { alias: publicRuleInstanceAlias } = this.createFunction(
+      {
+        name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
+        handler: 'app.ruleInstanceHandler',
+        codePath: 'dist/public-management-api-rule/',
+      },
+      atlasFunctionProps
+    )
+    tarponDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
+
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
       {

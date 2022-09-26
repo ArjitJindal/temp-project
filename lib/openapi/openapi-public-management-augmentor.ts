@@ -16,11 +16,12 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 const env = (process.env.ENV || 'prod').split(':')[0]
 
 const PathToLambda: any = {
-  '/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-  '/rules/{ruleId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-  '/rule-instances': StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+  '/rules': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+  '/rules/{ruleId}': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+  '/rule-instances':
+    StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/{ruleInstanceId}':
-    StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
+    StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

@@ -84,6 +84,12 @@ export const StackConstants = {
   API_KEY_GENERATOR_FUNCTION_NAME: getResourceNameForTarpon(
     'ApiKeyGeneratorFunction'
   ),
+  PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicManagementApiRuleFunction'
+  ),
+  PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicManagementApiRuleInstanceFunction'
+  ),
   CONSOLE_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRuleTemplateFunction'
   ),

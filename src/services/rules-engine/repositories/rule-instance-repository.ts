@@ -13,6 +13,28 @@ import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 
 const nanoId = customAlphabet('1234567890abcdef', 8)
 
+function toRuleInstance(item: any): RuleInstance {
+  return {
+    id: item.id,
+    type: item.type,
+    ruleId: item.ruleId,
+    ruleNameAlias: item.ruleNameAlias,
+    parameters: item.riskLevelParameters
+      ? item.riskLevelParameters[DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel]
+      : item.parameters,
+    riskLevelParameters: item.riskLevelParameters,
+    action: item.action,
+    riskLevelActions: item.riskLevelActions,
+    status: item.status,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    runCount: item.runCount,
+    hitCount: item.hitCount,
+    casePriority: item.casePriority,
+    caseCreationType: item.caseCreationType,
+  }
+}
+
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
   mongoDb: MongoClient
@@ -100,14 +122,16 @@ export class RuleInstanceRepository {
     return this.getRuleInstances({})
   }
 
-  private async getRuleInstanceById(ruleInstanceId: string) {
+  public async getRuleInstanceById(
+    ruleInstanceId: string
+  ): Promise<RuleInstance | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
       ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await this.dynamoDb.get(getItemInput).promise()
-    return result.Item as RuleInstance
+    return result.Item ? toRuleInstance(result.Item) : null
   }
 
   private async getRuleInstances(
@@ -124,29 +148,7 @@ export class RuleInstanceRepository {
       },
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (
-      result.Items?.map((item) => ({
-        id: item.id,
-        type: item.type,
-        ruleId: item.ruleId,
-        ruleNameAlias: item.ruleNameAlias,
-        parameters: item.riskLevelParameters
-          ? item.riskLevelParameters[
-              DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel
-            ]
-          : item.parameters,
-        riskLevelParameters: item.riskLevelParameters,
-        action: item.action,
-        riskLevelActions: item.riskLevelActions,
-        status: item.status,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-        runCount: item.runCount,
-        hitCount: item.hitCount,
-        casePriority: item.casePriority,
-        caseCreationType: item.caseCreationType,
-      })) || []
-    )
+    return result.Items?.map(toRuleInstance) || []
   }
 
   public async incrementRuleInstanceStatsCount(

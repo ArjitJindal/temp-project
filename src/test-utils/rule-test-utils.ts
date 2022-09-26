@@ -28,6 +28,7 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
     type: 'TRANSACTION',
     name: 'test rule name',
     description: DEFAULT_DESCRIPTION,
+    parametersSchema: {},
     defaultParameters: {},
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',

@@ -26,8 +26,8 @@ const TEST_TRANSACTION_AMOUNT_101 = {
 }
 
 const DESCRIPTION_TEMPLATE = TRANSACTION_RULES_LIBRARY.find(
-  (rule) => rule().id === 'R-124'
-)?.().descriptionTemplate as string
+  (rule) => rule.id === 'R-124'
+)?.descriptionTemplate as string
 
 dynamoDbSetupHook()
 

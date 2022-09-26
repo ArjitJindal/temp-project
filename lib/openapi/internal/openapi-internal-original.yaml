@@ -1466,6 +1466,8 @@ components:
           type: string
         description:
           type: string
+        parametersSchema:
+          type: object
         descriptionTemplate:
           type: string
         defaultParameters:
@@ -1499,6 +1501,7 @@ components:
         - type
         - name
         - description
+        - parametersSchema
         - defaultParameters
         - defaultAction
         - ruleImplementationName
@@ -1541,8 +1544,6 @@ components:
           type: number
         hitCount:
           type: number
-        '':
-          type: string
         caseCreationType:
           $ref: '#/components/schemas/CaseType'
         casePriority:

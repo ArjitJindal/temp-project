@@ -81,6 +81,7 @@ export class RuleRepository {
         name: item.name,
         description: item.description,
         descriptionTemplate: item.descriptionTemplate,
+        parametersSchema: item.parametersSchema,
         defaultParameters: item.defaultParameters,
         defaultAction: item.defaultAction,
         ruleImplementationName: item.ruleImplementationName,

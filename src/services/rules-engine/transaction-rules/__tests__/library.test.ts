@@ -4,34 +4,30 @@ import { simpleGit } from 'simple-git'
 import _ from 'lodash'
 import { TRANSACTION_RULES } from '..'
 import { TRANSACTION_RULES_LIBRARY } from '../library'
-import { RuleService } from '@/lambdas/console-api-rule/services/rule-service'
+import { RuleService } from '@/services/rules-engine/rule-service'
 import { Rule } from '@/@types/openapi-internal/Rule'
 
 const git = simpleGit()
 
-describe.each(TRANSACTION_RULES_LIBRARY)(
-  'Rule library integrity',
-  (getRule) => {
-    const rule = getRule()
-    test(`${rule.id}: ${rule.name}`, () => {
-      const ruleImplementation = TRANSACTION_RULES[rule.ruleImplementationName]
-      expect(ruleImplementation).not.toBeUndefined()
-      const schema = ruleImplementation.getSchema()
-      expect(() =>
-        RuleService.validateRuleParametersSchema(
-          schema,
-          rule.defaultParameters,
-          rule.defaultRiskLevelParameters
-        )
-      ).not.toThrow()
-    })
-  }
-)
+describe.each(TRANSACTION_RULES_LIBRARY)('Rule library integrity', (rule) => {
+  test(`${rule.id}: ${rule.name}`, () => {
+    const ruleImplementation = TRANSACTION_RULES[rule.ruleImplementationName]
+    expect(ruleImplementation).not.toBeUndefined()
+    const schema = ruleImplementation.getSchema()
+    expect(() =>
+      RuleService.validateRuleParametersSchema(
+        schema,
+        rule.defaultParameters,
+        rule.defaultRiskLevelParameters
+      )
+    ).not.toThrow()
+  })
+})
 
 test('Rule ID should be unique', () => {
-  expect(
-    new Set(TRANSACTION_RULES_LIBRARY.map((getRule) => getRule().id)).size
-  ).toBe(TRANSACTION_RULES_LIBRARY.length)
+  expect(new Set(TRANSACTION_RULES_LIBRARY.map((rule) => rule.id)).size).toBe(
+    TRANSACTION_RULES_LIBRARY.length
+  )
 })
 
 describe('', () => {
@@ -56,8 +52,7 @@ describe('', () => {
 
   describe.each(TRANSACTION_RULES_LIBRARY)(
     'Rule parameters breaking change check (see: https://www.notion.so/flagright/How-to-handle-rule-parameters-breaking-changes-5f7b6fc2116f43bbb1ffbe8b4a2089aa)',
-    (getRule) => {
-      const rule = getRule()
+    (rule) => {
       // TODO: will be unskipped after merging
       test.skip(`${rule.id}: ${rule.name}`, async () => {
         const ruleImplementation =
