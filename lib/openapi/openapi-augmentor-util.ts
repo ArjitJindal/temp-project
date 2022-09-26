@@ -100,13 +100,23 @@ export function getAugmentedOpenapi(
 
   // Labmda integrations
   for (const path in openapi.paths) {
-    for (const method in openapi.paths[path]) {
-      if (!['get', 'post', 'put', 'delete'].includes(method)) {
-        continue
-      }
-      const methodSetting = openapi.paths[path][method]
-      const lambdaFunctionName = pathToLambda[path]
+    // NOTE: path parameters should live under method in API Gateway. Move the path-level
+    // parameters to each method
+    const pathParameters = openapi.paths[path]['parameters']
+    delete openapi.paths[path]['parameters']
 
+    for (const method in openapi.paths[path]) {
+      const methodSetting = openapi.paths[path][method]
+
+      // Parameters
+      if (pathParameters) {
+        methodSetting['parameters'] = (
+          methodSetting['parameters'] || []
+        ).concat(pathParameters)
+      }
+
+      // Lambda integration
+      const lambdaFunctionName = pathToLambda[path]
       methodSetting['x-amazon-apigateway-request-validator'] = 'all'
       methodSetting['x-amazon-apigateway-integration'] = {
         uri: {
@@ -117,6 +127,7 @@ export function getAugmentedOpenapi(
         passthroughBehavior: 'never',
       }
 
+      // Security
       if (options?.iamAuthorizedPaths?.includes(path)) {
         methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }
         methodSetting['security'] = [{ sigv4: [] }]
