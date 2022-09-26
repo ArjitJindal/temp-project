@@ -189,7 +189,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-      description: 'You can *permanently* delete a rule instance using the `DELETE /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a rule instance, you can update the status on the rule instance using the [PUT /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update) endpoint'
+      description: 'You can *permanently* delete a rule instance using the `DELETE /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a rule instance, you can update the status on the rule instance using the [POST /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update) endpoint'
     post:
       security:
         - x-api-key: []
@@ -222,7 +222,7 @@ paths:
       description: |
         ### Update Rule Instance
 
-        Created rule instances can be idempotently updated with the `PUT /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
+        Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
 components:
   schemas:
     RuleInstance:

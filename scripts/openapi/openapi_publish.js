@@ -17,12 +17,23 @@ async function prepareSchemas(OUTPUT_DIR) {
   try {
     const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
     const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
+    const publicManagementDir = path.resolve(
+      PROJECT_DIR,
+      'lib',
+      'openapi',
+      'public-management'
+    )
 
     const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
     const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
+    const publicManagementDirOutput = path.resolve(
+      OUTPUT_DIR,
+      'public-management'
+    )
 
     await fs.ensureDir(internalDirOutput)
     await fs.ensureDir(publicDirOutput)
+    await fs.ensureDir(publicManagementDirOutput)
 
     const publicSchemaFile = path.resolve(
       publicDir,
@@ -66,6 +77,9 @@ async function prepareSchemas(OUTPUT_DIR) {
         path.resolve(publicDirOutput, 'openapi-public-original.yaml'),
         await stringify(publicSchemaYaml)
       )
+    }
+    {
+      await fs.copy(publicManagementDir, publicManagementDirOutput)
     }
   } catch (err) {
     console.error(err)
