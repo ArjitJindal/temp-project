@@ -31,6 +31,7 @@ import { TransactionsRoundValuePercentageRuleParameters } from './transactions-r
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
 import { TRANSACTION_RULES } from '.'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
 
 const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
   [
@@ -727,6 +728,34 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'transactions-round-value-percentage',
+        labels: [],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: HighUnsuccessfullStateRateParameters = {
+        transactionState: 'REFUNDED',
+        threshold: 1,
+        minimumTransactions: 3,
+        timeWindow: {
+          units: 7,
+          granularity: 'day',
+        },
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      }
+      return {
+        id: 'R-125',
+        type: 'TRANSACTION',
+        name: 'High percentage of unsuccesful state transactions',
+        description:
+          "A user's transaction (all, sending, or receiving) has >= x% of all transactions in a specific state (e.g. Refund) in time t. Rule is activated after the user initiates y number of transactions in total (all, sending, or receiving)",
+        descriptionTemplate:
+          "{{ if-sender 'Sender' 'Receiver' }} has more than {{ to-percent parameters.threshold }} of all transactions in a “{{ parameters.transactionState}}” state within {{ format-time-window parameters.timeWindow }}. The rule is activated after the user initiates {{ parameters.minimumTransactions }} number of transactions in total.",
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'high-unsuccessfull-state-rate',
         labels: [],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',

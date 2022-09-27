@@ -57,6 +57,13 @@ Handlebars.registerHelper('to-fixed', function (value, options) {
   return value.toFixed(fractionDigits || 2)
 })
 
+Handlebars.registerHelper('to-percent', function (value) {
+  if (value == null || Number.isNaN(value)) {
+    return `--.%`
+  }
+  return (value * 100).toFixed(2) + '%'
+})
+
 Handlebars.registerHelper('format-time-window', function (timeWindow) {
   const { units, granularity } = timeWindow
   return `${units} ${granularity}${units > 1 ? 's' : ''}`
