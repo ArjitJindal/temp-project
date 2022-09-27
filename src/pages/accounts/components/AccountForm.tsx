@@ -10,17 +10,24 @@ import { Account } from '@/apis';
 
 interface Props {
   editAccount: Account | null;
-  onClose: () => void;
+  onSuccess: () => void;
 }
 export default function AccountForm(props: Props) {
-  const { editAccount, onClose } = props;
+  const { editAccount, onSuccess } = props;
   const api = useApi();
   const formRef = useRef<ProFormInstance>();
   const isEdit = editAccount !== null;
   // todo: i18n
+  const initialValues =
+    editAccount != null
+      ? editAccount
+      : {
+          email: '',
+          role: 'user',
+        };
   return (
     <DrawerForm<Account>
-      initialValues={editAccount != null ? editAccount : {}}
+      initialValues={initialValues}
       title={isEdit ? 'Edit account' : 'Invite user'}
       width={400}
       formRef={formRef}
@@ -38,8 +45,8 @@ export default function AccountForm(props: Props) {
       }}
       autoFocusFirstInput
       onVisibleChange={(isVisible) => {
-        if (!isVisible) {
-          onClose();
+        if (isVisible) {
+          formRef.current?.setFieldsValue(initialValues);
         }
       }}
       onFinish={async (values) => {
@@ -52,7 +59,7 @@ export default function AccountForm(props: Props) {
               },
             });
             message.success('Account updated!');
-            formRef.current?.resetFields();
+            onSuccess();
             return true;
           } catch (e) {
             const error = e instanceof Response ? (await e.json())?.message : e;
@@ -68,7 +75,7 @@ export default function AccountForm(props: Props) {
               },
             });
             message.success('User invited!');
-            formRef.current?.resetFields();
+            onSuccess();
             return true;
           } catch (e) {
             const error = e instanceof Response ? (await e.json())?.message : e;

@@ -99,7 +99,7 @@ export default function () {
                 Delete
               </Button>
             </Popconfirm>
-            <AccountForm editAccount={item} onClose={refreshTable} />
+            <AccountForm editAccount={item} onSuccess={refreshTable} />
           </div>
         );
       },
@@ -138,7 +138,7 @@ export default function () {
         rowKey="id"
         toolBarRender={() => {
           return isAtLeastAdmin(user)
-            ? [<AccountForm editAccount={null} onClose={refreshTable} />]
+            ? [<AccountForm editAccount={null} onSuccess={refreshTable} />]
             : [];
         }}
         queryResults={accountsResult}
