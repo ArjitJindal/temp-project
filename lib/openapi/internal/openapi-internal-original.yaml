@@ -2218,6 +2218,7 @@ components:
         - LISTS
         - CASE_CREATION_TYPE
         - HELP_CENTER
+        - GOOGLE_SSO
       description: ''
     AccountRole:
       type: string
