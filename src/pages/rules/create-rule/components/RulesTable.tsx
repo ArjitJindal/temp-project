@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import style from '../style.module.less';
-import { RuleCreationForm } from './RuleCreationForm';
 import { RuleParametersTable } from './RuleParametersTable';
 import { Rule, RuleImplementation } from '@/apis';
 import { useApi } from '@/api';
-import { isAtLeast, useAuth0User, UserRole } from '@/utils/user-utils';
 import Button from '@/components/ui/Button';
 import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
@@ -17,7 +15,6 @@ interface Props {
 }
 
 export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule }) => {
-  const user = useAuth0User();
   const api = useApi();
   const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const columns: TableColumn<Rule>[] = useMemo(() => {
@@ -41,13 +38,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
         defaultSortOrder: 'ascend',
         render: (_, entity) => {
-          return isAtLeast(user, UserRole.ROOT) ? (
-            <RuleCreationForm rule={entity}>
-              <a>{entity.id}</a>
-            </RuleCreationForm>
-          ) : (
-            <span>{entity.id}</span>
-          );
+          return <span>{entity.id}</span>;
         },
       },
       {
@@ -108,7 +99,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         },
       },
     ];
-  }, [onSelectRule, ruleImplementations, user, isCaseCreationTypeEnabled]);
+  }, [onSelectRule, ruleImplementations, isCaseCreationTypeEnabled]);
 
   const request = useCallback(async () => {
     const rules = await api.getRules({});
@@ -130,7 +121,6 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
       pagination={false}
       rowKey="id"
       search={false}
-      toolBarRender={() => (isAtLeast(user, UserRole.ROOT) ? [<RuleCreationForm />] : [])}
       request={request}
       columns={columns}
     />
