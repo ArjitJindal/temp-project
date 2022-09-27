@@ -16,17 +16,11 @@ import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '@/pages/rul
 
 interface Props {
   rule: Rule;
-  ruleParametersSchema: object;
   onBack: () => void;
   onActivated: () => void;
 }
 
-export const RuleConfigurationsEditor: React.FC<Props> = ({
-  rule,
-  ruleParametersSchema,
-  onBack,
-  onActivated,
-}) => {
+export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActivated }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
   const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
@@ -152,7 +146,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({
       <Divider>Rule Parameters</Divider>
       <Row className={styles.section}>
         <RuleParametersEditor
-          parametersSchema={ruleParametersSchema}
+          parametersSchema={rule.parametersSchema}
           parameters={parameters}
           riskLevelParameters={riskLevelParameters}
           action={ruleAction}

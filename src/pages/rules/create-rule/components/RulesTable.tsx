@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import style from '../style.module.less';
 import { RuleParametersTable } from './RuleParametersTable';
-import { Rule, RuleImplementation } from '@/apis';
+import { Rule } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import { RequestTable } from '@/components/RequestTable';
@@ -11,10 +11,9 @@ import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
-  ruleImplementations: { [ruleImplementationName: string]: RuleImplementation } | undefined;
 }
 
-export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule }) => {
+export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const api = useApi();
   const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const columns: TableColumn<Rule>[] = useMemo(() => {
@@ -60,10 +59,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         title: 'Default Parameters',
         width: 250,
         render: (_, rule) => (
-          <RuleParametersTable
-            parameters={rule.defaultParameters}
-            schema={ruleImplementations?.[rule.ruleImplementationName].parametersSchema}
-          />
+          <RuleParametersTable parameters={rule.defaultParameters} schema={rule.parametersSchema} />
         ),
       },
       {
@@ -99,7 +95,7 @@ export const RulesTable: React.FC<Props> = ({ ruleImplementations, onSelectRule 
         },
       },
     ];
-  }, [onSelectRule, ruleImplementations, isCaseCreationTypeEnabled]);
+  }, [onSelectRule, isCaseCreationTypeEnabled]);
 
   const request = useCallback(async () => {
     const rules = await api.getRules({});

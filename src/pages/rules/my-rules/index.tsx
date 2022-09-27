@@ -6,7 +6,6 @@ import { getRuleInstanceDisplayId } from '../utils';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { Rule, RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import { RuleImplementation } from '@/apis/models/RuleImplementation';
 import PageWrapper from '@/components/PageWrapper';
 import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
@@ -24,9 +23,6 @@ const MyRule = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const [rules, setRules] = useState<{ [key: string]: Rule }>({});
-  const [ruleImplementations, setRuleImplementations] = useState<{
-    [key: string]: RuleImplementation;
-  }>({});
   const handleRuleInstanceUpdate = useCallback(
     async (newRuleInstance: RuleInstance) => {
       const ruleInstanceId = newRuleInstance.id as string;
@@ -148,10 +144,7 @@ const MyRule = () => {
           ) : (
             <RuleParametersTable
               parameters={ruleInstance.parameters}
-              schema={
-                ruleImplementations?.[rules[ruleInstance.ruleId].ruleImplementationName]
-                  .parametersSchema
-              }
+              schema={rules[ruleInstance.ruleId].parametersSchema}
             />
           );
         },
@@ -199,20 +192,14 @@ const MyRule = () => {
     ];
   }, [
     handleActivationChange,
-    ruleImplementations,
     rules,
     updatedRuleInstances,
     isPulseEnabled,
     isCaseCreationTypeEnabled,
   ]);
   const request = useCallback(async () => {
-    const [rules, ruleInstances, ruleImplementations] = await Promise.all([
-      api.getRules({}),
-      api.getRuleInstances({}),
-      api.getRuleImplementations({}),
-    ]);
+    const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances({})]);
     setRules(_.keyBy(rules, 'id'));
-    setRuleImplementations(_.keyBy(ruleImplementations, 'name'));
     return {
       items: ruleInstances,
       success: true,
@@ -253,9 +240,7 @@ const MyRule = () => {
         {currentRow?.id && (
           <RuleInstanceDetails
             rule={rules[currentRow.ruleId]}
-            ruleParametersSchema={
-              ruleImplementations[rules[currentRow.ruleId]?.ruleImplementationName].parametersSchema
-            }
+            ruleParametersSchema={rules[currentRow.ruleId].parametersSchema}
             ruleInstance={updatedRuleInstances[currentRow.id] || currentRow}
             onRuleInstanceUpdate={handleRuleInstanceUpdate}
             onRuleInstanceDeleted={() => {
