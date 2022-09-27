@@ -46,7 +46,7 @@ elif [ "$env" == "prod-eu-1" ]; then
     region="eu-central-1"
 elif [ "$env" == "prod-us-1" ]; then
     apiPrefix="us-1."
-    apiId=chw09486vg
+    apiId=eb7lsu6eqb
     managementApiId=w79lu22nyb
     profile="AWSAdministratorAccess-870721492449"
     region="us-west-2"
