@@ -41,6 +41,7 @@ export function getNameForGlobalResource(name: string, config: Config) {
 
 export const StackConstants = {
   TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
+  TARPON_RULE_DYNAMODB_TABLE_NAME: 'TarponRule',
   TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',

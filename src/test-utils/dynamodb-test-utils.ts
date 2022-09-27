@@ -1,9 +1,12 @@
 import AWS, { DynamoDB } from 'aws-sdk'
+import _ from 'lodash'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
 // We use a separate table for each jest worker. Then different test files running in parallel
 // won't interfere with each other.
-export const TEST_DYNAMODB_TABLE_NAME = `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${process.env.JEST_WORKER_ID}`
+export const TEST_DYNAMODB_TABLE_NAMES = _.range(0, 4).map(
+  (i) => `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${process.env.JEST_WORKER_ID}-${i}`
+)
 
 export function getTestDynamoDbClient(): AWS.DynamoDB.DocumentClient {
   return new AWS.DynamoDB.DocumentClient({
@@ -29,8 +32,10 @@ export function getTestDynamoDb(): AWS.DynamoDB {
 
 export function dynamoDbSetupHook() {
   beforeAll(async () => {
-    await deleteTable(TEST_DYNAMODB_TABLE_NAME, true)
-    await createTable(TEST_DYNAMODB_TABLE_NAME)
+    for (const table of TEST_DYNAMODB_TABLE_NAMES) {
+      await deleteTable(table, true)
+      await createTable(table)
+    }
   })
 }
 

@@ -1,4 +1,3 @@
-import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -8,17 +7,14 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 export class RuleRepository {
   tenantId: string
   dynamoDb: AWS.DynamoDB.DocumentClient
-  mongoDb: MongoClient
 
   constructor(
     tenantId: string,
     connections: {
       dynamoDb?: AWS.DynamoDB.DocumentClient
-      mongoDb?: MongoClient
     }
   ) {
     this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
-    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
 
@@ -64,7 +60,7 @@ export class RuleRepository {
   ): Promise<ReadonlyArray<Rule>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       ...query,
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
@@ -102,7 +98,7 @@ export class RuleRepository {
       updatedAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE(rule.id),
         ...newRule,
@@ -115,7 +111,7 @@ export class RuleRepository {
 
   async deleteRule(ruleId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE(ruleId),
       ReturnConsumedCapacity: 'TOTAL',
     }

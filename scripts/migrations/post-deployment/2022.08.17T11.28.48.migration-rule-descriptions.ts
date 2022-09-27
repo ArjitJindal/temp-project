@@ -1,8 +1,6 @@
 import { MigrationFn } from 'umzug'
-import { StackConstants } from '@cdk/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const changes = [
@@ -20,11 +18,9 @@ const changes = [
 async function migrateRules() {
   console.info(`Starting to migrate`)
   const dynamodb = await getDynamoDbClient()
-  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
 
   const ruleRepo = new RuleRepository(FLAGRIGHT_TENANT_ID, {
     dynamoDb: dynamodb,
-    mongoDb: mongodb,
   })
 
   for (const change of changes) {

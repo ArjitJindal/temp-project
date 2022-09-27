@@ -1,4 +1,3 @@
-import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { customAlphabet } from 'nanoid'
 import { DEFAULT_DRS_RISK_ITEM } from '../../risk-scoring/repositories/risk-repository'
@@ -37,18 +36,16 @@ function toRuleInstance(item: any): RuleInstance {
 
 export class RuleInstanceRepository {
   dynamoDb: AWS.DynamoDB.DocumentClient
-  mongoDb: MongoClient
+
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
       dynamoDb?: AWS.DynamoDB.DocumentClient
-      mongoDb?: MongoClient
     }
   ) {
     this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
-    this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
 
@@ -81,7 +78,7 @@ export class RuleInstanceRepository {
       hitCount: ruleInstance.hitCount || 0,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
         ...DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
         ...newRuleInstance,
@@ -94,7 +91,7 @@ export class RuleInstanceRepository {
 
   public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -126,7 +123,7 @@ export class RuleInstanceRepository {
     ruleInstanceId: string
   ): Promise<RuleInstance | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
       ReturnConsumedCapacity: 'TOTAL',
     }
@@ -139,7 +136,7 @@ export class RuleInstanceRepository {
   ): Promise<ReadonlyArray<RuleInstance>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       ...query,
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ReturnConsumedCapacity: 'TOTAL',
       ExpressionAttributeValues: {
@@ -159,7 +156,7 @@ export class RuleInstanceRepository {
     await Promise.all(
       runRuleInstanceIds.map((runRuleInstanceId) => {
         const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
-          TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+          TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
           UpdateExpression: `SET runCount = runCount + :runCountInc, hitCount = hitCount + :hitCountInc`,
           ExpressionAttributeValues: {

@@ -186,6 +186,9 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       tarponStream
     )
+    const tarponRuleDynamoDbTable = this.createDynamodbTable(
+      StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
+    )
     const hammerheadDynamoDbTable = this.createDynamodbTable(
       StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       hammerheadStream
@@ -362,6 +365,7 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     })
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
 
     /* Transaction Event */
@@ -371,6 +375,7 @@ export class CdkTarponStack extends cdk.Stack {
       codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
 
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
@@ -379,6 +384,7 @@ export class CdkTarponStack extends cdk.Stack {
       codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(userEventAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(userEventAlias)
 
     /* File Import */
     const { alias: fileImportAlias } = this.createFunction(
@@ -426,6 +432,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantWriteData(ruleAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(ruleAlias)
     this.grantMongoDbAccess(ruleAlias)
 
     /* Rule Instance */
@@ -438,6 +445,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(ruleInstanceAlias)
     this.grantMongoDbAccess(ruleInstanceAlias)
 
     /* Rule Template (Public) */
@@ -450,6 +458,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantReadData(publicRuleAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(publicRuleAlias)
 
     /* Rule Instance (Public) */
     const { alias: publicRuleInstanceAlias } = this.createFunction(
@@ -461,6 +470,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     tarponDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
+    tarponRuleDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
 
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
