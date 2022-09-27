@@ -9,10 +9,23 @@ import {
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 
 const TEST_TRANSACTION_AMOUNT_100 = {
   transactionCurrency: 'EUR',
   transactionAmount: 100,
+}
+
+const TEST_TRANSACTION_METHOD_IBAN_1 = {
+  method: 'IBAN',
+  BIC: 'AXISINBB250',
+  IBAN: 'ES9121000418450200051332',
+}
+
+const TEST_TRANSACTION_METHOD_IBAN_2 = {
+  method: 'IBAN',
+  BIC: 'BKDNINBBDDR',
+  IBAN: 'PL61109010140000071219812',
 }
 
 dynamoDbSetupHook()
@@ -561,6 +574,184 @@ describe('Anonymous sender/receiver', () => {
         }),
       ],
       expectedHits: [false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Match Payment Method', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-volume',
+      defaultParameters: {
+        timeWindow: {
+          units: 3600,
+          granularity: 'second',
+          rollingBasis: false,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionVolumeThreshold: {
+          EUR: 150,
+        },
+        paymentMethod: 'IBAN',
+      } as TransactionsVolumeRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Skip transactions with non-target paymentMethod',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-5',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-6',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationPaymentDetails:
+            TEST_TRANSACTION_METHOD_IBAN_2 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Match Payment Method Details', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-volume',
+      defaultParameters: {
+        timeWindow: {
+          units: 3600,
+          granularity: 'second',
+          rollingBasis: false,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionVolumeThreshold: {
+          EUR: 150,
+        },
+        matchPaymentMethodDetails: true,
+      } as TransactionsVolumeRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Skip transactions with non-target paymentMethod',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          destinationPaymentDetails:
+            TEST_TRANSACTION_METHOD_IBAN_2 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-5',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationPaymentDetails:
+            TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-5',
+          destinationUserId: '1-1',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationPaymentDetails:
+            TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-2',
+          destinationUserId: '1-7',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_1 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-2',
+          destinationUserId: '1-8',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originPaymentDetails: TEST_TRANSACTION_METHOD_IBAN_2 as IBANDetails,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true, false, true, false, true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

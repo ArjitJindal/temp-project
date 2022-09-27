@@ -158,6 +158,7 @@ async function getTransactions(
     checkType: 'sending' | 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    matchPaymentMethodDetails?: boolean
   }
 ): Promise<{
   sendingTransactions: ThinTransaction[]
@@ -169,6 +170,7 @@ async function getTransactions(
     afterTimestamp,
     transactionState,
     transactionTypes,
+    matchPaymentMethodDetails,
   } = options
   const [sendingTransactions, receivingTransactions] = await Promise.all([
     checkType === 'sending' || checkType === 'all'
@@ -182,7 +184,8 @@ async function getTransactions(
           {
             transactionState,
             transactionTypes,
-          }
+          },
+          matchPaymentMethodDetails
         )
       : Promise.resolve([]),
     checkType === 'receiving' || checkType === 'all'
@@ -196,7 +199,8 @@ async function getTransactions(
           {
             transactionState,
             transactionTypes,
-          }
+          },
+          matchPaymentMethodDetails
         )
       : Promise.resolve([]),
   ])
@@ -274,6 +278,7 @@ export async function getTransactionUserPastTransactions(
     checkReceiver: 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    matchPaymentMethodDetails?: boolean
   }
 ): Promise<{
   senderSendingTransactions: Transaction[]
@@ -287,6 +292,7 @@ export async function getTransactionUserPastTransactions(
     timeWindow,
     transactionState,
     transactionTypes,
+    matchPaymentMethodDetails,
   } = options
   const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
   const beforeTimestamp = transaction.timestamp!
@@ -302,6 +308,7 @@ export async function getTransactionUserPastTransactions(
             checkType: checkSender,
             transactionState,
             transactionTypes,
+            matchPaymentMethodDetails,
           }
         )
       : Promise.resolve({
@@ -320,6 +327,7 @@ export async function getTransactionUserPastTransactions(
             checkType: checkReceiver,
             transactionState,
             transactionTypes,
+            matchPaymentMethodDetails,
           }
         )
       : Promise.resolve({

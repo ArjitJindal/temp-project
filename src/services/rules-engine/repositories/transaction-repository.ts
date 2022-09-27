@@ -784,9 +784,10 @@ export class TransactionRepository {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions?: ThinTransactionsFilterOptions,
+    matchPaymentMethodDetails?: boolean
   ): Promise<Array<ThinTransaction>> {
-    return userId
+    return userId && !matchPaymentMethodDetails
       ? this.getUserSendingThinTransactions(userId, timeRange, filterOptions)
       : paymentDetails
       ? this.getNonUserSendingThinTransactions(
@@ -801,9 +802,10 @@ export class TransactionRepository {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions?: ThinTransactionsFilterOptions,
+    matchPaymentMethodDetails?: boolean
   ): Promise<Array<ThinTransaction>> {
-    return userId
+    return userId && !matchPaymentMethodDetails
       ? this.getUserReceivingThinTransactions(userId, timeRange, filterOptions)
       : paymentDetails
       ? this.getNonUserReceivingThinTransactions(

@@ -18,18 +18,23 @@ import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import {
   TIME_WINDOW_SCHEMA,
   TimeWindow,
+  PAYMENT_METHODS,
 } from '@/services/rules-engine/utils/time-utils'
 
-export type TransactionsVolumeRuleParameters =
-  DefaultTransactionRuleParameters & {
-    transactionVolumeThreshold: {
-      [currency: string]: number
-    }
-    transactionTypes?: TransactionType[]
-    timeWindow: TimeWindow
-    checkSender: 'sending' | 'all' | 'none'
-    checkReceiver: 'receiving' | 'all' | 'none'
+type Filters = DefaultTransactionRuleParameters & {
+  transactionTypes?: TransactionType[]
+  paymentMethod?: string
+}
+
+export type TransactionsVolumeRuleParameters = Filters & {
+  transactionVolumeThreshold: {
+    [currency: string]: number
   }
+  timeWindow: TimeWindow
+  checkSender: 'sending' | 'all' | 'none'
+  checkReceiver: 'receiving' | 'all' | 'none'
+  matchPaymentMethodDetails?: boolean
+}
 
 export default class TransactionsVolumeRule extends TransactionRule<TransactionsVolumeRuleParameters> {
   transactionRepository?: TransactionRepository
@@ -65,6 +70,19 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           uniqueItems: true,
           nullable: true,
         },
+        paymentMethod: {
+          type: 'string',
+          title: 'Method of payment',
+          enum: PAYMENT_METHODS,
+          nullable: true,
+        },
+        matchPaymentMethodDetails: {
+          type: 'boolean',
+          title: 'Match Payment Method Details',
+          description:
+            'Transactions will only be flagged if same payment details are used',
+          nullable: true,
+        },
         transactionVolumeThreshold: {
           type: 'object',
           title: 'Transactions Volume Threshold',
@@ -90,13 +108,20 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
   }
 
   public getFilters() {
-    const { transactionTypes } = this.parameters
-    return super
-      .getFilters()
-      .concat([
+    const filters = super.getFilters()
+    const { transactionTypes, paymentMethod } = this.parameters
+    const result = [
+      ...filters,
+      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
+    ]
+    if (paymentMethod != null) {
+      result.push(
         () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-      ])
+          this.transaction.originPaymentDetails?.method === paymentMethod ||
+          this.transaction.destinationPaymentDetails?.method === paymentMethod
+      )
+    }
+    return result
   }
 
   private async computeHits(): Promise<{
@@ -111,13 +136,14 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       timeWindow,
       transactionState,
       transactionTypes,
+      matchPaymentMethodDetails,
     } = this.parameters
 
     this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
-    const {
+    let {
       senderSendingTransactions,
       senderReceivingTransactions,
       receiverSendingTransactions,
@@ -131,8 +157,28 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         checkReceiver,
         transactionState,
         transactionTypes,
+        matchPaymentMethodDetails,
       }
     )
+
+    if (matchPaymentMethodDetails) {
+      senderSendingTransactions = senderSendingTransactions.filter(
+        (transaction) =>
+          transaction.originUserId === this.transaction.originUserId
+      )
+      senderReceivingTransactions = senderReceivingTransactions.filter(
+        (transaction) =>
+          transaction.destinationUserId === this.transaction.originUserId
+      )
+      receiverSendingTransactions = receiverSendingTransactions.filter(
+        (transaction) =>
+          transaction.originUserId === this.transaction.destinationUserId
+      )
+      receiverReceivingTransactions = receiverReceivingTransactions.filter(
+        (transaction) =>
+          transaction.destinationUserId === this.transaction.destinationUserId
+      )
+    }
 
     // Sum up the transactions amount
     const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
