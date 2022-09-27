@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { expandCountryGroup } from '@/utils/countries'
 
 export type CardIssuedCountryRuleParameters = {
   allowedCountries: string[]
@@ -26,7 +27,9 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
   }
 
   public async computeRule() {
-    const { allowedCountries } = this.parameters
+    const allowedCountries = expandCountryGroup(
+      this.parameters.allowedCountries
+    )
 
     const { cardIssuedCountry } = this.transaction
       .originPaymentDetails as CardDetails

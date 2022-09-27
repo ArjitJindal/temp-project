@@ -263,3 +263,64 @@ describe.each<TransactionRuleTestCase>([
     expectedHits
   )
 })
+
+describe('Check for EEA group of country', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'too-many-transactions-to-high-risk-country',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        highRiskCountries: ['DE', 'TR', 'PK', 'EEA'],
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TooManyTransactionsToHighRiskCountryRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Exceeded transaction from EEA - as a group of country - hit',
+      transactions: [
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'SE',
+            transactionAmount: 800,
+            transactionCurrency: 'RUB',
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'SE',
+            transactionAmount: 800,
+            transactionCurrency: 'RUB',
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'SE',
+            transactionAmount: 800,
+            transactionCurrency: 'RUB',
+          },
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

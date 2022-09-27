@@ -3,6 +3,7 @@ import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
+import { expandCountryGroup } from '@/utils/countries'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 type TooManyTransactionsToHighRiskCountryRulePartialParameters = {
@@ -38,13 +39,14 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
     transaction: Transaction,
     direction?: 'origin' | 'destination'
   ): boolean {
+    const highRiskCountries = expandCountryGroup(
+      this.parameters.highRiskCountries
+    )
     return direction === 'origin' && transaction.originAmountDetails?.country
-      ? this.parameters.highRiskCountries.includes(
-          transaction.originAmountDetails?.country
-        )
+      ? highRiskCountries.includes(transaction.originAmountDetails?.country)
       : direction === 'destination' &&
         transaction.destinationAmountDetails?.country
-      ? this.parameters.highRiskCountries.includes(
+      ? highRiskCountries.includes(
           transaction.destinationAmountDetails?.country
         )
       : false

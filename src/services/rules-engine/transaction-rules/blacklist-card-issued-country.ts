@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { expandCountryGroup } from '@/utils/countries'
 
 export type BlacklistCardIssuedCountryRuleParameters = {
   blacklistedCountries: string[]
@@ -26,7 +27,9 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
   }
 
   public async computeRule() {
-    const { blacklistedCountries } = this.parameters
+    const blacklistedCountries = expandCountryGroup(
+      this.parameters.blacklistedCountries
+    )
 
     const { cardIssuedCountry } = this.transaction
       .originPaymentDetails as CardDetails

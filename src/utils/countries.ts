@@ -265,3 +265,44 @@ export function formatCountry(country: string | undefined): string | undefined {
 }
 
 export default COUNTRIES
+
+const COUNTRY_GROUPS: { [key: string]: string[] } = {
+  EEA: [
+    'AT',
+    'BE',
+    'BG',
+    'HR',
+    'CY',
+    'CZ',
+    'DK',
+    'EE',
+    'FI',
+    'FR',
+    'DE',
+    'GR',
+    'HU',
+    'IS',
+    'IE',
+    'IT',
+    'LV',
+    'LI',
+    'LT',
+    'LU',
+    'MT',
+    'NL',
+    'NO',
+    'PL',
+    'PT',
+    'RO',
+    'SK',
+    'SI',
+    'ES',
+    'SE',
+  ],
+}
+
+export function expandCountryGroup(countryCodes: string[]) {
+  return countryCodes.flatMap(
+    (countryCode) => COUNTRY_GROUPS[countryCode] || countryCode
+  )
+}
