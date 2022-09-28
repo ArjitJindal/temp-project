@@ -18,29 +18,41 @@ export function FinancialDetails(prop: Props) {
     <Card.Section>
       <div className={s.details}>
         <Card.Row className={s.items}>
-          <Card.Column>
+          <Card.Column className={s.col}>
             <Form.Layout.Label
               icon={<FingerprintLineIcon />}
               title={'Expected TransactionAmount per month'}
             />
           </Card.Column>
           <Card.Column className={s.all}>
-            {user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth}
+            <div>
+              {
+                user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth
+                  ?.amountValue
+              }{' '}
+              {
+                user.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth
+                  ?.amountCurrency
+              }
+            </div>
           </Card.Column>
         </Card.Row>
         <Card.Row className={s.items}>
-          <Card.Column>
+          <Card.Column className={s.col}>
             <Form.Layout.Label
               icon={<FingerprintLineIcon />}
               title={'Expected Turn over per month'}
             />
           </Card.Column>
           <Card.Column className={s.all}>
-            {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth}
+            <span>
+              {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountValue}{' '}
+              {user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth?.amountCurrency}
+            </span>
           </Card.Column>
         </Card.Row>
         <Card.Row className={s.items}>
-          <Card.Column>
+          <Card.Column className={s.col}>
             <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'} />
           </Card.Column>
           <Card.Column className={s.all}>

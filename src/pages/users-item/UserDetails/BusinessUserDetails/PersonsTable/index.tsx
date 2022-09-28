@@ -91,7 +91,7 @@ export function renderEmail(email: string, i: number) {
 
 export function renderWeb(website: string, i: number) {
   return (
-    <div>
+    <div className={s.below}>
       <a key={i} href={`webto:${website}`}>
         {website}
       </a>
@@ -100,7 +100,7 @@ export function renderWeb(website: string, i: number) {
 }
 export function renderTel(tel: string, i: number) {
   return (
-    <div>
+    <div className={s.below}>
       <a key={i}>
         <b className={s.all}>{tel}</b>
       </a>
@@ -110,7 +110,7 @@ export function renderTel(tel: string, i: number) {
 
 export function renderFax(fax: string, i: number) {
   return (
-    <div>
+    <div className={s.below}>
       <a key={i}>
         <b className={s.all}>{fax}</b>
       </a>

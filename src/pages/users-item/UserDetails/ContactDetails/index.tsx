@@ -47,7 +47,7 @@ export default function ContactDetails(props: Props) {
           <Card.Column className={s.col}>
             <Form.Layout.Label icon={<EarthLineIcon />} title={'Fax'} />
           </Card.Column>
-          <Card.Column>
+          <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
               ? user.contactDetails?.faxNumbers?.map(renderFax)
               : user.legalEntity.contactDetails?.faxNumbers?.map(renderFax)}
@@ -57,7 +57,7 @@ export default function ContactDetails(props: Props) {
           <Card.Column className={s.col}>
             <Form.Layout.Label icon={<Home4LineIcon />} title={'Website'} />
           </Card.Column>
-          <Card.Column>
+          <Card.Column className={s.all}>
             {user.type === 'CONSUMER'
               ? user.contactDetails?.websites?.map(renderWebsite)
               : user.legalEntity.contactDetails?.websites?.map(renderWebsite)}
