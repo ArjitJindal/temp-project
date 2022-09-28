@@ -28,7 +28,8 @@ import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
 import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
-import { TRANSACTION_RULES } from '.'
+import { TooManyCounterpartyCountryRuleParameters } from './too-many-counterparty-country'
+import { TRANSACTION_RULES } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
 import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
@@ -780,11 +781,38 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         description:
           'User receives or send >= x transactions in time t from/to high risk country',
         descriptionTemplate:
-          '<Sender | Receiver> performed <x> or more transactions with <sender | receiver country> which is a high risk country within <t> <time granularity>',
+          "{{ if-sender 'Sender' 'Receiver' }} performed more than {{ parameters.transactionsLimit }} transactions with {{ if-sender 'sending' 'receiving' }} country which is high risk in {{ format-time-window parameters.timeWindow }}",
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'too-many-transactions-to-high-risk-country',
         labels: [],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: TooManyCounterpartyCountryRuleParameters = {
+        timeWindow: {
+          units: 1,
+          granularity: 'hour',
+        },
+        transactionsLimit: 2,
+        transactionTypes: ['DEPOSIT'],
+        checkSender: 'all',
+        checkReceiver: 'all',
+      }
+      return {
+        id: 'R-123',
+        type: 'TRANSACTION',
+        name: 'Too Many Counterparty Country',
+        description:
+          'User is receiving or sending funds from >= X different countries in time t',
+        descriptionTemplate:
+          "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds from more than {{ parameters.transactionsLimit }} unique country within {{ format-time-window parameters.timeWindow }}",
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'too-many-counterparty-country',
+        labels: ['AML', 'List'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
       }

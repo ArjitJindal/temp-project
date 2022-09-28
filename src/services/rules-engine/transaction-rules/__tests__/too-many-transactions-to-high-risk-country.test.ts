@@ -32,7 +32,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-77 description formatting', () => {
-  const descriptionTemplate = `User receives or send >= x transactions in time t from/to high risk country`
+  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} performed more than {{ parameters.transactionsLimit }} transactions with {{ if-sender 'sending' 'receiving' }} country which is high risk in {{ format-time-window parameters.timeWindow }}`
 
   testRuleDescriptionFormatting(
     'basic case',
@@ -69,7 +69,7 @@ describe('R-77 description formatting', () => {
     [
       null,
       null,
-      'User receives or send >= x transactions in time t from/to high risk country',
+      'Sender performed more than 2 transactions with sending country which is high risk in 5 seconds',
     ]
   )
 })

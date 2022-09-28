@@ -10,6 +10,8 @@ export function mergeRuleSchemas<T>(
       ...schema1.properties,
       ...schema2.properties,
     },
-    required: (schema1.required || []).concat(schema2.required || []),
+    required: Array.from(
+      new Set((schema1.required || []).concat(schema2.required || []))
+    ),
   } as JSONSchemaType<T>
 }

@@ -152,18 +152,22 @@ export default class TransactionsPatternVelocityBaseRule<
     const senderMatchedTransactions = [
       ...senderSendingTransactions
         .concat(this.transaction)
-        .filter((transaction) => this.matchPattern(transaction, 'origin')),
+        .filter((transaction) =>
+          this.matchPattern(transaction, 'origin', 'sender')
+        ),
       ...senderReceivingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'destination')
+        this.matchPattern(transaction, 'destination', 'sender')
       ),
     ]
     const receiverMatchedTransactions = [
       ...receiverSendingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'origin')
+        this.matchPattern(transaction, 'origin', 'receiver')
       ),
       ...receiverReceivingTransactions
         .concat(this.transaction)
-        .filter((transaction) => this.matchPattern(transaction, 'destination')),
+        .filter((transaction) =>
+          this.matchPattern(transaction, 'destination', 'receiver')
+        ),
     ]
 
     if (
@@ -193,7 +197,8 @@ export default class TransactionsPatternVelocityBaseRule<
 
   protected matchPattern(
     _transaction: Transaction,
-    _direction?: 'origin' | 'destination'
+    _direction?: 'origin' | 'destination',
+    _userType?: 'sender' | 'receiver'
   ): boolean {
     throw new Error('Not implemented')
   }

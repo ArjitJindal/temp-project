@@ -36,6 +36,7 @@ import TransactionsAverageAmountExceededRule from './transactions-average-amount
 import TransactionsRoundValuePercentageRule from './transactions-round-value-percentage'
 import TooManyTransactionsToHighRiskCountryRule from './too-many-transactions-to-high-risk-country'
 import HighUnsuccessfullStateRateRule from './high-unsuccessfull-state-rate'
+import TooManyCounterpartyCountryRule from './too-many-counterparty-country'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -76,6 +77,7 @@ export const TRANSACTION_RULES = {
   'too-many-transactions-to-high-risk-country':
     TooManyTransactionsToHighRiskCountryRule,
   'high-unsuccessfull-state-rate': HighUnsuccessfullStateRateRule,
+  'too-many-counterparty-country': TooManyCounterpartyCountryRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,
