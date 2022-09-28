@@ -36,7 +36,10 @@ describe('R-119 description formatting', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'high-traffic-between-same-parties',
       defaultParameters: {
-        timeWindowInDays: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
         transactionsLimit: 1,
       } as HighTrafficBetweenSamePartiesParameters,
       defaultAction: 'FLAG',
@@ -48,72 +51,24 @@ describe('R-119 description formatting', () => {
     TEST_TENANT_ID,
     [
       getTestTransaction({
-        reference: 'Too old transaction, should not be counted',
-        originUserId: '1',
-        destinationUserId: '2',
-        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
-      }),
-      getTestTransaction({
         reference: 'First transaction 1 -> 2',
         originUserId: '1',
         destinationUserId: '2',
         timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
       }),
       getTestTransaction({
         reference: 'Second transaction 1 -> 2',
         originUserId: '1',
         destinationUserId: '2',
         timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
-      }),
-      getTestTransaction({
-        reference:
-          'Transaction for different origin user, should not be counted',
-        originUserId: '111',
-        destinationUserId: '2',
-        timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
-      }),
-      getTestTransaction({
-        reference:
-          'Transaction for different destination user, should not be counted',
-        originUserId: '1',
-        destinationUserId: '222',
-        timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
-      }),
-      getTestTransaction({
-        reference: 'Third transaction 1->2, should be hit',
-        originUserId: '1',
-        destinationUserId: '2',
-        timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-        deviceData: {
-          ipAddress: '1.1.1.1',
-        },
       }),
     ],
     {
-      descriptionTemplate: `{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ parameters.timeWindowInDays }} day(s)`,
+      descriptionTemplate: `{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ format-time-window parameters.timeWindow }}`,
     },
     [
       null,
-      null,
-      null,
-      null,
-      null,
-      '1 transactions above the limit of 1 between same Sender and Receiver in 1 day(s)',
+      '1 transactions above the limit of 1 between same Sender and Receiver in 1 day',
     ]
   )
 })
@@ -126,7 +81,10 @@ describe('Core logic', () => {
       type: 'TRANSACTION',
       ruleImplementationName: 'high-traffic-between-same-parties',
       defaultParameters: {
-        timeWindowInDays: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
         transactionsLimit: 1,
       } as HighTrafficBetweenSamePartiesParameters,
       defaultAction: 'FLAG',
@@ -142,27 +100,18 @@ describe('Core logic', () => {
           originUserId: '1',
           destinationUserId: '2',
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'First transaction 1 -> 2',
           originUserId: '1',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Second transaction 1 -> 2',
           originUserId: '1',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -170,9 +119,6 @@ describe('Core logic', () => {
           originUserId: '111',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -180,21 +126,15 @@ describe('Core logic', () => {
           originUserId: '1',
           destinationUserId: '222',
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Third transaction 1->2, should be hit',
           originUserId: '1',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
       ],
-      expectedHits: [false, false, false, false, false, true],
+      expectedHits: [false, false, true, false, false, true],
     },
     {
       name: 'Too many transactions of two anonymous users - hit',
@@ -206,9 +146,6 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'First transaction',
@@ -217,18 +154,12 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Second transaction',
           originUserId: undefined,
           destinationUserId: undefined,
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -236,9 +167,6 @@ describe('Core logic', () => {
           originUserId: '111',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -246,9 +174,6 @@ describe('Core logic', () => {
           originUserId: '1',
           destinationUserId: '222',
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Third transaction, should be hit',
@@ -257,9 +182,6 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
       ],
       expectedHits: [false, false, false, false, false, true],
@@ -274,9 +196,6 @@ describe('Core logic', () => {
           originPaymentDetails: undefined,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'First transaction',
@@ -285,9 +204,6 @@ describe('Core logic', () => {
           originPaymentDetails: undefined,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Second transaction',
@@ -296,9 +212,6 @@ describe('Core logic', () => {
           originPaymentDetails: undefined,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -306,9 +219,6 @@ describe('Core logic', () => {
           originUserId: '111',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -316,9 +226,6 @@ describe('Core logic', () => {
           originUserId: '1',
           destinationUserId: '222',
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Third transaction, should be hit',
@@ -327,12 +234,9 @@ describe('Core logic', () => {
           originPaymentDetails: undefined,
           destinationPaymentDetails: cardDetails2,
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
       ],
-      expectedHits: [false, false, false, false, false, true],
+      expectedHits: [false, false, true, false, false, true],
     },
     {
       name: 'Too many transactions of anonymous origin and known destination users - hit',
@@ -344,9 +248,6 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: undefined,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'First transaction',
@@ -355,9 +256,6 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: undefined,
           timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Second transaction',
@@ -366,9 +264,6 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: undefined,
           timestamp: dayjs('2022-01-01T03:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -376,9 +271,6 @@ describe('Core logic', () => {
           originUserId: '111',
           destinationUserId: '2',
           timestamp: dayjs('2022-01-01T04:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference:
@@ -386,9 +278,6 @@ describe('Core logic', () => {
           originUserId: '1',
           destinationUserId: '222',
           timestamp: dayjs('2022-01-01T05:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
         getTestTransaction({
           reference: 'Third transaction, should be hit',
@@ -397,12 +286,9 @@ describe('Core logic', () => {
           originPaymentDetails: cardDetails1,
           destinationPaymentDetails: undefined,
           timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
-          deviceData: {
-            ipAddress: '1.1.1.1',
-          },
         }),
       ],
-      expectedHits: [false, false, false, false, false, true],
+      expectedHits: [false, false, true, false, false, true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

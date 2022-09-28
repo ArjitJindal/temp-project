@@ -1,10 +1,10 @@
 import { Rule } from '../rule'
+import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-import { Vars } from '@/services/rules-engine/utils/format-description'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -27,10 +27,14 @@ export interface PartyVars {
   ipAddress?: string | number | boolean
 }
 
-export interface TransactionVars {
+export interface TransactionVars<P> extends Vars {
   hitParty?: PartyVars
   origin?: PartyVars
   destination?: PartyVars
+  transaction: Transaction
+  senderUser?: User | Business
+  receiverUser?: User | Business
+  parameters: P
 }
 
 export type DefaultTransactionRuleParameters = {
@@ -80,10 +84,10 @@ export class TransactionRule<P> extends Rule {
 
   private getTransactionDescriptionVars(
     hitDirection: 'origin' | 'destination' | null
-  ): TransactionVars {
+  ): Partial<TransactionVars<unknown>> {
     const transaction = this.transaction
 
-    const result: TransactionVars = {
+    const result: Partial<TransactionVars<unknown>> = {
       hitParty: undefined,
       origin: {
         type: 'origin',
@@ -127,7 +131,7 @@ export class TransactionRule<P> extends Rule {
 
   public getTransactionVars(
     hitDirection: 'origin' | 'destination' | null
-  ): Vars {
+  ): TransactionVars<P> {
     // const parentVars = await super.getDescriptionVars()
     const transactionVars = this.getTransactionDescriptionVars(hitDirection)
     return {

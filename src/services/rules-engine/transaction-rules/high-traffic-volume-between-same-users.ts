@@ -5,7 +5,13 @@ import {
   isTransactionAmountAboveThreshold,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
-import { PAYMENT_METHODS, subtractTime, TimeWindow } from '../utils/time-utils'
+import {
+  PAYMENT_METHODS,
+  subtractTime,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+} from '../utils/time-utils'
+import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
@@ -30,6 +36,7 @@ export type HighTrafficVolumeBetweenSameUsersParameters = Filters & {
   transactionVolumeThreshold: {
     [currency: string]: number
   }
+  transactionsLimit?: number
 }
 
 export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<HighTrafficVolumeBetweenSameUsersParameters> {
@@ -61,26 +68,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
           enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
-        timeWindow: {
-          type: 'object',
-          title: 'Time Window',
-          properties: {
-            units: { type: 'integer', title: 'Number of time unit' },
-            granularity: {
-              type: 'string',
-              title: 'Time granularity',
-              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
-            },
-            rollingBasis: {
-              type: 'boolean',
-              title: 'Rolling basis',
-              description:
-                'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
-              nullable: true,
-            },
-          },
-          required: ['units', 'granularity'],
-        },
+        timeWindow: TIME_WINDOW_SCHEMA(),
         transactionVolumeThreshold: {
           type: 'object',
           title: 'Transactions Volume Threshold',
@@ -88,6 +76,13 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
             type: 'integer',
           },
           required: [],
+        },
+        transactionsLimit: {
+          type: 'number',
+          title: 'Transactions Count Threshold',
+          description:
+            'The rule is hit when the number of transactions per time window is greater than this threshold',
+          nullable: true,
         },
         transactionState: {
           type: 'string',
@@ -130,7 +125,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
-    const { transactionVolumeThreshold } = this.parameters
+    const { transactionVolumeThreshold, transactionsLimit } = this.parameters
     const { transactions } = await this.computeResults()
 
     const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
@@ -140,8 +135,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
         .map((transaction) => transaction.originAmountDetails),
       targetCurrency
     )
-    let volumeDelta
-    let volumeThreshold
+    let volumeDelta = null
+    let volumeThreshold = null
     if (
       transactionAmounts != null &&
       transactionVolumeThreshold[targetCurrency] != null
@@ -156,16 +151,36 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
         transactionAmount: transactionVolumeThreshold[targetCurrency],
         transactionCurrency: targetCurrency,
       }
-    } else {
-      volumeDelta = null
-      volumeThreshold = null
+    }
+
+    let countHit = true
+    if (Number.isFinite(transactionsLimit)) {
+      const highTrafficCountRule = new HighTrafficBetweenSameParties(
+        this.tenantId,
+        {
+          transaction: this.transaction,
+          senderUser: this.senderUser,
+          receiverUser: this.receiverUser,
+        },
+        {
+          parameters: this
+            .parameters as HighTrafficVolumeBetweenSameUsersParameters & {
+            transactionsLimit: number
+          },
+          action: this.action,
+        },
+        this.dynamoDb
+      )
+      const countResult = await highTrafficCountRule.computeRule()
+      countHit = Boolean(countResult)
     }
 
     if (
-      await isTransactionAmountAboveThreshold(
+      (await isTransactionAmountAboveThreshold(
         transactionAmounts,
         transactionVolumeThreshold
-      )
+      )) &&
+      countHit
     ) {
       return {
         action: this.action,

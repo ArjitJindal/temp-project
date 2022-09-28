@@ -602,7 +602,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     },
     () => {
       const defaultParameters: HighTrafficBetweenSamePartiesParameters = {
-        timeWindowInDays: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
         transactionsLimit: 100,
       }
       return {
@@ -612,7 +615,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         description:
           'Same receiver and destination details are used >= x times in time t',
         descriptionTemplate:
-          '{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ parameters.timeWindowInDays }} day(s)',
+          '{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ format-time-window parameters.timeWindow }}',
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'high-traffic-between-same-parties',

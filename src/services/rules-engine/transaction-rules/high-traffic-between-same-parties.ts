@@ -1,12 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
-import { PAYMENT_METHODS } from '../utils/time-utils'
+import {
+  PAYMENT_METHODS,
+  subtractTime,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+} from '../utils/time-utils'
 import dayjs from '@/utils/dayjs'
-import { RuleResult } from '@/services/rules-engine/rule'
 import {
   DefaultTransactionRuleParameters,
   TransactionRule,
+  TransactionVars,
 } from '@/services/rules-engine/transaction-rules/rule'
 import { isUserType } from '@/services/rules-engine/utils/user-rule-utils'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
@@ -14,6 +19,7 @@ import { getReceiverKeys } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
 
 type Filters = DefaultTransactionRuleParameters & {
   transactionTypes?: TransactionType[]
@@ -22,8 +28,16 @@ type Filters = DefaultTransactionRuleParameters & {
 }
 
 export type HighTrafficBetweenSamePartiesParameters = Filters & {
-  timeWindowInDays: number
+  timeWindow: TimeWindow
   transactionsLimit: number
+}
+
+type HighTrafficBetweenSamePartiesRuleResult = {
+  action: RuleAction
+  vars: TransactionVars<HighTrafficBetweenSamePartiesParameters> & {
+    count: number
+    delta: number
+  }
 }
 
 export default class HighTrafficBetweenSameParties extends TransactionRule<HighTrafficBetweenSamePartiesParameters> {
@@ -55,13 +69,12 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
           enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
-        timeWindowInDays: {
-          type: 'number',
-          title: 'Time Window (Days)',
-        },
+        timeWindow: TIME_WINDOW_SCHEMA(),
         transactionsLimit: {
           type: 'number',
-          title: 'Max transactions per time window',
+          title: 'Transactions Count Threshold',
+          description:
+            'The rule is hit when the number of transactions per time window is greater than this threshold',
         },
         transactionState: {
           type: 'string',
@@ -81,7 +94,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
           nullable: true,
         },
       },
-      required: ['timeWindowInDays', 'transactionsLimit'],
+      required: ['timeWindow', 'transactionsLimit'],
     }
   }
 
@@ -103,7 +116,9 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
     return result
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule(): Promise<
+    HighTrafficBetweenSamePartiesRuleResult | undefined
+  > {
     const { transactionsLimit } = this.parameters
     const { count } = await this.computeResults()
 
@@ -121,8 +136,8 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
   }
 
   private async computeResults() {
-    const { timeWindowInDays } = this.parameters
-    if (timeWindowInDays === undefined) {
+    const { timeWindow } = this.parameters
+    if (timeWindow === undefined) {
       throw new MissingRuleParameter()
     }
     const { transaction } = this
@@ -143,9 +158,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
         transaction.originPaymentDetails,
         {
           beforeTimestamp: timestamp,
-          afterTimestamp: dayjs(timestamp)
-            .subtract(timeWindowInDays, 'day')
-            .valueOf(),
+          afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
         },
         {
           transactionState: this.parameters.transactionState,
@@ -154,6 +167,6 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
             ?.PartitionKeyID,
         }
       )
-    return { count }
+    return { count: count + 1 }
   }
 }
