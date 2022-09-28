@@ -40,9 +40,11 @@ async function getTenantScopeCredentials(
         new PolicyBuilder(tenantId)
           .s3()
           .secretsManager()
-          .dynamoDb(StackConstants.TARPON_DYNAMODB_TABLE_NAME)
-          .dynamoDb(StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME)
-          .dynamoDb(StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME)
+          .dynamoDb([
+            StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+            StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+            StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+          ])
           .build()
       ),
       DurationSeconds: StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,

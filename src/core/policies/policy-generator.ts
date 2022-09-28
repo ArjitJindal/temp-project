@@ -14,12 +14,12 @@ export default class PolicyBuilder {
     this.statements = []
   }
 
-  dynamoDb(table: string) {
+  dynamoDb(tables: string[]) {
     this.statements.push({
-      Sid: `${table}AllowAllActionsOfTenantData`,
+      Sid: `AllowAllActionsOfTenantData`,
       Effect: 'Allow',
       Action: ['dynamodb:*'],
-      Resource: [`arn:aws:dynamodb:*:*:table/${table}`],
+      Resource: tables.map((table) => `arn:aws:dynamodb:*:*:table/${table}`),
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${this.tenantId}*`],
@@ -27,7 +27,7 @@ export default class PolicyBuilder {
       },
     })
     this.statements.push({
-      Sid: `${table}ReadOnlyAPIActionsOnFlagrightItems`,
+      Sid: `ReadOnlyAPIActionsOnFlagrightItems`,
       Effect: 'Allow',
       Action: [
         'dynamodb:GetItem',
@@ -36,7 +36,7 @@ export default class PolicyBuilder {
         'dynamodb:Query',
         'dynamodb:ConditionCheckItem',
       ],
-      Resource: [`arn:aws:dynamodb:*:*:table/${table}`],
+      Resource: tables.map((table) => `arn:aws:dynamodb:*:*:table/${table}`),
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],
