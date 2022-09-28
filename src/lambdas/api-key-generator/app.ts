@@ -9,12 +9,14 @@ import { logger } from '@/core/logger'
 
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
+  CASES_COLLECTION,
   getMongoDbClient,
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { Case } from '@/@types/openapi-internal/Case'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -133,6 +135,28 @@ export const createMongoDBCollections = async (
       transactionId: 1,
       transactionState: 1,
       timestamp: -1,
+    })
+    try {
+      await db.createCollection(CASES_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
+    await casesCollection.createIndex({ caseId: 1 })
+    await casesCollection.createIndex({ 'caseUsers.origin.userId': 1 })
+    await casesCollection.createIndex({ 'caseUsers.destination.userId': 1 })
+    await casesCollection.createIndex({ 'caseTransactions.status': 1 })
+    await casesCollection.createIndex({
+      'caseTransactions.destinationAmountDetails.transactionCurrency': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.originAmountDetails.transactionCurrency': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.destinationPaymentDetails.method': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.originPaymentDetails.method': 1,
     })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)

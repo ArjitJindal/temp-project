@@ -233,6 +233,19 @@ export class UserRepository {
     return await collection.findOne({ userId })
   }
 
+  public async getMongoUsersById(
+    userIds: string[]
+  ): Promise<(InternalConsumerUser | InternalBusinessUser)[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<
+      InternalConsumerUser | InternalBusinessUser
+    >(USERS_COLLECTION(this.tenantId))
+    return (await collection.find({ userId: { $in: userIds } }).toArray()) as (
+      | InternalConsumerUser
+      | InternalBusinessUser
+    )[]
+  }
+
   public async getUser<T>(userId: string): Promise<T | undefined> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,

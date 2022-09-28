@@ -181,4 +181,7 @@ export const StackConstants = {
   HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
   HAMMERHEAD_RETRY_STREAM_ID: 'hammerheadRetryStream',
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
+  CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiCaseFunction'
+  ),
 }

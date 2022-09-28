@@ -80,6 +80,14 @@ export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-transactions`
 }
 
+export const CASES_COLLECTION = (tenandId: string) => {
+  return `${tenandId}-cases`
+}
+
+export const COUNTER_COLLECTION = (tenandId: string) => {
+  return `${tenandId}-counter`
+}
+
 export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-users`
 }

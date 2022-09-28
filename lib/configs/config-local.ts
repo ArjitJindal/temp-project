@@ -40,6 +40,9 @@ export const config: Config = {
     DASHBOARD_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },
+    CASE_LAMBDA: {
+      PROVISIONED_CONCURRENCY: 0,
+    },
   },
   application: {
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',

@@ -1,5 +1,6 @@
 import { KinesisStreamEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
+import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import {
   getMongoDbClient,
   USER_EVENTS_COLLECTION,
@@ -20,6 +21,10 @@ import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const sqs = new AWS.SQS()
 
@@ -33,12 +38,27 @@ async function transactionHandler(
 
   logger.info(`Processing transaction ${transaction.transactionId}`)
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = await getDynamoDbClient()
   const transactionsRepo = new TransactionRepository(tenantId, {
+    mongoDb,
+  })
+  const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
   })
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb,
   })
+  const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
+
+  const caseCreationService = new CaseCreationService(
+    casesRepo,
+    usersRepo,
+    ruleInstancesRepo,
+    transactionsRepo
+  )
 
   const transactionId = transaction.transactionId
   let currentStatus: RuleAction | null = null
@@ -48,7 +68,7 @@ async function transactionHandler(
         ?.status ?? null
   }
   const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
-
+  await caseCreationService.addCasesToMongo(transaction)
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
   // a single record in DB using transaction date
@@ -84,14 +104,21 @@ async function userHandler(
     return
   }
 
+  const mongoDb = await getMongoDbClient()
+
   logger.info(`Processing user ${user.userId}`)
-  const db = (await getMongoDbClient()).db()
+  const db = mongoDb.db()
   const userCollection = db.collection<Business | User>(
     USERS_COLLECTION(tenantId)
   )
   await userCollection.replaceOne({ userId: user.userId }, user, {
     upsert: true,
   })
+
+  const casesRepo = new CaseRepository(tenantId, {
+    mongoDb,
+  })
+  await casesRepo.updateUsersInCases(user)
 }
 
 async function userEventHandler(

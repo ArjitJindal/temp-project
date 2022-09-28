@@ -131,6 +131,21 @@ export class RuleInstanceRepository {
     return result.Item ? toRuleInstance(result.Item) : null
   }
 
+  async getRuleInstancesByIds(
+    ruleInstanceIds: string[]
+  ): Promise<ReadonlyArray<RuleInstance>> {
+    if (ruleInstanceIds.length === 0) {
+      return []
+    }
+    const ruleInstancePromises = ruleInstanceIds.map((ruleInstanceId) =>
+      this.getRuleInstanceById(ruleInstanceId)
+    )
+    const ruleInstances = await Promise.all(ruleInstancePromises)
+    return ruleInstances.filter(
+      (ruleInstance) => ruleInstance
+    ) as RuleInstance[]
+  }
+
   private async getRuleInstances(
     query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
   ): Promise<ReadonlyArray<RuleInstance>> {

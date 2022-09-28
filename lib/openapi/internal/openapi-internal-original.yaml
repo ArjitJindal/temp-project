@@ -1404,6 +1404,178 @@ paths:
             type: number
           in: query
           name: limit
+  /cases:
+    get:
+      summary: Cases - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CasesListResponse'
+              examples: {}
+      operationId: get-case-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethod
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethod
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            $ref: '#/components/schemas/CaseType'
+          in: query
+          name: filterCaseType
+        - schema:
+            $ref: '#/components/schemas/CasePriority'
+          in: query
+          name: filterPriority
+    post:
+      summary: Cases - Update
+      operationId: post-cases
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CasesUpdateRequest'
+  '/cases/{caseId}/comments':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    post:
+      summary: Create a Case Comment
+      operationId: post-case-comments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+  '/cases/{caseId}/comments/{commentId}':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: commentId
+        in: path
+        required: true
+    delete:
+      summary: Delete a Case Comment
+      operationId: delete-cases-caseId-comments-commentId
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
     ManualRiskAssignmentUserState:
@@ -2304,6 +2476,138 @@ components:
         - Suspicious activity reported (SAR)
         - Documents not collected
         - Investigation completed
+    MissingUser:
+      title: MissingUser
+      type: object
+      properties:
+        userId:
+          type: string
+    Case:
+      title: Case
+      type: object
+      properties:
+        _id:
+          type: integer
+        caseId:
+          type: string
+        createdTimestamp: 
+          type: number
+        latestTransactionArrivalTimestamp: 
+          type: number
+        caseType: 
+          $ref: '#/components/schemas/CaseType'
+        caseStatus: 
+          $ref: '#/components/schemas/CaseStatus'
+        caseTransactions: 
+          type: array
+          items: 
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
+        caseUsers:
+          type: object
+          properties:
+            origin: 
+              oneOf:
+              - $ref: '#/components/schemas/InternalConsumerUser'
+              - $ref: '#/components/schemas/InternalBusinessUser'
+              - $ref: '#/components/schemas/MissingUser'
+            destination: 
+              oneOf:
+              - $ref: '#/components/schemas/InternalConsumerUser'
+              - $ref: '#/components/schemas/InternalBusinessUser'
+              - $ref: '#/components/schemas/MissingUser'
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        statusChanges:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseStatusChange'
+        priority:
+          $ref: '#/components/schemas/CasePriority'
+        relatedCases:
+          type: array
+          items: 
+            type: string
+    CasesListResponse:
+      title: CasesListResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Case'
+      required:
+        - total
+        - data
+    CaseUpdateRequest:
+      title: CaseUpdateRequest
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assignment'
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseClosingReasons'
+        caseStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        priority:
+          $ref: '#/components/schemas/CasePriority'
+        otherReason:
+          type: string
+    CasesUpdateRequest:
+      title: CasesUpdateRequest
+      type: object
+      properties:
+        caseIds:
+          type: array
+          items:
+            type: string
+        updates:
+          $ref: '#/components/schemas/CaseUpdateRequest'
+      required:
+        - caseIds
+        - updates
+    CaseStatusChange:
+      title: CaseStatusChange
+      type: object
+      properties:
+        userId:
+          type: string
+        reason:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseClosingReasons'
+        timestamp:
+          type: number
+        caseStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        otherReason:
+          type: string
+      required:
+        - userId
+        - timestamp
+    EntityCounter:
+      title: EntityCounter
+      type: object
+      properties:
+        _id:
+          type: string
+        entity:
+          type: string
+        count:
+          type: number   
   securitySchemes:
     Authorization:
       type: http

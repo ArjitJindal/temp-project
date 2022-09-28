@@ -595,6 +595,30 @@ export class CdkTarponStack extends cdk.Stack {
     })
     tarponDynamoDbTable.grantReadWriteData(listsAlias)
 
+    /* Case */
+    const { alias: caseAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+        handler: 'app.casesHandler',
+        codePath: 'dist/console-api-case/',
+        memorySize: config.resource.CASE_LAMBDA?.MEMORY_SIZE,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          ...({
+            TMP_BUCKET: tmpBucketName,
+            DOCUMENT_BUCKET: documentBucketName,
+          } as TransactionViewConfig),
+        },
+      }
+    )
+    tarponDynamoDbTable.grantReadWriteData(caseAlias)
+    s3TmpBucket.grantRead(caseAlias)
+    s3DocumentBucket.grantWrite(caseAlias)
+    this.grantMongoDbAccess(caseAlias)
+
     /* Slack App */
     const { alias: slackAppAlias } = this.createFunction(
       {
@@ -741,6 +765,10 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
     slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
+    tarponDynamoDbTable.grantReadData(tarponChangeCaptureKinesisConsumerAlias)
+    tarponRuleDynamoDbTable.grantReadData(
+      tarponChangeCaptureKinesisConsumerAlias
+    )
 
     // Webhook handler
     const { alias: webhookTarponChangeCaptureHandlerAlias } =

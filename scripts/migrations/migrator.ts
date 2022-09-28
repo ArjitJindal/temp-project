@@ -27,7 +27,7 @@ const migrationCollection =
     : 'migrations-post-deployment'
 
 if (process.env.ENV === 'local') {
-  process.env.MONGO_URI = 'mongodb://localhost:27017'
+  process.env.MONGO_URI = `mongodb://localhost:27017/${StackConstants.MONGO_DB_DATABASE_NAME}`
   process.env.DYNAMODB_URI = 'http://localhost:8000'
   process.env.AWS_REGION = 'local'
 }

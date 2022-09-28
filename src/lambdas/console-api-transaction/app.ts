@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { InternalServerError, BadRequest, NotFound } from 'http-errors'
+import { CaseService } from '../console-api-case/services/case-service'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -14,6 +15,7 @@ import { CsvHeaderSettings, ExportService } from '@/services/export'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { TransactionsUpdateRequest } from '@/@types/openapi-internal/TransactionsUpdateRequest'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -86,6 +88,15 @@ export const transactionsViewHandler = lambdaApi()(
     })
     const transactionService = new TransactionService(
       transactionRepository,
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
+    const caseRepository = new CaseRepository(tenantId, {
+      mongoDb: client,
+    })
+    const caseService = new CaseService(
+      caseRepository,
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET
@@ -231,7 +242,12 @@ export const transactionsViewHandler = lambdaApi()(
     ) {
       const updateRequest = JSON.parse(event.body) as TransactionsUpdateRequest
       const transactionIds = updateRequest?.transactionIds || []
-      return transactionService.updateTransactions(
+      await transactionService.updateTransactions(
+        userId,
+        transactionIds,
+        updateRequest.transactionUpdates
+      )
+      return caseService.updateCasesByTransactionIds(
         userId,
         transactionIds,
         updateRequest.transactionUpdates
@@ -255,16 +271,25 @@ export const transactionsViewHandler = lambdaApi()(
       event.body
     ) {
       const comment = JSON.parse(event.body) as Comment
-      return transactionService.saveTransactionComment(
+      const savedComment: Comment =
+        await transactionService.saveTransactionComment(
+          event.pathParameters.transactionId,
+          { ...comment, userId }
+        )
+      return caseService.saveCaseCommentByTransaction(
         event.pathParameters.transactionId,
-        { ...comment, userId }
+        { ...savedComment, userId }
       )
     } else if (
       event.httpMethod === 'DELETE' &&
       event.pathParameters?.transactionId &&
       event.pathParameters?.commentId
     ) {
-      return transactionService.deleteTransactionComment(
+      await transactionService.deleteTransactionComment(
+        event.pathParameters.transactionId,
+        event.pathParameters.commentId
+      )
+      return caseService.deleteCaseCommentByTransaction(
         event.pathParameters.transactionId,
         event.pathParameters.commentId
       )

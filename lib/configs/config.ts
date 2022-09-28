@@ -55,6 +55,10 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
+    CASE_LAMBDA: {
+      PROVISIONED_CONCURRENCY: number
+      MEMORY_SIZE?: number
+    }
   }
   application: {
     AUTH0_DOMAIN: string
