@@ -29,6 +29,7 @@ import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volu
 import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
 import { TooManyCounterpartyCountryRuleParameters } from './too-many-counterparty-country'
+import { TransactionsRoundValueVelocityRuleParameters } from './transactions-round-value-velocity'
 import { TRANSACTION_RULES } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -816,6 +817,30 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         defaultAction: 'FLAG',
         ruleImplementationName: 'too-many-counterparty-country',
         labels: ['AML', 'List'],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: TransactionsRoundValueVelocityRuleParameters = {
+        timeWindow: {
+          units: 7,
+          granularity: 'day',
+        },
+        transactionsLimit: 10,
+      }
+      return {
+        id: 'R-130',
+        type: 'TRANSACTION',
+        name: 'Too many round transactions to the same user',
+        description:
+          'User receives or sends >= x round transactions within time t',
+        descriptionTemplate:
+          "{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} {{ parameters.transactionsLimit }} or more transactions as round values ending in 00.00 (hundreds without cents) within time {{ format-time-window parameters.timeWindow }}",
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'transactions-round-value-velocity',
+        labels: ['AML'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
       }
