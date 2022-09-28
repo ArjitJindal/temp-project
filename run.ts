@@ -61,10 +61,6 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
     require('./src/lambdas/console-api-rule/app').ruleHandler(
       require('./events/get-rules').event
     ),
-  'get-rule-implementations': () =>
-    require('./src/lambdas/console-api-rule/app').ruleHandler(
-      require('./events/get-rule-implementations').event
-    ),
   'create-rule-instance': () =>
     require('./src/lambdas/console-api-rule/app').ruleInstanceHandler(
       require('./events/create-rule-instance').event

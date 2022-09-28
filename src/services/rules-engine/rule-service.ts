@@ -4,7 +4,6 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { RuleImplementation } from '@/@types/openapi-internal/RuleImplementation'
 import { TRANSACTION_RULES } from '@/services/rules-engine/transaction-rules'
 import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
@@ -35,15 +34,6 @@ export class RuleService {
 
   async getAllRules(): Promise<ReadonlyArray<Rule>> {
     return this.ruleRepository.getAllRules()
-  }
-
-  getAllRuleImplementations(): ReadonlyArray<RuleImplementation> {
-    return Object.entries(ALL_RULES)
-      .filter((entry) => !entry[0].startsWith('tests/'))
-      .map((entry) => ({
-        name: entry[0],
-        parametersSchema: entry[1].getSchema(),
-      }))
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

@@ -85,27 +85,6 @@ paths:
           in: query
           name: tenantId
           description: Tenant ID
-  /rule_implementations:
-    get:
-      summary: Rule Implementations - List
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RuleImplementation'
-              examples: {}
-            application/xml:
-              schema:
-                type: object
-                properties: {}
-      operationId: get-rule-implementations
-      description: ''
-    parameters: []
   '/rules/{ruleId}':
     parameters:
       - schema:
@@ -1991,17 +1970,6 @@ components:
       required:
         - status
         - timestamp
-    RuleImplementation:
-      title: RuleImplementation
-      type: object
-      properties:
-        name:
-          type: string
-        parametersSchema:
-          type: object
-      required:
-        - name
-        - parametersSchema
     Account:
       title: Account
       type: object

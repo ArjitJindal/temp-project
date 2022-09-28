@@ -29,11 +29,6 @@ export const ruleHandler = lambdaApi()(
       const rules = await ruleService.getAllRules()
       return rules
     } else if (
-      event.httpMethod === 'GET' &&
-      event.path.endsWith('/rule_implementations')
-    ) {
-      return ruleService.getAllRuleImplementations()
-    } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/rules') &&
       event.body
