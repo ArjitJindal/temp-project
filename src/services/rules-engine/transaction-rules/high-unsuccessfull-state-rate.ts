@@ -32,7 +32,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
     return {
       type: 'object',
       properties: {
-        timeWindow: TIME_WINDOW_SCHEMA,
+        timeWindow: TIME_WINDOW_SCHEMA(),
         transactionState: {
           type: 'string',
           enum: [

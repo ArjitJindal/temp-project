@@ -9,6 +9,11 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import {
+  getTestUser,
+  setUpConsumerUsersHooks,
+} from '@/test-utils/user-test-utils'
+import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
 
 const TEST_TRANSACTION_AMOUNT_100 = {
   transactionCurrency: 'EUR',
@@ -22,7 +27,7 @@ const TEST_TRANSACTION_AMOUNT_300 = {
 
 dynamoDbSetupHook()
 
-function getDefaultParams(): TransactionsAverageExceededParameters {
+function getDefaultParams(): TransactionsAverageAmountExceededParameters {
   return {
     period1: {
       granularity: 'day',
@@ -150,8 +155,217 @@ describe('Core login', () => {
       ],
       expectedHits: [true, false, true],
     },
+    {
+      name: 'Check exclude mode',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '222',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [true, false],
+      ruleParams: {
+        excludePeriod1: true,
+      },
+    },
+    {
+      name: 'Check exclude mode, mix period units',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '222',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [true, false],
+      ruleParams: {
+        period1: {
+          granularity: 'day',
+          units: 1,
+          rollingBasis: true,
+        },
+        period2: {
+          granularity: 'hour',
+          units: 48,
+          rollingBasis: true,
+        },
+        excludePeriod1: true,
+      },
+    },
+    {
+      name: 'Transactions number threshold',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '222',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
+      ruleParams: {
+        period1: {
+          granularity: 'day',
+          units: 1,
+          rollingBasis: true,
+        },
+        period2: {
+          granularity: 'day',
+          units: 2,
+          rollingBasis: true,
+        },
+        transactionsNumberThreshold: {
+          min: 2,
+        },
+      },
+    },
+    {
+      name: 'Average threshold',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
+      ruleParams: {
+        period1: {
+          granularity: 'day',
+          units: 1,
+          rollingBasis: true,
+        },
+        period2: {
+          granularity: 'day',
+          units: 2,
+          rollingBasis: true,
+        },
+        averageThreshold: {
+          max: 99,
+        },
+      },
+    },
   ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-average-amount-exceeded',
+        defaultParameters: {
+          ...defaultParams,
+          ...ruleParams,
+        },
+      },
+    ])
+
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Filters', () => {
+  const now = dayjs('2022-01-01T00:00:00.000Z')
+
+  describe.each<
+    TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+  >([
+    {
+      name: 'User age filter',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      ruleParams: {
+        ageRange: {
+          minAge: 18,
+          maxAge: 20,
+        },
+      },
+      expectedHits: [false],
+    },
+    {
+      name: 'User type filter',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      ruleParams: {
+        userType: 'BUSINESS',
+      },
+      expectedHits: [false],
+    },
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpConsumerUsersHooks(TEST_TENANT_ID, [
+      getTestUser({
+        userId: '1',
+        userDetails: {
+          dateOfBirth: '1990-01-01',
+          name: {
+            firstName: '1',
+          },
+        },
+      }),
+    ])
 
     setUpRulesHooks(TEST_TENANT_ID, [
       {

@@ -1,15 +1,12 @@
-import { JSONSchemaType } from 'ajv'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
-  PAYMENT_METHODS,
   subtractTime,
-  TIME_WINDOW_SCHEMA,
   TimeWindow,
+  toGranularity,
 } from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -20,27 +17,46 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
+import {
+  isUserBetweenAge,
+  isUserType,
+} from '@/services/rules-engine/utils/user-rule-utils'
+import { UserType } from '@/@types/user/user-type'
 
-type UserType = 'origin' | 'destination'
+type UserParty = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
 
 export type TransactionsAverageExceededParameters =
   DefaultTransactionRuleParameters & {
     period1: TimeWindow
     period2: TimeWindow
-    multiplierThresholds: {
-      [currency: string]: number
+    excludePeriod1?: boolean
+    ageRange?: {
+      minAge?: number
+      maxAge?: number
     }
+    userType?: UserType
     transactionTypes?: TransactionType[]
     paymentMethod?: string
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
+    transactionsNumberThreshold?: {
+      min?: number
+      max?: number
+    }
+    averageThreshold?: {
+      min?: number
+      max?: number
+    }
   }
 
-export default class TransactionAverageExceededRule extends TransactionRule<TransactionsAverageExceededParameters> {
+export default class TransactionAverageExceededRule<
+  Params extends TransactionsAverageExceededParameters
+> extends TransactionRule<Params> {
   transactionRepository?: TransactionRepository
 
   private avgMethod: 'AMOUNT' | 'NUMBER'
+  private multiplierThresholds: { [currency: string]: number }
 
   constructor(
     tenantId: string,
@@ -50,95 +66,34 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       receiverUser?: User | Business
     },
     params: {
-      parameters: TransactionsAverageExceededParameters
+      parameters: Params
       action: RuleAction
     },
     dynamoDb: AWS.DynamoDB.DocumentClient,
-    avgMethod: 'AMOUNT' | 'NUMBER'
+    avgMethod: 'AMOUNT' | 'NUMBER',
+    multiplierThresholds: { [currency: string]: number }
   ) {
     super(tenantId, data, params, dynamoDb)
     this.avgMethod = avgMethod
-  }
-
-  public static getSchema(): JSONSchemaType<TransactionsAverageExceededParameters> {
-    return {
-      type: 'object',
-      properties: {
-        period1: TIME_WINDOW_SCHEMA,
-        period2: TIME_WINDOW_SCHEMA,
-        multiplierThresholds: {
-          type: 'object',
-          title: 'Maximum multiplier',
-          additionalProperties: {
-            type: 'integer',
-            minimum: 1,
-          },
-          required: [],
-          nullable: false,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'], // check origin user, only for sending transactions or as a receiver too
-          nullable: false,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: false,
-        },
-      },
-      required: [
-        'period1',
-        'period2',
-        'multiplierThresholds',
-        'checkSender',
-        'checkReceiver',
-      ],
-    }
+    this.multiplierThresholds = multiplierThresholds
   }
 
   private async avg(
-    user: UserType,
+    user: UserParty,
     direction: Direction,
-    currency: string,
-    period1: TimeWindow,
-    period2: TimeWindow
-  ): Promise<[number, number]> {
+    currency: string
+  ): Promise<[number, number] | undefined> {
+    const {
+      period1,
+      period2,
+      averageThreshold,
+      transactionsNumberThreshold,
+      excludePeriod1,
+    } = this.parameters
+
+    const { min: avgMin, max: avgMax } = averageThreshold ?? {}
+    const { min: numMin, max: numMax } = transactionsNumberThreshold ?? {}
+
     const repo = this.transactionRepository as TransactionRepository
 
     const afterTimestamp1 = subtractTime(
@@ -149,6 +104,9 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       dayjs(this.transaction.timestamp),
       period2
     )
+
+    const beforeTimestamp1 = this.transaction.timestamp ?? Date.now()
+    const beforeTimestamp2 = excludePeriod1 ? afterTimestamp1 : beforeTimestamp1
 
     const userId =
       user === 'origin'
@@ -164,12 +122,14 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
         userId,
         paymentDetails,
         afterTimestamp1,
+        beforeTimestamp1,
         direction
       ),
       this.getTransactionsInTimeWindow(
         userId,
         paymentDetails,
         afterTimestamp2,
+        beforeTimestamp2,
         direction
       ),
     ])
@@ -180,6 +140,21 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     const includeCurrentTransaction =
       checkOriginSending || checkDestinationReceiving
 
+    let num1 = ids1.length
+    let num2 = ids2.length
+
+    if (includeCurrentTransaction && this.transaction.transactionId) {
+      num1++
+      if (!excludePeriod1) {
+        num2++
+      }
+    }
+
+    if ((numMin && num1 < numMin) || (numMax && num1 > numMax)) {
+      return
+    }
+
+    let result: [number, number]
     if (this.avgMethod === 'AMOUNT') {
       const [transactions1, transactions2] = await Promise.all([
         repo.getTransactionsByIds(ids1),
@@ -188,7 +163,9 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
 
       if (includeCurrentTransaction) {
         transactions1.push(this.transaction)
-        transactions2.push(this.transaction)
+        if (!excludePeriod1) {
+          transactions2.push(this.transaction)
+        }
       }
 
       const amountDetails1 = transactions1
@@ -206,28 +183,41 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
         )
         .filter((x): x is TransactionAmountDetails => x != null)
 
-      return await Promise.all([
-        avgTransactionAmount(amountDetails1, currency, period1.units),
-        avgTransactionAmount(amountDetails2, currency, period2.units),
+      const units1 = period1.units
+      const units2 = excludePeriod1
+        ? toGranularity(period2, period1.granularity).units - period1.units
+        : period2.units
+
+      result = await Promise.all([
+        avgTransactionAmount(amountDetails1, currency, units1),
+        avgTransactionAmount(amountDetails2, currency, units2),
       ])
     } else if (this.avgMethod === 'NUMBER') {
-      if (includeCurrentTransaction && this.transaction.transactionId) {
-        ids1.push(this.transaction.transactionId)
-        ids2.push(this.transaction.transactionId)
-      }
-      return [ids1.length / period1.units, ids2.length / period2.units]
+      result = [num1 / period1.units, num2 / period2.units]
     } else {
       throw neverThrow(
         this.avgMethod,
         `Method not supported: ${this.avgMethod}`
       )
     }
+
+    if (
+      (avgMin != null && result[0] < avgMin) ||
+      (avgMax != null && result[0] > avgMax)
+    ) {
+      return
+    }
+
+    return result
   }
 
   public getFilters() {
-    const { paymentMethod, transactionTypes } = this.parameters
+    const { paymentMethod, transactionTypes, ageRange, userType } =
+      this.parameters
     return [
       ...super.getFilters(),
+      () => !ageRange || isUserBetweenAge(this.senderUser, ageRange),
+      () => isUserType(this.senderUser, userType),
       () =>
         !paymentMethod ||
         this.transaction.originPaymentDetails?.method === paymentMethod,
@@ -239,13 +229,14 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     afterTimestamp: number,
+    beforeTimestamp: number,
     direction: Direction
   ): Promise<string[]> {
     const repo = this.transactionRepository as TransactionRepository
 
     const timeRange = {
       afterTimestamp,
-      beforeTimestamp: this.transaction.timestamp ?? Date.now(),
+      beforeTimestamp,
     }
     const filterOptions = {
       transactionState: this.parameters.transactionState,
@@ -275,15 +266,9 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
       dynamoDb: this.dynamoDb,
     })
 
-    const {
-      period1,
-      period2,
-      multiplierThresholds,
-      checkSender,
-      checkReceiver,
-    } = this.parameters
+    const { period1, period2, checkSender, checkReceiver } = this.parameters
 
-    const toCheck: [UserType, Direction][] = []
+    const toCheck: [UserParty, Direction][] = []
     if (checkSender !== 'none') {
       toCheck.push(['origin', 'sending'])
       if (checkSender === 'all') {
@@ -298,17 +283,14 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
     }
 
     for (const [currency, maxMultiplier] of Object.entries(
-      multiplierThresholds
+      this.multiplierThresholds
     )) {
       for (const [user, direction] of toCheck) {
-        const [avg1, avg2] = await this.avg(
-          user,
-          direction,
-          currency,
-          period1,
-          period2
-        )
-
+        const avgs = await this.avg(user, direction, currency)
+        if (avgs == null) {
+          return
+        }
+        const [avg1, avg2] = avgs
         const multiplier = avg1 / avg2
         const result = multiplier > maxMultiplier
         if (result) {
@@ -336,7 +318,7 @@ export default class TransactionAverageExceededRule extends TransactionRule<Tran
 async function avgTransactionAmount(
   details: TransactionAmountDetails[],
   currency: string,
-  timeUnits: number
+  units: number
 ): Promise<number> {
   if (details.length === 0) {
     return 0
@@ -349,5 +331,5 @@ async function avgTransactionAmount(
   )
 
   const sum = normalizedAmounts.reduce((acc, x) => acc + x.transactionAmount, 0)
-  return sum / timeUnits
+  return sum / units
 }

@@ -91,7 +91,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           },
           required: [],
         },
-        timeWindow: TIME_WINDOW_SCHEMA,
+        timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: {
           type: 'string',
           title: 'Origin User Transaction Direction',

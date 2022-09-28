@@ -9,6 +9,7 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 
 const TEST_TRANSACTION_AMOUNT_300 = {
   transactionCurrency: 'EUR',
@@ -17,7 +18,7 @@ const TEST_TRANSACTION_AMOUNT_300 = {
 
 dynamoDbSetupHook()
 
-function getDefaultParams(): TransactionsAverageExceededParameters {
+function getDefaultParams(): TransactionsAverageNumberExceededParameters {
   return {
     period1: {
       granularity: 'day',
@@ -29,9 +30,7 @@ function getDefaultParams(): TransactionsAverageExceededParameters {
       units: 2,
       rollingBasis: true,
     },
-    multiplierThresholds: {
-      EUR: 1,
-    },
+    multiplierThreshold: 1,
     checkSender: 'all',
     checkReceiver: 'all',
   }

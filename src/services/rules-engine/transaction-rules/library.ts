@@ -26,12 +26,13 @@ import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pa
 import { CardHolderNameRuleParameter } from './card-holder-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
 import { HighTrafficVolumeBetweenSameUsersParameters } from './high-traffic-volume-between-same-users'
-import { TransactionsAverageExceededParameters } from './transactions-average-exceeded'
 import { TransactionsRoundValuePercentageRuleParameters } from './transactions-round-value-percentage'
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
 import { TRANSACTION_RULES } from '.'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
+import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
+import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 
 const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
   [
@@ -620,7 +621,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       }
     },
     () => {
-      const defaultParameters: TransactionsAverageExceededParameters = {
+      const defaultParameters: TransactionsAverageNumberExceededParameters = {
         period1: {
           units: 1,
           granularity: 'day',
@@ -629,16 +630,14 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           units: 1,
           granularity: 'day',
         },
-        multiplierThresholds: {
-          EUR: 2,
-        },
+        multiplierThreshold: 2,
         checkSender: 'sending',
         checkReceiver: 'receiving',
       }
       return {
         id: 'R-121',
         type: 'TRANSACTION',
-        name: 'Average transactions exceed past period average',
+        name: 'Average transactions number exceed past period average number',
         description:
           'The average daily number of transactions of a user in the last t1 days, is >= X times higher than avg daily transactions in t2 days',
         descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. number of transactions in last {{ format-time-window period1 }} than avg. number of transactions in last {{ format-time-window period2 }}`,
@@ -651,7 +650,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       }
     },
     () => {
-      const defaultParameters: TransactionsAverageExceededParameters = {
+      const defaultParameters: TransactionsAverageAmountExceededParameters = {
         period1: {
           units: 1,
           granularity: 'day',

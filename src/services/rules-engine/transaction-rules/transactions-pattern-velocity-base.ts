@@ -65,7 +65,7 @@ export default class TransactionsPatternVelocityBaseRule<
           title: 'Initial Transactions Count Threshold',
           nullable: true,
         },
-        timeWindow: TIME_WINDOW_SCHEMA,
+        timeWindow: TIME_WINDOW_SCHEMA(),
         transactionTypes: {
           type: 'array',
           title: 'Target Transaction Types',

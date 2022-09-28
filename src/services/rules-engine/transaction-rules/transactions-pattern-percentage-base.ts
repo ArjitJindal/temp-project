@@ -66,7 +66,7 @@ export default class TransactionsPatternPercentageBaseRule<
           type: 'integer',
           title: 'Initial Transactions Count Threshold',
         },
-        timeWindow: TIME_WINDOW_SCHEMA,
+        timeWindow: TIME_WINDOW_SCHEMA(),
         transactionTypes: {
           type: 'array',
           title: 'Target Transaction Types',
