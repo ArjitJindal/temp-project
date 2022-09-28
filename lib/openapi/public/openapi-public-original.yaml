@@ -1748,6 +1748,34 @@ components:
           description: Whether 3ds was successfully enforced for the transaction
         nameOnCard:
           $ref: '#/components/schemas/ConsumerName'
+        cardExpiry:
+          $ref: '#/components/schemas/CardExpiry'
+        cardLast4Digits:
+          type: string
+          minLength: 4
+          maxLength: 4
+          description: Last 4 digits of Card
+        cardBrand:
+          type: string
+          description: Brand of Card
+          enum:
+            - VISA
+            - MASTERCARD
+            - AMERICAN_EXPRESS
+            - DISCOVER
+            - UNIONPAY
+            - RUPAY
+            - JCB
+        cardFunding:
+          type: string
+          description: Funding of Card
+          enum:
+            - CREDIT
+            - DEBIT
+            - PREPAID
+        cardAuthenticated:
+          type: boolean
+          description: Authentication of Card
       required:
         - method
     IBANDetails:
@@ -3638,6 +3666,20 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    CardExpiry:
+      title: CardExpiry
+      x-stoplight:
+        id: yzuf7hk7abyg6
+      type: object
+      properties:
+        month:
+          type: number
+        year:
+          type: number
+      x-examples:
+        example-1:
+          month: 1
+          year: 1990
     TransactionType:
       type: string
       title: TransactionType
