@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
+import { AttributeMap, DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -205,6 +206,31 @@ export class UserRepository {
 
   public async getConsumerUser(userId: string): Promise<User | undefined> {
     return await this.getUser<User>(userId)
+  }
+
+  public async getUsers(userIds: string[]): Promise<(User | Business)[]> {
+    const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
+      RequestItems: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
+          Keys: Array.from(new Set(userIds)).map((userId) =>
+            DynamoDbKeys.USER(this.tenantId, userId)
+          ),
+        },
+      },
+      ReturnConsumedCapacity: 'TOTAL',
+    }
+    const result = await this.dynamoDb.batchGet(batchGetItemInput).promise()
+    const users: DocumentClient.ItemList =
+      result.Responses?.[StackConstants.TARPON_DYNAMODB_TABLE_NAME] || []
+    return users.map((user: AttributeMap) => {
+      const projectedUser = {
+        ...user,
+      }
+      delete projectedUser.type
+      delete projectedUser.PartitionKeyID
+      delete projectedUser.SortKeyID
+      return projectedUser as unknown as User | Business
+    })
   }
 
   public async getMongoBusinessUser(

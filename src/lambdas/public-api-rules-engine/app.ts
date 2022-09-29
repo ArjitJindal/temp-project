@@ -2,6 +2,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { DocumentClient } from 'aws-sdk/clients/dynamodb'
+import { BadRequest } from 'http-errors'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -14,6 +16,36 @@ import {
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+
+async function getTransactionMissingUsers(
+  transaction: Transaction,
+  tenantId: string,
+  dynamoDb: DocumentClient
+): Promise<string[]> {
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
+  const userIds: string[] = Array.from(
+    new Set([transaction.originUserId, transaction.destinationUserId])
+  ).filter((id) => id) as string[]
+  if (userIds.length === 0) return []
+  const users = await userRepository.getUsers(userIds)
+  const existingUserIds = users.map((user) => user.userId)
+  if (users.length === userIds.length) {
+    return []
+  } else {
+    return userIds.filter((userId) => !existingUserIds.includes(userId))
+  }
+}
+
+function getMissingUsersMessage(userIds: string[]): string {
+  switch (userIds.length) {
+    case 2:
+      return `Users with userIds ${userIds[0]}, ${userIds[1]} do not exist`
+    default:
+      return `User with userId ${userIds[0]} does not exist`
+  }
+}
 
 export const transactionHandler = lambdaApi()(
   async (
@@ -27,8 +59,17 @@ export const transactionHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transaction = JSON.parse(event.body)
-      const result = await verifyTransaction(transaction, tenantId, dynamoDb)
-      return result
+      const missingUsers = await getTransactionMissingUsers(
+        transaction,
+        tenantId,
+        dynamoDb
+      )
+      if (missingUsers.length === 0) {
+        const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+        return result
+      } else {
+        throw new BadRequest(getMissingUsersMessage(missingUsers))
+      }
     } else if (event.httpMethod === 'GET' && transactionId) {
       const transactionRepository = new TransactionRepository(tenantId, {
         dynamoDb,
@@ -53,7 +94,26 @@ export const transactionEventHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
-      return await verifyTransactionEvent(transactionEvent, tenantId, dynamoDb)
+      let missingUsers: string[] = []
+      if (transactionEvent.updatedTransactionAttributes) {
+        missingUsers = await getTransactionMissingUsers(
+          transactionEvent.updatedTransactionAttributes,
+          tenantId,
+          dynamoDb
+        )
+      }
+      const isValidPayload =
+        !transactionEvent.updatedTransactionAttributes ||
+        missingUsers.length === 0
+      if (isValidPayload) {
+        return await verifyTransactionEvent(
+          transactionEvent,
+          tenantId,
+          dynamoDb
+        )
+      } else {
+        throw new BadRequest(getMissingUsersMessage(missingUsers))
+      }
     }
     throw new Error('Unhandled request')
   }

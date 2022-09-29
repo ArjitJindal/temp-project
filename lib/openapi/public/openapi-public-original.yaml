@@ -132,6 +132,10 @@ paths:
                         ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
+        '400':
+          description: Bad Request
+          headers: {}
+          content: {}
         '401':
           description: Unauthorized
           headers: {}
@@ -368,6 +372,10 @@ paths:
                         ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
+        '400':
+          description: Bad Request
+          headers: {}
+          content: {}
         '401':
           description: Unauthorized
           headers: {}
