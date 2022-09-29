@@ -35,6 +35,7 @@ import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
 import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
+import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 
 const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
   [
@@ -841,6 +842,31 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         defaultAction: 'FLAG',
         ruleImplementationName: 'transactions-round-value-velocity',
         labels: ['AML'],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: SamePaymentDetailsParameters = {
+        threshold: 2,
+        timeWindow: {
+          units: 7,
+          granularity: 'day',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      }
+      return {
+        id: 'R-127',
+        type: 'TRANSACTION',
+        name: 'Same payment details used too many times',
+        description: 'Same payment details used >= x times in unit time t',
+        descriptionTemplate:
+          'Same payment details used {{ numberOfUses }} times within {{ format-time-window parameters.timeWindow }}, which is more or equal than threshold of {{ parameters.threshold }}',
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'same-payment-details',
+        labels: [],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
       }
