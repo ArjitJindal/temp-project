@@ -64,7 +64,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         name: 'Transaction amount too high',
         description: 'Transaction amount is >= x in USD or equivalent',
         descriptionTemplate:
-          'Transaction amount is {{ usdLimit }} or more in USD or equivalent',
+          'Transaction amount is {{ format-money limit currency }} or more',
         defaultParameters,
         defaultAction: 'SUSPEND',
         ruleImplementationName: 'transaction-amount',
