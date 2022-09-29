@@ -6,6 +6,7 @@ import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 
 import { Construct } from 'constructs'
 import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
+import { Duration } from 'aws-cdk-lib'
 import { config as deployConfig } from './configs/config-deployment'
 import { config as devConfig } from './configs/config-dev'
 import { config as sandboxConfig } from './configs/config-sandbox'
@@ -117,6 +118,8 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         },
         role: devCodeDeployRole,
+        // Max timeout: 480 minutes (https://docs.aws.amazon.com/codebuild/latest/userguide/limits.html)
+        timeout: Duration.hours(8),
       })
     }
 
