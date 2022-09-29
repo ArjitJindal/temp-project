@@ -1,4 +1,4 @@
-import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded'
+import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'

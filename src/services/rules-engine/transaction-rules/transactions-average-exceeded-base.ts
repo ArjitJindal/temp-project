@@ -1,11 +1,14 @@
+import { JSONSchemaType } from 'ajv'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
+  PAYMENT_METHODS,
   subtractTime,
   TimeWindow,
+  TIME_WINDOW_SCHEMA,
   toGranularity,
 } from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
@@ -13,15 +16,12 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
-import { Business } from '@/@types/openapi-public/Business'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import { User } from '@/@types/openapi-public/User'
 import {
   isUserBetweenAge,
   isUserType,
 } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserType } from '@/@types/user/user-type'
+import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 type UserParty = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
@@ -50,32 +50,118 @@ export type TransactionsAverageExceededParameters =
     }
   }
 
-export default class TransactionAverageExceededRule<
+export default class TransactionAverageExceededBaseRule<
   Params extends TransactionsAverageExceededParameters
 > extends TransactionRule<Params> {
   transactionRepository?: TransactionRepository
 
-  private avgMethod: 'AMOUNT' | 'NUMBER'
-  private multiplierThresholds: { [currency: string]: number }
+  public static getBaseSchema(): JSONSchemaType<TransactionsAverageExceededParameters> {
+    return {
+      type: 'object',
+      properties: {
+        period1: TIME_WINDOW_SCHEMA({
+          title: 'Current period',
+        }),
+        period2: TIME_WINDOW_SCHEMA({
+          title: 'Reference period, should be larger than period1',
+        }),
+        excludePeriod1: {
+          type: 'boolean',
+          title: 'Exclude transactions in period1 from period2',
+          nullable: true,
+        },
+        paymentMethod: {
+          type: 'string',
+          title: 'Method of payment',
+          enum: PAYMENT_METHODS,
+          nullable: true,
+        },
+        transactionState: {
+          type: 'string',
+          enum: [
+            'CREATED',
+            'PROCESSING',
+            'SENT',
+            'EXPIRED',
+            'DECLINED',
+            'SUSPENDED',
+            'REFUNDED',
+            'SUCCESSFUL',
+          ],
+          title: 'Target Transaction State',
+          description:
+            'If not specified, all transactions regardless of the state will be used for running the rule',
+          nullable: true,
+        },
+        transactionTypes: {
+          type: 'array',
+          title: 'Target Transaction Types',
+          items: {
+            type: 'string',
+            enum: TRANSACTION_TYPES,
+          },
+          uniqueItems: true,
+          nullable: true,
+        },
+        checkSender: {
+          type: 'string',
+          title: 'Origin User Transaction Direction',
+          enum: ['sending', 'all', 'none'], // check origin user, only for sending transactions or as a receiver too
+          nullable: false,
+        },
+        checkReceiver: {
+          type: 'string',
+          title: 'Destination User Transaction Direction',
+          enum: ['receiving', 'all', 'none'],
+          nullable: false,
+        },
+        ageRange: {
+          type: 'object',
+          title: 'Target Age Range',
+          properties: {
+            minAge: { type: 'integer', title: 'Min Age', nullable: true },
+            maxAge: { type: 'integer', title: 'Max Age', nullable: true },
+          },
+          required: [],
+          nullable: true,
+        },
+        userType: {
+          type: 'string',
+          title: 'User type',
+          enum: ['BUSINESS', 'CONSUMER'],
+          nullable: true,
+        },
+        transactionsNumberThreshold: {
+          type: 'object',
+          title: 'Minimum average in period1 for rule to trigger',
+          properties: {
+            min: { type: 'integer', title: 'Min', nullable: true },
+            max: { type: 'integer', title: 'Max', nullable: true },
+          },
+          required: [],
+          nullable: true,
+        },
+        averageThreshold: {
+          type: 'object',
+          title: 'Minimum average in period1 for rule to trigger',
+          properties: {
+            min: { type: 'integer', title: 'Min', nullable: true },
+            max: { type: 'integer', title: 'Max', nullable: true },
+          },
+          required: [],
+          nullable: true,
+        },
+      },
+      required: ['period1', 'period2', 'checkSender', 'checkReceiver'],
+    }
+  }
 
-  constructor(
-    tenantId: string,
-    data: {
-      transaction: Transaction
-      senderUser?: User | Business
-      receiverUser?: User | Business
-    },
-    params: {
-      parameters: Params
-      action: RuleAction
-    },
-    dynamoDb: AWS.DynamoDB.DocumentClient,
-    avgMethod: 'AMOUNT' | 'NUMBER',
-    multiplierThresholds: { [currency: string]: number }
-  ) {
-    super(tenantId, data, params, dynamoDb)
-    this.avgMethod = avgMethod
-    this.multiplierThresholds = multiplierThresholds
+  protected getMultiplierThresholds(): { [currency: string]: number } {
+    throw new Error('Not implemented')
+  }
+
+  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' {
+    throw new Error('Not implemented')
   }
 
   private async avg(
@@ -155,7 +241,8 @@ export default class TransactionAverageExceededRule<
     }
 
     let result: [number, number]
-    if (this.avgMethod === 'AMOUNT') {
+    const avgMethod = this.getAvgMethod()
+    if (avgMethod === 'AMOUNT') {
       const [transactions1, transactions2] = await Promise.all([
         repo.getTransactionsByIds(ids1),
         repo.getTransactionsByIds(ids2),
@@ -192,13 +279,10 @@ export default class TransactionAverageExceededRule<
         avgTransactionAmount(amountDetails1, currency, units1),
         avgTransactionAmount(amountDetails2, currency, units2),
       ])
-    } else if (this.avgMethod === 'NUMBER') {
+    } else if (avgMethod === 'NUMBER') {
       result = [num1 / period1.units, num2 / period2.units]
     } else {
-      throw neverThrow(
-        this.avgMethod,
-        `Method not supported: ${this.avgMethod}`
-      )
+      throw neverThrow(avgMethod, `Method not supported: ${avgMethod}`)
     }
 
     if (
@@ -283,7 +367,7 @@ export default class TransactionAverageExceededRule<
     }
 
     for (const [currency, maxMultiplier] of Object.entries(
-      this.multiplierThresholds
+      this.getMultiplierThresholds()
     )) {
       for (const [user, direction] of toCheck) {
         const avgs = await this.avg(user, direction, currency)
