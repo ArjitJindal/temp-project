@@ -12,11 +12,15 @@ import { Topic } from 'aws-cdk-lib/aws-sns'
 import { FilterPattern, ILogGroup, MetricFilter } from 'aws-cdk-lib/aws-logs'
 
 export const TARPON_CUSTOM_METRIC_NAMESPACE = 'TarponCustom'
+const isDevUserStack = process.env.ENV === 'dev:user'
 
 export const createTarponOverallLambdaAlarm = (
   context: Construct,
   betterUptimeTopic: Topic
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, 'OverallLambdaErrorPercentage', {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 10,
@@ -56,6 +60,9 @@ export const createKinesisAlarm = (
   streamAlarmName: string,
   kinesisStreamName: string
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, streamAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 5,
@@ -101,6 +108,9 @@ export const createAPIGatewayAlarm = (
   restApiAlarmName: string,
   restApiName: string
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, restApiAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 5,
@@ -156,6 +166,9 @@ export const createDynamoDBAlarm = (
     dimensions?: DimensionsMap
   }
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, dynamoDBTableAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: options.threshold,
@@ -204,6 +217,9 @@ export const createAPIGatewayThrottlingAlarm = (
   restApiAlarmName: string,
   restApiName: string
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   createApiGatewayThrottlingMetricFilter(context, logGroup, restApiName)
   return new Alarm(context, restApiAlarmName, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
@@ -229,6 +245,9 @@ export const createLambdaErrorPercentageAlarm = (
   betterUptimeTopic: Topic,
   lambdaName: string
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, `${lambdaName}ErrorPercentage`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 10,
@@ -272,6 +291,9 @@ export const createLambdaThrottlingAlarm = (
   betterUptimeTopic: Topic,
   lambdaName: string
 ) => {
+  if (isDevUserStack) {
+    return null
+  }
   return new Alarm(context, `${lambdaName}Throttling`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
     threshold: 5,
