@@ -17,6 +17,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { Tag } from '@/@types/openapi-public/Tag'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -215,6 +216,23 @@ export class TransactionRepository {
         },
       })
     }
+    if (params.filterTagKey || params.filterTagValue) {
+      const elemCondition: { [attr: string]: Filter<Tag> } = {}
+      if (params.filterTagKey) {
+        elemCondition['key'] = { $eq: params.filterTagKey }
+      }
+      if (params.filterTagValue) {
+        elemCondition['value'] = {
+          $regex: params.filterTagValue,
+          $options: 'i',
+        }
+      }
+      conditions.push({
+        tags: {
+          $elemMatch: elemCondition,
+        },
+      })
+    }
 
     return { $and: conditions }
   }
@@ -231,9 +249,8 @@ export class TransactionRepository {
     params: DefaultApiGetTransactionsListRequest
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<TransactionCaseManagement>(name)
     const sortField =
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
@@ -1183,6 +1200,51 @@ export class TransactionRepository {
         ':receiverKeyId': filterOptions.receiverKeyId,
       },
     }
+  }
+
+  public async getTagKeys(): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Transaction>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    console.log('casesCollection', casesCollection)
+    const documents = await casesCollection
+      .aggregate([
+        {
+          $match: {
+            tags: {
+              $ne: null,
+            },
+          },
+        },
+        {
+          $project: {
+            key: {
+              $map: {
+                input: '$tags',
+                as: 'tag',
+                in: '$$tag.key',
+              },
+            },
+          },
+        },
+        {
+          $unwind: {
+            path: '$key',
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            keys: {
+              $addToSet: '$key',
+            },
+          },
+        },
+      ])
+      .toArray()
+
+    return documents[0]?.keys ?? []
   }
 }
 

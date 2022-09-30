@@ -127,6 +127,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterCaseStatus,
         filterOriginPaymentMethod,
         filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
         limit: parseInt(limit),
@@ -159,6 +161,8 @@ export const transactionsViewHandler = lambdaApi()(
         includeEvents: includeEvents === 'true',
         filterOriginPaymentMethod: filterOriginPaymentMethod,
         filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
       }
       return transactionService.getTransactions(params)
     } else if (
@@ -181,6 +185,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterRulesExecuted,
         filterOriginCurrencies,
         filterDestinationCurrencies,
+        filterTagKey,
+        filterTagValue,
         sortField,
         sortOrder,
       } = event.queryStringParameters as any
@@ -201,6 +207,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterDestinationCurrencies: filterDestinationCurrencies
           ? filterDestinationCurrencies.split(',')
           : undefined,
+        filterTagKey,
+        filterTagValue,
         sortField: sortField,
         sortOrder: sortOrder,
       }
@@ -235,6 +243,11 @@ export const transactionsViewHandler = lambdaApi()(
         transactionsCursor,
         TRANSACTION_EXPORT_HEADERS_SETTINGS
       )
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/transactions/tags/keys')
+    ) {
+      return await transactionService.getTagKeys()
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/transactions') &&

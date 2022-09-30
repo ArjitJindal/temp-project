@@ -43,6 +43,8 @@ const PathToLambda: any = {
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/export':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/tags/keys':
+    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/{transactionId}':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/consumer/users':

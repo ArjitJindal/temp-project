@@ -532,6 +532,14 @@ paths:
           in: query
           name: filterCaseStatus
         - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
             type: boolean
           in: query
           name: includeUsers
@@ -638,6 +646,18 @@ paths:
           in: query
           name: filterStatus
         - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
             type: string
           in: query
           name: sortField
@@ -647,6 +667,20 @@ paths:
           name: sortOrder
       x-internal: false
     parameters: []
+  /transactions/tags/keys:
+    get:
+      summary: Transaction - Export
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      operationId: get-transactions-tag-key-list
   '/transactions/{transactionId}':
     parameters:
       - schema:
@@ -2490,31 +2524,31 @@ components:
           type: integer
         caseId:
           type: string
-        createdTimestamp: 
+        createdTimestamp:
           type: number
-        latestTransactionArrivalTimestamp: 
+        latestTransactionArrivalTimestamp:
           type: number
-        caseType: 
+        caseType:
           $ref: '#/components/schemas/CaseType'
-        caseStatus: 
+        caseStatus:
           $ref: '#/components/schemas/CaseStatus'
-        caseTransactions: 
+        caseTransactions:
           type: array
-          items: 
+          items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
         caseUsers:
           type: object
           properties:
-            origin: 
+            origin:
               oneOf:
-              - $ref: '#/components/schemas/InternalConsumerUser'
-              - $ref: '#/components/schemas/InternalBusinessUser'
-              - $ref: '#/components/schemas/MissingUser'
-            destination: 
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+                - $ref: '#/components/schemas/MissingUser'
+            destination:
               oneOf:
-              - $ref: '#/components/schemas/InternalConsumerUser'
-              - $ref: '#/components/schemas/InternalBusinessUser'
-              - $ref: '#/components/schemas/MissingUser'
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+                - $ref: '#/components/schemas/MissingUser'
         comments:
           type: array
           items:
@@ -2531,7 +2565,7 @@ components:
           $ref: '#/components/schemas/CasePriority'
         relatedCases:
           type: array
-          items: 
+          items:
             type: string
     CasesListResponse:
       title: CasesListResponse
@@ -2607,7 +2641,7 @@ components:
         entity:
           type: string
         count:
-          type: number   
+          type: number
   securitySchemes:
     Authorization:
       type: http

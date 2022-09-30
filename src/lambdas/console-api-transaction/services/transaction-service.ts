@@ -155,4 +155,8 @@ export class TransactionService {
       Expires: 3600,
     })
   }
+
+  public async getTagKeys(): Promise<string[]> {
+    return this.transactionRepository.getTagKeys()
+  }
 }
