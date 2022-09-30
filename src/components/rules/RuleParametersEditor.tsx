@@ -15,6 +15,40 @@ const JSONSchemaForm = withTheme(Theme);
 
 const RISK_LEVELS: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
 
+function getFixedSchema(schema: object) {
+  return _.cloneDeepWith(schema, (value) => {
+    /**
+     * antd theme doesn't allow clearing the selected enum even the field is nullable.
+     * In this case, we concat the "empty" option and it'll be removed by removeEmptyValues
+     * to be a truly nullable field
+     */
+    if (value?.enum && value?.type === 'string' && value?.nullable) {
+      return {
+        ...value,
+        enum: [''].concat(value.enum),
+      };
+    }
+  });
+}
+
+/**
+ * If a required field has empty object or array, it'll pass the validation
+ * but it doesn't make sense for us. Thus removing them to make the validation fail
+ * and users must provide at least one value.
+ */
+function removeEmptyValues(formData: object) {
+  // empty value: {} or [] or null or undefined
+  return JSON.parse(
+    JSON.stringify(formData, (k, v) => {
+      const isEmptyObject = _.isObject(v) && _.isEmpty(v);
+      if (v === null || isEmptyObject) {
+        return undefined;
+      }
+      return v;
+    }),
+  );
+}
+
 function riskLevelToLabel(riskLevel: RiskLevel) {
   return `${_.capitalize(riskLevel.replace('_', ' '))} risk`;
 }
@@ -52,7 +86,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   const handleParametersChange = useCallback(
     (event: IChangeEvent) => {
       if (onParametersChange) {
-        onParametersChange(event.formData, event.errors);
+        onParametersChange(removeEmptyValues(event.formData), event.errors);
       }
     },
     [onParametersChange],
@@ -60,7 +94,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   const handleRiskLevelParametersChange = useCallback(
     (riskLevel: RiskLevel, event: IChangeEvent) => {
       if (onRiskLevelParametersChange) {
-        onRiskLevelParametersChange(riskLevel, event.formData, event.errors);
+        onRiskLevelParametersChange(riskLevel, removeEmptyValues(event.formData), event.errors);
       }
     },
     [onRiskLevelParametersChange],
@@ -81,7 +115,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
           {RISK_LEVELS.map((riskLevel) => (
             <Tabs.TabPane tab={riskLevelToLabel(riskLevel)} key={riskLevel}>
               <JSONSchemaForm
-                schema={parametersSchema}
+                schema={getFixedSchema(parametersSchema)}
                 formData={riskLevelParameters?.[riskLevel] || {}}
                 onChange={(event) => handleRiskLevelParametersChange(riskLevel, event)}
                 readonly={readonly}
@@ -95,7 +129,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
         </Tabs>
       ) : (
         <JSONSchemaForm
-          schema={parametersSchema}
+          schema={getFixedSchema(parametersSchema)}
           formData={parameters}
           onChange={handleParametersChange}
           readonly={readonly}
