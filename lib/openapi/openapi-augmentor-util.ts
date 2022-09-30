@@ -184,8 +184,7 @@ export function getAugmentedOpenapi(
             statusCode: 200,
             responseParameters: {
               'method.response.header.Access-Control-Allow-Headers': "'*'",
-              'method.response.header.Access-Control-Allow-Methods':
-                "'OPTIONS,POST,GET'",
+              'method.response.header.Access-Control-Allow-Methods': "'*'",
               'method.response.header.Access-Control-Allow-Origin': `'${
                 options?.allowedOrigin || '*'
               }'`,
