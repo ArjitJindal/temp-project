@@ -1,4 +1,5 @@
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from '../too-many-transactions-to-high-risk-country'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -32,8 +33,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-77 description formatting', () => {
-  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} performed more than {{ parameters.transactionsLimit }} transactions with {{ if-sender 'sending' 'receiving' }} country which is high risk in {{ format-time-window parameters.timeWindow }}`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -64,7 +63,8 @@ describe('R-77 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-77').descriptionTemplate,
     },
     [
       null,

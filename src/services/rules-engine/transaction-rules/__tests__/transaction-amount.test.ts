@@ -1,4 +1,5 @@
 import { TransactionAmountRuleParameters } from '../transaction-amount'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -56,7 +57,7 @@ describe('R-2 description formatting', () => {
     ],
     {
       descriptionTemplate:
-        'Transaction amount is {{ format-money limit currency }} or more',
+        getTransactionRuleByRuleId('R-2').descriptionTemplate,
     },
     ['Transaction amount is 1000.00 EUR or more']
   )
@@ -110,57 +111,9 @@ describe('R-75 description formatting', () => {
     ],
     {
       descriptionTemplate:
-        "CTR required since {{ if-sender 'sending' 'receiving' }} {{ format-money hitParty.amount }} is above {{ format-money limit currency }}",
+        getTransactionRuleByRuleId('R-75').descriptionTemplate,
     },
     ['CTR required since sending 10000.00 EUR is above 1000.00 EUR']
-  )
-})
-
-describe('R-112 description formatting', () => {
-  const TEST_TENANT_ID = getTestTenantId()
-
-  setUpRulesHooks(TEST_TENANT_ID, [
-    {
-      type: 'TRANSACTION',
-      ruleImplementationName: 'transaction-amount',
-      defaultParameters: {
-        transactionAmountThreshold: { USD: 1000, EUR: 1000 },
-        ageRange: { minAge: 18, maxAge: 25 },
-      } as TransactionAmountRuleParameters,
-      defaultAction: 'FLAG',
-    },
-  ])
-
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
-    getTestUser({
-      userId: 'description-1',
-      userDetails: {
-        name: {
-          firstName: '1',
-        },
-      },
-    }),
-  ])
-
-  testRuleDescriptionFormatting(
-    'first',
-    TEST_TENANT_ID,
-    [
-      getTestTransaction({
-        originUserId: 'description-1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
-      }),
-    ],
-    {
-      descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} whose age is between {{ parameters.ageRange.minAge }} - {{ parameters.ageRange.maxAge }} {{ if-sender 'sent' 'received' }} {{ format-money hitParty.amount }} above the limit {{ format-money limit currency }}",
-    },
-    [
-      'Sender whose age is between 18 - 25 sent 10000.00 EUR above the limit 1000.00 EUR',
-    ]
   )
 })
 

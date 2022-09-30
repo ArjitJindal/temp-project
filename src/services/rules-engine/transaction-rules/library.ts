@@ -195,7 +195,8 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         type: 'TRANSACTION',
         name: 'Too many outbound transactions under reporting limit',
         description:
-          '>= x number of low value outgoing transactions just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+          '>= x number of low value outgoing transaction(s) just below (minus amount of z) a specific threshold (y) from a user (your user is sending the funds). Very useful and common for structured money laundering attempts. This is a recommended rule.',
+        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transaction(s) just under the flagging limit`,
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'low-value-outgoing-transactions',
@@ -344,7 +345,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         name: 'High velocity user',
         description: 'If a user makes >= x transactions within time t',
         descriptionTemplate:
-          "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transactions above the limit of {{ parameters.transactionsLimit }} in {{ format-time-window parameters.timeWindow }}",
+          "{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsDif }} more transaction(s) above the limit of {{ parameters.transactionsLimit }} in {{ format-time-window parameters.timeWindow }}",
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'transactions-velocity',
@@ -882,3 +883,7 @@ export const TRANSACTION_RULES_LIBRARY: Array<Rule> =
         TRANSACTION_RULES[rule.ruleImplementationName].getSchema(),
     }
   })
+
+export function getTransactionRuleByRuleId(ruleId: string): Rule {
+  return TRANSACTION_RULES_LIBRARY.find((rule) => rule.id === ruleId) as Rule
+}

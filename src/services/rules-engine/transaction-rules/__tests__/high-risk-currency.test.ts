@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { HighRiskCurrencyRuleParameters } from '../high-risk-currency'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -36,8 +37,6 @@ describe('Core logic', () => {
   ])
 
   describe('R-6 description formatting', () => {
-    const descriptionTemplate = `{{ if-sender 'Sender’s' 'Receiver’s' }} currency ({{ hitParty.amount.currency }}) is a High Risk`
-
     testRuleDescriptionFormatting(
       'sender',
       TEST_TENANT_ID,
@@ -56,13 +55,11 @@ describe('Core logic', () => {
         }),
       ],
       {
-        descriptionTemplate,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-6').descriptionTemplate,
       },
-      [
-        'Sender’s currency (EUR) is a High Risk',
-      ]
+      ['Sender’s currency (EUR) is a High Risk']
     )
-
 
     testRuleDescriptionFormatting(
       'receiver',
@@ -82,13 +79,11 @@ describe('Core logic', () => {
         }),
       ],
       {
-        descriptionTemplate,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-6').descriptionTemplate,
       },
-      [
-        'Receiver’s currency (INR) is a High Risk',
-      ]
+      ['Receiver’s currency (INR) is a High Risk']
     )
-
   })
 
   describe.each<TransactionRuleTestCase>([

@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { SameUserUsingTooManyCardsParameters } from '../same-user-using-too-many-cards'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -27,8 +28,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-54 description formatting', () => {
-  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -51,7 +50,8 @@ describe('R-54 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-54').descriptionTemplate,
     },
     [null, 'Sender used 2 unique cards above the limit of 1']
   )

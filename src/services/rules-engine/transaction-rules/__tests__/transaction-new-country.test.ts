@@ -1,4 +1,5 @@
 import { TransactionNewCountryRuleParameters } from '../transaction-new-country'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -115,7 +116,8 @@ describe('R-3 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `User tried to {{ if-sender 'send' 'receive' }} money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.amount.country }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money {{ if-sender 'from' 'to' }} {{ if-sender origin.amount.country destination.payment.country }} prior`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-3').descriptionTemplate,
     },
     [
       null,

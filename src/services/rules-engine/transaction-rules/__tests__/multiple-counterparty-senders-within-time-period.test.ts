@@ -1,4 +1,5 @@
 import { MultipleSendersWithinTimePeriodRuleParameters } from '../multiple-senders-within-time-period-base'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -26,8 +27,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-10 description formatting', () => {
-  const descriptionTemplate = `More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ parameters.timePeriodDays }} day(s)`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -70,7 +69,8 @@ describe('R-10 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-10').descriptionTemplate,
     },
     [
       null,

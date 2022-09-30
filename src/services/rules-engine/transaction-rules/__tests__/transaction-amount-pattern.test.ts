@@ -1,4 +1,5 @@
 import { TransactionMatchesPatternRuleParameters } from '../transaction-amount-pattern'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -25,8 +26,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-117 description formatting', () => {
-  const descriptionTemplate = `Transaction amount of {{ format-money hitParty.amount }} matches a blacklisted pattern ending with {{ matchPattern }}`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -39,7 +38,8 @@ describe('R-117 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-117').descriptionTemplate,
     },
     [
       'Transaction amount of 10123.00 EUR matches a blacklisted pattern ending with 123',

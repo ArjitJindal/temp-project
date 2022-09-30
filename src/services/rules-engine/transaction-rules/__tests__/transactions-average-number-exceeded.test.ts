@@ -1,4 +1,5 @@
 import { TransactionsAverageExceededParameters } from '../transactions-average-exceeded-base'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -63,7 +64,8 @@ describe('Description formatting', () => {
         }),
       ],
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} made more than {{ to-fixed multiplier }} times avg. number of transactions in last {{ format-time-window period1 }} than avg. number of transactions in last {{ format-time-window period2 }}`,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-121').descriptionTemplate,
       },
       [
         'Sender made more than 2.00 times avg. number of transactions in last 1 day than avg. number of transactions in last 2 days',

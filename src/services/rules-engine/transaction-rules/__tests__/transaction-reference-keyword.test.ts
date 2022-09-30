@@ -1,4 +1,5 @@
 import { TransactionReferenceKeywordRuleParameters } from '../transaction-reference-keyword'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -25,8 +26,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-24 description formatting', () => {
-  const descriptionTemplate = `Keyword “{{ keyword }}” in reference is blacklisted`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -36,7 +35,8 @@ describe('R-24 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-24').descriptionTemplate,
     },
     ['Keyword “keyword1” in reference is blacklisted']
   )

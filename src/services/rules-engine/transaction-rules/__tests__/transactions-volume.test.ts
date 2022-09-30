@@ -1,4 +1,5 @@
 import { TransactionsVolumeRuleParameters } from '../transactions-volume'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -104,7 +105,8 @@ describe('Core logic', () => {
       TEST_TENANT_ID,
       TEST_HIT_TRANSACTIONS,
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency}} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }}`,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-69').descriptionTemplate,
       },
       [
         null,
@@ -113,47 +115,6 @@ describe('Core logic', () => {
         'Sender is spending 199.00 EUR above their expected amount of 201.00 EUR',
         'Sender is spending 199.00 EUR above their expected amount of 201.00 EUR',
         'Receiver is receiving 299.00 EUR above their expected amount of 201.00 EUR',
-      ]
-    )
-  })
-
-  describe('R-109, R-110 description formatting', () => {
-    const TEST_TENANT_ID = getTestTenantId()
-
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'transactions-volume',
-        defaultParameters: {
-          timeWindow: {
-            units: 3600,
-            granularity: 'second',
-          },
-          ...{
-            checkSender: 'all',
-            checkReceiver: 'all',
-            transactionVolumeThreshold: {
-              EUR: 201,
-            },
-          },
-        } as TransactionsVolumeRuleParameters,
-      },
-    ])
-
-    testRuleDescriptionFormatting(
-      'first',
-      TEST_TENANT_ID,
-      TEST_HIT_TRANSACTIONS,
-      {
-        descriptionTemplate: `Receiver is receiving >= {{ format-money volumeThreshold }} in total within time {{ parameters.timeWindow.units }} {{ parameters.timeWindow.granularity }}(s)`,
-      },
-      [
-        null,
-        null,
-        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
-        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
-        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
-        'Receiver is receiving >= 201.00 EUR in total within time 3600 second(s)',
       ]
     )
   })

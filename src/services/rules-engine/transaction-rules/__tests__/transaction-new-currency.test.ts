@@ -1,4 +1,5 @@
 import { TransactionNewCurrencyRuleParameters } from '../transaction-new-currency'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -25,8 +26,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-4 description formatting', () => {
-  const descriptionTemplate = `User tried to {{ if-sender 'send' 'receive' }} money in {{ hitParty.amount.currency }} more than {{ parameters.initialTransactions }} times. User has not {{ if-sender 'sent' 'received' }} any money in {{ hitParty.amount.currency }} prior`
-
   testRuleDescriptionFormatting(
     'sender',
     TEST_TENANT_ID,
@@ -69,7 +68,8 @@ describe('R-4 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-4').descriptionTemplate,
     },
     [
       null,
@@ -120,7 +120,8 @@ describe('R-4 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-4').descriptionTemplate,
     },
     [
       null,

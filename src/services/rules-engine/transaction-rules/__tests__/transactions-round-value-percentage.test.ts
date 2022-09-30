@@ -1,5 +1,5 @@
-import { TRANSACTION_RULES_LIBRARY } from '../library'
 import { TransactionsRoundValuePercentageRuleParameters } from '../transactions-round-value-percentage'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -24,10 +24,6 @@ const TEST_TRANSACTION_AMOUNT_101 = {
   transactionCurrency: 'EUR',
   transactionAmount: 101,
 }
-
-const DESCRIPTION_TEMPLATE = TRANSACTION_RULES_LIBRARY.find(
-  (rule) => rule.id === 'R-124'
-)?.descriptionTemplate as string
 
 dynamoDbSetupHook()
 
@@ -76,7 +72,8 @@ describe('R-124 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: DESCRIPTION_TEMPLATE,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-124').descriptionTemplate,
     },
     [
       null,

@@ -1,4 +1,5 @@
 import { IpAddressMultipleUsersRuleParameters } from '../ip-address-multiple-users'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -27,8 +28,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-52 description formatting', () => {
-  const descriptionTemplate = `Same ip address ({{ ipAddress }}) used by {{ uniqueUsersCount }} unique users`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -56,7 +55,8 @@ describe('R-52 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-52').descriptionTemplate,
     },
     [null, null, 'Same ip address (1.1.1.1) used by 2 unique users']
   )

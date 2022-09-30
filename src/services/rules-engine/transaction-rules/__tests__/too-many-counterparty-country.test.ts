@@ -1,4 +1,5 @@
 import { TooManyCounterpartyCountryRuleParameters } from '../too-many-counterparty-country'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -31,8 +32,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-123 description formatting', () => {
-  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'sending' 'receiving' }} funds from more than {{ parameters.transactionsLimit }} unique country within {{ format-time-window parameters.timeWindow }}`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -63,7 +62,8 @@ describe('R-123 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-123').descriptionTemplate,
     },
     [
       null,

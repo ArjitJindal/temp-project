@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { TooManyUsersForSameCardParameters } from '../too-many-users-for-same-card'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -27,8 +28,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-53 description formatting', () => {
-  const descriptionTemplate = `Same card ({{ cardFingerprint }}) used by {{ uniqueUserCount }} unique users`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -51,7 +50,8 @@ describe('R-53 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-53').descriptionTemplate,
     },
     [null, 'Same card (123) used by 2 unique users']
   )

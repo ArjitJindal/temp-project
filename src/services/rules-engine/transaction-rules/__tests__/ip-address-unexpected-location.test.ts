@@ -1,4 +1,5 @@
 import { IpAddressUnexpectedLocationRuleParameters } from '../ip-address-unexpected-location'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -60,8 +61,6 @@ setUpConsumerUsersHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-88 description formatting', () => {
-  const descriptionTemplate = `{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is not country of origin ({{ format-country hitParty.user.userDetails.countryOfResidence }}) or country of nationality ({{ format-country hitParty.user.userDetails.countryOfNationality }})`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -76,7 +75,8 @@ describe('R-88 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-88').descriptionTemplate,
     },
     [
       'Sender’s ip-bases country (Germany) is not country of origin (India) or country of nationality (Türkiye)',

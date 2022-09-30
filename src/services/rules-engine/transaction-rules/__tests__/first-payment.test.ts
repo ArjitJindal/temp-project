@@ -1,3 +1,4 @@
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -34,7 +35,8 @@ describe('R-1 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} first transaction`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-1').descriptionTemplate,
     },
     ['Sender’s first transaction']
   )

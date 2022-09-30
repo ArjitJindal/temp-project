@@ -1,4 +1,5 @@
 import { HighUnsuccessfullStateRateParameters } from '../high-unsuccessfull-state-rate'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -63,7 +64,8 @@ describe('Description formatting', () => {
         }),
       ],
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} has more than {{ to-percent parameters.threshold }} of all transactions in a “{{ parameters.transactionState}}” state within {{ format-time-window parameters.timeWindow }}. The rule is activated after the user initiates {{ parameters.minimumTransactions }} number of transactions in total.`,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-125').descriptionTemplate,
       },
       [
         'Sender has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total.',

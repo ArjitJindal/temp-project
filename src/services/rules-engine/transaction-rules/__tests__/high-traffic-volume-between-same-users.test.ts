@@ -1,4 +1,5 @@
 import { HighTrafficVolumeBetweenSameUsersParameters } from '../high-traffic-volume-between-same-users'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -121,7 +122,7 @@ describe('R-126 description formatting', () => {
     ],
     {
       descriptionTemplate:
-        '{{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above the threshold amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }} between two users',
+        getTransactionRuleByRuleId('R-126').descriptionTemplate,
     },
     [
       null,
@@ -129,7 +130,7 @@ describe('R-126 description formatting', () => {
       null,
       null,
       null,
-      '50.00 EUR above the threshold amount of 250.00 EUR between two users',
+      'Transaction volume 50.00 EUR above their expected amount of 250.00 EUR between two users in 1 day',
     ]
   )
 })

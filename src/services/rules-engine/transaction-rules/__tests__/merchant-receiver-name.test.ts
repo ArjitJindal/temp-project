@@ -1,4 +1,5 @@
 import { MerchantReceiverNameRuleParameters } from '../merchant-receiver-name'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -25,8 +26,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-13 description formatting', () => {
-  const descriptionTemplate = `{{ receiverName }} is blacklisted`
-
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
@@ -40,7 +39,8 @@ describe('R-13 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-13').descriptionTemplate,
     },
     ['Mobikwik is blacklisted']
   )

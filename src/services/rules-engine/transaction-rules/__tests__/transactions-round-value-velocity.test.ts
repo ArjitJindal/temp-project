@@ -1,4 +1,4 @@
-import { TRANSACTION_RULES_LIBRARY } from '../library'
+import { getTransactionRuleByRuleId } from '../library'
 import { TransactionsRoundValueVelocityRuleParameters } from '../transactions-round-value-velocity'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -20,10 +20,6 @@ const TEST_TRANSACTION_AMOUNT_101 = {
   transactionCurrency: 'EUR',
   transactionAmount: 101,
 }
-
-const DESCRIPTION_TEMPLATE = TRANSACTION_RULES_LIBRARY.find(
-  (rule) => rule.id === 'R-130'
-)?.descriptionTemplate as string
 
 dynamoDbSetupHook()
 
@@ -71,7 +67,8 @@ describe('R-130 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: DESCRIPTION_TEMPLATE,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-130').descriptionTemplate,
     },
     [
       null,

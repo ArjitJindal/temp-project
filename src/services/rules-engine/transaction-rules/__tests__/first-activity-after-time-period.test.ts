@@ -1,4 +1,5 @@
 import { FirstActivityAfterLongTimeRuleParameters } from '../first-activity-after-time-period'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -40,7 +41,8 @@ describe('R-5 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `User made a transaction from an account which was dormant for {{ parameters.dormancyPeriodDays }} days`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-5').descriptionTemplate,
     },
     [
       null,

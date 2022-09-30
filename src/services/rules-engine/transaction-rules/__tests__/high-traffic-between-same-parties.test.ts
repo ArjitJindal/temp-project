@@ -1,4 +1,5 @@
 import { HighTrafficBetweenSamePartiesParameters } from '../high-traffic-between-same-parties'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -64,7 +65,8 @@ describe('R-119 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `{{ delta }} transactions above the limit of {{ parameters.transactionsLimit }} between same Sender and Receiver in {{ format-time-window parameters.timeWindow }}`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-119').descriptionTemplate,
     },
     [
       null,

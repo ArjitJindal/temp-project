@@ -1,4 +1,5 @@
 import { CardIssuedCountryRuleParameters } from '../card-issued-country'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -49,7 +50,8 @@ describe('R-114 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} card country {{ hitParty.payment.country }} is not whitelisted`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-114').descriptionTemplate,
     },
     [
       null,

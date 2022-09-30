@@ -1,4 +1,5 @@
 import { TransactionsVolumeQuantilesRuleParameters } from '../transactions-volume-quantiles'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -94,7 +95,8 @@ describe('Sender/Receiver Parameters', () => {
       TEST_TENANT_ID,
       TEST_TRANSACTIONS,
       {
-        descriptionTemplate: `{{ if-sender 'Sender' 'Receiver' }} is {{ if-sender 'spending' 'receiving' }} {{ format-money volumeDelta.transactionAmount volumeDelta.transactionCurrency }} above their expected amount of {{ format-money volumeThreshold.transactionAmount volumeThreshold.transactionCurrency }}`,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-69').descriptionTemplate,
       },
       [
         null,

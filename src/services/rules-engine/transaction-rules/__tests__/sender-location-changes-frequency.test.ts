@@ -1,4 +1,5 @@
 import { SenderLocationChangesFrequencyRuleParameters } from '../sender-location-changes-frequency'
+import { getTransactionRuleByRuleId } from '../library'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -27,8 +28,6 @@ describe('Core logic', () => {
   ])
 
   describe('R-113 description formatting', () => {
-    const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} made {{ transactionsCount }} transactions from {{ locationsCount }} locations in more than {{ parameters.timeWindowInDays }} day(s)`
-
     testRuleDescriptionFormatting(
       'basic case',
       TEST_TENANT_ID,
@@ -59,7 +58,8 @@ describe('Core logic', () => {
         }),
       ],
       {
-        descriptionTemplate,
+        descriptionTemplate:
+          getTransactionRuleByRuleId('R-113').descriptionTemplate,
       },
       [
         null,

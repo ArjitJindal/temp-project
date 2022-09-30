@@ -1,3 +1,4 @@
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -30,7 +31,6 @@ setUpRulesHooks(TEST_TENANT_ID, [
 ])
 
 describe('R-7 description formatting', () => {
-  const descriptionTemplate = `{{ if-sender 'Sender' 'Receiver' }} sent {{ transactionCountDelta }} transactions just under the flagging limit`
   testRuleDescriptionFormatting(
     'first',
     TEST_TENANT_ID,
@@ -65,7 +65,8 @@ describe('R-7 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-7').descriptionTemplate,
     },
     [null, 'Receiver sent 1 transactions just under the flagging limit']
   )

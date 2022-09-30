@@ -1,4 +1,5 @@
 import { BlacklistCardIssuedCountryRuleParameters } from '../blacklist-card-issued-country'
+import { getTransactionRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -37,7 +38,8 @@ describe('R-22 description formatting', () => {
       }),
     ],
     {
-      descriptionTemplate: `{{ if-sender 'Sender’s' 'Receiver’s' }} card is issued from {{ if-sender origin.payment.country destination.payment.country }}, a blacklisted country`,
+      descriptionTemplate:
+        getTransactionRuleByRuleId('R-22').descriptionTemplate,
     },
     ['Sender’s card is issued from Germany, a blacklisted country']
   )
