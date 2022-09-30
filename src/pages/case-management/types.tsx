@@ -18,4 +18,6 @@ export type TableSearchParams = Partial<{
   transactionState: TransactionState;
   originMethodFilter: string;
   destinationMethodFilter: string;
+  tagKey: string;
+  tagValue: string;
 }>;

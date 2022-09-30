@@ -20,6 +20,8 @@ import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { makeUrl } from '@/utils/routing';
 import { TableColumn } from '@/components/ui/Table/types';
+import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 const TableList = () => {
   const api = useApi();
@@ -239,6 +241,23 @@ const TableList = () => {
           allowClear: true,
         },
       },
+      {
+        title: 'Tags',
+        hideInSearch: true,
+        width: 150,
+        onCell: (row) => ({
+          rowSpan: row.isFirstRow ? row.rowsCount : 0,
+        }),
+        render: (_, entity) => {
+          return (
+            <>
+              {entity.tags?.map((tag) => (
+                <KeyValueTag key={tag.key} tag={tag} />
+              ))}
+            </>
+          );
+        },
+      },
     ],
     [],
   );
@@ -257,6 +276,8 @@ const TableList = () => {
         destinationCurrenciesFilter,
         userId,
         userFilterMode,
+        tagKey,
+        tagValue,
         originMethodFilter,
         destinationMethodFilter,
       } = params;
@@ -280,6 +301,8 @@ const TableList = () => {
           includeUsers: true,
           filterOriginPaymentMethod: originMethodFilter,
           filterDestinationPaymentMethod: destinationMethodFilter,
+          filterTagKey: tagKey,
+          filterTagValue: tagValue,
         }),
       );
       analytics.event({
@@ -322,6 +345,22 @@ const TableList = () => {
                   setParams((state) => ({
                     ...state,
                     params: { ...state.params, transactionState: value ?? undefined },
+                  }));
+                }}
+              />
+              <TagSearchButton
+                initialState={{
+                  key: params.params.tagKey ?? null,
+                  value: params.params.tagValue ?? null,
+                }}
+                onConfirm={(value) => {
+                  setParams((state) => ({
+                    ...state,
+                    params: {
+                      ...state.params,
+                      tagKey: value.key ?? undefined,
+                      tagValue: value.value ?? undefined,
+                    },
                   }));
                 }}
               />

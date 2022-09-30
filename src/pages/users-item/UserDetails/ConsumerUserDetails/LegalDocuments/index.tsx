@@ -1,4 +1,3 @@
-import { Tag } from 'antd';
 import React from 'react';
 import moment from 'moment';
 import s from './index.module.less';
@@ -8,6 +7,7 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import Table from '@/components/ui/Table';
 import * as Card from '@/components/ui/Card';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 interface Props {
   person: InternalConsumerUser;
@@ -80,9 +80,7 @@ export function LegalDocumentsTable(prop: Props) {
               render: (_, document) => (
                 <>
                   {(document.tags ?? []).map((tag) => (
-                    <Tag color="processing" key={tag.key}>
-                      {tag.value}
-                    </Tag>
+                    <KeyValueTag key={tag.key} tag={tag} />
                   ))}
                 </>
               ),

@@ -17,7 +17,7 @@ export default function Label(props: Props) {
         {icon && <div className={s.icon}>{icon}</div>}
         <div className={s.title}>{title}</div>
       </div>
-      {children && <div className={s.content}>{children}</div>}
+      {children}
     </div>
   );
 }

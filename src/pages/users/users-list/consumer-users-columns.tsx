@@ -1,11 +1,12 @@
 import moment from 'moment';
 import { Link } from 'react-router-dom';
-import { Tag } from 'antd';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT, DEFAULT_DATE_DISPLAY_FORMAT } from '@/utils/dates';
+import React from 'react';
+import { DEFAULT_DATE_DISPLAY_FORMAT, DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { TableColumn } from '@/components/ui/Table/types';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 const convertToDateString = (createdTimestamp: number) =>
   moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
@@ -105,18 +106,11 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       render: (tags: any) => {
         if (tags instanceof Array) {
           return (
-            <span>
-              <Tag color={'cyan'}>
-                {tags?.map((tag: any) => {
-                  const key = Object.keys(tag)[0];
-                  return (
-                    <span>
-                      {key}: <span style={{ fontWeight: 700 }}>{tag[key]}</span>
-                    </span>
-                  );
-                })}
-              </Tag>
-            </span>
+            <>
+              {tags?.map((tag: any) => (
+                <KeyValueTag key={tag.key} tag={tag} />
+              ))}
+            </>
           );
         }
       },

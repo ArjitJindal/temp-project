@@ -1,4 +1,4 @@
-import { Tag, Typography } from 'antd';
+import { Typography } from 'antd';
 import React from 'react';
 import s from './styles.module.less';
 import { Address, LegalDocument, Person } from '@/apis';
@@ -6,6 +6,7 @@ import { formatConsumerName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Table from '@/components/ui/Table';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
+import KeyValueTag from '@/components/ui/KeyValueTag';
 
 export function expandedRowRender(person: Person) {
   return (
@@ -47,9 +48,7 @@ export function expandedRowRender(person: Person) {
             render: (_, document) => (
               <>
                 {(document.tags ?? []).map((tag) => (
-                  <Tag color="processing" key={tag.key}>
-                    {tag.value}
-                  </Tag>
+                  <KeyValueTag key={tag.key} tag={tag} />
                 ))}
               </>
             ),

@@ -34,6 +34,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           return key;
         })
         .join(','),
+      tagKey: params.tagKey ?? undefined,
+      tagValue: params.tagValue ?? undefined,
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -63,6 +65,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
           }
           return [key, 'ascend'];
         }) ?? [],
+      tagKey: raw.tagKey ?? undefined,
+      tagValue: raw.tagValue ?? undefined,
     };
   },
 };

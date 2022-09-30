@@ -14,3 +14,4 @@ export const USERS_ITEM_TRANSACTIONS_HISTORY = (
 ): QueryKey => ['users', userId, 'transactions-history', params];
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
+export const TRANSACTIONS_TAG_LIST = (): QueryKey => ['transactions', 'tags', 'list'];
