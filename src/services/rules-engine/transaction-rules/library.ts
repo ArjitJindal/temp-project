@@ -30,6 +30,7 @@ import { TransactionsRoundValuePercentageRuleParameters } from './transactions-r
 import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-transactions-to-high-risk-country'
 import { TooManyCounterpartyCountryRuleParameters } from './too-many-counterparty-country'
 import { TransactionsRoundValueVelocityRuleParameters } from './transactions-round-value-velocity'
+import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-details'
 import { TRANSACTION_RULES } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -874,6 +875,25 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         defaultAction: 'FLAG',
         ruleImplementationName: 'same-payment-details',
         labels: [],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: BlacklistPaymentdetailsRuleParameters = {
+        blacklistedIBANPaymentDetails: [],
+      }
+      return {
+        id: 'R-129',
+        type: 'TRANSACTION',
+        name: 'Blacklist payment details',
+        description: 'Payment details are in the blacklist',
+        descriptionTemplate:
+          "{{ if-sender 'Sender’s' 'Receiver’s' }} payment details are in blacklisted payment details",
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'blacklist-payment-details',
+        labels: ['AML', 'Risk Appetite', 'List'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
       }
