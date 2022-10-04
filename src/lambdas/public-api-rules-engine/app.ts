@@ -19,11 +19,13 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 
+type MissingUserIdMap = { field: string; userId: string }
+
 async function getTransactionMissingUsers(
   transaction: Transaction,
   tenantId: string,
   dynamoDb: DocumentClient
-): Promise<string[]> {
+): Promise<(MissingUserIdMap | undefined)[]> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   const userIds: string[] = Array.from(
     new Set([transaction.originUserId, transaction.destinationUserId])
@@ -34,16 +36,32 @@ async function getTransactionMissingUsers(
   if (users.length === userIds.length) {
     return []
   } else {
-    return userIds.filter((userId) => !existingUserIds.includes(userId))
+    return userIds
+      .filter((userId) => !existingUserIds.includes(userId))
+      .map((userId) => {
+        if (userId === transaction.originUserId) {
+          return {
+            field: 'originUserId',
+            userId: userId,
+          }
+        } else if (userId === transaction.destinationUserId) {
+          return {
+            field: 'destinationUserId',
+            userId: userId,
+          }
+        }
+      })
   }
 }
 
-function getMissingUsersMessage(userIds: string[]): string {
+function getMissingUsersMessage(
+  userIds: (MissingUserIdMap | undefined)[]
+): string {
   switch (userIds.length) {
     case 2:
-      return `Users with userIds ${userIds[0]}, ${userIds[1]} do not exist`
+      return `${userIds[0]?.field}: ${userIds[0]?.userId} and ${userIds[0]?.field}: ${userIds[0]?.userId} do not exist`
     default:
-      return `User with userId ${userIds[0]} does not exist`
+      return `${userIds[0]?.field}: ${userIds[0]?.userId} does not exist`
   }
 }
 
@@ -94,7 +112,7 @@ export const transactionEventHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
-      let missingUsers: string[] = []
+      let missingUsers: (MissingUserIdMap | undefined)[] = []
       if (transactionEvent.updatedTransactionAttributes) {
         missingUsers = await getTransactionMissingUsers(
           transactionEvent.updatedTransactionAttributes,

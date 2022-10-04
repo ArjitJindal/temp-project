@@ -34,6 +34,7 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
     return [
       () => this.transaction.deviceData?.ipAddress !== undefined,
       () => this.senderUser !== undefined && isConsumerUser(this.senderUser),
+      () => !!(this.senderUser as User).userDetails,
     ]
   }
 
@@ -52,8 +53,8 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       this.dynamoDb
     )
     const expectedCountries = [
-      consumerUser.userDetails.countryOfResidence,
-      consumerUser.userDetails.countryOfNationality,
+      consumerUser.userDetails!.countryOfResidence,
+      consumerUser.userDetails!.countryOfNationality,
       ...(
         await aggregationRepository.getUserTransactionCountries(
           consumerUser.userId

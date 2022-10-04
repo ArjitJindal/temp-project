@@ -28,13 +28,14 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
     return [
       () => this.transaction.originPaymentDetails?.method === 'CARD',
       () => isUserType(this.senderUser, 'CONSUMER'),
+      () => !!(this.senderUser as User).userDetails,
     ]
   }
 
   public async computeRule() {
     const { allowedDistance } = this.parameters
     const userName = getConsumerName(
-      (this.senderUser as User).userDetails.name,
+      (this.senderUser as User).userDetails!.name,
       true
     )
 
