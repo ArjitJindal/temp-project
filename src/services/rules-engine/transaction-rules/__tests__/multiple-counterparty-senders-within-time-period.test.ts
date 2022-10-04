@@ -20,7 +20,10 @@ setUpRulesHooks(TEST_TENANT_ID, [
     ruleImplementationName: 'multiple-counterparty-senders-within-time-period',
     defaultParameters: {
       sendersCount: 2,
-      timePeriodDays: 30,
+      timeWindow: {
+        units: 30,
+        granularity: 'day',
+      },
     } as MultipleSendersWithinTimePeriodRuleParameters,
     defaultAction: 'FLAG',
   },
@@ -75,7 +78,7 @@ describe('R-10 description formatting', () => {
     [
       null,
       null,
-      'More than 2 counterparties transacting with a single user over a set period of 30 day(s)',
+      'More than 2 counterparties transacting with a single user over a set period of 30 days',
     ]
   )
 })

@@ -207,7 +207,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     },
     () => {
       const defaultParameters: MultipleSendersWithinTimePeriodRuleParameters = {
-        timePeriodDays: 30,
+        timeWindow: {
+          units: 30,
+          granularity: 'day',
+        },
         sendersCount: 4,
       }
       return {
@@ -217,7 +220,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         description:
           'More than x users transacting with a single counterparty over a set period of time t (E.g. Nigerian prince scam outbound)',
         descriptionTemplate:
-          'More than {{ parameters.sendersCount }} users transacting with a single counterparty over a set period of {{ parameters.timePeriodDays }} days',
+          'More than {{ parameters.sendersCount }} users transacting with a single counterparty over a set period of {{ format-time-window parameters.timeWindow }}',
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'multiple-user-senders-within-time-period',
@@ -228,7 +231,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     },
     () => {
       const defaultParameters: MultipleSendersWithinTimePeriodRuleParameters = {
-        timePeriodDays: 30,
+        timeWindow: {
+          units: 30,
+          granularity: 'day',
+        },
         sendersCount: 4,
       }
       return {
@@ -238,7 +244,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         description:
           'More than x counterparties transacting with a single user over a set period of time t (E.g. Nigerian prince scam inbound)',
         descriptionTemplate:
-          'More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ parameters.timePeriodDays }} day(s)',
+          'More than {{ parameters.sendersCount }} counterparties transacting with a single user over a set period of {{ format-time-window parameters.timeWindow }}',
         defaultParameters,
         defaultAction: 'FLAG',
         ruleImplementationName:

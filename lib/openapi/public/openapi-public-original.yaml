@@ -1766,9 +1766,6 @@ components:
           description: 'Branch code of the bank. In some countries, this can be the same as the bank''s SWIFT code'
         paymentChannel:
           type: string
-          enum:
-            - POS
-            - ONLINE
       required:
         - method
     WalletDetails:
@@ -3056,6 +3053,8 @@ components:
         specialInstructions:
           type: string
           description: Special instructions to be specified if any
+        paymentChannel:
+          type: string
       required:
         - method
     UPIDetails:

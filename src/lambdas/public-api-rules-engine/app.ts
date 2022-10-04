@@ -59,7 +59,7 @@ function getMissingUsersMessage(
 ): string {
   switch (userIds.length) {
     case 2:
-      return `${userIds[0]?.field}: ${userIds[0]?.userId} and ${userIds[0]?.field}: ${userIds[0]?.userId} do not exist`
+      return `${userIds[0]?.field}: ${userIds[0]?.userId} and ${userIds[1]?.field}: ${userIds[1]?.userId} do not exist`
     default:
       return `${userIds[0]?.field}: ${userIds[0]?.userId} does not exist`
   }

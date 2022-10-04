@@ -21,7 +21,10 @@ describe('Core logic', () => {
       ruleImplementationName: 'multiple-user-senders-within-time-period',
       defaultParameters: {
         sendersCount: 2,
-        timePeriodDays: 30,
+        timeWindow: {
+          units: 30,
+          granularity: 'day',
+        },
       } as MultipleSendersWithinTimePeriodRuleParameters,
       defaultAction: 'FLAG',
     },
@@ -163,7 +166,10 @@ describe('Transaction State', () => {
       ruleImplementationName: 'multiple-user-senders-within-time-period',
       defaultParameters: {
         sendersCount: 2,
-        timePeriodDays: 30,
+        timeWindow: {
+          units: 30,
+          granularity: 'day',
+        },
         transactionState: 'SUCCESSFUL',
       } as MultipleSendersWithinTimePeriodRuleParameters,
       defaultAction: 'FLAG',

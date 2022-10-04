@@ -6,11 +6,16 @@ import {
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
+import {
+  subtractTime,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+} from '@/services/rules-engine/utils/time-utils'
 
 export type MultipleSendersWithinTimePeriodRuleParameters =
   DefaultTransactionRuleParameters & {
     sendersCount: number
-    timePeriodDays: number
+    timeWindow: TimeWindow
   }
 
 export type SenderReceiverTypes = {
@@ -40,10 +45,10 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             'If not specified, all transactions regardless of the state will be used for running the rule',
           nullable: true,
         },
+        timeWindow: TIME_WINDOW_SCHEMA(),
         sendersCount: { type: 'integer', title: 'Senders Count Threshold' },
-        timePeriodDays: { type: 'integer', title: 'Time Window (Days)' },
       },
-      required: ['sendersCount', 'timePeriodDays'],
+      required: ['sendersCount', 'timeWindow'],
     }
   }
 
@@ -52,15 +57,16 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
   }
 
   public async computeRule() {
-    const { timePeriodDays, sendersCount, transactionState } = this.parameters
+    const { timeWindow, sendersCount, transactionState } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
-    const afterTimestamp = dayjs(this.transaction.timestamp)
-      .subtract(timePeriodDays, 'day')
-      .valueOf()
+    const afterTimestamp = subtractTime(
+      dayjs(this.transaction.timestamp),
+      timeWindow
+    )
     let senderTransactions: ThinTransaction[] = []
     if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =
