@@ -4,6 +4,7 @@ import {
   ArrowsAltOutlined,
   ArrowDownOutlined,
   ArrowUpOutlined,
+  UndoOutlined,
 } from '@ant-design/icons';
 import style from './index.module.less';
 import { TransactionType } from '@/apis/models/TransactionType';
@@ -33,6 +34,10 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
     transactionTypeDisplay = 'Withdrawal';
     tagColor = 'orange';
     transactionTypeIcon = <ArrowUpOutlined />;
+  } else if (transactionType === 'REFUND') {
+    transactionTypeDisplay = 'Withdrawal';
+    tagColor = 'red';
+    transactionTypeIcon = <UndoOutlined />;
   } else if (transactionType === 'TRANSFER') {
     transactionTypeDisplay = 'Transfer';
   } else {

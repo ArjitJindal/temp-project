@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { Link } from 'react-router-dom';
+import { Tag } from 'antd';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { Amount, InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
@@ -42,7 +43,15 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
-        return entity.legalEntity.companyGeneralDetails.businessIndustry;
+        return (
+          <div>
+            {entity.legalEntity.companyGeneralDetails.businessIndustry
+              ? entity.legalEntity.companyGeneralDetails.businessIndustry.map((industry) => {
+                  return <Tag>{industry}</Tag>;
+                })
+              : '-'}
+          </div>
+        );
       },
       valueType: 'textarea',
     },

@@ -33,7 +33,13 @@ export default function UsersInfoCard(props: Props) {
         </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<GovernmentLineIcon />} title={'Business Industry'}>
-        {user.legalEntity.companyGeneralDetails.businessIndustry ?? '-'}
+        <div>
+          {user.legalEntity.companyGeneralDetails.businessIndustry
+            ? user.legalEntity.companyGeneralDetails.businessIndustry.map((industry) => {
+                return <Tag>{industry}</Tag>;
+              })
+            : '-'}
+        </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<EarthLineIcon />} title={'Main Products and Services'}>
         {user.legalEntity.companyGeneralDetails.mainProductsServicesSold ?? '-'}
