@@ -230,6 +230,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/RuleInstanceBase'
         - $ref: '#/components/schemas/RuleInstanceUpdatable'
+      additionalProperties: false
     RuleInstanceBase:
       title: RuleInstanceBase
       type: object
@@ -304,6 +305,7 @@ components:
       required:
         - action
         - alias
+      additionalProperties: false
     CaseType:
       type: string
       title: CaseType
