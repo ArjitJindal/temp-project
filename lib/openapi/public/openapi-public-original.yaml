@@ -1256,7 +1256,6 @@ components:
       allOf:
         - $ref: '#/components/schemas/UserBase'
         - $ref: '#/components/schemas/UserOptional'
-      additionalProperties: false
     Person:
       title: Person
       required:
@@ -2364,7 +2363,6 @@ components:
       allOf:
         - $ref: '#/components/schemas/BusinessOptional'
         - $ref: '#/components/schemas/BusinessBase'
-      additionalProperties: false
     BusinessBase:
       title: BusinessBase
       type: object
