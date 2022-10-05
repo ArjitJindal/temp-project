@@ -25,7 +25,7 @@ function getDefaultParams(): HighUnsuccessfullStateRateParameters {
       units: 1,
       rollingBasis: true,
     },
-    threshold: 1,
+    threshold: 100,
     transactionState: 'REFUNDED',
     checkSender: 'all',
     checkReceiver: 'all',

@@ -39,7 +39,9 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
         timeWindow: TIME_WINDOW_SCHEMA(),
         threshold: {
           type: 'number',
-          title: 'Maximum rate of transactions of specified state',
+          title:
+            'Maximum rate of transactions of specified state (as a percentage)',
+          nullable: false,
         },
         minimumTransactions: {
           type: 'number',
@@ -123,7 +125,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
       this.parameters.checkSender !== 'none' &&
       senderFullCount >= this.parameters.minimumTransactions
     ) {
-      const rate = senderFilteredCount / senderFullCount
+      const rate = (senderFilteredCount / senderFullCount) * 100
 
       if (rate > this.parameters.threshold) {
         return {
@@ -138,7 +140,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
       this.parameters.checkReceiver !== 'none' &&
       receiverFullCount >= this.parameters.minimumTransactions
     ) {
-      const rate = receiverFilteredCount / receiverFullCount
+      const rate = (receiverFilteredCount / receiverFullCount) * 100
       if (rate > this.parameters.threshold) {
         return {
           action: this.action,
