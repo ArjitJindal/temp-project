@@ -158,7 +158,9 @@ describe('Verify Transaction Event', () => {
       })
       const transaction = getTestTransaction({
         transactionId: 'dummy',
-        reference: 'old reference',
+        deviceData: {
+          deviceIdentifier: 'deviceIdentifier',
+        },
       })
       const result1 = await verifyTransaction(
         transaction,
@@ -171,14 +173,20 @@ describe('Verify Transaction Event', () => {
           await transactionRepository.getTransactionById(
             transaction.transactionId as string
           )
-        )?.reference
-      ).toEqual('old reference')
+        )?.deviceData
+      ).toEqual({
+        deviceIdentifier: 'deviceIdentifier',
+      })
 
       const transactionEvent = getTestTransactionEvent({
         eventId: '1',
         transactionId: transaction.transactionId,
         transactionState: 'SUCCESSFUL',
-        updatedTransactionAttributes: { reference: 'new reference' },
+        updatedTransactionAttributes: {
+          deviceData: {
+            ipAddress: 'ipAddress',
+          },
+        },
       })
       const result2 = await verifyTransactionEvent(
         transactionEvent,
@@ -194,7 +202,10 @@ describe('Verify Transaction Event', () => {
         executedRules: result1.executedRules,
         hitRules: result1.hitRules,
       })
-      expect(latestTransaction?.reference).toEqual('new reference')
+      expect(latestTransaction?.deviceData).toEqual({
+        deviceIdentifier: 'deviceIdentifier',
+        ipAddress: 'ipAddress',
+      })
     })
 
     test("run rules even if the transaction doesn't have updates", async () => {

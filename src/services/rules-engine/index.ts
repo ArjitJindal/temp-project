@@ -207,11 +207,13 @@ export async function verifyTransactionEvent(
       `transaction ${transactionEvent.transactionId} not found`
     )
   }
-  const updatedTransaction: TransactionWithRulesResult = {
-    ...transaction,
-    transactionState: transactionEvent.transactionState,
-    ...(transactionEvent.updatedTransactionAttributes || {}),
-  }
+  const updatedTransaction: TransactionWithRulesResult = _.merge(
+    {
+      ...transaction,
+      transactionState: transactionEvent.transactionState,
+    },
+    transactionEvent.updatedTransactionAttributes || {}
+  )
   const { executedRules, hitRules } = await verifyTransactionIdempotent(
     tenantId,
     dynamoDb,
@@ -286,10 +288,10 @@ export async function verifyConsumerUserEvent(
       `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
     )
   }
-  const updatedConsumerUser: User = {
-    ...user,
-    ...(userEvent.updatedConsumerUserAttributes || {}),
-  }
+  const updatedConsumerUser: User = _.merge(
+    user,
+    userEvent.updatedConsumerUserAttributes || {}
+  )
   await userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
   await userRepository.saveConsumerUser(updatedConsumerUser)
   return updatedConsumerUser
@@ -308,10 +310,10 @@ export async function verifyBusinessUserEvent(
       `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
     )
   }
-  const updatedBusinessUser: Business = {
-    ...user,
-    ...(userEvent.updatedBusinessUserAttributes || {}),
-  }
+  const updatedBusinessUser: Business = _.merge(
+    user,
+    userEvent.updatedBusinessUserAttributes || {}
+  )
   await userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
   await userRepository.saveBusinessUser(updatedBusinessUser)
   return updatedBusinessUser
