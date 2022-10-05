@@ -13,6 +13,7 @@ import { WalletDetails } from '../openapi-public/WalletDetails'
 import { WalletPaymentMethod } from '../openapi-public/WalletPaymentMethod'
 import { MpesaPaymentMethod } from '../openapi-public/MpesaPaymentMethod'
 import { MpesaDetails } from '../openapi-public/MpesaDetails'
+import { GeneralBankAccountPaymentMethod } from '../openapi-public/GeneralBankAccountPaymentMethod'
 
 export type PaymentDetails =
   | CardDetails
@@ -26,7 +27,7 @@ export type PaymentDetails =
 
 export type PaymentMethod =
   | CardPaymentMethod
-  | GenericBankAccountDetails
+  | GeneralBankAccountPaymentMethod
   | IBANPaymentMethod
   | ACHPaymentMethod
   | SWIFTPaymentMethod

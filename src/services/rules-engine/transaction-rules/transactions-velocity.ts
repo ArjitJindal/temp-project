@@ -215,9 +215,16 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       afterTimestamp,
       beforeTimestamp: this.transaction.timestamp!,
     }
-    const filterOptions: ThinTransactionsFilterOptions = {
+    const originFilterOptions: ThinTransactionsFilterOptions = {
       transactionState: this.parameters.transactionState,
       transactionTypes: this.parameters.transactionTypes,
+      originPaymentMethod: this.parameters.paymentMethod,
+    }
+    const destinationFilterOptions: ThinTransactionsFilterOptions = {
+      transactionState: this.parameters.transactionState,
+      transactionTypes: this.parameters.transactionTypes,
+
+      destinationPaymentMethod: this.parameters.paymentMethod,
     }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'
@@ -228,7 +235,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
                   userId,
                   paymentDetails,
                   timeRange,
-                  filterOptions
+                  originFilterOptions
                 ),
                 'sending'
               ))()
@@ -236,7 +243,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
               userId,
               paymentDetails,
               timeRange,
-              filterOptions
+              originFilterOptions
             )
         : Promise.resolve(0),
       checkType === 'receiving' || checkType === 'all'
@@ -247,7 +254,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
                   userId,
                   paymentDetails,
                   timeRange,
-                  filterOptions
+                  destinationFilterOptions
                 ),
                 'receiving'
               ))()
@@ -255,7 +262,7 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
               userId,
               paymentDetails,
               timeRange,
-              filterOptions
+              destinationFilterOptions
             )
         : Promise.resolve(0),
     ])

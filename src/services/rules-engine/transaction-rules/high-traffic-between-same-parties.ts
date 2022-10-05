@@ -22,8 +22,8 @@ import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/
 import { getReceiverKeys } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 type Filters = DefaultTransactionRuleParameters & {
   transactionTypes?: TransactionType[]
@@ -126,6 +126,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
         },
         {
           transactionState: this.parameters.transactionState,
+          originPaymentMethod: this.parameters.paymentMethod,
           transactionTypes: this.parameters.transactionTypes,
           receiverKeyId: getReceiverKeys(this.tenantId, transaction)
             ?.PartitionKeyID,

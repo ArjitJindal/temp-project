@@ -12,7 +12,10 @@ import {
   getUserSenderKeys,
 } from '../utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
@@ -49,6 +52,8 @@ export type ThinTransaction = {
   receiverKeyId?: string
   originUserId?: string
   destinationUserId?: string
+  originPaymentMethod?: PaymentMethod
+  destinationPaymentMethod?: PaymentMethod
 }
 
 export type ThinTransactionsFilterOptions = {
@@ -56,6 +61,8 @@ export type ThinTransactionsFilterOptions = {
   transactionState?: TransactionState
   senderKeyId?: string
   receiverKeyId?: string
+  originPaymentMethod?: PaymentMethod
+  destinationPaymentMethod?: PaymentMethod
 }
 
 export class TransactionRepository {
@@ -540,6 +547,8 @@ export class TransactionRepository {
       transactionState: transaction.transactionState,
       originUserId: transaction.originUserId,
       destinationUserId: transaction.destinationUserId,
+      originPaymentMethod: transaction.originPaymentDetails?.method,
+      destinationPaymentMethod: transaction.destinationPaymentDetails?.method,
     }
 
     // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
@@ -1188,6 +1197,10 @@ export class TransactionRepository {
       filterOptions.transactionState && 'transactionState = :transactionState',
       filterOptions.receiverKeyId && 'receiverKeyId = :receiverKeyId',
       filterOptions.senderKeyId && 'senderKeyId = :senderKeyId',
+      filterOptions.originPaymentMethod &&
+        'originPaymentMethod = :originPaymentMethod',
+      filterOptions.destinationPaymentMethod &&
+        'destinationPaymentMethod = :destinationPaymentMethod',
     ].filter(Boolean)
     if (filters.length === 0) {
       return {}
@@ -1198,6 +1211,8 @@ export class TransactionRepository {
         ':transactionState': filterOptions.transactionState,
         ':senderKeyId': filterOptions.senderKeyId,
         ':receiverKeyId': filterOptions.receiverKeyId,
+        ':originPaymentMethod': filterOptions.originPaymentMethod,
+        ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
       },
     }
   }

@@ -959,14 +959,22 @@ describe('Optional parameter - Payment Method', () => {
             method: 'CARD',
             cardFingerprint: uuidv4(),
           },
+          destinationPaymentDetails: {
+            method: 'WALLET',
+            walletType: 'savings',
+          },
         }),
         getTestTransaction({
           originUserId: '2-1',
           destinationUserId: '2-3',
           timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
           originPaymentDetails: {
-            method: 'CARD',
-            cardFingerprint: uuidv4(),
+            method: 'WALLET',
+            walletType: 'savings',
+          },
+          destinationPaymentDetails: {
+            method: 'WALLET',
+            walletType: 'savings',
           },
         }),
         getTestTransaction({
@@ -974,6 +982,10 @@ describe('Optional parameter - Payment Method', () => {
           destinationUserId: '2-4',
           timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
           originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: uuidv4(),
+          },
+          destinationPaymentDetails: {
             method: 'WALLET',
             walletType: 'savings',
           },
