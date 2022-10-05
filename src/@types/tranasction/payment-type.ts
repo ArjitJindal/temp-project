@@ -43,4 +43,5 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   'UPI',
   'WALLET',
   'MPESA',
+  'GENERIC_BANK_ACCOUNT',
 ]

@@ -123,6 +123,7 @@ describe('Public Management API - Rule', () => {
                   'UPI',
                   'WALLET',
                   'MPESA',
+                  'GENERIC_BANK_ACCOUNT',
                 ],
               },
               userType: {
