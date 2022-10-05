@@ -42,7 +42,7 @@ export default function UsersInfoCard(props: Props) {
         </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<EarthLineIcon />} title={'Main Products and Services'}>
-        {user.legalEntity.companyGeneralDetails.mainProductsServicesSold ?? '-'}
+        {user.legalEntity.companyGeneralDetails?.mainProductsServicesSold ?? '-'}
       </Form.Layout.Label>
       <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
         {user.legalEntity.reasonForAccountOpening ?? '-'}

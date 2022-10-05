@@ -42,15 +42,15 @@ export default function UserDetails(props: Props) {
             />
             <FinancialDetails user={user} />
           </Card.Column>
+          <Card.Column className={s.address}>
+            <Card.Subtitle className={s.border} title="Addresses" icon={<CommunityLineIcon />} />
+            <Addresses user={user as InternalBusinessUser} />
+          </Card.Column>
         </Card.Row>
       </Card.Column>
       <Card.Column className={s.details}>
         <Card.Subtitle className={s.border} title="Contact Details" icon={<SurveyLineIcon />} />
         <ContactDetails user={user as InternalBusinessUser} />
-      </Card.Column>
-      <Card.Column className={s.address}>
-        <Card.Subtitle className={s.border} title="Addresses" icon={<CommunityLineIcon />} />
-        <Addresses user={user as InternalBusinessUser} />
       </Card.Column>
     </Card.Row>
   );
