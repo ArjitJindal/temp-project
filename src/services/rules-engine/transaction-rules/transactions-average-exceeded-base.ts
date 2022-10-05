@@ -1,14 +1,25 @@
 import { JSONSchemaType } from 'ajv'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
+import {
+  AGE_RANGE_OPTIONAL_SCHEMA,
+  CHECK_RECEIVER_SCHEMA,
+  CHECK_SENDER_SCHEMA,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import {
-  PAYMENT_METHODS,
   subtractTime,
-  TimeWindow,
-  TIME_WINDOW_SCHEMA,
   toGranularity,
 } from '@/services/rules-engine/utils/time-utils'
 import dayjs from '@/utils/dayjs'
@@ -21,7 +32,6 @@ import {
   isUserType,
 } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserType } from '@/@types/user/user-type'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 type UserParty = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
@@ -37,7 +47,7 @@ export type TransactionsAverageExceededParameters =
     }
     userType?: UserType
     transactionTypes?: TransactionType[]
-    paymentMethod?: string
+    paymentMethod?: PaymentMethod
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
     transactionsNumberThreshold?: {
@@ -70,67 +80,6 @@ export default class TransactionAverageExceededBaseRule<
           title: 'Exclude transactions in period1 from period2',
           nullable: true,
         },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'], // check origin user, only for sending transactions or as a receiver too
-          nullable: false,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: false,
-        },
-        ageRange: {
-          type: 'object',
-          title: 'Target Age Range',
-          properties: {
-            minAge: { type: 'integer', title: 'Min Age', nullable: true },
-            maxAge: { type: 'integer', title: 'Max Age', nullable: true },
-          },
-          required: [],
-          nullable: true,
-        },
-        userType: {
-          type: 'string',
-          title: 'User type',
-          enum: ['BUSINESS', 'CONSUMER'],
-          nullable: true,
-        },
         transactionsNumberThreshold: {
           type: 'object',
           title: 'Minimum average in period1 for rule to trigger',
@@ -151,6 +100,13 @@ export default class TransactionAverageExceededBaseRule<
           required: [],
           nullable: true,
         },
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        checkSender: CHECK_SENDER_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_SCHEMA(),
+        ageRange: AGE_RANGE_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['period1', 'period2', 'checkSender', 'checkReceiver'],
     }

@@ -1,5 +1,5 @@
 import { renameRuleParameter } from '../utils/rule'
-import { TimeWindow } from '@/services/rules-engine/utils/time-utils'
+import { TimeWindow } from '@/services/rules-engine/utils/rule-parameter-schemas'
 
 export const up = async () => {
   await renameRuleParameter(

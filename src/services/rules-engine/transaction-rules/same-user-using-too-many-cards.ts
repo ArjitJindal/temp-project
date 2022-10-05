@@ -18,6 +18,8 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
         uniqueCardsCountThreshold: {
           type: 'integer',
           title: 'Cards Count Threshold',
+          description:
+            'rule is run when the cards count per time window is greater than the threshold',
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },

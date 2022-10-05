@@ -1,6 +1,10 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import {
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_AMOUNT_RANGE_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -23,40 +27,14 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        lowTransactionValues: {
-          type: 'object',
+        lowTransactionValues: TRANSACTION_AMOUNT_RANGE_SCHEMA({
           title: 'Low Transaction Value',
-          additionalProperties: {
-            type: 'object',
-            properties: {
-              max: { type: 'integer' },
-              min: { type: 'integer' },
-            },
-            required: ['max', 'min'],
-          },
-          required: [],
-        },
+        }),
         lowTransactionCount: {
           type: 'integer',
           title: 'Low-value Transactions Count Threshold',
         },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],
     }

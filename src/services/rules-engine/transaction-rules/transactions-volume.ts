@@ -10,20 +10,27 @@ import {
   isTransactionInTargetTypes,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
+import {
+  CHECK_RECEIVER_SCHEMA,
+  CHECK_SENDER_SCHEMA,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
-import {
-  TIME_WINDOW_SCHEMA,
-  TimeWindow,
-  PAYMENT_METHODS,
-} from '@/services/rules-engine/utils/time-utils'
 
 type Filters = DefaultTransactionRuleParameters & {
   transactionTypes?: TransactionType[]
-  paymentMethod?: string
+  paymentMethod?: PaymentMethod
 }
 
 export type TransactionsVolumeRuleParameters = Filters & {
@@ -43,64 +50,21 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
+        transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
+          title: 'Transactions Volume Threshold',
+        }),
+        timeWindow: TIME_WINDOW_SCHEMA(),
+        checkSender: CHECK_SENDER_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
         matchPaymentMethodDetails: {
           type: 'boolean',
           title: 'Match Payment Method Details',
           description:
             'Transactions will only be flagged if same payment details are used',
           nullable: true,
-        },
-        transactionVolumeThreshold: {
-          type: 'object',
-          title: 'Transactions Volume Threshold',
-          additionalProperties: {
-            type: 'integer',
-          },
-          required: [],
-        },
-        timeWindow: TIME_WINDOW_SCHEMA(),
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'],
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
         },
       },
       required: ['transactionVolumeThreshold', 'timeWindow'],

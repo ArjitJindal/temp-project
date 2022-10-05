@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { AggregationRepository } from '../repositories/aggregation-repository'
+import { INITIAL_TRANSACTIONS_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
 export type TransactionNewCurrencyRuleParameters = {
@@ -11,10 +12,7 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
     return {
       type: 'object',
       properties: {
-        initialTransactions: {
-          type: 'integer',
-          title: 'Initial Transactions Count Threshold',
-        },
+        initialTransactions: INITIAL_TRANSACTIONS_SCHEMA(),
       },
       required: ['initialTransactions'],
     }

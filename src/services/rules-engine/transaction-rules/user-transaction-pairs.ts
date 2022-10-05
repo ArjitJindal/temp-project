@@ -2,10 +2,13 @@ import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
+import {
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type UserTransactionPairsRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -22,23 +25,6 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
         userPairsThreshold: {
           type: 'integer',
           title: 'User Pairs Count Threshold',
@@ -47,16 +33,8 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
           type: 'integer',
           title: 'Time Window (Seconds)',
         },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
         excludedUserIds: {
           type: 'array',
           title: 'Excluded User IDs',

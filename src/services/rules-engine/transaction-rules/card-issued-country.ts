@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
@@ -12,11 +13,9 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
     return {
       type: 'object',
       properties: {
-        allowedCountries: {
-          type: 'array',
+        allowedCountries: COUNTRIES_SCHEMA({
           title: 'Whitelist Countries (ISO 3166-1 alpha-2)',
-          items: { type: 'string' },
-        },
+        }),
       },
       required: ['allowedCountries'],
     }

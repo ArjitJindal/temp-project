@@ -5,13 +5,19 @@ import {
   isTransactionAmountAboveThreshold,
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
+import { subtractTime } from '../utils/time-utils'
 import {
-  PAYMENT_METHODS,
-  subtractTime,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-} from '../utils/time-utils'
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
+
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
 import {
@@ -23,11 +29,11 @@ import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/
 import { getReceiverKeys } from '@/services/rules-engine/utils'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 type Filters = DefaultTransactionRuleParameters & {
   transactionTypes?: TransactionType[]
-  paymentMethod?: string
+  paymentMethod?: PaymentMethod
   userType?: UserType
 }
 
@@ -46,61 +52,15 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
     return {
       type: 'object',
       properties: {
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        userType: {
-          type: 'string',
-          title: 'Type of user',
-          enum: ['CONSUMER', 'BUSINESS'],
-          nullable: true,
-        },
-        timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionVolumeThreshold: {
-          type: 'object',
+        transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
           title: 'Transactions Volume Threshold',
-          additionalProperties: {
-            type: 'integer',
-          },
-          required: [],
-        },
-        transactionsLimit: {
-          type: 'number',
-          title: 'Transactions Count Threshold',
-          description:
-            'The rule is hit when the number of transactions per time window is greater than this threshold',
-          nullable: true,
-        },
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
+        }),
+        transactionsLimit: TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA(),
+        timeWindow: TIME_WINDOW_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['timeWindow', 'transactionVolumeThreshold'],
     }

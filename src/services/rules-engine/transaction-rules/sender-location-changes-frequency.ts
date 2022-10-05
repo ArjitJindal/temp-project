@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import dayjs = require('dayjs')
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { MissingRuleParameter } from './errors'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 
@@ -16,28 +17,14 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
         uniqueCitiesCountThreshold: {
           type: 'integer',
           title: 'Cities Count Threshold',
+          description:
+            'rule is run when the cities count per time window is greater than the threshold',
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
     }

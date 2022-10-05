@@ -2,9 +2,13 @@ import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
+import {
+  TRANSACTIONS_THRESHOLD_SCHEMA,
+  TRANSACTION_TYPES_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 export type ConsecutiveTransactionSameTypeRuleParameters =
@@ -22,45 +26,14 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        targetTransactionsThreshold: {
-          type: 'integer',
-          title: 'Transactions Count Threshold',
-        },
-        transactionTypes: {
-          type: 'array',
+        targetTransactionsThreshold: TRANSACTIONS_THRESHOLD_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_SCHEMA({
           title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        otherTransactionTypes: {
-          type: 'array',
+        }),
+        otherTransactionTypes: TRANSACTION_TYPES_SCHEMA({
           title: 'Other Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-        },
+        }),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: [

@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 
@@ -13,27 +14,11 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
         dormancyPeriodDays: {
           type: 'integer',
           title: 'Dormancy Period Threshold (Days)',
         },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['dormancyPeriodDays'],
     }

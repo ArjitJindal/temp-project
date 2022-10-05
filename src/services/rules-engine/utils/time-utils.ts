@@ -1,3 +1,4 @@
+import { TimeWindow } from './rule-parameter-schemas'
 import { Dayjs, duration } from '@/utils/dayjs'
 
 export type TimeWindowGranularity =
@@ -7,34 +8,6 @@ export type TimeWindowGranularity =
   | 'day'
   | 'week'
   | 'month'
-
-export type TimeWindow = {
-  units: number
-  granularity: TimeWindowGranularity
-  rollingBasis?: boolean
-}
-
-export const TIME_WINDOW_SCHEMA = (params: { title?: string } = {}) =>
-  ({
-    type: 'object',
-    title: params.title ?? 'Time Window',
-    properties: {
-      units: { type: 'integer', title: 'Number of time unit' },
-      granularity: {
-        type: 'string',
-        title: 'Time granularity',
-        enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
-      },
-      rollingBasis: {
-        type: 'boolean',
-        title: 'Rolling basis',
-        description:
-          'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
-        nullable: true,
-      },
-    },
-    required: ['units', 'granularity'],
-  } as const)
 
 export function toGranularity(
   timeWindow: TimeWindow,
@@ -66,13 +39,3 @@ export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
   }
   return afterTimestamp
 }
-
-export const PAYMENT_METHODS = [
-  'ACH',
-  'CARD',
-  'IBAN',
-  'SWIFT',
-  'UPI',
-  'WALLET',
-  'MPESA',
-]

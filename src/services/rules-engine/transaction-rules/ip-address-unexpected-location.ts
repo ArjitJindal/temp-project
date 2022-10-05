@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 
@@ -17,15 +18,8 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
     return {
       type: 'object',
       properties: {
-        transactionAmountThreshold: {
-          type: 'object',
-          title: 'Transaction Amount Threshold',
-          additionalProperties: {
-            type: 'integer',
-          },
-          required: [],
-          nullable: true,
-        },
+        transactionAmountThreshold:
+          TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA(),
       },
     }
   }

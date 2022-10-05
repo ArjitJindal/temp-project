@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
+import { LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
 export type TransactionReferenceKeywordRuleParameters = {
@@ -17,12 +18,7 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
           title: 'Keywords',
           items: { type: 'string' },
         },
-        allowedDistance: {
-          type: 'integer',
-          title:
-            'Maximum number of single-character edits (Levenshtein distance)',
-          nullable: true,
-        },
+        allowedDistance: LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA(),
       },
       required: ['keywords'],
     }

@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
+import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
@@ -20,11 +21,7 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
       {
         type: 'object',
         properties: {
-          highRiskCountries: {
-            type: 'array',
-            title: 'High Risk Countries',
-            items: { type: 'string' },
-          },
+          highRiskCountries: COUNTRIES_SCHEMA({ title: 'High Risk Countries' }),
         },
         required: ['highRiskCountries'],
       }

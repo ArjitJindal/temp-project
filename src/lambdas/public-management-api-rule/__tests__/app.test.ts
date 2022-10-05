@@ -108,12 +108,12 @@ describe('Public Management API - Rule', () => {
                   type: 'integer',
                 },
                 type: 'object',
-                title: 'Transaction Amount Threshold',
+                title: 'Transactions Amount Threshold',
                 required: [],
               },
               paymentMethod: {
                 type: 'string',
-                title: 'Method of payment',
+                title: 'Payment Method',
                 nullable: true,
                 enum: [
                   'ACH',
@@ -127,7 +127,7 @@ describe('Public Management API - Rule', () => {
               },
               userType: {
                 type: 'string',
-                title: 'Type of user',
+                title: 'User Type',
                 nullable: true,
                 enum: ['CONSUMER', 'BUSINESS'],
               },

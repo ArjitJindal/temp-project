@@ -33,3 +33,13 @@ export type PaymentMethod =
   | UPIPaymentMethod
   | WalletPaymentMethod
   | MpesaPaymentMethod
+
+export const PAYMENT_METHODS: PaymentMethod[] = [
+  'ACH',
+  'CARD',
+  'IBAN',
+  'SWIFT',
+  'UPI',
+  'WALLET',
+  'MPESA',
+]

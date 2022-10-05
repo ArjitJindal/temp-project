@@ -6,15 +6,22 @@ import {
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import {
-  PAYMENT_METHODS,
+  CHECK_RECEIVER_OPTIONAL_SCHEMA,
+  CHECK_SENDER_OPTIONAL_SCHEMA,
+  INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-} from '../utils/time-utils'
+  TRANSACTIONS_THRESHOLD_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 export type TransactionsPatternVelocityRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -26,7 +33,7 @@ export type TransactionsPatternVelocityRuleParameters =
     checkReceiver?: 'receiving' | 'all' | 'none'
     initialTransactions?: number
     transactionTypes?: TransactionType[]
-    paymentMethod?: string
+    paymentMethod?: PaymentMethod
     userType?: UserType
   }
 
@@ -39,67 +46,15 @@ export default class TransactionsPatternVelocityBaseRule<
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        transactionsLimit: {
-          type: 'integer',
-          title: 'Transactions Limit',
-        },
-        initialTransactions: {
-          type: 'integer',
-          title: 'Initial Transactions Count Threshold',
-          nullable: true,
-        },
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        userType: {
-          type: 'string',
-          title: 'Type of user',
-          enum: ['CONSUMER', 'BUSINESS'],
-          nullable: true,
-        },
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'],
-          nullable: true,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: true,
-        },
+        transactionsLimit: TRANSACTIONS_THRESHOLD_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
+        checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
       },
       required: ['transactionsLimit', 'timeWindow'],
     }

@@ -19,6 +19,8 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
         uniqueUsersCountThreshold: {
           type: 'integer',
           title: 'Users Count Threshold',
+          description:
+            'rule is run when the users count per time window is greater than the threshold',
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },

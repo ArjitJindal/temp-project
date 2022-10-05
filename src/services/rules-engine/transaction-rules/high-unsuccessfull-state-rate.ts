@@ -1,18 +1,21 @@
 import { JSONSchemaType } from 'ajv'
+import {
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  TRANSACTION_STATE_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  CHECK_SENDER_SCHEMA,
+  CHECK_RECEIVER_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleResult } from '@/services/rules-engine/rule'
-import {
-  TIME_WINDOW_SCHEMA,
-  TimeWindow,
-} from '@/services/rules-engine/utils/time-utils'
 import {
   getTransactionUserPastTransactionsCount,
   isTransactionInTargetTypes,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type HighUnsuccessfullStateRateParameters =
   DefaultTransactionRuleParameters & {
@@ -32,57 +35,19 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
     return {
       type: 'object',
       properties: {
+        transactionState: TRANSACTION_STATE_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: false,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
         threshold: {
           type: 'number',
           title: 'Maximum rate of transactions of specified state',
-          nullable: false,
         },
         minimumTransactions: {
           type: 'number',
           title: 'Transactions number user need to make before rule is checked',
-          nullable: false,
         },
-        // todo: generalize
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'], // check origin user, only for sending transactions or as a receiver too
-          nullable: false,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: false,
-        },
+        checkSender: CHECK_SENDER_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
       },
       required: [
         'transactionState',

@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
@@ -12,11 +13,9 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
     return {
       type: 'object',
       properties: {
-        blacklistedCountries: {
-          type: 'array',
+        blacklistedCountries: COUNTRIES_SCHEMA({
           title: 'Blacklisted Countries (ISO 3166-1 alpha-2)',
-          items: { type: 'string' },
-        },
+        }),
       },
       required: ['blacklistedCountries'],
     }

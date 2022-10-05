@@ -5,23 +5,27 @@ import {
   isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import { isUserBetweenAge, isUserType } from '../utils/user-rule-utils'
-import { PAYMENT_METHODS } from '../utils/time-utils'
+import {
+  TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
+  AGE_RANGE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+  AgeRange,
+} from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { UserType } from '@/@types/user/user-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
     [currency: string]: number
   }
-  ageRange?: {
-    minAge?: number
-    maxAge?: number
-  }
   // optional parameter
+  ageRange?: AgeRange
   transactionTypes?: TransactionType[]
-  paymentMethod?: string
+  paymentMethod?: PaymentMethod
   userType?: UserType
 }
 
@@ -30,46 +34,11 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
     return {
       type: 'object',
       properties: {
-        transactionAmountThreshold: {
-          type: 'object',
-          title: 'Transaction Amount Threshold',
-          additionalProperties: {
-            type: 'integer',
-          },
-          required: [],
-        },
-        ageRange: {
-          type: 'object',
-          title: 'Target Age Range',
-          properties: {
-            minAge: { type: 'integer', title: 'Min Age', nullable: true },
-            maxAge: { type: 'integer', title: 'Max Age', nullable: true },
-          },
-          required: [],
-          nullable: true,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        userType: {
-          type: 'string',
-          title: 'Type of user',
-          enum: ['CONSUMER', 'BUSINESS'],
-          nullable: true,
-        },
+        transactionAmountThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA(),
+        ageRange: AGE_RANGE_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['transactionAmountThreshold'],
     }

@@ -10,14 +10,27 @@ import {
   isTransactionInTargetTypes,
   isTransactionWithinTimeWindow,
 } from '../utils/transaction-rule-utils'
-import { PAYMENT_METHODS, subtractTime, TimeWindow } from '../utils/time-utils'
+import { subtractTime } from '../utils/time-utils'
+import {
+  CHECK_RECEIVER_OPTIONAL_SCHEMA,
+  CHECK_SENDER_OPTIONAL_SCHEMA,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  TRANSACTIONS_THRESHOLD_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 
 export type TransactionsVelocityRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -34,7 +47,7 @@ export type TransactionsVelocityRuleParameters =
       to?: string
     }
     transactionTypes?: TransactionType[]
-    paymentMethod?: string
+    paymentMethod?: PaymentMethod
     userType?: UserType
     onlyCheckKnownUsers?: boolean
   }
@@ -46,59 +59,14 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        transactionsLimit: {
-          type: 'number',
-          title: 'Transactions Limit',
-        },
-        timeWindow: {
-          type: 'object',
-          title: 'Time Window',
-          properties: {
-            units: { type: 'integer', title: 'Number of time unit' },
-            granularity: {
-              type: 'string',
-              title: 'Time granularity',
-              enum: ['second', 'minute', 'hour', 'day', 'week', 'month'],
-            },
-            rollingBasis: {
-              type: 'boolean',
-              title: 'Rolling basis',
-              description:
-                'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
-              nullable: true,
-            },
-          },
-          required: ['units', 'granularity'],
-        },
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'],
-          nullable: true,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: true,
-        },
+        transactionsLimit: TRANSACTIONS_THRESHOLD_SCHEMA(),
+        timeWindow: TIME_WINDOW_SCHEMA(),
+        checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
         userIdsToCheck: {
           type: 'array',
           title: 'Target User IDs',
@@ -120,28 +88,6 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
               nullable: true,
             },
           },
-          nullable: true,
-        },
-        transactionTypes: {
-          type: 'array',
-          title: 'Target Transaction Types',
-          items: {
-            type: 'string',
-            enum: TRANSACTION_TYPES,
-          },
-          uniqueItems: true,
-          nullable: true,
-        },
-        paymentMethod: {
-          type: 'string',
-          title: 'Method of payment',
-          enum: PAYMENT_METHODS,
-          nullable: true,
-        },
-        userType: {
-          type: 'string',
-          title: 'Type of user',
-          enum: ['CONSUMER', 'BUSINESS'],
           nullable: true,
         },
         onlyCheckKnownUsers: {

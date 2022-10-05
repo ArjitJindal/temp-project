@@ -3,14 +3,15 @@ import {
   ThinTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
+import {
+  TimeWindow,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  TIME_WINDOW_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
-import {
-  subtractTime,
-  TimeWindow,
-  TIME_WINDOW_SCHEMA,
-} from '@/services/rules-engine/utils/time-utils'
+import { subtractTime } from '@/services/rules-engine/utils/time-utils'
 
 export type MultipleSendersWithinTimePeriodRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -28,25 +29,14 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
     return {
       type: 'object',
       properties: {
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
+        sendersCount: {
+          type: 'integer',
+          title: 'Senders Count Threshold',
           description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
+            'rule is run when the senders count per time window is greater than the threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
-        sendersCount: { type: 'integer', title: 'Senders Count Threshold' },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['sendersCount', 'timeWindow'],
     }

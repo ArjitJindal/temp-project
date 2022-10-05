@@ -1,10 +1,13 @@
 import { JSONSchemaType } from 'ajv'
+import {
+  CHECK_RECEIVER_SCHEMA,
+  CHECK_SENDER_SCHEMA,
+  TimeWindow,
+  TIME_WINDOW_SCHEMA,
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import {
-  TIME_WINDOW_SCHEMA,
-  TimeWindow,
-} from '@/services/rules-engine/utils/time-utils'
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 
@@ -28,35 +31,9 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
           title:
             'Number of times payment details need to be used to trigger the rule',
         },
-        transactionState: {
-          type: 'string',
-          enum: [
-            'CREATED',
-            'PROCESSING',
-            'SENT',
-            'EXPIRED',
-            'DECLINED',
-            'SUSPENDED',
-            'REFUNDED',
-            'SUCCESSFUL',
-          ],
-          title: 'Target Transaction State',
-          description:
-            'If not specified, all transactions regardless of the state will be used for running the rule',
-          nullable: true,
-        },
-        checkSender: {
-          type: 'string',
-          title: 'Origin User Transaction Direction',
-          enum: ['sending', 'all', 'none'],
-          nullable: false,
-        },
-        checkReceiver: {
-          type: 'string',
-          title: 'Destination User Transaction Direction',
-          enum: ['receiving', 'all', 'none'],
-          nullable: false,
-        },
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        checkSender: CHECK_SENDER_SCHEMA(),
+        checkReceiver: CHECK_RECEIVER_SCHEMA(),
       },
       required: ['timeWindow', 'threshold'],
     }
