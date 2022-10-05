@@ -19,7 +19,7 @@ function getFixedSchema(schema: object) {
   return _.cloneDeepWith(schema, (value) => {
     /**
      * antd theme doesn't allow clearing the selected enum even the field is nullable.
-     * In this case, we concat the "empty" option and it'll be removed by removeEmptyValues
+     * In this case, we concat the "empty" option and it'll be removed by removeNil
      * to be a truly nullable field
      */
     if (value?.enum && value?.type === 'string' && value?.nullable) {
@@ -31,17 +31,10 @@ function getFixedSchema(schema: object) {
   });
 }
 
-/**
- * If a required field has empty object or array, it'll pass the validation
- * but it doesn't make sense for us. Thus removing them to make the validation fail
- * and users must provide at least one value.
- */
-function removeEmptyValues(formData: object) {
-  // empty value: {} or [] or null or undefined
+function removeNil(formData: object) {
   return JSON.parse(
     JSON.stringify(formData, (k, v) => {
-      const isEmptyObject = _.isObject(v) && _.isEmpty(v);
-      if (v === null || isEmptyObject) {
+      if (v === null) {
         return undefined;
       }
       return v;
@@ -86,7 +79,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   const handleParametersChange = useCallback(
     (event: IChangeEvent) => {
       if (onParametersChange) {
-        onParametersChange(removeEmptyValues(event.formData), event.errors);
+        onParametersChange(removeNil(event.formData), event.errors);
       }
     },
     [onParametersChange],
@@ -94,7 +87,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
   const handleRiskLevelParametersChange = useCallback(
     (riskLevel: RiskLevel, event: IChangeEvent) => {
       if (onRiskLevelParametersChange) {
-        onRiskLevelParametersChange(riskLevel, removeEmptyValues(event.formData), event.errors);
+        onRiskLevelParametersChange(riskLevel, removeNil(event.formData), event.errors);
       }
     },
     [onRiskLevelParametersChange],
