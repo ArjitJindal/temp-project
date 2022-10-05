@@ -13,6 +13,7 @@ import * as Card from '@/components/ui/Card';
 import * as Form from '@/components/ui/Form';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import RestartLineIcon from '@/components/ui/icons/Remix/device/restart-line.react.svg';
+import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import TransactionState from '@/components/ui/TransactionState';
@@ -91,6 +92,9 @@ export default function TransactionsItem() {
                   </Form.Layout.Label>
                   <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
                     <TransactionTypeTag transactionType={transaction.type} />
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<FileLineIcon />} title="Reference">
+                    {transaction.reference}
                   </Form.Layout.Label>
                 </EntityHeader>
               </Card.Section>

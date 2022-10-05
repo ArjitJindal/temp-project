@@ -35,7 +35,7 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
     tagColor = 'orange';
     transactionTypeIcon = <ArrowUpOutlined />;
   } else if (transactionType === 'REFUND') {
-    transactionTypeDisplay = 'Withdrawal';
+    transactionTypeDisplay = 'Refund';
     tagColor = 'red';
     transactionTypeIcon = <UndoOutlined />;
   } else if (transactionType === 'TRANSFER') {
