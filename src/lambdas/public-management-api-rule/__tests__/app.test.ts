@@ -142,6 +142,7 @@ describe('Public Management API - Rule', () => {
                     'TRANSFER',
                     'EXTERNAL_PAYMENT',
                     'WITHDRAWAL',
+                    'REFUND',
                   ],
                 },
                 uniqueItems: true,

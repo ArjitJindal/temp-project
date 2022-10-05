@@ -5,4 +5,5 @@ export const TRANSACTION_TYPES: TransactionType[] = [
   'TRANSFER',
   'EXTERNAL_PAYMENT',
   'WITHDRAWAL',
+  'REFUND',
 ]
