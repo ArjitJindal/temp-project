@@ -495,6 +495,8 @@ paths:
                       kycRiskScore: 63.36
                       actionRiskScore: 72.32
                       dynamicRiskScore: 73.92
+        '400':
+          description: Bad Request
         '401':
           description: Unauthorized
           headers: {}
@@ -635,6 +637,8 @@ paths:
                       kycRiskScore: 63.36
                       actionRiskScore: 72.32
                       dynamicRiskScore: 73.92
+        '400':
+          description: Bad Request
         '401':
           description: Unauthorized
           headers: {}
@@ -839,6 +843,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Business'
+        '400':
+          description: Bad Request
         '401':
           description: Unauthorized
           headers: {}
@@ -892,6 +898,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Business'
+        '400':
+          description: Bad Request
         '401':
           description: Unauthorized
           headers: {}
@@ -1699,9 +1707,6 @@ components:
           description: Authentication of Card
         paymentChannel:
           type: string
-          enum:
-            - POS
-            - ONLINE
       required:
         - method
     IBANDetails:
@@ -2867,16 +2872,9 @@ components:
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
         allowedPaymentMethods:
-          type: string
-          enum:
-            - CARD
-            - IBAN
-            - ACH
-            - WALLET
-            - UPI
-            - GENERIC_BANK_ACCOUNT
-            - SWIFT
-            - MPESA
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethods'
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
@@ -3729,6 +3727,20 @@ components:
         - listType
         - size
         - createdTimestamp
+    PaymentMethods:
+      type: string
+      title: PaymentMethods
+      x-stoplight:
+        id: m0vgh0ergujca
+      enum:
+        - ACH
+        - CARD
+        - IBAN
+        - UPI
+        - GENERIC_BANK_ACCOUNT
+        - MPESA
+        - SWIFT
+        - WALLET
   securitySchemes:
     x-api-key:
       name: x-api-key
