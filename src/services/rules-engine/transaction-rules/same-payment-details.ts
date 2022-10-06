@@ -2,8 +2,9 @@ import { JSONSchemaType } from 'ajv'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
-  TimeWindow,
+  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
+  TimeWindow,
   TRANSACTION_STATE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
@@ -16,6 +17,7 @@ export type SamePaymentDetailsParameters = DefaultTransactionRuleParameters & {
   threshold: number
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
+  paymentMethod?: string
 }
 
 export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentDetailsParameters> {
@@ -34,13 +36,23 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
         transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
       },
       required: ['timeWindow', 'threshold'],
     }
   }
 
   public getFilters() {
-    return [...super.getFilters()]
+    const { paymentMethod } = this.parameters
+
+    const result = [...super.getFilters()]
+    if (paymentMethod != null) {
+      result.push(
+        () => this.transaction.originPaymentDetails?.method === paymentMethod
+      )
+    }
+
+    return result
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
