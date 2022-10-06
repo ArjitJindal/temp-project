@@ -251,6 +251,10 @@ const COUNTRIES = {
   AX: 'Åland Islands',
 };
 
+export const COUNTRY_NAME_TO_CODE = Object.fromEntries(
+  Object.entries(COUNTRIES).map((entry) => [entry[1], entry[0]]),
+);
+
 export type CountryCode = keyof typeof COUNTRIES;
 
 export default COUNTRIES;

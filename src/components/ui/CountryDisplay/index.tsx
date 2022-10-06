@@ -1,23 +1,25 @@
 import { Space } from 'antd';
 import ReactCountryFlag from 'react-country-flag';
-import COUNTRIES from '@/utils/countries';
+import COUNTRIES, { COUNTRY_NAME_TO_CODE } from '@/utils/countries';
 
 interface Props {
-  // Alpha-2, Alpha-3 or Numeric code
+  // Alpha-2 code
   isoCode?: string;
+  countryName?: string;
 }
 
 export default function CountryDisplay(props: Props): JSX.Element {
-  const { isoCode } = props;
-  if (!isoCode) {
+  const { isoCode, countryName } = props;
+  if (!isoCode && !countryName) {
     return <>-</>;
   }
-  const countryName = COUNTRIES[isoCode];
+  const code = isoCode || COUNTRY_NAME_TO_CODE[countryName!];
+  const name = countryName || COUNTRIES[isoCode!];
 
   return (
     <Space>
-      {countryName && <ReactCountryFlag countryCode={isoCode} svg />}
-      <span>{countryName || isoCode}</span>
+      {name && <ReactCountryFlag countryCode={code} svg />}
+      <span>{name || code}</span>
     </Space>
   );
 }

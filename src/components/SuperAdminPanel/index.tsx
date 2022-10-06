@@ -26,6 +26,7 @@ const FEATURES: Feature[] = [
   'LISTS',
   'CASE_CREATION_TYPE',
   'HELP_CENTER',
+  'SANCTIONS',
 ];
 
 export default function SuperAdminPanel() {

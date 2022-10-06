@@ -20,14 +20,17 @@ import RulesPage from '@/pages/rules';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
+import SanctionsPage from '@/pages/sanctions';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
   const isImportFilesEnabled = useFeature('IMPORT_FILES');
   const isListsFeatureEnabled = useFeature('LISTS');
-  const [lastActiveTab, _] = useLocalStorageState('user-active-tab', 'consumer');
-  const [lastActiveRuleTab, __] = useLocalStorageState('rule-active-tab', 'create-rule');
+  const isSanctionsEnabled = useFeature('SANCTIONS');
+  const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
+  const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'create-rule');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
+  const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -243,6 +246,32 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
+      isSanctionsEnabled && {
+        path: '/sanctions',
+        name: 'sanctions',
+        icon: 'GlobalOutlined',
+        hideChildrenInMenu: true,
+        position: 'top',
+        routes: [
+          {
+            path: '/sanctions',
+            redirect:
+              lastActiveSanctionsTab === 'search'
+                ? '/sanctions/search'
+                : '/sanctions/search-history',
+          },
+          {
+            path: '/sanctions/:type',
+            name: 'sanctions',
+            component: SanctionsPage,
+          },
+          {
+            path: '/sanctions/search/:searchId',
+            component: SanctionsPage,
+            name: 'search-history-item',
+          },
+        ],
+      },
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -277,5 +306,7 @@ export function useRoutes(): RouteItem[] {
     isImportFilesEnabled,
     isListsFeatureEnabled,
     lastActiveList,
+    isSanctionsEnabled,
+    lastActiveSanctionsTab,
   ]);
 }

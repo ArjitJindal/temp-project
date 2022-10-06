@@ -9,6 +9,7 @@ import {
   SmileOutlined,
   UnorderedListOutlined,
   UsergroupAddOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 
 import {
@@ -49,6 +50,7 @@ const icons = {
   smile: <SmileOutlined />,
   table: <Table />,
   ImportOutlined: <ImportOutlined />,
+  GlobalOutlined: <GlobalOutlined />,
 };
 
 function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {

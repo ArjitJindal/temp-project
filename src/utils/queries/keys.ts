@@ -15,3 +15,13 @@ export const USERS_ITEM_TRANSACTIONS_HISTORY = (
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const TRANSACTIONS_TAG_LIST = (): QueryKey => ['transactions', 'tags', 'list'];
+export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
+  'sanctions',
+  'search',
+  { params },
+];
+export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
+  'sanctions',
+  'search',
+  searchId,
+];
