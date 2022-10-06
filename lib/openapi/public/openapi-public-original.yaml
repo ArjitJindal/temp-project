@@ -2349,20 +2349,24 @@ components:
           minLength: 1
           type: string
           description: Country of registration for the company
+        taxIdentifier:
+          type: string
+          description: Tax ID number of the registered entity
+        legalEntityType:
+          type: string
+          description: 'Type of legal entity. Ex: Limited Liability'
         tag:
           type: array
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-        taxIdentifier:
-          type: string
       required:
         - registrationIdentifier
         - registrationCountry
     Business:
       allOf:
-        - $ref: '#/components/schemas/BusinessOptional'
         - $ref: '#/components/schemas/BusinessBase'
+        - $ref: '#/components/schemas/BusinessOptional'
     BusinessBase:
       title: BusinessBase
       type: object
@@ -2863,11 +2867,6 @@ components:
           description: Director(s) of the company. Must be at least one
           items:
             $ref: '#/components/schemas/Person'
-        tags:
-          type: array
-          description: Additional information that can be added via tags
-          items:
-            $ref: '#/components/schemas/Tag'
         transactionLimits:
           $ref: '#/components/schemas/TransactionLimits'
         riskLevel:
@@ -2876,6 +2875,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethods'
+        tags:
+          type: array
+          description: Additional information that can be added via tags
+          items:
+            $ref: '#/components/schemas/Tag'
     BusinessUsersResponse:
       title: BusinessUsersResponse
       type: object
