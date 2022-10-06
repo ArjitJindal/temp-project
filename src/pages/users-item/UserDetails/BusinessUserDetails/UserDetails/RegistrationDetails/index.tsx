@@ -58,7 +58,7 @@ export function RegistrationDetails(prop: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             <div>
-              {user.tags?.map(({ key, value }: ApiTag) => (
+              {user.legalEntity.companyRegistrationDetails?.tag?.map(({ key, value }: ApiTag) => (
                 <Tag color={'cyan'}>
                   {key}: <span style={{ fontWeight: 700 }}>{value}</span>
                 </Tag>

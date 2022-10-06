@@ -57,7 +57,7 @@ export function FinancialDetails(prop: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             <div>
-              {user.tags?.map(({ key, value }: ApiTag) => (
+              {user.legalEntity.companyFinancialDetails?.tags?.map(({ key, value }: ApiTag) => (
                 <Tag color={'cyan'}>
                   {key}: <span style={{ fontWeight: 700 }}>{value}</span>
                 </Tag>
