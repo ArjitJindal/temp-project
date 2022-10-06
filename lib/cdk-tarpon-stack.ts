@@ -672,7 +672,11 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     this.grantMongoDbAccess(webhookDelivererAlias)
-    this.grantSecretsManagerAccess(webhookDelivererAlias, 'webhooks', 'READ')
+    this.grantSecretsManagerAccessByPrefix(
+      webhookDelivererAlias,
+      'webhooks',
+      'READ'
+    )
     webhookDeliveryQueue.grantConsumeMessages(webhookDelivererAlias)
     webhookDelivererAlias.addEventSource(
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
@@ -687,7 +691,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     this.grantMongoDbAccess(webhookConfigurationHandlerAlias)
-    this.grantSecretsManagerAccess(
+    this.grantSecretsManagerAccessByPrefix(
       webhookConfigurationHandlerAlias,
       'webhooks',
       'READ_WRITE'
@@ -812,6 +816,29 @@ export class CdkTarponStack extends cdk.Stack {
       webhookTarponChangeCaptureHandlerAlias
     )
     this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerAlias)
+
+    // Sanctions handler
+    const { alias: sanctionsHandlerAlias } = this.createFunction(
+      {
+        name: StackConstants.SANCTIONS_FUNCTION_NAME,
+        handler: 'app.sanctionsHandler',
+        codePath: 'dist/sanctions',
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          COMPLYADVANTAGE_API_KEY: process.env
+            .COMPLYADVANTAGE_API_KEY as string,
+        },
+      }
+    )
+    this.grantMongoDbAccess(sanctionsHandlerAlias)
+    this.grantSecretsManagerAccess(
+      sanctionsHandlerAlias,
+      [this.config.application.COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN],
+      'READ'
+    )
 
     /* Hammerhead Kinesis Change capture consumer */
 
@@ -1096,12 +1123,24 @@ export class CdkTarponStack extends cdk.Stack {
     )
   }
 
-  private grantSecretsManagerAccess(
+  private grantSecretsManagerAccessByPrefix(
     alias: Alias,
     prefix: string,
     mode: 'READ' | 'WRITE' | 'READ_WRITE'
   ) {
-    const aliasIdentifier = alias.node.id.replace(/:/g, '-')
+    this.grantSecretsManagerAccess(
+      alias,
+      [`arn:aws:secretsmanager:*:*:secret:*/${prefix}/*`],
+      mode
+    )
+  }
+
+  private grantSecretsManagerAccess(
+    resource: Resource & { role?: IRole },
+    resources: string[],
+    mode: 'READ' | 'WRITE' | 'READ_WRITE'
+  ) {
+    const aliasIdentifier = resource.node.id.replace(/:/g, '-')
     const actions = []
     if (mode === 'READ' || mode === 'READ_WRITE') {
       actions.push('secretsmanager:GetSecretValue')
@@ -1110,14 +1149,14 @@ export class CdkTarponStack extends cdk.Stack {
       actions.push('secretsmanager:CreateSecret')
       actions.push('secretsmanager:DeleteSecret')
     }
-    alias.role?.attachInlinePolicy(
+    resource.role?.attachInlinePolicy(
       new Policy(this, `${aliasIdentifier}-SecretsManagerPolicy`, {
         policyName: `${aliasIdentifier}-SecretsManagerPolicy`,
         statements: [
           new PolicyStatement({
             effect: Effect.ALLOW,
             actions: actions,
-            resources: [`arn:aws:secretsmanager:*:*:secret:*/${prefix}/*`],
+            resources,
           }),
         ],
       })

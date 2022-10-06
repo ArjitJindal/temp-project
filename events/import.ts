@@ -1,6 +1,7 @@
+import { TestApiEvent, TestApiRequestContext } from './types'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 
-export const event = {
+export const event: TestApiEvent = {
   resource: '/import',
   path: '/import',
   httpMethod: 'POST',
@@ -10,7 +11,7 @@ export const event = {
       principalId: 'test-tenant-id',
       tenantName: 'test-tenant-name',
     },
-  },
+  } as TestApiRequestContext,
   stageVariables: null,
   body: JSON.stringify({
     type: 'TRANSACTION',

@@ -1,13 +1,12 @@
 import { TestApiEvent, TestApiRequestContext } from './types'
 
 export const event: TestApiEvent = {
-  resource: '/transactions',
-  path: '/files/getPresignedUrl',
-  httpMethod: 'POST',
+  resource: '/sanctions/search',
+  path: '/sanctions/search',
+  httpMethod: 'GET',
   headers: {},
   requestContext: {
-    accountId: 'test',
-    authorizer: { principalId: 'test-tenant-id' },
+    authorizer: { principalId: 'flagright' },
   } as TestApiRequestContext,
   stageVariables: null,
 }

@@ -1610,6 +1610,61 @@ paths:
       responses:
         '200':
           description: OK
+  /sanctions/search:
+    post:
+      summary: Search Sanctions
+      operationId: post-sanctions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearchResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanctionsSearchRequest'
+    get:
+      summary: Get all search history
+      operationId: get-sanctions-search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SanctionsSearchHistory'
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+        - schema:
+            type: number
+          in: query
+          name: skip
+  '/sanctions/search/{searchId}':
+    get:
+      summary: Get single search history
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsSearchHistory'
+      parameters:
+        - schema:
+            type: string
+          name: searchId
+          in: path
+          required: true
+      operationId: get-sanctions-search-$-searchId
 components:
   schemas:
     ManualRiskAssignmentUserState:
@@ -2393,6 +2448,7 @@ components:
         - CASE_CREATION_TYPE
         - HELP_CENTER
         - GOOGLE_SSO
+        - SANCTIONS
       description: ''
     AccountRole:
       type: string
@@ -2641,6 +2697,283 @@ components:
         entity:
           type: string
         count:
+          type: number
+    SanctionsSearchRequest:
+      title: SanctionsSearchRequest
+      x-stoplight:
+        id: ldj2zpwhzk8s5
+      type: object
+      properties:
+        _id:
+          type: string
+        searchTerm:
+          type: string
+        fuzziness:
+          type: number
+        countryCodes:
+          type: array
+          items:
+            type: string
+        yearOfBirth:
+          type: number
+      required:
+        - searchTerm
+    SanctionsSearchResponse:
+      title: SanctionsSearchResponse
+      x-stoplight:
+        id: ldj2zpwhzk8s5
+      type: object
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplyAdvantageSearchHit'
+        searchId:
+          type: string
+        rawComplyAdvantageResponse:
+          $ref: '#/components/schemas/ComplyAdvantageSearchResponse'
+      required:
+        - total
+        - data
+        - searchId
+    SanctionsSearchHistory:
+      title: SanctionsSearchHistory
+      x-stoplight:
+        id: ldj2zpwhzk8s5
+      type: object
+      properties:
+        request:
+          $ref: '#/components/schemas/SanctionsSearchRequest'
+        response:
+          $ref: '#/components/schemas/SanctionsSearchResponse'
+        createdAt:
+          type: number
+      required:
+        - request
+        - createdAt
+    ComplyAdvantageSearchResponse:
+      title: ComplyAdvantageSearchResponse
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        status:
+          type: string
+        content:
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  format: int32
+                ref:
+                  type: string
+                searcher_id:
+                  type: integer
+                  format: int32
+                assignee_id:
+                  type: integer
+                  format: int32
+                filters:
+                  type: object
+                  properties:
+                    types:
+                      type: array
+                      items:
+                        type: string
+                    country_codes:
+                      type: array
+                      items: {}
+                    birth_year:
+                      type: integer
+                      format: int32
+                    entity_type:
+                      type: string
+                    remove_deceased:
+                      type: integer
+                      format: int32
+                    exact_match:
+                      type: boolean
+                    fuzziness:
+                      type: number
+                match_status:
+                  type: string
+                risk_level:
+                  type: string
+                search_term:
+                  type: string
+                submitted_term:
+                  type: string
+                client_ref:
+                  type: string
+                  format: nullable
+                total_hits:
+                  type: integer
+                  format: int32
+                updated_at:
+                  type: string
+                created_at:
+                  type: string
+                tags:
+                  type: array
+                  items: {}
+                labels:
+                  type: array
+                  items: {}
+                total_matches:
+                  type: integer
+                  format: int32
+                limit:
+                  type: integer
+                  format: int32
+                offset:
+                  type: integer
+                  format: int32
+                share_url:
+                  type: string
+                searcher:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int32
+                    email:
+                      type: string
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                      format: nullable
+                    created_at:
+                      type: string
+                    user_is_active:
+                      type: boolean
+                assignee:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      format: int32
+                    email:
+                      type: string
+                    name:
+                      type: string
+                    phone:
+                      type: string
+                      format: nullable
+                    created_at:
+                      type: string
+                    user_is_active:
+                      type: boolean
+                hits:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ComplyAdvantageSearchHit'
+    ComplyAdvantageSearchHit:
+      type: object
+      properties:
+        doc:
+          type: object
+          properties:
+            aka:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+            entity_type:
+              type: string
+            fields:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  source:
+                    type: string
+                  value:
+                    type: string
+            id:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            last_updated_utc:
+              type: string
+              format: date-time
+            media:
+              type: array
+              items:
+                type: object
+                properties:
+                  snippet:
+                    type: string
+                  title:
+                    type: string
+                  url:
+                    type: string
+            name:
+              type: string
+            source_notes:
+              type: object
+            sources:
+              type: array
+              items:
+                type: string
+            types:
+              type: array
+              items:
+                type: string
+        match_types:
+          type: array
+          items:
+            type: string
+        match_types_details:
+          type: array
+          items:
+            type: object
+            properties:
+              aml_types:
+                type: array
+                items:
+                  type: string
+              matching_name:
+                type: string
+              name_matches:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    match_types:
+                      type: array
+                      items:
+                        type: string
+                    query_term:
+                      type: string
+              secondary_matches:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    match_types:
+                      type: array
+                      items:
+                        type: string
+                    query_term:
+                      type: string
+              sources:
+                type: array
+                items:
+                  type: string
+        score:
           type: number
   securitySchemes:
     Authorization:

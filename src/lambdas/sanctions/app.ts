@@ -1,0 +1,46 @@
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsService } from '@/services/sanctions'
+import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
+
+export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const sanctionsService = new SanctionsService(tenantId)
+
+    if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/sanctions/search' &&
+      event.body
+    ) {
+      const searchRequest = JSON.parse(event.body) as SanctionsSearchRequest
+      return sanctionsService.search(searchRequest)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/sanctions/search'
+    ) {
+      const q = event.queryStringParameters
+      const params: DefaultApiGetSanctionsSearchRequest = {
+        limit: q?.limit ? parseInt(q.limit) : undefined,
+        skip: q?.skip ? parseInt(q.skip) : undefined,
+      }
+      return sanctionsService.getSearchHistory(params)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/sanctions/search/{searchId}' &&
+      event.pathParameters?.searchId
+    ) {
+      return sanctionsService.getSearchResult(event.pathParameters.searchId)
+    }
+    throw new Error('Unhandled request')
+  }
+)

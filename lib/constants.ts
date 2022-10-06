@@ -132,6 +132,7 @@ export const StackConstants = {
   ),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
+  SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon('SanctionsFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,

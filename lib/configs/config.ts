@@ -70,6 +70,7 @@ export type Config = {
     // TODO: Save/Retrieve secrets from AWS Secret Manager (Need to rotate the secrets after it's done)
     AUTH0_MANAGEMENT_CLIENT_SECRET: string
     ATLAS_CREDENTIALS_SECRET_ARN: string
+    COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: string
     CONSOLE_URI: string
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
     NODE_ENV?: string

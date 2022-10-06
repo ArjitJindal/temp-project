@@ -1,9 +1,13 @@
-export const event = {
+import { TestApiEvent, TestApiRequestContext } from './types'
+
+export const event: TestApiEvent = {
   resource: '/consumer',
   path: '/consumer/users',
   httpMethod: 'POST',
   headers: {},
-  requestContext: { authorizer: { principalId: 'test-tenant-id' } },
+  requestContext: {
+    authorizer: { principalId: 'test-tenant-id' },
+  } as TestApiRequestContext,
   stageVariables: null,
   body: JSON.stringify({
     userId: '96647cfd9e8fe66ee0f3362e011e34e8',

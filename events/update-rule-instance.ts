@@ -1,4 +1,6 @@
-export const event = {
+import { TestApiEvent } from './types'
+
+export const event: TestApiEvent = {
   resource: '/rule_instances',
   path: '/rule_instances',
   httpMethod: 'PUT',

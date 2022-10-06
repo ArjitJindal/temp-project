@@ -91,6 +91,8 @@ const PathToLambda: any = {
   '/cases/{caseId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments/{commentId}':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/sanctions/search': StackConstants.SANCTIONS_FUNCTION_NAME,
+  '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

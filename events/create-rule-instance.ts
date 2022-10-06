@@ -1,10 +1,13 @@
+import { TestApiEvent, TestApiRequestContext } from './types'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
-export const event = {
+export const event: TestApiEvent = {
   resource: '/rule_instances',
   path: '/rule_instances',
   httpMethod: 'POST',
-  requestContext: { authorizer: { principalId: 'test-tenant-id' } },
+  requestContext: {
+    authorizer: { principalId: 'test-tenant-id' },
+  } as TestApiRequestContext,
   body: JSON.stringify({
     type: 'TRANSACTION',
     ruleId: 'R-1',
