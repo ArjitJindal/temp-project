@@ -101,6 +101,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
     [setActiveTab],
   );
 
+  const uiSchema = parametersSchema['ui:schema'];
   return (
     <div className={styles.tab}>
       {isPulseEnabled ? (
@@ -113,6 +114,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
                 onChange={(event) => handleRiskLevelParametersChange(riskLevel, event)}
                 readonly={readonly}
                 liveValidate
+                uiSchema={uiSchema}
               >
                 {/* Add a dummy fragment for disabling the submit button */}
                 <Fragment />
@@ -127,6 +129,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
           onChange={handleParametersChange}
           readonly={readonly}
           liveValidate
+          uiSchema={uiSchema}
         >
           {/* Add a dummy fragment for disabling the submit button */}
           <Fragment />
