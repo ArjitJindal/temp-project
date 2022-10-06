@@ -65,6 +65,33 @@ function getMissingUsersMessage(
   }
 }
 
+async function getMissingRelatedTransactions(
+  relatedTransactionIds: string[],
+  tenantId: string,
+  dynamoDb: DocumentClient
+) {
+  const transactionRepository = new TransactionRepository(tenantId, {
+    dynamoDb,
+  })
+  const relatedTransactions = await transactionRepository.getTransactionsByIds(
+    relatedTransactionIds
+  )
+  const foundTransactions: string[] = []
+
+  if (relatedTransactions.length === relatedTransactionIds.length) {
+    return []
+  } else {
+    relatedTransactionIds.map((transactionId) => {
+      relatedTransactions.map((transaction) => {
+        if (transaction.transactionId === transactionId) {
+          foundTransactions.push(transactionId)
+        }
+      })
+    })
+    return relatedTransactionIds.filter((x) => !foundTransactions.includes(x))
+  }
+}
+
 export const transactionHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -77,6 +104,22 @@ export const transactionHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transaction = JSON.parse(event.body)
+      if (
+        transaction.relatedTransactionIds &&
+        transaction.relatedTransactionIds.length
+      ) {
+        const missingRelatedTransactions = await getMissingRelatedTransactions(
+          transaction.relatedTransactionIds,
+          tenantId,
+          dynamoDb
+        )
+        if (missingRelatedTransactions.length) {
+          throw new BadRequest(
+            `Transaction with ID(s): ${missingRelatedTransactions} do not exist.`
+          )
+        }
+      }
+
       const missingUsers = await getTransactionMissingUsers(
         transaction,
         tenantId,

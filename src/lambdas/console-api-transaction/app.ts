@@ -59,6 +59,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
       deviceYear: 'INCLUDE',
       appVersion: 'INCLUDE',
     },
+    relatedTransactionIds: 'JSON',
     tags: 'JSON',
     executedRules: 'JSON',
     hitRules: 'JSON',
