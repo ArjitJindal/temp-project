@@ -28,14 +28,14 @@ describe('Verify hits-per-user statistics', () => {
 
     await transactionRepository.addCaseToMongo({
       ...getTestTransaction({
-        timestamp: timestamp,
+        timestamp,
       }),
       hitRules: hitRules,
       executedRules: hitRules,
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     })
-    await statsRepository.refreshStats()
+    await statsRepository.refreshStats(timestamp)
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -75,14 +75,14 @@ describe('Verify hits-per-user statistics', () => {
 
     await transactionRepository.addCaseToMongo({
       ...getTestTransaction({
-        timestamp: timestamp,
+        timestamp,
       }),
       hitRules: hitRules,
       executedRules: [...hitRules, notHitRule('BLOCK'), notHitRule('FLAG')],
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     })
-    await statsRepository.refreshStats()
+    await statsRepository.refreshStats(timestamp)
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -111,8 +111,7 @@ describe('Verify hits-per-user statistics', () => {
     const transactionRepository = await getTransactionsRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
-    const d = dayjs('2022-01-30T12:00:00.000Z')
-    const timestamp = d.valueOf()
+    const initialTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
@@ -121,17 +120,18 @@ describe('Verify hits-per-user statistics', () => {
 
     for (let i = 0; i < transactionsCount; i += 1) {
       const hitRules = [...new Array(hitRulesCount)].map(() => hitRule())
+      const timestamp = initialTimestamp + 3600 * 1000 * i
       await transactionRepository.addCaseToMongo({
         ...getTestTransaction({
-          timestamp: timestamp + 3600 * 1000 * i,
+          timestamp,
         }),
         hitRules: hitRules,
         executedRules: hitRules,
         originUserId: originUserId,
         destinationUserId: destinationUserId,
       })
+      await statsRepository.refreshStats(timestamp)
     }
-    await statsRepository.refreshStats()
     {
       const stats = await statsRepository.getHitsByUserStats(
         0,
@@ -162,27 +162,27 @@ describe('Verify hits-per-user statistics', () => {
     const transactionRepository = await getTransactionsRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
-    const d = dayjs('2022-01-30T12:00:00.000Z')
-    const timestamp = d.valueOf()
+    const initialTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
 
     const originUserId = 'test-user-id'
     const destinationUserId = 'test-user-id-2'
-    const transactionsCount = 1000
+    const transactionsCount = 100
 
     const hitRules = [hitRule()]
 
     for (let i = 0; i < transactionsCount; i += 1) {
+      const timestamp = initialTimestamp + 3600 * 1000 * i
       await transactionRepository.addCaseToMongo({
         ...getTestTransaction({
-          timestamp: timestamp + 3600 * 1000 * i,
+          timestamp,
         }),
         hitRules: hitRules,
         executedRules: [...hitRules, notHitRule()],
         originUserId: originUserId,
         destinationUserId: destinationUserId,
       })
+      await statsRepository.refreshStats(timestamp)
     }
-    await statsRepository.refreshStats()
     {
       const stats = await statsRepository.getHitsByUserStats(
         0,

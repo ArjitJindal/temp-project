@@ -1,6 +1,6 @@
-import dayjs from 'dayjs'
 import { SameUserUsingTooManyCardsParameters } from '../same-user-using-too-many-cards'
 import { getTransactionRuleByRuleId } from '../library'
+import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {

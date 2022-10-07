@@ -72,7 +72,7 @@ async function transactionHandler(
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
   // a single record in DB using transaction date
-  await dashboardStatsRepository.refreshStats()
+  await dashboardStatsRepository.refreshStats(transaction.timestamp)
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
   if (!currentStatus && newStatus !== 'ALLOW') {

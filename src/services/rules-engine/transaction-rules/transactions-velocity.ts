@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { JSONSchemaType } from 'ajv'
 import {
   ThinTransaction,
@@ -24,6 +23,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
+import dayjs from '@/utils/dayjs'
 import {
   PaymentDetails,
   PaymentMethod,

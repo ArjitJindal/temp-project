@@ -44,7 +44,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV && process.env.ENV === 'local') {
+      if (process.env.ENV === 'local') {
         await dashboardStatsRepository.refreshStats()
       }
 
@@ -84,7 +84,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV && process.env.ENV === 'local') {
+      if (process.env.ENV === 'local') {
         await dashboardStatsRepository.refreshStats()
       }
 
@@ -108,7 +108,9 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      // await dashboardStatsRepository.refreshStats(tenantId)
+      if (process.env.ENV === 'local') {
+        await dashboardStatsRepository.refreshStats()
+      }
 
       const endTimestampNumber = endTimestamp
         ? parseInt(endTimestamp)

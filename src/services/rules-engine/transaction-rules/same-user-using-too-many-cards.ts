@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import dayjs from 'dayjs'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
+import dayjs from '@/utils/dayjs'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type SameUserUsingTooManyCardsParameters = {

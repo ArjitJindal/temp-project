@@ -1,6 +1,6 @@
 import { Db, MongoClient } from 'mongodb'
 import _ from 'lodash'
-import { getTimeLabels } from '../utils'
+import { getAffectedInterval, getTimeLabels } from '../utils'
 import dayjs from '@/utils/dayjs'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
@@ -8,11 +8,9 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DAY_DATE_FORMAT,
   DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT,
   MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
@@ -21,12 +19,21 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
-import { logger } from '@/core/logger'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
+import { RuleAction } from '@/@types/openapi-public/RuleAction'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
+
+const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
+  keyof DashboardStatsTransactionsCountData,
+  RuleAction
+> = new Map([
+  ['flaggedTransactions', 'FLAG'],
+  ['stoppedTransactions', 'BLOCK'],
+  ['suspendedTransactions', 'SUSPEND'],
+])
 
 export class DashboardStatsRepository {
   mongoDb: MongoClient
@@ -44,7 +51,8 @@ export class DashboardStatsRepository {
 
   private async recalculateHitsByUser(
     db: Db,
-    direction: 'ORIGIN' | 'DESTINATION'
+    direction: 'ORIGIN' | 'DESTINATION',
+    timestamp?: number
   ) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
@@ -66,10 +74,21 @@ export class DashboardStatsRepository {
       }
     )
 
+    let timestampMatch = undefined
+    if (timestamp) {
+      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+      timestampMatch = {
+        timestamp: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
     await transactionsCollection
       .aggregate([
         {
           $match: {
+            ...timestampMatch,
             [userFieldName]: { $exists: true },
           },
         },
@@ -134,15 +153,26 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  private async recalculateRuleHitStats(db: Db) {
+  private async recalculateRuleHitStats(db: Db, timestamp?: number) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
     const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
       this.tenantId
     )
+    let timestampMatch = undefined
+    if (timestamp) {
+      const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+      timestampMatch = {
+        timestamp: {
+          $gte: start,
+          $lt: end,
+        },
+      }
+    }
     await transactionsCollection
       .aggregate([
+        { $match: { ...timestampMatch } },
         {
           $unwind: {
             path: '$hitRules',
@@ -193,7 +223,7 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  public async recalculateTransactionsVolumeStats(db: Db) {
+  public async recalculateTransactionsVolumeStats(db: Db, timestamp?: number) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
@@ -204,402 +234,190 @@ export class DashboardStatsRepository {
     const aggregatedMonthlyCollectionName =
       DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(this.tenantId)
 
-    // Stages for calculating rules final action, which follows the same
-    // logic as TransactionRepository.getAggregatedRuleStatus
-    const rulesResultStages = [
-      {
-        $addFields: {
-          hitRulesResult: {
-            $map: {
-              input: '$hitRules',
-              as: 'rule',
-              in: {
-                ruleAction: '$$rule.ruleAction',
-                order: {
-                  $indexOfArray: [RULE_ACTIONS, '$$rule.ruleAction'],
-                },
-              },
-            },
-          },
-        },
-      },
-      {
-        $addFields: {
-          hitRulesResult: {
-            $reduce: {
-              input: '$hitRulesResult',
-              initialValue: null,
-              in: {
-                $cond: {
-                  if: {
-                    $or: [
-                      { $eq: ['$$value', null] },
-                      { $lt: ['$$this.order', '$$value.order'] },
-                    ],
+    const getHourlyAggregationPipeline = (
+      key: keyof DashboardStatsTransactionsCountData
+    ) => {
+      // Stages for calculating rules final action, which follows the same
+      // logic as TransactionRepository.getAggregatedRuleStatus
+      const rulesResultPipeline = [
+        {
+          $addFields: {
+            hitRulesResult: {
+              $map: {
+                input: '$hitRules',
+                as: 'rule',
+                in: {
+                  ruleAction: '$$rule.ruleAction',
+                  order: {
+                    $indexOfArray: [RULE_ACTIONS, '$$rule.ruleAction'],
                   },
-                  then: '$$this',
-                  else: '$$value',
                 },
               },
             },
           },
         },
-      },
-      {
-        $addFields: {
-          hitRulesResult: {
-            $cond: {
-              if: { $eq: ['$hitRulesResult', null] },
-              then: 'null',
-              else: '$hitRulesResult.ruleAction',
+        {
+          $addFields: {
+            hitRulesResult: {
+              $reduce: {
+                input: '$hitRulesResult',
+                initialValue: null,
+                in: {
+                  $cond: {
+                    if: {
+                      $or: [
+                        { $eq: ['$$value', null] },
+                        { $lt: ['$$this.order', '$$value.order'] },
+                      ],
+                    },
+                    then: '$$this',
+                    else: '$$value',
+                  },
+                },
+              },
             },
           },
         },
-      },
-    ]
+        {
+          $addFields: {
+            hitRulesResult: {
+              $cond: {
+                if: { $eq: ['$hitRulesResult', null] },
+                then: 'null',
+                else: '$hitRulesResult.ruleAction',
+              },
+            },
+          },
+        },
+      ]
+      const ruleAction = TRANSACTION_STATE_KEY_TO_RULE_ACTION.get(key)
+      const ruleActionMatch = ruleAction && { hitRulesResult: ruleAction }
+      let timestampMatch = undefined
+      if (timestamp) {
+        const { start, end } = getAffectedInterval(timestamp, 'HOUR')
+        timestampMatch = {
+          timestamp: {
+            $gte: start,
+            $lt: end,
+          },
+        }
+      }
+      return [
+        ...(ruleAction ? rulesResultPipeline : []),
+        { $match: { ...timestampMatch, ...ruleActionMatch } },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: HOUR_DATE_FORMAT,
+                date: { $toDate: { $toLong: '$timestamp' } },
+              },
+            },
+            [key]: { $sum: 1 },
+          },
+        },
+        {
+          $merge: {
+            into: aggregatedHourlyCollectionName,
+            whenMatched: 'merge',
+          },
+        },
+      ]
+    }
+
     // Hourly Stats
-    try {
-      await transactionsCollection
-        .aggregate([
-          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              totalTransactions: { $sum: 1 },
+    await transactionsCollection
+      .aggregate(getHourlyAggregationPipeline('totalTransactions'))
+      .next()
+    await transactionsCollection
+      .aggregate(getHourlyAggregationPipeline('flaggedTransactions'))
+      .next()
+    await transactionsCollection
+      .aggregate(getHourlyAggregationPipeline('stoppedTransactions'))
+      .next()
+    await transactionsCollection
+      .aggregate(getHourlyAggregationPipeline('suspendedTransactions'))
+      .next()
+
+    const getDerivedAggregationPipeline = (
+      granularity: 'DAY' | 'MONTH',
+      timestamp?: number
+    ) => {
+      let timestampMatch = undefined
+      if (timestamp) {
+        const { start, end } = getAffectedInterval(timestamp, granularity)
+        const format =
+          granularity === 'DAY' ? HOUR_DATE_FORMAT_JS : DAY_DATE_FORMAT_JS
+        timestampMatch = {
+          _id: {
+            $gte: dayjs(start).format(format),
+            $lt: dayjs(end).format(format),
+          },
+        }
+      }
+      return [
+        { $match: { ...timestampMatch } },
+        {
+          $addFields: {
+            time: {
+              $substr: ['$_id', 0, granularity === 'DAY' ? 10 : 7],
             },
           },
-          {
-            $merge: {
-              into: aggregatedHourlyCollectionName,
-              whenMatched: 'replace',
+        },
+        {
+          $group: {
+            _id: '$time',
+            totalTransactions: {
+              $sum: '$totalTransactions',
+            },
+            flaggedTransactions: {
+              $sum: '$flaggedTransactions',
+            },
+            stoppedTransactions: {
+              $sum: '$stoppedTransactions',
+            },
+            suspendedTransactions: {
+              $sum: '$suspendedTransactions',
             },
           },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'FLAG',
-            },
+        },
+        {
+          $merge: {
+            into:
+              granularity === 'DAY'
+                ? aggregatedDailyCollectionName
+                : aggregatedMonthlyCollectionName,
+            whenMatched: 'replace',
           },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              flaggedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedHourlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'BLOCK',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              stoppedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedHourlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'SUSPEND',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              suspendedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedHourlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-    } catch (e) {
-      logger.error(`ERROR ${e}`)
+        },
+      ]
     }
+
     // Daily stats
-    try {
-      await transactionsCollection
-        .aggregate([
-          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: DAY_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              totalTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedDailyCollectionName,
-              whenMatched: 'replace',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'FLAG',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: DAY_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              flaggedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedDailyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'BLOCK',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: DAY_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              stoppedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedDailyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'SUSPEND',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: DAY_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              suspendedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedDailyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-    } catch (e) {
-      logger.error(`ERROR ${e}`)
-    }
+    await db
+      .collection<DashboardStatsTransactionsCountData>(
+        aggregatedHourlyCollectionName
+      )
+      .aggregate(getDerivedAggregationPipeline('DAY', timestamp))
+      .next()
+
     // Monthly stats
-    try {
-      await transactionsCollection
-        .aggregate([
-          { $match: { timestamp: { $gte: 0 } } }, // aggregates everything for now
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: MONTH_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              totalTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedMonthlyCollectionName,
-              whenMatched: 'replace',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'FLAG',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: MONTH_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              flaggedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedMonthlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'BLOCK',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: MONTH_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              stoppedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedMonthlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-      await transactionsCollection
-        .aggregate([
-          ...rulesResultStages,
-          {
-            $match: {
-              timestamp: { $gte: 0 },
-              hitRulesResult: 'SUSPEND',
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format: MONTH_DATE_FORMAT,
-                  date: { $toDate: { $toLong: '$timestamp' } },
-                },
-              },
-              suspendedTransactions: { $sum: 1 },
-            },
-          },
-          {
-            $merge: {
-              into: aggregatedMonthlyCollectionName,
-              whenMatched: 'merge',
-            },
-          },
-        ])
-        .next()
-    } catch (e) {
-      logger.error(`ERROR ${e}`)
-    }
+    await db
+      .collection<DashboardStatsTransactionsCountData>(
+        aggregatedDailyCollectionName
+      )
+      .aggregate(getDerivedAggregationPipeline('MONTH', timestamp))
+      .next()
   }
 
-  public async refreshStats() {
+  public async refreshStats(timestamp?: number) {
     const db = this.mongoDb.db()
 
     await Promise.all([
-      this.recalculateTransactionsVolumeStats(db),
-      this.recalculateRuleHitStats(db),
-      this.recalculateHitsByUser(db, 'ORIGIN'),
-      this.recalculateHitsByUser(db, 'DESTINATION'),
+      this.recalculateTransactionsVolumeStats(db, timestamp),
+      this.recalculateRuleHitStats(db, timestamp),
+      this.recalculateHitsByUser(db, 'ORIGIN', timestamp),
+      this.recalculateHitsByUser(db, 'DESTINATION', timestamp),
     ])
   }
 
@@ -613,6 +431,7 @@ export class DashboardStatsRepository {
 
     let collection
     let timeLabels: string[]
+    let timeFormat: string
 
     if (granularity === granularityValues.DAY) {
       collection = db.collection<DashboardStatsTransactionsCountData>(
@@ -622,8 +441,9 @@ export class DashboardStatsRepository {
         DAY_DATE_FORMAT_JS,
         startTimestamp,
         endTimestamp,
-        'day'
+        'DAY'
       )
+      timeFormat = DAY_DATE_FORMAT_JS
     } else if (granularity === granularityValues.MONTH) {
       collection = db.collection<DashboardStatsTransactionsCountData>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY(tenantId)
@@ -632,8 +452,9 @@ export class DashboardStatsRepository {
         MONTH_DATE_FORMAT_JS,
         startTimestamp,
         endTimestamp,
-        'month'
+        'MONTH'
       )
+      timeFormat = MONTH_DATE_FORMAT_JS
     } else {
       collection = db.collection<DashboardStatsTransactionsCountData>(
         DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY(tenantId)
@@ -642,17 +463,18 @@ export class DashboardStatsRepository {
         HOUR_DATE_FORMAT_JS,
         startTimestamp,
         endTimestamp,
-        'hour'
+        'HOUR'
       )
+      timeFormat = HOUR_DATE_FORMAT_JS
     }
 
-    const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
-    const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
+    const startDate = dayjs(startTimestamp).format(timeFormat)
+    const endDate = dayjs(endTimestamp).format(timeFormat)
 
     const dashboardStats = await collection
       .find({
         _id: {
-          $gt: startDate,
+          $gte: startDate,
           $lte: endDate,
         },
       })
@@ -660,16 +482,16 @@ export class DashboardStatsRepository {
       .toArray()
 
     const dashboardStatsById = _.keyBy(dashboardStats, '_id')
-    return timeLabels.map(
-      (timeLabel) =>
-        dashboardStatsById[timeLabel] || {
-          _id: timeLabel,
-          totalTransactions: 0,
-          flaggedTransactions: 0,
-          stoppedTransactions: 0,
-          suspendedTransactions: 0,
-        }
-    )
+    return timeLabels.map((timeLabel) => {
+      const stat = dashboardStatsById[timeLabel]
+      return {
+        _id: timeLabel,
+        totalTransactions: stat?.totalTransactions ?? 0,
+        flaggedTransactions: stat?.flaggedTransactions ?? 0,
+        stoppedTransactions: stat?.stoppedTransactions ?? 0,
+        suspendedTransactions: stat?.suspendedTransactions ?? 0,
+      }
+    })
   }
 
   public async getHitsByUserStats(
