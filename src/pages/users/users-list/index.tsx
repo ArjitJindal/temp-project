@@ -154,7 +154,6 @@ export default function UsersList() {
     <PageWrapper title={i18n('menu.users.lists')}>
       <PageTabs
         activeKey={list}
-        destroyInactiveTabPane={true}
         onChange={(key) => {
           navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
         }}

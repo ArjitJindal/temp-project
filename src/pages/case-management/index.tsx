@@ -15,8 +15,6 @@ function TableList() {
   return (
     <PageWrapper title={i18n('menu.case-management')}>
       <PageTabs
-        type="line"
-        destroyInactiveTabPane={true}
         onChange={() => {
           navigate(makeUrl('/case-management'));
         }}

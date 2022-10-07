@@ -3,6 +3,7 @@ import { Tabs } from 'antd';
 import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import PageWrapper from '@/components/PageWrapper';
+import PageTabs from '@/components/ui/PageTabs';
 
 const SanctionsPage: React.FC = () => {
   const { type = 'search' } = useParams<'type'>();
@@ -10,10 +11,8 @@ const SanctionsPage: React.FC = () => {
   const navigate = useNavigate();
   return (
     <PageWrapper>
-      <Tabs
-        type="line"
+      <PageTabs
         activeKey={type}
-        destroyInactiveTabPane={true}
         onChange={(key) => {
           navigate(`/sanctions/${key}`, { replace: true });
         }}
@@ -24,7 +23,7 @@ const SanctionsPage: React.FC = () => {
         <Tabs.TabPane tab="Search History" key="search-history">
           <SanctionsSearchHistoryTable />
         </Tabs.TabPane>
-      </Tabs>
+      </PageTabs>
     </PageWrapper>
   );
 };

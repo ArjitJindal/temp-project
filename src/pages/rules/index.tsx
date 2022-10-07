@@ -6,6 +6,7 @@ import StepForm from './create-rule/index';
 import MyRule from './my-rules';
 import RequestNew from './request-new';
 import PageWrapper from '@/components/PageWrapper';
+import PageTabs from '@/components/ui/PageTabs';
 
 const TableList = () => {
   const { rule = 'create-rule' } = useParams<'rule'>();
@@ -16,10 +17,8 @@ const TableList = () => {
   }, [setLocalStorageActiveTab, rule]);
   return (
     <PageWrapper>
-      <Tabs
-        type="line"
+      <PageTabs
         activeKey={rule}
-        destroyInactiveTabPane={true}
         onChange={(key) => {
           navigate(`/rules/${key}`, { replace: true });
         }}
@@ -33,7 +32,7 @@ const TableList = () => {
         <Tabs.TabPane tab="Request New" key="request-new">
           <RequestNew />
         </Tabs.TabPane>
-      </Tabs>
+      </PageTabs>
     </PageWrapper>
   );
 };
