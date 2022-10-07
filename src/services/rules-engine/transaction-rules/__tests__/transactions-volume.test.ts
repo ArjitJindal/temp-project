@@ -723,3 +723,64 @@ describe('Match Payment Method Details', () => {
     )
   })
 })
+
+describe('Initial transactions', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-volume',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+        transactionVolumeThreshold: {
+          EUR: 50,
+        },
+        initialTransactions: 1,
+      } as TransactionsVolumeRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'rule is hit after the past transactions is more than initialTransactions',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-4',
+          destinationUserId: '1-2',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

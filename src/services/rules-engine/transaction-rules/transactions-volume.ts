@@ -1,8 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import {
-  ThinTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactions,
@@ -13,6 +10,7 @@ import {
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
+  INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
   PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
@@ -21,10 +19,7 @@ import {
   TRANSACTION_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
@@ -34,6 +29,7 @@ type Filters = DefaultTransactionRuleParameters & {
 }
 
 export type TransactionsVolumeRuleParameters = Filters & {
+  initialTransactions?: number
   transactionVolumeThreshold: {
     [currency: string]: number
   }
@@ -50,6 +46,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     return {
       type: 'object',
       properties: {
+        initialTransactions: INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA(),
         transactionVolumeThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA({
           title: 'Transactions Volume Threshold',
         }),
@@ -101,6 +98,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       transactionState,
       transactionTypes,
       matchPaymentMethodDetails,
+      initialTransactions,
     } = this.parameters
 
     this.transactionRepository = new TransactionRepository(this.tenantId, {
@@ -181,10 +179,20 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       receiverReceivingAmount
     )
 
+    const skipCheckSender =
+      initialTransactions &&
+      senderSendingTransactions.length + senderReceivingTransactions.length <
+        initialTransactions
+    const skipCheckReceiver =
+      initialTransactions &&
+      receiverSendingTransactions.length +
+        receiverReceivingTransactions.length <
+        initialTransactions
     let isSenderHit = false
     let isReceiverHit = false
     let amount: TransactionAmountDetails | null = null
     if (
+      !skipCheckSender &&
       checkSender === 'sending' &&
       (await isTransactionAmountAboveThreshold(
         senderSendingAmount,
@@ -194,6 +202,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       isSenderHit = true
       amount = senderSendingAmount
     } else if (
+      !skipCheckSender &&
       checkSender === 'all' &&
       (await isTransactionAmountAboveThreshold(
         senderSum,
@@ -203,6 +212,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       isSenderHit = true
       amount = senderSum
     } else if (
+      !skipCheckReceiver &&
       checkReceiver === 'receiving' &&
       (await isTransactionAmountAboveThreshold(
         receiverReceivingAmount,
@@ -212,6 +222,7 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       isReceiverHit = true
       amount = receiverReceivingAmount
     } else if (
+      !skipCheckReceiver &&
       checkReceiver === 'all' &&
       (await isTransactionAmountAboveThreshold(
         receiverSum,
@@ -266,53 +277,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
           volumeThreshold,
         },
       }
-    }
-  }
-
-  private async getTransactions(
-    userId: string | undefined,
-    paymentDetails: PaymentDetails | undefined,
-    afterTimestamp: number,
-    checkType: 'sending' | 'receiving' | 'all' | 'none'
-  ): Promise<{
-    sendingTransactions: ThinTransaction[]
-    receivingTransactions: ThinTransaction[]
-  }> {
-    const transactionRepository = this
-      .transactionRepository as TransactionRepository
-    const [sendingTransactions, receivingTransactions] = await Promise.all([
-      checkType === 'sending' || checkType === 'all'
-        ? transactionRepository.getGenericUserSendingThinTransactions(
-            userId,
-            paymentDetails,
-            {
-              afterTimestamp,
-              beforeTimestamp: this.transaction.timestamp!,
-            },
-            {
-              transactionState: this.parameters.transactionState,
-              transactionTypes: this.parameters.transactionTypes,
-            }
-          )
-        : Promise.resolve([]),
-      checkType === 'receiving' || checkType === 'all'
-        ? transactionRepository.getGenericUserReceivingThinTransactions(
-            userId,
-            paymentDetails,
-            {
-              afterTimestamp,
-              beforeTimestamp: this.transaction.timestamp!,
-            },
-            {
-              transactionState: this.parameters.transactionState,
-              transactionTypes: this.parameters.transactionTypes,
-            }
-          )
-        : Promise.resolve([]),
-    ])
-    return {
-      sendingTransactions,
-      receivingTransactions,
     }
   }
 }
