@@ -7,6 +7,7 @@ import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react.svg';
+import LinkIcon from '@/components/ui/icons/Remix/business/links-line.react.svg';
 import BuildingIcon from '@/components/ui/icons/Remix/buildings/building-4-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import * as Form from '@/components/ui/Form';
@@ -37,9 +38,19 @@ export default function TransactionInfoCard(props: Props) {
           <Form.Layout.Label icon={<TransactionIcon />} title={'Transaction Type'} />
           <TransactionTypeTag transactionType={transaction.type} />
           <Form.Layout.Label icon={<FileLineIcon />} title="Reference" />
-          {transaction.reference}
+          {transaction.reference ?? '-'}
           <Form.Layout.Label icon={<BuildingIcon />} title="Product Type" />
-          {transaction.productType}
+          {transaction.productType ?? '-'}
+          <Form.Layout.Label icon={<LinkIcon />} title="Related Transactions" />
+          {transaction.relatedTransactionIds
+            ? transaction.relatedTransactionIds.map((transactionId) => {
+                return (
+                  <Id to={makeUrl(`/transactions/item/:id`, { id: transactionId })}>
+                    {transactionId}
+                  </Id>
+                );
+              })
+            : '-'}
         </div>
       </Card.Section>
     </Card.Root>
