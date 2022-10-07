@@ -16,6 +16,7 @@ import {
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-public/RequestParameters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 
@@ -24,12 +25,32 @@ type MissingUserIdMap = { field: string; userId: string }
 async function getTransactionMissingUsers(
   transaction: Transaction,
   tenantId: string,
-  dynamoDb: DocumentClient
+  dynamoDb: DocumentClient,
+  validationParams?: DefaultApiPostConsumerTransactionRequest
 ): Promise<(MissingUserIdMap | undefined)[]> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
-  const userIds: string[] = Array.from(
+  let userIds: string[] = Array.from(
     new Set([transaction.originUserId, transaction.destinationUserId])
   ).filter((id) => id) as string[]
+
+  if (validationParams) {
+    if (
+      validationParams?.validateOriginUserId === 'false' &&
+      validationParams?.validateDestinationUserId === 'false'
+    ) {
+      return []
+    }
+    if (validationParams?.validateOriginUserId === 'false') {
+      userIds = Array.from(new Set([transaction.destinationUserId])).filter(
+        (id) => id
+      ) as string[]
+    } else if (validationParams?.validateDestinationUserId === 'false') {
+      userIds = Array.from(new Set([transaction.originUserId])).filter(
+        (id) => id
+      ) as string[]
+    }
+  }
+
   if (userIds.length === 0) return []
   const users = await userRepository.getUsers(userIds)
   const existingUserIds = users.map((user) => user.userId)
@@ -103,6 +124,7 @@ export const transactionHandler = lambdaApi()(
     const transactionId = event.pathParameters?.transactionId
 
     if (event.httpMethod === 'POST' && event.body) {
+      const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
       if (
         transaction.relatedTransactionIds &&
@@ -123,7 +145,8 @@ export const transactionHandler = lambdaApi()(
       const missingUsers = await getTransactionMissingUsers(
         transaction,
         tenantId,
-        dynamoDb
+        dynamoDb,
+        validationParams || undefined
       )
       if (missingUsers.length === 0) {
         const result = await verifyTransaction(transaction, tenantId, dynamoDb)
