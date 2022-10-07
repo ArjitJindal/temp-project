@@ -750,13 +750,13 @@ export class CdkTarponStack extends cdk.Stack {
     if (!isDevUserStack) {
       tarponChangeCaptureKinesisConsumerAlias.addEventSource(
         new KinesisEventSource(tarponStream, {
-          batchSize: 1,
+          batchSize: 10,
           startingPosition: StartingPosition.TRIM_HORIZON,
         })
       )
       tarponChangeCaptureKinesisConsumerAlias.addEventSource(
         new KinesisEventSource(tarponMongoDbRetryStream, {
-          batchSize: 1,
+          batchSize: 10,
           startingPosition: StartingPosition.LATEST,
         })
       )
