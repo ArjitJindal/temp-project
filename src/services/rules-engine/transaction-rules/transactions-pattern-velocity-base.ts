@@ -124,30 +124,42 @@ export default class TransactionsPatternVelocityBaseRule<
           this.matchPattern(transaction, 'destination', 'receiver')
         ),
     ]
+    const senderMatchedTransactionGroups = this.groupTransactions(
+      senderMatchedTransactions
+    )
+    const receiverMatchedTransactionGroups = this.groupTransactions(
+      receiverMatchedTransactions
+    )
 
-    if (
-      (!initialTransactions ||
-        senderMatchedTransactions.length > initialTransactions) &&
-      senderMatchedTransactions.length > transactionsLimit
-    ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('origin'),
-        },
-      }
-    } else if (
-      (!initialTransactions ||
-        receiverMatchedTransactions.length > initialTransactions) &&
-      receiverMatchedTransactions.length > transactionsLimit
-    ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('destination'),
-        },
+    for (const group of senderMatchedTransactionGroups) {
+      if (
+        (!initialTransactions || group.length > initialTransactions!) &&
+        group.length > transactionsLimit
+      ) {
+        return {
+          action: this.action,
+          vars: {
+            ...super.getTransactionVars('origin'),
+          },
+        }
       }
     }
+    for (const group of receiverMatchedTransactionGroups) {
+      if (
+        (!initialTransactions || group.length > initialTransactions!) &&
+        group.length > transactionsLimit
+      ) {
+        return {
+          action: this.action,
+          vars: {
+            ...super.getTransactionVars('destination'),
+          },
+        }
+      }
+    }
+  }
+  protected groupTransactions(transactions: Transaction[]): Transaction[][] {
+    return [transactions]
   }
 
   protected matchPattern(

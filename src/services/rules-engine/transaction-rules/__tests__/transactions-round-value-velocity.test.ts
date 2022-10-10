@@ -147,3 +147,78 @@ describe('Core logic', () => {
     )
   })
 })
+describe('Optional parameter - Same Amount', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-round-value-velocity',
+      defaultParameters: {
+        sameAmount: true,
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TransactionsRoundValueVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Amount and currency are same - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 500,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 500,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 300,
+            transactionCurrency: 'EUR',
+          },
+          timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 500,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 500,
+            transactionCurrency: 'EUR',
+          },
+          timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
