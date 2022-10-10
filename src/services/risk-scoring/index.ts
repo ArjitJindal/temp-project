@@ -4,8 +4,19 @@ import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/Paramete
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { logger } from '@/core/logger'
 
 const DEFAULT_RISK_LEVEL = 'HIGH' // defaults to high risk for now - will be configurable in the future
+
+const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
+  let riskScore = 75 // Make this configurable
+  riskClassificationValues.map((value) => {
+    if (value.riskLevel === DEFAULT_RISK_LEVEL) {
+      riskScore = _.mean([value.upperBoundRiskScore, value.lowerBoundRiskScore])
+    }
+  })
+  return riskScore
+}
 
 export const calculateKRS = async (
   tenantId: string,
@@ -15,7 +26,6 @@ export const calculateKRS = async (
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
   const riskClassificationValues = await riskRepository.getRiskClassification()
-
   const riskScoresList: number[] = []
 
   parameterRiskScores
@@ -31,7 +41,7 @@ export const calculateKRS = async (
         user,
         parameterAttributeDetails
       )
-      riskClassificationValues.map((value) => {
+      riskClassificationValues.forEach((value) => {
         if (riskLevel == value.riskLevel) {
           const riskScore = _.mean([
             value.upperBoundRiskScore,
@@ -41,7 +51,11 @@ export const calculateKRS = async (
         }
       })
     })
-  const krsScore = _.mean(riskScoresList)
+  const krsScore = riskScoresList.length
+    ? _.mean(riskScoresList)
+    : getDefaultRiskValue(riskClassificationValues)
+
+  logger.info(`KRS Score: ${krsScore}`)
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
 }
 
