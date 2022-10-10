@@ -49,13 +49,7 @@ export default function BusinessUserDetails(props: Props) {
       >
         {user.directors && user.directors.length > 0 && <PersonsTable persons={user.directors} />}
       </Card.Root>
-      <Card.Root
-        header={{
-          title: 'Transaction History',
-        }}
-      >
-        <UserTransactionHistoryTable userId={user.userId} />
-      </Card.Root>
+      <UserTransactionHistoryTable userId={user.userId} />
       <Divider className={s.divider} orientation="left" orientationMargin="0">
         Documents
       </Divider>
