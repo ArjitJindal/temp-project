@@ -40,8 +40,9 @@ function getDefaultParams(): TransactionsAverageAmountExceededParameters {
       units: 2,
       rollingBasis: true,
     },
-    multiplierThresholds: {
-      EUR: 1,
+    multiplierThreshold: {
+      currency: 'EUR',
+      value: 100,
     },
     checkSender: 'all',
     checkReceiver: 'all',
@@ -87,7 +88,7 @@ describe('Description formatting', () => {
 
 const defaultParams = getDefaultParams()
 
-describe('Core login', () => {
+describe('Core logic', () => {
   const now = dayjs('2022-01-01T00:00:00.000Z')
 
   describe.each<
@@ -286,7 +287,7 @@ describe('Core login', () => {
           rollingBasis: true,
         },
         averageThreshold: {
-          max: 99,
+          max: 9999,
         },
       },
     },

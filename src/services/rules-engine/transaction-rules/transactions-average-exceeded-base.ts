@@ -1,12 +1,11 @@
-import { JSONSchemaType } from 'ajv'
 import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import {
   AGE_RANGE_OPTIONAL_SCHEMA,
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   PAYMENT_METHOD_OPTIONAL_SCHEMA,
-  TimeWindow,
   TIME_WINDOW_SCHEMA,
+  TimeWindow,
   TRANSACTION_STATE_OPTIONAL_SCHEMA,
   TRANSACTION_TYPES_OPTIONAL_SCHEMA,
   USER_TYPE_OPTIONAL_SCHEMA,
@@ -32,6 +31,8 @@ import {
   isUserType,
 } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserType } from '@/@types/user/user-type'
+import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
+import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
 
 type UserParty = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
@@ -65,15 +66,15 @@ export default class TransactionAverageExceededBaseRule<
 > extends TransactionRule<Params> {
   transactionRepository?: TransactionRepository
 
-  public static getBaseSchema(): JSONSchemaType<TransactionsAverageExceededParameters> {
+  public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsAverageExceededParameters> {
     return {
       type: 'object',
       properties: {
         period1: TIME_WINDOW_SCHEMA({
-          title: 'Current period',
+          title: 'period1 (Current period)',
         }),
         period2: TIME_WINDOW_SCHEMA({
-          title: 'Reference period, should be larger than period1',
+          title: 'period2 (Reference period, should be larger than period1)',
         }),
         excludePeriod1: {
           type: 'boolean',
@@ -82,7 +83,8 @@ export default class TransactionAverageExceededBaseRule<
         },
         transactionsNumberThreshold: {
           type: 'object',
-          title: 'Minimum average in period1 for rule to trigger',
+          title:
+            "Rule doesn't trigger if transactions number in period1 in less than 'Min' or more than 'Max'",
           properties: {
             min: { type: 'integer', title: 'Min', nullable: true },
             max: { type: 'integer', title: 'Max', nullable: true },
@@ -92,7 +94,8 @@ export default class TransactionAverageExceededBaseRule<
         },
         averageThreshold: {
           type: 'object',
-          title: 'Minimum average in period1 for rule to trigger',
+          title:
+            "Rule doesn't trigger if average in period1 in less than 'Min' or more than 'Max'",
           properties: {
             min: { type: 'integer', title: 'Min', nullable: true },
             max: { type: 'integer', title: 'Max', nullable: true },
@@ -109,6 +112,22 @@ export default class TransactionAverageExceededBaseRule<
         userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['period1', 'period2', 'checkSender', 'checkReceiver'],
+      'ui:schema': {
+        'ui:order': [
+          'period1',
+          'period2',
+          'excludePeriod1',
+          'paymentMethod',
+          'transactionState',
+          'transactionTypes',
+          'checkSender',
+          'checkReceiver',
+          'ageRange',
+          'userType',
+          'transactionsNumberThreshold',
+          'averageThreshold',
+        ],
+      },
     }
   }
 
@@ -242,8 +261,8 @@ export default class TransactionAverageExceededBaseRule<
     }
 
     if (
-      (avgMin != null && result[0] < avgMin) ||
-      (avgMax != null && result[0] > avgMax)
+      (avgMin != null && multiplierToPercents(result[0]) < avgMin) ||
+      (avgMax != null && multiplierToPercents(result[0]) > avgMax)
     ) {
       return
     }
@@ -332,7 +351,7 @@ export default class TransactionAverageExceededBaseRule<
         }
         const [avg1, avg2] = avgs
         const multiplier = avg1 / avg2
-        const result = multiplier > maxMultiplier
+        const result = multiplierToPercents(multiplier) > maxMultiplier
         if (result) {
           const vars = {
             ...super.getTransactionVars(user),

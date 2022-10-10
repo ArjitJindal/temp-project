@@ -31,7 +31,7 @@ function getDefaultParams(): TransactionsAverageNumberExceededParameters {
       units: 2,
       rollingBasis: true,
     },
-    multiplierThreshold: 1,
+    multiplierThreshold: 100,
     checkSender: 'all',
     checkReceiver: 'all',
   }

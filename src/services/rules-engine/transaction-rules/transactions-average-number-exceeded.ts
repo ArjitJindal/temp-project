@@ -4,9 +4,14 @@ import TransactionAverageExceededBaseRule, {
   TransactionsAverageExceededParameters,
 } from './transactions-average-exceeded-base'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { PERCENT_SCHEMA } from '@/services/rules-engine/utils/math-utils'
 
 type TransactionsAverageNumberExceededPartialParameters = {
   multiplierThreshold: number
+  averageThreshold?: {
+    min?: number
+    max?: number
+  }
 }
 
 export type TransactionsAverageNumberExceededParameters =
@@ -22,13 +27,41 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
       {
         type: 'object',
         properties: {
-          multiplierThreshold: {
-            type: 'number',
-            title: 'Maximum multiplier',
-            nullable: false,
+          multiplierThreshold: PERCENT_SCHEMA({
+            title:
+              'Maximum multiplier (as a percentage). For example, specifying 200 (%) means that period2 average should be twice as big as period1 average to trigger the rule',
+            maximum: 'NO_MAXIMUM',
+          }),
+          averageThreshold: {
+            type: 'object',
+            title:
+              "Rule doesn't trigger if average transactions number in period1 in less than 'Min' or more than 'Max' (as a percentage)",
+            properties: {
+              min: PERCENT_SCHEMA({ title: 'Min', maximum: 'NO_MAXIMUM' }),
+              max: PERCENT_SCHEMA({ title: 'Max', maximum: 'NO_MAXIMUM' }),
+            },
+            required: [],
+            nullable: true,
           },
         },
         required: ['multiplierThreshold'],
+        'ui:schema': {
+          'ui:order': [
+            'period1',
+            'period2',
+            'excludePeriod1',
+            'multiplierThreshold',
+            'transactionsNumberThreshold',
+            'averageThreshold',
+            'checkSender',
+            'checkReceiver',
+            'ageRange',
+            'userType',
+            'paymentMethod',
+            'transactionState',
+            'transactionTypes',
+          ],
+        },
       }
 
     return mergeRuleSchemas<TransactionsAverageNumberExceededParameters>(

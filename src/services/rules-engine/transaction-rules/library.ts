@@ -641,10 +641,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           granularity: 'day',
         },
         period2: {
-          units: 1,
+          units: 2,
           granularity: 'day',
         },
-        multiplierThreshold: 2,
+        multiplierThreshold: 200,
         checkSender: 'sending',
         checkReceiver: 'receiving',
       }
@@ -670,11 +670,12 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           granularity: 'day',
         },
         period2: {
-          units: 1,
+          units: 2,
           granularity: 'day',
         },
-        multiplierThresholds: {
-          EUR: 2,
+        multiplierThreshold: {
+          currency: 'EUR',
+          value: 200,
         },
         checkSender: 'sending',
         checkReceiver: 'receiving',
