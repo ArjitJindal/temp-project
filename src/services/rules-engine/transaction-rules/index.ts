@@ -40,6 +40,7 @@ import TooManyCounterpartyCountryRule from './too-many-counterparty-country'
 import TransactionsRoundValueVelocityRule from './transactions-round-value-velocity'
 import SamePaymentDetailsRule from './same-payment-details'
 import BlacklistPaymentdetailsRule from './blacklist-payment-details'
+import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -84,6 +85,7 @@ export const TRANSACTION_RULES = {
   'same-payment-details': SamePaymentDetailsRule,
   'too-many-counterparty-country': TooManyCounterpartyCountryRule,
   'blacklist-payment-details': BlacklistPaymentdetailsRule,
+  'transactions-exceed-past-period': TransactionsExceedPastPeriodRule,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

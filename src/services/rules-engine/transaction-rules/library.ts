@@ -31,6 +31,7 @@ import { TooManyTransactionsToHighRiskCountryRuleParameters } from './too-many-t
 import { TooManyCounterpartyCountryRuleParameters } from './too-many-counterparty-country'
 import { TransactionsRoundValueVelocityRuleParameters } from './transactions-round-value-velocity'
 import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-details'
+import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
 import { TRANSACTION_RULES } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -895,6 +896,36 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         defaultAction: 'FLAG',
         ruleImplementationName: 'blacklist-payment-details',
         labels: ['AML', 'Risk Appetite', 'List'],
+        defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: TransactionsExceedPastPeriodRuleParameters = {
+        multiplierThreshold: 100,
+        timeWindow1: {
+          units: 1,
+          granularity: 'day',
+        },
+        timeWindow2: {
+          units: 2,
+          granularity: 'day',
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      }
+      return {
+        id: 'R-131',
+        type: 'TRANSACTION',
+        name: 'Transactions exceed past period',
+        description:
+          'Total number of transactions in the last time period t1 is >= X times higher than total number of transactions in time period t2',
+        descriptionTemplate:
+          "{{ if-sender 'Sender' 'Receiver' }} {{ if-sender 'sending' 'receiving' }} transaction(s) in {{ format-time-window parameters.timeWindow1 }} is more than {{ parameters.multiplierThreshold }} times in {{ format-time-window parameters.timeWindow2 }}",
+        defaultParameters,
+        defaultAction: 'FLAG',
+        ruleImplementationName: 'transactions-exceed-past-period',
+        labels: ['Internal Fraud', 'AML', 'Fraud'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
       }
