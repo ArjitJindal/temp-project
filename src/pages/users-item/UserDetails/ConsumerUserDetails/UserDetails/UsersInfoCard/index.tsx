@@ -52,6 +52,19 @@ export default function UsersInfoCard(props: Props) {
           {moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}
         </Form.Layout.Label>
       </div>
+      <div>
+        <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
+          {user.reasonForAccountOpening ? (
+            <div className={s.tag}>
+              {user.reasonForAccountOpening.map((reason) => {
+                return <Tag>{reason}</Tag>;
+              })}
+            </div>
+          ) : (
+            '-'
+          )}
+        </Form.Layout.Label>
+      </div>
       <div className={s.tag}>
         <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
           <div>
