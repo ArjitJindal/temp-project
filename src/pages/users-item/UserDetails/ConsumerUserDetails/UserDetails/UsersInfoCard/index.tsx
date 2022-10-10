@@ -52,10 +52,10 @@ export default function UsersInfoCard(props: Props) {
           {moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}
         </Form.Layout.Label>
       </div>
-      <div>
+      <div className={s.inner}>
         <Form.Layout.Label icon={<EarthLineIcon />} title={'Reason for opening account'}>
           {user.reasonForAccountOpening ? (
-            <div className={s.tag}>
+            <div>
               {user.reasonForAccountOpening.map((reason) => {
                 return <Tag>{reason}</Tag>;
               })}
