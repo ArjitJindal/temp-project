@@ -12,6 +12,33 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const TEST_TENANT_ID = getTestTenantId()
+const TEST_TRANSACTIONS = [
+  getTestTransaction({
+    originUserId: '2-1',
+    destinationUserId: '2-2',
+    timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+  }),
+  getTestTransaction({
+    originUserId: '2-1',
+    destinationUserId: '2-3',
+    timestamp: dayjs('2022-01-01T00:00:05.000Z').valueOf(),
+  }),
+  getTestTransaction({
+    originUserId: '2-1',
+    destinationUserId: '2-4',
+    timestamp: dayjs('2022-01-01T00:00:06.000Z').valueOf(),
+  }),
+  getTestTransaction({
+    originUserId: '2-1',
+    destinationUserId: '2-5',
+    timestamp: dayjs('2022-01-01T00:00:07.000Z').valueOf(),
+  }),
+  getTestTransaction({
+    originUserId: '2-1',
+    destinationUserId: '2-6',
+    timestamp: dayjs('2022-01-01T00:00:08.000Z').valueOf(),
+  }),
+]
 
 dynamoDbSetupHook()
 
@@ -29,6 +56,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
         units: 10,
         granularity: 'second',
       },
+      minTransactionsInTimeWindow1: 4,
       checkSender: 'all',
       checkReceiver: 'all',
     } as TransactionsExceedPastPeriodRuleParameters,
@@ -39,33 +67,13 @@ describe('R-131 description formatting', () => {
   testRuleDescriptionFormatting(
     'basic case',
     TEST_TENANT_ID,
-    [
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-2',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-3',
-        timestamp: dayjs('2022-01-01T00:00:05.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-4',
-        timestamp: dayjs('2022-01-01T00:00:06.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-5',
-        timestamp: dayjs('2022-01-01T00:00:07.000Z').valueOf(),
-      }),
-    ],
+    TEST_TRANSACTIONS,
     {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-131').descriptionTemplate,
     },
     [
+      null,
       null,
       null,
       null,
@@ -76,29 +84,8 @@ describe('R-131 description formatting', () => {
 describe.each<TransactionRuleTestCase>([
   {
     name: 'Exceeded transactions - hit',
-    transactions: [
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-2',
-        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-3',
-        timestamp: dayjs('2022-01-01T00:00:05.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-4',
-        timestamp: dayjs('2022-01-01T00:00:06.000Z').valueOf(),
-      }),
-      getTestTransaction({
-        originUserId: '2-1',
-        destinationUserId: '2-5',
-        timestamp: dayjs('2022-01-01T00:00:07.000Z').valueOf(),
-      }),
-    ],
-    expectedHits: [false, false, false, true],
+    transactions: TEST_TRANSACTIONS,
+    expectedHits: [false, false, false, false, true],
   },
 ])('', ({ name, transactions, expectedHits }) => {
   createTransactionRuleTestCase(

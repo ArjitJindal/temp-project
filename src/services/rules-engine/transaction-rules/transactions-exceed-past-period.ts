@@ -23,6 +23,7 @@ import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 export type TransactionsExceedPastPeriodRuleParameters =
   DefaultTransactionRuleParameters & {
+    minTransactionsInTimeWindow1?: number
     multiplierThreshold: number
     timeWindow1: TimeWindow
     timeWindow2: TimeWindow
@@ -43,12 +44,6 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
     return {
       type: 'object',
       properties: {
-        multiplierThreshold: {
-          type: 'integer',
-          title: 'Multiplier threshold',
-          description:
-            'rule is run when the number of transactions of time period 2 is greater than the number of transactions of time period 1 multiplied by this threshold',
-        },
         timeWindow1: TIME_WINDOW_SCHEMA({
           title: 'Time Period 1',
         }),
@@ -57,6 +52,17 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
           description:
             'Should be larger than time period 1. Time period 1 is excluded',
         }),
+        multiplierThreshold: {
+          type: 'integer',
+          title: 'Multiplier threshold',
+          description:
+            'rule is run when the number of transactions of time period 2 is greater than the number of transactions of time period 1 multiplied by this threshold',
+        },
+        minTransactionsInTimeWindow1: {
+          type: 'integer',
+          title: 'Minimum number of transactions in time period 1',
+          nullable: true,
+        },
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
         transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
@@ -85,6 +91,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
   public async computeRule() {
     const {
       multiplierThreshold,
+      minTransactionsInTimeWindow1,
       timeWindow1,
       timeWindow2,
       checkSender,
@@ -143,6 +150,8 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
 
     if (
       checkSender !== 'none' &&
+      (!minTransactionsInTimeWindow1 ||
+        senderTransactionsCount1 >= minTransactionsInTimeWindow1) &&
       senderTransactionsCount2 - senderTransactionsCount1 > 0 &&
       senderTransactionsCount1 >
         multiplierThreshold *
@@ -157,6 +166,8 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
     }
     if (
       checkReceiver !== 'none' &&
+      (!minTransactionsInTimeWindow1 ||
+        receiverTransactionsCount1 >= minTransactionsInTimeWindow1) &&
       receiverTransactionsCount2 - receiverTransactionsCount1 > 0 &&
       receiverTransactionsCount1 >
         multiplierThreshold *
