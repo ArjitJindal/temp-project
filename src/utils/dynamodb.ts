@@ -9,25 +9,105 @@ import {
   UpdateExpression,
 } from 'aws-sdk/clients/dynamodb'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
-import { chunk } from 'lodash'
+import _, { chunk } from 'lodash'
 import { StackConstants } from '@cdk/constants'
 import { Credentials, CredentialsOptions } from 'aws-sdk/lib/credentials'
+import {
+  BatchGetCommand,
+  BatchWriteCommand,
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getCredentialsFromEvent } from './credentials'
+import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
+import {
+  DYNAMODB_READ_CAPACITY_METRIC,
+  DYNAMODB_WRITE_CAPACITY_METRIC,
+} from '@/core/cloudwatch/metrics'
+import { logger } from '@/core/logger'
+
+function getAugmentedDynamoDBCommand(command: any): {
+  type: 'READ' | 'WRITE'
+  command: any
+} {
+  const newInput = {
+    ...command.input,
+    ReturnConsumedCapacity: 'TOTAL',
+  }
+  switch (command.constructor.name) {
+    case 'PutCommand':
+      return { type: 'WRITE', command: new PutCommand(newInput) }
+    case 'UpdateCommand':
+      return { type: 'WRITE', command: new UpdateCommand(newInput) }
+    case 'DeleteCommand':
+      return { type: 'WRITE', command: new DeleteCommand(newInput) }
+    case 'BatchWriteCommand':
+      return { type: 'WRITE', command: new BatchWriteCommand(newInput) }
+    case 'QueryCommand':
+      return { type: 'READ', command: new QueryCommand(newInput) }
+    case 'GetCommand':
+      return { type: 'READ', command: new GetCommand(newInput) }
+    case 'BatchGetCommand':
+      return { type: 'READ', command: new BatchGetCommand(newInput) }
+    default: {
+      logger.warn(`Unhandled dynamodb command: ${command.constructor.name}`)
+      return command
+    }
+  }
+}
+
+export function withMetrics(
+  client: DynamoDBDocumentClient
+): DynamoDBDocumentClient {
+  const metricPublisher = new MetricPublisher()
+  client.send = _.wrap(
+    client.send.bind(client),
+    async (func: any, command: any, ...args) => {
+      const commandInfo = getAugmentedDynamoDBCommand(command)
+      const result = await func(commandInfo.command, ...args)
+      const consumedCapacity = result?.ConsumedCapacity as ConsumedCapacity
+      const capacityUnits = consumedCapacity?.CapacityUnits
+      if (commandInfo.type === 'READ' && capacityUnits) {
+        // Don't await
+        metricPublisher.publicMetric(
+          DYNAMODB_READ_CAPACITY_METRIC,
+          capacityUnits,
+          { table: command?.input?.TableName }
+        )
+      }
+      if (commandInfo.type === 'WRITE' && capacityUnits) {
+        // Don't await
+        metricPublisher.publicMetric(
+          DYNAMODB_WRITE_CAPACITY_METRIC,
+          capacityUnits,
+          { table: command?.input?.TableName }
+        )
+      }
+      return result
+    }
+  ) as any
+  return client
+}
 
 export function getDynamoDbClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
   >
-): AWS.DynamoDB.DocumentClient {
+): DynamoDBDocumentClient {
   const isLocal = process.env.ENV === 'local'
   return getDynamoDbClient(isLocal ? undefined : getCredentialsFromEvent(event))
 }
 
-export function getDynamoDbClient(
+export function getDynamoDbRawClient(
   credentials?: Credentials | CredentialsOptions
-): AWS.DynamoDB.DocumentClient {
+): DynamoDBClient {
   const isLocal = process.env.ENV === 'local'
-  return new AWS.DynamoDB.DocumentClient({
+  const rawClient = new DynamoDBClient({
     credentials: isLocal
       ? {
           accessKeyId: 'fake',
@@ -42,10 +122,21 @@ export function getDynamoDbClient(
         }:8000`
       : undefined,
   })
+  return rawClient
+}
+
+export function getDynamoDbClient(
+  credentials?: Credentials | CredentialsOptions
+): DynamoDBDocumentClient {
+  const rawClient = getDynamoDbRawClient(credentials)
+  const client = DynamoDBDocumentClient.from(rawClient, {
+    marshallOptions: { removeUndefinedValues: true },
+  })
+  return withMetrics(client)
 }
 
 async function getLastEvaluatedKey(
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   count = 0
 ): Promise<{ PartitionKeyID: string; SortKeyID: string } | undefined> {
@@ -53,7 +144,7 @@ async function getLastEvaluatedKey(
     ...query,
     ProjectionExpression: 'PartitionKeyID,SortKeyID',
   }
-  const result = await dynamoDb.query(newQuery).promise()
+  const result = await dynamoDb.send(new QueryCommand(newQuery))
 
   if (
     result.LastEvaluatedKey &&
@@ -77,7 +168,7 @@ async function getLastEvaluatedKey(
 }
 
 export async function paginateQuery(
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   options?: { skip?: number; limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
@@ -106,12 +197,12 @@ export async function paginateQuery(
 }
 
 async function paginateQueryInternal(
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   currentPage: number,
   options: { limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
-  const result = await dynamoDb.query(query).promise()
+  const result = await dynamoDb.send(new QueryCommand(query))
   const limit = query.Limit || options.limit
   const leftLimit = limit ? limit - (result.Count as number) : Infinity
   if (
@@ -145,7 +236,7 @@ async function paginateQueryInternal(
 }
 
 export async function* paginateQueryGenerator(
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   pagesLimit = Infinity
 ): AsyncGenerator<AWS.DynamoDB.DocumentClient.QueryOutput> {
@@ -157,7 +248,7 @@ export async function* paginateQueryGenerator(
       ...query,
       ExclusiveStartKey: lastEvaluateKey,
     }
-    const result = await dynamoDb.query(paginatedQuery).promise()
+    const result = await dynamoDb.send(new QueryCommand(paginatedQuery))
     yield result
     lastEvaluateKey = result.LastEvaluatedKey || null
     currentPage += 1
@@ -165,18 +256,18 @@ export async function* paginateQueryGenerator(
 }
 
 export async function batchWrite(
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   requests: DocumentClient.WriteRequest[],
   table: string = StackConstants.TARPON_DYNAMODB_TABLE_NAME
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
-    await dynamoDb
-      .batchWrite({
+    await dynamoDb.send(
+      new BatchWriteCommand({
         RequestItems: {
           [table]: nextChunk,
         },
       })
-      .promise()
+    )
   }
 }
 

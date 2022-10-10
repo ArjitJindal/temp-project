@@ -1,6 +1,13 @@
 import { StackConstants } from '@cdk/constants'
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client'
 import { v4 as uuidv4 } from 'uuid'
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
@@ -15,10 +22,10 @@ import { neverReturn } from '@/utils/lang'
 import { ListType } from '@/@types/openapi-public/ListType'
 
 export class ListRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   tenantId: string
 
-  constructor(tenantId: string, dynamoDb: AWS.DynamoDB.DocumentClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
   }
@@ -50,21 +57,21 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List not find by id "${listId}"`)
     }
-    await this.dynamoDb
-      .put({
+    await this.dynamoDb.send(
+      new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_DELETED(this.tenantId, header.listType, listId),
           header,
         },
       })
-      .promise()
-    await this.dynamoDb
-      .delete({
+    )
+    await this.dynamoDb.send(
+      new DeleteCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
       })
-      .promise()
+    )
   }
 
   async getListHeaders(
@@ -98,12 +105,12 @@ export class ListRepository {
     listType: ListType,
     listId: string
   ): Promise<ListHeader | null> {
-    const { Item } = await this.dynamoDb
-      .get({
+    const { Item } = await this.dynamoDb.send(
+      new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
       })
-      .promise()
+    )
     if (Item == null) {
       return null
     }
@@ -112,8 +119,8 @@ export class ListRepository {
   }
 
   async updateListHeader(listHeader: ListHeader): Promise<void> {
-    await this.dynamoDb
-      .put({
+    await this.dynamoDb.send(
+      new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_HEADER(
@@ -124,7 +131,7 @@ export class ListRepository {
           header: listHeader,
         },
       })
-      .promise()
+    )
   }
 
   async refreshListHeader(listHeader: ListHeader): Promise<void> {
@@ -143,12 +150,12 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    const { Item } = await this.dynamoDb
-      .get({
+    const { Item } = await this.dynamoDb.send(
+      new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
       })
-      .promise()
+    )
     if (Item == null) {
       return null
     }
@@ -160,15 +167,15 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    await this.dynamoDb
-      .put({
+    await this.dynamoDb.send(
+      new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
           ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, listItem.key),
           ...listItem,
         },
       })
-      .promise()
+    )
     await this.refreshListHeader(header)
   }
 
@@ -177,12 +184,12 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    await this.dynamoDb
-      .delete({
+    await this.dynamoDb.send(
+      new DeleteCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
       })
-      .promise()
+    )
     await this.refreshListHeader(header)
   }
 
@@ -222,8 +229,8 @@ export class ListRepository {
       cursor?: string
     }
   ): Promise<CursorPaginatedResponse<ListItem>> {
-    const { Items = [], LastEvaluatedKey } = await this.dynamoDb
-      .query({
+    const { Items = [], LastEvaluatedKey } = await this.dynamoDb.send(
+      new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
@@ -235,7 +242,7 @@ export class ListRepository {
           : undefined,
         Limit: 20,
       })
-      .promise()
+    )
     const items: ListItem[] = Items.map(({ key, metadata }) => ({
       key,
       metadata,
@@ -278,8 +285,8 @@ export class ListRepository {
       KeyConditionExpression = neverReturn(method, 'PartitionKeyID = :pk')
     }
 
-    const { Items = [] } = await this.dynamoDb
-      .query({
+    const { Items = [] } = await this.dynamoDb.send(
+      new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         KeyConditionExpression,
         ExpressionAttributeValues: {
@@ -288,7 +295,7 @@ export class ListRepository {
         },
         Limit: 1,
       })
-      .promise()
+    )
     return Items.length > 0
   }
 

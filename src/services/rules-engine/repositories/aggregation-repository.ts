@@ -1,4 +1,10 @@
 import { StackConstants } from '@cdk/constants'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb'
+import AWS from 'aws-sdk'
 import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys, TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -22,10 +28,10 @@ type UserTimeAggregationAttributes = {
 }
 
 export class AggregationRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   tenantId: string
 
-  constructor(tenantId: string, dynamoDb: AWS.DynamoDB.DocumentClient) {
+  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
   }
@@ -45,12 +51,11 @@ export class AggregationRepository {
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :countries`,
       ExpressionAttributeValues: {
-        ':countries': this.dynamoDb.createSet([country]),
+        ':countries': new Set<string>([country]),
       },
       ReturnValues: 'UPDATED_NEW',
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.update(updateItemInput).promise()
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
   public async getUserTransactionCountries(
@@ -74,22 +79,13 @@ export class AggregationRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return {
-      receivingFromCountries: new Set(
-        result.Item?.receivingFromCountries?.values || []
-      ),
-      receivingToCountries: new Set(
-        result.Item?.receivingToCountries?.values || []
-      ),
-      sendingFromCountries: new Set(
-        result.Item?.sendingFromCountries?.values || []
-      ),
-      sendingToCountries: new Set(
-        result.Item?.sendingToCountries?.values || []
-      ),
+      receivingFromCountries: result.Item?.receivingFromCountries || new Set(),
+      receivingToCountries: result.Item?.receivingToCountries || new Set(),
+      sendingFromCountries: result.Item?.sendingFromCountries || new Set(),
+      sendingToCountries: result.Item?.sendingToCountries || new Set(),
     }
   }
 
@@ -108,12 +104,11 @@ export class AggregationRepository {
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :currencies`,
       ExpressionAttributeValues: {
-        ':currencies': this.dynamoDb.createSet([currency]),
+        ':currencies': new Set<string>([currency]),
       },
       ReturnValues: 'UPDATED_NEW',
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.update(updateItemInput).promise()
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
   public async getUserTransactionCurrencies(
@@ -129,14 +124,11 @@ export class AggregationRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return {
-      receivingCurrencies: new Set(
-        result.Item?.receivingCurrencies?.values || []
-      ),
-      sendingCurrencies: new Set(result.Item?.sendingCurrencies?.values || []),
+      receivingCurrencies: result.Item?.receivingCurrencies || new Set(),
+      sendingCurrencies: result.Item?.sendingCurrencies || new Set(),
     }
   }
 
@@ -158,9 +150,8 @@ export class AggregationRepository {
         ':inc': 1,
       },
       ReturnValues: 'UPDATED_NEW',
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.update(updateItemInput).promise()
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
   public async getUserTransactionsCount(
@@ -179,9 +170,8 @@ export class AggregationRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return {
       receivingTransactionsCount: result.Item?.receivingTransactionsCount || 0,
       sendingTransactionsCount: result.Item?.sendingTransactionsCount || 0,
@@ -233,9 +223,8 @@ export class AggregationRepository {
         ':amount': totalTransactionAmount,
       },
       ReturnValues: 'UPDATED_NEW',
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.update(updateItemInput).promise()
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
   public async getUserTransactionsVolumeQuantile(
@@ -258,9 +247,8 @@ export class AggregationRepository {
         this.getTransactionsVolumeQuantileTimeLabel(timestamp, timeGranularity)
       ),
       ProjectionExpression: attributes.join(','),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return {
       sendingTransactionsVolume: result.Item?.sendingTransactionsVolume,
       receivingTransactionsVolume: result.Item?.receivingTransactionsVolume,

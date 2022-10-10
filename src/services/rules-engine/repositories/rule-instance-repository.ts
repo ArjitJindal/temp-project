@@ -1,5 +1,12 @@
 import { StackConstants } from '@cdk/constants'
 import { customAlphabet } from 'nanoid'
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { DEFAULT_DRS_RISK_ITEM } from '../../risk-scoring/repositories/risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
@@ -35,17 +42,17 @@ function toRuleInstance(item: any): RuleInstance {
 }
 
 export class RuleInstanceRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.tenantId = tenantId
   }
 
@@ -83,9 +90,8 @@ export class RuleInstanceRepository {
         ...DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
         ...newRuleInstance,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
     return newRuleInstance
   }
 
@@ -93,9 +99,8 @@ export class RuleInstanceRepository {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.delete(deleteItemInput).promise()
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 
   public async getActiveRuleInstances(
@@ -125,9 +130,8 @@ export class RuleInstanceRepository {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return result.Item ? toRuleInstance(result.Item) : null
   }
 
@@ -153,7 +157,7 @@ export class RuleInstanceRepository {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: {
         ...query.ExpressionAttributeValues,
         ':pk': DynamoDbKeys.RULE_INSTANCE(this.tenantId).PartitionKeyID,
@@ -181,9 +185,8 @@ export class RuleInstanceRepository {
               : 0,
           },
           ReturnValues: 'UPDATED_NEW',
-          ReturnConsumedCapacity: 'TOTAL',
         }
-        return this.dynamoDb.update(updateItemInput).promise()
+        return this.dynamoDb.send(new UpdateCommand(updateItemInput))
       })
     )
   }

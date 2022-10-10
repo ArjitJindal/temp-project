@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as _ from 'lodash'
 import { NotFound } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import {
   DEFAULT_DRS_RISK_ITEM,
@@ -30,7 +31,7 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { hasFeature } from '@/core/utils/context'
+import { getContext, getContextStorage, hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import {
   compileTemplate,
@@ -57,7 +58,7 @@ function getTransactionRuleImplementation(
   receiverUser: User | Business | undefined,
   ruleParameters: object,
   ruleAction: RuleAction,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   const RuleClass = TRANSACTION_RULES[ruleImplementationName]
   if (!RuleClass) {
@@ -73,7 +74,7 @@ function getTransactionRuleImplementation(
 
 export async function verifyTransactionIdempotent(
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   transaction: Transaction
 ): Promise<{
   executedRules: ExecutedRulesResult[]
@@ -125,7 +126,7 @@ export async function verifyTransactionIdempotent(
 export async function verifyTransaction(
   transaction: Transaction,
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<TransactionMonitoringResult | DuplicateTransactionReturnType> {
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
@@ -191,7 +192,7 @@ export async function verifyTransaction(
 export async function verifyTransactionEvent(
   transactionEvent: TransactionEvent,
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<TransactionEventMonitoringResult> {
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,
@@ -256,7 +257,7 @@ export async function verifyTransactionEvent(
 export async function updateAggregation(
   tenantId: string,
   transaction: Transaction,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   await Promise.all(
     Aggregators.map(async (Aggregator) => {
@@ -278,7 +279,7 @@ export async function updateAggregation(
 export async function verifyConsumerUserEvent(
   userEvent: ConsumerUserEvent,
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<User> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   const userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
@@ -300,7 +301,7 @@ export async function verifyConsumerUserEvent(
 export async function verifyBusinessUserEvent(
   userEvent: BusinessUserEvent,
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<Business> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   const userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
@@ -343,42 +344,52 @@ async function getRulesResult(
     await Promise.all(
       ruleInstances.map(async (ruleInstance) => {
         const ruleInfo: Rule = rulesById[ruleInstance.ruleId]
-        try {
-          const { parameters, action } = getUserSpecificParameters(
-            userRiskLevel,
-            ruleInstance
-          )
-          const rule = getRuleImplementationCallback(
-            rulesById[ruleInstance.ruleId].ruleImplementationName,
-            parameters,
-            action
-          )
-          const shouldCompute = await everyAsync(
-            rule.getFilters(),
-            async (ruleFilter) => ruleFilter()
-          )
-          const ruleResult = shouldCompute ? await rule.computeRule() : null
-          const ruleHit = !_.isNil(ruleResult)
-          if (ruleHit) {
-            hitRuleInstanceIds.push(ruleInstance.id as string)
-          }
-
-          return {
-            ruleId: ruleInstance.ruleId,
-            ruleInstanceId: ruleInstance.id,
-            ruleName: ruleInstance.ruleNameAlias || ruleInfo.name,
-            ruleDescription: await getRuleDescription(
-              rule,
-              ruleInfo,
-              parameters as Vars,
-              ruleResult ?? null
-            ),
-            ruleAction: action,
-            ruleHit,
-          }
-        } catch (e) {
-          logger.error(e)
+        // Set up rule specific context
+        const context = _.cloneDeep(getContext() || {})
+        context.metricDimensions = {
+          ...context.metricDimensions,
+          ruleId: ruleInstance.ruleId,
+          ruleInstanceId: ruleInstance.id,
+          ruleImplementation: ruleInfo.ruleImplementationName,
         }
+        return getContextStorage().run(context, async () => {
+          try {
+            const { parameters, action } = getUserSpecificParameters(
+              userRiskLevel,
+              ruleInstance
+            )
+            const rule = getRuleImplementationCallback(
+              rulesById[ruleInstance.ruleId].ruleImplementationName,
+              parameters,
+              action
+            )
+            const shouldCompute = await everyAsync(
+              rule.getFilters(),
+              async (ruleFilter) => ruleFilter()
+            )
+            const ruleResult = shouldCompute ? await rule.computeRule() : null
+            const ruleHit = !_.isNil(ruleResult)
+            if (ruleHit) {
+              hitRuleInstanceIds.push(ruleInstance.id as string)
+            }
+
+            return {
+              ruleId: ruleInstance.ruleId,
+              ruleInstanceId: ruleInstance.id,
+              ruleName: ruleInstance.ruleNameAlias || ruleInfo.name,
+              ruleDescription: await getRuleDescription(
+                rule,
+                ruleInfo,
+                parameters as Vars,
+                ruleResult ?? null
+              ),
+              ruleAction: action,
+              ruleHit,
+            }
+          } catch (e) {
+            logger.error(e)
+          }
+        })
       })
     )
   ).filter(Boolean) as ExecutedRulesResult[]

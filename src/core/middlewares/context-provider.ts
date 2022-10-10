@@ -13,7 +13,7 @@ export const contextProvider =
   () =>
   (handler: CallableFunction): Handler =>
   async (event, context, callback): Promise<APIGatewayProxyResult> => {
-    const initialContext = await getInitialContext(event)
+    const initialContext = await getInitialContext(event, context)
     return getContextStorage().run(initialContext, async () => {
       return handler(event, context, callback)
     })

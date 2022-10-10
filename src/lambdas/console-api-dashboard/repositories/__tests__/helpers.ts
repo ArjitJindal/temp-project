@@ -1,9 +1,9 @@
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { getTestDynamoDbClient } from '@/test-utils/dynamodb-test-utils'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getMongoClient } from '@/test-utils/mongo-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -30,7 +30,7 @@ export function notHitRule(
 }
 
 export async function getTransactionsRepo(tenantId: string) {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoClient()
   return new TransactionRepository(tenantId, {
     mongoDb,

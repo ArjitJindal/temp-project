@@ -5,6 +5,7 @@ import {
 } from 'aws-lambda'
 import { StackConstants } from '@cdk/constants'
 import { DynamoDB } from 'aws-sdk'
+import { GetCommand } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from './dynamodb'
 
 export function createKinesisStreamEvent<T>(
@@ -45,12 +46,12 @@ export async function localTarponChangeCaptureHandler(key: {
   }
 
   const dynamoDb = getDynamoDbClientByEvent(null as any)
-  const entity = await dynamoDb
-    .get({
+  const entity = await dynamoDb.send(
+    new GetCommand({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: key,
     })
-    .promise()
+  )
   const kinesisEvent = createKinesisStreamEvent(
     key.PartitionKeyID,
     key.SortKeyID,

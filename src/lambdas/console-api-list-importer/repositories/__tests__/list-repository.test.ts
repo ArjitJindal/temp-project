@@ -1,11 +1,8 @@
-import {
-  dynamoDbSetupHook,
-  getTestDynamoDbClient,
-} from '@/test-utils/dynamodb-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
 import { ListExisted as List } from '@/@types/openapi-internal/ListExisted'
-import { CursorPaginatedResponse } from '@/utils/dynamodb'
+import { CursorPaginatedResponse, getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 
 dynamoDbSetupHook()
@@ -15,7 +12,7 @@ const LIST_TYPE = 'USERS-WHITELISTS'
 describe('Verify list repository', () => {
   test('Getting list of lists', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const TYPE_1 = 'USERS-WHITELISTS'
@@ -31,7 +28,7 @@ describe('Verify list repository', () => {
   })
   test('Verify simple write-read', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const name = 'Test list'
@@ -61,7 +58,7 @@ describe('Verify list repository', () => {
   })
   test('Verify list delete', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
     const { listId } = await listRepo.createList(LIST_TYPE, {
       items: [],
@@ -85,7 +82,7 @@ describe('Verify list repository', () => {
   })
   test('Verify ordering', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const list = await listRepo.createList(LIST_TYPE, {
@@ -97,7 +94,7 @@ describe('Verify list repository', () => {
   })
   test('Verify deduplication', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const list = await listRepo.createList(LIST_TYPE, {
@@ -116,7 +113,7 @@ describe('Verify list repository', () => {
   })
   test('Verify overriding', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const { listId } = await listRepo.createList(LIST_TYPE)
@@ -150,7 +147,7 @@ describe('Verify list repository', () => {
   })
   test('Verify multiple items writing', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const { listId } = await listRepo.createList(LIST_TYPE)
@@ -167,7 +164,7 @@ describe('Verify list repository', () => {
   })
   test('Verify overriding of the same keys', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const { listId } = await listRepo.createList(LIST_TYPE)
@@ -185,7 +182,7 @@ describe('Verify list repository', () => {
   })
   test('Large arrays read/write', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const { listId } = await listRepo.createList(LIST_TYPE)
@@ -201,7 +198,7 @@ describe('Verify list repository', () => {
   })
   test('Fetch list of lists', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const lists: List[] = [
@@ -231,7 +228,7 @@ describe('Verify list repository', () => {
   })
   test('Check key-value read/write API', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const {
@@ -289,7 +286,7 @@ describe('Verify list repository', () => {
   })
   test('Test paginated keys reading', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const initialValues = [...new Array(100)].map((_, i) => ({
@@ -327,7 +324,7 @@ describe('Verify list repository', () => {
   })
   test('Test counting values', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const initialValues = [...new Array(100)].map((_, i) => ({
@@ -346,7 +343,7 @@ describe('Verify list repository', () => {
   })
   test('Test matching values', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
     const { listId } = await listRepo.createList(LIST_TYPE, {
       items: [{ key: 'aaabbb' }, { key: 'ccc' }, { key: 'aaaccc' }],

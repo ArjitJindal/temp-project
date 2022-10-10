@@ -1,5 +1,6 @@
 import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
@@ -26,8 +27,8 @@ async function migrateTenant(tenant: Tenant) {
         ruleDescription: rule.ruleDescription,
         ruleAction: rule.ruleAction,
       }))
-    await dynamodb
-      .update({
+    await dynamodb.send(
+      new UpdateCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
         UpdateExpression: `SET hitRules = :hitRules`,
@@ -35,7 +36,7 @@ async function migrateTenant(tenant: Tenant) {
           ':hitRules': hitRules,
         },
       })
-      .promise()
+    )
     console.info(`Migrated transaction ${transaction.transactionId}`)
     migratedCount += 1
   }

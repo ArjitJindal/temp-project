@@ -4,6 +4,12 @@ import _, { chunk } from 'lodash'
 import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
+  BatchGetCommand,
+  BatchWriteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+} from '@aws-sdk/lib-dynamodb'
+import {
   getNonUserReceiverKeys,
   getNonUserSenderKeys,
   getReceiverKeys,
@@ -66,18 +72,18 @@ export type ThinTransactionsFilterOptions = {
 }
 
 export class TransactionRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -498,9 +504,8 @@ export class TransactionRepository {
             })),
           ] as WriteRequest[],
         },
-        ReturnConsumedCapacity: 'TOTAL',
       }
-    await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
     if (process.env.NODE_ENV === 'development') {
       const { localTarponChangeCaptureHandler } = await import(
@@ -619,9 +624,8 @@ export class TransactionRepository {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 
     if (!result.Item) {
       return null
@@ -675,9 +679,10 @@ export class TransactionRepository {
           ),
         },
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.batchGet(batchGetItemInput).promise()
+    const result = await this.dynamoDb.send(
+      new BatchGetCommand(batchGetItemInput)
+    )
     return (
       (result.Responses?.[
         StackConstants.TARPON_DYNAMODB_TABLE_NAME
@@ -722,7 +727,6 @@ export class TransactionRepository {
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
       Limit: 1,
-      ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return !!result.Count
@@ -791,7 +795,6 @@ export class TransactionRepository {
       },
       Limit: n,
       ScanIndexForward: false,
-      ReturnConsumedCapacity: 'TOTAL',
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return (
@@ -1150,7 +1153,6 @@ export class TransactionRepository {
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
       ScanIndexForward: false,
-      ReturnConsumedCapacity: 'TOTAL',
     }
   }
 

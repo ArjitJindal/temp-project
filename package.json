@@ -145,9 +145,12 @@
     "yaml": "^2.1.1"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.183.0",
+    "@aws-sdk/client-dynamodb": "^3.183.0",
     "@aws-sdk/client-kinesis": "^3.168.0",
     "@aws-sdk/client-secrets-manager": "^3.145.0",
     "@aws-sdk/client-sqs": "^3.145.0",
+    "@aws-sdk/lib-dynamodb": "^3.183.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",

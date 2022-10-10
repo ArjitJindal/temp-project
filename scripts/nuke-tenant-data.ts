@@ -3,6 +3,7 @@ import AWS from 'aws-sdk'
 import { program } from 'commander'
 import { StackConstants } from '@cdk/constants'
 import { Db } from 'mongodb'
+import { DeleteCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -47,7 +48,7 @@ const tenantId = program.args[0]
 const { types } = program.opts()
 
 let mongoDb: Db
-let dynamoDb: AWS.DynamoDB.DocumentClient
+let dynamoDb: DynamoDBDocumentClient
 const deletedUserAggregationUserIds = new Set()
 
 async function dropMongoDbCollection(collectionName: string) {
@@ -103,7 +104,6 @@ async function deleteTransactions() {
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.TRANSACTION(tenantId).PartitionKeyID,
     },
-    ReturnConsumedCapacity: 'TOTAL',
   }
   for await (const transactionsResult of paginateQueryGenerator(
     dynamoDb,
@@ -125,12 +125,12 @@ async function deleteTransactions() {
 }
 
 async function deletePartitionKey(entityName: string, key: DynamoDbKey) {
-  await dynamoDb
-    .delete({
+  await dynamoDb.send(
+    new DeleteCommand({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: key,
     })
-    .promise()
+  )
   logger.info(`Deleted ${entityName} ${JSON.stringify(key)}`)
 }
 

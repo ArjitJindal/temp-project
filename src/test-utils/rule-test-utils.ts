@@ -1,4 +1,3 @@
-import { getTestDynamoDbClient } from './dynamodb-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -14,9 +13,10 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { User } from '@/@types/openapi-public/User'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export async function createRule(testTenantId: string, rule: Partial<Rule>) {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
   })
@@ -63,7 +63,7 @@ export async function updateRule(
   ruleId: string,
   changes: Partial<Rule>
 ) {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
   })
@@ -78,7 +78,7 @@ export async function getRule(
   testTenantId: string,
   ruleId: string
 ): Promise<Rule> {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
   })
@@ -93,7 +93,7 @@ export async function bulkVerifyTransactions(
   tenantId: string,
   transactions: Transaction[]
 ): Promise<TransactionMonitoringResult[] | DuplicateTransactionReturnType[]> {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const results = []
   for (const transaction of transactions) {
     results.push(await verifyTransaction(transaction, tenantId, dynamoDb))
@@ -105,7 +105,7 @@ export async function bulkVerifyUserEvents(
   tenantId: string,
   userEvents: ConsumerUserEvent[]
 ): Promise<User[]> {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const results = []
   for (const userEvent of userEvents) {
     results.push(await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb))

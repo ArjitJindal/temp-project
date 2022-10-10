@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RiskRepository } from './repositories/risk-repository'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { User } from '@/@types/openapi-public/User'
@@ -20,7 +21,7 @@ const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
 
 export const calculateKRS = async (
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   user: User | Business
 ): Promise<any> => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })

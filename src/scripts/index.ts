@@ -1,6 +1,8 @@
 import * as AWS from 'aws-sdk'
 import { IBAN } from 'ibankit'
 
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { TransactionWithRulesResult } from '../@types/openapi-public/TransactionWithRulesResult'
 import {
   createUuid,
@@ -31,7 +33,7 @@ const createCardPaymentDetails = (sendingCountry: string, name: any) => {
 }
 
 const createBusinessUsers = (
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   tenantId: string,
   numberOfUsers: number,
   currency: string,
@@ -96,11 +98,14 @@ export const createAndUploadTestData = async (
   profileName: string
 ) => {
   /* DB init */
-  const dynamoDb = new AWS.DynamoDB.DocumentClient({
-    credentials: new AWS.SharedIniFileCredentials({
-      profile: profileName,
+  const dynamoDb = DynamoDBDocumentClient.from(
+    new DynamoDBClient({
+      credentials: new AWS.SharedIniFileCredentials({
+        profile: profileName,
+      }),
     }),
-  })
+    { marshallOptions: { removeUndefinedValues: true } }
+  )
 
   const transactionRepository = new TransactionRepository(`fake-${tenantId}`, {
     dynamoDb,

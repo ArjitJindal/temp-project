@@ -2,10 +2,7 @@ import _ from 'lodash'
 import { verifyTransaction, verifyTransactionEvent } from '..'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
-import {
-  dynamoDbSetupHook,
-  getTestDynamoDbClient,
-} from '@/test-utils/dynamodb-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -16,10 +13,11 @@ import {
   getTestUser,
   setUpConsumerUsersHooks,
 } from '@/test-utils/user-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
 
-const dynamoDb = getTestDynamoDbClient()
+const dynamoDb = getDynamoDbClient()
 
 dynamoDbSetupHook()
 

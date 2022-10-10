@@ -1,8 +1,5 @@
 import { ruleHandler, ruleInstanceHandler } from '../app'
-import {
-  dynamoDbSetupHook,
-  getTestDynamoDbClient,
-} from '@/test-utils/dynamodb-test-utils'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import {
   getApiGatewayDeleteEvent,
   getApiGatewayGetEvent,
@@ -12,6 +9,7 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { TRANSACTION_RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -22,7 +20,7 @@ describe('Public Management API - Rule', () => {
   let ruleInstanceRepository: RuleInstanceRepository
 
   beforeAll(async () => {
-    const dynamoDb = getTestDynamoDbClient()
+    const dynamoDb = getDynamoDbClient()
     ruleRepository = new RuleRepository(TEST_TENANT_ID, { dynamoDb })
     ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,

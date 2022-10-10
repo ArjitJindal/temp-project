@@ -1,10 +1,8 @@
 import { StackConstants } from '@cdk/constants'
 import _, { chunk } from 'lodash'
-import { paginateQuery } from '../dynamodb'
-import {
-  dynamoDbSetupHook,
-  getTestDynamoDbClient,
-} from '@/test-utils/dynamodb-test-utils'
+import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
+import { getDynamoDbClient, paginateQuery } from '../dynamodb'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 const MOCK_RECORDS_COUNT = 250
 const MOCK_ATTRIBUTES = {
@@ -20,7 +18,7 @@ const MOCK_ITEMS = _.range(0, MOCK_RECORDS_COUNT)
   }))
   .sort((a, b) => a.SortKeyID.localeCompare(b.SortKeyID))
 
-const dynamoDb = getTestDynamoDbClient()
+const dynamoDb = getDynamoDbClient()
 
 dynamoDbSetupHook()
 
@@ -37,14 +35,13 @@ describe('paginateQuery', () => {
           },
         },
       }))
-      await dynamoDb
-        .batchWrite({
+      await dynamoDb.send(
+        new BatchWriteCommand({
           RequestItems: {
             [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: putRequests,
           },
-          ReturnConsumedCapacity: 'TOTAL',
         })
-        .promise()
+      )
     }
   })
   test('Returns all items - paginated', async () => {
@@ -55,7 +52,7 @@ describe('paginateQuery', () => {
         ':pk': 'partition',
       },
     })
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: MOCK_RECORDS_COUNT,
       ScannedCount: MOCK_RECORDS_COUNT,
       Items: MOCK_ITEMS,
@@ -71,7 +68,7 @@ describe('paginateQuery', () => {
         ':sk': '100',
       },
     })
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 1,
       ScannedCount: 1,
       Items: [
@@ -93,7 +90,7 @@ describe('paginateQuery', () => {
       },
       Limit: 249,
     })
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 249,
       ScannedCount: 249,
       Items: MOCK_ITEMS.slice(0, 249),
@@ -112,7 +109,7 @@ describe('paginateQuery', () => {
       },
       { skip: 249 }
     )
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 1,
       ScannedCount: 1,
       Items: [
@@ -137,7 +134,7 @@ describe('paginateQuery', () => {
       },
       { skip: 1, limit: 1 }
     )
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 1,
       ScannedCount: 1,
       Items: [
@@ -162,7 +159,7 @@ describe('paginateQuery', () => {
       },
       { limit: 249 }
     )
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 249,
       ScannedCount: 249,
       Items: MOCK_ITEMS.slice(0, 249),
@@ -181,7 +178,7 @@ describe('paginateQuery', () => {
       },
       { skip: 239, limit: 3 }
     )
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       Count: 3,
       ScannedCount: 3,
       Items: [

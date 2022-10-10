@@ -10,7 +10,7 @@ export const event: TestApiEvent = {
   } as TestApiRequestContext,
   stageVariables: null,
   body: JSON.stringify({
-    userId: '96647cfd9e8fe66ee0f3362e011e34e8',
+    userId: '8650a2611d0771cba03310f74bf6',
     userDetails: {
       name: {
         firstName: 'Baran',

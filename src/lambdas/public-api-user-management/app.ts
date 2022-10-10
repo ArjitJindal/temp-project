@@ -3,6 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -15,7 +16,7 @@ import { hasFeature } from '@/core/utils/context'
 
 const handleRiskLevelParam = (
   tenantId: string,
-  dynamoDb: AWS.DynamoDB.DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   userPayload: User | Business
 ) => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })

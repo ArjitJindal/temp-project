@@ -1,4 +1,9 @@
 import { StackConstants } from '@cdk/constants'
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -6,15 +11,15 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 export class RuleRepository {
   tenantId: string
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.tenantId = tenantId
   }
 
@@ -62,7 +67,7 @@ export class RuleRepository {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: {
         ...query.ExpressionAttributeValues,
         ':pk': DynamoDbKeys.RULE().PartitionKeyID,
@@ -103,9 +108,8 @@ export class RuleRepository {
         ...DynamoDbKeys.RULE(rule.id),
         ...newRule,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
     return newRule
   }
 
@@ -113,8 +117,7 @@ export class RuleRepository {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE(ruleId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.delete(deleteItemInput).promise()
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 }

@@ -2,6 +2,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
+import {
+  BatchWriteCommand,
+  DynamoDBDocumentClient,
+} from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -14,18 +18,18 @@ type TimeRange = {
 }
 
 export class UserEventRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -64,9 +68,8 @@ export class UserEventRepository {
             },
           ].filter(Boolean) as WriteRequest[],
         },
-        ReturnConsumedCapacity: 'TOTAL',
       }
-    await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
     if (process.env.NODE_ENV === 'development') {
       const { localTarponChangeCaptureHandler } = await import(
@@ -121,7 +124,6 @@ export class UserEventRepository {
         userEventAttributeNames.map((name) => [`#${name}`, name])
       ),
       ScanIndexForward: false,
-      ReturnConsumedCapacity: 'TOTAL',
     }
   }
 }

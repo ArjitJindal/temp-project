@@ -2,8 +2,8 @@ import { AsyncLocalStorage } from 'async_hooks'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Context as LambdaContext,
 } from 'aws-lambda'
-import { Logger } from 'winston'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -15,7 +15,8 @@ type LogMetaData = {
 
 type Context = LogMetaData & {
   features?: Feature[]
-  logger?: Logger
+  logMetaData?: { [key: string]: string }
+  metricDimensions?: { [key: string]: string | undefined }
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
@@ -23,19 +24,24 @@ const asyncLocalStorage = new AsyncLocalStorage<Context>()
 export async function getInitialContext(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-  >
+  >,
+  lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
     const tenantId = event.requestContext.authorizer?.principalId
     const dynamoDb = getDynamoDbClientByEvent(event)
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     const settings = await tenantRepository.getTenantSettings(['features'])
-    const logMetaData: LogMetaData = { tenantId: tenantId }
-    const childLogger = winstonLogger.child(logMetaData)
     const context: Context = {
-      ...logMetaData,
+      logMetaData: {
+        tenantId: tenantId,
+        functionName: lambdaContext?.functionName,
+      },
+      metricDimensions: {
+        tenantId: tenantId,
+        functionName: lambdaContext?.functionName,
+      },
       features: settings?.features,
-      logger: childLogger,
     }
     return context
   } catch (e) {

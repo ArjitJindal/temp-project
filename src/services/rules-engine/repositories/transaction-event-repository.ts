@@ -2,24 +2,28 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { WriteRequest } from 'aws-sdk/clients/dynamodb'
+import {
+  BatchWriteCommand,
+  DynamoDBDocumentClient,
+} from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 
 export class TransactionEventRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -54,9 +58,8 @@ export class TransactionEventRepository {
             },
           ].filter(Boolean) as WriteRequest[],
         },
-        ReturnConsumedCapacity: 'TOTAL',
       }
-    await this.dynamoDb.batchWrite(batchWriteItemParams).promise()
+    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
 
     if (process.env.NODE_ENV === 'development') {
       const { localTarponChangeCaptureHandler } = await import(

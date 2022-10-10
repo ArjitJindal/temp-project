@@ -1,6 +1,11 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import _ from 'lodash'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -48,17 +53,17 @@ export const DEFAULT_DRS_RISK_ITEM: ManualRiskAssignmentUserState = {
 
 export class RiskRepository {
   tenantId: string
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -67,9 +72,8 @@ export class RiskRepository {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 
     if (!result.Item) {
       return null
@@ -95,10 +99,9 @@ export class RiskRepository {
         ...DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'),
         ...newKrsScoreItem,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
 
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
 
     return score
   }
@@ -107,7 +110,7 @@ export class RiskRepository {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId).PartitionKeyID,
       },
@@ -139,9 +142,8 @@ export class RiskRepository {
         ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
         ...newRiskClassificationValues,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
     return newRiskClassificationValues
   }
 
@@ -151,7 +153,7 @@ export class RiskRepository {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId)
           .PartitionKeyID,
@@ -182,9 +184,8 @@ export class RiskRepository {
         ...DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId, 'LATEST'), // Version it later
         ...newDRSRiskItem,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
     return newDRSRiskItem
   }
 
@@ -200,9 +201,8 @@ export class RiskRepository {
         ), // Version it later
         ...parameterRiskLevels,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
     return parameterRiskLevels
   }
 
@@ -219,7 +219,7 @@ export class RiskRepository {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: expressionAttributeVals,
     }
     try {
@@ -244,7 +244,7 @@ export class RiskRepository {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: keyConditionExpr,
-      ReturnConsumedCapacity: 'TOTAL',
+
       ExpressionAttributeValues: expressionAttributeVals,
     }
     try {

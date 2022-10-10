@@ -1,5 +1,6 @@
 import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
+import { PutCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { getRulesById } from '../utils/rule'
 import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
@@ -29,7 +30,6 @@ async function migrateTransactions(tenant: Tenant) {
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.TRANSACTION(tenant.id).PartitionKeyID,
     },
-    ReturnConsumedCapacity: 'TOTAL',
   }
   for await (const transactionsResult of paginateQueryGenerator(
     dynamoDb,
@@ -60,9 +60,8 @@ async function migrateTransactions(tenant: Tenant) {
             ...DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
             ...transaction,
           },
-          ReturnConsumedCapacity: 'TOTAL',
         }
-        await dynamoDb.put(putItemInput).promise()
+        await dynamoDb.send(new PutCommand(putItemInput))
       }
     }
   }

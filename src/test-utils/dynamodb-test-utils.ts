@@ -1,4 +1,8 @@
-import AWS, { DynamoDB } from 'aws-sdk'
+import {
+  CreateTableCommand,
+  DeleteTableCommand,
+} from '@aws-sdk/client-dynamodb'
+import { DynamoDB } from 'aws-sdk'
 import _ from 'lodash'
 
 export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
@@ -7,28 +11,6 @@ export const TEST_DYNAMODB_TABLE_NAME_PREFIX = '__test__'
 export const TEST_DYNAMODB_TABLE_NAMES = _.range(0, 4).map(
   (i) => `${TEST_DYNAMODB_TABLE_NAME_PREFIX}${process.env.JEST_WORKER_ID}-${i}`
 )
-
-export function getTestDynamoDbClient(): AWS.DynamoDB.DocumentClient {
-  return new AWS.DynamoDB.DocumentClient({
-    credentials: {
-      accessKeyId: 'fake',
-      secretAccessKey: 'fake',
-    },
-    endpoint: 'http://localhost:8000',
-    region: 'local',
-  })
-}
-
-export function getTestDynamoDb(): AWS.DynamoDB {
-  return new AWS.DynamoDB({
-    credentials: {
-      accessKeyId: 'fake',
-      secretAccessKey: 'fake',
-    },
-    endpoint: 'http://localhost:8000',
-    region: 'local',
-  })
-}
 
 export function dynamoDbSetupHook() {
   beforeAll(async () => {
@@ -40,9 +22,10 @@ export function dynamoDbSetupHook() {
 }
 
 async function createTable(tableName: string) {
-  const dynamo = getTestDynamoDb()
   try {
-    await dynamo.createTable(createSchema(tableName)).promise()
+    const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
+    const dynamodb = getDynamoDbRawClient()
+    await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
   } catch (e: any) {
     throw new Error(
       `Unable to create table "${tableName}"; ${e.message ?? 'Unknown error'}`
@@ -51,9 +34,10 @@ async function createTable(tableName: string) {
 }
 
 async function deleteTable(tableName: string, silent = false) {
-  const dynamo = getTestDynamoDb()
   try {
-    await dynamo.deleteTable({ TableName: tableName }).promise()
+    const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
+    const dynamodb = getDynamoDbRawClient()
+    await dynamodb.send(new DeleteTableCommand({ TableName: tableName }))
   } catch (e: any) {
     if (!silent) {
       throw new Error(

@@ -157,7 +157,10 @@ export class TarponStreamConsumerBuilder {
   public build() {
     return async (event: KinesisStreamEvent) => {
       if (!this.retryStreamName) {
-        throw new Error(`Retry stream is not set!`)
+        if (process.env.ENV !== 'local') {
+          throw new Error(`Retry stream is not set!`)
+        }
+        this.retryStreamName = 'local-retry-stream'
       }
 
       const isFromRetryStream = this.isFromRetryStream(event)

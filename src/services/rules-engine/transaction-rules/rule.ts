@@ -1,3 +1,4 @@
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Rule } from '../rule'
 import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
@@ -48,7 +49,7 @@ export class TransactionRule<P> extends Rule {
   receiverUser?: User | Business
   parameters: P
   action: RuleAction
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
@@ -61,7 +62,7 @@ export class TransactionRule<P> extends Rule {
       parameters: P
       action: RuleAction
     },
-    dynamoDb: AWS.DynamoDB.DocumentClient
+    dynamoDb: DynamoDBDocumentClient
   ) {
     super()
     this.tenantId = tenantId

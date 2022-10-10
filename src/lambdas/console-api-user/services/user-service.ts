@@ -1,6 +1,7 @@
 import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
@@ -24,7 +25,7 @@ export class UserService {
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     },
     s3: AWS.S3,

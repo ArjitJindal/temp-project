@@ -1,5 +1,10 @@
 import { StackConstants } from '@cdk/constants'
 import { MongoClient } from 'mongodb'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { DynamoDbKeys, TenantSettingName } from '@/core/dynamodb/dynamodb-keys'
 import { getUpdateAttributesUpdateItemInput } from '@/utils/dynamodb'
@@ -10,17 +15,17 @@ type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
 
 export class TenantRepository {
   tenantId: string
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -32,9 +37,8 @@ export class TenantRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ProjectionExpression: settingNames?.join(','),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return result.Item ? (result.Item as Partial<TenantSettings>) : {}
   }
 
@@ -45,10 +49,10 @@ export class TenantRepository {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
-      ReturnConsumedCapacity: 'TOTAL',
+
       ...getUpdateAttributesUpdateItemInput(newTenantSettings),
     }
-    await this.dynamoDb.update(updateItemInput).promise()
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
     return newTenantSettings
   }
 

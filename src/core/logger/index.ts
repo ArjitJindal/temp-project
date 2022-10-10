@@ -13,7 +13,7 @@ export const winstonLogger = createLogger({
 
 export const logger = new Proxy(winstonLogger, {
   get(target, property, receiver) {
-    target = getContext()?.logger || target
+    target = target.child(getContext()?.logMetaData || {})
     return Reflect.get(target, property, receiver)
   },
 })

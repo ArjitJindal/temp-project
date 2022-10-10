@@ -1,3 +1,4 @@
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ParserOptionsArgs } from '@fast-csv/parse'
 import { MongoClient } from 'mongodb'
 
@@ -5,7 +6,7 @@ export interface ConverterInterface<T> {
   initialize(
     tenantId?: string,
     connections?: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ): Promise<void>

@@ -2,8 +2,8 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { BadRequest } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -25,7 +25,7 @@ type MissingUserIdMap = { field: string; userId: string }
 async function getTransactionMissingUsers(
   transaction: Transaction,
   tenantId: string,
-  dynamoDb: DocumentClient,
+  dynamoDb: DynamoDBDocumentClient,
   validationParams?: DefaultApiPostConsumerTransactionRequest
 ): Promise<(MissingUserIdMap | undefined)[]> {
   const userRepository = new UserRepository(tenantId, { dynamoDb })
@@ -89,7 +89,7 @@ function getMissingUsersMessage(
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
   tenantId: string,
-  dynamoDb: DocumentClient
+  dynamoDb: DynamoDBDocumentClient
 ) {
   const transactionRepository = new TransactionRepository(tenantId, {
     dynamoDb,

@@ -19,6 +19,7 @@ import { AlertPayload } from '@/@types/alert/alert-payload'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { logger } from '@/core/logger'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -92,7 +93,7 @@ const DANGER_COLOR_STATUSES: RuleAction[] = ['BLOCK', 'SUSPEND']
 
 export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
   const mongoDb = await getMongoDbClient()
-  const dynamoDb = new AWS.DynamoDB.DocumentClient()
+  const dynamoDb = getDynamoDbClient()
   for (const record of event.Records) {
     const { tenantId, transactionId } = JSON.parse(record.body) as AlertPayload
     const tenantRepository = new TenantRepository(tenantId, {

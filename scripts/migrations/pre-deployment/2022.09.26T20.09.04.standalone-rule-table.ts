@@ -1,4 +1,5 @@
 import { StackConstants } from '@cdk/constants'
+import { DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient, paginateQuery } from '@/utils/dynamodb'
@@ -10,7 +11,7 @@ async function moveItem(item: any, fromTable: string, toTable: string) {
     TableName: toTable,
     Item: item,
   }
-  await dynamodb.put(putItemInput).promise()
+  await dynamodb.send(new PutCommand(putItemInput))
 
   const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
     TableName: fromTable,
@@ -18,9 +19,8 @@ async function moveItem(item: any, fromTable: string, toTable: string) {
       PartitionKeyID: item.PartitionKeyID,
       SortKeyID: item.SortKeyID,
     },
-    ReturnConsumedCapacity: 'TOTAL',
   }
-  await dynamodb.delete(deleteItemInput).promise()
+  await dynamodb.send(new DeleteCommand(deleteItemInput))
 }
 
 async function migrateTenant(
@@ -32,7 +32,7 @@ async function migrateTenant(
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fromTable,
     KeyConditionExpression: 'PartitionKeyID = :pk',
-    ReturnConsumedCapacity: 'TOTAL',
+
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.RULE_INSTANCE(tenant.id).PartitionKeyID,
     },
@@ -49,7 +49,7 @@ async function migrateRules(fromTable: string, toTable: string) {
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
     TableName: fromTable,
     KeyConditionExpression: 'PartitionKeyID = :pk',
-    ReturnConsumedCapacity: 'TOTAL',
+
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.RULE().PartitionKeyID,
     },

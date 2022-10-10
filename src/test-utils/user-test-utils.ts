@@ -1,6 +1,6 @@
-import { getTestDynamoDbClient } from './dynamodb-test-utils'
 import { User } from '@/@types/openapi-public/User'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export function getTestUser(user: Partial<User> = {}): User {
   return {
@@ -62,7 +62,7 @@ export function getTestUser(user: Partial<User> = {}): User {
 }
 
 export async function createConsumerUser(testTenantId: string, user: User) {
-  const dynamoDb = getTestDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb })
   const createdUser = await userRepository.saveConsumerUser(user)
   return async () => {

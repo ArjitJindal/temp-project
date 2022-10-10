@@ -1,3 +1,4 @@
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
@@ -9,7 +10,7 @@ export abstract class Aggregator {
   constructor(
     tenantId: string,
     transaction: Transaction,
-    dynamoDb: AWS.DynamoDB.DocumentClient
+    dynamoDb: DynamoDBDocumentClient
   ) {
     this.tenantId = tenantId
     this.transaction = transaction

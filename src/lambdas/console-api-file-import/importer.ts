@@ -1,6 +1,7 @@
 import { parse } from '@fast-csv/parse'
 import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ConverterInterface } from './converter-interface'
 import { converters as transactionConverters } from './transaction'
 import { converters as userConverters } from './user'
@@ -20,7 +21,7 @@ export class Importer {
   tenantId: string
   tenantName: string
   connections: {
-    dynamoDb: AWS.DynamoDB.DocumentClient
+    dynamoDb: DynamoDBDocumentClient
     mongoDb: MongoClient
     s3: AWS.S3
   }
@@ -31,7 +32,7 @@ export class Importer {
     tenantId: string,
     tenantName: string,
     connections: {
-      dynamoDb: AWS.DynamoDB.DocumentClient
+      dynamoDb: DynamoDBDocumentClient
       mongoDb: MongoClient
       s3: AWS.S3
     },

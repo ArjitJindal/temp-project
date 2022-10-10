@@ -1,7 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
-import { AttributeMap, DocumentClient } from 'aws-sdk/clients/dynamodb'
+import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
+import {
+  BatchGetCommand,
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -13,18 +20,18 @@ import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 
 export class UserRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
-      dynamoDb?: AWS.DynamoDB.DocumentClient
+      dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
     }
   ) {
-    this.dynamoDb = connections.dynamoDb as AWS.DynamoDB.DocumentClient
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
   }
@@ -217,10 +224,11 @@ export class UserRepository {
           ),
         },
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.batchGet(batchGetItemInput).promise()
-    const users: DocumentClient.ItemList =
+    const result = await this.dynamoDb.send(
+      new BatchGetCommand(batchGetItemInput)
+    )
+    const users: ItemList =
       result.Responses?.[StackConstants.TARPON_DYNAMODB_TABLE_NAME] || []
     return users.map((user: AttributeMap) => {
       const projectedUser = {
@@ -276,9 +284,8 @@ export class UserRepository {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    const result = await this.dynamoDb.get(getItemInput).promise()
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     if (!result.Item) {
       return undefined
     }
@@ -317,9 +324,8 @@ export class UserRepository {
         type,
         ...newUser,
       },
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.put(putItemInput).promise()
+    await this.dynamoDb.send(new PutCommand(putItemInput))
 
     if (process.env.NODE_ENV === 'development') {
       const { localTarponChangeCaptureHandler } = await import(
@@ -334,8 +340,7 @@ export class UserRepository {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
-      ReturnConsumedCapacity: 'TOTAL',
     }
-    await this.dynamoDb.delete(deleteItemInput).promise()
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
 }

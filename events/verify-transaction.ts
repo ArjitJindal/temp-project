@@ -10,9 +10,7 @@ export const event: TestApiEvent = {
   } as TestApiRequestContext,
   stageVariables: null,
   body: JSON.stringify({
-    transactionId: '7b80a539eea6e78acbd6d458e5971482',
     originUserId: '8650a2611d0771cba03310f74bf6',
-    destinationUserId: '9350a2611e0771cba03310f74bf6',
     originAmountDetails: {
       country: 'DE',
       transactionAmount: 800,

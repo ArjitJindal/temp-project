@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   ArnPrincipal,
   Effect,
@@ -1104,6 +1105,7 @@ export class CdkTarponStack extends cdk.Stack {
         'CloudWatchLambdaInsightsExecutionRolePolicy'
       )
     )
+    Metric.grantPutMetricData(alias)
     return { alias, func }
   }
 

@@ -1,72 +1,76 @@
+import {
+  DynamoDBDocumentClient,
+  QueryCommand,
+  PutCommand,
+  DeleteCommand,
+  GetCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@cdk/constants'
 
 const DEFAULT_TTL_SECONDS = 2592000 // 30 days
 
 export class TransientRepository {
-  dynamoDb: AWS.DynamoDB.DocumentClient
+  dynamoDb: DynamoDBDocumentClient
   ttlSeconds?: number
 
-  constructor(dynamoDb: AWS.DynamoDB.DocumentClient, ttlSeconds?: number) {
+  constructor(dynamoDb: DynamoDBDocumentClient, ttlSeconds?: number) {
     this.dynamoDb = dynamoDb
     this.ttlSeconds = ttlSeconds
   }
 
   public async hasPrimaryKeyId(primaryKeyId: string): Promise<boolean> {
-    const result = await this.dynamoDb
-      .query({
+    const result = await this.dynamoDb.send(
+      new QueryCommand({
         TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': primaryKeyId,
         },
-        ReturnConsumedCapacity: 'TOTAL',
+
         Limit: 1,
       })
-      .promise()
+    )
     return Boolean(result.Items?.length)
   }
 
   public async addKey(partitionKeyId: string, sortKeyId: string) {
-    await this.dynamoDb
-      .put({
+    await this.dynamoDb.send(
+      new PutCommand({
         TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
         Item: {
           PartitionKeyID: partitionKeyId,
           SortKeyID: sortKeyId || 'default',
           ttl: this.getUpdatedTTLAttribute(),
         },
-        ReturnConsumedCapacity: 'TOTAL',
       })
-      .promise()
+    )
   }
 
   public async deleteKey(partitionKeyId: string, sortKeyId: string) {
-    await this.dynamoDb
-      .delete({
+    await this.dynamoDb.send(
+      new DeleteCommand({
         TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
         Key: {
           PartitionKeyID: partitionKeyId,
           SortKeyID: sortKeyId || 'default',
         },
-        ReturnConsumedCapacity: 'TOTAL',
       })
-      .promise()
+    )
   }
 
   public async hasKey(
     partitionKeyId: string,
     sortKeyId: string
   ): Promise<boolean> {
-    const result = await this.dynamoDb
-      .get({
+    const result = await this.dynamoDb.send(
+      new GetCommand({
         TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
         Key: {
           PartitionKeyID: partitionKeyId,
           SortKeyID: sortKeyId || 'default',
         },
-        ReturnConsumedCapacity: 'TOTAL',
       })
-      .promise()
+    )
     return Boolean(result.Item)
   }
 
