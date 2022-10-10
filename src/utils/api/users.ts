@@ -43,7 +43,7 @@ export function getFullName(userDetails: UserDetails | undefined): string {
 }
 
 export function businessName(user: InternalBusinessUser): string {
-  return user.legalEntity.companyGeneralDetails.legalName;
+  return user.legalEntity?.companyGeneralDetails?.legalName;
 }
 
 export function getUserName(user?: InternalConsumerUser | InternalBusinessUser) {
