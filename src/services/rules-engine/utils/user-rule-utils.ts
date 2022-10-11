@@ -11,16 +11,34 @@ export function isUserBetweenAge(
   ageRange: { minAge?: number; maxAge?: number } | undefined
 ): boolean {
   const consumerUser = user as User
-  if (
-    !user ||
-    !isConsumerUser(user) ||
-    !ageRange ||
-    !consumerUser.userDetails?.dateOfBirth
-  ) {
+  const businessUser = user as Business // For typescript
+
+  if (!user || !ageRange) {
     return true
   }
-  const age = dayjs().diff(dayjs(consumerUser.userDetails.dateOfBirth), 'year')
-  return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 200)
+  if (isConsumerUser(user)) {
+    if (!consumerUser.userDetails?.dateOfBirth) {
+      return true
+    }
+    const age = dayjs().diff(
+      dayjs(consumerUser.userDetails.dateOfBirth),
+      'year'
+    )
+    return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 200)
+  } else {
+    if (
+      !businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
+    ) {
+      return true
+    }
+    const age = dayjs().diff(
+      dayjs(
+        businessUser.legalEntity?.companyRegistrationDetails?.dateOfRegistration
+      ),
+      'year'
+    )
+    return _.inRange(age, ageRange.minAge || 0, ageRange.maxAge || 1000)
+  }
 }
 
 export function isConsumerUser(user: User | Business) {
