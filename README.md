@@ -66,28 +66,6 @@ Summary, after Tarpon dependencies are setup (including local DDB instance and M
 3. `npm run synth:local`
 4. `npm run start-local-api`
 
-### Running Chrome (or Chromium) in Unsecure Mode
-
-In order to use the local-api for Phytoplankton, you'll need to use the "unsecured" chrome instance. You can
-
-For Mac, you can run:
-
-```
-open -n -a /usr/bin/google-chrome --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
-```
-
-or
-
-```
-open -n -a "Google Chrome" --args --user-data-dir="/tmp/chrome_dev_test" --disable-web-security
-```
-
-For Linux:
-
-```
-chromium-browser --disable-web-security --user-data-dir="./tmp"
-```
-
 ### Deployment
 
 You can deploy to dev using something like:
