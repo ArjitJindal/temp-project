@@ -8,7 +8,7 @@ const CopyPlugin = require('copy-webpack-plugin')
 
 const config: Configuration = {
   devtool: false,
-  parallelism: 50,
+  parallelism: 10,
   entry: Object.fromEntries(
     fs
       .readdirSync('./src/lambdas')
