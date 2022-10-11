@@ -15,7 +15,7 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
 
-const PathToLambda: any = {
+export const PublicManagementApiPathToLambda: any = {
   '/rules': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
   '/rules/{ruleId}': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
   '/rule-instances':
@@ -26,7 +26,7 @@ const PathToLambda: any = {
 
 const openapi = getAugmentedOpenapi(
   './lib/openapi/public-management/openapi-public-management-original.yaml',
-  PathToLambda,
+  PublicManagementApiPathToLambda,
   'API_KEY'
 )
 mkdirp.sync(`./dist/openapi`)

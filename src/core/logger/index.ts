@@ -1,13 +1,15 @@
 import { createLogger, format, transports } from 'winston'
 import { getContext } from '../utils/context'
 
+const isLocal = process.env.ENV
+const logFormat = format.combine(
+  format.timestamp(),
+  format.errors({ stack: true }),
+  format.json()
+)
 export const winstonLogger = createLogger({
-  level: process.env.ENV === 'local' ? 'debug' : 'info',
-  format: format.combine(
-    format.timestamp(),
-    format.errors({ stack: true }),
-    format.json()
-  ),
+  level: isLocal ? 'debug' : 'info',
+  format: isLocal ? format.combine(logFormat, format.prettyPrint()) : logFormat,
   transports: [new transports.Console({})],
 })
 

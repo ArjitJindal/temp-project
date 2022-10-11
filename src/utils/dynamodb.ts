@@ -1,4 +1,3 @@
-import os from 'os'
 import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -115,12 +114,7 @@ export function getDynamoDbRawClient(
         }
       : credentials,
     region: isLocal ? 'local' : process.env.AWS_REGION,
-    endpoint: isLocal
-      ? process.env.DYNAMODB_URI ||
-        `http://${
-          os.type() === 'Linux' ? '172.17.0.1' : 'host.docker.internal'
-        }:8000`
-      : undefined,
+    endpoint: isLocal ? 'http://localhost:8000' : undefined,
   })
   return rawClient
 }

@@ -15,7 +15,7 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
 
-const PathToLambda: any = {
+export const ConsoleApiPathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
@@ -97,7 +97,7 @@ const PathToLambda: any = {
 
 const openapi = getAugmentedOpenapi(
   './lib/openapi/internal/openapi-internal-original.yaml',
-  PathToLambda,
+  ConsoleApiPathToLambda,
   'JWT',
   {
     iamAuthorizedPaths: ['/apikey', '/iam/rules', '/iam/rule_instances'],

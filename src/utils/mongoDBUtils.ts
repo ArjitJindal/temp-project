@@ -1,4 +1,3 @@
-import os from 'os'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 
@@ -27,12 +26,7 @@ export async function getMongoDbClient(
     )
   }
   if (process.env.ENV === 'local') {
-    return await MongoClient.connect(
-      process.env.MONGO_URI ||
-        `mongodb://${
-          os.type() === 'Linux' ? '172.17.0.1' : 'host.docker.internal'
-        }:27017/${dbName}`
-    )
+    return await MongoClient.connect('mongodb://localhost:27017')
   }
 
   const credentials = await getCredentials()

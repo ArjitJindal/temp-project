@@ -1336,7 +1336,9 @@ paths:
     get:
       summary: Slack OAuth Redirect
       tags: []
-      responses: {}
+      responses:
+        '200':
+          description: OK
       operationId: get-slack-oauth-redirect
     parameters: []
   /webhooks:
@@ -2811,7 +2813,6 @@ components:
                   type: string
                 client_ref:
                   type: string
-                  format: nullable
                 total_hits:
                   type: integer
                   format: int32
@@ -2848,7 +2849,6 @@ components:
                       type: string
                     phone:
                       type: string
-                      format: nullable
                     created_at:
                       type: string
                     user_is_active:
@@ -2865,7 +2865,6 @@ components:
                       type: string
                     phone:
                       type: string
-                      format: nullable
                     created_at:
                       type: string
                     user_is_active:

@@ -59,9 +59,9 @@ export const localDev =
       } else {
         // For requests of the public REST APIs
         const jwtAuthorizerResult: JWTAuthorizerResult = {
-          principalId: event.headers?.['Tenant-Id'] || 'unset',
-          tenantName: event.headers?.['Tenant-Name'] || 'unset',
-          userId: event.headers?.['User-Id'] || 'unset',
+          principalId: event.headers?.['tenant-id'] || 'unset',
+          tenantName: event.headers?.['tenant-name'] || 'unset',
+          userId: event.headers?.['user-id'] || 'unset',
           ...authorizer,
         }
         event.requestContext.authorizer = jwtAuthorizerResult

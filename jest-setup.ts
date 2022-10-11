@@ -10,4 +10,3 @@ jest.mock('@cdk/constants', () => ({
 }))
 
 process.env.RETRY_KINESIS_STREAM_NAME = 'mock-retry-stream'
-process.env.DYNAMODB_URI = 'http://localhost:8000'

@@ -15,7 +15,7 @@ import { getAugmentedOpenapi } from './openapi-augmentor-util'
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
 
-const PathToLambda: any = {
+export const PublicApiPathToLambda: any = {
   '/transactions': StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
   '/transactions/{transactionId}':
     StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
@@ -32,7 +32,7 @@ const PathToLambda: any = {
 
 const openapi = getAugmentedOpenapi(
   './lib/openapi/public/openapi-public-original.yaml',
-  PathToLambda,
+  PublicApiPathToLambda,
   'API_KEY'
 )
 mkdirp.sync(`./dist/openapi`)

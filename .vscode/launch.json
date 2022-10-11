@@ -3,44 +3,30 @@
   "configurations": [
     {
       "type": "node-terminal",
-      "name": "Run Script: create-user",
+      "name": "Run Console API",
       "request": "launch",
-      "command": "npm run create-user",
+      "command": "npm run dev:api:console",
       "cwd": "${workspaceFolder}"
     },
     {
       "type": "node-terminal",
-      "name": "Run Script: get-user",
+      "name": "Run Public API",
       "request": "launch",
-      "command": "npm run get-user",
+      "command": "npm run dev:api:public",
       "cwd": "${workspaceFolder}"
     },
     {
       "type": "node-terminal",
-      "name": "Run Script: create-rule-instance",
+      "name": "Run Public Management API",
       "request": "launch",
-      "command": "npm run create-rule-instance",
+      "command": "npm run dev:api:public-management",
       "cwd": "${workspaceFolder}"
     },
     {
       "type": "node-terminal",
-      "name": "Run Script: update-rule-instance",
+      "name": "Run all APIs",
       "request": "launch",
-      "command": "npm run update-rule-instance",
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "node-terminal",
-      "name": "Run Script: verify-transaction",
-      "request": "launch",
-      "command": "npm run verify-transaction",
-      "cwd": "${workspaceFolder}"
-    },
-    {
-      "type": "node-terminal",
-      "name": "Run Script: get-transaction",
-      "request": "launch",
-      "command": "npm run get-transaction",
+      "command": "npm run dev:api",
       "cwd": "${workspaceFolder}"
     }
   ]

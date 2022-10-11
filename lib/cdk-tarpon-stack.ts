@@ -66,6 +66,7 @@ import {
   createLambdaErrorPercentageAlarm,
   createLambdaThrottlingAlarm,
 } from './cdk-cw-alarms'
+import { LAMBDAS } from './lambdas'
 import {
   FileImportConfig,
   GetPresignedUrlConfig,
@@ -77,8 +78,6 @@ const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 
 type InternalFunctionProps = {
   name: string
-  handler: string
-  codePath: string
   provisionedConcurrency?: number
   layers?: Array<ILayerVersion>
   memorySize?: number
@@ -304,8 +303,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: apiKeyGeneratorAlias } = this.createFunction(
       {
         name: StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
-        handler: 'app.apiKeyGeneratorHandler',
-        codePath: 'dist/api-key-generator',
       },
       atlasFunctionProps
     )
@@ -330,8 +327,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: apiKeyAuthorizerAlias, func: apiKeyAuthorizerFunction } =
       this.createFunction({
         name: StackConstants.API_KEY_AUTHORIZER_FUNCTION_NAME,
-        handler: 'app.apiKeyAuthorizer',
-        codePath: 'dist/api-key-authorizer',
         provisionedConcurrency:
           config.resource.API_KEY_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
       })
@@ -341,8 +336,6 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.JWT_AUTHORIZER_FUNCTION_NAME,
-          handler: 'app.jwtAuthorizer',
-          codePath: 'dist/jwt-authorizer',
           provisionedConcurrency:
             config.resource.JWT_AUTHORIZER_LAMBDA.PROVISIONED_CONCURRENCY,
         },
@@ -358,8 +351,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transaction */
     const { alias: transactionAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
-      handler: 'app.transactionHandler',
-      codePath: 'dist/public-api-rules-engine',
       provisionedConcurrency:
         config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
       layers: [fastGeoIpLayer],
@@ -372,8 +363,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
-      handler: 'app.transactionEventHandler',
-      codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
@@ -381,8 +370,6 @@ export class CdkTarponStack extends cdk.Stack {
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
-      handler: 'app.userEventsHandler',
-      codePath: 'dist/public-api-rules-engine',
     })
     tarponDynamoDbTable.grantReadWriteData(userEventAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(userEventAlias)
@@ -391,8 +378,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: fileImportAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
-        handler: 'app.fileImportHandler',
-        codePath: 'dist/console-api-file-import/',
       },
       {
         ...atlasFunctionProps,
@@ -412,8 +397,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: getPresignedUrlAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
-        handler: 'app.getPresignedUrlHandler',
-        codePath: 'dist/console-api-file-import/',
       },
       {
         environment: {
@@ -427,8 +410,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: ruleAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
-        handler: 'app.ruleHandler',
-        codePath: 'dist/console-api-rule/',
       },
       atlasFunctionProps
     )
@@ -440,8 +421,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: ruleInstanceAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
-        handler: 'app.ruleInstanceHandler',
-        codePath: 'dist/console-api-rule/',
       },
       atlasFunctionProps
     )
@@ -453,8 +432,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: publicRuleAlias } = this.createFunction(
       {
         name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
-        handler: 'app.ruleHandler',
-        codePath: 'dist/public-management-api-rule/',
       },
       atlasFunctionProps
     )
@@ -465,8 +442,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: publicRuleInstanceAlias } = this.createFunction(
       {
         name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
-        handler: 'app.ruleInstanceHandler',
-        codePath: 'dist/public-management-api-rule/',
       },
       atlasFunctionProps
     )
@@ -477,8 +452,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: transactionsViewAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
-        handler: 'app.transactionsViewHandler',
-        codePath: 'dist/console-api-transaction/',
         memorySize: config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
       },
       {
@@ -501,8 +474,6 @@ export class CdkTarponStack extends cdk.Stack {
     this.createFunction(
       {
         name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
-        handler: 'app.accountsHandler',
-        codePath: 'dist/console-api-account/',
       },
       atlasFunctionProps
     )
@@ -511,8 +482,6 @@ export class CdkTarponStack extends cdk.Stack {
     this.createFunction(
       {
         name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
-        handler: 'app.tenantsHandler',
-        codePath: 'dist/console-api-tenant/',
       },
       atlasFunctionProps
     )
@@ -521,8 +490,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: businessUsersViewAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-        handler: 'app.businessUsersViewHandler',
-        codePath: 'dist/console-api-user/',
         provisionedConcurrency:
           config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
@@ -544,8 +511,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: consumerUsersViewAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
-        handler: 'app.consumerUsersViewHandler',
-        codePath: 'dist/console-api-user/',
         provisionedConcurrency:
           config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
@@ -567,8 +532,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: dashboardStatsAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
-        handler: 'app.dashboardStatsHandler',
-        codePath: 'dist/console-api-dashboard/',
         provisionedConcurrency:
           config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
@@ -580,8 +543,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* User */
     const { alias: userAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-      handler: 'app.userHandler',
-      codePath: 'dist/public-api-user-management',
       provisionedConcurrency:
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
@@ -591,8 +552,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* List Importer */
     const { alias: listsAlias } = this.createFunction({
       name: StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-      handler: 'app.listsHandler',
-      codePath: 'dist/console-api-list-importer/',
     })
     tarponDynamoDbTable.grantReadWriteData(listsAlias)
 
@@ -600,8 +559,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: caseAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
-        handler: 'app.casesHandler',
-        codePath: 'dist/console-api-case/',
         memorySize: config.resource.CASE_LAMBDA?.MEMORY_SIZE,
       },
       {
@@ -624,8 +581,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: slackAppAlias } = this.createFunction(
       {
         name: StackConstants.SLACK_APP_FUNCTION_NAME,
-        handler: 'app.slackAppHandler',
-        codePath: 'dist/slack-app',
       },
       {
         ...atlasFunctionProps,
@@ -642,8 +597,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: slackAlertAlias } = this.createFunction(
       {
         name: StackConstants.SLACK_ALERT_FUNCTION_NAME,
-        handler: 'app.slackAlertHandler',
-        codePath: 'dist/slack-app',
       },
       {
         ...atlasFunctionProps,
@@ -667,8 +620,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: webhookDelivererAlias } = this.createFunction(
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
-        handler: 'app.webhookDeliveryHandler',
-        codePath: 'dist/webhook-deliverer',
       },
       atlasFunctionProps
     )
@@ -686,8 +637,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: webhookConfigurationHandlerAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
-        handler: 'app.webhookConfigurationHandler',
-        codePath: 'dist/console-api-webhook',
       },
       atlasFunctionProps
     )
@@ -705,8 +654,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: riskClassificationAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
-        handler: 'app.riskClassificationHandler',
-        codePath: 'dist/console-api-pulse/',
       },
       atlasFunctionProps
     )
@@ -715,16 +662,12 @@ export class CdkTarponStack extends cdk.Stack {
     /* Manual User Risk Assignment function */
     const { alias: manualUserRiskAssignmentAlias } = this.createFunction({
       name: StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
-      handler: 'app.manualRiskAssignmentHandler',
-      codePath: 'dist/console-api-pulse/',
     })
     hammerheadDynamoDbTable.grantReadWriteData(manualUserRiskAssignmentAlias)
 
     /* Parameter risk level assignment function */
     const { alias: parameterRiskAssignmentAlias } = this.createFunction({
       name: StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
-      handler: 'app.parameterRiskAssignmentHandler',
-      codePath: 'dist/console-api-pulse/',
     })
     hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
@@ -735,8 +678,6 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          handler: 'app.tarponChangeMongodbHandler',
-          codePath: 'dist/tarpon-change-mongodb-consumer',
         },
         {
           ...atlasFunctionProps,
@@ -780,8 +721,6 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          handler: 'app.tarponChangeWebhookHandler',
-          codePath: 'dist/tarpon-change-webhook-consumer',
         },
         {
           ...atlasFunctionProps,
@@ -822,8 +761,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: sanctionsHandlerAlias } = this.createFunction(
       {
         name: StackConstants.SANCTIONS_FUNCTION_NAME,
-        handler: 'app.sanctionsHandler',
-        codePath: 'dist/sanctions',
       },
       {
         ...atlasFunctionProps,
@@ -847,8 +784,6 @@ export class CdkTarponStack extends cdk.Stack {
       this.createFunction(
         {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          handler: 'app.hammerheadChangeCaptureHandler',
-          codePath: 'dist/hammerhead-change-capture-kinesis-consumer',
         },
         {
           ...atlasFunctionProps,
@@ -1032,14 +967,8 @@ export class CdkTarponStack extends cdk.Stack {
     internalFunctionProps: InternalFunctionProps,
     props: Partial<FunctionProps> = {}
   ): { alias: Alias; func: LambdaFunction } {
-    const {
-      layers,
-      name,
-      handler,
-      codePath,
-      memorySize,
-      provisionedConcurrency,
-    } = internalFunctionProps
+    const { layers, name, memorySize, provisionedConcurrency } =
+      internalFunctionProps
     const layersArray = layers ? [...layers] : []
     if (
       !layersArray.includes(this.cwInsightsLayer) &&
@@ -1047,11 +976,15 @@ export class CdkTarponStack extends cdk.Stack {
     ) {
       layersArray.push(this.cwInsightsLayer)
     }
+    const { handlerName } = LAMBDAS[name]
+    if (!handlerName) {
+      throw new Error(`Unknown lambda ${name}!`)
+    }
     const func = new LambdaFunction(this, name, {
       functionName: name,
       runtime: Runtime.NODEJS_16_X,
-      handler,
-      code: Code.fromAsset(codePath),
+      handler: `app.${handlerName}`,
+      code: Code.fromAsset(`dist/${LAMBDAS[name].codePath}`),
       tracing: Tracing.ACTIVE,
       timeout: DEFAULT_LAMBDA_TIMEOUT,
       memorySize: memorySize

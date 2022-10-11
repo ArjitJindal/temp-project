@@ -160,7 +160,7 @@ export class TarponStreamConsumerBuilder {
         if (process.env.ENV !== 'local') {
           throw new Error(`Retry stream is not set!`)
         }
-        this.retryStreamName = 'local-retry-stream'
+        this.retryStreamName = 'localRetrStream'
       }
 
       const isFromRetryStream = this.isFromRetryStream(event)
