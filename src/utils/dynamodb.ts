@@ -132,7 +132,8 @@ export function getDynamoDbClient(
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
-  return withMetrics(client)
+  // TODO: re-enable withMetrics
+  return client
 }
 
 async function getLastEvaluatedKey(
