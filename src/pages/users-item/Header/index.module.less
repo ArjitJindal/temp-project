@@ -1,14 +1,19 @@
-.items {
-  display: grid;
-  position: relative;
-  grid-template-columns:
-    minmax(150px, 300px) minmax(120px, min-content) auto minmax(120px, min-content)
-    100px;
-  gap: 2rem;
-  margin-left: 250px;
-  margin-top: -75px;
-}
+@import '~antd/es/style/themes/default.less';
 
 .root {
-  width: 270px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }

@@ -18,7 +18,7 @@ export default function UserIdNameCard(props: Props) {
         <div className={s.id}>{user && <Id>{user.userId}</Id>}</div>
         <div className={s.name}>{user ? getUserName(user) : 'User undefined'}</div>
       </div>
-      <div>{children}</div>
+      {children && <div>{children}</div>}
     </>
   );
 }
