@@ -69,7 +69,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       }),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
-        computeType: ComputeType.MEDIUM,
+        computeType: ComputeType.LARGE,
       },
     })
     const getDeployCodeBuildProject = (config: Config) => {
