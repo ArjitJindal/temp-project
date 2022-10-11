@@ -22,6 +22,7 @@ const GENERATED_DIRS = [
   'node_modules',
   'src/@types/openapi-internal',
   'src/@types/openapi-public',
+  'src/@types/openapi-public-management',
 ]
 
 export type CdkTarponPipelineStackProps = cdk.StackProps
