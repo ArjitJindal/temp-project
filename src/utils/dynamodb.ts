@@ -31,33 +31,32 @@ import {
 import { logger } from '@/core/logger'
 
 function getAugmentedDynamoDBCommand(command: any): {
-  type: 'READ' | 'WRITE'
+  type: 'READ' | 'WRITE' | null
   command: any
 } {
   const newInput = {
     ...command.input,
     ReturnConsumedCapacity: 'TOTAL',
   }
-  switch (command.constructor.name) {
-    case 'PutCommand':
-      return { type: 'WRITE', command: new PutCommand(newInput) }
-    case 'UpdateCommand':
-      return { type: 'WRITE', command: new UpdateCommand(newInput) }
-    case 'DeleteCommand':
-      return { type: 'WRITE', command: new DeleteCommand(newInput) }
-    case 'BatchWriteCommand':
-      return { type: 'WRITE', command: new BatchWriteCommand(newInput) }
-    case 'QueryCommand':
-      return { type: 'READ', command: new QueryCommand(newInput) }
-    case 'GetCommand':
-      return { type: 'READ', command: new GetCommand(newInput) }
-    case 'BatchGetCommand':
-      return { type: 'READ', command: new BatchGetCommand(newInput) }
-    default: {
-      logger.warn(`Unhandled dynamodb command: ${command.constructor.name}`)
-      return command
-    }
+
+  if (command instanceof PutCommand) {
+    return { type: 'WRITE', command: new PutCommand(newInput) }
+  } else if (command instanceof UpdateCommand) {
+    return { type: 'WRITE', command: new UpdateCommand(newInput) }
+  } else if (command instanceof DeleteCommand) {
+    return { type: 'WRITE', command: new DeleteCommand(newInput) }
+  } else if (command instanceof BatchWriteCommand) {
+    return { type: 'WRITE', command: new BatchWriteCommand(newInput) }
+  } else if (command instanceof QueryCommand) {
+    return { type: 'READ', command: new QueryCommand(newInput) }
+  } else if (command instanceof GetCommand) {
+    return { type: 'READ', command: new GetCommand(newInput) }
+  } else if (command instanceof BatchGetCommand) {
+    return { type: 'READ', command: new BatchGetCommand(newInput) }
   }
+
+  logger.warn(`Unhandled dynamodb command: ${command.constructor.name}`)
+  return { type: null, command }
 }
 
 export function withMetrics(
@@ -126,8 +125,7 @@ export function getDynamoDbClient(
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
-  // TODO: re-enable withMetrics
-  return client
+  return withMetrics(client)
 }
 
 async function getLastEvaluatedKey(

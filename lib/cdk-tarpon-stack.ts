@@ -1251,7 +1251,8 @@ export class CdkTarponStack extends cdk.Stack {
       },
     })
     const apiValidationErrorTemplate = {
-      'application/json': '{ "errors": $context.error.validationErrorString }',
+      'application/json':
+        '{ "errors": "$context.error.validationErrorString" }',
     }
     restApi.addGatewayResponse('BadRequestBodyValidationResponse', {
       type: ResponseType.BAD_REQUEST_BODY,
