@@ -110,7 +110,7 @@ async function buildCode(env, options) {
     publicPath: '/',
     minify: !devMode,
     metafile: !devMode,
-    sourcemap: !devMode,
+    sourcemap: devMode,
     treeShaking: !devMode,
     watch: watch
       ? {
