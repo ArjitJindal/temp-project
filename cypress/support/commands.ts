@@ -4,9 +4,11 @@ Cypress.Commands.add('loginByForm', (username: string, password: string) => {
   const loginUrl = Cypress.env('loginUrl');
   cy.visit(loginUrl);
   cy.location('host').should('eq', new URL(loginUrl).host);
+
   cy.get('input#username').type(username);
   cy.get('input#password').type(password);
-  cy.get('button[type=submit]')[0].click();
+  cy.get('button[type=submit]').first().click();
+
   cy.location('host', { timeout: 10000 }).should(
     'eq',
     new URL(Cypress.config('baseUrl') as string).host,
