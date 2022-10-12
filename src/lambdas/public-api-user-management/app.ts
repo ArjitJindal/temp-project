@@ -12,7 +12,10 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { calculateKRS } from '@/services/risk-scoring'
-import { hasFeature } from '@/core/utils/context'
+import {
+  hasFeature,
+  updateLogMetadataEntityDetails,
+} from '@/core/utils/context'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -49,7 +52,7 @@ export const userHandler = lambdaApi()(
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)
-
+      updateLogMetadataEntityDetails(`userId`, userPayload.userId)
       if ((userPayload as User).userId) {
         const user = isConsumerUser
           ? await userRepository.getConsumerUser(userPayload.userId)
