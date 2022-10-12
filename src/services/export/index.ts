@@ -47,11 +47,11 @@ function makeRows<T>(object: T, reference: CsvHeaderSettings<T>): Row {
         continue
       }
       if (action === 'INCLUDE') {
-        result[key] = object[key] ?? ''
+        result[key as string] = (object[key] as any) ?? ''
         continue
       }
       if (action === 'JSON') {
-        result[key] = JSON.stringify(object[key])
+        result[key as string] = JSON.stringify(object[key])
         continue
       }
       if (typeof action === 'object') {
@@ -95,7 +95,7 @@ export class ExportService<T> {
     const stream = csvFormat.format({
       headers,
       alwaysWriteHeaders: true,
-      transform: (object: T) => makeRows(object, headerSettings),
+      transform: (object: any) => makeRows(object, headerSettings),
     })
 
     const uploadInfo = this.s3.upload({

@@ -76,7 +76,9 @@ async function createServer(serverInfo: ServerInfo) {
   async function handler(req: Request, res: Response) {
     const openapiInfo = (req as any).openapi
     const lambdaName = serverInfo.pathToLambda[openapiInfo.openApiRoute]
-    const lambdaHandler = LAMBDAS[lambdaName].handler
+    const lambdaHandler = (
+      await import(`@/lambdas/${LAMBDAS[lambdaName].codePath}/app`)
+    )[LAMBDAS[lambdaName].handlerName]
     const apigatewayEvent = {
       resource: openapiInfo.openApiRoute,
       path: req.url.split('?')[0],
