@@ -195,7 +195,7 @@ describe.each<TransactionRuleTestCase>([
         originAmountDetails: {
           country: 'AF',
           transactionAmount: 800,
-          transactionCurrency: 'PNR',
+          transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
           country: 'USA',
@@ -208,7 +208,7 @@ describe.each<TransactionRuleTestCase>([
         originAmountDetails: {
           country: 'AF',
           transactionAmount: 800,
-          transactionCurrency: 'PNR',
+          transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
           country: 'USA',
@@ -221,7 +221,7 @@ describe.each<TransactionRuleTestCase>([
         originAmountDetails: {
           country: 'AF',
           transactionAmount: 800,
-          transactionCurrency: 'PNR',
+          transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
           country: 'USA',
@@ -314,6 +314,68 @@ describe('Check for EEA group of country', () => {
         }),
       ],
       expectedHits: [false, false, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Exclusive high risk countries', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'too-many-transactions-to-high-risk-country',
+      defaultParameters: {
+        transactionsLimit: 1,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        highRiskCountries: ['DE'],
+        highRiskCountriesExclusive: ['EEA'],
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TooManyTransactionsToHighRiskCountryRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Exceeded transaction from outside of EEA - hit',
+      transactions: [
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'IT',
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originAmountDetails: {
+            country: 'US',
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true, true],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(

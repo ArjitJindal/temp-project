@@ -40,7 +40,7 @@ describe('R-123 description formatting', () => {
         originAmountDetails: {
           country: 'PK',
           transactionAmount: 800,
-          transactionCurrency: 'PNR',
+          transactionCurrency: 'PKR',
         },
         timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
       }),

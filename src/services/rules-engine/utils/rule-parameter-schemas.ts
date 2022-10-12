@@ -45,6 +45,12 @@ export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>
     items: { type: 'string' },
   } as const)
 
+export const COUNTRIES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...COUNTRIES_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const CURRENRIES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',

@@ -67,6 +67,12 @@ async function createServer(serverInfo: ServerInfo) {
     })
   )
 
+  function addCorsHeaders(res: Response) {
+    res.header('Access-Control-Allow-Headers', '*')
+    res.header('Access-Control-Allow-Methods', '*')
+    res.header('Access-Control-Allow-Origin', '*')
+  }
+
   async function handler(req: Request, res: Response) {
     const openapiInfo = (req as any).openapi
     const lambdaName = serverInfo.pathToLambda[openapiInfo.openApiRoute]
@@ -87,6 +93,7 @@ async function createServer(serverInfo: ServerInfo) {
       Object.entries(apigatewayResponse?.headers || {}).forEach((entry) => {
         res.header(entry[0], entry[1] as any)
       })
+      addCorsHeaders(res)
       res.status(apigatewayResponse.statusCode)
       res.send(apigatewayResponse.body)
     } catch (e) {
@@ -106,9 +113,7 @@ async function createServer(serverInfo: ServerInfo) {
   connect(app)
 
   app.options('*', (_req, res) => {
-    res.header('Access-Control-Allow-Headers', '*')
-    res.header('Access-Control-Allow-Methods', '*')
-    res.header('Access-Control-Allow-Origin', '*')
+    addCorsHeaders(res)
     res.status(200)
     res.send()
   })
