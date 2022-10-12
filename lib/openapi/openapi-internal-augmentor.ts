@@ -88,6 +88,7 @@ export const ConsoleApiPathToLambda: any = {
   '/pulse/risk-parameter':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/cases': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/cases/{caseId}': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments/{commentId}':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

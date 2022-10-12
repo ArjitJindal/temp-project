@@ -1561,6 +1561,22 @@ paths:
             $ref: '#/components/schemas/CasePriority'
           in: query
           name: filterPriority
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionTagValue
+        - schema:
+            type: boolean
+          in: query
+          name: includeTransactionUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeTransactionEvents
     post:
       summary: Cases - Update
       operationId: post-cases
@@ -1572,6 +1588,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CasesUpdateRequest'
+  '/cases/{caseId}':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    get:
+      summary: Create a Case Comment
+      operationId: get-case
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '404':
+          description: Not found
   '/cases/{caseId}/comments':
     parameters:
       - schema:
@@ -2016,6 +2051,24 @@ components:
               - hitCount
       required:
         - data
+    CaseTransaction:
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
+        - type: object
+          additionalProperties: false
+          properties:
+            originUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+            destinationUser:
+              oneOf:
+                - $ref: '#/components/schemas/InternalConsumerUser'
+                - $ref: '#/components/schemas/InternalBusinessUser'
+            events:
+              type: array
+              items:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
@@ -2595,7 +2648,7 @@ components:
         caseTransactions:
           type: array
           items:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
+            $ref: '#/components/schemas/CaseTransaction'
         caseUsers:
           type: object
           properties:

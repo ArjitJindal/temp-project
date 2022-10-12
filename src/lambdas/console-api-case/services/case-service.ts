@@ -59,8 +59,14 @@ export class CaseService {
     return 'OK'
   }
 
-  public async getCase(caseId: string): Promise<Case | null> {
-    const caseEntity = await this.caseRepository.getCaseById(caseId)
+  public async getCase(
+    caseId: string,
+    params: {
+      includeTransactionEvents?: boolean
+      includeTransactionUsers?: boolean
+    } = {}
+  ): Promise<Case | null> {
+    const caseEntity = await this.caseRepository.getCaseById(caseId, params)
     return caseEntity && this.getAugmentedCase(caseEntity)
   }
 
@@ -139,7 +145,7 @@ export class CaseService {
     transactionIds: string[],
     transactionUpdates: TransactionUpdateRequest
   ) {
-    const caseIds: string[] = await (
+    const caseIds: string[] = (
       await this.caseRepository.getCasesByTransactionIds(
         transactionIds,
         'TRANSACTION'

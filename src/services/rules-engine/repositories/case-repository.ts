@@ -7,7 +7,12 @@ import {
   UpdateResult,
 } from 'mongodb'
 import _ from 'lodash'
-import { CASES_COLLECTION, COUNTER_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  CASES_COLLECTION,
+  COUNTER_COLLECTION,
+  TRANSACTION_EVENTS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -20,6 +25,7 @@ import { CASE_PRIORITY } from '@/@types/case/case-priority'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { Tag } from '@/@types/openapi-public/Tag'
 
 export class CaseRepository {
   mongoDb: MongoClient
@@ -88,7 +94,7 @@ export class CaseRepository {
     conditions.push({
       createdTimestamp: {
         $gte: params.afterTimestamp || 0,
-        $lte: params.beforeTimestamp,
+        $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       },
     })
 
@@ -209,7 +215,23 @@ export class CaseRepository {
         },
       })
     }
-
+    if (params.filterTransactionTagKey || params.filterTransactionTagValue) {
+      const elemCondition: { [attr: string]: Filter<Tag> } = {}
+      if (params.filterTransactionTagKey) {
+        elemCondition['key'] = { $eq: params.filterTransactionTagKey }
+      }
+      if (params.filterTransactionTagValue) {
+        elemCondition['value'] = {
+          $regex: params.filterTransactionTagValue,
+          $options: 'i',
+        }
+      }
+      conditions.push({
+        'caseTransactions.tags': {
+          $elemMatch: elemCondition,
+        },
+      })
+    }
     return { $and: conditions }
   }
 
@@ -239,6 +261,127 @@ export class CaseRepository {
     }
     if (params?.limit) {
       pipeline.push({ $limit: params.limit })
+    }
+    if (params?.includeTransactionUsers) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: USERS_COLLECTION(this.tenantId),
+              localField: 'caseTransactions.originUserId',
+              foreignField: 'userId',
+              as: '_originUsers',
+            },
+          },
+          {
+            $lookup: {
+              from: USERS_COLLECTION(this.tenantId),
+              localField: 'caseTransactions.destinationUserId',
+              foreignField: 'userId',
+              as: '_destinationUsers',
+            },
+          },
+          {
+            $set: {
+              caseTransactions: {
+                $map: {
+                  input: '$caseTransactions',
+                  as: 'transaction',
+                  in: {
+                    $mergeObjects: [
+                      '$$transaction',
+                      {
+                        originUser: {
+                          $first: {
+                            $filter: {
+                              input: '$_originUsers',
+                              as: 'user',
+                              cond: {
+                                $eq: [
+                                  '$$user.userId',
+                                  '$$transaction.originUserId',
+                                ],
+                              },
+                            },
+                          },
+                        },
+                        destinationUser: {
+                          $first: {
+                            $filter: {
+                              input: '$_destinationUsers',
+                              as: 'user',
+                              cond: {
+                                $eq: [
+                                  '$$user.userId',
+                                  '$$transaction.destinationUserId',
+                                ],
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _originUsers: false,
+              _destinationUsers: false,
+            },
+          },
+        ]
+      )
+    }
+    if (params?.includeTransactionEvents) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
+              localField: 'caseTransactions.transactionId',
+              foreignField: 'transactionId',
+              as: '_events',
+            },
+          },
+          {
+            $set: {
+              caseTransactions: {
+                $map: {
+                  input: '$caseTransactions',
+                  as: 'transaction',
+                  in: {
+                    $mergeObjects: [
+                      '$$transaction',
+                      {
+                        events: {
+                          $filter: {
+                            input: '$_events',
+                            as: 'event',
+                            cond: {
+                              $eq: [
+                                '$$event.transactionId',
+                                '$$transaction.transactionId',
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _events: false,
+            },
+          },
+        ]
+      )
     }
     return collection.aggregate<Case>(pipeline)
   }
@@ -323,10 +466,24 @@ export class CaseRepository {
     )
   }
 
-  public async getCaseById(caseId: string): Promise<Case | null> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return collection.findOne<Case>({ caseId })
+  public async getCaseById(
+    caseId: string,
+    params: {
+      includeTransactionEvents?: boolean
+      includeTransactionUsers?: boolean
+    } = {}
+  ): Promise<Case | null> {
+    const { data } = await this.getCases({
+      filterId: `^${caseId}$`,
+      includeTransactionEvents: params.includeTransactionEvents ?? false,
+      includeTransactionUsers: params.includeTransactionUsers ?? false,
+      limit: 1,
+      skip: 0,
+    })
+    if (data.length === 0) {
+      return null
+    }
+    return data[0]
   }
 
   public async getCasesByTransactionId(

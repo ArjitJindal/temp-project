@@ -26,7 +26,7 @@ export async function getMongoDbClient(
     )
   }
   if (process.env.ENV === 'local') {
-    return await MongoClient.connect('mongodb://localhost:27017')
+    return await MongoClient.connect(`mongodb://localhost:27017/${dbName}`)
   }
 
   const credentials = await getCredentials()

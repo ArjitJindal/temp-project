@@ -16,10 +16,9 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -89,64 +88,55 @@ export const slackAppHandler = lambdaApi()(
   }
 )
 
-const DANGER_COLOR_STATUSES: RuleAction[] = ['BLOCK', 'SUSPEND']
-
 export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   for (const record of event.Records) {
-    const { tenantId, transactionId } = JSON.parse(record.body) as AlertPayload
-    const tenantRepository = new TenantRepository(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
-    const transactionRepository = new TransactionRepository(tenantId, {
-      mongoDb,
-    })
-    const slackWebhook = await tenantRepository.getTenantMetadata(
-      'SLACK_WEBHOOK'
-    )
-    if (!slackWebhook) {
-      continue
-    }
-
-    if (transactionId) {
-      const settings = await tenantRepository.getTenantSettings([
-        'ruleActionAliases',
-      ])
-      const transaction =
-        await transactionRepository.getTransactionCaseManagement(transactionId)
-      const statusAlias = settings?.ruleActionAliases?.find(
-        (alias) => alias.action === transaction?.status
-      )?.alias
-      const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
-      logger.info(
-        `Sending Slack alert: tenant=${tenantId}, transactionId=${transactionId}`
-      )
-      await webhook.send({
-        text: 'New case created',
-        attachments: [
-          {
-            color: DANGER_COLOR_STATUSES.includes(
-              transaction?.status as RuleAction
-            )
-              ? '#ff0000' // red
-              : '#ffa500', // orange
-            blocks: [
-              {
-                type: 'section',
-                text: {
-                  type: 'mrkdwn',
-                  text:
-                    `<${process.env.CONSOLE_URI}/case-management/case/${transactionId}|${transactionId}>\n` +
-                    '*status*\n' +
-                    `${statusAlias || transaction?.status}`,
-                },
-              },
-            ],
-          },
-        ],
+    const payload = JSON.parse(record.body) as AlertPayload
+    if (payload.kind === 'NEW_CASE') {
+      const { tenantId, caseId } = payload
+      const tenantRepository = new TenantRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
       })
+      const slackWebhook = await tenantRepository.getTenantMetadata(
+        'SLACK_WEBHOOK'
+      )
+      if (!slackWebhook) {
+        continue
+      }
+
+      const caseRepository = new CaseRepository(tenantId, {
+        mongoDb,
+      })
+      const caseItem = await caseRepository.getCaseById(caseId)
+
+      if (caseId) {
+        const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
+        logger.info(
+          `Sending case Slack alert: tenant=${tenantId}, caseId=${caseId}`
+        )
+        await webhook.send({
+          text: 'New case created',
+          attachments: [
+            {
+              color: '#ffa500', // orange
+              blocks: [
+                {
+                  type: 'section',
+                  text: {
+                    type: 'mrkdwn',
+                    text:
+                      `<${process.env.CONSOLE_URI}/case-management/case/${caseId}|${caseId}>\n` +
+                      '*status:*\n' +
+                      `${caseItem?.caseStatus}`,
+                  },
+                },
+              ],
+            },
+          ],
+        })
+      }
     }
   }
 })

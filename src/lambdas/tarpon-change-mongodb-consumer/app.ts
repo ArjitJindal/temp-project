@@ -13,7 +13,7 @@ import { User } from '@/@types/openapi-public/User'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { AlertPayload } from '@/@types/alert/alert-payload'
+import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -68,14 +68,14 @@ async function transactionHandler(
         ?.status ?? null
   }
   const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
-  await caseCreationService.addCasesToMongo(transaction)
+  const caseItem = await caseCreationService.addCasesToMongo(transaction)
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
   // a single record in DB using transaction date
   await dashboardStatsRepository.refreshStats(transaction.timestamp)
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
-  if (!currentStatus && newStatus !== 'ALLOW') {
+  if (!currentStatus && newStatus !== 'ALLOW' && caseItem?.caseId != null) {
     const tenantRepository = new TenantRepository(tenantId, {
       mongoDb: await getMongoDbClient(),
     })
@@ -83,12 +83,14 @@ async function transactionHandler(
       logger.info(
         `Sending slack alert SQS message for transaction ${transactionId}`
       )
+      const payload: NewCaseAlertPayload = {
+        kind: 'NEW_CASE',
+        tenantId,
+        caseId: caseItem.caseId,
+      }
       await sqs
         .sendMessage({
-          MessageBody: JSON.stringify({
-            tenantId,
-            transactionId: transactionId,
-          } as AlertPayload),
+          MessageBody: JSON.stringify(payload),
           QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
         })
         .promise()

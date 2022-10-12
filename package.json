@@ -64,7 +64,7 @@
     "dev:api:public": "API=PUBLIC npm run start-local-api",
     "dev:api:public-management": "API=PUBLIC_MANAGEMENT npm run start-local-api",
     "dev:api:console": "API=CONSOLE npm run start-local-api",
-    "dev": "npm run parallel dev:databases dev:api",
+    "dev": "ENV=local npm run build && npm run parallel dev:databases dev:api",
     "prepare": "husky install",
     "_migrator": "ts-node scripts/migrations/migrator.ts",
     "migration:pre:create": "MIGRATION_TYPE=PRE_DEPLOYMENT ENV=local npm run _migrator create -- --name $npm_config_name.ts --allow-extension .ts",

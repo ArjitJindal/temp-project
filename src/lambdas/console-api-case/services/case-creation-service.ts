@@ -40,7 +40,9 @@ export class CaseCreationService {
     }
   }
 
-  async addCasesToMongo(transaction: TransactionWithRulesResult) {
+  async addCasesToMongo(
+    transaction: TransactionWithRulesResult
+  ): Promise<Case | null> {
     //TODO add user cases, currently implemented for transaction cases
     const transactionStatus = TransactionRepository.getAggregatedRuleStatus(
       transaction.executedRules
@@ -92,7 +94,6 @@ export class CaseCreationService {
         }
       }
     }
-
     if (transactionStatus != 'ALLOW' && !existingCase) {
       const caseEntity: Case = {
         createdTimestamp: Date.now(),
@@ -103,7 +104,7 @@ export class CaseCreationService {
         caseUsers: caseUsers,
         priority: casePriority,
       }
-      await this.caseRepository.addCaseMongo(caseEntity)
+      return await this.caseRepository.addCaseMongo(caseEntity)
     }
     if (existingCase) {
       if (Object.keys(caseUsers).length) {
@@ -111,7 +112,8 @@ export class CaseCreationService {
       }
       existingCase.priority = casePriority
       existingCase.caseTransactions = [transaction]
-      await this.caseRepository.addCaseMongo(existingCase)
+      return await this.caseRepository.addCaseMongo(existingCase)
     }
+    return null
   }
 }
