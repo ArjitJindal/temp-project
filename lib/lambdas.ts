@@ -48,11 +48,11 @@ export const LAMBDAS: {
   },
   [StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME]: {
     codePath: 'public-management-api-rule',
-    handlerName: 'publicRuleHandler',
+    handlerName: 'ruleHandler',
   },
   [StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME]: {
     codePath: 'public-management-api-rule',
-    handlerName: 'publicRuleInstanceHandler',
+    handlerName: 'ruleInstanceHandler',
   },
   [StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME]: {
     codePath: 'console-api-transaction',
