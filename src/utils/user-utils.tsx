@@ -168,9 +168,11 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
   if (flagrightUser === 'ORPHAN') {
     // todo: i18n
     return (
-      <ErrorPage title={'Orphan user'}>
+      <ErrorPage title={'User Not Provisioned'}>
         <p>
-          User doesn't belong to any tenant. Please contact us to include you to proper organization
+          User does not have a provisioned Flagright Account. If your organization already uses
+          Flagright, please ask your Flagright Console Admin to add you to the Console. If you are
+          not a Flagright customer yet, please contact Flagright Sales Team at hello@flagright.com
         </p>
         <Button onClick={() => logout()}>Log out</Button>
       </ErrorPage>
