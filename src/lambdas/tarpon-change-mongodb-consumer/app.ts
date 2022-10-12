@@ -25,7 +25,6 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { updateLogMetadataEntityDetails } from '@/core/utils/context'
 
 const sqs = new AWS.SQS()
 
@@ -36,7 +35,8 @@ async function transactionHandler(
   if (!transaction) {
     return
   }
-  updateLogMetadataEntityDetails(`transactionId`, transaction.transactionId)
+
+  logger.info(`Processing transaction ${transaction.transactionId}`)
   const mongoDb = await getMongoDbClient()
   const dynamoDb = await getDynamoDbClient()
   const transactionsRepo = new TransactionRepository(tenantId, {
@@ -105,7 +105,8 @@ async function userHandler(
   }
 
   const mongoDb = await getMongoDbClient()
-  updateLogMetadataEntityDetails(`userId`, user.userId)
+
+  logger.info(`Processing user ${user.userId}`)
   const db = mongoDb.db()
   const userCollection = db.collection<Business | User>(
     USERS_COLLECTION(tenantId)
@@ -127,9 +128,10 @@ async function userEventHandler(
   if (!userEvent) {
     return
   }
-  updateLogMetadataEntityDetails(`userId`, userEvent.userId)
-  updateLogMetadataEntityDetails(`userEventId`, userEvent.eventId)
 
+  logger.info(
+    `Processing user event ${userEvent.eventId} (user: ${userEvent.userId})`
+  )
   const db = (await getMongoDbClient()).db()
   const userEventCollection = db.collection<
     ConsumerUserEvent | BusinessUserEvent
@@ -154,12 +156,10 @@ async function transactionEventHandler(
   if (!transactionEvent) {
     return
   }
-  updateLogMetadataEntityDetails(
-    `transactionId`,
-    transactionEvent.transactionId
-  )
-  updateLogMetadataEntityDetails(`eventId`, transactionEvent.eventId)
 
+  logger.info(
+    `Processing transaction event: ${transactionEvent.eventId} (transaction: ${transactionEvent.transactionId})`
+  )
   const db = (await getMongoDbClient()).db()
   const transactionEventCollection = db.collection<TransactionEvent>(
     TRANSACTION_EVENTS_COLLECTION(tenantId)

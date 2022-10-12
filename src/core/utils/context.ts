@@ -11,7 +11,6 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 
 type LogMetaData = {
   tenantId?: string
-  entityDetails?: { [key: string]: string | undefined }
 }
 
 type Context = LogMetaData & {
@@ -48,16 +47,6 @@ export async function getInitialContext(
   } catch (e) {
     winstonLogger.error(`Failed to initialize context`)
     return {}
-  }
-}
-
-export function updateLogMetadataEntityDetails(key: string, value?: string) {
-  const context = asyncLocalStorage.getStore()
-  if (context && context.logMetaData) {
-    context.logMetaData.entityDetails = Object.create(
-      context.entityDetails ? context.entityDetails : null
-    )
-    context.entityDetails![key] = value
   }
 }
 

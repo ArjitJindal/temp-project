@@ -19,7 +19,6 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-public/RequestParameters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { updateLogMetadataEntityDetails } from '@/core/utils/context'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -127,7 +126,6 @@ export const transactionHandler = lambdaApi()(
     if (event.httpMethod === 'POST' && event.body) {
       const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
-      updateLogMetadataEntityDetails(`transactionId`, transaction.transactionId)
       if (
         transaction.relatedTransactionIds &&
         transaction.relatedTransactionIds.length
@@ -180,12 +178,6 @@ export const transactionEventHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
-      updateLogMetadataEntityDetails(
-        `transactionId`,
-        transactionEvent.transactionId
-      )
-      updateLogMetadataEntityDetails(`eventId`, transactionEvent.eventId)
-
       let missingUsers: (MissingUserIdMap | undefined)[] = []
       if (transactionEvent.updatedTransactionAttributes) {
         missingUsers = await getTransactionMissingUsers(
@@ -226,9 +218,6 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as ConsumerUserEvent
-      updateLogMetadataEntityDetails(`userId`, userEvent.userId)
-      updateLogMetadataEntityDetails(`eventId`, userEvent.eventId)
-
       return await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb)
     }
     if (
@@ -237,8 +226,6 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as BusinessUserEvent
-      updateLogMetadataEntityDetails(`businessUserId`, userEvent.userId)
-      updateLogMetadataEntityDetails(`eventId`, userEvent.eventId)
       return await verifyBusinessUserEvent(userEvent, tenantId, dynamoDb)
     }
     throw new Error('Unhandled request')
