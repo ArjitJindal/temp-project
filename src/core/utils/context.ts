@@ -15,7 +15,7 @@ type LogMetaData = {
 
 type Context = LogMetaData & {
   features?: Feature[]
-  logMetaData?: { [key: string]: string }
+  logMetaData?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
 }
 
@@ -47,6 +47,16 @@ export async function getInitialContext(
   } catch (e) {
     winstonLogger.error(`Failed to initialize context`)
     return {}
+  }
+}
+
+export function updateLogMetadata(key: string, value?: string) {
+  const context = asyncLocalStorage.getStore()
+  if (context) {
+    context.logMetaData = Object.create(
+      context.logMetaData ? context.logMetaData : null
+    )
+    context.logMetaData ? (context.logMetaData[key] = value) : ''
   }
 }
 

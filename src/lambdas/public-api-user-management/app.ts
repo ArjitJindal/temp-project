@@ -12,7 +12,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { calculateKRS } from '@/services/risk-scoring'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -49,6 +49,8 @@ export const userHandler = lambdaApi()(
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)
+      updateLogMetadata(`userId`, userPayload.userId)
+      logger.info(`Processing Consumer User`) // Need to log to show on the logs
 
       if ((userPayload as User).userId) {
         const user = isConsumerUser

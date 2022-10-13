@@ -19,6 +19,8 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-public/RequestParameters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { updateLogMetadata } from '@/core/utils/context'
+import { logger } from '@/core/logger'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -126,6 +128,8 @@ export const transactionHandler = lambdaApi()(
     if (event.httpMethod === 'POST' && event.body) {
       const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
+      updateLogMetadata(`transactionId`, transaction.transactionId)
+      logger.info(`Processing Transaction`) // Need to log to show on the logs
       if (
         transaction.relatedTransactionIds &&
         transaction.relatedTransactionIds.length
@@ -178,6 +182,10 @@ export const transactionEventHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
+      updateLogMetadata(`transactionId`, transactionEvent.transactionId)
+      updateLogMetadata(`eventId`, transactionEvent.eventId)
+      logger.info(`Processing Transaction Event`) // Need to log to show on the logs
+
       let missingUsers: (MissingUserIdMap | undefined)[] = []
       if (transactionEvent.updatedTransactionAttributes) {
         missingUsers = await getTransactionMissingUsers(
@@ -218,6 +226,10 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as ConsumerUserEvent
+      updateLogMetadata(`userId`, userEvent.userId)
+      updateLogMetadata(`eventId`, userEvent.eventId)
+      logger.info(`Processing Consumer User Event`) // Need to log to show on the logs
+
       return await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb)
     }
     if (
@@ -226,6 +238,10 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as BusinessUserEvent
+      updateLogMetadata(`businessUserId`, userEvent.userId)
+      updateLogMetadata(`eventId`, userEvent.eventId)
+      logger.info(`Processing Business User Event`) // Need to log to show on the logs
+
       return await verifyBusinessUserEvent(userEvent, tenantId, dynamoDb)
     }
     throw new Error('Unhandled request')
