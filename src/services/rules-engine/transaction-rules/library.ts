@@ -645,6 +645,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           units: 2,
           granularity: 'day',
         },
+        transactionsNumberThreshold2: {
+          min: 5,
+        },
         multiplierThreshold: 200,
         checkSender: 'sending',
         checkReceiver: 'receiving',
@@ -673,6 +676,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         period2: {
           units: 2,
           granularity: 'day',
+        },
+        transactionsNumberThreshold2: {
+          min: 5,
         },
         multiplierThreshold: {
           currency: 'EUR',

@@ -55,6 +55,10 @@ export type TransactionsAverageExceededParameters =
       min?: number
       max?: number
     }
+    transactionsNumberThreshold2?: {
+      min?: number
+      max?: number
+    }
     averageThreshold?: {
       min?: number
       max?: number
@@ -85,6 +89,17 @@ export default class TransactionAverageExceededBaseRule<
           type: 'object',
           title:
             "Rule doesn't trigger if transactions number in period1 in less than 'Min' or more than 'Max'",
+          properties: {
+            min: { type: 'integer', title: 'Min', nullable: true },
+            max: { type: 'integer', title: 'Max', nullable: true },
+          },
+          required: [],
+          nullable: true,
+        },
+        transactionsNumberThreshold2: {
+          type: 'object',
+          title:
+            "Rule doesn't trigger if transactions number in period2 in less than 'Min' or more than 'Max'",
           properties: {
             min: { type: 'integer', title: 'Min', nullable: true },
             max: { type: 'integer', title: 'Max', nullable: true },
@@ -125,6 +140,7 @@ export default class TransactionAverageExceededBaseRule<
           'ageRange',
           'userType',
           'transactionsNumberThreshold',
+          'transactionsNumberThreshold2',
           'averageThreshold',
         ],
       },
@@ -149,11 +165,13 @@ export default class TransactionAverageExceededBaseRule<
       period2,
       averageThreshold,
       transactionsNumberThreshold,
+      transactionsNumberThreshold2,
       excludePeriod1,
     } = this.parameters
 
     const { min: avgMin, max: avgMax } = averageThreshold ?? {}
-    const { min: numMin, max: numMax } = transactionsNumberThreshold ?? {}
+    const { min: numMin1, max: numMax1 } = transactionsNumberThreshold ?? {}
+    const { min: numMin2, max: numMax2 } = transactionsNumberThreshold2 ?? {}
 
     const repo = this.transactionRepository as TransactionRepository
 
@@ -211,7 +229,10 @@ export default class TransactionAverageExceededBaseRule<
       }
     }
 
-    if ((numMin && num1 < numMin) || (numMax && num1 > numMax)) {
+    if ((numMin1 && num1 < numMin1) || (numMax1 && num1 > numMax1)) {
+      return
+    }
+    if ((numMin2 && num2 < numMin2) || (numMax2 && num2 > numMax2)) {
       return
     }
 

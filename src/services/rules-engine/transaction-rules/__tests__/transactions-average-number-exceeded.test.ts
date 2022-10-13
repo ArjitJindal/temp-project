@@ -133,6 +133,51 @@ describe('Core logic', () => {
   })
 })
 
+describe('Filters', () => {
+  const now = dayjs('2022-01-01T00:00:00.000Z')
+
+  describe.each<
+    TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+  >([
+    {
+      name: "Minimum transaction number in period 2 wouldn't let rule to trigger",
+      transactions: [
+        getTestTransaction({
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [false],
+      ruleParams: {
+        transactionsNumberThreshold2: {
+          min: 2,
+        },
+      },
+    },
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-average-number-exceeded',
+        defaultParameters: {
+          ...defaultParams,
+          ...ruleParams,
+        },
+      },
+    ])
+
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
 describe('Different directions', () => {
   const now = dayjs('2022-01-01T00:00:00.000Z')
 
@@ -248,6 +293,67 @@ describe('Different directions', () => {
       expectedHits: [true, false, true],
       ruleParams: {
         checkSender: 'none',
+        checkReceiver: 'all',
+      },
+    },
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-average-number-exceeded',
+        defaultParameters: {
+          ...defaultParams,
+          ...ruleParams,
+        },
+      },
+    ])
+
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Customer cases', () => {
+  const now = dayjs('2022-01-01T00:00:00.000Z')
+  describe.each<
+    TransactionRuleTestCase<
+      Partial<TransactionsAverageNumberExceededParameters>
+    >
+  >([
+    {
+      name: '#1 (https://www.notion.so/flagright/Fix-R-121-False-Positives-9d4513da582247acbd20fea9544bfd41)',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Anon#1',
+          destinationUserId: 'Nick',
+          timestamp: now.subtract(2, 'day').subtract(2, 'second').valueOf(),
+        }),
+      ],
+      expectedHits: [true],
+      ruleParams: {
+        ageRange: {
+          maxAge: 2,
+        },
+        checkSender: 'all',
+        period2: {
+          granularity: 'day',
+          units: 30,
+        },
+        transactionsNumberThreshold: {},
+        excludePeriod1: true,
+        period1: {
+          granularity: 'day',
+          units: 1,
+        },
+        averageThreshold: {},
+        multiplierThreshold: 200,
         checkReceiver: 'all',
       },
     },

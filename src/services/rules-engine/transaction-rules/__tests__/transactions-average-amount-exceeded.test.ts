@@ -355,6 +355,22 @@ describe('Filters', () => {
       },
       expectedHits: [false],
     },
+    {
+      name: "Minimum transaction number in period2 wouldn't let rule to trigger",
+      transactions: [
+        getTestTransaction({
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          timestamp: now.valueOf(),
+        }),
+      ],
+      expectedHits: [false],
+      ruleParams: {
+        transactionsNumberThreshold2: {
+          min: 2,
+        },
+      },
+    },
   ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
