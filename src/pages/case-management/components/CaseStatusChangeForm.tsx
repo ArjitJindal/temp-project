@@ -6,13 +6,13 @@ import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 
 interface Props {
-  transactionId: string;
+  caseId: string;
   newCaseStatus: CaseStatus;
   onSaved: () => void;
 }
 
 interface CasesProps {
-  transactionIds: string[];
+  caseIds: string[];
   newCaseStatus: CaseStatus;
   onSaved: () => void;
 }
@@ -47,7 +47,7 @@ interface FormValues {
 }
 
 export function CaseStatusChangeForm(props: Props) {
-  const { transactionId, onSaved, newCaseStatus } = props;
+  const { caseId, onSaved, newCaseStatus } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isSaving, setSaving] = useState(false);
@@ -58,10 +58,10 @@ export function CaseStatusChangeForm(props: Props) {
     const hideMessage = message.loading(`Saving...`, 0);
     try {
       setSaving(true);
-      await api.postTransactions({
-        TransactionsUpdateRequest: {
-          transactionIds: [transactionId],
-          transactionUpdates: {
+      await api.postCases({
+        CasesUpdateRequest: {
+          caseIds: [caseId],
+          updates: {
             caseStatus: newCaseStatus,
           },
         },
@@ -75,17 +75,17 @@ export function CaseStatusChangeForm(props: Props) {
       hideMessage();
       setSaving(false);
     }
-  }, [onSaved, transactionId, api, newCaseStatus]);
+  }, [onSaved, caseId, api, newCaseStatus]);
 
   const handleUpdateTransaction = useCallback(
     async (values: FormValues) => {
       const hideMessage = message.loading(`Saving...`, 0);
       try {
         setSaving(true);
-        await api.postTransactions({
-          TransactionsUpdateRequest: {
-            transactionIds: [transactionId],
-            transactionUpdates: {
+        await api.postCases({
+          CasesUpdateRequest: {
+            caseIds: [caseId],
+            updates: {
               caseStatus: newCaseStatus,
               otherReason:
                 values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
@@ -103,7 +103,7 @@ export function CaseStatusChangeForm(props: Props) {
         setSaving(false);
       }
     },
-    [onSaved, transactionId, api, newCaseStatus],
+    [onSaved, caseId, api, newCaseStatus],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
@@ -188,7 +188,7 @@ export function CaseStatusChangeForm(props: Props) {
 }
 
 export function CasesStatusChangeForm(props: CasesProps) {
-  const { transactionIds, onSaved, newCaseStatus } = props;
+  const { caseIds, onSaved, newCaseStatus } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isSaving, setSaving] = useState(false);
@@ -201,10 +201,10 @@ export function CasesStatusChangeForm(props: CasesProps) {
     const hideMessage = message.loading(`Saving...`, 0);
     try {
       setSaving(true);
-      await api.postTransactions({
-        TransactionsUpdateRequest: {
-          transactionIds,
-          transactionUpdates: {
+      await api.postCases({
+        CasesUpdateRequest: {
+          caseIds,
+          updates: {
             caseStatus: newCaseStatus,
           },
         },
@@ -218,17 +218,17 @@ export function CasesStatusChangeForm(props: CasesProps) {
       hideMessage();
       setSaving(false);
     }
-  }, [onSaved, transactionIds, api, newCaseStatus]);
+  }, [onSaved, caseIds, api, newCaseStatus]);
 
   const handleUpdateTransaction = useCallback(
     async (values: FormValues) => {
       const hideMessage = message.loading(`Saving...`, 0);
       try {
         setSaving(true);
-        await api.postTransactions({
-          TransactionsUpdateRequest: {
-            transactionIds,
-            transactionUpdates: {
+        await api.postCases({
+          CasesUpdateRequest: {
+            caseIds,
+            updates: {
               caseStatus: newCaseStatus,
               otherReason:
                 values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
@@ -246,16 +246,14 @@ export function CasesStatusChangeForm(props: CasesProps) {
         setSaving(false);
       }
     },
-    [onSaved, transactionIds, api, newCaseStatus],
+    [onSaved, caseIds, api, newCaseStatus],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
   // todo: i18n
-  const modalTitle =
-    transactionIds.length == 1 ? 'Close case' : `Close ${transactionIds.length}  cases`;
+  const modalTitle = caseIds.length == 1 ? 'Close case' : `Close ${caseIds.length}  cases`;
   const modalMessagePrefix = 'Are you sure you want to';
-  const modalMessageSuffix =
-    `${transactionIds.length} case` + (transactionIds.length == 1 ? '?' : 's?');
+  const modalMessageSuffix = `${caseIds.length} case` + (caseIds.length == 1 ? '?' : 's?');
 
   return (
     <>
@@ -268,7 +266,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
             setAwaitingConfirmation(true);
           }
         }}
-        disabled={!transactionIds.length}
+        disabled={!caseIds.length || isSaving}
       >
         {caseStatusToOperationName(newCaseStatus)}
       </Button>

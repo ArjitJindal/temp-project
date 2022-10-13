@@ -10,14 +10,20 @@ interface Props {
 
 export const ConsoleUserAvatar: React.FC<Props> = ({ userId, users, loadingUsers }) => {
   return (
-    <Tag key={userId}>
+    <Tag
+      key={userId}
+      style={{
+        height: 28,
+        display: 'inline-flex',
+      }}
+    >
       <Space size="small">
         {loadingUsers ? (
           <LoadingOutlined />
         ) : (
           <>
             <Avatar size={15} src={users[userId]?.picture} />
-            {users[userId]?.name}
+            {users[userId]?.name ?? userId}
           </>
         )}
       </Space>

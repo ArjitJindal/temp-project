@@ -1,10 +1,10 @@
 import * as Card from '@/components/ui/Card';
 import UserDetails from '@/pages/transactions-item/UserDetails';
-import { TransactionCaseManagement } from '@/apis';
+import { CaseTransaction } from '@/apis';
 import TransactionInfoCard from '@/pages/case-management-item/components/TransactionDetailsCard/TransactionInfoCard';
 
 interface Props {
-  transaction: TransactionCaseManagement;
+  transaction: CaseTransaction;
 }
 
 export default function TransactionDetailsCard(props: Props) {

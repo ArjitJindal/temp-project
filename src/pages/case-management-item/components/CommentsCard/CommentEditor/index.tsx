@@ -8,11 +8,11 @@ import { useApi } from '@/api';
 import { Comment as TransactionComment, FileInfo } from '@/apis';
 
 interface Props {
-  transactionId: string;
+  caseId: string;
   onCommentAdded: (comment: TransactionComment) => void;
 }
 
-export default function CommentEditor({ transactionId, onCommentAdded }: Props) {
+export default function CommentEditor({ caseId, onCommentAdded }: Props) {
   const api = useApi();
   const [commentValue, setCommentValue] = useState('');
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -24,8 +24,8 @@ export default function CommentEditor({ transactionId, onCommentAdded }: Props) 
   const submitComment = useCallback(async () => {
     setLoading(true);
     try {
-      const comment = await api.postTransactionsComments({
-        transactionId,
+      const comment = await api.postCaseComments({
+        caseId,
         Comment: {
           body: commentValue,
           files,
@@ -39,7 +39,7 @@ export default function CommentEditor({ transactionId, onCommentAdded }: Props) 
     } finally {
       setLoading(false);
     }
-  }, [api, commentValue, files, onCommentAdded, transactionId]);
+  }, [api, commentValue, files, onCommentAdded, caseId]);
 
   return (
     <Row gutter={[0, 16]}>

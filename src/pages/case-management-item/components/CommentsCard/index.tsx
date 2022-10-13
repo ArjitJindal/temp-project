@@ -9,13 +9,13 @@ import { Comment as TransactionComment } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
-  transactionId: string | undefined;
+  caseId: string | undefined;
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
 }
 
 export default function CommentsCard(props: Props) {
-  const { comments, transactionId, onCommentsUpdate } = props;
+  const { comments, caseId, onCommentsUpdate } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
 
@@ -23,10 +23,10 @@ export default function CommentsCard(props: Props) {
   const api = useApi();
 
   const handleDeleteComment = useCallback(
-    async (transactionId: string, commentId: string) => {
+    async (caseId: string, commentId: string) => {
       try {
         setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
-        await api.deleteTransactionsTransactionIdCommentsCommentId({ transactionId, commentId });
+        await api.deleteCasesCaseIdCommentsCommentId({ caseId, commentId });
         setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
         onCommentsUpdate(comments.filter((comment) => comment.id !== commentId));
         message.success('Comment deleted');
@@ -63,20 +63,18 @@ export default function CommentsCard(props: Props) {
                 currentUserId={currentUserId}
                 deletingCommentIds={deletingCommentIds}
                 onDelete={() => {
-                  if (comment.id != null && transactionId != null) {
-                    handleDeleteComment(transactionId, comment.id);
+                  if (comment.id != null && caseId != null) {
+                    handleDeleteComment(caseId, comment.id);
                   }
                 }}
               />
             )}
           />
         )}
-        {transactionId != null && (
+        {caseId != null && (
           <AntComment
             avatar={<Avatar src={user?.picture} />}
-            content={
-              <CommentEditor transactionId={transactionId} onCommentAdded={handleCommentAdded} />
-            }
+            content={<CommentEditor caseId={caseId} onCommentAdded={handleCommentAdded} />}
           />
         )}
       </Card.Section>

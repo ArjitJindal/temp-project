@@ -2,7 +2,7 @@ import React from 'react';
 import moment from 'moment';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
-import { TransactionCaseManagement } from '@/apis';
+import { CaseTransaction } from '@/apis';
 import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-line.react.svg';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
@@ -14,11 +14,10 @@ import * as Form from '@/components/ui/Form';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
 interface Props {
-  transaction: TransactionCaseManagement;
+  transaction: CaseTransaction;
 }
 
 export default function TransactionInfoCard(props: Props) {
@@ -34,7 +33,6 @@ export default function TransactionInfoCard(props: Props) {
           <Form.Layout.Label icon={<TimerLineIcon />} title={'Transaction Time'} />
           <div>{moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}</div>
           <Form.Layout.Label icon={<PulseLineIcon />} title={'Rule action'} />
-          <RuleActionStatus ruleAction={transaction.status} />
           <Form.Layout.Label icon={<TransactionIcon />} title={'Transaction Type'} />
           <TransactionTypeTag transactionType={transaction.type} />
           <Form.Layout.Label icon={<FileLineIcon />} title="Reference" />

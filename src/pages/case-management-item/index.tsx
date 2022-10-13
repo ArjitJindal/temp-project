@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import TransactionDetailsCard from './components/TransactionDetailsCard';
 import Header from './components/Header';
 import RulesHitCard from './components/RulesHitCard';
-import { TransactionCaseManagement } from '@/apis';
+import { Case } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -18,34 +18,23 @@ import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CASES_ITEM } from '@/utils/queries/keys';
 
-export type CaseManagementItem = TransactionCaseManagement & {
-  index: number;
-  transactionId?: string;
-  isFirstRow: boolean;
-  isLastRow: boolean;
-  rowSpan: number;
-  ruleName: string | null;
-  ruleDescription: string | null;
-  rowKey: string;
-};
-
 function CaseManagementItemPage() {
-  const { id: transactionId } = useParams<'id'>() as { id: string };
+  const { id: caseId } = useParams<'id'>() as { id: string };
   const i18n = useI18n();
   const api = useApi();
   const queryClient = useQueryClient();
   const backUrl = useBackUrl();
 
   const queryResults = useQuery(
-    CASES_ITEM(transactionId),
-    (): Promise<TransactionCaseManagement> =>
-      api.getTransaction({
-        transactionId,
+    CASES_ITEM(caseId),
+    (): Promise<Case> =>
+      api.getCase({
+        caseId,
       }),
   );
 
-  const handleTransactionUpdate = (transaction: TransactionCaseManagement) => {
-    queryClient.setQueryData(CASES_ITEM(transactionId), transaction);
+  const handleCaseUpdate = (caseItem: Case) => {
+    queryClient.setQueryData(CASES_ITEM(caseId), caseItem);
   };
 
   return (
@@ -57,33 +46,47 @@ function CaseManagementItemPage() {
     >
       <Card.Root>
         <AsyncResourceRenderer resource={queryResults.data}>
-          {(transaction) => (
-            <>
-              <Card.Section>
-                <Header transaction={transaction} />
-              </Card.Section>
-              <Card.Section>
-                <TransactionDetailsCard transaction={transaction} />
-                <RulesHitCard rulesHit={transaction.hitRules} />
-                <TransactionEventsCard events={transaction.events ?? []} />
-                <UserDetailsCard
-                  title="Origin (Sender) User Details"
-                  user={transaction.originUser}
-                />
-                <UserDetailsCard
-                  title="Destination (Receiver) User Details"
-                  user={transaction.destinationUser}
-                />
-                <CommentsCard
-                  transactionId={transactionId}
-                  comments={transaction.comments ?? []}
-                  onCommentsUpdate={(newComments) => {
-                    handleTransactionUpdate({ ...transaction, comments: newComments });
-                  }}
-                />
-              </Card.Section>
-            </>
-          )}
+          {(caseItem) => {
+            if (caseItem.caseTransactions == null || caseItem.caseTransactions.length === 0) {
+              throw new Error(`Case doesn't have transactions`);
+            }
+            if (caseItem.caseTransactions.length > 1) {
+              console.warn('Case have more than one transaction, it is not supported for a moment');
+            }
+            const [transaction] = caseItem.caseTransactions;
+            return (
+              <>
+                <Card.Section>
+                  <Header
+                    caseItem={caseItem}
+                    onReload={() => {
+                      queryResults.refetch();
+                    }}
+                  />
+                </Card.Section>
+                <Card.Section>
+                  <TransactionDetailsCard transaction={transaction} />
+                  <RulesHitCard rulesHit={transaction.hitRules} />
+                  <TransactionEventsCard events={transaction.events ?? []} />
+                  <UserDetailsCard
+                    title="Origin (Sender) User Details"
+                    user={transaction.originUser}
+                  />
+                  <UserDetailsCard
+                    title="Destination (Receiver) User Details"
+                    user={transaction.destinationUser}
+                  />
+                  <CommentsCard
+                    caseId={caseItem.caseId}
+                    comments={caseItem.comments ?? []}
+                    onCommentsUpdate={(newComments) => {
+                      handleCaseUpdate({ ...caseItem, comments: newComments });
+                    }}
+                  />
+                </Card.Section>
+              </>
+            );
+          }}
         </AsyncResourceRenderer>
       </Card.Root>
     </PageWrapper>

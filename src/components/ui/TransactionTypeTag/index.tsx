@@ -41,7 +41,7 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
   } else if (transactionType === 'TRANSFER') {
     transactionTypeDisplay = 'Transfer';
   } else {
-    transactionTypeDisplay = neverReturn(transactionType, transactionType);
+    transactionTypeDisplay = neverReturn(transactionType, '');
   }
 
   return (

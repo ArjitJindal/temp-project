@@ -17,6 +17,7 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
   return editing ? (
     <>
       <Select<string[]>
+        className={s.select}
         mode="multiple"
         allowClear
         style={{ width: '100%' }}
@@ -34,10 +35,11 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
         value={loadingUsers ? [] : assignments.map((assignment) => assignment.assigneeUserId)}
       >
         {Object.values(users).map((user, index) => (
-          <Select.Option key={user.id} className={s.option}>
-            <Space size="small">
+          <Select.Option key={user.id}>
+            <div className={s.item}>
               <Avatar
                 size="small"
+                className={s.avatar}
                 style={{
                   color: colorSchema[index % 4].text,
                   backgroundColor: colorSchema[index % 4].background,
@@ -47,7 +49,7 @@ export const AssigneesDropdown: React.FC<Props> = ({ assignments, editing, onCha
                 {user.email.toUpperCase().charAt(0)}
               </Avatar>
               <span>{user.name}</span>
-            </Space>
+            </div>
           </Select.Option>
         ))}
       </Select>

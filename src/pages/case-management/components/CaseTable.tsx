@@ -15,7 +15,7 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { currencies } from '@/utils/currencies';
 import { TableActionType } from '@/components/RequestTable';
-import { TransactionCaseManagement } from '@/apis';
+import { Case, CaseTransaction, RuleAction } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import {
@@ -31,11 +31,9 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import UserLink from '@/components/UserLink';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { TransactionType } from '@/apis/models/TransactionType';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import TransactionStatusButton from '@/pages/transactions/components/TransactionStatusButton';
 import { TableColumn, TableDataItem, TableRow } from '@/components/ui/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { useQuery } from '@/utils/queries/hooks';
@@ -46,13 +44,17 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import KeyValueTag from '@/components/ui/KeyValueTag';
+import TransactionState from '@/components/ui/TransactionState';
 
-export type CaseManagementItem = TransactionCaseManagement & {
+export type CaseManagementItem = Case & {
   index: number;
-  transactionId?: string;
-  ruleName: string | null;
-  ruleDescription: string | null;
   rowKey: string;
+  ruleName?: string | null;
+  ruleDescription?: string | null;
+  ruleAction?: RuleAction | null;
+  transaction: CaseTransaction | null;
+  transactionFirstRow: boolean;
+  transactionsRowsCount: number;
 };
 
 interface Props {
@@ -64,19 +66,19 @@ export default function CaseTable(props: Props) {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const [updatedTransactions, setUpdatedTransactions] = useState<{
-    [key: string]: TransactionCaseManagement;
+  const [updatedCases, setUpdatedCases] = useState<{
+    [key: string]: Case;
   }>({});
-  const handleTransactionUpdate = useCallback(async (newTransaction: TransactionCaseManagement) => {
-    const transactionId = newTransaction.transactionId as string;
-    setUpdatedTransactions((prev) => ({
+  const handleCaseUpdate = useCallback(async (caseItem: Case) => {
+    const transactionId = caseItem.caseId as string;
+    setUpdatedCases((prev) => ({
       ...prev,
-      [transactionId]: newTransaction,
+      [transactionId]: caseItem,
     }));
   }, []);
   const api = useApi();
   const handleUpdateAssignments = useCallback(
-    async (transaction: TransactionCaseManagement, assignees: string[]) => {
+    async (caseItem: Case, assignees: string[]) => {
       const hideMessage = message.loading(`Saving...`, 0);
       const assignments = assignees.map((assigneeUserId) => ({
         assignedByUserId: user.userId,
@@ -84,14 +86,14 @@ export default function CaseTable(props: Props) {
         timestamp: Date.now(),
       }));
       try {
-        handleTransactionUpdate({
-          ...transaction,
+        handleCaseUpdate({
+          ...caseItem,
           assignments,
         });
-        await api.postTransactions({
-          TransactionsUpdateRequest: {
-            transactionIds: [transaction.transactionId as string],
-            transactionUpdates: {
+        await api.postCases({
+          CasesUpdateRequest: {
+            caseIds: [caseItem.caseId as string],
+            updates: {
               assignments,
             },
           },
@@ -103,7 +105,7 @@ export default function CaseTable(props: Props) {
         hideMessage();
       }
     },
-    [api, handleTransactionUpdate, user.userId],
+    [api, handleCaseUpdate, user.userId],
   );
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -168,7 +170,7 @@ export default function CaseTable(props: Props) {
     } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
     const [response, time] = await measure(() =>
-      api.getTransactionsList({
+      api.getCaseList({
         limit: DEFAULT_PAGE_SIZE!,
         skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
         afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
@@ -190,12 +192,12 @@ export default function CaseTable(props: Props) {
         transactionType: type,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
-        includeUsers: true,
-        includeEvents: true,
+        includeTransactionUsers: true,
+        includeTransactionEvents: false, // todo: do we still need events?
         filterOriginPaymentMethod: originMethodFilter,
         filterDestinationPaymentMethod: destinationMethodFilter,
-        filterTagKey: tagKey,
-        filterTagValue: tagValue,
+        filterTransactionTagKey: tagKey,
+        filterTransactionTagValue: tagValue,
       }),
     );
     analytics.event({
@@ -204,26 +206,43 @@ export default function CaseTable(props: Props) {
     });
     const items: TableDataItem<CaseManagementItem>[] = response.data.map(
       (item, index): TableDataItem<CaseManagementItem> => {
-        const dataItem = {
+        const caseTransactions = item.caseTransactions ?? [];
+        const dataItem: CaseManagementItem = {
           index,
-          rowKey: item.transactionId ?? `${index}`,
-          ruleName: null,
-          ruleDescription: null,
+          rowKey: item.caseId ?? `${index}`,
+          transaction: null,
+          transactionFirstRow: true,
+          transactionsRowsCount: 1,
           ...item,
         };
-        if (item.hitRules.length === 0) {
+        if (caseTransactions.length === 0) {
           return dataItem;
         }
         return {
           item: dataItem,
-          rows: item.hitRules.map(
-            (rule, i): CaseManagementItem => ({
-              ...dataItem,
-              rowKey: `${item.transactionId}#${i}`,
-              ruleName: rule.ruleName,
-              ruleDescription: rule.ruleDescription,
-            }),
-          ),
+          rows: caseTransactions.flatMap((transaction) => {
+            if (transaction.hitRules.length === 0) {
+              return [
+                {
+                  ...dataItem,
+                  rowKey: `${item.caseId}#${transaction.transactionId}`,
+                  transaction,
+                },
+              ];
+            }
+            return transaction.hitRules.map((rule, i): CaseManagementItem => {
+              return {
+                ...dataItem,
+                rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
+                transaction: transaction,
+                ruleName: rule.ruleName,
+                ruleDescription: rule.ruleDescription,
+                ruleAction: rule.ruleAction,
+                transactionsRowsCount: transaction.hitRules.length,
+                transactionFirstRow: i === 0,
+              };
+            });
+          }),
         };
       },
     );
@@ -239,24 +258,55 @@ export default function CaseTable(props: Props) {
 
   // todo: i18n
   const columns: TableColumn<CaseManagementItem>[] = useMemo(() => {
+    const onTransactionCell = (row: TableRow<CaseManagementItem>) => ({
+      rowSpan: row.transactionFirstRow ? row.transactionsRowsCount : 0,
+    });
+
+    const onCaseCell = (row: TableRow<CaseManagementItem>) => ({
+      rowSpan: row.isFirstRow ? row.rowsCount : 0,
+    });
+
     const mergedColumns: TableColumn<CaseManagementItem>[] = [
+      {
+        title: 'Case ID',
+        width: 130,
+        copyable: true,
+        ellipsis: true,
+        onCell: onCaseCell,
+        render: (dom, entity) => {
+          return (
+            <Id
+              id={entity.caseId}
+              to={addBackUrlToRoute(
+                makeUrl(`/case-management/case/:caseId`, {
+                  caseId: entity.caseId,
+                }),
+              )}
+            >
+              {entity.caseId}
+            </Id>
+          );
+        },
+      },
       {
         title: 'Transaction ID',
         dataIndex: 'transactionId',
         width: 130,
         copyable: true,
         ellipsis: true,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
+        onCell: onTransactionCell,
         render: (dom, entity) => {
           return (
-            <Id
-              id={entity.transactionId}
-              to={addBackUrlToRoute(`/case-management/case/${entity.transactionId}`)}
-            >
-              {entity.transactionId}
-            </Id>
+            entity.transaction && (
+              <Id
+                id={entity.transaction.transactionId}
+                to={makeUrl(`/transactions/item/:transactionId`, {
+                  transactionId: entity.transaction.transactionId,
+                })}
+              >
+                {entity.transaction.transactionId}
+              </Id>
+            )
           );
         },
       },
@@ -264,30 +314,50 @@ export default function CaseTable(props: Props) {
         title: 'Transaction Type',
         dataIndex: 'type',
         width: 175,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
+        onCell: onTransactionCell,
         valueType: 'select',
         fieldProps: {
           options: transactionType,
           allowClear: true,
         },
         render: (dom, entity) => {
-          return <TransactionTypeTag transactionType={entity.type as TransactionType} />;
+          return <TransactionTypeTag transactionType={entity.transaction?.type} />;
         },
       },
       {
         title: 'Rules Hit',
         hideInSearch: true,
         width: 150,
-        dataIndex: 'ruleName',
+        render: (_, entity) => {
+          return <>{entity.ruleName}</>;
+        },
       },
       {
         title: 'Rules Description',
         tooltip: 'Describes the conditions required for this rule to be hit.',
         width: 270,
         hideInSearch: true,
-        dataIndex: 'ruleDescription',
+        render: (_, entity) => {
+          return <>{entity.ruleDescription}</>;
+        },
+      },
+      {
+        title: 'Rule Action',
+        sorter: true,
+        dataIndex: 'status',
+        hideInSearch: true,
+        valueType: 'select',
+        fieldProps: {
+          options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
+          allowClear: true,
+        },
+        width: 200,
+        render: (dom, entity) => {
+          if (entity.ruleAction == null) {
+            return <></>;
+          }
+          return <RuleActionStatus ruleAction={entity.ruleAction} />;
+        },
       },
       {
         title: 'Timestamp',
@@ -296,11 +366,9 @@ export default function CaseTable(props: Props) {
         dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
         sorter: true,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
-        render: (_, transaction) => {
-          return <TimestampDisplay timestamp={transaction.timestamp} />;
+        onCell: onTransactionCell,
+        render: (_, entity) => {
+          return <TimestampDisplay timestamp={entity.transaction?.timestamp} />;
         },
       },
       {
@@ -310,9 +378,10 @@ export default function CaseTable(props: Props) {
         dataIndex: 'transactionState',
         hideInSearch: true,
         sorter: true,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
+        onCell: onTransactionCell,
+        render: (_, entity) => {
+          return <TransactionState transactionState={entity.transaction?.transactionState} />;
+        },
       },
       {
         title: 'Origin',
@@ -326,12 +395,18 @@ export default function CaseTable(props: Props) {
             ellipsis: true,
             dataIndex: 'originUserId',
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              if (!entity.originUser) return entity.originUserId;
-              return <UserLink user={entity.originUser}>{String(entity.originUserId)}</UserLink>;
+              const transaction = entity.transaction;
+              if (transaction == null) {
+                return <></>;
+              }
+              if (!transaction.originUser) return transaction.originUserId;
+              return (
+                <UserLink user={transaction.originUser}>
+                  {String(transaction.originUserId)}
+                </UserLink>
+              );
             },
           },
           {
@@ -339,22 +414,22 @@ export default function CaseTable(props: Props) {
             tooltip: 'Origin is the Sender in a transaction',
             width: 220,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return getUserName(entity.originUser);
+              return getUserName(entity.transaction?.originUser);
             },
           },
           {
             title: 'Origin Method',
             width: 160,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
+              return (
+                <PaymentMethodTag
+                  paymentMethod={entity.transaction?.originPaymentDetails?.method}
+                />
+              );
             },
           },
           {
@@ -363,16 +438,18 @@ export default function CaseTable(props: Props) {
             hideInSearch: true,
             sorter: true,
             width: 150,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              if (entity.originAmountDetails?.transactionAmount !== undefined) {
+              const transaction = entity.transaction;
+              if (transaction == null) {
+                return <></>;
+              }
+              if (transaction.originAmountDetails?.transactionAmount !== undefined) {
                 return new Intl.NumberFormat().format(
-                  entity.originAmountDetails?.transactionAmount,
+                  transaction.originAmountDetails?.transactionAmount,
                 );
               } else {
-                return entity.originAmountDetails?.transactionAmount;
+                return transaction.originAmountDetails?.transactionAmount;
               }
             },
           },
@@ -380,22 +457,18 @@ export default function CaseTable(props: Props) {
             title: 'Origin Currency',
             hideInSearch: true,
             width: 140,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return entity.originAmountDetails?.transactionCurrency;
+              return entity.transaction?.originAmountDetails?.transactionCurrency;
             },
           },
           {
             title: 'Origin Country',
             hideInSearch: true,
             width: 140,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return <CountryDisplay isoCode={entity.originAmountDetails?.country} />;
+              return <CountryDisplay isoCode={entity.transaction?.originAmountDetails?.country} />;
             },
           },
         ],
@@ -412,14 +485,14 @@ export default function CaseTable(props: Props) {
             ellipsis: true,
             hideInSearch: true,
             width: 170,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              if (!entity.destinationUser) return entity.destinationUserId;
+              if (!entity.transaction?.destinationUser) {
+                return entity.transaction?.destinationUserId;
+              }
               return (
-                <UserLink user={entity.destinationUser}>
-                  {String(entity.destinationUserId)}
+                <UserLink user={entity.transaction.destinationUser}>
+                  {String(entity.transaction.destinationUserId)}
                 </UserLink>
               );
             },
@@ -429,22 +502,22 @@ export default function CaseTable(props: Props) {
             tooltip: 'Destination is the Receiver in a transaction',
             width: 180,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return getUserName(entity.destinationUser);
+              return getUserName(entity.transaction?.destinationUser);
             },
           },
           {
             title: 'Destination Method',
             width: 160,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
+              return (
+                <PaymentMethodTag
+                  paymentMethod={entity.transaction?.destinationPaymentDetails?.method}
+                />
+              );
             },
           },
           {
@@ -453,60 +526,52 @@ export default function CaseTable(props: Props) {
             dataIndex: 'destnationAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
+              if (entity.transaction?.destinationAmountDetails?.transactionAmount !== undefined) {
                 return new Intl.NumberFormat().format(
-                  entity.destinationAmountDetails?.transactionAmount,
+                  entity.transaction?.destinationAmountDetails?.transactionAmount,
                 );
               } else {
-                return entity.destinationAmountDetails?.transactionAmount;
+                return entity.transaction?.destinationAmountDetails?.transactionAmount;
               }
             },
           },
           {
             title: 'Destination Currency',
             width: 200,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             hideInSearch: true,
             render: (dom, entity) => {
-              return entity.destinationAmountDetails?.transactionCurrency;
+              return entity.transaction?.destinationAmountDetails?.transactionCurrency;
             },
           },
           {
             title: 'Destination Country',
             width: 200,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onTransactionCell,
             render: (dom, entity) => {
-              return <CountryDisplay isoCode={entity.destinationAmountDetails?.country} />;
+              return (
+                <CountryDisplay isoCode={entity.transaction?.destinationAmountDetails?.country} />
+              );
             },
           },
         ],
       },
       {
-        title: 'Rule Action',
-        sorter: true,
-        dataIndex: 'status',
+        title: 'Tags',
         hideInSearch: true,
-        valueType: 'select',
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
-        fieldProps: {
-          options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
-          allowClear: true,
-        },
-        width: 200,
-        render: (dom, entity) => {
-          const transaction = updatedTransactions[entity.transactionId as string] || entity;
-          return <RuleActionStatus ruleAction={transaction.status} />;
+        width: 250,
+        onCell: onTransactionCell,
+        render: (_, entity) => {
+          return (
+            <>
+              {entity.transaction?.tags?.map((tag) => (
+                <KeyValueTag key={tag.key} tag={tag} />
+              ))}
+            </>
+          );
         },
       },
       {
@@ -514,16 +579,16 @@ export default function CaseTable(props: Props) {
         hideInSearch: true,
         fixed: 'right',
         width: 120,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
+        onCell: onCaseCell,
         render: (dom, entity) => {
           return (
-            <CaseStatusChangeForm
-              transactionId={entity.transactionId as string}
-              newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
-              onSaved={reloadTable}
-            />
+            entity?.caseId && (
+              <CaseStatusChangeForm
+                caseId={entity.caseId}
+                newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
+                onSaved={reloadTable}
+              />
+            )
           );
         },
       },
@@ -533,23 +598,20 @@ export default function CaseTable(props: Props) {
         width: 250,
         ellipsis: true,
         fixed: 'right',
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
+        onCell: onCaseCell,
         render: (dom, entity) => {
-          const transaction = updatedTransactions[entity.transactionId as string] || entity;
+          const caseItem = updatedCases[entity.caseId as string] || entity;
           return (
             <AssigneesDropdown
-              assignments={transaction.assignments || []}
+              assignments={caseItem.assignments || []}
               editing={true}
-              onChange={(assignees) => handleUpdateAssignments(transaction, assignees)}
+              onChange={(assignees) => handleUpdateAssignments(caseItem, assignees)}
             />
           );
         },
       },
       {
         title: 'Rules Hit',
-        dataIndex: 'rulesHitFilter',
         hideInTable: true,
         width: 120,
         valueType: 'select',
@@ -567,7 +629,6 @@ export default function CaseTable(props: Props) {
       },
       {
         title: 'Rules Executed',
-        dataIndex: 'rulesExecutedFilter',
         hideInTable: true,
         width: 120,
         valueType: 'select',
@@ -585,7 +646,6 @@ export default function CaseTable(props: Props) {
       },
       {
         title: 'Origin Currencies',
-        dataIndex: 'originCurrenciesFilter',
         hideInTable: true,
         width: 120,
         valueType: 'select',
@@ -597,7 +657,6 @@ export default function CaseTable(props: Props) {
       },
       {
         title: 'Destination Currencies',
-        dataIndex: 'destinationCurrenciesFilter',
         hideInTable: true,
         width: 120,
         valueType: 'select',
@@ -611,7 +670,6 @@ export default function CaseTable(props: Props) {
         title: 'Origin Method',
         hideInTable: true,
         width: 120,
-        dataIndex: 'originMethodFilter',
         valueType: 'select',
         fieldProps: {
           options: paymentMethod,
@@ -622,28 +680,10 @@ export default function CaseTable(props: Props) {
         title: 'Destination Method',
         hideInTable: true,
         width: 120,
-        dataIndex: 'destinationMethodFilter',
         valueType: 'select',
         fieldProps: {
           options: paymentMethod,
           allowClear: true,
-        },
-      },
-      {
-        title: 'Tags',
-        hideInSearch: true,
-        width: 250,
-        onCell: (row) => ({
-          rowSpan: row.isFirstRow ? row.rowsCount : 0,
-        }),
-        render: (_, entity) => {
-          return (
-            <>
-              {entity.tags?.map((tag) => (
-                <KeyValueTag key={tag.key} tag={tag} />
-              ))}
-            </>
-          );
         },
       },
     ];
@@ -655,9 +695,7 @@ export default function CaseTable(props: Props) {
             tooltip: 'Reason provided for closing a case',
             width: 300,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onCaseCell,
             render: (dom, entity) => {
               return entity.statusChanges?.length ? (
                 <ClosingReasonTag
@@ -673,9 +711,7 @@ export default function CaseTable(props: Props) {
             title: 'Closed By',
             width: 250,
             hideInSearch: true,
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onCaseCell,
             render: (dom, entity) => {
               return entity.statusChanges?.length ? (
                 <ConsoleUserAvatar
@@ -693,9 +729,7 @@ export default function CaseTable(props: Props) {
             width: 160,
             hideInSearch: true,
             valueType: 'dateTimeRange',
-            onCell: (row) => ({
-              rowSpan: row.isFirstRow ? row.rowsCount : 0,
-            }),
+            onCell: onCaseCell,
             render: (dom, entity) => {
               return entity.statusChanges?.length ? (
                 <TimestampDisplay
@@ -710,15 +744,7 @@ export default function CaseTable(props: Props) {
       );
     }
     return mergedColumns;
-  }, [
-    api,
-    handleUpdateAssignments,
-    reloadTable,
-    updatedTransactions,
-    isOpenTab,
-    users,
-    loadingUsers,
-  ]);
+  }, [api, handleUpdateAssignments, reloadTable, updatedCases, isOpenTab, users, loadingUsers]);
 
   return (
     <QueryResultsTable<CaseManagementItem, TableSearchParams>
@@ -728,15 +754,6 @@ export default function CaseTable(props: Props) {
       actionsHeader={[
         ({ params, setParams }) => (
           <>
-            <TransactionStatusButton
-              status={params.status ?? undefined}
-              onConfirm={(value) => {
-                setParams((state) => ({
-                  ...state,
-                  status: value ?? undefined,
-                }));
-              }}
-            />
             <UserSearchButton
               initialMode={params.userFilterMode ?? 'ALL'}
               userId={params.userId ?? null}
@@ -772,7 +789,7 @@ export default function CaseTable(props: Props) {
             />
             <Divider type="vertical" style={{ height: '32px' }} />
             <CasesStatusChangeForm
-              transactionIds={selectedEntities}
+              caseIds={selectedEntities}
               onSaved={reloadTable}
               newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
             />
