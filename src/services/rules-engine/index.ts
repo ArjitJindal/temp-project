@@ -31,7 +31,12 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { getContext, getContextStorage, hasFeature } from '@/core/utils/context'
+import {
+  getContext,
+  getContextStorage,
+  hasFeature,
+  updateLogMetadata,
+} from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import {
   compileTemplate,
@@ -360,6 +365,9 @@ async function getRulesResult(
         }
         return getContextStorage().run(context, async () => {
           try {
+            updateLogMetadata('ruleId', ruleInstance.ruleId)
+            updateLogMetadata('ruleInstanceId', ruleInstance.id)
+            logger.info(`Running rule`)
             const { parameters, action } = getUserSpecificParameters(
               userRiskLevel,
               ruleInstance
@@ -369,15 +377,14 @@ async function getRulesResult(
               parameters,
               action
             )
-            logger.info(
-              `Running rule: ${ruleInstance.ruleId} with InstaceID: ${ruleInstance.id}`
-            )
+
             const shouldCompute = await everyAsync(
               rule.getFilters(),
               async (ruleFilter) => ruleFilter()
             )
             const ruleResult = shouldCompute ? await rule.computeRule() : null
             const ruleHit = !_.isNil(ruleResult)
+            logger.info(`Completed rule`)
             if (ruleHit) {
               hitRuleInstanceIds.push(ruleInstance.id as string)
             }
