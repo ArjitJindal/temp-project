@@ -153,7 +153,9 @@ export const transactionHandler = lambdaApi()(
         validationParams || undefined
       )
       if (missingUsers.length === 0) {
+        logger.info(`Verifying Transaction`)
         const result = await verifyTransaction(transaction, tenantId, dynamoDb)
+        logger.info(`CompletedProcessing Transaction`)
         return result
       } else {
         throw new BadRequest(getMissingUsersMessage(missingUsers))

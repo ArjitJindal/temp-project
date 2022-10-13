@@ -102,6 +102,7 @@ export async function verifyTransactionIdempotent(
       : undefined,
     ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
   ])
+  logger.info(`Running rules`)
 
   return getRulesResult(
     ruleRepository,
@@ -180,7 +181,9 @@ export async function verifyTransaction(
     }
   )
 
+  logger.info(`Updating Aggregations`)
   await updateAggregation(tenantId, savedTransaction, dynamoDb)
+  logger.info(`Updated Aggregations`)
 
   return {
     transactionId: savedTransaction.transactionId as string,
@@ -215,6 +218,8 @@ export async function verifyTransactionEvent(
     },
     transactionEvent.updatedTransactionAttributes || {}
   )
+  logger.info(`Running Rules`)
+
   const { executedRules, hitRules } = await verifyTransactionIdempotent(
     tenantId,
     dynamoDb,
@@ -245,6 +250,7 @@ export async function verifyTransactionEvent(
     executedRules: undefined,
     hitRules: undefined,
   }
+  logger.info(`Processed`)
 
   return {
     eventId,
@@ -362,6 +368,9 @@ async function getRulesResult(
               rulesById[ruleInstance.ruleId].ruleImplementationName,
               parameters,
               action
+            )
+            logger.info(
+              `Running rule: ${ruleInstance.ruleId} with InstaceID: ${ruleInstance.id}`
             )
             const shouldCompute = await everyAsync(
               rule.getFilters(),
