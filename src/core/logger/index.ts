@@ -1,7 +1,7 @@
 import { createLogger, format, transports } from 'winston'
 import { getContext } from '../utils/context'
 
-const isLocal = process.env.ENV
+const isLocal = process.env.ENV === 'local'
 const logFormat = format.combine(
   format.timestamp(),
   format.errors({ stack: true }),
