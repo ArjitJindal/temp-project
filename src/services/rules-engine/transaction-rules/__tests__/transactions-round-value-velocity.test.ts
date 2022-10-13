@@ -21,6 +21,16 @@ const TEST_TRANSACTION_AMOUNT_101 = {
   transactionAmount: 101,
 }
 
+const TEST_TRANSACTION_AMOUNT_200 = {
+  transactionCurrency: 'EUR',
+  transactionAmount: 200,
+}
+
+const TEST_TRANSACTION_AMOUNT_300 = {
+  transactionCurrency: 'EUR',
+  transactionAmount: 300,
+}
+
 dynamoDbSetupHook()
 
 describe('R-130 description formatting', () => {
@@ -117,8 +127,8 @@ describe('Core logic', () => {
         getTestTransaction({
           originUserId: '1',
           destinationUserId: '3',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
           timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
         }),
         getTestTransaction({
@@ -131,8 +141,8 @@ describe('Core logic', () => {
         getTestTransaction({
           originUserId: '5',
           destinationUserId: '2',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
           timestamp: dayjs('2000-01-01T01:00:04.000Z').valueOf(),
         }),
       ],
@@ -156,7 +166,7 @@ describe('Optional parameter - Same Amount', () => {
       ruleImplementationName: 'transactions-round-value-velocity',
       defaultParameters: {
         sameAmount: true,
-        transactionsLimit: 2,
+        transactionsLimit: 1,
         timeWindow: {
           units: 5,
           granularity: 'second',
@@ -174,40 +184,22 @@ describe('Optional parameter - Same Amount', () => {
         getTestTransaction({
           originUserId: '1',
           destinationUserId: '2',
-          originAmountDetails: {
-            transactionAmount: 500,
-            transactionCurrency: 'EUR',
-          },
-          destinationAmountDetails: {
-            transactionAmount: 100,
-            transactionCurrency: 'EUR',
-          },
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
           originUserId: '1',
           destinationUserId: '2',
-          originAmountDetails: {
-            transactionAmount: 500,
-            transactionCurrency: 'EUR',
-          },
-          destinationAmountDetails: {
-            transactionAmount: 300,
-            transactionCurrency: 'EUR',
-          },
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
           timestamp: dayjs('2000-01-01T01:00:01.000Z').valueOf(),
         }),
         getTestTransaction({
           originUserId: '1',
           destinationUserId: '2',
-          originAmountDetails: {
-            transactionAmount: 500,
-            transactionCurrency: 'EUR',
-          },
-          destinationAmountDetails: {
-            transactionAmount: 500,
-            transactionCurrency: 'EUR',
-          },
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           timestamp: dayjs('2000-01-01T01:00:02.000Z').valueOf(),
         }),
       ],

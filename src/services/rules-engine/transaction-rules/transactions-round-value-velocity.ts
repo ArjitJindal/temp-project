@@ -50,12 +50,15 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
   }
 
   protected groupTransactions(transactions: Transaction[]): Transaction[][] {
-    const obj = _.groupBy(
-      transactions,
-      (t) =>
-        `${t.originAmountDetails?.transactionAmount}${t.originAmountDetails?.transactionCurrency}`
-    )
-    return Object.values(obj)
+    if (this.parameters.sameAmount) {
+      const obj = _.groupBy(
+        transactions,
+        (t) =>
+          `${t.originAmountDetails?.transactionAmount}${t.originAmountDetails?.transactionCurrency}`
+      )
+      return Object.values(obj)
+    }
+    return [transactions]
   }
 
   private isRoundValue(value: number) {
