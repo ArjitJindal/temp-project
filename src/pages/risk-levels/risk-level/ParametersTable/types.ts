@@ -22,4 +22,10 @@ export interface RiskLevelTableItem {
   dataType: DataTypes;
 }
 export type RiskLevelTable = RiskLevelTableItem[];
-export type DataTypes = 'STRING' | 'COUNTRY' | 'CURRENCY' | 'PAYMENT_METHOD';
+export type DataTypes =
+  | 'STRING'
+  | 'COUNTRY'
+  | 'CURRENCY'
+  | 'PAYMENT_METHOD'
+  | 'CONSUMER_USER_TYPE'
+  | 'BUSINESS_USER_TYPE';

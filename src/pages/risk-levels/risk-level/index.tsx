@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
+  BUSINESS_RISK_PARAMETERS,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
@@ -29,7 +30,7 @@ export default function () {
   const [valuesResources, setValuesResources] = useState<{
     [key in ParameterName]?: AsyncResource<ParameterSettings>;
   }>({});
-  const { type = 'user' } = useParams<'type'>();
+  const { type = 'consumer' } = useParams<'type'>();
   const navigate = useNavigate();
 
   const onUpdateParameter = useCallback(
@@ -158,9 +159,18 @@ export default function () {
             navigate(makeUrl(`/risk-levels/risk-level/:type`, { type: key }), { replace: true });
           }}
         >
-          <Tabs.TabPane tab="User" key="user">
+          <Tabs.TabPane tab="Consumer" key="consumer">
             <ParametersTable
               parameters={USER_RISK_PARAMETERS}
+              parameterSettings={valuesResources}
+              onRefresh={onRefresh}
+              onSaveValues={onSaveValues}
+              onActivate={onActivate}
+            />
+          </Tabs.TabPane>
+          <Tabs.TabPane tab="Business" key="business">
+            <ParametersTable
+              parameters={BUSINESS_RISK_PARAMETERS}
               parameterSettings={valuesResources}
               onRefresh={onRefresh}
               onSaveValues={onSaveValues}

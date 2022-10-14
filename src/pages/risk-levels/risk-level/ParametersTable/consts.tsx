@@ -4,6 +4,7 @@ import { DataTypes, RiskLevelTable } from '@/pages/risk-levels/risk-level/Parame
 import COUNTRIES from '@/utils/countries';
 import { PAYMENT_METHODS } from '@/utils/payments';
 import { currencies } from '@/utils/currencies';
+import { businessType, consumerType } from '@/utils/customer-type';
 
 type InputRendererProps = {
   disabled?: boolean;
@@ -16,6 +17,15 @@ export type ValueRenderer = (props: { value: string | null }) => React.ReactNode
 
 // todo: i18n
 export const USER_RISK_PARAMETERS: RiskLevelTable = [
+  {
+    parameter: 'type',
+    title: 'Customer Type',
+    description: 'Risk value for consumer (individuals) users',
+    type: 'DISCRETE',
+    entity: 'CONSUMER_USER',
+    dataType: 'CONSUMER_USER_TYPE',
+    isDerived: false,
+  },
   {
     parameter: 'userDetails.countryOfResidence',
     title: 'Country of Residence',
@@ -32,6 +42,18 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
+    isDerived: false,
+  },
+];
+
+export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
+  {
+    parameter: 'type',
+    title: 'Customer Type',
+    description: 'Risk value for businesses (merchants/legal entities) users',
+    type: 'DISCRETE',
+    entity: 'BUSINESS',
+    dataType: 'BUSINESS_USER_TYPE',
     isDerived: false,
   },
 ];
@@ -102,7 +124,11 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   },
 ];
 
-export const ALL_RISK_PARAMETERS = [...USER_RISK_PARAMETERS, ...TRANSACTION_RISK_PARAMETERS];
+export const ALL_RISK_PARAMETERS = [
+  ...USER_RISK_PARAMETERS,
+  ...BUSINESS_RISK_PARAMETERS,
+  ...TRANSACTION_RISK_PARAMETERS,
+];
 
 const MultipleSelect: React.FC<
   InputRendererProps & { options: Array<{ value: string; label: string }> }
@@ -149,6 +175,12 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
   CURRENCY: (props) => {
     return <MultipleSelect options={currencies} {...props} />;
   },
+  CONSUMER_USER_TYPE: (props) => {
+    return <MultipleSelect options={consumerType} {...props} />;
+  },
+  BUSINESS_USER_TYPE: (props) => {
+    return <MultipleSelect options={businessType} {...props} />;
+  },
   PAYMENT_METHOD: (props) => {
     return (
       <MultipleSelect
@@ -171,4 +203,16 @@ export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
     return <span>{COUNTRIES[value]}</span>;
   },
   PAYMENT_METHOD: ({ value }) => <span>{value}</span>,
+  CONSUMER_USER_TYPE: ({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return <span>{value}</span>;
+  },
+  BUSINESS_USER_TYPE: ({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return <span>{value}</span>;
+  },
 };
