@@ -47,7 +47,7 @@ Ensure you have the local instance of DynamoDB & MongoDB running. You need Docke
 npm run dev:databases
 ```
 
-You can populate your local databases by running:
+You can populate your local databases by running (You will need to do this everytime you kill the local instance of the database):
 
 ```
 npm run generate-local-data

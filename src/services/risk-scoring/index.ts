@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RiskRepository } from './repositories/risk-repository'
+import { riskLevelPrecendence } from './utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -33,26 +34,28 @@ export const calculateKRS = async (
     ?.filter(
       (parameterAttributeDetails) =>
         parameterAttributeDetails.isActive &&
-        !parameterAttributeDetails.isDerived &&
         (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER' ||
           parameterAttributeDetails.riskEntityType === 'BUSINESS')
     )
     .forEach((parameterAttributeDetails) => {
-      const riskLevel: RiskLevel = getSchemaAttributeValues(
-        parameterAttributeDetails.parameter,
-        user,
-        parameterAttributeDetails
-      )
-      riskClassificationValues.forEach((value) => {
-        if (riskLevel == value.riskLevel) {
-          const riskScore = _.mean([
-            value.upperBoundRiskScore,
-            value.lowerBoundRiskScore,
-          ])
-          riskScoresList.push(riskScore)
-        }
-      })
+      if (parameterAttributeDetails.parameterType == 'VARIABLE') {
+        const riskLevel: RiskLevel = getSchemaAttributeValues(
+          parameterAttributeDetails.parameter,
+          user,
+          parameterAttributeDetails
+        )
+        riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+      } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {
+        const riskLevel: RiskLevel = getIterableAttributeValues(
+          parameterAttributeDetails,
+          user
+        )
+        riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+      }
     })
+
+  logger.info(`Risk score: ${riskScoresList}`)
+
   const krsScore = riskScoresList.length
     ? _.mean(riskScoresList)
     : getDefaultRiskValue(riskClassificationValues)
@@ -63,10 +66,10 @@ export const calculateKRS = async (
 
 const getSchemaAttributeValues = (
   paramName: string,
-  user: User | Business,
+  entity: User | Business,
   parameterRiskLevelDetails: ParameterAttributeRiskValues
 ): RiskLevel => {
-  const endValue = _.get(user, paramName)
+  const endValue = _.get(entity, paramName)
 
   if (endValue) {
     const { riskLevelAssignmentValues } = parameterRiskLevelDetails
@@ -77,4 +80,69 @@ const getSchemaAttributeValues = (
     }
   }
   return DEFAULT_RISK_LEVEL
+}
+
+const getIterableAttributeValues = (
+  parameterRiskLevelDetails: ParameterAttributeRiskValues,
+  user: User | Business
+): RiskLevel => {
+  const { parameter, targetIterableParameter, matchType } =
+    parameterRiskLevelDetails
+  const iterableValue = _.get(user, parameter)
+  let individualRiskLevel
+  let iterableMaxRiskLevel = 'VERY_LOW' as RiskLevel
+  if (iterableValue && targetIterableParameter) {
+    iterableValue.forEach((value: any) => {
+      individualRiskLevel = getSchemaAttributeValues(
+        targetIterableParameter,
+        value,
+        parameterRiskLevelDetails
+      )
+      if (
+        riskLevelPrecendence[individualRiskLevel] >=
+        riskLevelPrecendence[iterableMaxRiskLevel]
+      ) {
+        iterableMaxRiskLevel = individualRiskLevel
+      }
+    })
+    return iterableMaxRiskLevel
+  } else if (
+    iterableValue &&
+    !targetIterableParameter &&
+    matchType == 'ARRAY_MATCH'
+  ) {
+    let hasRiskValueMatch = false
+    iterableValue.forEach((value: any) => {
+      const { riskLevelAssignmentValues } = parameterRiskLevelDetails
+      for (const idx in riskLevelAssignmentValues) {
+        if (riskLevelAssignmentValues[idx].parameterValue === value) {
+          if (
+            riskLevelPrecendence[riskLevelAssignmentValues[idx].riskLevel] >=
+            riskLevelPrecendence[iterableMaxRiskLevel]
+          ) {
+            iterableMaxRiskLevel = riskLevelAssignmentValues[idx].riskLevel
+            hasRiskValueMatch = true
+          }
+        }
+      }
+    })
+    return hasRiskValueMatch ? iterableMaxRiskLevel : DEFAULT_RISK_LEVEL
+  }
+  return DEFAULT_RISK_LEVEL
+}
+
+const getRiskScore = (
+  riskClassificationValues: Array<any>,
+  riskLevel: RiskLevel
+): number => {
+  let calculatedRiskScore = 75
+  riskClassificationValues.forEach((value) => {
+    if (riskLevel == value.riskLevel) {
+      calculatedRiskScore = _.mean([
+        value.upperBoundRiskScore,
+        value.lowerBoundRiskScore,
+      ])
+    }
+  })
+  return calculatedRiskScore
 }

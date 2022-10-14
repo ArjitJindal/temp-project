@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -2005,7 +2005,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -2462,6 +2462,9 @@ components:
             - destinationAmountDetails.transactionCurrency
             - ipAddressCountry
             - type
+            - legalEntity.companyRegistrationDetails.registrationCountry
+            - shareHolders
+            - directors
         isActive:
           type: boolean
         isDerived:
@@ -2481,6 +2484,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskParameterLevelKeyValue'
+        parameterType:
+          type: string
+          enum:
+            - ITERABLE
+            - VARIABLE
+        matchType:
+          type: string
+          enum:
+            - DIRECT
+            - ARRAY_MATCH
+        targetIterableParameter:
+          type: string
+          enum:
+            - generalDetails.countryOfNationality
       required:
         - parameter
         - isActive
