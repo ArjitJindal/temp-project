@@ -41,22 +41,16 @@ aws_secret_access_key=false
 
 ### For first run
 
-Ensure you have the local instance of DynamoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
+Ensure you have the local instance of DynamoDB & MongoDB running. You need Docker installed and runnable for this. Run this command (with sudo if you're on Linux):
 
 ```
-npm run start-local-ddb
+npm run dev:databases
 ```
 
-For the first run create the database using:
+You can populate your local databases by running:
 
 ```
-npm run create-local-ddb
-```
-
-Run the below command to recreate the table:
-
-```
-npm run recreate-local-ddb
+npm run generate-local-data
 ```
 
 You can now run the following:
@@ -69,12 +63,6 @@ npm run update-rule-instance
 npm run verify-transaction
 npm run get-transaction
 npm run import-list
-```
-
-For console, you will also need mongoDB. You can start a local containerized instance using"
-
-```
-npm run start-local-mongodb
 ```
 
 Then you can synthesize local cdk template like so:
@@ -90,12 +78,6 @@ npm run start-local-api
 ```
 
 Local environment config (ex: tenantID) is stored in `local-dev.ts`.
-
-### Generating Data for Local:
-
-Run the script once you got DynamoDB and mongo running
-
-`generate-local-data`
 
 ## Deploy
 
@@ -116,6 +98,10 @@ To deploy to your stack for dev:
 ```bash
 GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
 ```
+
+### TenantID when running API Locally
+
+- When running the Public API locally (and testing through Postman), tarpon does not check the x-api-key to fetch the tenant ID. You need to set the tenant ID using the request header with key: `tenant-id` and value to the local tenant (`flagright`).
 
 ### Fixing common deploy errors by clean deploy
 

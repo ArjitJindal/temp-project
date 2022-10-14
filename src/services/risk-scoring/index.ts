@@ -34,7 +34,8 @@ export const calculateKRS = async (
       (parameterAttributeDetails) =>
         parameterAttributeDetails.isActive &&
         !parameterAttributeDetails.isDerived &&
-        parameterAttributeDetails.riskEntityType === 'CONSUMER_USER'
+        (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER' ||
+          parameterAttributeDetails.riskEntityType === 'BUSINESS')
     )
     .forEach((parameterAttributeDetails) => {
       const riskLevel: RiskLevel = getSchemaAttributeValues(

@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
@@ -311,17 +310,17 @@ export class UserRepository {
     user: User | Business,
     type: UserType
   ): Promise<User | Business> {
-    const userId = user.userId || uuidv4()
+    const userId = user.userId
     const newUser = {
       ...user,
       userId,
+      type,
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Item: {
         ...primaryKey,
-        type,
         ...newUser,
       },
     }
