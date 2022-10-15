@@ -3,6 +3,9 @@ import {
   ParameterAttributeRiskValuesRiskValueTypeEnum,
   ParameterAttributeRiskValuesRiskEntityTypeEnum,
   RiskParameterLevelKeyValue,
+  ParameterAttributeRiskValuesParameterTypeEnum,
+  ParameterAttributeRiskValuesTargetIterableParameterEnum,
+  ParameterAttributeRiskValuesMatchTypeEnum,
 } from '@/apis';
 
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
@@ -20,6 +23,9 @@ export interface RiskLevelTableItem {
   entity: ParameterAttributeRiskValuesRiskEntityTypeEnum;
   isDerived: boolean;
   dataType: DataTypes;
+  parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
+  matchType: ParameterAttributeRiskValuesMatchTypeEnum;
+  targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
 }
 export type RiskLevelTable = RiskLevelTableItem[];
 export type DataTypes =
@@ -28,4 +34,5 @@ export type DataTypes =
   | 'CURRENCY'
   | 'PAYMENT_METHOD'
   | 'CONSUMER_USER_TYPE'
-  | 'BUSINESS_USER_TYPE';
+  | 'BUSINESS_USER_TYPE'
+  | 'BUSINESS_REGISTRATION_COUNTRY';

@@ -25,6 +25,8 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'CONSUMER_USER',
     dataType: 'CONSUMER_USER_TYPE',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'userDetails.countryOfResidence',
@@ -34,6 +36,8 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'userDetails.countryOfNationality',
@@ -43,6 +47,8 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
 ];
 
@@ -55,6 +61,54 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'BUSINESS',
     dataType: 'BUSINESS_USER_TYPE',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
+    title: 'Business Registration Country',
+    description: 'Risk value based on registration country of the business',
+    type: 'DISCRETE',
+    entity: 'BUSINESS',
+    dataType: 'COUNTRY',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'shareHolders',
+    title: 'Shareholders Country of Nationality',
+    description: 'Risk value based on shareholder country of the nationality',
+    type: 'DISCRETE',
+    entity: 'BUSINESS',
+    dataType: 'COUNTRY',
+    isDerived: false,
+    parameterType: 'ITERABLE',
+    matchType: 'DIRECT',
+    targetIterableParameter: 'generalDetails.countryOfNationality',
+  },
+  {
+    parameter: 'directors',
+    title: 'Directors Country of Nationality',
+    description: 'Risk value based on director country of the nationality',
+    type: 'DISCRETE',
+    entity: 'BUSINESS',
+    dataType: 'COUNTRY',
+    isDerived: false,
+    parameterType: 'ITERABLE',
+    matchType: 'DIRECT',
+    targetIterableParameter: 'generalDetails.countryOfNationality',
+  },
+  {
+    parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
+    title: 'Business Industry',
+    description: 'Risk value based on the industry in which the business operates',
+    type: 'DISCRETE',
+    entity: 'BUSINESS',
+    dataType: 'STRING',
+    isDerived: false,
+    parameterType: 'ITERABLE',
+    matchType: 'ARRAY_MATCH',
   },
 ];
 
@@ -67,6 +121,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'destinationPaymentDetails.method',
@@ -76,6 +132,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'originAmountDetails.country',
@@ -85,6 +143,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'destinationAmountDetails.country',
@@ -94,6 +154,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'originAmountDetails.transactionCurrency',
@@ -103,6 +165,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'destinationAmountDetails.transactionCurrency',
@@ -112,6 +176,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
     isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
   {
     parameter: 'ipAddressCountry',
@@ -121,6 +187,8 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     isDerived: true,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
 ];
 
@@ -181,6 +249,14 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
   BUSINESS_USER_TYPE: (props) => {
     return <MultipleSelect options={businessType} {...props} />;
   },
+  BUSINESS_REGISTRATION_COUNTRY: (props) => {
+    return (
+      <MultipleSelect
+        options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
+        {...props}
+      />
+    );
+  },
   PAYMENT_METHOD: (props) => {
     return (
       <MultipleSelect
@@ -197,6 +273,12 @@ export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
     <span>{currencies.find((currency) => currency.value === value)?.label}</span>
   ),
   COUNTRY: ({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return <span>{COUNTRIES[value]}</span>;
+  },
+  BUSINESS_REGISTRATION_COUNTRY: ({ value }) => {
     if (value == null) {
       return null;
     }
