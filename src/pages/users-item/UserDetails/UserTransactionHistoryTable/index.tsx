@@ -16,9 +16,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
-interface Props {
-  userId: string;
-}
 
 export type DataItem = {
   index: number;
@@ -41,7 +38,8 @@ const createCurrencyStringFromTransactionAmount = (
   return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
 };
 
-export default function UserTransactionHistoryTable({ userId }: Props) {
+export function Content(props: { userId: string }) {
+  const { userId } = props;
   const api = useApi();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
@@ -102,11 +100,7 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
   });
 
   return (
-    <Card.Root
-      header={{
-        title: 'Transaction History',
-      }}
-    >
+    <>
       <div ref={rootRef} style={{ position: 'relative' }} className={style.expandedRow}>
         <QueryResultsTable
           search={false}
@@ -329,6 +323,26 @@ export default function UserTransactionHistoryTable({ userId }: Props) {
           }}
         />
       </div>
+    </>
+  );
+}
+
+interface Props {
+  userId: string | undefined;
+  collapsedByDefault?: boolean;
+}
+
+export default function UserTransactionHistoryTable(props: Props) {
+  const { userId, collapsedByDefault } = props;
+  return (
+    <Card.Root
+      disabled={userId == null}
+      header={{
+        title: 'Transaction History',
+        collapsedByDefault,
+      }}
+    >
+      {userId && <Content userId={userId} />}
     </Card.Root>
   );
 }

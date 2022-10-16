@@ -3,11 +3,12 @@ import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
-import { RequestTable, TableActionType } from '@/components/RequestTable';
+import { RequestTable } from '@/components/RequestTable';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import Button from '@/components/ui/Button';
+import { TableActionType } from '@/components/ui/Table';
 import { TableColumn } from '@/components/ui/Table/types';
 
 export const WebhookSettings: React.FC = () => {

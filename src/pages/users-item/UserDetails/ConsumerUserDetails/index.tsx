@@ -1,32 +1,29 @@
-import { Divider } from 'antd';
 import UserDetails from '../ConsumerUserDetails/UserDetails/index';
 import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
 import { LegalDocumentsTable } from './LegalDocuments';
 import { InternalConsumerUser } from '@/apis';
-import * as Card from '@/components/ui/Card';
-import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { useApi } from '@/api';
+import DocumentsCard from '@/pages/users-item/UserDetails/DocumentsCard';
 
 interface Props {
   user: InternalConsumerUser;
   isEmbedded?: boolean;
+  collapsedByDefault?: boolean;
 }
 
 export default function ConsumerUserDetails(props: Props) {
-  const { user, isEmbedded } = props;
+  const { user, isEmbedded, collapsedByDefault } = props;
   const api = useApi();
   const userId = user.userId;
   return (
-    <Card.Section>
-      <UserDetails user={user} />
-      <LegalDocumentsTable person={user} />
-      <UserTransactionHistoryTable userId={userId} />
-      <Divider orientation="left" orientationMargin="0">
-        Documents
-      </Divider>
-      <UploadFilesList
-        files={user.files || []}
-        disableUpload={isEmbedded}
+    <>
+      <UserDetails user={user} collapsedByDefault={collapsedByDefault} />
+      <LegalDocumentsTable person={user} collapsedByDefault={collapsedByDefault} />
+      <UserTransactionHistoryTable userId={userId} collapsedByDefault={collapsedByDefault} />
+      <DocumentsCard
+        user={user}
+        collapsedByDefault={collapsedByDefault}
+        isEmbedded={isEmbedded}
         onFileUploaded={async (file) => {
           await api.postConsumerUsersUserIdFiles({
             userId: userId,
@@ -40,6 +37,6 @@ export default function ConsumerUserDetails(props: Props) {
           });
         }}
       />
-    </Card.Section>
+    </>
   );
 }

@@ -8,12 +8,12 @@ interface Props {
   rulesHit: HitRulesResult[];
 }
 
-export default function UserDetailsCard(props: Props) {
+export default function RulesHitCard(props: Props) {
   const { rulesHit } = props;
   return (
     <Card.Root
       header={{
-        title: 'Rules Hit',
+        title: 'Rules Hits',
         collapsable: true,
         collapsedByDefault: false,
       }}

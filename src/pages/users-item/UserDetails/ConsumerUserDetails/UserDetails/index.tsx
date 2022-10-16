@@ -9,6 +9,7 @@ import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-l
 
 interface Props {
   user: InternalConsumerUser;
+  collapsedByDefault?: boolean;
 }
 
 export default function UserDetails(props: Props) {

@@ -1,27 +1,27 @@
-import { Divider } from 'antd';
 import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
-import s from './styles.module.less';
 import PersonsTable from './PersonsTable';
 import UserDetails from './UserDetails';
 import ExpectedTransactionLimits from './TransactionLimits';
 import { useApi } from '@/api';
-import { UploadFilesList } from '@/components/files/UploadFilesList';
 import { InternalBusinessUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
+import DocumentsCard from '@/pages/users-item/UserDetails/DocumentsCard';
 
 interface Props {
   user: InternalBusinessUser;
   isEmbedded?: boolean;
+  collapsedByDefault?: boolean;
 }
 
 export default function BusinessUserDetails(props: Props) {
-  const { user, isEmbedded } = props;
+  const { user, isEmbedded, collapsedByDefault } = props;
   const api = useApi();
   return (
-    <Card.Section>
+    <>
       <Card.Root
         header={{
           title: 'User Details',
+          collapsedByDefault,
         }}
       >
         <UserDetails user={user} />
@@ -29,6 +29,7 @@ export default function BusinessUserDetails(props: Props) {
       <Card.Root
         header={{
           title: 'Expected Transaction Limits',
+          collapsedByDefault,
         }}
       >
         <ExpectedTransactionLimits user={user} />
@@ -36,6 +37,7 @@ export default function BusinessUserDetails(props: Props) {
       <Card.Root
         header={{
           title: 'Shareholders',
+          collapsedByDefault,
         }}
       >
         {user.shareHolders && user.shareHolders.length > 0 && (
@@ -45,17 +47,16 @@ export default function BusinessUserDetails(props: Props) {
       <Card.Root
         header={{
           title: 'Directors',
+          collapsedByDefault,
         }}
       >
         {user.directors && user.directors.length > 0 && <PersonsTable persons={user.directors} />}
       </Card.Root>
       <UserTransactionHistoryTable userId={user.userId} />
-      <Divider className={s.divider} orientation="left" orientationMargin="0">
-        Documents
-      </Divider>
-      <UploadFilesList
-        files={user.files || []}
-        disableUpload={isEmbedded}
+      <DocumentsCard
+        user={user}
+        collapsedByDefault={collapsedByDefault}
+        isEmbedded={isEmbedded}
         onFileUploaded={async (file) => {
           await api.postBusinessUsersUserIdFiles({
             userId: user.userId,
@@ -69,6 +70,6 @@ export default function BusinessUserDetails(props: Props) {
           });
         }}
       />
-    </Card.Section>
+    </>
   );
 }

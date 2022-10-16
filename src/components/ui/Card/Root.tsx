@@ -6,13 +6,14 @@ import Header, { HeaderSettings } from './Header';
 import { useLocalStorageState } from './helpers';
 
 interface Props {
+  disabled?: boolean;
   className?: string;
   header?: HeaderSettings;
   children: React.ReactNode;
 }
 
 export default function Root(props: Props) {
-  const { className, header, children } = props;
+  const { disabled, className, header, children } = props;
   const { collapsable = true, collapsableKey, collapsedByDefault = false } = header ?? {};
 
   const [isCollapsed, setCollapsed] = useLocalStorageState(
@@ -21,12 +22,12 @@ export default function Root(props: Props) {
   );
 
   return (
-    <div className={cn(s.root, className)}>
+    <div className={cn(s.root, className, disabled && s.disabled)}>
       <Column>
         {header && (
           <Header
             header={header}
-            isCollapsed={collapsable && isCollapsed}
+            isCollapsed={disabled || (collapsable && isCollapsed)}
             setCollapsed={setCollapsed}
           />
         )}

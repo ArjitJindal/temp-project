@@ -1,7 +1,8 @@
 import { Tag } from 'antd';
-import { ArrowDownOutlined, ArrowsAltOutlined, SwapOutlined } from '@ant-design/icons';
+import s from './index.module.less';
 import { neverReturn } from '@/utils/lang';
 import { CaseType } from '@/apis';
+import COLORS from '@/components/ui/colors';
 
 interface Props {
   caseType: CaseType | undefined;
@@ -13,24 +14,30 @@ export default function CaseTypeTag(props: Props) {
     return <>-</>;
   }
   let transactionTypeDisplay: string;
-  let transactionTypeIcon = <SwapOutlined />;
-  let tagColor = 'geekblue';
+  let bgColor;
+  let borderColor;
 
   if (caseType === 'USER') {
     transactionTypeDisplay = 'User';
-    tagColor = 'blue';
-    transactionTypeIcon = <ArrowDownOutlined />;
+    bgColor = COLORS.turquoise.tint;
+    borderColor = COLORS.turquoise.base;
   } else if (caseType === 'TRANSACTION') {
     transactionTypeDisplay = 'Transaction';
-    tagColor = 'orange';
-    transactionTypeIcon = <ArrowsAltOutlined />;
+    bgColor = COLORS.orange.tint;
+    borderColor = COLORS.orange.base;
   } else {
     transactionTypeDisplay = neverReturn(caseType, caseType);
   }
 
   return (
-    <Tag color={tagColor}>
-      {transactionTypeIcon} {transactionTypeDisplay}
+    <Tag
+      className={s.root}
+      style={{
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+      }}
+    >
+      {transactionTypeDisplay}
     </Tag>
   );
 }

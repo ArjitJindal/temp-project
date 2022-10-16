@@ -65,14 +65,13 @@ export function useRoutes(): RouteItem[] {
             name: 'item',
           },
           {
-            path: '/case-management',
+            path: '/case-management/:list',
             name: 'list',
             component: CaseManagementPage,
           },
           {
-            path: '/case-management/closed',
-            name: 'list',
-            component: CaseManagementPage,
+            path: '/case-management',
+            redirect: '/case-management/transaction',
           },
         ],
       },

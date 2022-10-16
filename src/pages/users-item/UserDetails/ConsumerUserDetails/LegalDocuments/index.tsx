@@ -11,6 +11,7 @@ import KeyValueTag from '@/components/ui/KeyValueTag';
 
 interface Props {
   person: InternalConsumerUser;
+  collapsedByDefault?: boolean;
 }
 
 export function LegalDocumentsTable(prop: Props) {

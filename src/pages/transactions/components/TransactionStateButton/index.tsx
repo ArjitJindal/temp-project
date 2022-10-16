@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Popover } from 'antd';
 import _ from 'lodash';
-import HealthLineIcon from './health-line.react.svg';
 import s from './style.module.less';
 import PopupContent from './PopupContent';
+import HealthLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { TransactionState } from '@/apis';
 

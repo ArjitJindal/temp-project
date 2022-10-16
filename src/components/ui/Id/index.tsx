@@ -7,39 +7,39 @@ import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-lin
 import { copyTextToClipboard } from '@/utils/browser';
 
 interface ExtraProps {
+  alwaysShowCopy?: boolean;
   to?: string;
   children?: string;
 }
 
 export default function Id(props: ButtonProps & ExtraProps) {
-  const { to, children } = props;
+  const { alwaysShowCopy, to, children } = props;
+
+  const handleClickCopy = (e: React.MouseEvent<unknown>) => {
+    e.preventDefault();
+    // todo: i18n
+    if (children) {
+      copyTextToClipboard(children)
+        .then(() => {
+          message.success('Copied to clipboard');
+        })
+        .catch((e) => {
+          message.warn(`Unable copy to clipboard; ${e.message ?? 'Unknown error'}`);
+        });
+    }
+  };
 
   if (to != null) {
     return (
       <Link className={style.root} to={to} title={children}>
         {children}
+        {alwaysShowCopy && <FileCopyLineIcon className={style.icon} onClick={handleClickCopy} />}
       </Link>
     );
   }
+
   return (
-    <a
-      className={style.root}
-      href="#"
-      title={children}
-      onClick={(e) => {
-        e.preventDefault();
-        // todo: i18n
-        if (children) {
-          copyTextToClipboard(children)
-            .then(() => {
-              message.success('Copied to clipboard');
-            })
-            .catch((e) => {
-              message.warn(`Unable copy to clipboard; ${e.message ?? 'Unknown error'}`);
-            });
-        }
-      }}
-    >
+    <a className={style.root} href="#" title={children} onClick={handleClickCopy}>
       <div className={style.inner}>
         <span className={style.id}>{children}</span>
         <div>

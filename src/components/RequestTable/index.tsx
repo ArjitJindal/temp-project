@@ -3,7 +3,7 @@ import { ProTableProps } from '@ant-design/pro-table';
 import type { ParamsType } from '@ant-design/pro-provider';
 import React, { useCallback, useEffect, useState } from 'react';
 import { SortOrder } from 'antd/es/table/interface';
-import Table, { ActionRenderer, AllParams, RowSelection } from '../ui/Table';
+import Table, { ActionRenderer, AllParams, RowSelection, TableActionType } from '../ui/Table';
 import {
   AsyncResource,
   failed,
@@ -17,10 +17,6 @@ import { getErrorMessage, isEqual } from '@/utils/lang';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { TableColumn, TableData, TableDataItem, TableRow } from '@/components/ui/Table/types';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-
-export type TableActionType = {
-  reload: () => void;
-};
 
 export type RequestFunctionType<T extends object, Params extends object = ParamsType> = (
   params: Params & {

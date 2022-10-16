@@ -30,15 +30,14 @@ export default function ExportButton(props: Props) {
           const hideMessage = message.loading(`Exporting search results...`, 0);
           setBusy(true);
           try {
-            const { timestamp, transactionId, rulesHitFilter, rulesExecutedFilter } =
-              onGetFormValues();
+            const { timestamp, caseId, rulesHitFilter, rulesExecutedFilter } = onGetFormValues();
             // todo: deduplicate with fetching
             const { downloadUrl } = await api.getTransactionsListExport({
               limit: EXPORT_ENTRIES_LIMIT,
               skip: 0,
               afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
               beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-              filterId: transactionId,
+              filterId: caseId,
               filterRulesHit: rulesHitFilter,
               filterRulesExecuted: rulesExecutedFilter,
               filterOutStatus: 'ALLOW',

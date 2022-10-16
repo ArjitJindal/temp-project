@@ -1,11 +1,11 @@
 import Avatar from '../../../pages/transactions-item/UserDetails/Avatar/index';
 import Id from '../Id';
 import s from './index.module.less';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import { getUserName } from '@/utils/api/users';
+import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
+import { getUserLink, getUserName } from '@/utils/api/users';
 
 interface Props {
-  user: InternalConsumerUser | InternalBusinessUser;
+  user: InternalConsumerUser | InternalBusinessUser | MissingUser | undefined;
   children?: React.ReactNode;
 }
 
@@ -15,7 +15,13 @@ export default function UserIdNameCard(props: Props) {
     <>
       <div className={s.user}>
         <Avatar name={user ? getUserName(user) : undefined} />
-        <div className={s.id}>{user && <Id>{user.userId}</Id>}</div>
+        <div className={s.id}>
+          {user && (
+            <Id to={getUserLink(user)} alwaysShowCopy>
+              {user.userId}
+            </Id>
+          )}
+        </div>
         <div className={s.name}>{user ? getUserName(user) : 'User undefined'}</div>
       </div>
       {children && <div>{children}</div>}

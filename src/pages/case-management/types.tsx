@@ -3,10 +3,10 @@ import { SortOrder } from '@/components/ui/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 export type TableSearchParams = Partial<{
+  caseId: string;
   page: number;
   sort: [string, SortOrder][];
   timestamp: string[];
-  transactionId: string;
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
   originCurrenciesFilter: Array<string>;
@@ -20,4 +20,5 @@ export type TableSearchParams = Partial<{
   destinationMethodFilter: string;
   tagKey: string;
   tagValue: string;
+  caseStatus: 'OPEN' | 'CLOSED';
 }>;

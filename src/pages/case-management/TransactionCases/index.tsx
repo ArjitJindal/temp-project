@@ -1,50 +1,40 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import type { ProColumns } from '@ant-design/pro-table';
-import { Divider, message } from 'antd';
-import moment from 'moment';
+import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
-import { useNavigate } from 'react-router';
 import StateSearchButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
-import { AddToSlackButton } from './AddToSlackButton';
-import { AssigneesDropdown } from './AssigneesDropdown';
-import { ClosingReasonTag } from './ClosingReasonTag';
-import { ConsoleUserAvatar } from './ConsoleUserAvatar';
+import { AddToSlackButton } from '../components/AddToSlackButton';
+import { AssigneesDropdown } from '../components/AssigneesDropdown';
+import { CasesStatusChangeForm, CaseStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { currencies } from '@/utils/currencies';
-import { TableActionType } from '@/components/RequestTable';
-import { Case, CaseTransaction, RuleAction } from '@/apis';
+import { Case, CasesListResponse, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
-import {
-  CasesStatusChangeForm,
-  CaseStatusChangeForm,
-} from '@/pages/case-management/components/CaseStatusChangeForm';
-import { useAnalytics } from '@/utils/segment/context';
-import { measure } from '@/utils/time-utils';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
-import { makeUrl, parseQueryString } from '@/utils/routing';
-import { useDeepEqualEffect } from '@/utils/hooks';
-import { queryAdapter } from '@/pages/case-management/helpers';
+import { makeUrl } from '@/utils/routing';
 import UserLink from '@/components/UserLink';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { TableColumn, TableDataItem, TableRow } from '@/components/ui/Table/types';
+import { TableColumn, TableRow } from '@/components/ui/Table/types';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { useQuery } from '@/utils/queries/hooks';
-import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-import { CASES_LIST } from '@/utils/queries/keys';
+import { AllParams, TableActionType } from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import KeyValueTag from '@/components/ui/KeyValueTag';
 import TransactionState from '@/components/ui/TransactionState';
+import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
+import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
+import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
+import { QueryResult } from '@/utils/queries/types';
+import { useTableData } from '@/pages/case-management/TransactionCases/helpers';
+import CaseStatusTag from '@/components/ui/CaseStatusTag';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -58,203 +48,26 @@ export type CaseManagementItem = Case & {
 };
 
 interface Props {
-  isOpenTab: boolean;
+  params: AllParams<TableSearchParams>;
+  queryResult: QueryResult<CasesListResponse>;
+  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
+  onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
 }
 
-export default function CaseTable(props: Props) {
-  const { isOpenTab } = props;
+export default function TransactionCases(props: Props) {
+  const { params, queryResult, onChangeParams, onUpdateCases } = props;
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const [updatedCases, setUpdatedCases] = useState<{
-    [key: string]: Case;
-  }>({});
-  const handleCaseUpdate = useCallback(async (caseItem: Case) => {
-    const transactionId = caseItem.caseId as string;
-    setUpdatedCases((prev) => ({
-      ...prev,
-      [transactionId]: caseItem,
-    }));
-  }, []);
   const api = useApi();
-  const handleUpdateAssignments = useCallback(
-    async (caseItem: Case, assignees: string[]) => {
-      const hideMessage = message.loading(`Saving...`, 0);
-      const assignments = assignees.map((assigneeUserId) => ({
-        assignedByUserId: user.userId,
-        assigneeUserId,
-        timestamp: Date.now(),
-      }));
-      try {
-        handleCaseUpdate({
-          ...caseItem,
-          assignments,
-        });
-        await api.postCases({
-          CasesUpdateRequest: {
-            caseIds: [caseItem.caseId as string],
-            updates: {
-              assignments,
-            },
-          },
-        });
-        message.success('Saved');
-      } catch (e) {
-        message.error('Failed to save');
-      } finally {
-        hideMessage();
-      }
-    },
-    [api, handleCaseUpdate, user.userId],
-  );
+  const [users, loadingUsers] = useUsers();
+
+  const tableQueryResult = useTableData(queryResult);
+  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
   }, []);
-  const analytics = useAnalytics();
-  const navigate = useNavigate();
-
-  const [users, loadingUsers] = useUsers();
-
-  const pushParamsToNavigation = useCallback(
-    (params: TableSearchParams) => {
-      navigate(makeUrl('/case-management', {}, queryAdapter.serializer(params)), {
-        replace: true,
-      });
-    },
-    [navigate],
-  );
-
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
-
-  const [params, setParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    ...parsedParams,
-  });
-
-  const handleChangeParams = (params: AllParams<TableSearchParams>) => {
-    pushParamsToNavigation({
-      ...params,
-      page: params.page,
-      sort: params.sort,
-    });
-  };
-
-  useDeepEqualEffect(() => {
-    setParams((prevState) => ({
-      ...prevState,
-      ...parsedParams,
-      page: parsedParams.page ?? 1,
-      sort: parsedParams.sort ?? [],
-    }));
-  }, [parsedParams]);
-
-  const queryResults = useQuery(CASES_LIST({ ...params, isOpenTab }), async () => {
-    const {
-      sort,
-      page,
-      timestamp,
-      transactionId,
-      rulesHitFilter,
-      rulesExecutedFilter,
-      originCurrenciesFilter,
-      destinationCurrenciesFilter,
-      userId,
-      userFilterMode,
-      type,
-      status,
-      transactionState,
-      originMethodFilter,
-      destinationMethodFilter,
-      tagKey,
-      tagValue,
-    } = params;
-    const [sortField, sortOrder] = sort[0] ?? [];
-    const [response, time] = await measure(() =>
-      api.getCaseList({
-        limit: DEFAULT_PAGE_SIZE!,
-        skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
-        afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-        // beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
-        beforeTimestamp: Number.MAX_SAFE_INTEGER,
-        filterId: transactionId,
-        filterRulesHit: rulesHitFilter,
-        filterRulesExecuted: rulesExecutedFilter,
-        filterOutStatus: isOpenTab ? 'ALLOW' : undefined,
-        filterOutCaseStatus: isOpenTab ? 'CLOSED' : undefined,
-        filterTransactionState: transactionState,
-        filterCaseStatus: isOpenTab ? undefined : 'CLOSED',
-        filterStatus: status,
-        filterOriginCurrencies: originCurrenciesFilter,
-        filterDestinationCurrencies: destinationCurrenciesFilter,
-        filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-        filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-        filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
-        transactionType: type,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        includeTransactionUsers: true,
-        includeTransactionEvents: false, // todo: do we still need events?
-        filterOriginPaymentMethod: originMethodFilter,
-        filterDestinationPaymentMethod: destinationMethodFilter,
-        filterTransactionTagKey: tagKey,
-        filterTransactionTagValue: tagValue,
-      }),
-    );
-    analytics.event({
-      title: 'Table Loaded',
-      time,
-    });
-    const items: TableDataItem<CaseManagementItem>[] = response.data.map(
-      (item, index): TableDataItem<CaseManagementItem> => {
-        const caseTransactions = item.caseTransactions ?? [];
-        const dataItem: CaseManagementItem = {
-          index,
-          rowKey: item.caseId ?? `${index}`,
-          transaction: null,
-          transactionFirstRow: true,
-          transactionsRowsCount: 1,
-          ...item,
-        };
-        if (caseTransactions.length === 0) {
-          return dataItem;
-        }
-        return {
-          item: dataItem,
-          rows: caseTransactions.flatMap((transaction) => {
-            if (transaction.hitRules.length === 0) {
-              return [
-                {
-                  ...dataItem,
-                  rowKey: `${item.caseId}#${transaction.transactionId}`,
-                  transaction,
-                },
-              ];
-            }
-            return transaction.hitRules.map((rule, i): CaseManagementItem => {
-              return {
-                ...dataItem,
-                rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
-                transaction: transaction,
-                ruleName: rule.ruleName,
-                ruleDescription: rule.ruleDescription,
-                ruleAction: rule.ruleAction,
-                transactionsRowsCount: transaction.hitRules.length,
-                transactionFirstRow: i === 0,
-              };
-            });
-          }),
-        };
-      },
-    );
-
-    return {
-      items,
-      success: true,
-      total: response.total,
-    };
-  });
-
-  const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   // todo: i18n
   const columns: TableColumn<CaseManagementItem>[] = useMemo(() => {
@@ -269,6 +82,7 @@ export default function CaseTable(props: Props) {
     const mergedColumns: TableColumn<CaseManagementItem>[] = [
       {
         title: 'Case ID',
+        dataIndex: 'caseId',
         width: 130,
         copyable: true,
         ellipsis: true,
@@ -286,6 +100,16 @@ export default function CaseTable(props: Props) {
               {entity.caseId}
             </Id>
           );
+        },
+      },
+      {
+        title: 'Created on',
+        dataIndex: 'createdTimestamp',
+        onCell: onCaseCell,
+        sorter: true,
+        width: 150,
+        render: (_, entity) => {
+          return <TimestampDisplay timestamp={entity.createdTimestamp} />;
         },
       },
       {
@@ -360,15 +184,13 @@ export default function CaseTable(props: Props) {
         },
       },
       {
-        title: 'Timestamp',
+        title: 'Transaction Timestamp',
         width: 130,
         ellipsis: true,
-        dataIndex: 'timestamp',
         valueType: 'dateTimeRange',
-        sorter: true,
         onCell: onTransactionCell,
         render: (_, entity) => {
-          return <TimestampDisplay timestamp={entity.transaction?.timestamp} />;
+          return <TimestampDisplay timestamp={entity.createdTimestamp} />;
         },
       },
       {
@@ -575,6 +397,14 @@ export default function CaseTable(props: Props) {
         },
       },
       {
+        title: 'Case Status',
+        onCell: onCaseCell,
+        width: 150,
+        render: (_, entity) => {
+          return entity.caseStatus && <CaseStatusTag caseStatus={entity.caseStatus} />;
+        },
+      },
+      {
         title: 'Operations',
         hideInSearch: true,
         fixed: 'right',
@@ -585,7 +415,7 @@ export default function CaseTable(props: Props) {
             entity?.caseId && (
               <CaseStatusChangeForm
                 caseId={entity.caseId}
-                newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
+                newCaseStatus={params.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
                 onSaved={reloadTable}
               />
             )
@@ -600,12 +430,21 @@ export default function CaseTable(props: Props) {
         fixed: 'right',
         onCell: onCaseCell,
         render: (dom, entity) => {
-          const caseItem = updatedCases[entity.caseId as string] || entity;
+          // const caseItem = updatedCases[entity.caseId as string] || entity;
           return (
             <AssigneesDropdown
-              assignments={caseItem.assignments || []}
+              assignments={entity.assignments || []}
               editing={true}
-              onChange={(assignees) => handleUpdateAssignments(caseItem, assignees)}
+              onChange={(assignees) => {
+                const assignments = assignees.map((assigneeUserId) => ({
+                  assignedByUserId: user.userId,
+                  assigneeUserId,
+                  timestamp: Date.now(),
+                }));
+                onUpdateCases([entity.caseId as string], {
+                  assignments,
+                });
+              }}
             />
           );
         },
@@ -687,7 +526,7 @@ export default function CaseTable(props: Props) {
         },
       },
     ];
-    if (!isOpenTab) {
+    if (params.caseStatus === 'CLOSED') {
       mergedColumns.push(
         ...([
           {
@@ -740,20 +579,30 @@ export default function CaseTable(props: Props) {
               );
             },
           },
-        ] as ProColumns<TableRow<CaseManagementItem>>[]),
+        ] as TableColumn<TableRow<CaseManagementItem>>[]),
       );
     }
     return mergedColumns;
-  }, [api, handleUpdateAssignments, reloadTable, updatedCases, isOpenTab, users, loadingUsers]);
+  }, [params.caseStatus, api, reloadTable, users, loadingUsers, user.userId, onUpdateCases]);
 
   return (
     <QueryResultsTable<CaseManagementItem, TableSearchParams>
-      queryResults={queryResults}
+      queryResults={tableQueryResult}
       params={params}
-      onChangeParams={handleChangeParams}
+      onChangeParams={onChangeParams}
       actionsHeader={[
         ({ params, setParams }) => (
           <>
+            <CaseStatusButtons
+              status={params.caseStatus ?? 'OPEN'}
+              onChange={(newStatus) => {
+                setParams((state) => ({
+                  ...state,
+                  caseStatus: newStatus,
+                }));
+              }}
+            />
+            <Divider type="vertical" style={{ height: '32px' }} />
             <UserSearchButton
               initialMode={params.userFilterMode ?? 'ALL'}
               userId={params.userId ?? null}
@@ -791,7 +640,7 @@ export default function CaseTable(props: Props) {
             <CasesStatusChangeForm
               caseIds={selectedEntities}
               onSaved={reloadTable}
-              newCaseStatus={isOpenTab ? 'CLOSED' : 'REOPENED'}
+              newCaseStatus={params.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
             />
           </>
         ),

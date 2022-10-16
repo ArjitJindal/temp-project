@@ -1,7 +1,8 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Input, message } from 'antd';
 import s from './index.module.less';
-import { RequestTable, TableActionType } from '@/components/RequestTable';
+import { RequestTable } from '@/components/RequestTable';
+import { TableActionType } from '@/components/ui/Table';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';

@@ -87,7 +87,7 @@ export default function RuleHitCard() {
         return (
           <Link
             to={makeUrl(
-              '/case-management',
+              '/case-management/transaction',
               {},
               {
                 rulesHitFilter: rules[stat.ruleId].id,

@@ -159,7 +159,7 @@ export default function HitsPerUserCard(props: Props) {
             <Link
               key="view-cases"
               to={makeUrl(
-                '/case-management',
+                '/case-management/transaction',
                 {},
                 {
                   userId: user.userId,

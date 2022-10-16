@@ -10,7 +10,7 @@ import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
-import { TableActionType } from '@/components/RequestTable';
+import { TableActionType } from '@/components/ui/Table';
 import { useI18n } from '@/locales';
 import COLORS from '@/components/ui/colors';
 import { TableColumn } from '@/components/ui/Table/types';

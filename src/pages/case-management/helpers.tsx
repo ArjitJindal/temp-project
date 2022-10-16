@@ -11,7 +11,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
     return {
       page: params.page ?? 1,
       timestamp: params.timestamp?.map((x) => moment(x).valueOf()).join(','),
-      transactionId: params.transactionId,
+      caseId: params.caseId,
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
       originCurrenciesFilter: params.originCurrenciesFilter?.join(','),
@@ -36,6 +36,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         .join(','),
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
+      caseStatus: params.caseStatus,
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -44,7 +45,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => moment(parseInt(x)).format())
         : undefined,
-      transactionId: raw.transactionId,
+      caseId: raw.caseId,
       rulesHitFilter: raw.rulesHitFilter?.split(','),
       rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
       originCurrenciesFilter: raw.originCurrenciesFilter?.split(','),
@@ -67,6 +68,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         }) ?? [],
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
+      caseStatus: raw.caseStatus === 'CLOSED' ? 'CLOSED' : 'OPEN',
     };
   },
 };

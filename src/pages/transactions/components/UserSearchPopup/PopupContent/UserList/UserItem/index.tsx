@@ -26,8 +26,9 @@ export default function UserItem(props: Props) {
       }}
     >
       <List.Item.Meta
+        className={s.meta}
         title={<span className={s.userName}>{getUserName(user)}</span>}
-        description={user.userId}
+        description={<span className={s.id}>{user.userId}</span>}
       />
       {user.riskLevel && <RiskLevelTag level={user.riskLevel} />}
     </List.Item>
