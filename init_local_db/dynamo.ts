@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
+import usersMain from './dynamo_users'
 
 async function main() {
   console.log('Create Dynamo tables')
@@ -14,6 +15,10 @@ async function main() {
   } catch (e) {
     console.error(e)
   }
+
+  console.log('Create users')
+  await usersMain()
+
   console.log('Done')
 }
 

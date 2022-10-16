@@ -41,6 +41,7 @@ import TransactionsRoundValueVelocityRule from './transactions-round-value-veloc
 import SamePaymentDetailsRule from './same-payment-details'
 import BlacklistPaymentdetailsRule from './blacklist-payment-details'
 import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
+import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
@@ -91,4 +92,5 @@ export const TRANSACTION_RULES = {
   'tests/test-success-rule': TestSuccessRule,
   'tests/test-failure-rule': TestFailureRule,
   'tests/test-non-hit-rule': TestNonHitRule,
+  'tests/test-always-hit-rule': TestAlwaysHitRule,
 } as unknown as { [key: string]: typeof TransactionRule }

@@ -45,6 +45,8 @@ import {
 import { getErrorMessage } from '@/utils/lang'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
+import { PartyVars } from '@/services/rules-engine/transaction-rules/rule'
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -389,6 +391,20 @@ async function getRulesResult(
               hitRuleInstanceIds.push(ruleInstance.id as string)
             }
 
+            let ruleHitDirections: RuleHitDirection[] = []
+            if (ruleResult?.hitDirections) {
+              ruleHitDirections = ruleResult?.hitDirections
+            } else if (ruleResult?.vars?.['hitParty'] != null) {
+              // trying to derive hit direction from vars. Not ideal solution,
+              // we should move to proper returning hitDirections field
+              const vars: PartyVars = ruleResult.vars.hitParty as PartyVars
+              ruleHitDirections = [
+                vars.type === 'origin' ? 'ORIGIN' : 'DESTINATION',
+              ]
+            } else {
+              ruleHitDirections = ['ORIGIN', 'DESTINATION']
+            }
+
             return {
               ruleId: ruleInstance.ruleId,
               ruleInstanceId: ruleInstance.id,
@@ -401,6 +417,9 @@ async function getRulesResult(
               ),
               ruleAction: action,
               ruleHit,
+              ruleHitMeta: {
+                hitDirections: ruleHitDirections,
+              },
             }
           } catch (e) {
             logger.error(e)
@@ -426,6 +445,7 @@ async function getRulesResult(
       ruleName: result.ruleName,
       ruleDescription: result.ruleDescription,
       ruleAction: result.ruleAction,
+      ruleHitMeta: result.ruleHitMeta,
     }))
     .sort(ruleAscendingComparator) as HitRulesResult[]
 

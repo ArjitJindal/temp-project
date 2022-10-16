@@ -2155,6 +2155,8 @@ components:
           $ref: '#/components/schemas/RuleAction'
         ruleHit:
           type: boolean
+        ruleHitMeta:
+          $ref: '#/components/schemas/RuleHitMeta'
       required:
         - ruleId
         - ruleInstanceId
@@ -2190,6 +2192,8 @@ components:
           description: Description of the rule
         ruleAction:
           $ref: '#/components/schemas/RuleAction'
+        ruleHitMeta:
+          $ref: '#/components/schemas/RuleHitMeta'
       required:
         - ruleId
         - ruleInstanceId
@@ -3275,6 +3279,20 @@ components:
       description: Model for rule action if a rule is hit. This is returned in the API
         response and can be configured on Console by operational accounts like a
         Compliance Analyst
+    RuleHitMeta:
+      type: object
+      description: Details of rule execution, for internal purposes only
+      properties:
+        hitDirections:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleHitDirection'
+    RuleHitDirection:
+      type: string
+      title: RuleHitDirection
+      enum:
+        - ORIGIN
+        - DESTINATION
     InternalUser:
       description: Internal user- employees
       type: object

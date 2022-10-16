@@ -1,6 +1,7 @@
 import { User } from '@/@types/openapi-public/User'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export function getTestUser(user: Partial<User> = {}): User {
   return {
@@ -63,7 +64,8 @@ export function getTestUser(user: Partial<User> = {}): User {
 
 export async function createConsumerUser(testTenantId: string, user: User) {
   const dynamoDb = getDynamoDbClient()
-  const userRepository = new UserRepository(testTenantId, { dynamoDb })
+  const mongoDb = await getMongoDbClient()
+  const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const createdUser = await userRepository.saveConsumerUser(user)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)

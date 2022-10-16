@@ -70,32 +70,34 @@ async function transactionHandler(
         ?.status ?? null
   }
   const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
-  const caseItem = await caseCreationService.addCasesToMongo(transaction)
+  const cases = await caseCreationService.handleTransaction(transaction)
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
   // a single record in DB using transaction date
   await dashboardStatsRepository.refreshStats(transaction.timestamp)
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
-  if (!currentStatus && newStatus !== 'ALLOW' && caseItem?.caseId != null) {
+  if (!currentStatus && newStatus !== 'ALLOW' && cases.length > 0) {
     const tenantRepository = new TenantRepository(tenantId, {
       mongoDb: await getMongoDbClient(),
     })
     if (await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
-      logger.info(
-        `Sending slack alert SQS message for transaction ${transactionId}`
-      )
-      const payload: NewCaseAlertPayload = {
-        kind: 'NEW_CASE',
-        tenantId,
-        caseId: caseItem.caseId,
+      for (const caseItem of cases) {
+        logger.info(
+          `Sending slack alert SQS message for transaction ${transactionId}`
+        )
+        const payload: NewCaseAlertPayload = {
+          kind: 'NEW_CASE',
+          tenantId,
+          caseId: caseItem.caseId as string,
+        }
+        await sqs
+          .sendMessage({
+            MessageBody: JSON.stringify(payload),
+            QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
+          })
+          .promise()
       }
-      await sqs
-        .sendMessage({
-          MessageBody: JSON.stringify(payload),
-          QueueUrl: process.env.SLACK_ALERT_QUEUE_URL as string,
-        })
-        .promise()
     }
   }
 }

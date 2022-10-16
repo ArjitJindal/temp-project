@@ -69,6 +69,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
     if (thresholdHit != null) {
       return {
         action: this.action,
+        hitDirections: ['ORIGIN' as const, 'DESTINATION' as const],
         vars: {
           ...super.getTransactionVars('origin'),
           limit: thresholdHit.min?.toFixed(2),

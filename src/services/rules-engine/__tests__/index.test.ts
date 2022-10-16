@@ -63,6 +63,9 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
             ruleHit: true,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
           },
         ],
         hitRules: [
@@ -72,6 +75,9 @@ describe('Verify Transaction', () => {
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
           },
         ],
       } as TransactionMonitoringResult)
@@ -105,6 +111,9 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
             ruleHit: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
           },
         ],
         hitRules: [],
@@ -293,6 +302,9 @@ describe('Verify Transaction Event', () => {
               ruleDescription: 'test rule description',
               ruleAction: 'BLOCK',
               ruleHit: true,
+              ruleHitMeta: {
+                hitDirections: ['ORIGIN', 'DESTINATION'],
+              },
             },
           ],
           hitRules: [
@@ -302,6 +314,9 @@ describe('Verify Transaction Event', () => {
               ruleName: 'test rule name',
               ruleDescription: 'test rule description',
               ruleAction: 'BLOCK',
+              ruleHitMeta: {
+                hitDirections: ['ORIGIN', 'DESTINATION'],
+              },
             },
           ],
         } as TransactionMonitoringResult)
@@ -325,6 +340,9 @@ describe('Verify Transaction Event', () => {
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
             ruleHit: true,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
           },
         ],
         hitRules: [
@@ -334,6 +352,9 @@ describe('Verify Transaction Event', () => {
             ruleName: 'test rule name',
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
           },
         ],
       } as TransactionMonitoringResult)

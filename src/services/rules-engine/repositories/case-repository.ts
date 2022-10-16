@@ -500,6 +500,27 @@ export class CaseRepository {
       .toArray()
   }
 
+  public async getCasesByUserId(
+    userId: string,
+    direction: 'ORIGIN' | 'DESTINATION',
+    caseType: CaseType
+  ): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return await casesCollection
+      .find({
+        caseType,
+        ...(direction === 'ORIGIN'
+          ? {
+              'caseUsers.origin.userId': userId,
+            }
+          : {
+              'caseUsers.destination.userId': userId,
+            }),
+      })
+      .toArray()
+  }
+
   public async updateUsersInCases(user: User | Business) {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
