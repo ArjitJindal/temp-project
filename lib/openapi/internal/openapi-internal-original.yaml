@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: http://localhost:3000
+  - url: 'http://localhost:3000'
 paths:
   /apikey:
     parameters: []
@@ -2005,7 +2005,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: 2020-01-04
+            - _id: '2020-01-04'
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -2466,6 +2466,8 @@ components:
             - shareHolders
             - directors
             - legalEntity.companyGeneralDetails.businessIndustry
+            - userDetails.dateOfBirth
+            - legalEntity.companyRegistrationDetails.dateOfRegistration
         isActive:
           type: boolean
         isDerived:
