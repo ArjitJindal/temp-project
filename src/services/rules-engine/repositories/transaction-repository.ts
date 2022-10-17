@@ -642,13 +642,13 @@ export class TransactionRepository {
   public async getTransactionsByIds(
     transactionIds: string[]
   ): Promise<Transaction[]> {
-    const transactions = []
-    for (const transactionIdsChunk of chunk(transactionIds, 100)) {
-      transactions.push(
-        ...(await this.getTransactionsByIdsChunk(transactionIdsChunk))
+    return (
+      await Promise.all(
+        chunk(transactionIds, 100).map((transactionIdsChunk) =>
+          this.getTransactionsByIdsChunk(transactionIdsChunk)
+        )
       )
-    }
-    return transactions
+    ).flatMap((e) => e)
   }
 
   private async getTransactionsByIdsChunk(
