@@ -30,6 +30,7 @@ export interface RiskLevelTableItem {
 export type RiskLevelTable = RiskLevelTableItem[];
 export type DataTypes =
   | 'STRING'
+  | 'RANGE'
   | 'COUNTRY'
   | 'CURRENCY'
   | 'PAYMENT_METHOD'

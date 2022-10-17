@@ -1,10 +1,17 @@
 import React from 'react';
 import { Input, Select } from 'antd';
-import { DataTypes, RiskLevelTable } from '@/pages/risk-levels/risk-level/ParametersTable/types';
+import {
+  DataTypes,
+  ParameterName,
+  ParameterValues,
+  RiskLevelTable,
+} from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
 import { PAYMENT_METHODS } from '@/utils/payments';
 import { currencies } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
+import { RiskLevel } from '@/utils/risk-levels';
+import Slider from '@/components/ui/Slider';
 
 type InputRendererProps = {
   disabled?: boolean;
@@ -46,6 +53,17 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'userDetails.dateOfBirth',
+    title: 'Date of birth',
+    description: 'Risk based on customer date of birth',
+    type: 'RANGE',
+    entity: 'CONSUMER_USER',
+    dataType: 'RANGE',
     isDerived: false,
     parameterType: 'VARIABLE',
     matchType: 'DIRECT',
@@ -109,6 +127,17 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'ITERABLE',
     matchType: 'ARRAY_MATCH',
+  },
+  {
+    parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
+    title: 'Date of registration',
+    description: 'Risk based on business date of registration',
+    type: 'RANGE',
+    entity: 'BUSINESS',
+    dataType: 'RANGE',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
   },
 ];
 
@@ -265,6 +294,23 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
       />
     );
   },
+  RANGE: ({ disabled, values, onChange }) => {
+    const range = (values[0] ?? '0,0').split(',').map((x) => parseInt(x) || 0);
+    return (
+      <>
+        <Slider
+          range
+          marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
+          endExclusive={true}
+          value={[range[0], range[1]]}
+          disabled={disabled}
+          onChange={(value) => {
+            onChange([value.map((x) => `${x}`).join(',')]);
+          }}
+        />
+      </>
+    );
+  },
 };
 
 export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
@@ -297,4 +343,44 @@ export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
     }
     return <span>{value}</span>;
   },
+  RANGE: ({ value }) => {
+    const range = value?.split(',').map((x) => parseInt(x)) ?? [];
+    return (
+      <Slider
+        range
+        endExclusive={true}
+        marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
+        defaultValue={[range[0] ?? 0, range[1] ?? 0]}
+        disabled={true}
+      />
+    );
+  },
 };
+
+type Validation = (params: {
+  newParameterName: ParameterName;
+  newValue: string[];
+  newRiskLevel: RiskLevel | null;
+  previousValues: ParameterValues;
+}) => null | string;
+
+export const NEW_VALUE_VALIDATIONS: Validation[] = [
+  ({ newParameterName, newValue, previousValues }) => {
+    if (
+      newParameterName === 'userDetails.dateOfBirth' ||
+      newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration'
+    ) {
+      for (const valueItem of newValue) {
+        const [x1, x2] = valueItem.split(',').map((x) => parseInt(x));
+        const hasOverlaps = previousValues.some(({ parameterValue }) => {
+          const [y1, y2] = parameterValue.split(',').map((x) => parseInt(x));
+          return x1 < y2 && y1 < x2;
+        });
+        if (hasOverlaps) {
+          return 'Age ranges should not overlap';
+        }
+      }
+    }
+    return null;
+  },
+];

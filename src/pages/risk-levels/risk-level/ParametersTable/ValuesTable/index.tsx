@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Button } from 'antd';
+import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
 import { ParameterName, ParameterValues, RiskLevelTableItem } from '../types';
-import { INPUT_RENDERERS, VALUE_RENDERERS } from '../consts';
+import { INPUT_RENDERERS, NEW_VALUE_VALIDATIONS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
@@ -64,13 +64,28 @@ export default function ValuesTable(props: Props) {
     setValues(lastValues);
   };
 
+  const newValueValidationMessage: string | null = NEW_VALUE_VALIDATIONS.reduce<string | null>(
+    (acc, validation): string | null => {
+      if (acc != null) {
+        return acc;
+      }
+      return validation({
+        newValue: newValue,
+        newRiskLevel: newRiskLevel,
+        newParameterName: parameter,
+        previousValues: values,
+      });
+    },
+    null,
+  );
+
   return (
     <div className={style.root}>
       <div className={style.table}>
         <div className={style.header}>Variable</div>
         <div className={style.header}>Risk Score</div>
         <div className={style.header}></div>
-        {values.map(({ parameterValue, riskLevel }, i) => {
+        {values.map(({ parameterValue, riskLevel }) => {
           const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
             handleUpdateValues((values) =>
               values.map((x) =>
@@ -91,7 +106,7 @@ export default function ValuesTable(props: Props) {
           };
 
           return (
-            <React.Fragment key={i}>
+            <React.Fragment key={parameterValue}>
               <div>
                 {VALUE_RENDERERS[dataType]({
                   value: parameterValue,
@@ -129,11 +144,19 @@ export default function ValuesTable(props: Props) {
             <RiskLevelSwitch disabled={loading} current={newRiskLevel} onChange={setNewRiskLevel} />
           </div>
           <div>
-            <Button disabled={loading || !newValue || newRiskLevel == null} onClick={handleAdd}>
+            <Button
+              disabled={
+                loading || !newValue || newRiskLevel == null || newValueValidationMessage != null
+              }
+              onClick={handleAdd}
+            >
               Set
             </Button>
           </div>
         </>
+        {newValueValidationMessage != null && (
+          <Alert message={newValueValidationMessage} type="error" />
+        )}
       </div>
       <div className={style.footer}>
         <Button disabled={loading || !isChanged} onClick={handleCancel}>

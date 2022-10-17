@@ -51,9 +51,9 @@ export default function ParametersTable(props: Props) {
           render: (_, item) => {
             switch (item.type) {
               case 'DISCRETE':
-                return <Tag color="success">{item.type}</Tag>;
+                return <Tag color="green">{item.type}</Tag>;
               case 'RANGE':
-                return <Tag color="processing">{item.type}</Tag>;
+                return <Tag color="blue">{item.type}</Tag>;
             }
             return neverReturn(item.type, <Tag>{item.type}</Tag>);
           },
