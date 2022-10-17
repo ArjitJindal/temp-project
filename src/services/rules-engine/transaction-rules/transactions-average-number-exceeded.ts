@@ -52,6 +52,7 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
             'excludePeriod1',
             'multiplierThreshold',
             'transactionsNumberThreshold',
+            'transactionsNumberThreshold2',
             'averageThreshold',
             'checkSender',
             'checkReceiver',
