@@ -21,7 +21,7 @@ export function getRuleInstanceDisplay(
   rules: RulesMap,
   ruleInstances: RuleInstanceMap,
 ) {
-  return ruleInstances[ruleInstanceId as string]?.ruleNameAlias || rules[ruleId].name;
+  return ruleInstances[ruleInstanceId as string]?.ruleNameAlias || rules[ruleId].name || ruleId;
 }
 
 export const RULE_CASE_CREATION_TYPE_OPTIONS: { label: string; value: CaseType }[] = [
