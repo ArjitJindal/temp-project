@@ -140,6 +140,7 @@ export default function Menu(props: {
         inlineCollapsed={isCollapsed}
         theme="dark"
         mode="inline"
+        selectedKeys={selectedKeys}
         items={renderItems(
           'menu',
           routes.filter((route) => route.position === 'bottom'),
