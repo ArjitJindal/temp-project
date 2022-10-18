@@ -9,4 +9,5 @@ jest.mock('@cdk/constants', () => ({
   },
 }))
 
+process.env.ENV = 'local'
 process.env.RETRY_KINESIS_STREAM_NAME = 'mock-retry-stream'

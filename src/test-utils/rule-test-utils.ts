@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -14,8 +15,13 @@ import { User } from '@/@types/openapi-public/User'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
-export async function createRule(testTenantId: string, rule: Partial<Rule>) {
+export async function createRule(
+  testTenantId: string,
+  rule: Partial<Rule>,
+  ruleInstance?: Partial<RuleInstance>
+) {
   const dynamoDb = getDynamoDbClient()
   const ruleRepository = new RuleRepository(testTenantId, {
     dynamoDb,
@@ -48,6 +54,7 @@ export async function createRule(testTenantId: string, rule: Partial<Rule>) {
       status: 'ACTIVE',
       caseCreationType: createdRule.defaultCaseCreationType as CaseType,
       casePriority: createdRule.defaultCasePriority as CasePriority,
+      ...ruleInstance,
     })
 
   return async () => {
@@ -126,7 +133,10 @@ export function getRuleHits(
 
 export const SETUP_TEST_RULE_ID = 'test rule id'
 
-export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
+export function setUpRulesHooks(
+  tenantId: string,
+  rules: Array<Partial<Rule> | Partial<RuleInstance>>
+) {
   const cleanups: Array<() => void> = [
     async () => {
       return
@@ -136,15 +146,19 @@ export function setUpRulesHooks(tenantId: string, rules: Array<Partial<Rule>>) {
   beforeAll(async () => {
     for (const rule of rules) {
       cleanups.push(
-        await createRule(tenantId, {
-          id: SETUP_TEST_RULE_ID,
-          name: 'test rule name',
-          description: DEFAULT_DESCRIPTION,
-          defaultParameters: {},
-          defaultAction: 'FLAG',
-          ruleImplementationName: 'tests/test-success-rule',
-          ...rule,
-        })
+        await createRule(
+          tenantId,
+          {
+            id: SETUP_TEST_RULE_ID,
+            name: 'test rule name',
+            description: DEFAULT_DESCRIPTION,
+            defaultParameters: {},
+            defaultAction: 'FLAG',
+            ruleImplementationName: 'tests/test-success-rule',
+            ...rule,
+          },
+          _.omit(rule, 'id')
+        )
       )
     }
   })

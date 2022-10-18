@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import _ from 'lodash'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -9,6 +10,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
+import { USER_FILTERS } from '@/services/rules-engine/user-filters'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -28,6 +30,17 @@ export const ruleHandler = lambdaApi()(
     if (event.httpMethod === 'GET' && event.path.endsWith('/rules')) {
       const rules = await ruleService.getAllRules()
       return rules
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/rule-filters'
+    ) {
+      const filters = Object.values(USER_FILTERS).map(
+        (filterClass) => (filterClass.getSchema() as any)?.properties || {}
+      )
+      return {
+        type: 'object',
+        properties: _.merge({}, ...filters),
+      }
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/rules') &&

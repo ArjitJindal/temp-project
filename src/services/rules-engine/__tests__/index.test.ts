@@ -84,6 +84,45 @@ describe('Verify Transaction', () => {
     })
   })
 
+  describe('Verify Transaction with filters', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'R-1',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        filters: { whitelistUsers: { userIds: ['1'] } },
+      },
+    ])
+    setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+
+    test('rule is not rune', async () => {
+      const transaction = getTestTransaction({
+        transactionId: 'dummy',
+        originUserId: '1',
+      })
+      const result = await verifyTransaction(
+        transaction,
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      expect(result).toEqual({
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description',
+            ruleAction: 'FLAG',
+            ruleHit: false,
+          },
+        ],
+        hitRules: [],
+      } as TransactionMonitoringResult)
+    })
+  })
+
   describe('Verify Transaction: executed rules (non-hit)', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -111,9 +150,6 @@ describe('Verify Transaction', () => {
             ruleDescription: 'test rule description',
             ruleAction: 'FLAG',
             ruleHit: false,
-            ruleHitMeta: {
-              hitDirections: ['ORIGIN', 'DESTINATION'],
-            },
           },
         ],
         hitRules: [],

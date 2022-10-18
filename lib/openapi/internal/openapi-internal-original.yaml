@@ -62,6 +62,26 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Rule'
+  /rule-filters:
+    get:
+      summary: Rule Filters - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+              examples: {}
+      operationId: get-rule-filters
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: ruleId
+    parameters: []
   /iam/rules:
     parameters: []
     post:
@@ -1800,6 +1820,8 @@ components:
           type: string
         ruleNameAlias:
           type: string
+        filters:
+          type: object
         parameters:
           type: object
         riskLevelParameters:

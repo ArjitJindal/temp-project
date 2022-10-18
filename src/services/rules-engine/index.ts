@@ -17,6 +17,7 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { Rule as RuleBase, RuleResult } from './rule'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
+import { USER_FILTERS } from './user-filters'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -117,6 +118,7 @@ export async function verifyTransactionIdempotent(
     riskRepository,
     ruleInstances,
     senderUser,
+    receiverUser,
     (ruleImplementationName, parameters, action) =>
       getTransactionRuleImplementation(
         ruleImplementationName,
@@ -333,12 +335,37 @@ export async function verifyBusinessUserEvent(
   return updatedBusinessUser
 }
 
+async function computeRuleFilters(
+  tenantId: string,
+  ruleFilters: { [key: string]: any },
+  senderUser: User | Business | undefined,
+  receiverUser: User | Business | undefined,
+  dynamoDb: DynamoDBDocumentClient
+) {
+  for (const filterKey in ruleFilters) {
+    if (USER_FILTERS[filterKey]) {
+      const RuleFilterClass = USER_FILTERS[filterKey]
+      const ruleFilter = new RuleFilterClass(
+        tenantId,
+        { senderUser, receiverUser },
+        { [filterKey]: ruleFilters[filterKey] },
+        dynamoDb
+      )
+      if (!(await ruleFilter.predicate())) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
 async function getRulesResult(
   ruleRepository: RuleRepository,
   ruleInstanceRepository: RuleInstanceRepository,
   riskRepository: RiskRepository,
   ruleInstances: ReadonlyArray<RuleInstance>,
-  user: User | Business | undefined,
+  senderUser: User | Business | undefined,
+  receiverUser: User | Business | undefined,
   getRuleImplementationCallback: (
     ruleImplementationName: string,
     ruleParameters: object,
@@ -352,7 +379,7 @@ async function getRulesResult(
     'id'
   )
   const hitRuleInstanceIds: string[] = []
-  const userRiskLevel = await getUserRiskLevel(riskRepository, user)
+  const userRiskLevel = await getUserRiskLevel(riskRepository, senderUser)
   const ruleResults = (
     await Promise.all(
       ruleInstances.map(async (ruleInstance) => {
@@ -379,12 +406,22 @@ async function getRulesResult(
               parameters,
               action
             )
-
-            const shouldCompute = await everyAsync(
+            // TODO: Refactor rules engine to be class-based - FDT-45786
+            const shouldCompute = await computeRuleFilters(
+              riskRepository.tenantId,
+              ruleInstance.filters,
+              senderUser,
+              receiverUser,
+              riskRepository.dynamoDb
+            )
+            const shouldComputeLegacy = await everyAsync(
               rule.getFilters(),
               async (ruleFilter) => ruleFilter()
             )
-            const ruleResult = shouldCompute ? await rule.computeRule() : null
+            const ruleResult =
+              shouldCompute && shouldComputeLegacy
+                ? await rule.computeRule()
+                : null
             const ruleHit = !_.isNil(ruleResult)
             logger.info(`Completed rule`)
             if (ruleHit) {
@@ -417,9 +454,11 @@ async function getRulesResult(
               ),
               ruleAction: action,
               ruleHit,
-              ruleHitMeta: {
-                hitDirections: ruleHitDirections,
-              },
+              ruleHitMeta: ruleHit
+                ? {
+                    hitDirections: ruleHitDirections,
+                  }
+                : undefined,
             }
           } catch (e) {
             logger.error(e)
