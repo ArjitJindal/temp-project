@@ -1,12 +1,14 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RiskRepository } from './repositories/risk-repository'
-import { riskLevelPrecendence } from './utils'
+import { getAgeFromTimestamp, riskLevelPrecendence } from './utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { logger } from '@/core/logger'
+import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
+import dayjs from '@/utils/dayjs'
 
 const DEFAULT_RISK_LEVEL = 'HIGH' // defaults to high risk for now - will be configurable in the future
 
@@ -29,7 +31,6 @@ export const calculateKRS = async (
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
   const riskClassificationValues = await riskRepository.getRiskClassification()
   const riskScoresList: number[] = []
-
   parameterRiskScores
     ?.filter(
       (parameterAttributeDetails) =>
@@ -38,15 +39,28 @@ export const calculateKRS = async (
           parameterAttributeDetails.riskEntityType === 'BUSINESS')
     )
     .forEach((parameterAttributeDetails) => {
-      if (parameterAttributeDetails.parameterType == 'VARIABLE') {
-        const riskLevel: RiskLevel = getSchemaAttributeValues(
+      if (parameterAttributeDetails.isDerived) {
+        if (
+          parameterAttributeDetails.parameter ===
+            'legalEntity.companyRegistrationDetails.dateOfRegistration' ||
+          parameterAttributeDetails.parameter === 'userDetails.dateOfBirth'
+        ) {
+          const riskLevel = getAgeDerivedRiskLevel(
+            parameterAttributeDetails.parameter,
+            user,
+            parameterAttributeDetails.riskLevelAssignmentValues
+          )
+          riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+        }
+      } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
+        const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
           parameterAttributeDetails.parameter,
           user,
-          parameterAttributeDetails
+          parameterAttributeDetails.riskLevelAssignmentValues
         )
         riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
       } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {
-        const riskLevel: RiskLevel = getIterableAttributeValues(
+        const riskLevel: RiskLevel = getIterableAttributeRiskLevel(
           parameterAttributeDetails,
           user
         )
@@ -54,7 +68,7 @@ export const calculateKRS = async (
       }
     })
 
-  logger.info(`Risk score: ${riskScoresList}`)
+  logger.info(`Risk scores: ${riskScoresList}`)
 
   const krsScore = riskScoresList.length
     ? _.mean(riskScoresList)
@@ -64,15 +78,14 @@ export const calculateKRS = async (
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
 }
 
-const getSchemaAttributeValues = (
+const getSchemaAttributeRiskLevel = (
   paramName: string,
   entity: User | Business,
-  parameterRiskLevelDetails: ParameterAttributeRiskValues
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
 ): RiskLevel => {
   const endValue = _.get(entity, paramName)
 
   if (endValue) {
-    const { riskLevelAssignmentValues } = parameterRiskLevelDetails
     for (const idx in riskLevelAssignmentValues) {
       if (riskLevelAssignmentValues[idx].parameterValue === endValue) {
         return riskLevelAssignmentValues[idx].riskLevel
@@ -82,21 +95,25 @@ const getSchemaAttributeValues = (
   return DEFAULT_RISK_LEVEL
 }
 
-const getIterableAttributeValues = (
-  parameterRiskLevelDetails: ParameterAttributeRiskValues,
+const getIterableAttributeRiskLevel = (
+  parameterAttributeDetails: ParameterAttributeRiskValues,
   user: User | Business
 ): RiskLevel => {
-  const { parameter, targetIterableParameter, matchType } =
-    parameterRiskLevelDetails
+  const {
+    parameter,
+    targetIterableParameter,
+    matchType,
+    riskLevelAssignmentValues,
+  } = parameterAttributeDetails
   const iterableValue = _.get(user, parameter)
   let individualRiskLevel
   let iterableMaxRiskLevel = 'VERY_LOW' as RiskLevel
   if (iterableValue && targetIterableParameter) {
     iterableValue.forEach((value: any) => {
-      individualRiskLevel = getSchemaAttributeValues(
+      individualRiskLevel = getSchemaAttributeRiskLevel(
         targetIterableParameter,
         value,
-        parameterRiskLevelDetails
+        riskLevelAssignmentValues
       )
       if (
         riskLevelPrecendence[individualRiskLevel] >=
@@ -113,7 +130,7 @@ const getIterableAttributeValues = (
   ) {
     let hasRiskValueMatch = false
     iterableValue.forEach((value: any) => {
-      const { riskLevelAssignmentValues } = parameterRiskLevelDetails
+      const { riskLevelAssignmentValues } = parameterAttributeDetails
       for (const idx in riskLevelAssignmentValues) {
         if (riskLevelAssignmentValues[idx].parameterValue === value) {
           if (
@@ -127,6 +144,31 @@ const getIterableAttributeValues = (
       }
     })
     return hasRiskValueMatch ? iterableMaxRiskLevel : DEFAULT_RISK_LEVEL
+  }
+  return DEFAULT_RISK_LEVEL
+}
+
+const getAgeDerivedRiskLevel = (
+  paramName: string,
+  entity: User | Business,
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
+) => {
+  const endValue = _.get(entity, paramName)
+  if (endValue) {
+    const age = getAgeFromTimestamp(dayjs(endValue).valueOf())
+    let lowerBound
+    let upperBound
+    let bounds
+    for (const idx in riskLevelAssignmentValues) {
+      bounds = riskLevelAssignmentValues[idx].parameterValue.split(',')
+      if (bounds && bounds.length == 2) {
+        lowerBound = parseFloat(bounds[0])
+        upperBound = parseFloat(bounds[1])
+        if (age >= lowerBound && age < upperBound) {
+          return riskLevelAssignmentValues[idx].riskLevel
+        }
+      }
+    }
   }
   return DEFAULT_RISK_LEVEL
 }

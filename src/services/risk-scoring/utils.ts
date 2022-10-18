@@ -1,3 +1,4 @@
+import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 
 type OptionRequirements = Record<RiskLevel, number>
@@ -8,4 +9,8 @@ export const riskLevelPrecendence: OptionRequirements = {
   MEDIUM: 3,
   HIGH: 4,
   VERY_HIGH: 5,
+}
+
+export const getAgeFromTimestamp = (timestamp: number) => {
+  return dayjs().diff(dayjs(timestamp), 'year')
 }
