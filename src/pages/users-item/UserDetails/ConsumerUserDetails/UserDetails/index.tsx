@@ -20,7 +20,7 @@ export default function UserDetails(props: Props) {
         title: 'User Details',
       }}
     >
-      <Card.Row>
+      <Card.Row className={s.container}>
         <Card.Column className={s.all}>
           <Card.Section className={s.section}>
             <UsersInfoCard user={user} />

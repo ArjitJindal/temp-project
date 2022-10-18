@@ -6,6 +6,7 @@
 @header-z-index: 999;
 // popover should be lower than header
 @popover-z-index: 998;
+@menu-z-index: 997;
 
 :root {
   .root {
@@ -42,6 +43,7 @@
 
   .aside {
     position: fixed;
+    z-index: @menu-z-index;
     top: 48px;
     bottom: 0;
     left: 0;
