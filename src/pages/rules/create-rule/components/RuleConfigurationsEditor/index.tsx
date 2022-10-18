@@ -13,6 +13,7 @@ import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
+import { RuleFiltersEditor } from '@/components/rules/RuleFiltersEditor';
 
 interface Props {
   rule: Rule;
@@ -40,6 +41,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
   const [caseCreationType, setCaseCreationType] = useState(rule.defaultCaseCreationType);
   const [casePriority, setCasePriority] = useState(rule.defaultCasePriority);
   const [parameters, setParameters] = useState(rule.defaultParameters);
+  const [filters, setFilters] = useState({});
   const [riskLevelParameters, setRiskLevelParameters] = useState(
     isPulseEnabled
       ? rule.defaultRiskLevelParameters || {
@@ -54,6 +56,10 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
   const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
   const [activating, setActivating] = useState(false);
 
+  const handleFiltersChange = useCallback((newFilters: object, errors: AjvError[]) => {
+    setFilters(newFilters);
+    setValidationErrors(errors);
+  }, []);
   const handleParametersChange = useCallback((newParameters: object, errors: AjvError[]) => {
     setParameters(newParameters);
     setValidationErrors(errors);
@@ -86,6 +92,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
           RuleInstance: {
             ruleId: rule.id as string,
             ruleNameAlias,
+            filters,
             parameters,
             riskLevelParameters,
             action,
@@ -101,7 +108,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
         setActivating(false);
       }
     },
-    [api, onActivated, ruleNameAlias],
+    [api, filters, onActivated, ruleNameAlias],
   );
 
   return (
@@ -142,6 +149,11 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
           </Descriptions>
         </Row>
       )}
+
+      <Divider>Rule Filters</Divider>
+      <Row className={styles.section}>
+        <RuleFiltersEditor filters={filters} onChange={handleFiltersChange} />
+      </Row>
 
       <Divider>Rule Parameters</Divider>
       <Row className={styles.section}>

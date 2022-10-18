@@ -30,3 +30,4 @@ export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
   'search',
   searchId,
 ];
+export const RULE_FILTERS = (): QueryKey => ['rule-filters'];

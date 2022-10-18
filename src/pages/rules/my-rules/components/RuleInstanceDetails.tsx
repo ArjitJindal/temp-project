@@ -11,6 +11,7 @@ import Button from '@/components/ui/Button';
 import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RuleFiltersEditor } from '@/components/rules/RuleFiltersEditor';
 
 interface Props {
   rule: Rule;
@@ -34,6 +35,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   const [deleting, setDeleting] = useState(false);
   const [ruleNameAlias, setRuleNameAlias] = useState(ruleInstance.ruleNameAlias);
   const [parameters, setParameters] = useState(ruleInstance.parameters);
+  const [filters, setFilters] = useState(ruleInstance.filters);
   const [riskLevelParameters, setRiskLevelParameters] = useState(
     ruleInstance.riskLevelParameters ||
       (isPulseEnabled
@@ -79,6 +81,10 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     setParameters(newParameters);
     setValidationErrors(errors);
   }, []);
+  const handleFiltersChange = useCallback((newFilters: object, errors: AjvError[]) => {
+    setFilters(newFilters);
+    setValidationErrors(errors);
+  }, []);
   const handleRiskLevelParametersChange = useCallback(
     (riskLevel: RiskLevel, newParameters: object, errors: AjvError[]) => {
       if (riskLevelParameters) {
@@ -99,6 +105,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         ...ruleInstance,
         // We don't save rule name alias if it's the same as the rule name
         ruleNameAlias: ruleNameAlias === rule.name ? undefined : ruleNameAlias,
+        filters,
         parameters,
         riskLevelParameters,
         action: ruleAction,
@@ -115,15 +122,16 @@ export const RuleInstanceDetails: React.FC<Props> = ({
       setSaving(false);
     }
   }, [
-    onRuleInstanceUpdate,
-    parameters,
-    riskLevelActions,
-    riskLevelParameters,
     rule.id,
     rule.name,
-    ruleAction,
+    onRuleInstanceUpdate,
     ruleInstance,
     ruleNameAlias,
+    filters,
+    parameters,
+    riskLevelParameters,
+    ruleAction,
+    riskLevelActions,
     caseCreationType,
     casePriority,
   ]);
@@ -224,6 +232,13 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             ></Radio.Group>
           </ProDescriptions.Item>
         )}
+        <ProDescriptions.Item label={<b>Filters:</b>} valueType="text">
+          <RuleFiltersEditor
+            filters={filters}
+            readonly={!editing || saving}
+            onChange={handleFiltersChange}
+          />
+        </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Parameters:</b>} valueType="text">
           <RuleParametersEditor
             parametersSchema={ruleParametersSchema}
