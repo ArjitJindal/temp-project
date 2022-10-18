@@ -23,7 +23,7 @@ import {
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { getTimstampBasedIDPrefix } from '@/utils/timestampUtils'
+import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -69,6 +69,13 @@ export type ThinTransactionsFilterOptions = {
   receiverKeyId?: string
   originPaymentMethod?: PaymentMethod
   destinationPaymentMethod?: PaymentMethod
+}
+
+export function getNewTransactionID(transaction: Transaction) {
+  return (
+    transaction.transactionId ||
+    `${getTimestampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
+  )
 }
 
 export class TransactionRepository {
@@ -475,9 +482,7 @@ export class TransactionRepository {
       hitRules?: HitRulesResult[]
     } = {}
   ): Promise<Transaction> {
-    transaction.transactionId =
-      transaction.transactionId ||
-      `${getTimstampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
+    transaction.transactionId = getNewTransactionID(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
 
     const primaryKey = DynamoDbKeys.TRANSACTION(

@@ -1,6 +1,6 @@
 // TODO: Refactor rules engine to be a class
 
-/* eslint-disable @typescript-eslint/no-var-requires */
+import * as Sentry from '@sentry/serverless'
 import * as _ from 'lodash'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -48,10 +48,14 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { PartyVars } from '@/services/rules-engine/transaction-rules/rule'
+import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
+import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
 }
+
+const RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD = 3000
 
 const ruleAscendingComparator = (
   rule1: HitRulesResult,
@@ -190,9 +194,9 @@ export async function verifyTransaction(
     }
   )
 
-  logger.info(`Updating Aggregations`)
+  logger.info(`Updating aggregations`)
   await updateAggregation(tenantId, savedTransaction, dynamoDb)
-  logger.info(`Updated Aggregations`)
+  logger.info(`Updated aggregations`)
 
   return {
     transactionId: savedTransaction.transactionId as string,
@@ -372,6 +376,7 @@ async function getRulesResult(
     ruleAction: RuleAction
   ) => RuleBase
 ) {
+  const metricPublisher = new MetricPublisher()
   const rulesById = _.keyBy(
     await ruleRepository.getRulesByIds(
       ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -394,9 +399,12 @@ async function getRulesResult(
         }
         return getContextStorage().run(context, async () => {
           try {
-            updateLogMetadata('ruleId', ruleInstance.ruleId)
-            updateLogMetadata('ruleInstanceId', ruleInstance.id)
+            updateLogMetadata({
+              ruleId: ruleInstance.ruleId,
+              ruleInstanceId: ruleInstance.id,
+            })
             logger.info(`Running rule`)
+            const startTime = Date.now()
             const { parameters, action } = getUserSpecificParameters(
               userRiskLevel,
               ruleInstance
@@ -423,7 +431,23 @@ async function getRulesResult(
                 ? await rule.computeRule()
                 : null
             const ruleHit = !_.isNil(ruleResult)
+
+            const ruleExecutionTimeMs =
+              Date.now().valueOf() - startTime.valueOf()
+            // Don't await publishing metric
+            metricPublisher.publicMetric(
+              RULE_EXECUTION_TIME_MS_METRIC,
+              ruleExecutionTimeMs
+            )
+            if (ruleExecutionTimeMs > RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD) {
+              const timeoutMessage = `Rule ${ruleInstance.ruleId} (${ruleInstance.id}) runs for too long`
+              logger.warn(`${timeoutMessage} - ${ruleExecutionTimeMs / 1000} s`)
+              Sentry.captureMessage(timeoutMessage, {
+                extra: { ruleExecutionTimeMs },
+              })
+            }
             logger.info(`Completed rule`)
+
             if (ruleHit) {
               hitRuleInstanceIds.push(ruleInstance.id as string)
             }
@@ -462,6 +486,7 @@ async function getRulesResult(
             }
           } catch (e) {
             logger.error(e)
+            Sentry.captureException(e)
           }
         })
       })

@@ -1,9 +1,11 @@
 import { AsyncLocalStorage } from 'async_hooks'
+import * as Sentry from '@sentry/serverless'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Context as LambdaContext,
 } from 'aws-lambda'
+import _ from 'lodash'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -15,7 +17,7 @@ type LogMetaData = {
 
 type Context = LogMetaData & {
   features?: Feature[]
-  logMetaData?: { [key: string]: string | undefined }
+  logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
 }
 
@@ -33,8 +35,8 @@ export async function getInitialContext(
     const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
     const settings = await tenantRepository.getTenantSettings(['features'])
     const context: Context = {
-      logMetaData: {
-        tenantId: tenantId,
+      logMetadata: {
+        tenantId,
         functionName: lambdaContext?.functionName,
       },
       metricDimensions: {
@@ -50,13 +52,19 @@ export async function getInitialContext(
   }
 }
 
-export function updateLogMetadata(key: string, value?: string) {
+export function updateLogMetadata(addedMetadata: {
+  [key: string]: string | undefined
+}) {
   const context = asyncLocalStorage.getStore()
   if (context) {
-    context.logMetaData = Object.create(
-      context.logMetaData ? context.logMetaData : null
+    context.logMetadata = _.omitBy(
+      {
+        ...context.logMetadata,
+        ...addedMetadata,
+      },
+      _.isNil
     )
-    context.logMetaData ? (context.logMetaData[key] = value) : ''
+    Sentry.setTags(context.logMetadata)
   }
 }
 

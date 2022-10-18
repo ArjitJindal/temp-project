@@ -5,6 +5,7 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
@@ -32,19 +33,18 @@ export const initSentry =
 
     return Sentry.AWSLambda.wrapHandler(
       async (event, context, callback): Promise<APIGatewayProxyResult> => {
-        if (
-          event.requestContext != null &&
-          event.requestContext.authorizer != null
-        ) {
-          const { principalId, userId, tenantName, verifiedEmail } = event
-            .requestContext.authorizer as unknown as JWTAuthorizerResult
+        Sentry.configureScope((scope) => scope.clear())
+
+        if (event.requestContext?.authorizer) {
+          const { userId, verifiedEmail } = event.requestContext
+            .authorizer as unknown as JWTAuthorizerResult
 
           Sentry.setUser({
             id: userId,
             email: verifiedEmail ?? undefined,
           })
-          Sentry.setTag('tenant', `${principalId} (${tenantName})`)
         }
+        Sentry.setTags(getContext()?.logMetadata || {})
 
         return handler(event, context, callback)
       }

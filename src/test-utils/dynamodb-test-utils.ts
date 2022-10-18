@@ -22,15 +22,22 @@ export function dynamoDbSetupHook() {
 }
 
 async function createTable(tableName: string) {
-  try {
-    const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
-    const dynamodb = getDynamoDbRawClient()
-    await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
-  } catch (e: any) {
-    throw new Error(
-      `Unable to create table "${tableName}"; ${e.message ?? 'Unknown error'}`
-    )
+  let error = null
+  for (let i = 0; i < 5; i++) {
+    try {
+      const { getDynamoDbRawClient } = await import('@/utils/dynamodb')
+      const dynamodb = getDynamoDbRawClient()
+      await dynamodb.send(new CreateTableCommand(createSchema(tableName)))
+      return
+    } catch (e: any) {
+      error = e
+    }
   }
+  throw new Error(
+    `Unable to create table "${tableName}"; ${
+      error?.message ?? 'Unknown error'
+    }`
+  )
 }
 
 async function deleteTable(tableName: string, silent = false) {

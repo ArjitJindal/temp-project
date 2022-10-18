@@ -12,8 +12,8 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     localDev(),
     httpErrorHandler(),
     jsonSerializer(),
-    initSentry(),
     contextProvider(),
+    initSentry(),
     featureProtected(options?.requiredFeatures),
   ] as const
   return compose(...middlewares)

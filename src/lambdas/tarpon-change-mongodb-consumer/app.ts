@@ -36,7 +36,7 @@ async function transactionHandler(
   if (!transaction) {
     return
   }
-  updateLogMetadata(`transactionId`, transaction.transactionId)
+  updateLogMetadata({ transactionId: transaction.transactionId })
   logger.info(`Processing Transaction`)
 
   const mongoDb = await getMongoDbClient()
@@ -111,7 +111,7 @@ async function userHandler(
   }
 
   const mongoDb = await getMongoDbClient()
-  updateLogMetadata(`userId`, user.userId)
+  updateLogMetadata({ userId: user.userId })
   logger.info(`Processing User`)
 
   const db = mongoDb.db()
@@ -135,8 +135,10 @@ async function userEventHandler(
   if (!userEvent) {
     return
   }
-  updateLogMetadata(`userId`, userEvent.userId)
-  updateLogMetadata(`userEventId`, userEvent.eventId)
+  updateLogMetadata({
+    userId: userEvent.userId,
+    userEventId: userEvent.eventId,
+  })
   logger.info(`Processing User Event`)
 
   const db = (await getMongoDbClient()).db()
@@ -163,8 +165,10 @@ async function transactionEventHandler(
   if (!transactionEvent) {
     return
   }
-  updateLogMetadata(`transactionId`, transactionEvent.transactionId)
-  updateLogMetadata(`eventId`, transactionEvent.eventId)
+  updateLogMetadata({
+    transactionId: transactionEvent.transactionId,
+    eventId: transactionEvent.eventId,
+  })
   logger.info(`Processing Transaction Event`)
 
   const db = (await getMongoDbClient()).db()

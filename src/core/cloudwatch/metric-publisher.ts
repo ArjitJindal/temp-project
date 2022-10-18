@@ -26,7 +26,7 @@ export class MetricPublisher {
       ...dimensions,
     }
     if (process.env.ENV === 'local') {
-      // console.log('Publishing metric: ', metric, value, dimensionsWithContext)
+      console.log('Publishing metric: ', metric, value, dimensionsWithContext)
       return
     }
     try {

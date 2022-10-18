@@ -49,7 +49,7 @@ export const userHandler = lambdaApi()(
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)
-      updateLogMetadata(`userId`, userPayload.userId)
+      updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
 
       if ((userPayload as User).userId) {

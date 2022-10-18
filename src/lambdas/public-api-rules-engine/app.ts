@@ -6,7 +6,10 @@ import { BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import {
+  getNewTransactionID,
+  TransactionRepository,
+} from '@/services/rules-engine/repositories/transaction-repository'
 import {
   verifyBusinessUserEvent,
   verifyTransaction,
@@ -128,8 +131,8 @@ export const transactionHandler = lambdaApi()(
     if (event.httpMethod === 'POST' && event.body) {
       const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
-      updateLogMetadata(`transactionId`, transaction.transactionId)
-      logger.info(`Processing Transaction`) // Need to log to show on the logs
+      updateLogMetadata({ transactionId: getNewTransactionID(transaction) })
+      logger.info(`Processing transaction`) // Need to log to show on the logs
       if (
         transaction.relatedTransactionIds &&
         transaction.relatedTransactionIds.length
@@ -153,9 +156,9 @@ export const transactionHandler = lambdaApi()(
         validationParams || undefined
       )
       if (missingUsers.length === 0) {
-        logger.info(`Verifying Transaction`)
+        logger.info(`Verifying transaction`)
         const result = await verifyTransaction(transaction, tenantId, dynamoDb)
-        logger.info(`CompletedProcessing Transaction`)
+        logger.info(`Completed processing transaction`)
         return result
       } else {
         throw new BadRequest(getMissingUsersMessage(missingUsers))
@@ -184,8 +187,10 @@ export const transactionEventHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const transactionEvent = JSON.parse(event.body) as TransactionEvent
-      updateLogMetadata(`transactionId`, transactionEvent.transactionId)
-      updateLogMetadata(`eventId`, transactionEvent.eventId)
+      updateLogMetadata({
+        transactionId: transactionEvent.transactionId,
+        eventId: transactionEvent.eventId,
+      })
       logger.info(`Processing Transaction Event`) // Need to log to show on the logs
 
       let missingUsers: (MissingUserIdMap | undefined)[] = []
@@ -228,8 +233,10 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as ConsumerUserEvent
-      updateLogMetadata(`userId`, userEvent.userId)
-      updateLogMetadata(`eventId`, userEvent.eventId)
+      updateLogMetadata({
+        userId: userEvent.userId,
+        eventId: userEvent.eventId,
+      })
       logger.info(`Processing Consumer User Event`) // Need to log to show on the logs
 
       return await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb)
@@ -240,8 +247,10 @@ export const userEventsHandler = lambdaApi()(
       event.body
     ) {
       const userEvent = JSON.parse(event.body) as BusinessUserEvent
-      updateLogMetadata(`businessUserId`, userEvent.userId)
-      updateLogMetadata(`eventId`, userEvent.eventId)
+      updateLogMetadata({
+        businessUserId: userEvent.userId,
+        eventId: userEvent.eventId,
+      })
       logger.info(`Processing Business User Event`) // Need to log to show on the logs
 
       return await verifyBusinessUserEvent(userEvent, tenantId, dynamoDb)

@@ -7,7 +7,7 @@ export const isNumeric = (n: any) => {
   return !isNaN(parseFloat(n)) && isFinite(n)
 }
 
-export const getTimstampBasedIDPrefix = (timestamp: any): string => {
+export const getTimestampBasedIDPrefix = (timestamp: any): string => {
   if (!isValidTimestamp(timestamp)) {
     throw Error(
       `Invalid timestamp: ${timestamp}. Please provide a EPOCH timestamp`
