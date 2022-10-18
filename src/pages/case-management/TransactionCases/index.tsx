@@ -288,6 +288,8 @@ export default function TransactionCases(props: Props) {
             title: 'Origin Country',
             hideInSearch: true,
             width: 140,
+            dataIndex: 'caseTransactions.originAmountDetails.country',
+            sorter: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
               return <CountryDisplay isoCode={entity.transaction?.originAmountDetails?.country} />;
@@ -373,6 +375,8 @@ export default function TransactionCases(props: Props) {
             width: 200,
             hideInSearch: true,
             onCell: onTransactionCell,
+            dataIndex: 'caseTransactions.destinationAmountDetails.country',
+            sorter: true,
             render: (dom, entity) => {
               return (
                 <CountryDisplay isoCode={entity.transaction?.destinationAmountDetails?.country} />

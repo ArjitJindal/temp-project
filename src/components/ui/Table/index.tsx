@@ -1,4 +1,4 @@
-import ProTable, { ProColumns, ProTableProps } from '@ant-design/pro-table';
+import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import { Checkbox, Pagination } from 'antd';
 import _ from 'lodash';
@@ -10,7 +10,6 @@ import { isMultiRows, SortOrder, TableColumn, TableData, TableRow } from './type
 import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
-import { TransactionCaseManagement } from '@/apis';
 
 export type TableActionType = {
   reload: () => void;
@@ -165,14 +164,28 @@ export default function Table<
     [key: number]: number;
   }>({});
 
-  const adjustedColumns: TableColumn<T>[] = (columns ?? []).map((col, index) => ({
-    ...col,
-    width: updatedColumnWidth[index] || col.width,
-    onHeaderCell: (column) => ({
-      width: (column as ProColumns<TransactionCaseManagement>).width,
-      onResize: handleResize(index, setUpdatedColumnWidth),
-    }),
-  }));
+  function adjustColumns<T extends object>(
+    columns: TableColumn<T>[] | undefined | null,
+  ): TableColumn<T>[] {
+    return (columns ?? []).map(
+      (col: TableColumn<T>, index): TableColumn<T> => ({
+        ...col,
+        sortOrder: params?.sort.find(([field]) => field === col.dataIndex)?.[1],
+        width: updatedColumnWidth[index] || col.width,
+        onHeaderCell: (column) => ({
+          width: (column as TableColumn<T>).width,
+          onResize: handleResize(index, setUpdatedColumnWidth),
+        }),
+        ...('children' in col
+          ? {
+              children: adjustColumns(col.children),
+            }
+          : {}),
+      }),
+    );
+  }
+
+  const adjustedColumns: TableColumn<T>[] = adjustColumns(columns);
 
   if (rowSelection != null) {
     const allSelected =

@@ -23,6 +23,7 @@ export default function CaseStatusButtons(props: Props) {
     <div className={s.root}>
       {STATUSES.map((buttonStatus) => (
         <button
+          key={buttonStatus}
           className={cn(s.button, status === buttonStatus && s.isActive)}
           onClick={() => {
             onChange(buttonStatus);
