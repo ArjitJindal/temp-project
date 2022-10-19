@@ -13,6 +13,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
@@ -152,6 +153,38 @@ export const manualRiskAssignmentHandler = lambdaApi({
       event.resource === '/pulse/manual-risk-assignment'
     ) {
       return riskRepository.getManualDRSRiskItem(userId)
+    }
+    throw new BadRequest('Unhandled request')
+  }
+)
+
+export const riskLevelAndScoreHandler = lambdaApi({
+  requiredFeatures: ['PULSE'],
+})(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId } = event.requestContext.authorizer
+
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const client = await getMongoDbClient()
+
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb,
+      mongoDb: client,
+    })
+
+    if (event.httpMethod === 'GET' && event.resource === '/pulse/krs-value') {
+      const userId = (event.queryStringParameters || {}).userId as string
+      logger.info(`userId: ${userId}`)
+      if (userId == null) {
+        throw new BadRequest(`"userId" is a requred query parameter`)
+      }
+      logger.info(`Getting KRS`)
+
+      return riskRepository.getKrsValueFromMongo(userId)
     }
     throw new BadRequest('Unhandled request')
   }

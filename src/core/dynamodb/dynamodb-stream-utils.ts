@@ -12,6 +12,7 @@ import {
   CONSUMER_USER_EVENT_KEY_IDENTIFIER,
   USER_PRIMARY_KEY_IDENTIFIER,
   BUSINESS_USER_EVENT_KEY_IDENTIFIER,
+  KRS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -25,6 +26,7 @@ type DynamoDbEntityType =
   | 'TRANSACTION_EVENT'
   | 'CONSUMER_USER_EVENT'
   | 'BUSINESS_USER_EVENT'
+  | 'KRS_VALUE'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -73,6 +75,12 @@ function getDynamoDbEntityMetadata(
       type: 'TRANSACTION_EVENT',
       entityId: `TRANSACTION:${(entity as TransactionEvent).transactionId}`,
     }
+  } else if (partitionKeyId.includes(KRS_KEY_IDENTIFIER)) {
+    logger.info(`Meta part: ${partitionKeyId}`)
+    return {
+      type: 'KRS_VALUE',
+      entityId: `KRS_VALUE:${entity.userId}`,
+    }
   }
   return null
 }
@@ -94,10 +102,12 @@ function getDynamoDbEntity(
     )
     return null
   }
+  logger.info(`PK: ${partitionKeyId}`)
   const metadata = getDynamoDbEntityMetadata(
     partitionKeyId,
     OldImage || NewImage
   )
+  logger.info(`metadatas: ${metadata}`)
   if (!metadata) {
     return null
   }

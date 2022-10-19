@@ -30,6 +30,7 @@ export const CONSUMER_USER_EVENT_KEY_IDENTIFIER = 'consumer-user-event#'
 export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 export const KRS_KEY_IDENTIFIER = '#krs-value'
+export const ARS_KEY_IDENTIFIER = '#ars-value'
 
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction

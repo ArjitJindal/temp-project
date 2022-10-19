@@ -67,3 +67,34 @@ export async function localTarponChangeCaptureHandler(key: {
     ) => Promise<void>
   )(kinesisEvent)
 }
+
+export async function localHammerheadChangeCaptureHandler(key: {
+  PartitionKeyID: string
+  SortKeyID?: string
+}) {
+  if (process.env.ENV !== 'local') {
+    return
+  }
+
+  const dynamoDb = getDynamoDbClientByEvent(null as any)
+  const entity = await dynamoDb.send(
+    new GetCommand({
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: key,
+    })
+  )
+  const kinesisEvent = createKinesisStreamEvent(
+    key.PartitionKeyID,
+    key.SortKeyID,
+    undefined,
+    entity.Item
+  )
+  const { hammerheadChangeCaptureHandler } = await import(
+    '@/lambdas/hammerhead-change-capture-kinesis-consumer/app'
+  )
+  await (
+    hammerheadChangeCaptureHandler as any as (
+      event: KinesisStreamEvent
+    ) => Promise<void>
+  )(kinesisEvent)
+}

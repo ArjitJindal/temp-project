@@ -1,18 +1,25 @@
-import { KinesisStreamEvent, KinesisStreamRecordPayload } from 'aws-lambda'
+import { KinesisStreamEvent } from 'aws-lambda'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { getDynamoDbUpdates } from '@/core/dynamodb/dynamodb-stream-utils'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { KrsItem } from '@/services/risk-scoring/types'
 
 export const hammerheadChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
     try {
-      for (const record of event.Records) {
-        const payload: KinesisStreamRecordPayload = record.kinesis
-        const message: string = Buffer.from(payload.data, 'base64').toString()
-        const dynamoDBStreamObject = JSON.parse(message).dynamodb
-        const tenantId =
-          dynamoDBStreamObject.Keys.PartitionKeyID.S.split('#')[0]
-        // STUB for now, until we start calculating ARS And DRS
-        logger.info(`From tenant with ID: ${tenantId}`)
+      for (const update of getDynamoDbUpdates(event)) {
+        logger.info(`Storing KRS in Mongo`)
+        if (update.NewImage && update.entityId.includes('KRS_VALUE')) {
+          const mongoDb = await getMongoDbClient()
+          const newImage = update.NewImage
+
+          const riskRepository = new RiskRepository(update.tenantId, {
+            mongoDb,
+          })
+          await riskRepository.addKrsValueToMongo(newImage as KrsItem)
+        }
       }
     } catch (err) {
       logger.error(err)

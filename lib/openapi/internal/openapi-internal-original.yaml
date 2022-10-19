@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -1309,6 +1309,27 @@ paths:
           name: userId
           required: true
           description: UserID of the user to get manual risk assignment settings
+  /pulse/krs-value:
+    parameters: []
+    get:
+      summary: KYC Risk Value
+      operationId: get-krs-value
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KrsScore'
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user to get manual risk assignment settings
   /pulse/risk-parameter:
     parameters: []
     post:
@@ -1737,6 +1758,22 @@ components:
       required:
         - isManualOverride
         - isUpdatable
+    KrsScore:
+      title: KrsScore
+      type: object
+      description: ''
+      properties:
+        createdAt:
+          type: number
+        krsScore:
+          type: number
+        userId:
+          type: string
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - createdAt
+        - krsScore
     Rule:
       title: Rule
       type: object
@@ -2027,7 +2064,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33

@@ -671,6 +671,16 @@ export class CdkTarponStack extends cdk.Stack {
     })
     hammerheadDynamoDbTable.grantReadWriteData(parameterRiskAssignmentAlias)
 
+    /* Get Risk Scores */
+    const { alias: riskLevelAndScoreAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+    hammerheadDynamoDbTable.grantReadWriteData(riskLevelAndScoreAlias)
+    this.grantMongoDbAccess(riskLevelAndScoreAlias)
+
     /* Tarpon Kinesis Change capture consumer */
 
     // MongoDB mirror handler

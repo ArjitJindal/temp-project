@@ -72,7 +72,7 @@ export class TarponStreamConsumerBuilder {
     return this
   }
 
-  private async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
+  public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
       await this.transactionHandler(
         update.tenantId,

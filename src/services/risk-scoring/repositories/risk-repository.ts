@@ -6,6 +6,7 @@ import {
   GetCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
+import { KrsItem } from '../types'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -16,6 +17,7 @@ import {
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
 import { logger } from '@/core/logger'
+import { KRS_SCORES_COLLECTION } from '@/utils/mongoDBUtils'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -92,16 +94,24 @@ export class RiskRepository {
       krsScore: score,
       createdAt: Date.now(),
     }
+    const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'),
+        ...primaryKey,
         ...newKrsScoreItem,
+        userId: userId,
       },
     }
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
+    if (process.env.NODE_ENV === 'development') {
+      const { localHammerheadChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localHammerheadChangeCaptureHandler(primaryKey)
+    }
 
     return score
   }
@@ -256,5 +266,34 @@ export class RiskRepository {
       logger.error(e)
       return null
     }
+  }
+  /* MongoDB operations */
+
+  async addKrsValueToMongo(krsItem: KrsItem): Promise<KrsItem> {
+    const db = this.mongoDb.db()
+    const krsValuesCollection = db.collection<KrsItem & { version: string }>(
+      KRS_SCORES_COLLECTION(this.tenantId)
+    )
+
+    const structuredItem = { ...krsItem, version: krsItem.SortKeyID }
+
+    await krsValuesCollection.replaceOne(
+      { userId: krsItem.userId },
+      structuredItem,
+      {
+        upsert: true,
+      }
+    )
+    return krsItem
+  }
+
+  async getKrsValueFromMongo(
+    userId: string
+  ): Promise<(KrsItem & { version: string }) | null> {
+    const db = this.mongoDb.db()
+    const krsValuesCollection = db.collection<KrsItem & { version: string }>(
+      KRS_SCORES_COLLECTION(this.tenantId)
+    )
+    return await krsValuesCollection.findOne({ userId })
   }
 }

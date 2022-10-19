@@ -118,6 +118,10 @@ export const LAMBDAS: {
     codePath: 'console-api-pulse',
     handlerName: 'parameterRiskAssignmentHandler',
   },
+  [StackConstants.CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME]: {
+    codePath: 'console-api-pulse',
+    handlerName: 'riskLevelAndScoreHandler',
+  },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
     handlerName: 'tarponChangeMongodbHandler',
