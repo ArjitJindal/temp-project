@@ -1,10 +1,12 @@
 import UserManualRiskPanel from '../UserDetails/UserManualRiskPanel';
 import KycStatusEditor from '../UserDetails/KycStatusEditor';
 import UserStateEditor from '../UserDetails/UserStateEditor';
+import KycRiskDisplay from '../UserDetails/KycRiskDisplay';
 import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
 import Calendar2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
+import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
@@ -28,6 +30,13 @@ export default function Header(props: { user: InternalConsumerUser | InternalBus
           <Form.Layout.Label icon={<Calendar2LineIcon />} title={'User Status'}>
             <UserStateEditor user={user} />
           </Form.Layout.Label>
+        </div>
+        <div>
+          <Feature name="PULSE_KRS_CALCULATION">
+            <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
+              <KycRiskDisplay userId={user.userId} />
+            </Form.Layout.Label>
+          </Feature>
         </div>
       </div>
     </div>
