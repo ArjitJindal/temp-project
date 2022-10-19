@@ -66,6 +66,7 @@ import {
   createAPIGatewayThrottlingAlarm,
   createLambdaErrorPercentageAlarm,
   createLambdaThrottlingAlarm,
+  createLambdaConsumerIteratorAgeAlarm,
 } from './cdk-cw-alarms'
 import { LAMBDAS } from './lambdas'
 import {
@@ -709,11 +710,15 @@ export class CdkTarponStack extends cdk.Stack {
         tarponChangeConsumerProps
       )
     if (!isDevUserStack) {
-      tarponChangeCaptureKinesisConsumerAlias.addEventSource(
-        this.createKinesisEventSource(tarponStream)
+      this.createKinesisEventSource(
+        StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        tarponChangeCaptureKinesisConsumerAlias,
+        tarponStream,
+        { startingPosition: StartingPosition.TRIM_HORIZON }
       )
-      tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
-        this.createKinesisEventSourceForRetry(tarponMongoDbRetryStream)
+      this.createKinesisEventSourceForRetry(
+        tarponChangeCaptureKinesisConsumerRetryAlias,
+        tarponMongoDbRetryStream
       )
     }
     tarponMongoDbRetryStream.grantWrite(tarponChangeCaptureKinesisConsumerAlias)
@@ -752,11 +757,15 @@ export class CdkTarponStack extends cdk.Stack {
         webhookTarponChangeConsumerProps
       )
     if (!isDevUserStack) {
-      webhookTarponChangeCaptureHandlerAlias.addEventSource(
-        this.createKinesisEventSource(tarponStream)
+      this.createKinesisEventSource(
+        StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        webhookTarponChangeCaptureHandlerAlias,
+        tarponStream,
+        { startingPosition: StartingPosition.TRIM_HORIZON }
       )
-      webhookTarponChangeCaptureHandlerRetryAlias.addEventSource(
-        this.createKinesisEventSourceForRetry(tarponWebhookRetryStream)
+      this.createKinesisEventSourceForRetry(
+        webhookTarponChangeCaptureHandlerRetryAlias,
+        tarponWebhookRetryStream
       )
     }
     tarponWebhookRetryStream.grantWrite(webhookTarponChangeCaptureHandlerAlias)
@@ -803,8 +812,10 @@ export class CdkTarponStack extends cdk.Stack {
       )
 
     if (!isDevUserStack) {
-      hammerheadChangeCaptureKinesisConsumerAlias.addEventSource(
-        this.createKinesisEventSource(hammerheadStream)
+      this.createKinesisEventSource(
+        StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
+        hammerheadChangeCaptureKinesisConsumerAlias,
+        hammerheadStream
       )
     }
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
@@ -1207,28 +1218,39 @@ export class CdkTarponStack extends cdk.Stack {
   }
 
   private createKinesisEventSource(
+    functionName: string,
+    alias: Alias,
     stream: IStream,
     props?: Partial<KinesisEventSourceProps>
   ) {
-    return new KinesisEventSource(stream, {
+    const eventSource = new KinesisEventSource(stream, {
       batchSize: 10,
       startingPosition: StartingPosition.LATEST,
       ...props,
     })
+    alias.addEventSource(eventSource)
+
+    createLambdaConsumerIteratorAgeAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      functionName
+    )
   }
 
   private createKinesisEventSourceForRetry(
+    alias: Alias,
     stream: IStream,
     props?: Partial<KinesisEventSourceProps>
   ) {
     // If there're less than 10000 pending records in the stream, we'll retry evety 5 minutes
     // we should fix the error before it reaches 10000 records
-    return new KinesisEventSource(stream, {
+    const eventSource = new KinesisEventSource(stream, {
       batchSize: 10000, // max possible value
       maxBatchingWindow: Duration.minutes(5), // max possible value
       startingPosition: StartingPosition.LATEST,
       ...props,
     })
+    alias.addEventSource(eventSource)
   }
 
   private createApiGateway(apiName: string): {

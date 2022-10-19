@@ -286,6 +286,35 @@ export const createLambdaErrorPercentageAlarm = (
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
 
+export const createLambdaConsumerIteratorAgeAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  lambdaName: string
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${lambdaName}IteratorAge`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: 20000,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: `Lambda-${lambdaName}IteratorAge`,
+    alarmDescription: `Covers IteratorAge in ${lambdaName} in the AWS account. 
+    Alarm triggers when IteratorAge exceedes 20s for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    metric: new Metric({
+      label: 'Lambda Iterator Age',
+      namespace: 'AWS/Lambda',
+      metricName: 'IteratorAge',
+      dimensionsMap: {
+        FunctionName: lambdaName,
+      },
+    }).with({
+      period: Duration.seconds(300),
+      statistic: 'Average',
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
 export const createLambdaThrottlingAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,

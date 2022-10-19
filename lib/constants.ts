@@ -180,7 +180,7 @@ export const StackConstants = {
   CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME:
     getResourceNameForHammerhead('ConsoleApiParameterRiskAssignmentFunction'),
   CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME: getResourceNameForHammerhead(
-    'ConsoleApiRiskLevelAndScoreAssignmentFunction'
+    'ConsoleApiRiskLevelAndScoreFunction'
   ),
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
