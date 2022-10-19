@@ -28,22 +28,14 @@ export const jsonSerializer =
       }
     }
     const response = await handler(event, context, callback)
-    if (!response) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify(response),
-      }
-    }
+    let body = 'OK'
+    let headers = {}
 
     if (response?.headers && response?.body) {
-      return {
-        statusCode: 200,
-        headers: {
-          ...response.headers,
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: response.body,
-      }
+      headers = response.headers
+      body = response.body
+    } else if (response) {
+      body = JSON.stringify(response)
     }
 
     return {
@@ -51,7 +43,8 @@ export const jsonSerializer =
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        ...headers,
       },
-      body: JSON.stringify(response),
+      body,
     }
   }
