@@ -62,6 +62,19 @@ async function createNewApiKeyForTenant(
   return newApiKey
 }
 
+export const apiKeyGeneratorHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    >
+  ) => {
+    const { tenantId, usagePlanId } =
+      event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
+    await createMongoDBCollections(await getMongoDbClient(), tenantId)
+    return createNewApiKeyForTenant(tenantId, usagePlanId)
+  }
+)
+
 export const createMongoDBCollections = async (
   mongoClient: MongoClient,
   tenantId: string
@@ -76,6 +89,9 @@ export const createMongoDBCollections = async (
     const transactionCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
+    await transactionCollection.createIndex({
+      timestamp: -1,
+    })
     await transactionCollection.createIndex({
       caseStatus: 1,
       type: 1,
@@ -136,6 +152,9 @@ export const createMongoDBCollections = async (
       transactionState: 1,
       timestamp: -1,
     })
+    await transactionEventsCollection.createIndex({
+      eventId: 1,
+    })
     try {
       await db.createCollection(CASES_COLLECTION(tenantId))
     } catch (e) {
@@ -145,6 +164,10 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({ caseId: 1 })
     await casesCollection.createIndex({ 'caseUsers.origin.userId': 1 })
     await casesCollection.createIndex({ 'caseUsers.destination.userId': 1 })
+    await casesCollection.createIndex({
+      'caseTransactions.transactionId': 1,
+      caseType: 1,
+    })
     await casesCollection.createIndex({ 'caseTransactions.status': 1 })
     await casesCollection.createIndex({
       'caseTransactions.destinationAmountDetails.transactionCurrency': 1,
@@ -162,16 +185,3 @@ export const createMongoDBCollections = async (
     logger.error(`Error in creating MongoDB collections: ${e}`)
   }
 }
-
-export const apiKeyGeneratorHandler = lambdaApi()(
-  async (
-    event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-    >
-  ) => {
-    const { tenantId, usagePlanId } =
-      event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-    await createMongoDBCollections(await getMongoDbClient(), tenantId)
-    return createNewApiKeyForTenant(tenantId, usagePlanId)
-  }
-)
