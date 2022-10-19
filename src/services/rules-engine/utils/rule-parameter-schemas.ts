@@ -20,7 +20,7 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
     title: options?.title || 'Time Window',
     description: options?.description,
     properties: {
-      units: { type: 'integer', title: 'Number of time unit' },
+      units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
       granularity: {
         type: 'string',
         title: 'Time granularity',
@@ -35,6 +35,29 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
       },
     },
     required: ['units', 'granularity'],
+  } as const)
+
+export const AGE_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    title: options?.title || 'Age',
+    description: options?.description,
+    properties: {
+      units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
+      granularity: {
+        type: 'string',
+        title: 'Time granularity',
+        enum: ['day', 'month', 'year'],
+        nullable: true,
+      },
+    },
+    required: [],
+  } as const)
+
+export const AGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...AGE_SCHEMA(options),
+    nullable: true,
   } as const)
 
 export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>

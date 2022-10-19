@@ -1,8 +1,20 @@
 import { UserRuleFilter } from './filter'
-import WhitelistUsersRuleFilter from './whitelist-users'
+import UserCreationAgeRuleFilter, {
+  UserCreationAgeRuleFilterParameter,
+} from './user-creation-age'
+import WhitelistUsersRuleFilter, {
+  WhitelistUsersRuleFilterParameter,
+} from './whitelist-users'
 
-export type UserFilterKeys = keyof WhitelistUsersRuleFilter
+export type UserFilterKeys =
+  | keyof WhitelistUsersRuleFilterParameter
+  | keyof UserCreationAgeRuleFilterParameter
 
-export const USER_FILTERS = {
-  whitelistUsers: WhitelistUsersRuleFilter,
-} as unknown as { [key: string]: typeof UserRuleFilter }
+const _USER_FILTERS = new Map<UserFilterKeys, any>([
+  ['whitelistUsers', WhitelistUsersRuleFilter],
+  ['userCreationAgeRange', UserCreationAgeRuleFilter],
+])
+
+export const USER_FILTERS = Object.fromEntries(_USER_FILTERS) as {
+  [key: string]: typeof UserRuleFilter
+}
