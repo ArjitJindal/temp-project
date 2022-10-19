@@ -43,6 +43,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3'
 import { IStream, Stream } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
+  KinesisEventSourceProps,
   SqsEventSource,
 } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { LogGroup } from 'aws-cdk-lib/aws-logs'
@@ -684,38 +685,38 @@ export class CdkTarponStack extends cdk.Stack {
     /* Tarpon Kinesis Change capture consumer */
 
     // MongoDB mirror handler
+    const tarponChangeConsumerProps = {
+      ...atlasFunctionProps,
+      environment: {
+        ...atlasFunctionProps.environment,
+        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
+        RETRY_KINESIS_STREAM_NAME: tarponMongoDbRetryStream.streamName,
+      },
+      timeout: Duration.minutes(15),
+    }
     const { alias: tarponChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
         {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         },
+        tarponChangeConsumerProps
+      )
+    const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
+      this.createFunction(
         {
-          ...atlasFunctionProps,
-          environment: {
-            ...atlasFunctionProps.environment,
-            SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-            RETRY_KINESIS_STREAM_NAME: tarponMongoDbRetryStream.streamName,
-          },
-          timeout: Duration.minutes(15),
-        }
+          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        },
+        tarponChangeConsumerProps
       )
     if (!isDevUserStack) {
       tarponChangeCaptureKinesisConsumerAlias.addEventSource(
-        new KinesisEventSource(tarponStream, {
-          batchSize: 10,
-          startingPosition: StartingPosition.TRIM_HORIZON,
-        })
+        this.createKinesisEventSource(tarponStream)
       )
-      tarponChangeCaptureKinesisConsumerAlias.addEventSource(
-        new KinesisEventSource(tarponMongoDbRetryStream, {
-          batchSize: 10,
-          startingPosition: StartingPosition.LATEST,
-        })
+      tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
+        this.createKinesisEventSourceForRetry(tarponMongoDbRetryStream)
       )
     }
-    tarponMongoDbRetryStream.grantReadWrite(
-      tarponChangeCaptureKinesisConsumerAlias
-    )
+    tarponMongoDbRetryStream.grantWrite(tarponChangeCaptureKinesisConsumerAlias)
     transientDynamoDbTable.grantReadWriteData(
       tarponChangeCaptureKinesisConsumerAlias
     )
@@ -727,38 +728,38 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     // Webhook handler
+    const webhookTarponChangeConsumerProps = {
+      ...atlasFunctionProps,
+      environment: {
+        ...atlasFunctionProps.environment,
+        WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
+        RETRY_KINESIS_STREAM_NAME: tarponWebhookRetryStream.streamName,
+      },
+      timeout: Duration.minutes(15),
+    }
     const { alias: webhookTarponChangeCaptureHandlerAlias } =
       this.createFunction(
         {
           name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         },
+        webhookTarponChangeConsumerProps
+      )
+    const { alias: webhookTarponChangeCaptureHandlerRetryAlias } =
+      this.createFunction(
         {
-          ...atlasFunctionProps,
-          environment: {
-            ...atlasFunctionProps.environment,
-            WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-            RETRY_KINESIS_STREAM_NAME: tarponWebhookRetryStream.streamName,
-          },
-          timeout: Duration.minutes(15),
-        }
+          name: StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        },
+        webhookTarponChangeConsumerProps
       )
     if (!isDevUserStack) {
       webhookTarponChangeCaptureHandlerAlias.addEventSource(
-        new KinesisEventSource(tarponStream, {
-          batchSize: 1,
-          startingPosition: StartingPosition.LATEST,
-        })
+        this.createKinesisEventSource(tarponStream)
       )
-      webhookTarponChangeCaptureHandlerAlias.addEventSource(
-        new KinesisEventSource(tarponWebhookRetryStream, {
-          batchSize: 1,
-          startingPosition: StartingPosition.LATEST,
-        })
+      webhookTarponChangeCaptureHandlerRetryAlias.addEventSource(
+        this.createKinesisEventSourceForRetry(tarponWebhookRetryStream)
       )
     }
-    tarponWebhookRetryStream.grantReadWrite(
-      webhookTarponChangeCaptureHandlerAlias
-    )
+    tarponWebhookRetryStream.grantWrite(webhookTarponChangeCaptureHandlerAlias)
     webhookDeliveryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerAlias
     )
@@ -803,10 +804,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     if (!isDevUserStack) {
       hammerheadChangeCaptureKinesisConsumerAlias.addEventSource(
-        new KinesisEventSource(hammerheadStream, {
-          batchSize: 10,
-          startingPosition: StartingPosition.TRIM_HORIZON,
-        })
+        this.createKinesisEventSource(hammerheadStream)
       )
     }
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
@@ -1206,6 +1204,31 @@ export class CdkTarponStack extends cdk.Stack {
       stream.streamName
     )
     return stream
+  }
+
+  private createKinesisEventSource(
+    stream: IStream,
+    props?: Partial<KinesisEventSourceProps>
+  ) {
+    return new KinesisEventSource(stream, {
+      batchSize: 10,
+      startingPosition: StartingPosition.LATEST,
+      ...props,
+    })
+  }
+
+  private createKinesisEventSourceForRetry(
+    stream: IStream,
+    props?: Partial<KinesisEventSourceProps>
+  ) {
+    // If there're less than 10000 pending records in the stream, we'll retry evety 5 minutes
+    // we should fix the error before it reaches 10000 records
+    return new KinesisEventSource(stream, {
+      batchSize: 10000, // max possible value
+      maxBatchingWindow: Duration.minutes(5), // max possible value
+      startingPosition: StartingPosition.LATEST,
+      ...props,
+    })
   }
 
   private createApiGateway(apiName: string): {

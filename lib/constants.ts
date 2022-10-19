@@ -122,6 +122,8 @@ export const StackConstants = {
   ),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
+  TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
+    getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerRetryFunction'),
   SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon('SlackAppFunction'),
   SLACK_ALERT_FUNCTION_NAME: getResourceNameForTarpon('SlackAlertFunction'),
   CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME: getResourceNameForTarpon(
@@ -132,6 +134,8 @@ export const StackConstants = {
   ),
   WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('WebhookTarponChangeCaptureFunction'),
+  WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
+    getResourceNameForTarpon('WebhookTarponChangeCaptureRetryFunction'),
   SANCTIONS_FUNCTION_NAME: getResourceNameForTarpon('SanctionsFunction'),
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
@@ -166,6 +170,8 @@ export const StackConstants = {
   HAMMERHEAD_DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
+  HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
+    getResourceNameForHammerhead('ChangeCaptureKinesisConsumerRetry'),
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForHammerhead(
     'ConsoleApiRiskClassificationFunction'
   ),

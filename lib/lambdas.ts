@@ -126,7 +126,16 @@ export const LAMBDAS: {
     codePath: 'tarpon-change-mongodb-consumer',
     handlerName: 'tarponChangeMongodbHandler',
   },
+  [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]: {
+    codePath: 'tarpon-change-mongodb-consumer',
+    handlerName: 'tarponChangeMongodbHandler',
+  },
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]:
+    {
+      codePath: 'tarpon-change-webhook-consumer',
+      handlerName: 'tarponChangeWebhookHandler',
+    },
+  [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
     {
       codePath: 'tarpon-change-webhook-consumer',
       handlerName: 'tarponChangeWebhookHandler',
