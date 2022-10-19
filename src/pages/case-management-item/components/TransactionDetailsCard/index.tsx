@@ -20,12 +20,14 @@ export default function TransactionDetailsCard(props: Props) {
         <UserDetails
           type="ORIGIN"
           user={transaction.originUser}
+          userId={transaction.originUserId}
           amountDetails={transaction.originAmountDetails}
           paymentDetails={transaction.originPaymentDetails}
         />
         <UserDetails
           type="DESTINATION"
           user={transaction.destinationUser}
+          userId={transaction.destinationUserId}
           amountDetails={transaction.destinationAmountDetails}
           paymentDetails={transaction.destinationPaymentDetails}
         />

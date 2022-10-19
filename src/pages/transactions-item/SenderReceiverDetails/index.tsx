@@ -21,12 +21,14 @@ export default function SenderReceiverDetails(props: Props) {
           <UserDetails
             type="ORIGIN"
             user={transaction.originUser}
+            userId={transaction.originUserId}
             amountDetails={transaction.originAmountDetails}
             paymentDetails={transaction.originPaymentDetails}
           />
           <UserDetails
             type="DESTINATION"
             user={transaction.destinationUser}
+            userId={transaction.originUserId}
             amountDetails={transaction.destinationAmountDetails}
             paymentDetails={transaction.destinationPaymentDetails}
           />

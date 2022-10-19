@@ -22,7 +22,7 @@ export default function UserIdNameCard(props: Props) {
             </Id>
           )}
         </div>
-        <div className={s.name}>{user ? getUserName(user) : 'User undefined'}</div>
+        <div className={s.name}>{user ? getUserName(user) : 'Unknown user'}</div>
       </div>
       {children && <div>{children}</div>}
     </>

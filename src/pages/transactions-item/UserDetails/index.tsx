@@ -1,4 +1,6 @@
 import cn from 'clsx';
+import { Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
@@ -12,15 +14,22 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 
+function getUnknownUserTooltipMessage(userId?: string) {
+  return userId
+    ? `User ${userId} doesn't exist in the system. Please call the user creation API to create the user in order to see the user info.`
+    : 'Please include origin/destination user ID when calling our transaction verification API and create the user with the user creation API';
+}
+
 interface Props {
   type: 'ORIGIN' | 'DESTINATION';
   user: InternalBusinessUser | InternalConsumerUser | undefined;
   amountDetails: TransactionAmountDetails | undefined;
   paymentDetails: PaymentDetails | undefined;
+  userId?: string;
 }
 
 export default function UserDetails(props: Props) {
-  const { type, user, amountDetails, paymentDetails } = props;
+  const { type, user, userId, amountDetails, paymentDetails } = props;
   const isDestination = type === 'DESTINATION';
   return (
     <Card.Root className={cn(s.root, s[`type-${type}`])}>
@@ -40,7 +49,15 @@ export default function UserDetails(props: Props) {
         </div>
         <div className={s.user}>
           <Avatar name={user ? getUserName(user) : undefined} />
-          <span>{user ? getUserName(user) : 'Receiver undefined'}</span>
+          <span>
+            {user ? (
+              getUserName(user)
+            ) : (
+              <Tooltip title={getUnknownUserTooltipMessage(userId)}>
+                Unknown user <QuestionCircleOutlined />
+              </Tooltip>
+            )}
+          </span>
           {user && (
             <Id
               to={makeUrl('/users/list/:list/:id', {
