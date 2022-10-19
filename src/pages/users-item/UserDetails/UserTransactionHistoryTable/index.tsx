@@ -1,4 +1,3 @@
-import { Button } from 'antd';
 import { Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import style from './style.module.less';
@@ -288,27 +287,6 @@ export function Content(props: { userId: string }) {
                   }),
                 },
               ],
-            },
-            {
-              title: 'Actions',
-              render: (dom, entity) => {
-                return entity.ruleName ? (
-                  <Link
-                    to={makeUrl(`/case-management/case/:id`, {
-                      id: entity.transactionId,
-                    })}
-                  >
-                    <Button size="small" type="ghost">
-                      View Case
-                    </Button>
-                  </Link>
-                ) : (
-                  '-'
-                );
-              },
-              onCell: (_) => ({
-                rowSpan: _.isFirstRow ? _.rowsCount : 0,
-              }),
             },
           ]}
           expandable={{
