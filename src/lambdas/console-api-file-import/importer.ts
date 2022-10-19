@@ -14,7 +14,7 @@ import {
   ImportRequest,
   ImportRequestFormatEnum,
 } from '@/@types/openapi-internal/ImportRequest'
-import { verifyTransaction } from '@/services/rules-engine'
+import { RulesEngineService } from '@/services/rules-engine'
 import { logger } from '@/core/logger'
 
 export class Importer {
@@ -27,6 +27,7 @@ export class Importer {
   }
   importTmpBucket: string
   importBucket: string
+  rulesEngine: RulesEngineService
 
   constructor(
     tenantId: string,
@@ -44,6 +45,10 @@ export class Importer {
     this.connections = connections
     this.importTmpBucket = importTmpBucket
     this.importBucket = importBucket
+    this.rulesEngine = new RulesEngineService(
+      this.tenantId,
+      this.connections.dynamoDb
+    )
   }
 
   public async importTransactions(
@@ -62,10 +67,8 @@ export class Importer {
   }
 
   private async importTransaction(transaction: Transaction): Promise<void> {
-    const transactionResult = await verifyTransaction(
-      transaction,
-      this.tenantId,
-      this.connections.dynamoDb
+    const transactionResult = await this.rulesEngine.verifyTransaction(
+      transaction
     )
     logger.debug(`Imported transaction (id=${transactionResult.transactionId})`)
   }

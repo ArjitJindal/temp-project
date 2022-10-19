@@ -1,5 +1,8 @@
 import Handlebars from 'handlebars'
 import { formatCountry } from '@/utils/countries'
+import { Rule } from '@/@types/openapi-internal/Rule'
+import { logger } from '@/core/logger'
+import { getErrorMessage } from '@/utils/lang'
 
 Handlebars.registerHelper('possessive', function (value) {
   if (value == null || typeof value !== 'string' || value === '') {
@@ -80,4 +83,29 @@ export function compileTemplate(template: string): CompiledTemplate {
   return (params: Vars) => {
     return compiled(params)
   }
+}
+
+export async function generateRuleDescription(
+  ruleInfo: Rule,
+  parameters: Vars,
+  ruleResultVars?: Vars
+): Promise<string> {
+  if (ruleInfo.descriptionTemplate) {
+    try {
+      const ruleDescriptionTemplate = compileTemplate(
+        ruleInfo.descriptionTemplate
+      )
+      return ruleDescriptionTemplate({
+        ...ruleResultVars,
+        parameters,
+      })
+    } catch (e) {
+      logger.error(
+        `Unable to format contextual description, using general description as a fallback. Original template: "${
+          ruleInfo.descriptionTemplate
+        }". Details: ${getErrorMessage(e)}`
+      )
+    }
+  }
+  return ruleInfo.description
 }

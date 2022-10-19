@@ -10,12 +10,7 @@ import {
   getNewTransactionID,
   TransactionRepository,
 } from '@/services/rules-engine/repositories/transaction-repository'
-import {
-  verifyBusinessUserEvent,
-  verifyTransaction,
-  verifyTransactionEvent,
-  verifyConsumerUserEvent,
-} from '@/services/rules-engine'
+import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
@@ -155,14 +150,15 @@ export const transactionHandler = lambdaApi()(
         dynamoDb,
         validationParams || undefined
       )
-      if (missingUsers.length === 0) {
-        logger.info(`Verifying transaction`)
-        const result = await verifyTransaction(transaction, tenantId, dynamoDb)
-        logger.info(`Completed processing transaction`)
-        return result
-      } else {
+      if (missingUsers.length > 0) {
         throw new BadRequest(getMissingUsersMessage(missingUsers))
       }
+
+      logger.info(`Verifying transaction`)
+      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+      const result = await rulesEngine.verifyTransaction(transaction)
+      logger.info(`Completed processing transaction`)
+      return result
     } else if (event.httpMethod === 'GET' && transactionId) {
       const transactionRepository = new TransactionRepository(tenantId, {
         dynamoDb,
@@ -205,11 +201,8 @@ export const transactionEventHandler = lambdaApi()(
         !transactionEvent.updatedTransactionAttributes ||
         missingUsers.length === 0
       if (isValidPayload) {
-        return await verifyTransactionEvent(
-          transactionEvent,
-          tenantId,
-          dynamoDb
-        )
+        const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+        return rulesEngine.verifyTransactionEvent(transactionEvent)
       } else {
         throw new BadRequest(getMissingUsersMessage(missingUsers))
       }
@@ -239,7 +232,8 @@ export const userEventsHandler = lambdaApi()(
       })
       logger.info(`Processing Consumer User Event`) // Need to log to show on the logs
 
-      return await verifyConsumerUserEvent(userEvent, tenantId, dynamoDb)
+      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+      return await rulesEngine.verifyConsumerUserEvent(userEvent)
     }
     if (
       event.httpMethod === 'POST' &&
@@ -253,7 +247,8 @@ export const userEventsHandler = lambdaApi()(
       })
       logger.info(`Processing Business User Event`) // Need to log to show on the logs
 
-      return await verifyBusinessUserEvent(userEvent, tenantId, dynamoDb)
+      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+      return await rulesEngine.verifyBusinessUserEvent(userEvent)
     }
     throw new Error('Unhandled request')
   }

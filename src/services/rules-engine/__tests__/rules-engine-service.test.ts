@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { verifyTransaction, verifyTransactionEvent } from '..'
+import { RulesEngineService } from '..'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -23,12 +23,9 @@ dynamoDbSetupHook()
 
 describe('Verify Transaction', () => {
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
+    const rulesEngine = new RulesEngineService(getTestTenantId(), dynamoDb)
     const transaction = getTestTransaction({ transactionId: 'dummy' })
-    const result = await verifyTransaction(
-      transaction,
-      getTestTenantId(),
-      dynamoDb
-    )
+    const result = await rulesEngine.verifyTransaction(transaction)
     expect(result).toEqual({
       transactionId: 'dummy',
       executedRules: [],
@@ -47,12 +44,9 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
         transactionId: 'dummy',
         executedRules: [
@@ -97,15 +91,12 @@ describe('Verify Transaction', () => {
     setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
     test('rule is not rune', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         originUserId: '1',
       })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
         transactionId: 'dummy',
         executedRules: [
@@ -134,12 +125,9 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
         transactionId: 'dummy',
         executedRules: [
@@ -168,17 +156,10 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({ transactionId: 'dummy' })
-      const result1 = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
-      const result2 = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result1 = await rulesEngine.verifyTransaction(transaction)
+      const result2 = await rulesEngine.verifyTransaction(transaction)
       expect(result1.executedRules).toEqual(result2.executedRules)
     })
   })
@@ -199,17 +180,14 @@ describe('Verify Transaction Event', () => {
       const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
         dynamoDb,
       })
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         deviceData: {
           deviceIdentifier: 'deviceIdentifier',
         },
       })
-      const result1 = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result1 = await rulesEngine.verifyTransaction(transaction)
 
       expect(
         (
@@ -231,11 +209,7 @@ describe('Verify Transaction Event', () => {
           },
         },
       })
-      const result2 = await verifyTransactionEvent(
-        transactionEvent,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result2 = await rulesEngine.verifyTransactionEvent(transactionEvent)
       const latestTransaction = await transactionRepository.getTransactionById(
         transaction.transactionId as string
       )
@@ -255,14 +229,11 @@ describe('Verify Transaction Event', () => {
       const transactionRepository = new TransactionRepository(TEST_TENANT_ID, {
         dynamoDb,
       })
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy-2',
       })
-      const result1 = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result1 = await rulesEngine.verifyTransaction(transaction)
 
       const transactionEvent = getTestTransactionEvent({
         eventId: '2',
@@ -270,11 +241,7 @@ describe('Verify Transaction Event', () => {
         transactionState: 'SUCCESSFUL',
         updatedTransactionAttributes: undefined,
       })
-      const result2 = await verifyTransactionEvent(
-        transactionEvent,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result2 = await rulesEngine.verifyTransactionEvent(transactionEvent)
       const latestTransaction = await transactionRepository.getTransactionById(
         transaction.transactionId as string
       )
@@ -319,15 +286,12 @@ describe('Verify Transaction Event', () => {
         })
         await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
 
+        const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
         const transaction = getTestTransaction({
           transactionId: '1',
           originUserId: '1',
         })
-        const result = await verifyTransaction(
-          transaction,
-          TEST_TENANT_ID,
-          dynamoDb
-        )
+        const result = await rulesEngine.verifyTransaction(transaction)
         expect(result).toEqual({
           transactionId: '1',
           executedRules: [
@@ -360,12 +324,9 @@ describe('Verify Transaction Event', () => {
     })
 
     test('returns normal action without PULSE feature flag', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({ transactionId: '2' })
-      const result = await verifyTransaction(
-        transaction,
-        TEST_TENANT_ID,
-        dynamoDb
-      )
+      const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
         transactionId: '2',
         executedRules: [
