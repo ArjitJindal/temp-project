@@ -3812,7 +3812,6 @@ components:
         - SWIFT
         - WALLET
         - CHECK
-        - MPESA
     CardMerchantDetails:
       title: CardMerchantDetails
       x-stoplight:
@@ -3842,9 +3841,7 @@ components:
       type: object
       properties:
         method:
-          type: string
-          enum:
-            - CHECK
+          $ref: '#/components/schemas/CheckPaymentMethod'
         checkNumber:
           type: string
         checkIdentifier:
