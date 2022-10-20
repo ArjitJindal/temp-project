@@ -4,6 +4,7 @@ import {
   WalletOutlined,
   BankOutlined,
   MobileOutlined,
+  FileDoneOutlined,
 } from '@ant-design/icons';
 import style from './index.module.less';
 
@@ -43,6 +44,10 @@ export const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
     paymentMethodDisplay = 'Mpesa';
     paymentIcon = <MobileOutlined />;
     tagColor = 'red';
+  } else if (paymentMethod === 'CHECK') {
+    paymentMethodDisplay = 'Check';
+    paymentIcon = <FileDoneOutlined />;
+    tagColor = 'orange';
   } else {
     paymentMethodDisplay = paymentMethod;
   }
