@@ -21,6 +21,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   getMongoDbClient,
   IMPORT_COLLECTION,
+  KRS_SCORES_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   USER_EVENTS_COLLECTION,
@@ -29,13 +30,23 @@ import { logger } from '@/core/logger'
 
 type DynamoDbKey = { PartitionKeyID: string; SortKeyID: string }
 
-type TYPES = 'transaction' | 'user' | 'rule-instance' | 'dashboard' | 'import'
+type TYPES =
+  | 'transaction'
+  | 'user'
+  | 'rule-instance'
+  | 'dashboard'
+  | 'import'
+  | 'parameter-risk-values'
+  | 'krs-risk-values'
+
 const TYPES: TYPES[] = [
   'transaction',
   'user',
   'rule-instance',
   'dashboard',
   'import',
+  'parameter-risk-values',
+  'krs-risk-values',
 ]
 let allMongoDbCollections: string[] = []
 
@@ -124,19 +135,31 @@ async function deleteTransactions() {
   await dropMongoDbCollection(TRANSACTIONS_COLLECTION(tenantId))
 }
 
-async function deletePartitionKey(entityName: string, key: DynamoDbKey) {
+async function deletePartitionKey(
+  entityName: string,
+  key: DynamoDbKey,
+  tableName?: string
+) {
   await dynamoDb.send(
     new DeleteCommand({
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: tableName
+        ? tableName
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: key,
     })
   )
   logger.info(`Deleted ${entityName} ${JSON.stringify(key)}`)
 }
 
-async function deletePartition(entityName: string, partitionKeyId: string) {
+async function deletePartition(
+  entityName: string,
+  partitionKeyId: string,
+  tableName?: string
+) {
   const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: tableName
+      ? tableName
+      : StackConstants.TARPON_DYNAMODB_TABLE_NAME,
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': partitionKeyId,
@@ -233,6 +256,46 @@ async function deleteImports() {
   await dropMongoDbCollection(IMPORT_COLLECTION(tenantId))
 }
 
+async function deleteParameterRiskValues() {
+  await deletePartition(
+    'provided parameter risk values',
+    DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(tenantId).PartitionKeyID,
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+  )
+}
+
+async function deleteRiskValue(userId: string) {
+  await deletePartitionKey(
+    'user risk score',
+    DynamoDbKeys.KRS_VALUE_ITEM(tenantId, userId, '1') as DynamoDbKey,
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+  )
+}
+
+async function deleteKrsValues() {
+  const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    KeyConditionExpression: 'PartitionKeyID = :pk',
+    ExpressionAttributeValues: {
+      ':pk': DynamoDbKeys.USER(tenantId).PartitionKeyID,
+    },
+    ProjectionExpression: 'PartitionKeyID,SortKeyID',
+  }
+  for await (const result of paginateQueryGenerator(dynamoDb, queryInput)) {
+    for (const item of (result.Items || []) as DynamoDbKey[]) {
+      try {
+        await deleteRiskValue(item.SortKeyID)
+      } catch (e) {
+        logger.error(
+          `Failed to delete KRS Risk Value for user: ${item.SortKeyID} - ${e}`
+        )
+        throw e
+      }
+    }
+  }
+  await dropMongoDbCollection(KRS_SCORES_COLLECTION(tenantId))
+}
+
 async function nukeTenantData(tenantId: string) {
   const typesToDelete = (types || TYPES) as TYPES[]
   logger.info(
@@ -260,6 +323,12 @@ async function nukeTenantData(tenantId: string) {
   }
   if (typesToDelete.includes('import')) {
     await deleteImports()
+  }
+  if (typesToDelete.includes('parameter-risk-values')) {
+    await deleteParameterRiskValues()
+  }
+  if (typesToDelete.includes('krs-risk-values')) {
+    await deleteKrsValues()
   }
 }
 
