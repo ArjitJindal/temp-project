@@ -155,9 +155,7 @@ export class CaseCreationService {
 
     const caseUsers: CaseCaseUsers = await this.getCaseUsers(transaction)
     const transactionStatus = TransactionRepository.getAggregatedRuleStatus(
-      transaction.executedRules
-        .filter((rule) => rule.ruleHit)
-        .map((rule) => rule.ruleAction)
+      transaction.hitRules.map((rule) => rule.ruleAction)
     )
     const ruleInstances =
       await this.ruleInstanceRepository.getRuleInstancesByIds(

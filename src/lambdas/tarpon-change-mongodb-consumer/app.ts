@@ -70,7 +70,10 @@ async function transactionHandler(
         ?.status ?? null
   }
   const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
+  logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)
+  logger.info(`Case Creation Completed`)
+
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
   // a single record in DB using transaction date

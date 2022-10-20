@@ -76,7 +76,6 @@ function getDynamoDbEntityMetadata(
       entityId: `TRANSACTION:${(entity as TransactionEvent).transactionId}`,
     }
   } else if (partitionKeyId.includes(KRS_KEY_IDENTIFIER)) {
-    logger.info(`Meta part: ${partitionKeyId}`)
     return {
       type: 'KRS_VALUE',
       entityId: `KRS_VALUE:${entity.userId}`,
@@ -102,12 +101,10 @@ function getDynamoDbEntity(
     )
     return null
   }
-  logger.info(`PK: ${partitionKeyId}`)
   const metadata = getDynamoDbEntityMetadata(
     partitionKeyId,
     OldImage || NewImage
   )
-  logger.info(`metadatas: ${metadata}`)
   if (!metadata) {
     return null
   }

@@ -3,6 +3,11 @@ import { KinesisClient, PutRecordCommand } from '@aws-sdk/client-kinesis'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import {
+  getContext,
+  getContextStorage,
+  updateLogMetadata,
+} from '../utils/context'
+import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
 } from './dynamodb-stream-utils'
@@ -167,48 +172,46 @@ export class TarponStreamConsumerBuilder {
 
       if (isFromRetryStream) {
         for (const update of getDynamoDbUpdates(event)) {
-          if (await this.shouldRun(update)) {
-            try {
-              await this.handleDynamoDbUpdate(update)
-              await this.handleUpdateSuccess(update)
-              logger.info('Retry SUCCESS', {
+          await getContextStorage().run(getContext() || {}, async () => {
+            if (await this.shouldRun(update)) {
+              updateLogMetadata({
                 tenantId: update.tenantId,
                 entityId: update.entityId,
                 sequenceNumber: update.sequenceNumber,
               })
-            } catch (e) {
-              logger.error((e as Error).message, {
-                tenantId: update.tenantId,
-                entityId: update.entityId,
-                sequenceNumber: update.sequenceNumber,
-              })
-              throw e
+              try {
+                await this.handleDynamoDbUpdate(update)
+                await this.handleUpdateSuccess(update)
+                logger.info('Retry SUCCESS')
+              } catch (e) {
+                logger.error((e as Error).message)
+                throw e
+              }
             }
-          }
+          })
         }
       } else {
         for (const update of getDynamoDbUpdates(event)) {
-          if (await this.shouldSendToRetryStream(update)) {
-            await this.sendToRetryStream(update)
-            logger.warn(
-              `There're other events for the entity currently being retried. Sent to retry stream.`,
-              {
-                tenantId: update.tenantId,
-                entityId: update.entityId,
-              }
-            )
-          } else {
-            try {
-              await this.handleDynamoDbUpdate(update)
-            } catch (e) {
+          await getContextStorage().run(getContext() || {}, async () => {
+            updateLogMetadata({
+              tenantId: update.tenantId,
+              entityId: update.entityId,
+            })
+            if (await this.shouldSendToRetryStream(update)) {
               await this.sendToRetryStream(update)
-              logger.error(e)
-              logger.warn(`Failed to process. Sent to retry stream`, {
-                tenantId: update.tenantId,
-                entityId: update.entityId,
-              })
+              logger.warn(
+                `There're other events for the entity currently being retried. Sent to retry stream.`
+              )
+            } else {
+              try {
+                await this.handleDynamoDbUpdate(update)
+              } catch (e) {
+                await this.sendToRetryStream(update)
+                logger.error(e)
+                logger.warn(`Failed to process. Sent to retry stream`)
+              }
             }
-          }
+          })
         }
       }
     }

@@ -30,20 +30,24 @@ export async function getInitialContext(
   lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
-    const tenantId = event.requestContext.authorizer?.principalId
-    const dynamoDb = getDynamoDbClientByEvent(event)
-    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-    const settings = await tenantRepository.getTenantSettings(['features'])
+    let features = undefined
+    const tenantId = event.requestContext?.authorizer?.principalId
+    if (tenantId) {
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+      features = (await tenantRepository.getTenantSettings(['features']))
+        ?.features
+    }
     const context: Context = {
       logMetadata: {
         tenantId,
         functionName: lambdaContext?.functionName,
       },
       metricDimensions: {
-        tenantId: tenantId,
+        tenantId,
         functionName: lambdaContext?.functionName,
       },
-      features: settings?.features,
+      features,
     }
     return context
   } catch (e) {
