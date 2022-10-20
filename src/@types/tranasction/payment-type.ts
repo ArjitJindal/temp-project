@@ -12,7 +12,9 @@ import { UPIPaymentMethod } from '../openapi-public/UPIPaymentMethod'
 import { WalletDetails } from '../openapi-public/WalletDetails'
 import { WalletPaymentMethod } from '../openapi-public/WalletPaymentMethod'
 import { MpesaPaymentMethod } from '../openapi-public/MpesaPaymentMethod'
+import { CheckPaymentMethod } from '../openapi-public/CheckPaymentMethod'
 import { MpesaDetails } from '../openapi-public/MpesaDetails'
+import { CheckDetails } from '../openapi-public/CheckDetails'
 import { GeneralBankAccountPaymentMethod } from '../openapi-public/GeneralBankAccountPaymentMethod'
 
 export type PaymentDetails =
@@ -24,6 +26,7 @@ export type PaymentDetails =
   | UPIDetails
   | WalletDetails
   | MpesaDetails
+  | CheckDetails
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -34,6 +37,7 @@ export type PaymentMethod =
   | UPIPaymentMethod
   | WalletPaymentMethod
   | MpesaPaymentMethod
+  | CheckPaymentMethod
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
   'ACH',
@@ -44,4 +48,5 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   'WALLET',
   'MPESA',
   'GENERIC_BANK_ACCOUNT',
+  'CHECK',
 ]

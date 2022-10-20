@@ -16,6 +16,7 @@ import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAccountDetails'
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
 import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
+import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -171,6 +172,19 @@ export const DynamoDbKeys = {
         }
         return {
           PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#phoneNumber:${phoneNumber}#businessShortCode:${businessShortCode}#${direction}`,
+          SortKeyID: `${timestamp}`,
+        }
+      }
+      case 'CHECK': {
+        const { checkIdentifier, checkNumber } = paymentDetails as CheckDetails
+        if (!checkIdentifier || !checkNumber) {
+          logger.warn(
+            'Payment identifier not found: check identifier or check number'
+          )
+          return null
+        }
+        return {
+          PartitionKeyID: `${tenantId}#transaction#${tranasctionTypeKey}#paymentDetails#checkIdentifier:${checkIdentifier}#checkNumber:${checkNumber}#${direction}`,
           SortKeyID: `${timestamp}`,
         }
       }
