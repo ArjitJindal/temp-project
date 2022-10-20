@@ -125,7 +125,8 @@ export function getDynamoDbClient(
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
-  return withMetrics(client)
+  // TODO: re-enalbe metrics in FDT-45338
+  return client
 }
 
 async function getLastEvaluatedKey(
