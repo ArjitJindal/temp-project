@@ -688,6 +688,9 @@ export class CdkTarponStack extends cdk.Stack {
     // MongoDB mirror handler
     const tarponChangeConsumerProps = {
       ...atlasFunctionProps,
+      memorySize: config.resource.TARPON_CHANGE_CAPTURE_LAMBDA
+        ? config.resource.TARPON_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
+        : 256,
       environment: {
         ...atlasFunctionProps.environment,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,

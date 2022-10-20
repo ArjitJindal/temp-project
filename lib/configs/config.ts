@@ -39,6 +39,9 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
+    TARPON_CHANGE_CAPTURE_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
