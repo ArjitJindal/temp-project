@@ -711,7 +711,7 @@ export class CdkTarponStack extends cdk.Stack {
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
-        StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
         { startingPosition: StartingPosition.TRIM_HORIZON }
@@ -758,10 +758,9 @@ export class CdkTarponStack extends cdk.Stack {
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
-        StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         webhookTarponChangeCaptureHandlerAlias,
-        tarponStream,
-        { startingPosition: StartingPosition.TRIM_HORIZON }
+        tarponStream
       )
       this.createKinesisEventSourceForRetry(
         webhookTarponChangeCaptureHandlerRetryAlias,
@@ -815,7 +814,8 @@ export class CdkTarponStack extends cdk.Stack {
       this.createKinesisEventSource(
         StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         hammerheadChangeCaptureKinesisConsumerAlias,
-        hammerheadStream
+        hammerheadStream,
+        { startingPosition: StartingPosition.TRIM_HORIZON }
       )
     }
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
