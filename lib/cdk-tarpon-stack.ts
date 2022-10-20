@@ -728,11 +728,24 @@ export class CdkTarponStack extends cdk.Stack {
     transientDynamoDbTable.grantReadWriteData(
       tarponChangeCaptureKinesisConsumerAlias
     )
+    transientDynamoDbTable.grantReadWriteData(
+      tarponChangeCaptureKinesisConsumerRetryAlias
+    )
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
+    this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerRetryAlias)
     slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
+    slackAlertQueue.grantSendMessages(
+      tarponChangeCaptureKinesisConsumerRetryAlias
+    )
     tarponDynamoDbTable.grantReadData(tarponChangeCaptureKinesisConsumerAlias)
+    tarponDynamoDbTable.grantReadData(
+      tarponChangeCaptureKinesisConsumerRetryAlias
+    )
     tarponRuleDynamoDbTable.grantReadData(
       tarponChangeCaptureKinesisConsumerAlias
+    )
+    tarponRuleDynamoDbTable.grantReadData(
+      tarponChangeCaptureKinesisConsumerRetryAlias
     )
 
     // Webhook handler
@@ -774,10 +787,17 @@ export class CdkTarponStack extends cdk.Stack {
     webhookDeliveryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerAlias
     )
+    webhookDeliveryQueue.grantSendMessages(
+      webhookTarponChangeCaptureHandlerRetryAlias
+    )
     transientDynamoDbTable.grantReadWriteData(
       webhookTarponChangeCaptureHandlerAlias
     )
+    transientDynamoDbTable.grantReadWriteData(
+      webhookTarponChangeCaptureHandlerRetryAlias
+    )
     this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerAlias)
+    this.grantMongoDbAccess(webhookTarponChangeCaptureHandlerRetryAlias)
 
     // Sanctions handler
     const { alias: sanctionsHandlerAlias } = this.createFunction(
