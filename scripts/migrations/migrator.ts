@@ -47,7 +47,10 @@ async function main() {
     },
   })
 
-  await umzug.runAsCLI()
+  const success = await umzug.runAsCLI()
+  if (!success) {
+    exit(1)
+  }
 
   if (migrationType === 'POST_DEPLOYMENT') {
     await syncMongoDbIndices()
