@@ -3,7 +3,14 @@
   "configurations": [
     {
       "type": "node-terminal",
-      "name": "Run Console (dev)",
+      "name": "Run Console (Local API)",
+      "request": "launch",
+      "command": "npm run start:local",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "node-terminal",
+      "name": "Run Console (Dev API)",
       "request": "launch",
       "command": "npm run start:dev",
       "cwd": "${workspaceFolder}"

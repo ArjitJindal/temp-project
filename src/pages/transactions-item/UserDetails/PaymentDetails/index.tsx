@@ -14,6 +14,7 @@ import {
   WalletDetails,
   MpesaDetails,
 } from '@/apis';
+import { CheckDetails } from '@/apis/models/CheckDetails';
 
 export type PaymentDetails =
   | CardDetails
@@ -23,7 +24,8 @@ export type PaymentDetails =
   | UPIDetails
   | WalletDetails
   | SWIFTDetails
-  | MpesaDetails;
+  | MpesaDetails
+  | CheckDetails;
 
 interface Props {
   paymentDetails: PaymentDetails | undefined;
