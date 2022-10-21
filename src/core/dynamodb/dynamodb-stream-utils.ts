@@ -125,11 +125,14 @@ export function getDynamoDbUpdates(
     const message: string = Buffer.from(payload.data, 'base64').toString()
 
     const dynamoDBStreamRecord = JSON.parse(message).dynamodb as StreamRecord
+    const entity = getDynamoDbEntity(dynamoDBStreamRecord)
 
-    return {
-      ...getDynamoDbEntity(dynamoDBStreamRecord),
-      rawRecord: record,
-      sequenceNumber: payload.sequenceNumber,
-    }
+    return (
+      entity && {
+        ...entity,
+        rawRecord: record,
+        sequenceNumber: payload.sequenceNumber,
+      }
+    )
   }).filter(Boolean) as DynamoDbEntityUpdate[]
 }
