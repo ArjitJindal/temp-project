@@ -49,7 +49,7 @@ export default function CreatedLists() {
       <PageWrapper
         backButton={{
           title: i18n('menu.lists.created-lists'),
-          url: makeUrl('/lists/:type', { type: listType }),
+          url: makeUrl('/lists/:type', { type: listType?.toLowerCase() }),
         }}
       >
         <Card.Root>
