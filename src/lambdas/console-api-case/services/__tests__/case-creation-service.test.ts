@@ -183,7 +183,7 @@ describe('User cases', () => {
 
         const nextCase = cases[0]
         expect(firstCase.caseId).toEqual(nextCase.caseId)
-        expect(nextCase.caseTransactions).toHaveLength(2)
+        expect(nextCase.caseTransactionsIds).toHaveLength(2)
       }
     })
   })

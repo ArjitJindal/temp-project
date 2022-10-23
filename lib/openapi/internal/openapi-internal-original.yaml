@@ -1613,6 +1613,10 @@ paths:
         - schema:
             type: boolean
           in: query
+          name: includeTransactions
+        - schema:
+            type: boolean
+          in: query
           name: includeTransactionUsers
         - schema:
             type: boolean
@@ -1646,6 +1650,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Case'
+        '404':
+          description: Not found
+  '/cases/{caseId}/transactions':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+      - schema:
+          type: number
+        in: query
+        name: limit
+        required: true
+      - schema:
+          type: number
+        in: query
+        name: skip
+        required: true
+    get:
+      summary: Get transactions related to case
+      operationId: get-case-transactions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseTransactionsListResponse'
         '404':
           description: Not found
   '/cases/{caseId}/comments':
@@ -2728,6 +2761,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CaseTransaction'
+        caseTransactionsIds:
+          type: array
+          items:
+            type: string
         caseUsers:
           type: object
           properties:
@@ -2771,6 +2808,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Case'
+      required:
+        - total
+        - data
+    CaseTransactionsListResponse:
+      title: CasesListResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseTransaction'
       required:
         - total
         - data

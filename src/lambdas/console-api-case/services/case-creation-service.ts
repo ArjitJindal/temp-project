@@ -129,9 +129,9 @@ export class CaseCreationService {
             ...existedCase,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
-            caseTransactions: [
-              ...(existedCase.caseTransactions ?? []),
-              params.transaction,
+            caseTransactionsIds: [
+              ...(existedCase.caseTransactionsIds ?? []),
+              params.transaction.transactionId as string,
             ],
           })
         } else {
@@ -140,7 +140,7 @@ export class CaseCreationService {
             createdTimestamp: params.createdTimestamp,
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
-            caseTransactions: [params.transaction],
+            caseTransactionsIds: [params.transaction.transactionId as string],
           })
         }
       }
@@ -248,21 +248,7 @@ export class CaseCreationService {
           latestTransactionArrivalTimestamp: now,
           caseType: 'TRANSACTION',
           caseStatus: 'OPEN',
-          caseTransactions: [
-            {
-              ...transaction,
-              // keep only transaction related hits
-              hitRules: transaction.hitRules.filter((item) => {
-                const ruleInstance = ruleInstances.find(
-                  (x) => x.id === item.ruleInstanceId
-                )
-                if (ruleInstance == null) {
-                  return false
-                }
-                return ruleInstance.caseCreationType === 'TRANSACTION'
-              }),
-            },
-          ],
+          caseTransactionsIds: [transaction.transactionId as string],
           caseUsers: caseUsers,
           priority: casePriority,
         }
@@ -273,7 +259,7 @@ export class CaseCreationService {
           existingCase.caseUsers = caseUsers
         }
         existingCase.priority = casePriority
-        existingCase.caseTransactions = [transaction]
+        existingCase.caseTransactionsIds = [transaction.transactionId as string]
         result.push(existingCase)
       }
     }

@@ -67,6 +67,7 @@ export const casesHandler = lambdaApi()(
         filterPriority,
         filterTransactionTagKey,
         filterTransactionTagValue,
+        includeTransactions,
         includeTransactionUsers,
         includeTransactionEvents,
       } = event.queryStringParameters as any
@@ -103,6 +104,7 @@ export const casesHandler = lambdaApi()(
         filterPriority,
         filterTransactionTagKey,
         filterTransactionTagValue,
+        includeTransactions: includeTransactions === 'true',
         includeTransactionUsers: includeTransactionUsers === 'true',
         includeTransactionEvents: includeTransactionEvents === 'true',
       }
@@ -140,6 +142,19 @@ export const casesHandler = lambdaApi()(
         ...comment,
         userId,
       })
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/cases/{caseId}/transactions' &&
+      event.pathParameters?.caseId
+    ) {
+      const { limit, skip } = event.queryStringParameters as any
+      return await caseService.getCaseTransactions(
+        event.pathParameters.caseId,
+        {
+          limit: parseInt(limit) || 20,
+          skip: parseInt(skip) || 0,
+        }
+      )
     } else if (
       event.httpMethod === 'DELETE' &&
       event.resource === '/cases/{caseId}/comments/{commentId}' &&

@@ -8,6 +8,7 @@ import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
+import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -62,12 +63,23 @@ export class CaseService {
   public async getCase(
     caseId: string,
     params: {
+      includeTransactions?: boolean
       includeTransactionEvents?: boolean
       includeTransactionUsers?: boolean
     } = {}
   ): Promise<Case | null> {
     const caseEntity = await this.caseRepository.getCaseById(caseId, params)
     return caseEntity && this.getAugmentedCase(caseEntity)
+  }
+
+  public async getCaseTransactions(
+    caseId: string,
+    params: {
+      limit?: number
+      skip?: number
+    }
+  ): Promise<CaseTransactionsListResponse> {
+    return await this.caseRepository.getCaseTransactions(caseId, params)
   }
 
   public async saveCaseComment(caseId: string, comment: Comment) {

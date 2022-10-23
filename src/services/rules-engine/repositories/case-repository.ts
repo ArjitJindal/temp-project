@@ -7,10 +7,12 @@ import {
   UpdateResult,
 } from 'mongodb'
 import _ from 'lodash'
+import { NotFound } from 'http-errors'
 import {
   CASES_COLLECTION,
   COUNTER_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -26,6 +28,8 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
+import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 
 export class CaseRepository {
   mongoDb: MongoClient
@@ -87,9 +91,11 @@ export class CaseRepository {
     }
   }
 
-  public getCasesMongoQuery(
-    params: DefaultApiGetCaseListRequest
-  ): Filter<Case> {
+  private getCasesMongoQuery(params: DefaultApiGetCaseListRequest): {
+    filter: Filter<Case>
+    requiresTransactions: boolean
+  } {
+    let requiresTransactions = false
     const conditions: Filter<Case>[] = []
     conditions.push({
       createdTimestamp: {
@@ -105,11 +111,13 @@ export class CaseRepository {
       conditions.push({
         'caseTransactions.type': { $regex: params.transactionType },
       })
+      requiresTransactions = true
     }
     if (params.filterOutStatus != null) {
       conditions.push({
         'caseTransactions.status': { $ne: params.filterOutStatus },
       })
+      requiresTransactions = true
     }
     if (params.filterOutCaseStatus != null) {
       conditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
@@ -120,11 +128,13 @@ export class CaseRepository {
           $eq: params.filterTransactionState,
         },
       })
+      requiresTransactions = true
     }
     if (params.filterStatus != null) {
       conditions.push({
         'caseTransactions.status': { $eq: params.filterStatus },
       })
+      requiresTransactions = true
     }
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
@@ -171,6 +181,7 @@ export class CaseRepository {
           $all: executedRulesFilters,
         },
       })
+      requiresTransactions = true
     }
 
     if (params.filterOriginCurrencies != null) {
@@ -179,6 +190,7 @@ export class CaseRepository {
           $in: params.filterOriginCurrencies,
         },
       })
+      requiresTransactions = true
     }
     if (params.filterDestinationCurrencies != null) {
       conditions.push({
@@ -186,6 +198,7 @@ export class CaseRepository {
           $in: params.filterDestinationCurrencies,
         },
       })
+      requiresTransactions = true
     }
     if (params.filterOriginPaymentMethod != null) {
       conditions.push({
@@ -193,6 +206,7 @@ export class CaseRepository {
           $eq: params.filterOriginPaymentMethod,
         },
       })
+      requiresTransactions = true
     }
     if (params.filterDestinationPaymentMethod != null) {
       conditions.push({
@@ -200,6 +214,7 @@ export class CaseRepository {
           $eq: params.filterDestinationPaymentMethod,
         },
       })
+      requiresTransactions = true
     }
     if (params.filterCaseType != null) {
       conditions.push({
@@ -231,36 +246,43 @@ export class CaseRepository {
           $elemMatch: elemCondition,
         },
       })
+      requiresTransactions = true
     }
-    return { $and: conditions }
+    return {
+      filter: { $and: conditions },
+      requiresTransactions,
+    }
   }
 
-  public async getCasesCursor(
+  public getCasesMongoPipeline(
     params: DefaultApiGetCaseListRequest
-  ): Promise<AggregationCursor<Case>> {
-    const query = this.getCasesMongoQuery(params)
-    return this.getDenormalizedCases(query, params)
-  }
-
-  private getDenormalizedCases(
-    query: Filter<Case>,
-    params: DefaultApiGetCaseListRequest
-  ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+  ): Document[] {
     const sortField =
-      params?.sortField !== undefined ? params?.sortField : 'timestamp'
+      params?.sortField !== undefined ? params?.sortField : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const pipeline: Document[] = [
-      { $match: query },
-      { $sort: { [sortField]: sortOrder } },
-    ]
-    if (params?.skip) {
-      pipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      pipeline.push({ $limit: params.limit })
+    const { filter, requiresTransactions: queryRequiresTransactions } =
+      this.getCasesMongoQuery(params)
+
+    const pipeline: Document[] = [{ $sort: { [sortField]: sortOrder } }]
+    const requiresTransactions =
+      queryRequiresTransactions ||
+      params?.includeTransactions ||
+      params?.includeTransactionUsers ||
+      params?.includeTransactionEvents
+    if (requiresTransactions) {
+      pipeline.push(
+        ...[
+          {
+            $lookup: {
+              from: TRANSACTIONS_COLLECTION(this.tenantId),
+              localField: 'caseTransactionsIds',
+              foreignField: 'transactionId',
+              as: 'caseTransactions',
+            },
+          },
+        ]
+      )
     }
     if (params?.includeTransactionUsers) {
       pipeline.push(
@@ -383,6 +405,29 @@ export class CaseRepository {
         ]
       )
     }
+    pipeline.push({ $match: filter })
+    if (!params.includeTransactions) {
+      pipeline.push({ $unset: 'caseTransactions' })
+    }
+    if (params?.skip) {
+      pipeline.push({ $skip: params.skip })
+    }
+    if (params?.limit) {
+      pipeline.push({ $limit: params.limit })
+    }
+    return pipeline
+  }
+
+  public getCasesCursor(
+    params: DefaultApiGetCaseListRequest
+  ): AggregationCursor<Case> {
+    const pipeline = this.getCasesMongoPipeline(params)
+    return this.getDenormalizedCases(pipeline)
+  }
+
+  private getDenormalizedCases(pipeline: Document[]) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return collection.aggregate<Case>(pipeline)
   }
 
@@ -391,16 +436,22 @@ export class CaseRepository {
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const query = this.getCasesMongoQuery(params)
-    return collection.countDocuments(query)
+    const pipeline = this.getCasesMongoPipeline(params)
+    pipeline.push({
+      $count: 'count',
+    })
+    const result: AggregationCursor<{ count: number }> =
+      await collection.aggregate(pipeline)
+    const item = await result.next()
+    return item?.count ?? 0
   }
 
   public async getCases(
     params: DefaultApiGetCaseListRequest
   ): Promise<{ total: number; data: Case[] }> {
-    const cursor = await this.getCasesCursor(params)
-    const total = await this.getCasesCount(params)
-    return { total, data: await cursor.toArray() }
+    const cursor = this.getCasesCursor(params)
+    const total = this.getCasesCount(params)
+    return { total: await total, data: await cursor.toArray() }
   }
 
   public async updateCases(
@@ -486,6 +537,55 @@ export class CaseRepository {
     return data[0]
   }
 
+  public async getCaseTransactions(
+    caseId: string,
+    params: {
+      limit?: number
+      skip?: number
+    } = {}
+  ): Promise<CaseTransactionsListResponse> {
+    const caseItem = await this.getCaseById(caseId)
+    if (caseItem == null) {
+      throw new NotFound(`Case not found: ${caseId}`)
+    }
+    const caseTransactionsIds = caseItem.caseTransactionsIds
+    if (caseTransactionsIds == null) {
+      return {
+        total: 0,
+        data: [],
+      }
+    }
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(
+      TRANSACTIONS_COLLECTION(this.tenantId)
+    )
+    const pipeline: Document[] = [
+      {
+        $match: {
+          transactionId: { $in: caseTransactionsIds },
+        },
+      },
+    ]
+
+    const totalPipeline = [...pipeline, { $count: 'count' }]
+    const totalCursor = collection.aggregate<{ count: number }>(totalPipeline)
+    const totalPromise = totalCursor.next().then((item) => item?.count ?? 0)
+
+    const dataPipeline = [...pipeline]
+    if (params?.skip) {
+      dataPipeline.push({ $skip: params.skip })
+    }
+    if (params?.limit) {
+      dataPipeline.push({ $limit: params.limit })
+    }
+    const dataCursor = collection.aggregate<CaseTransaction>(dataPipeline)
+
+    return {
+      total: await totalPromise,
+      data: await dataCursor.toArray(),
+    }
+  }
+
   public async getCasesByTransactionId(
     transactionId: string,
     caseType: CaseType
@@ -549,7 +649,7 @@ export class CaseRepository {
     return await casesCollection
       .find({
         caseType,
-        'caseTransactions.transactionId': { $in: transactionIds },
+        caseTransactionsIds: { $in: transactionIds },
       })
       .toArray()
   }
