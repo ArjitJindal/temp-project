@@ -111,7 +111,7 @@ export default function UserCases(props: Props) {
         title: 'Transactions Hit',
         width: 150,
         render: (_, entity) => {
-          return <>{entity.caseTransactions?.length ?? 0}</>;
+          return <>{entity.caseTransactionsIds?.length ?? 0}</>;
         },
       },
       // {

@@ -17,7 +17,7 @@ export default function UserCaseDetails(props: Props) {
     <>
       <UserIdNameCard user={user} />
       <UserDetails user={user} isEmbedded={true} collapsedByDefault={true} />
-      <RulesHitCard transactions={caseItem.caseTransactions ?? []} />
+      <RulesHitCard caseItem={caseItem} />
       <CommentsCard
         caseId={caseItem.caseId}
         comments={caseItem.comments ?? []}

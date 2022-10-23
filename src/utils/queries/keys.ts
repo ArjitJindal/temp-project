@@ -10,6 +10,13 @@ export const CASES_LIST = (type: CaseType, params: AnyParameters): QueryKey => [
   { params },
 ];
 export const CASES_ITEM = (transactionId: string): QueryKey => ['cases', transactionId];
+export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParameters): QueryKey => [
+  'cases',
+  caseId,
+  'transactions',
+  'list',
+  searchParams,
+];
 export const LISTS_OF_TYPE = (type: ListType): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id: string): QueryKey => ['lists', 'item', id];
 export const LISTS = (): QueryKey => ['lists'];

@@ -12,7 +12,6 @@ export function useTableData(
       const items: TableDataItem<TableItem>[] = response.data.map(
         (item, index): TableDataItem<TableItem> => {
           const caseUser = item.caseUsers ?? {};
-          const caseTransactions = item.caseTransactions ?? [];
           const user = caseUser.origin ?? caseUser.destination ?? undefined;
           const dataItem: TableItem = {
             index,
@@ -20,9 +19,6 @@ export function useTableData(
             user: user != null && 'type' in user ? user : null,
             ...item,
           };
-          if (caseTransactions.length === 0) {
-            return dataItem;
-          }
           return dataItem;
         },
       );

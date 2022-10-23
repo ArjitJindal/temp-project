@@ -131,8 +131,8 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           transactionType: type,
           sortField: sortField ?? undefined,
           sortOrder: sortOrder ?? undefined,
-          includeTransactionUsers: true,
-          includeTransactionEvents: false, // todo: do we still need events?
+          includeTransactions: caseType === 'TRANSACTION',
+          includeTransactionUsers: caseType === 'TRANSACTION',
           filterOriginPaymentMethod: originMethodFilter,
           filterDestinationPaymentMethod: destinationMethodFilter,
           filterTransactionTagKey: tagKey,

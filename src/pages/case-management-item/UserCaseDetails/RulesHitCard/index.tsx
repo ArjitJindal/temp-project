@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
 import * as Card from '@/components/ui/Card';
-import Table from '@/components/ui/Table';
-import { CaseTransaction } from '@/apis';
+import { CommonParams } from '@/components/ui/Table';
+import { Case, CaseTransaction } from '@/apis';
 import { transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -13,6 +13,11 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
+import { useQuery } from '@/utils/queries/hooks';
+import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export function expandedRowRender(transaction: CaseTransaction) {
   return (
@@ -23,11 +28,31 @@ export function expandedRowRender(transaction: CaseTransaction) {
 }
 
 interface Props {
-  transactions: CaseTransaction[];
+  caseItem: Case;
 }
 
 export default function RulesHitCard(props: Props) {
-  const { transactions } = props;
+  const { caseItem } = props;
+
+  const api = useApi();
+  const caseId = caseItem.caseId as string;
+
+  const [params, setParams] = useState<CommonParams>({
+    page: 1,
+    pageSize: DEFAULT_PAGE_SIZE,
+    sort: [],
+  });
+  const queryResult = useQuery(CASES_ITEM_TRANSACTIONS(caseId, params), async () => {
+    const response = await api.getCaseTransactions({
+      caseId,
+      limit: params.pageSize,
+      skip: (params.page - 1) * params.pageSize,
+    });
+    return {
+      total: response.total,
+      items: response.data,
+    };
+  });
 
   return (
     <Card.Root
@@ -38,7 +63,7 @@ export default function RulesHitCard(props: Props) {
       }}
     >
       <Card.Section>
-        <Table<CaseTransaction>
+        <QueryResultsTable<CaseTransaction, CommonParams>
           disableInternalPadding={true}
           rowKey="transactionId"
           options={{
@@ -47,7 +72,6 @@ export default function RulesHitCard(props: Props) {
             density: false,
           }}
           search={false}
-          pagination={false}
           scroll={{ x: 2300 }}
           columns={[
             {
@@ -231,7 +255,9 @@ export default function RulesHitCard(props: Props) {
               ],
             },
           ]}
-          data={{ items: transactions }}
+          queryResults={queryResult}
+          params={params}
+          onChangeParams={setParams}
           expandable={{ expandedRowRender }}
         />
       </Card.Section>
