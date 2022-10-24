@@ -210,7 +210,7 @@ export default function TransactionCases(props: Props) {
         hideInSearch: true,
         children: [
           {
-            title: 'Origin User ID',
+            title: 'User ID',
             tooltip: 'Origin is the Sender in a transaction',
             width: 200,
             copyable: true,
@@ -232,7 +232,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Origin User Name',
+            title: 'User Name',
             tooltip: 'Origin is the Sender in a transaction',
             width: 220,
             hideInSearch: true,
@@ -242,7 +242,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Origin Method',
+            title: 'Method',
             width: 160,
             hideInSearch: true,
             onCell: onTransactionCell,
@@ -255,7 +255,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Origin Amount',
+            title: 'Amount',
             dataIndex: 'originAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
@@ -276,7 +276,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Origin Currency',
+            title: 'Currency',
             hideInSearch: true,
             width: 140,
             onCell: onTransactionCell,
@@ -285,7 +285,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Origin Country',
+            title: 'Country',
             hideInSearch: true,
             width: 140,
             dataIndex: 'caseTransactions.originAmountDetails.country',
@@ -302,7 +302,7 @@ export default function TransactionCases(props: Props) {
         hideInSearch: true,
         children: [
           {
-            title: 'Destination User ID',
+            title: 'User ID',
             tooltip: 'Destination is the Receiver in a transaction',
             dataIndex: 'destinationUserId',
             copyable: true,
@@ -322,7 +322,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Destination User Name',
+            title: 'User Name',
             tooltip: 'Destination is the Receiver in a transaction',
             width: 180,
             hideInSearch: true,
@@ -332,7 +332,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Destination Method',
+            title: 'Method',
             width: 160,
             hideInSearch: true,
             onCell: onTransactionCell,
@@ -345,7 +345,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Destination Amount',
+            title: 'Amount',
             width: 200,
             dataIndex: 'destnationAmountDetails.transactionAmount',
             hideInSearch: true,
@@ -362,7 +362,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Destination Currency',
+            title: 'Currency',
             width: 200,
             onCell: onTransactionCell,
             hideInSearch: true,
@@ -371,7 +371,7 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Destination Country',
+            title: 'Country',
             width: 200,
             hideInSearch: true,
             onCell: onTransactionCell,

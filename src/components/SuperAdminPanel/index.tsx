@@ -108,7 +108,7 @@ export default function SuperAdminPanel() {
   return (
     <>
       <Button type="default" size="small" onClick={showModal}>
-        Super Admin
+        {user.tenantName}
       </Button>
       <Modal
         title="Super Admin Panel"

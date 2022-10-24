@@ -32,7 +32,7 @@ const RiskAlgorithmTable: React.FC = () => {
               </div>
               <div className={styles.KRSformula}>DRS[0] = KRS</div>
               <div className={styles.KRSformula}>DRS[1] = avg ( KRS + ARS[1] )</div>
-              <div className={styles.KRSformula}>DRS[2] = avg ( KRS + DRS[1] + ARS[2] )</div>
+              <div className={styles.KRSformula}>DRS[2] = avg ( DRS[1] + ARS[2] )</div>
             </pre>
           </ProCard>
         </ProCard>
@@ -40,7 +40,7 @@ const RiskAlgorithmTable: React.FC = () => {
         <ProCard
           title={
             <>
-              <span className={styles.KRSheader}>KYC Risk Score</span>
+              <span className={styles.KRSheader}>KYC Risk Score (KRS)</span>
               <div className={styles.KRSsubheader}>
                 Risk score of your customer’s profile. KRS changes slowly over time.
               </div>
@@ -57,7 +57,7 @@ const RiskAlgorithmTable: React.FC = () => {
             bordered
             bodyStyle={{ border: 10 }}
           >
-            <ProCard.TabPane key=" tab1 " tab="Consumers">
+            <ProCard.TabPane key=" tab1 " tab="Consumer Users">
               <RcResizeObserver
                 key="resize-observer"
                 onResize={(offset) => {
@@ -104,7 +104,7 @@ const RiskAlgorithmTable: React.FC = () => {
                       <div className={styles.header}>Result</div>
                       <div> </div>
                       <div>
-                        Result User has a KRS score of 58<br></br>and is of Medium Risk.
+                        User has a KRS score of 58<br></br>and is of Medium Risk.
                       </div>
                     </pre>
                   </ProCard>

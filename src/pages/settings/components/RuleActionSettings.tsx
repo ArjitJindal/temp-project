@@ -64,23 +64,18 @@ export const RuleActionSettings: React.FC = () => {
     () => [
       {
         action: 'FLAG',
-        description: 'Risky transaction detected',
+        description: 'Process the transaction but generate a case for investigation',
         actionAlias: actionToAlias.get('FLAG'),
       },
       {
         action: 'SUSPEND',
-        description: 'Stop the transaction from proceeding',
+        description: 'Stop the transaction from proceeding until the investigation is completed',
         actionAlias: actionToAlias.get('SUSPEND'),
       },
       {
         action: 'BLOCK',
-        description: 'Stop the transaction from proceeding',
+        description: 'Decline the transaction automatically',
         actionAlias: actionToAlias.get('BLOCK'),
-      },
-      {
-        action: 'WHITELIST',
-        description: 'Add transaction as excception to rule',
-        actionAlias: actionToAlias.get('WHITELIST'),
       },
     ],
     [actionToAlias],

@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
 import StateSearchButton from './components/TransactionStateButton';
+import styles from './style.module.less';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { currencies } from '@/utils/currencies';
 import { getUserName } from '@/utils/api/users';
@@ -22,7 +23,6 @@ import { makeUrl } from '@/utils/routing';
 import { TableColumn } from '@/components/ui/Table/types';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import KeyValueTag from '@/components/ui/KeyValueTag';
-
 const TableList = () => {
   const api = useApi();
 
@@ -263,6 +263,7 @@ const TableList = () => {
   );
 
   const analytics = useAnalytics();
+  const [requestCount, setRequestCount] = useState(0);
   const request: RequestFunctionType<TransactionCaseManagement> = useCallback(
     async (params, sorter) => {
       const {
@@ -305,6 +306,7 @@ const TableList = () => {
           filterTagValue: tagValue,
         }),
       );
+      setRequestCount(response.total);
       analytics.event({
         title: 'Table Loaded',
         time,
@@ -324,47 +326,51 @@ const TableList = () => {
       <RequestTable<TransactionCaseManagement>
         actionsHeader={[
           ({ params, setParams }) => (
-            <>
-              <UserSearchButton
-                initialMode={params.params.userFilterMode ?? 'ALL'}
-                userId={params.params.userId ?? null}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    params: {
-                      ...state.params,
-                      userId: userId,
-                      userFilterMode: mode,
-                    },
-                  }));
-                }}
-              />
-              <StateSearchButton
-                transactionState={params.params.transactionState ?? undefined}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    params: { ...state.params, transactionState: value ?? undefined },
-                  }));
-                }}
-              />
-              <TagSearchButton
-                initialState={{
-                  key: params.params.tagKey ?? null,
-                  value: params.params.tagValue ?? null,
-                }}
-                onConfirm={(value) => {
-                  setParams((state) => ({
-                    ...state,
-                    params: {
-                      ...state.params,
-                      tagKey: value.key ?? undefined,
-                      tagValue: value.value ?? undefined,
-                    },
-                  }));
-                }}
-              />
-            </>
+            <div className={styles.flex}>
+              <div className={styles.filterbuttons}>
+                <UserSearchButton
+                  initialMode={params.params.userFilterMode ?? 'ALL'}
+                  userId={params.params.userId ?? null}
+                  onConfirm={(userId, mode) => {
+                    setParams((state) => ({
+                      ...state,
+                      params: {
+                        ...state.params,
+                        userId: userId,
+                        userFilterMode: mode,
+                      },
+                    }));
+                  }}
+                />
+                <StateSearchButton
+                  transactionState={params.params.transactionState ?? undefined}
+                  onConfirm={(value) => {
+                    setParams((state) => ({
+                      ...state,
+                      params: { ...state.params, transactionState: value ?? undefined },
+                    }));
+                  }}
+                />
+                <TagSearchButton
+                  initialState={{
+                    key: params.params.tagKey ?? null,
+                    value: params.params.tagValue ?? null,
+                  }}
+                  onConfirm={(value) => {
+                    setParams((state) => ({
+                      ...state,
+                      params: {
+                        ...state.params,
+                        tagKey: value.key ?? undefined,
+                        tagValue: value.value ?? undefined,
+                      },
+                    }));
+                  }}
+                />
+              </div>
+
+              <div className={styles.count}>Displaying {requestCount} results</div>
+            </div>
           ),
         ]}
         form={{
