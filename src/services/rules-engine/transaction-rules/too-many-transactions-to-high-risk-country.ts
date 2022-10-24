@@ -1,9 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
-import {
-  COUNTRIES_SCHEMA,
-  COUNTRIES_OPTIONAL_SCHEMA,
-} from '../utils/rule-parameter-schemas'
+import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
@@ -11,7 +8,7 @@ import { expandCountryGroup } from '@/utils/countries'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
 type TooManyTransactionsToHighRiskCountryRulePartialParameters = {
-  highRiskCountries: string[]
+  highRiskCountries?: string[]
   highRiskCountriesExclusive?: string[]
 }
 export type TooManyTransactionsToHighRiskCountryRuleParameters =
@@ -28,7 +25,7 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
       {
         type: 'object',
         properties: {
-          highRiskCountries: COUNTRIES_SCHEMA({
+          highRiskCountries: COUNTRIES_OPTIONAL_SCHEMA({
             title: 'High Risk Countries (ISO 3166-1 alpha-2)',
             description: 'Countries in this list are considered high risk',
           }),
@@ -38,7 +35,7 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
               "Countries that aren't in this list are considered high risk",
           }),
         },
-        required: ['highRiskCountries'],
+        nullable: true,
       }
 
     return mergeRuleSchemas<TooManyTransactionsToHighRiskCountryRuleParameters>(
@@ -53,7 +50,7 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
     }
     if (!this.highRiskCountries) {
       this.highRiskCountries = expandCountryGroup(
-        this.parameters.highRiskCountries
+        this.parameters.highRiskCountries || []
       )
     }
     if (!this.highRiskCountriesExclusive) {
