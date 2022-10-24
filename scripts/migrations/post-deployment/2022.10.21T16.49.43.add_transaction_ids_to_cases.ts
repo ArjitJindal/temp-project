@@ -35,7 +35,6 @@ export async function migrateTenant(tenant: Tenant) {
     }
     caseItem = await cases.next()
   } while (caseItem != null)
-  await mongodb.close()
 }
 
 export const up = async () => {
