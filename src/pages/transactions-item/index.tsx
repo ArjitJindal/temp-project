@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import moment from 'moment';
+import ActionRiskDisplay from '../case-management-item/components/TransactionDetailsCard/ActionRiskDisplay';
 import SenderReceiverDetails from './SenderReceiverDetails';
 import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
@@ -14,6 +15,7 @@ import * as Form from '@/components/ui/Form';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import RestartLineIcon from '@/components/ui/icons/Remix/device/restart-line.react.svg';
 import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react.svg';
+import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import TransactionState from '@/components/ui/TransactionState';
@@ -21,6 +23,7 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export default function TransactionsItem() {
   const i18n = useI18n();
@@ -96,6 +99,11 @@ export default function TransactionsItem() {
                   <Form.Layout.Label icon={<FileLineIcon />} title="Reference">
                     {transaction.reference}
                   </Form.Layout.Label>
+                  <Feature name="PULSE_ARS_CALCULATION">
+                    <Form.Layout.Label icon={<HospitalIcon />} title={'Action Risk Score'}>
+                      <ActionRiskDisplay transactionId={transaction.transactionId!} />
+                    </Form.Layout.Label>
+                  </Feature>
                 </EntityHeader>
               </Card.Section>
               <Card.Section>

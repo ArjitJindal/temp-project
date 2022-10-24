@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import ActionRiskDisplay from '../ActionRiskDisplay';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
 import { CaseTransaction } from '@/apis';
@@ -7,6 +8,7 @@ import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react.svg';
+import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import LinkIcon from '@/components/ui/icons/Remix/business/links-line.react.svg';
 import BuildingIcon from '@/components/ui/icons/Remix/buildings/building-4-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
@@ -15,6 +17,7 @@ import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   transaction: CaseTransaction;
@@ -33,12 +36,19 @@ export default function TransactionInfoCard(props: Props) {
           <Form.Layout.Label icon={<TimerLineIcon />} title={'Transaction Time'} />
           <div>{moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}</div>
           <Form.Layout.Label icon={<PulseLineIcon />} title={'Rule action'} />
+          {'-'}
           <Form.Layout.Label icon={<TransactionIcon />} title={'Transaction Type'} />
-          <TransactionTypeTag transactionType={transaction.type} />
+          {transaction.type ? <TransactionTypeTag transactionType={transaction.type} /> : '-'}
           <Form.Layout.Label icon={<FileLineIcon />} title="Reference" />
           {transaction.reference ?? '-'}
           <Form.Layout.Label icon={<BuildingIcon />} title="Product Type" />
           {transaction.productType ?? '-'}
+          <Form.Layout.Label icon={<BuildingIcon />} title="Action Risk Score" />
+          <Feature name="PULSE_ARS_CALCULATION">
+            <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
+              <ActionRiskDisplay transactionId={transaction.transactionId!} />
+            </Form.Layout.Label>
+          </Feature>
           <Form.Layout.Label icon={<LinkIcon />} title="Related Transactions" />
           {transaction.relatedTransactionIds
             ? transaction.relatedTransactionIds.map((transactionId) => {

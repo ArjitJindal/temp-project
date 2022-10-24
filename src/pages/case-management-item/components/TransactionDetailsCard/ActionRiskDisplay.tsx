@@ -1,22 +1,22 @@
 import { Spin, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { useApi } from '@/api';
-import { KrsScore } from '@/apis';
+import { ArsScore } from '@/apis';
 
 interface Props {
-  userId: string;
+  transactionId: string;
 }
 
-export default function KycRiskDisplay({ userId }: Props) {
+export default function ActionRiskDisplay({ transactionId }: Props) {
   const api = useApi();
 
-  const [syncState, setSyncState] = useState<KrsScore>();
+  const [syncState, setSyncState] = useState<ArsScore>();
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let isCanceled = false;
     api
-      .getKrsValue({ userId })
+      .getArsValue({ transactionId })
       .then((result: any) => {
         if (isCanceled) {
           return;
@@ -24,7 +24,7 @@ export default function KycRiskDisplay({ userId }: Props) {
         setSyncState(result);
         setLoading(false);
       })
-      .catch((e) => {
+      .catch((e: any) => {
         if (isCanceled) {
           return;
         }
@@ -34,14 +34,14 @@ export default function KycRiskDisplay({ userId }: Props) {
     return () => {
       isCanceled = true;
     };
-  }, [userId, api]);
+  }, [transactionId, api]);
 
   return (
     <Tag>
       {loading ? (
         <Spin />
-      ) : syncState && syncState.krsScore ? (
-        syncState.krsScore.toFixed(4)
+      ) : syncState && syncState.arsScore ? (
+        syncState.arsScore.toFixed(4)
       ) : (
         'N / A'
       )}
