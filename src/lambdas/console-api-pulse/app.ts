@@ -186,6 +186,20 @@ export const riskLevelAndScoreHandler = lambdaApi({
 
       return riskRepository.getKrsValueFromMongo(userId)
     }
+    if (event.httpMethod === 'GET' && event.resource === '/pulse/ars-value') {
+      const transactionId = (event.queryStringParameters || {})
+        .transactionId as string
+      logger.info(`transactionId: ${transactionId}`)
+      if (transactionId == null) {
+        throw new BadRequest(`"transactionId" is a requred query parameter`)
+      }
+      logger.info(`Getting ARS`)
+      logger.info(
+        `ARS: ${await riskRepository.getArsValueFromMongo(transactionId)}`
+      )
+
+      return await riskRepository.getArsValueFromMongo(transactionId)
+    }
     throw new BadRequest('Unhandled request')
   }
 )

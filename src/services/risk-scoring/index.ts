@@ -9,6 +9,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { logger } from '@/core/logger'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
 import dayjs from '@/utils/dayjs'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 const DEFAULT_RISK_LEVEL = 'HIGH' // defaults to high risk for now - will be configurable in the future
 
@@ -78,9 +79,49 @@ export const calculateKRS = async (
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
 }
 
+export const calculateARS = async (
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  transaction: Transaction
+): Promise<any> => {
+  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  const parameterRiskScores = await riskRepository.getParameterRiskItems()
+  const riskClassificationValues = await riskRepository.getRiskClassification()
+  const riskScoresList: number[] = []
+
+  parameterRiskScores
+    ?.filter(
+      (parameterAttributeDetails) =>
+        parameterAttributeDetails.isActive &&
+        !parameterAttributeDetails.isDerived &&
+        parameterAttributeDetails.riskEntityType === 'TRANSACTION'
+    )
+    .forEach((parameterAttributeDetails) => {
+      const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
+        parameterAttributeDetails.parameter,
+        transaction,
+        parameterAttributeDetails.riskLevelAssignmentValues
+      )
+      riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+    })
+  const arsScore = riskScoresList.length
+    ? _.mean(riskScoresList)
+    : getDefaultRiskValue(riskClassificationValues)
+
+  logger.info(`ARS Scores List: ${riskScoresList}`)
+  logger.info(`ARS Score: ${arsScore}`)
+
+  await riskRepository.createOrUpdateArsScore(
+    transaction.transactionId!,
+    arsScore,
+    transaction.originUserId,
+    transaction.destinationUserId
+  )
+}
+
 const getSchemaAttributeRiskLevel = (
   paramName: string,
-  entity: User | Business,
+  entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
 ): RiskLevel => {
   const endValue = _.get(entity, paramName)

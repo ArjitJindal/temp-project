@@ -6,7 +6,7 @@ import {
   GetCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { KrsItem } from '../types'
+import { ArsItem, KrsItem } from '../types'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -17,7 +17,10 @@ import {
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
 import { logger } from '@/core/logger'
-import { KRS_SCORES_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  ARS_SCORES_COLLECTION,
+  KRS_SCORES_COLLECTION,
+} from '@/utils/mongoDBUtils'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -112,6 +115,32 @@ export class RiskRepository {
       )
       await localHammerheadChangeCaptureHandler(primaryKey)
     }
+
+    return score
+  }
+
+  async createOrUpdateArsScore(
+    transactionId: string,
+    score: number,
+    originUserId?: string,
+    destinationUserId?: string
+  ): Promise<any> {
+    const newArsScoreItem: any = {
+      arsScore: score,
+      createdAt: Date.now(),
+      originUserId: originUserId,
+      destinationUserId: destinationUserId,
+    }
+
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1'),
+        ...newArsScoreItem,
+      },
+    }
+
+    await this.dynamoDb.send(new PutCommand(putItemInput))
 
     return score
   }
@@ -295,5 +324,36 @@ export class RiskRepository {
       KRS_SCORES_COLLECTION(this.tenantId)
     )
     return await krsValuesCollection.findOne({ userId })
+  }
+
+  async addArsValueToMongo(arsItem: ArsItem): Promise<ArsItem> {
+    const db = this.mongoDb.db()
+    const arsValuesCollection = db.collection<ArsItem & { version: string }>(
+      ARS_SCORES_COLLECTION(this.tenantId)
+    )
+
+    const structuredItem = { ...arsItem, version: arsItem.SortKeyID }
+
+    await arsValuesCollection.replaceOne(
+      { transactionId: arsItem.transactionId },
+      structuredItem,
+      {
+        upsert: true,
+      }
+    )
+    return arsItem
+  }
+
+  async getArsValueFromMongo(
+    transactionId: string
+  ): Promise<(ArsItem & { version: string }) | null> {
+    const db = this.mongoDb.db()
+    const arsValuesCollection = db.collection<ArsItem & { version: string }>(
+      ARS_SCORES_COLLECTION(this.tenantId)
+    )
+    const all = await arsValuesCollection.findOne({ transactionId })
+    logger.info(`FIND ALL: ${JSON.stringify(all)}`)
+
+    return await arsValuesCollection.findOne({ transactionId })
   }
 }

@@ -25,7 +25,8 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { updateLogMetadata } from '@/core/utils/context'
+import { updateLogMetadata, hasFeature } from '@/core/utils/context'
+import { calculateARS } from '@/services/risk-scoring'
 
 const sqs = new AWS.SQS()
 
@@ -102,6 +103,9 @@ async function transactionHandler(
           .promise()
       }
     }
+  }
+  if (hasFeature('PULSE_ARS_CALCULATION')) {
+    calculateARS(tenantId, dynamoDb, transaction)
   }
 }
 

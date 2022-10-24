@@ -5,3 +5,13 @@ export type KrsItem = {
   PartitionKeyID: string
   SortKeyID: string
 }
+
+export type ArsItem = {
+  createdAt: number
+  arsScore: number
+  transactionId: string
+  originUserId?: string
+  destinationUserId?: string
+  PartitionKeyID: string
+  SortKeyID: string
+}

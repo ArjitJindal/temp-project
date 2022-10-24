@@ -13,6 +13,7 @@ import {
   USER_PRIMARY_KEY_IDENTIFIER,
   BUSINESS_USER_EVENT_KEY_IDENTIFIER,
   KRS_KEY_IDENTIFIER,
+  ARS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -27,6 +28,7 @@ type DynamoDbEntityType =
   | 'CONSUMER_USER_EVENT'
   | 'BUSINESS_USER_EVENT'
   | 'KRS_VALUE'
+  | 'ARS_VALUE'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -79,6 +81,11 @@ function getDynamoDbEntityMetadata(
     return {
       type: 'KRS_VALUE',
       entityId: `KRS_VALUE:${entity.userId}`,
+    }
+  } else if (partitionKeyId.includes(ARS_KEY_IDENTIFIER)) {
+    return {
+      type: 'ARS_VALUE',
+      entityId: `ARS_VALUE:${entity.userId}`,
     }
   }
   return null

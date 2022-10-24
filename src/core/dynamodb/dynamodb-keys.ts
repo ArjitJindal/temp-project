@@ -295,6 +295,14 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#krs-value`,
     SortKeyID: version,
   }),
+  ARS_VALUE_ITEM: (
+    tenantId: string,
+    transactionId: string,
+    version: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#${TRANSACTION_ID_PREFIX}${transactionId}#krs-value`,
+    SortKeyID: version,
+  }),
 }
 
 function getTransactionTypeKey(transactionType: string | undefined): string {
