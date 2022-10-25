@@ -11,7 +11,7 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
-const DEFAULT_RISK_LEVEL = 'HIGH' // defaults to high risk for now - will be configurable in the future
+const DEFAULT_RISK_LEVEL = 'VERY_HIGH' // defaults to very high risk for now - will be configurable in the future
 
 const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
   let riskScore = 75 // Make this configurable
