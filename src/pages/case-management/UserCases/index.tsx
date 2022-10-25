@@ -95,6 +95,7 @@ export default function UserCases(props: Props) {
       {
         title: 'User ID',
         width: 150,
+        hideInSearch: true,
         render: (_, entity) => {
           const { userId, user } = entity;
           return userId ? <Id to={getUserLink(user)}>{userId}</Id> : '-';
