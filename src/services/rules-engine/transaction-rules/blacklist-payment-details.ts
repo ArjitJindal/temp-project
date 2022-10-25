@@ -29,27 +29,41 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
         blacklistedCardPaymentDetails: {
           type: 'array',
           title: 'Blacklist Card Payment Details',
-          items: { type: 'object' },
-          properties: {
-            cardFingerprint: {
-              type: 'string',
-              title: 'Card Fingerprint',
-              nullable: true,
-            },
-            cardLast4Digits: {
-              type: 'string',
-              title: 'Card Number Suffix',
-              nullable: true,
-            },
-            cardExpiry: {
-              type: 'object',
-              title: 'Card Expiry Date',
-              nullable: true,
-            },
-            nameOnCard: {
-              type: 'object',
-              title: 'Card Holder Name',
-              nullable: true,
+          items: {
+            type: 'object',
+            properties: {
+              cardFingerprint: {
+                type: 'string',
+                title: 'Card Fingerprint',
+                nullable: true,
+              },
+              cardLast4Digits: {
+                type: 'string',
+                title: 'Card Number Suffix',
+                nullable: true,
+              },
+              cardExpiry: {
+                type: 'object',
+                properties: {
+                  month: {
+                    type: 'integer',
+                    title: 'Month',
+                    nullable: true,
+                  },
+                  year: {
+                    type: 'integer',
+                    title: 'Year',
+                    nullable: true,
+                  },
+                },
+                title: 'Card Expiry Date',
+                nullable: true,
+              },
+              nameOnCard: {
+                type: 'string',
+                title: 'Card Holder Name',
+                nullable: true,
+              },
             },
           },
           nullable: true,
