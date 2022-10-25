@@ -409,12 +409,6 @@ export class CaseRepository {
     if (!params.includeTransactions) {
       pipeline.push({ $unset: 'caseTransactions' })
     }
-    if (params?.skip) {
-      pipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      pipeline.push({ $limit: params.limit })
-    }
     return pipeline
   }
 
@@ -422,6 +416,12 @@ export class CaseRepository {
     params: DefaultApiGetCaseListRequest
   ): AggregationCursor<Case> {
     const pipeline = this.getCasesMongoPipeline(params)
+    if (params?.skip) {
+      pipeline.push({ $skip: params.skip })
+    }
+    if (params?.limit) {
+      pipeline.push({ $limit: params.limit })
+    }
     return this.getDenormalizedCases(pipeline)
   }
 
