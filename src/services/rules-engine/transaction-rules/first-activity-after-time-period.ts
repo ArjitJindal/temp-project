@@ -1,12 +1,19 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import {
+  TRANSACTION_STATE_OPTIONAL_SCHEMA,
+  USER_TYPE_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
+import { isUserType } from '../utils/user-rule-utils'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { UserType } from '@/@types/user/user-type'
 import dayjs from '@/utils/dayjs'
 
 export type FirstActivityAfterLongTimeRuleParameters =
   DefaultTransactionRuleParameters & {
     dormancyPeriodDays: number
+    // optional parameter
+    userType?: UserType
   }
 
 export default class FirstActivityAfterLongTimeRule extends TransactionRule<FirstActivityAfterLongTimeRuleParameters> {
@@ -19,9 +26,15 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
           title: 'Dormancy Period Threshold (Days)',
         },
         transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['dormancyPeriodDays'],
     }
+  }
+
+  public getFilters() {
+    const { userType } = this.parameters
+    return [() => isUserType(this.senderUser, userType)]
   }
 
   public async computeRule() {

@@ -4,6 +4,10 @@ import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
+  getTestUser,
+  setUpConsumerUsersHooks,
+} from '@/test-utils/user-test-utils'
+import {
   setUpRulesHooks,
   createTransactionRuleTestCase,
   TransactionRuleTestCase,
@@ -170,7 +174,87 @@ describe('Transaction State', () => {
           transactionState: 'SUCCESSFUL',
         }),
       ],
-      expectedHits: [false, false, true],
+      expectedHits: [false, true, true],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Optional parameters - User Type', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'first-activity-after-time-period',
+      defaultParameters: {
+        dormancyPeriodDays: 365,
+        userType: 'CONSUMER',
+      } as FirstActivityAfterLongTimeRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({ userId: '1' }),
+    getTestUser({ userId: '2' }),
+    getTestUser({ userId: '3' }),
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Exceeded dormacy period with Comsumer user - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'Not exceeded dormacy period with Comsumer user - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1',
+          destinationUserId: '2',
+          timestamp: dayjs('2021-01-02T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
+    },
+    {
+      name: 'Exceeded dormacy period with Business user - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '6',
+          destinationUserId: '7',
+          timestamp: dayjs('2021-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '6',
+          destinationUserId: '8',
+          timestamp: dayjs('2022-01-02T00:00:00.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false],
     },
   ])('', ({ name, transactions, expectedHits }) => {
     createTransactionRuleTestCase(
