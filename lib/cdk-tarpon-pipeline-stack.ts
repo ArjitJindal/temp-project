@@ -87,7 +87,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               commands: [
                 'npm install @tsconfig/node16 ts-node typescript',
                 `ASSUME_ROLE_ARN="${roleArn}"`,
-                `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy --duration-seconds 43200)`,
+                `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
                 'export TEMP_ROLE',
                 'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
                 'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',

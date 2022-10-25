@@ -92,6 +92,40 @@ export function withMetrics(
   return client
 }
 
+export function withRetry(
+  client: DynamoDBDocumentClient
+): DynamoDBDocumentClient {
+  // We only retry with the refreshed credentials when running migrations
+  if (!process.env.ASSUME_ROLE_ARN) {
+    return client
+  }
+
+  client.send = _.wrap(
+    client.send.bind(client),
+    async (func: any, command: any, ...args) => {
+      try {
+        const result = await func(command, ...args)
+        return result
+      } catch (e) {
+        if ((e as any)?.name === 'ExpiredTokenException') {
+          logger.warn('Retry DynamoDB operation...')
+          const retryClient = getDynamoDbClient(
+            {
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
+              sessionToken: process.env.AWS_SESSION_TOKEN as string,
+            },
+            { retry: false }
+          )
+          return await retryClient.send(command, ...args)
+        }
+        throw e
+      }
+    }
+  ) as any
+  return client
+}
+
 export function getDynamoDbClientByEvent(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
     APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
@@ -119,14 +153,16 @@ export function getDynamoDbRawClient(
 }
 
 export function getDynamoDbClient(
-  credentials?: Credentials | CredentialsOptions
+  credentials?: Credentials | CredentialsOptions,
+  options?: { retry?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
   // TODO: re-enalbe metrics in FDT-45338
-  return client
+  const retry = options?.retry ?? true
+  return retry ? withRetry(client) : client
 }
 
 async function getLastEvaluatedKey(
