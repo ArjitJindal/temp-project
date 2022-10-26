@@ -488,6 +488,12 @@ paths:
           in: query
           name: filterId
         - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIdList
+        - schema:
             $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterOutStatus
@@ -1690,6 +1696,10 @@ paths:
         in: query
         name: skip
         required: true
+      - schema:
+          type: boolean
+        in: query
+        name: includeUsers
     get:
       summary: Get transactions related to case
       operationId: get-case-transactions

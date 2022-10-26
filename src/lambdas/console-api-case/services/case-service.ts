@@ -75,8 +75,9 @@ export class CaseService {
   public async getCaseTransactions(
     caseId: string,
     params: {
-      limit?: number
-      skip?: number
+      limit: number
+      skip: number
+      includeUsers?: boolean
     }
   ): Promise<CaseTransactionsListResponse> {
     return await this.caseRepository.getCaseTransactions(caseId, params)

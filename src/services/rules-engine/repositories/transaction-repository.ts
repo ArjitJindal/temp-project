@@ -135,7 +135,11 @@ export class TransactionRepository {
         $lte: params.beforeTimestamp,
       },
     })
-
+    if (params.filterIdList != null) {
+      conditions.push({
+        transactionId: { $in: params.filterIdList },
+      })
+    }
     if (params.filterId != null) {
       conditions.push({ transactionId: { $regex: params.filterId } })
     }

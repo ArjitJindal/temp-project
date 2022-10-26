@@ -147,12 +147,13 @@ export const casesHandler = lambdaApi()(
       event.resource === '/cases/{caseId}/transactions' &&
       event.pathParameters?.caseId
     ) {
-      const { limit, skip } = event.queryStringParameters as any
+      const { limit, skip, includeUsers } = event.queryStringParameters as any
       return await caseService.getCaseTransactions(
         event.pathParameters.caseId,
         {
           limit: parseInt(limit) || 20,
           skip: parseInt(skip) || 0,
+          includeUsers: includeUsers === 'true',
         }
       )
     } else if (

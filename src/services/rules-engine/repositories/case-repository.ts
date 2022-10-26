@@ -28,8 +28,8 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
-import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 export class CaseRepository {
   mongoDb: MongoClient
@@ -540,10 +540,15 @@ export class CaseRepository {
   public async getCaseTransactions(
     caseId: string,
     params: {
-      limit?: number
-      skip?: number
-    } = {}
+      limit: number
+      skip: number
+      includeUsers?: boolean
+    }
   ): Promise<CaseTransactionsListResponse> {
+    const transactionsRepo = new TransactionRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+
     const caseItem = await this.getCaseById(caseId)
     if (caseItem == null) {
       throw new NotFound(`Case not found: ${caseId}`)
@@ -555,35 +560,15 @@ export class CaseRepository {
         data: [],
       }
     }
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    const pipeline: Document[] = [
-      {
-        $match: {
-          transactionId: { $in: caseTransactionsIds },
-        },
-      },
-    ]
 
-    const totalPipeline = [...pipeline, { $count: 'count' }]
-    const totalCursor = collection.aggregate<{ count: number }>(totalPipeline)
-    const totalPromise = totalCursor.next().then((item) => item?.count ?? 0)
-
-    const dataPipeline = [...pipeline]
-    if (params?.skip) {
-      dataPipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      dataPipeline.push({ $limit: params.limit })
-    }
-    const dataCursor = collection.aggregate<CaseTransaction>(dataPipeline)
-
-    return {
-      total: await totalPromise,
-      data: await dataCursor.toArray(),
-    }
+    return await transactionsRepo.getTransactions({
+      filterIdList: caseTransactionsIds,
+      afterTimestamp: 0,
+      beforeTimestamp: Number.MAX_SAFE_INTEGER,
+      limit: params.limit,
+      skip: params.skip,
+      includeUsers: params.includeUsers,
+    })
   }
 
   public async getCasesByTransactionId(
