@@ -29,7 +29,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
 }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
-  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -208,30 +207,27 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         <ProDescriptions.Item label={<b>Updated At:</b>} valueType="dateTime">
           {ruleInstance.createdAt}
         </ProDescriptions.Item>
-        {isCaseCreationTypeEnabled && (
-          <ProDescriptions.Item label={<b>Case Creation Type</b>}>
-            <Radio.Group
-              name="caseCreationType"
-              options={RULE_CASE_CREATION_TYPE_OPTIONS}
-              onChange={(event) => setCaseCreationType(event.target.value)}
-              optionType="button"
-              disabled={!editing || saving}
-              value={caseCreationType}
-            ></Radio.Group>
-          </ProDescriptions.Item>
-        )}
-        {isCaseCreationTypeEnabled && (
-          <ProDescriptions.Item label={<b>Case Priority</b>}>
-            <Radio.Group
-              name="casePriority"
-              options={RULE_CASE_PRIORITY}
-              onChange={(event) => setCasePriority(event.target.value)}
-              optionType="button"
-              disabled={!editing || saving}
-              value={casePriority}
-            ></Radio.Group>
-          </ProDescriptions.Item>
-        )}
+        <ProDescriptions.Item label={<b>Case Creation Type</b>}>
+          <Radio.Group
+            name="caseCreationType"
+            options={RULE_CASE_CREATION_TYPE_OPTIONS}
+            onChange={(event) => setCaseCreationType(event.target.value)}
+            optionType="button"
+            disabled={!editing || saving}
+            value={caseCreationType}
+          ></Radio.Group>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label={<b>Case Priority</b>}>
+          <Radio.Group
+            name="casePriority"
+            options={RULE_CASE_PRIORITY}
+            onChange={(event) => setCasePriority(event.target.value)}
+            optionType="button"
+            disabled={!editing || saving}
+            value={casePriority}
+          ></Radio.Group>
+        </ProDescriptions.Item>
+
         <ProDescriptions.Item label={<b>Filters:</b>} valueType="text">
           <RuleFiltersEditor
             filters={filters}

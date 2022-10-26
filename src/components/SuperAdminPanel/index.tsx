@@ -25,7 +25,6 @@ const FEATURES: Feature[] = [
   'AUDIT_LOGS',
   'IMPORT_FILES',
   'LISTS',
-  'CASE_CREATION_TYPE',
   'HELP_CENTER',
   'SANCTIONS',
 ];

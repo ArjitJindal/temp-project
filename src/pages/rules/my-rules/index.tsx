@@ -15,7 +15,6 @@ import { TableColumn } from '@/components/ui/Table/types';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
-  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
@@ -149,7 +148,7 @@ const MyRule = () => {
           );
         },
       },
-      ...(isCaseCreationTypeEnabled ? caseCreationHeaders : []),
+      ...caseCreationHeaders,
       {
         title: 'Action',
         align: 'center',
@@ -190,13 +189,7 @@ const MyRule = () => {
         },
       },
     ];
-  }, [
-    handleActivationChange,
-    rules,
-    updatedRuleInstances,
-    isPulseEnabled,
-    isCaseCreationTypeEnabled,
-  ]);
+  }, [handleActivationChange, rules, updatedRuleInstances, isPulseEnabled]);
   const request = useCallback(async () => {
     const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances({})]);
     setRules(_.keyBy(rules, 'id'));

@@ -7,7 +7,6 @@ import Button from '@/components/ui/Button';
 import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { TableColumn } from '@/components/ui/Table/types';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -15,7 +14,6 @@ interface Props {
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const api = useApi();
-  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<Rule>[] = [
       {
@@ -54,7 +52,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         width: 500,
         dataIndex: 'description',
       },
-      ...(isCaseCreationTypeEnabled ? caseCreationHeaders : []),
+      ...caseCreationHeaders,
       {
         title: 'Default Parameters',
         width: 250,
@@ -95,7 +93,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         },
       },
     ];
-  }, [onSelectRule, isCaseCreationTypeEnabled]);
+  }, [onSelectRule]);
 
   const request = useCallback(async () => {
     const rules = await api.getRules({});

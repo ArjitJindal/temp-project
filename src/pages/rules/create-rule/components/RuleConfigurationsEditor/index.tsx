@@ -24,7 +24,6 @@ interface Props {
 export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActivated }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
-  const isCaseCreationTypeEnabled = useFeature('CASE_CREATION_TYPE');
   const [ruleNameAlias, setRuleNameAlias] = useState<string>();
   const [ruleAction, setRuleAction] = useState<RuleAction>(rule.defaultAction);
   const [riskLevelRuleActions, setRiskLevelRuleActions] = useState(
@@ -125,31 +124,28 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
           <Descriptions.Item label="Rule Description"> {rule.description}</Descriptions.Item>
         </Descriptions>
       </Row>
-      {isCaseCreationTypeEnabled && (
-        <Row justify="center" className={styles.section}>
-          <Descriptions column={1} colon={false} layout="vertical">
-            <Descriptions.Item label="Case Creation Type">
-              <Radio.Group
-                name="caseCreationType"
-                options={RULE_CASE_CREATION_TYPE_OPTIONS}
-                onChange={(event) => setCaseCreationType(event.target.value)}
-                optionType="button"
-                value={caseCreationType}
-              ></Radio.Group>
-            </Descriptions.Item>
-            <Descriptions.Item label="Case Priority">
-              <Radio.Group
-                name="casePriority"
-                options={RULE_CASE_PRIORITY}
-                onChange={(event) => setCasePriority(event.target.value)}
-                optionType="button"
-                value={casePriority}
-              ></Radio.Group>
-            </Descriptions.Item>
-          </Descriptions>
-        </Row>
-      )}
-
+      <Row justify="center" className={styles.section}>
+        <Descriptions column={1} colon={false} layout="vertical">
+          <Descriptions.Item label="Case Creation Type">
+            <Radio.Group
+              name="caseCreationType"
+              options={RULE_CASE_CREATION_TYPE_OPTIONS}
+              onChange={(event) => setCaseCreationType(event.target.value)}
+              optionType="button"
+              value={caseCreationType}
+            ></Radio.Group>
+          </Descriptions.Item>
+          <Descriptions.Item label="Case Priority">
+            <Radio.Group
+              name="casePriority"
+              options={RULE_CASE_PRIORITY}
+              onChange={(event) => setCasePriority(event.target.value)}
+              optionType="button"
+              value={casePriority}
+            ></Radio.Group>
+          </Descriptions.Item>
+        </Descriptions>
+      </Row>
       <Divider>Rule Filters</Divider>
       <Row className={styles.section}>
         <RuleFiltersEditor filters={filters} onChange={handleFiltersChange} />
