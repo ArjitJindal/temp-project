@@ -75,7 +75,14 @@ export class CdkTarponPipelineStack extends cdk.Stack {
     })
     const getDeployCodeBuildProject = (config: Config) => {
       const env = config.stage + (config.region ? `:${config.region}` : '')
-      const roleArn = `arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole`
+      const assumeRuleCommands = [
+        `ASSUME_ROLE_ARN="arn:aws:iam::${config.env.account}:role/CodePipelineDeployRole"`,
+        `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
+        'export TEMP_ROLE',
+        'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
+        'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
+        'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
+      ]
       return new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
@@ -86,15 +93,10 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               },
               commands: [
                 'npm install @tsconfig/node16 ts-node typescript',
-                `ASSUME_ROLE_ARN="${roleArn}"`,
-                `TEMP_ROLE=$(aws sts assume-role --role-arn $ASSUME_ROLE_ARN --role-session-name deploy)`,
-                'export TEMP_ROLE',
-                'export AWS_ACCESS_KEY_ID=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.AccessKeyId")',
-                'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
-                'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
                 `export SM_SECRET_ARN=${config.application.ATLAS_CREDENTIALS_SECRET_ARN}`,
                 `export ENV=${env}`,
                 `export AWS_REGION=${config.env.region}`,
+                ...assumeRuleCommands,
               ],
             },
             build: {
@@ -104,6 +106,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                     `mv "$CODEBUILD_SRC_DIR_${buildOutput.artifactName}"/${dir} ${dir}`
                 ),
                 `npm run migration:pre:up`,
+                ...assumeRuleCommands,
                 `npm run synth:${env}`,
                 `npm run deploy:${env} -- --require-approval=never`,
                 `npm run migration:post:up`,

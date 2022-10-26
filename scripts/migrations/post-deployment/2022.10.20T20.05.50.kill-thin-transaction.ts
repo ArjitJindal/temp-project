@@ -8,7 +8,8 @@ export const up = async () => {
       migrateTenant(
         tenant,
         new Date('2022-10-26').valueOf(),
-        Number.MAX_SAFE_INTEGER
+        Number.MAX_SAFE_INTEGER,
+        '2022.10.20T20.05.50.kill-thin-transaction'
       )
     )
   }

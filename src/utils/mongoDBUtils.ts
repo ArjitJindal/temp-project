@@ -155,6 +155,8 @@ export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-searches`
 }
 
+export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
+
 export const MONTH_DATE_FORMAT = '%Y-%m'
 export const DAY_DATE_FORMAT = '%Y-%m-%d'
 export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
