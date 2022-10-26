@@ -7,10 +7,24 @@ import Button from '@/components/ui/Button';
 import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { TableColumn } from '@/components/ui/Table/types';
+import { RecommendedTag } from '@/components/ui/RecommendedTag';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
 }
+export const recommendedRules = [
+  'R-2',
+  'R-3',
+  'R-4',
+  'R-5',
+  'R-10',
+  'R-30',
+  'R-54',
+  'R-69',
+  'R-121',
+  'R-122',
+  'R-124',
+];
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const api = useApi();
@@ -30,12 +44,18 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
     return [
       {
         title: 'Rule ID',
-        width: 100,
+        width: 200,
         dataIndex: 'id',
         sorter: (a, b) => parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1]),
         defaultSortOrder: 'ascend',
         render: (_, entity) => {
-          return <span>{entity.id}</span>;
+          return (
+            <>
+              <span className={style.root}>
+                {entity.id} {recommendedRules.includes(entity.id) ? <RecommendedTag /> : ''}
+              </span>
+            </>
+          );
         },
       },
       {
