@@ -27,6 +27,7 @@ const FEATURES: Feature[] = [
   'LISTS',
   'HELP_CENTER',
   'SANCTIONS',
+  'DASHBOARD_BLOCK_USER',
 ];
 
 export default function SuperAdminPanel() {
