@@ -32,6 +32,7 @@ export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
+export const DRS_KEY_IDENTIFIER = '#drs-value'
 
 export const DynamoDbKeys = {
   // Attributes: refer to Transaction
@@ -293,6 +294,10 @@ export const DynamoDbKeys = {
   }),
   KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#krs-value`,
+    SortKeyID: version,
+  }),
+  DRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
+    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#drs-value`,
     SortKeyID: version,
   }),
   ARS_VALUE_ITEM: (

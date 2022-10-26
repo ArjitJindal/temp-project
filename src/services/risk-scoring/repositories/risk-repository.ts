@@ -6,7 +6,7 @@ import {
   GetCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { ArsItem, KrsItem } from '../types'
+import { ArsItem, DrsItem, KrsItem } from '../types'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -19,6 +19,7 @@ import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualR
 import { logger } from '@/core/logger'
 import {
   ARS_SCORES_COLLECTION,
+  DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
 } from '@/utils/mongoDBUtils'
 
@@ -110,12 +111,8 @@ export class RiskRepository {
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
-      const { localHammerheadChangeCaptureHandler } = await import(
-        '@/utils/local-dynamodb-change-handler'
-      )
-      await localHammerheadChangeCaptureHandler(primaryKey)
+      await handleLocalChangeCapture(primaryKey)
     }
-
     return score
   }
 
@@ -131,16 +128,72 @@ export class RiskRepository {
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     }
+    const primaryKey = DynamoDbKeys.ARS_VALUE_ITEM(
+      this.tenantId,
+      transactionId,
+      '1'
+    )
 
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1'),
+        ...primaryKey,
         ...newArsScoreItem,
       },
     }
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(primaryKey)
+    }
+    return score
+  }
+
+  async getDrsScore(userId: string): Promise<any> {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+
+    if (!result.Item) {
+      return null
+    }
+
+    const drsScoreItem = {
+      ...result.Item,
+    }
+    delete drsScoreItem.PartitionKeyID
+    delete drsScoreItem.SortKeyID
+    return drsScoreItem
+  }
+
+  async createOrUpdateDrsScore(
+    userId: string,
+    score: number,
+    transactionId: string
+  ): Promise<any> {
+    const newDrsScoreItem: any = {
+      drsScore: score,
+      transactionId: transactionId,
+      createdAt: Date.now(),
+    }
+    const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
+
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...primaryKey,
+        ...newDrsScoreItem,
+        userId: userId,
+      },
+    }
+
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(primaryKey)
+    }
 
     return score
   }
@@ -296,6 +349,7 @@ export class RiskRepository {
       return null
     }
   }
+
   /* MongoDB operations */
 
   async addKrsValueToMongo(krsItem: KrsItem): Promise<KrsItem> {
@@ -351,9 +405,45 @@ export class RiskRepository {
     const arsValuesCollection = db.collection<ArsItem & { version: string }>(
       ARS_SCORES_COLLECTION(this.tenantId)
     )
-    const all = await arsValuesCollection.findOne({ transactionId })
-    logger.info(`FIND ALL: ${JSON.stringify(all)}`)
-
     return await arsValuesCollection.findOne({ transactionId })
   }
+  async addDrsValueToMongo(drsItem: DrsItem): Promise<DrsItem> {
+    const db = this.mongoDb.db()
+    const drsValuesCollection = db.collection<DrsItem & { version: string }>(
+      DRS_SCORES_COLLECTION(this.tenantId)
+    )
+
+    const structuredItem = { ...drsItem, version: drsItem.SortKeyID }
+
+    await drsValuesCollection.replaceOne(
+      { userId: drsItem.userId, transactionId: drsItem.transactionId },
+      structuredItem,
+      {
+        upsert: true,
+      }
+    )
+    return drsItem
+  }
+
+  async getDrsValueFromMongo(
+    userId: string
+  ): Promise<(DrsItem & { version: string }) | null> {
+    const db = this.mongoDb.db()
+    const drsValuesCollection = db.collection<DrsItem & { version: string }>(
+      DRS_SCORES_COLLECTION(this.tenantId)
+    )
+    return await drsValuesCollection.findOne({ userId })
+  }
+}
+
+/** Kinesis Util */
+
+const handleLocalChangeCapture = async (primaryKey: {
+  PartitionKeyID: string
+  SortKeyID?: string
+}) => {
+  const { localHammerheadChangeCaptureHandler } = await import(
+    '@/utils/local-dynamodb-change-handler'
+  )
+  await localHammerheadChangeCaptureHandler(primaryKey)
 }

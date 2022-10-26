@@ -6,6 +6,7 @@ import { BadRequest } from 'http-errors'
 import { StackConstants } from '@cdk/constants'
 import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { updateLogMetadata } from '@/core/utils/context'
 
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -199,6 +200,19 @@ export const riskLevelAndScoreHandler = lambdaApi({
       )
 
       return await riskRepository.getArsValueFromMongo(transactionId)
+    }
+    if (event.httpMethod === 'GET' && event.resource === '/pulse/drs-value') {
+      const userId = (event.queryStringParameters || {}).userId as string
+      updateLogMetadata({
+        userId,
+      })
+      if (userId == null) {
+        throw new BadRequest(`"transactionId" is a requred query parameter`)
+      }
+      logger.info(`Getting DRS`)
+      const score = await riskRepository.getDrsValueFromMongo(userId)
+      logger.info(`DRS: ${score}`)
+      return score
     }
     throw new BadRequest('Unhandled request')
   }

@@ -26,7 +26,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata, hasFeature } from '@/core/utils/context'
-import { calculateARS } from '@/services/risk-scoring'
+import { updateDynamicRiskScores } from '@/services/risk-scoring'
 
 const sqs = new AWS.SQS()
 
@@ -74,6 +74,11 @@ async function transactionHandler(
   logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)
   logger.info(`Case Creation Completed`)
+  if (hasFeature('PULSE_ARS_CALCULATION')) {
+    logger.info(`Calculating ARS & DRS`)
+    updateDynamicRiskScores(tenantId, dynamoDb, transaction)
+    logger.info(`Calculation of ARS & DRS Completed`)
+  }
 
   // TODO: this is not very efficient, because we recalculate all the
   // statistics for each transaction. Need to implement updating
@@ -103,9 +108,6 @@ async function transactionHandler(
           .promise()
       }
     }
-  }
-  if (hasFeature('PULSE_ARS_CALCULATION')) {
-    calculateARS(tenantId, dynamoDb, transaction)
   }
 }
 

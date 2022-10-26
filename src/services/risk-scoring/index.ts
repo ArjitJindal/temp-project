@@ -23,7 +23,7 @@ const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
   return riskScore
 }
 
-export const calculateKRS = async (
+export const updateInitialRiskScores = async (
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
   user: User | Business
@@ -77,9 +77,14 @@ export const calculateKRS = async (
 
   logger.info(`KRS Score: ${krsScore}`)
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
+  await riskRepository.createOrUpdateDrsScore(
+    user.userId,
+    krsScore,
+    'FIRST_DRS'
+  )
 }
 
-export const calculateARS = async (
+export const updateDynamicRiskScores = async (
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
   transaction: Transaction
@@ -117,6 +122,35 @@ export const calculateARS = async (
     transaction.originUserId,
     transaction.destinationUserId
   )
+  if (transaction.originUserId) {
+    await calculateAndUpdateDRS(
+      transaction.originUserId,
+      arsScore,
+      transaction.transactionId!,
+      riskRepository
+    )
+  }
+  if (transaction.destinationUserId) {
+    await calculateAndUpdateDRS(
+      transaction.destinationUserId,
+      arsScore,
+      transaction.transactionId!,
+      riskRepository
+    )
+  }
+}
+
+const calculateAndUpdateDRS = async (
+  userId: string,
+  arsScore: number,
+  transactionId: string,
+  riskRepository: RiskRepository
+) => {
+  const krsScore = await riskRepository.getKrsScore(userId)
+  const currentDrsValue = (await riskRepository.getDrsScore(userId)) ?? krsScore
+
+  const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
+  await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)
 }
 
 const getSchemaAttributeRiskLevel = (

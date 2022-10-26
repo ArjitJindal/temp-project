@@ -4,7 +4,7 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbUpdates } from '@/core/dynamodb/dynamodb-stream-utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { ArsItem, KrsItem } from '@/services/risk-scoring/types'
+import { ArsItem, DrsItem, KrsItem } from '@/services/risk-scoring/types'
 
 export const hammerheadChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
@@ -29,6 +29,16 @@ export const hammerheadChangeCaptureHandler = lambdaConsumer()(
             mongoDb,
           })
           await riskRepository.addArsValueToMongo(newImage as ArsItem)
+        }
+        if (update.NewImage && update.entityId.includes('DRS_VALUE')) {
+          logger.info(`Storing DRS in Mongo`)
+          const mongoDb = await getMongoDbClient()
+          const newImage = update.NewImage
+
+          const riskRepository = new RiskRepository(update.tenantId, {
+            mongoDb,
+          })
+          await riskRepository.addDrsValueToMongo(newImage as DrsItem)
         }
       }
     } catch (err) {

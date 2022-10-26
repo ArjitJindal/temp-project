@@ -15,3 +15,12 @@ export type ArsItem = {
   PartitionKeyID: string
   SortKeyID: string
 }
+
+export type DrsItem = {
+  createdAt: number
+  drsScore: number
+  userId: string
+  transactionId: string
+  PartitionKeyID: string
+  SortKeyID: string
+}

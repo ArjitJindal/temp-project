@@ -1335,7 +1335,7 @@ paths:
           in: query
           name: userId
           required: true
-          description: UserID of the user to get manual risk assignment
+          description: UserID of the user to get KYC Risk Score
   /pulse/ars-value:
     parameters: []
     get:
@@ -1356,7 +1356,28 @@ paths:
           in: query
           name: transactionId
           required: true
-          description: transactionId of the transaction to get manual risk assignment
+          description: transactionId of the transaction to get Action Risk Score
+  /pulse/drs-value:
+    parameters: []
+    get:
+      summary: Dynamic Risk Value
+      operationId: get-drs-value
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrsScore'
+        '403':
+          description: Not enough privileges
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: userId
+          required: true
+          description: UserID of the user to get Dynamic Risk Score
   /pulse/risk-parameter:
     parameters: []
     post:
@@ -1858,6 +1879,22 @@ components:
       required:
         - createdAt
         - arsScore
+    DrsScore:
+      title: DrsScore
+      type: object
+      description: ''
+      properties:
+        createdAt:
+          type: number
+        drsScore:
+          type: number
+        userId:
+          type: string
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+      required:
+        - createdAt
+        - drsScore
     Rule:
       title: Rule
       type: object
