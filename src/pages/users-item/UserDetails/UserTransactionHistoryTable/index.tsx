@@ -15,6 +15,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
+import TransactionState from '@/components/ui/TransactionState';
 
 export type DataItem = {
   index: number;
@@ -154,6 +155,16 @@ export function Content(props: { userId: string }) {
               title: 'Rules Description',
               tooltip: 'Describes the conditions required for this rule to be hit.',
               dataIndex: 'ruleDescription',
+            },
+            {
+              title: 'Last transaction state',
+              render: (_, entity) => {
+                return (
+                  <TransactionState
+                    transactionState={entity.events[entity.events.length - 1].transactionState}
+                  />
+                );
+              },
             },
             {
               title: 'Transaction Time',
