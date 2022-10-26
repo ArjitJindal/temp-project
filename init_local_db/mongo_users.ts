@@ -33,7 +33,7 @@ const legalDocument1: LegalDocument = {
   documentNumber: '781939182',
   documentIssuedDate: generateRandomTimestamp(),
   documentExpirationDate: Date.now() + 3600000 * 24 * 365 * 4,
-  documentIssuedCountry: 'USA',
+  documentIssuedCountry: 'US',
   tags: [documentTag1, documentTag2],
   nameOnDocument: {
     firstName: 'Share',
@@ -46,7 +46,7 @@ const legalDocument2: LegalDocument = {
   documentType: 'INN',
   documentNumber: '7474018285741827',
   documentIssuedDate: generateRandomTimestamp(),
-  documentIssuedCountry: 'USA',
+  documentIssuedCountry: 'US',
   tags: [documentTag1, documentTag2],
   nameOnDocument: {
     firstName: 'Share',
@@ -73,8 +73,8 @@ const businessUsers: InternalBusinessUser[] = [
             middleName: 'Holder',
             lastName: 'Number-One',
           },
-          countryOfResidence: 'USA',
-          countryOfNationality: 'Great Britan',
+          countryOfResidence: 'US',
+          countryOfNationality: 'GB',
         },
         legalDocuments: [legalDocument1, legalDocument2],
         contactDetails: {

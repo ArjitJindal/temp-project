@@ -53,7 +53,7 @@ describe('R-3 description formatting', () => {
           transactionCurrency: 'EUR',
         },
         destinationAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'EUR',
         },
@@ -90,7 +90,7 @@ describe('R-3 description formatting', () => {
         originUserId: 'formatting-1-1-2',
         destinationUserId: 'formatting-1-2-2',
         originAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'EUR',
         },
@@ -157,7 +157,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'EUR',
         },
         destinationAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'EUR',
         },
@@ -219,7 +219,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'EUR',
         },
         destinationAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 68351.34,
           transactionCurrency: 'INR',
         },
@@ -262,7 +262,7 @@ describe.each<TransactionRuleTestCase>([
         originUserId: '3-4',
         destinationUserId: '3-1',
         originAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'EUR',
         },
@@ -287,7 +287,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'EUR',
         },
         destinationAmountDetails: {
-          country: 'AFG',
+          country: 'AF',
           transactionAmount: 68351.34,
           transactionCurrency: 'INR',
         },
@@ -315,7 +315,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'EUR',
         },
         destinationAmountDetails: {
-          country: 'BEL',
+          country: 'BE',
           transactionAmount: 68351.34,
           transactionCurrency: 'INR',
         },

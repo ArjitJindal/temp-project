@@ -17,6 +17,7 @@ import { TransactionRepository } from '@/services/rules-engine/repositories/tran
 import { CardPaymentMethod } from '@/@types/openapi-public/CardPaymentMethod'
 import { IBANPaymentMethod } from '@/@types/openapi-public/IBANPaymentMethod'
 import { logger } from '@/core/logger'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
@@ -24,7 +25,7 @@ FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
 
 const paymentMethods = ['CARD', 'IBAN']
 
-const createCardPaymentDetails = (sendingCountry: string, name: any) => {
+const createCardPaymentDetails = (sendingCountry: CountryCode, name: any) => {
   return {
     cardFingerprint: createUuid().substring(0, 10),
     cardIssuedCountry: sendingCountry,
@@ -37,7 +38,7 @@ const createBusinessUsers = (
   tenantId: string,
   numberOfUsers: number,
   currency: string,
-  country: string
+  country: CountryCode
 ) => {
   const userIDs: string[] = []
   const userRepository = new UserRepository(`fake-${tenantId}`, {
@@ -79,7 +80,7 @@ const createBankPaymentDetails = (name: any) => {
   }
 }
 
-const createPaymentDetails = (sendingCountry: string, name: any) => {
+const createPaymentDetails = (sendingCountry: CountryCode, name: any) => {
   const paymentMethod = paymentMethods[getRandomIntInclusive(0, 1)]
   if (paymentMethod == 'CARD') {
     return {

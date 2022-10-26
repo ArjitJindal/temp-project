@@ -2,8 +2,8 @@ import { TransactionCaseManagement } from '../src/@types/openapi-internal/Transa
 
 const sampleTransaction = {
   destinationAmountDetails: {
-    country: 'PH',
-    transactionCurrency: 'PHP',
+    country: 'PH' as const,
+    transactionCurrency: 'PHP' as const,
     transactionAmount: 50,
   },
   productType: 'Payment link',

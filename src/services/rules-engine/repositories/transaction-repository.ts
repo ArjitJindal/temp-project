@@ -477,6 +477,20 @@ export class TransactionRepository {
 
   /* DynamoDB operations */
 
+  private sanitizeTransactionInPlace(transaction: Transaction) {
+    const COUNTRY_FIELD_PATHS = [
+      'transaction.originPaymentDetails.cardIssuedCountry',
+      'transaction.destinationPaymentDetails.cardIssuedCountry',
+      'transaction.originAmountDetails.country',
+      'transaction.destinationAmountDetails.country',
+    ]
+    COUNTRY_FIELD_PATHS.forEach((path) => {
+      if (_.get(transaction, path) === 'N/A') {
+        _.set(transaction, path, undefined)
+      }
+    })
+  }
+
   public async saveTransaction(
     transaction: Transaction,
     rulesResult: {
@@ -484,6 +498,7 @@ export class TransactionRepository {
       hitRules?: HitRulesResult[]
     } = {}
   ): Promise<Transaction> {
+    this.sanitizeTransactionInPlace(transaction)
     transaction.transactionId = getNewTransactionID(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
 

@@ -1,3 +1,4 @@
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 
 export const currencies: string[] = [
@@ -12,7 +13,7 @@ export const currencies: string[] = [
   'TRY',
 ]
 
-export const countries: string[] = [
+export const countries: CountryCode[] = [
   'US',
   'DE',
   'JP',

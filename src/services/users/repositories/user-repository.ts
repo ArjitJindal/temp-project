@@ -8,6 +8,7 @@ import {
   GetCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
+import _ from 'lodash'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -306,10 +307,31 @@ export class UserRepository {
     return (await this.saveUser(user, 'CONSUMER')) as User
   }
 
+  private sanitizeUserInPlace(user: User | Business) {
+    const COUNTRY_FIELD_PATHS = [
+      'userDetails.countryOfResidence',
+      'userDetails.countryOfNationality',
+      'legalEntity.companyRegistrationDetails.registrationCountry',
+    ]
+    COUNTRY_FIELD_PATHS.forEach((path) => {
+      if (_.get(user, path) === 'N/A') {
+        _.set(user, path, undefined)
+      }
+    })
+    if ((user as User).legalDocuments) {
+      ;(user as User).legalDocuments?.forEach((doc) => {
+        if (doc.documentIssuedCountry === 'N/A') {
+          doc.documentIssuedCountry = undefined as any
+        }
+      })
+    }
+  }
+
   public async saveUser(
     user: User | Business,
     type: UserType
   ): Promise<User | Business> {
+    this.sanitizeUserInPlace(user)
     const userId = user.userId
     const newUser = {
       ...user,

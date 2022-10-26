@@ -11,6 +11,7 @@ import {
   businessIndustryMainProducts,
   documentTypes,
 } from './constants'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 const createCompanyFinanceDetails = (currency: string) => {
   return {
@@ -25,14 +26,14 @@ const createCompanyFinanceDetails = (currency: string) => {
   }
 }
 
-const createCompanyRegistrationDetails = (country: string) => {
+const createCompanyRegistrationDetails = (country: CountryCode) => {
   return {
     registrationIdentifier: createUuid().slice(0, 10),
     registrationCountry: country,
   }
 }
 
-export const createLegalEntity = (currency: string, country: string) => {
+export const createLegalEntity = (currency: string, country: CountryCode) => {
   const businessIndustry =
     businessIndustries[getRandomIntInclusive(0, businessIndustries.length - 1)]
   return {
@@ -46,7 +47,7 @@ export const createLegalEntity = (currency: string, country: string) => {
   }
 }
 
-export const createShareHolders = (country: string) => {
+export const createShareHolders = (country: CountryCode) => {
   const numberOfShareHolders = getRandomIntInclusive(0, 7)
   const shareHolders = []
   for (let i = 0; i < numberOfShareHolders; i++) {

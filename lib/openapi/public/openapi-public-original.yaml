@@ -1381,8 +1381,7 @@ components:
             User's identity document expiration date (UNIX timestamp in
             milliseconds)
         documentIssuedCountry:
-          type: string
-          description: User's identity document issuance country
+          $ref: '#/components/schemas/CountryCode'
         tags:
           type: array
           items:
@@ -2131,9 +2130,7 @@ components:
           type: string
           description: Currency of the transaction
         country:
-          minLength: 1
-          type: string
-          description: Country where the transaction occurred
+          $ref: '#/components/schemas/CountryCode'
       required:
         - transactionAmount
         - transactionCurrency
@@ -2246,13 +2243,9 @@ components:
           pattern: '^(\d{4}-\d{2}-\d{2})*$'
           description: Date of birth of the user (YYYY-MM-DD)
         countryOfResidence:
-          minLength: 1
-          type: string
-          description: Country of residence of the user
+          $ref: '#/components/schemas/CountryCode'
         countryOfNationality:
-          minLength: 1
-          type: string
-          description: Country of nationality of the user
+          $ref: '#/components/schemas/CountryCode'
       required:
         - name
     CompanyGeneralDetails:
@@ -2302,9 +2295,7 @@ components:
             Commercial registry registration number for the company in its
             registration country
         registrationCountry:
-          minLength: 1
-          type: string
-          description: Country of registration for the company
+          $ref: '#/components/schemas/CountryCode'
         taxIdentifier:
           type: string
           description: Tax ID number of the registered entity
@@ -2896,9 +2887,7 @@ components:
             having to use explicit card number. This is likely available at your
             card payment scheme provider
         cardIssuedCountry:
-          minLength: 1
-          type: string
-          description: The country of issuance for a specific card
+          $ref: '#/components/schemas/CountryCode'
         transactionReferenceField:
           minLength: 1
           type: string
@@ -3322,9 +3311,7 @@ components:
           minLength: 1
           description: Employee name
         employeeNationality:
-          type: string
-          minLength: 1
-          description: Employee nationality
+          $ref: '#/components/schemas/CountryCode'
       required:
         - employeeID
     TransactionEvent:
@@ -3997,6 +3984,262 @@ components:
           $ref: '#/components/schemas/Address'
       required:
         - method
+    CountryCode:
+      type: string
+      title: CountryCode
+      x-stoplight:
+        id: 8uh01wccoglx5
+      enum:
+        - AF
+        - AL
+        - DZ
+        - AS
+        - AD
+        - AO
+        - AI
+        - AQ
+        - AG
+        - AR
+        - AM
+        - AW
+        - AU
+        - AT
+        - AZ
+        - BS
+        - BH
+        - BD
+        - BB
+        - BY
+        - BE
+        - BZ
+        - BJ
+        - BM
+        - BT
+        - BO
+        - BQ
+        - BA
+        - BW
+        - BV
+        - BR
+        - IO
+        - BN
+        - BG
+        - BF
+        - BI
+        - CV
+        - KH
+        - CM
+        - CA
+        - KY
+        - CF
+        - TD
+        - CL
+        - CN
+        - CX
+        - CC
+        - CO
+        - KM
+        - CD
+        - CG
+        - CK
+        - CR
+        - HR
+        - CU
+        - CW
+        - CY
+        - CZ
+        - CI
+        - DK
+        - DJ
+        - DM
+        - DO
+        - EC
+        - EG
+        - SV
+        - GQ
+        - ER
+        - EE
+        - SZ
+        - ET
+        - FK
+        - FO
+        - FJ
+        - FI
+        - FR
+        - GF
+        - PF
+        - TF
+        - GA
+        - GM
+        - GE
+        - DE
+        - GH
+        - GI
+        - GR
+        - GL
+        - GD
+        - GP
+        - GU
+        - GT
+        - GG
+        - GN
+        - GW
+        - GY
+        - HT
+        - HM
+        - VA
+        - HN
+        - HK
+        - HU
+        - IS
+        - IN
+        - ID
+        - IR
+        - IQ
+        - IE
+        - IM
+        - IL
+        - IT
+        - JM
+        - JP
+        - JE
+        - JO
+        - KZ
+        - KE
+        - KI
+        - KP
+        - KR
+        - KW
+        - KG
+        - LA
+        - LV
+        - LB
+        - LS
+        - LR
+        - LY
+        - LI
+        - LT
+        - LU
+        - MO
+        - MG
+        - MW
+        - MY
+        - MV
+        - ML
+        - MT
+        - MH
+        - MQ
+        - MR
+        - MU
+        - YT
+        - MX
+        - FM
+        - MD
+        - MC
+        - MN
+        - ME
+        - MS
+        - MA
+        - MZ
+        - MM
+        - NA
+        - NR
+        - NP
+        - NL
+        - NC
+        - NZ
+        - NI
+        - NE
+        - NG
+        - NU
+        - NF
+        - MK
+        - MP
+        - 'NO'
+        - OM
+        - PK
+        - PW
+        - PS
+        - PA
+        - PG
+        - PY
+        - PE
+        - PH
+        - PN
+        - PL
+        - PT
+        - PR
+        - QA
+        - RO
+        - RU
+        - RW
+        - RE
+        - BL
+        - SH
+        - KN
+        - LC
+        - MF
+        - PM
+        - VC
+        - WS
+        - SM
+        - ST
+        - SA
+        - SN
+        - RS
+        - SC
+        - SL
+        - SG
+        - SX
+        - SK
+        - SI
+        - SB
+        - SO
+        - ZA
+        - GS
+        - SS
+        - ES
+        - LK
+        - SD
+        - SR
+        - SJ
+        - SE
+        - CH
+        - SY
+        - TW
+        - TJ
+        - TZ
+        - TH
+        - TL
+        - TG
+        - TK
+        - TO
+        - TT
+        - TN
+        - TM
+        - TC
+        - TV
+        - TR
+        - UG
+        - UA
+        - AE
+        - GB
+        - UM
+        - US
+        - UY
+        - UZ
+        - VU
+        - VE
+        - VN
+        - VG
+        - VI
+        - WF
+        - EH
+        - YE
+        - ZM
+        - ZW
+        - AX
+        - 'N/A'
   securitySchemes:
     x-api-key:
       name: x-api-key

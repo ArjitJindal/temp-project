@@ -79,7 +79,7 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'GBP',
         },
@@ -87,7 +87,7 @@ describe.each<TransactionRuleTestCase>([
       }),
       getTestTransaction({
         originAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'GBP',
         },
@@ -95,7 +95,7 @@ describe.each<TransactionRuleTestCase>([
       }),
       getTestTransaction({
         originAmountDetails: {
-          country: 'UK',
+          country: 'GB',
           transactionAmount: 800,
           transactionCurrency: 'GBP',
         },

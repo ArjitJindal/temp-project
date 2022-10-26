@@ -132,7 +132,7 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
@@ -140,7 +140,7 @@ describe.each<TransactionRuleTestCase>([
       }),
       getTestTransaction({
         originAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
@@ -148,7 +148,7 @@ describe.each<TransactionRuleTestCase>([
       }),
       getTestTransaction({
         originAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
@@ -198,7 +198,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
@@ -211,7 +211,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
@@ -224,7 +224,7 @@ describe.each<TransactionRuleTestCase>([
           transactionCurrency: 'PKR',
         },
         destinationAmountDetails: {
-          country: 'USA',
+          country: 'US',
           transactionAmount: 800,
           transactionCurrency: 'USD',
         },
