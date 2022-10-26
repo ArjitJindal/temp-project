@@ -44,6 +44,11 @@ import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { Currency, getCurrencyExchangeRate } from '@/utils/currency-utils'
+import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
+import dayjs, { duration } from '@/utils/dayjs'
+import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
+import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -158,7 +163,7 @@ export class TransactionRepository {
       })
     }
     if (params.filterStatus != null) {
-      conditions.push({ status: { $eq: params.filterStatus } })
+      conditions.push({ status: { $in: params.filterStatus } })
     }
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
@@ -1298,7 +1303,6 @@ export class TransactionRepository {
     const casesCollection = db.collection<Transaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
-    console.log('casesCollection', casesCollection)
     const documents = await casesCollection
       .aggregate([
         {
@@ -1336,6 +1340,180 @@ export class TransactionRepository {
       .toArray()
 
     return documents[0]?.keys ?? []
+  }
+
+  public async getStatsByType(
+    params: DefaultApiGetTransactionsListRequest,
+    referenceCurrency: Currency
+  ): Promise<TransactionsStatsByTypesResponse['data']> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<TransactionCaseManagement>(name)
+    const query = this.getTransactionsMongoQuery(params)
+
+    const result: {
+      [key in TransactionType]?: {
+        amounts: number[]
+        sum: number
+        min: number | null
+        max: number | null
+      }
+    } = {}
+
+    const cursor = await collection.find(query, {
+      skip: params.skip,
+      limit: params.limit,
+    })
+    for await (const next of cursor) {
+      if (next.type) {
+        const acc = result[next.type] ?? {
+          amounts: [],
+          sum: 0,
+          min: null,
+          max: null,
+        }
+        result[next.type] = acc
+        const amount = await this.getAmount(next, referenceCurrency)
+        acc.amounts.push(amount)
+        acc.min = acc.min != null ? Math.min(acc.min, amount) : amount
+        acc.max = acc.max != null ? Math.max(acc.max, amount) : amount
+      }
+    }
+
+    return Object.entries(result).map(([transactionType, acc]) => {
+      const amounts = acc.amounts
+      amounts.sort((x, y) => x - y)
+      const count = amounts.length
+      const sum = amounts.reduce((acc: number, x) => acc + (x ?? 0), 0)
+      return {
+        transactionType: transactionType as TransactionType,
+        count,
+        average: (sum / count || 0) ?? undefined,
+        min: acc.min ?? undefined,
+        max: acc.max ?? undefined,
+        median:
+          (count % 2 === 1
+            ? amounts[(count - 1) / 2]
+            : (amounts[count / 2] + amounts[count / 2 - 1]) / 2) || undefined,
+      }
+    })
+  }
+
+  public async getStatsByTime(
+    params: DefaultApiGetTransactionsListRequest,
+    referenceCurrency: Currency
+  ): Promise<TransactionsStatsByTimeResponse['data']> {
+    const db = this.mongoDb.db()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<TransactionCaseManagement>(name)
+    const query = this.getTransactionsMongoQuery(params)
+
+    const minMax = await collection
+      .aggregate<{ oldest: number; youngest: number }>([
+        { $match: query },
+        {
+          $group: {
+            _id: '_id',
+            oldest: {
+              $min: '$timestamp',
+            },
+            youngest: {
+              $max: '$timestamp',
+            },
+          },
+        },
+      ])
+      .next()
+    if (minMax == null) {
+      return []
+    }
+    const { oldest, youngest } = minMax
+
+    const difference = youngest - oldest
+
+    let seriesFormat: string
+    let labelFormat: string
+    let granularity: 'HOUR' | 'DAY' | 'MONTH'
+    const dur = duration(difference)
+    if (dur.asMonths() > 1) {
+      seriesFormat = 'YYYY/MM/01 00:00 Z'
+      labelFormat = 'YYYY/MM'
+      granularity = 'MONTH'
+    } else if (dur.asDays() > 1) {
+      seriesFormat = 'YYYY/MM/DD 00:00 Z'
+      labelFormat = 'MM/DD'
+      granularity = 'DAY'
+    } else {
+      seriesFormat = 'YYYY/MM/DD HH:00 Z'
+      labelFormat = 'HH:mm'
+      granularity = 'HOUR'
+    }
+
+    const result: TransactionsStatsByTimeResponse['data'] = getTimeLabels(
+      seriesFormat,
+      oldest,
+      youngest,
+      granularity
+    ).map((series) => ({
+      series: series,
+      label: dayjs(series, seriesFormat).format(labelFormat),
+      values: {},
+    }))
+
+    const aggregationCursor = collection.find(query, {
+      skip: params.skip,
+      limit: params.limit,
+    })
+    for await (const transaction of aggregationCursor) {
+      if (transaction.timestamp) {
+        const series = dayjs(transaction.timestamp).format(seriesFormat)
+        const label = dayjs(transaction.timestamp).format(labelFormat)
+        const amount = await this.getAmount(transaction, referenceCurrency)
+
+        let counters = result.find((x) => x.series === series)
+        if (counters == null) {
+          counters = {
+            series,
+            label,
+            values: {},
+          }
+          result.push(counters)
+        }
+
+        const ruleActionCounter = counters.values[transaction.status] ?? {
+          count: 0,
+          amount: 0,
+        }
+        counters.values[transaction.status] = ruleActionCounter
+
+        ruleActionCounter.count = ruleActionCounter.count + 1
+        ruleActionCounter.amount = ruleActionCounter.amount + amount
+      }
+    }
+
+    return result
+  }
+
+  private async getAmount(
+    transaction: TransactionCaseManagement,
+    referenceCurrency: Currency
+  ): Promise<number> {
+    let amount = 0
+    if (transaction.originAmountDetails != null) {
+      if (
+        transaction.originAmountDetails.transactionCurrency != referenceCurrency
+      ) {
+        const exchangeRate = await getCurrencyExchangeRate(
+          transaction.originAmountDetails.transactionCurrency,
+          referenceCurrency
+        )
+        amount =
+          transaction.originAmountDetails.transactionAmount * exchangeRate
+      } else {
+        amount = transaction.originAmountDetails.transactionAmount
+      }
+    }
+    return amount
   }
 }
 

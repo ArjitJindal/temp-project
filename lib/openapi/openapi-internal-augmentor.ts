@@ -42,6 +42,10 @@ export const ConsoleApiPathToLambda: any = {
   '/lists/{listType}/{listId}/items/{key}':
     StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/stats/by-types':
+    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions/stats/by-time':
+    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/export':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/tags/keys':

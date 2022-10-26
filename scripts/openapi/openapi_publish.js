@@ -151,6 +151,7 @@ async function main() {
   )
 
   await fs.remove(OUTPUT_DIR)
+  console.log('Done!')
 }
 
 main().catch((e) => {

@@ -3,6 +3,9 @@ import _ from 'lodash'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { logger } from '@/core/logger'
 
+// todo: make a proper enum type
+export type Currency = string
+
 const cachedData: {
   [sourceCurrency: string]: { [targetCurrency: string]: number }
 } = {}
@@ -15,8 +18,8 @@ const cachedData: {
  * performance improvement (it currently takes a network call to jsdelivr CDN)
  */
 export async function getCurrencyExchangeRate(
-  sourceCurrency: string,
-  targetCurrency: string
+  sourceCurrency: Currency,
+  targetCurrency: Currency
 ) {
   const sourceCurr = sourceCurrency.toLowerCase()
   const targetCurr = targetCurrency.toLowerCase()

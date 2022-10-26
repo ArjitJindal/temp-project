@@ -7,6 +7,9 @@ import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionU
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionStatusChange'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { Currency } from '@/utils/currency-utils'
+import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
+import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 
 export class TransactionService {
   transactionRepository: TransactionRepository
@@ -34,6 +37,26 @@ export class TransactionService {
       this.getAugmentedTransactionCaseManagement(transaction)
     )
     return result
+  }
+
+  public async getStatsByType(
+    params: DefaultApiGetTransactionsListRequest,
+    referenceCurrency: Currency
+  ): Promise<TransactionsStatsByTypesResponse['data']> {
+    return await this.transactionRepository.getStatsByType(
+      params,
+      referenceCurrency
+    )
+  }
+
+  public async getStatsByTime(
+    params: DefaultApiGetTransactionsListRequest,
+    referenceCurrency: Currency
+  ): Promise<TransactionsStatsByTimeResponse['data']> {
+    return await this.transactionRepository.getStatsByTime(
+      params,
+      referenceCurrency
+    )
   }
 
   public async updateTransactions(

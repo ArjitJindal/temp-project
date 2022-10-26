@@ -140,7 +140,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterOutStatus,
         filterOutCaseStatus,
         filterTransactionState,
-        filterStatus,
+        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')
@@ -166,6 +166,154 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagValue,
       }
       return transactionService.getTransactions(params)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/transactions/stats/by-types')
+    ) {
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterOutStatus,
+        filterOutCaseStatus,
+        filterTransactionState,
+        filterRulesHit,
+        filterRulesExecuted,
+        filterOriginCurrencies,
+        filterDestinationCurrencies,
+        filterUserId,
+        filterOriginUserId,
+        filterDestinationUserId,
+        transactionType,
+        sortField,
+        sortOrder,
+        includeUsers,
+        includeEvents,
+        filterStatus,
+        filterCaseStatus,
+        filterOriginPaymentMethod,
+        filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
+        referenceCurrency,
+      } = event.queryStringParameters as any
+
+      const params: DefaultApiGetTransactionsListRequest = {
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterOutStatus,
+        filterOutCaseStatus,
+        filterTransactionState,
+        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
+        filterCaseStatus,
+        filterRulesExecuted: filterRulesExecuted
+          ? filterRulesExecuted.split(',')
+          : undefined, // todo: need a proper parser for url
+        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        filterUserId,
+        filterOriginUserId,
+        filterDestinationUserId,
+        transactionType,
+        sortField: sortField,
+        sortOrder: sortOrder,
+        filterOriginCurrencies: filterOriginCurrencies
+          ? filterOriginCurrencies.split(',')
+          : undefined,
+        filterDestinationCurrencies: filterDestinationCurrencies
+          ? filterDestinationCurrencies.split(',')
+          : undefined,
+        includeUsers: includeUsers === 'true',
+        includeEvents: includeEvents === 'true',
+        filterOriginPaymentMethod: filterOriginPaymentMethod,
+        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
+      }
+      return {
+        data: await transactionService.getStatsByType(
+          params,
+          referenceCurrency ?? 'USD'
+        ),
+      }
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/transactions/stats/by-time')
+    ) {
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterOutStatus,
+        filterOutCaseStatus,
+        filterTransactionState,
+        filterRulesHit,
+        filterRulesExecuted,
+        filterOriginCurrencies,
+        filterDestinationCurrencies,
+        filterUserId,
+        filterOriginUserId,
+        filterDestinationUserId,
+        transactionType,
+        sortField,
+        sortOrder,
+        includeUsers,
+        includeEvents,
+        filterStatus,
+        filterCaseStatus,
+        filterOriginPaymentMethod,
+        filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
+        referenceCurrency,
+      } = event.queryStringParameters as any
+
+      const params: DefaultApiGetTransactionsListRequest = {
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterOutStatus,
+        filterOutCaseStatus,
+        filterTransactionState,
+        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
+        filterCaseStatus,
+        filterRulesExecuted: filterRulesExecuted
+          ? filterRulesExecuted.split(',')
+          : undefined, // todo: need a proper parser for url
+        filterRulesHit: filterRulesHit ? filterRulesHit.split(',') : undefined, // todo: need a proper parser for url
+        filterUserId,
+        filterOriginUserId,
+        filterDestinationUserId,
+        transactionType,
+        sortField: sortField,
+        sortOrder: sortOrder,
+        filterOriginCurrencies: filterOriginCurrencies
+          ? filterOriginCurrencies.split(',')
+          : undefined,
+        filterDestinationCurrencies: filterDestinationCurrencies
+          ? filterDestinationCurrencies.split(',')
+          : undefined,
+        includeUsers: includeUsers === 'true',
+        includeEvents: includeEvents === 'true',
+        filterOriginPaymentMethod: filterOriginPaymentMethod,
+        filterDestinationPaymentMethod: filterDestinationPaymentMethod,
+        filterTagKey,
+        filterTagValue,
+      }
+      return {
+        data: await transactionService.getStatsByTime(
+          params,
+          referenceCurrency ?? 'USD'
+        ),
+      }
     } else if (
       event.httpMethod === 'GET' &&
       event.path.endsWith('/transactions/export')

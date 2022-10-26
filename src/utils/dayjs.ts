@@ -1,4 +1,4 @@
-import dayjsLib, { ConfigType } from 'dayjs'
+import dayjsLib, { ConfigType, OptionType } from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import durationPlugin, {
   Duration,
@@ -10,8 +10,11 @@ dayjsLib.extend(durationPlugin)
 
 export type Dayjs = dayjsLib.Dayjs
 
-export default function dayjs(config?: ConfigType): dayjsLib.Dayjs {
-  const dayjs = dayjsLib(config)
+export default function dayjs(
+  config?: ConfigType,
+  format?: OptionType
+): dayjsLib.Dayjs {
+  const dayjs = dayjsLib(config, format)
   return dayjs.utc()
 }
 

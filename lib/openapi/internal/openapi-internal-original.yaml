@@ -550,7 +550,9 @@ paths:
           in: query
           name: filterDestinationUserId
         - schema:
-            $ref: '#/components/schemas/RuleAction'
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
         - schema:
@@ -668,7 +670,9 @@ paths:
           in: query
           name: filterOutStatus
         - schema:
-            $ref: '#/components/schemas/RuleAction'
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
         - schema:
@@ -727,6 +731,276 @@ paths:
         '404':
           description: Not Found
       description: ''
+  /transactions/stats/by-types:
+    get:
+      summary: Transaction - Stats
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsStatsByTypesResponse'
+              examples: {}
+      operationId: get-transactions-stats-by-type
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: boolean
+          in: query
+          name: includeUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeEvents
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethod
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethod
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            type: string
+          in: query
+          name: referenceCurrency
+  /transactions/stats/by-time:
+    get:
+      summary: Transaction - Stats
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsStatsByTimeResponse'
+              examples: {}
+      operationId: get-transactions-stats-by-time
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: false
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterOutCaseStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRulesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
+        - schema:
+            $ref: '#/components/schemas/CaseStatus'
+          in: query
+          name: filterCaseStatus
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: boolean
+          in: query
+          name: includeUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeEvents
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethod
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethod
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            type: string
+          in: query
+          name: referenceCurrency
   /consumer/users:
     get:
       summary: Consumer Users - List
@@ -2116,6 +2390,71 @@ components:
             $ref: '#/components/schemas/TransactionCaseManagement'
       required:
         - total
+        - data
+    TransactionsStatsByTypesResponse:
+      title: TransactionsStatsByTypesResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              transactionType:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+              count:
+                type: number
+              average:
+                type: number
+                nullable: true
+              min:
+                type: number
+                nullable: true
+              max:
+                type: number
+                nullable: true
+              median:
+                type: number
+                nullable: true
+            required:
+              - transactionType
+              - count
+      required:
+        - data
+    TransactionsStatsByTimeResponse:
+      title: TransactionsStatsByTypesResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              series:
+                type: string
+              label:
+                type: string
+              values:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    count:
+                      type: number
+                    amount:
+                      type: number
+                  required:
+                    - count
+                    - amount
+            required:
+              - series
+              - label
+              - values
+      required:
         - data
     TransactionCaseManagement:
       allOf:
