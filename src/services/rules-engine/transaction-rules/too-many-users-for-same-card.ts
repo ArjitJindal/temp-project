@@ -54,18 +54,20 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const thinTransactionsFromCard =
-      await transactionRepository.getNonUserSendingThinTransactions(
+    const transactionsFromCard =
+      await transactionRepository.getNonUserSendingTransactions(
         this.transaction.originPaymentDetails as CardDetails,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)
             .subtract(timeWindowInDays, 'day')
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
-        }
+        },
+        {},
+        ['originUserId']
       )
     const uniqueUserCount = new Set(
-      thinTransactionsFromCard
+      transactionsFromCard
         .map((transaction) => transaction.originUserId)
         .concat(this.transaction.originUserId)
         .filter(Boolean)

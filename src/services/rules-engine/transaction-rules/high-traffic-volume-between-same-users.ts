@@ -175,29 +175,20 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
       dynamoDb: this.dynamoDb,
     })
 
-    const thinTransactions =
-      await transactionRepository.getUserSendingThinTransactions(
-        originUserId,
-        {
-          beforeTimestamp: timestamp,
-          afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
-        },
-        {
-          transactionState: this.parameters.transactionState,
-          transactionTypes: this.parameters.transactionTypes,
-          receiverKeyId: getReceiverKeys(this.tenantId, transaction)
-            ?.PartitionKeyID,
-        }
-      )
-    const transactions = (
-      await transactionRepository.getTransactionsByIds(
-        thinTransactions.map((transaction) => transaction.transactionId)
-      )
-    ).filter(
-      (transaction) =>
-        !this.parameters.paymentMethod ||
-        transaction.originPaymentDetails?.method ===
-          this.parameters.paymentMethod
+    const transactions = await transactionRepository.getUserSendingTransactions(
+      originUserId,
+      {
+        beforeTimestamp: timestamp,
+        afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
+      },
+      {
+        transactionState: this.parameters.transactionState,
+        transactionTypes: this.parameters.transactionTypes,
+        receiverKeyId: getReceiverKeys(this.tenantId, transaction)
+          ?.PartitionKeyID,
+        originPaymentMethod: this.parameters.paymentMethod,
+      },
+      ['originAmountDetails']
     )
 
     return { transactions }

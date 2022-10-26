@@ -101,7 +101,8 @@ export default class TransactionsPatternVelocityBaseRule<
         checkReceiver,
         transactionState,
         transactionTypes,
-      }
+      },
+      this.getNeededTransactionFields()
     )
 
     const senderMatchedTransactions = [
@@ -167,6 +168,10 @@ export default class TransactionsPatternVelocityBaseRule<
     _direction?: 'origin' | 'destination',
     _userType?: 'sender' | 'receiver'
   ): boolean {
+    throw new Error('Not implemented')
+  }
+
+  protected getNeededTransactionFields(): Array<keyof Transaction> {
     throw new Error('Not implemented')
   }
 }

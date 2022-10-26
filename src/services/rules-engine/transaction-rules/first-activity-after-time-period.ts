@@ -43,19 +43,20 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
       dynamoDb: this.dynamoDb,
     })
 
-    const lastSendingThinTransaction =
+    const lastSendingTransaction =
       this.transaction.originUserId &&
       (
-        await transactionRepository.getLastNUserSendingThinTransactions(
+        await transactionRepository.getLastNUserSendingTransactions(
           this.transaction.originUserId,
           1,
-          { transactionState }
+          { transactionState },
+          ['timestamp']
         )
       )[0]
-    if (lastSendingThinTransaction) {
+    if (lastSendingTransaction) {
       if (
         dayjs(this.transaction.timestamp).diff(
-          lastSendingThinTransaction.timestamp,
+          lastSendingTransaction.timestamp,
           'day'
         ) > dormancyPeriodDays
       ) {

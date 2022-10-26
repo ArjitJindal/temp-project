@@ -54,4 +54,8 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
     this.uniqueCountries[userType].add(country)
     return true
   }
+
+  protected getNeededTransactionFields(): Array<keyof Transaction> {
+    return ['originAmountDetails', 'destinationAmountDetails']
+  }
 }

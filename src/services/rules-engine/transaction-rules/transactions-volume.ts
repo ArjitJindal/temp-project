@@ -120,7 +120,13 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         transactionState,
         transactionTypes,
         matchPaymentMethodDetails,
-      }
+      },
+      [
+        'originUserId',
+        'destinationUserId',
+        'originAmountDetails',
+        'destinationAmountDetails',
+      ]
     )
 
     if (matchPaymentMethodDetails) {

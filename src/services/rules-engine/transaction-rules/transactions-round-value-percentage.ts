@@ -26,4 +26,8 @@ export default class TransactionsRoundValuePercentageRule extends TransactionsPa
   private isRoundValue(value: number) {
     return value % 100 === 0
   }
+
+  protected getNeededTransactionFields(): Array<keyof Transaction> {
+    return ['originAmountDetails', 'destinationAmountDetails']
+  }
 }

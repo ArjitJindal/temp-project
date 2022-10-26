@@ -50,19 +50,12 @@ type TimeRange = {
   beforeTimestamp: number // exclusive
   afterTimestamp: number // inclusive
 }
-export type ThinTransaction = {
-  transactionId: string
-  timestamp: number
-  transactionState?: TransactionState
+
+export type AuxiliaryIndexTransaction = Partial<Transaction> & {
   senderKeyId?: string
   receiverKeyId?: string
-  originUserId?: string
-  destinationUserId?: string
-  originPaymentMethod?: PaymentMethod
-  destinationPaymentMethod?: PaymentMethod
 }
-
-export type ThinTransactionsFilterOptions = {
+export type TransactionsFilterOptions = {
   transactionTypes?: TransactionType[]
   transactionState?: TransactionState
   senderKeyId?: string
@@ -521,7 +514,7 @@ export class TransactionRepository {
     return transaction
   }
 
-  private getTransactionAuxiliaryIndices(transaction: Transaction) {
+  public getTransactionAuxiliaryIndices(transaction: Transaction) {
     const senderKeys = getSenderKeys(this.tenantId, transaction)
     const receiverKeys = getReceiverKeys(this.tenantId, transaction)
     const userSenderKeys = getUserSenderKeys(this.tenantId, transaction)
@@ -551,15 +544,6 @@ export class TransactionRepository {
     const nonUserReceiverKeysOfTransactionType =
       transaction.type &&
       getNonUserReceiverKeys(this.tenantId, transaction, transaction.type)
-
-    const thinTransactionAttributes: Partial<ThinTransaction> = {
-      transactionId: transaction.transactionId,
-      transactionState: transaction.transactionState,
-      originUserId: transaction.originUserId,
-      destinationUserId: transaction.destinationUserId,
-      originPaymentMethod: transaction.originPaymentDetails?.method,
-      destinationPaymentMethod: transaction.destinationPaymentDetails?.method,
-    }
 
     // IMPORTANT: Added/Deleted keys here should be reflected in nuke-tenant-data.ts as well
     return [
@@ -619,7 +603,7 @@ export class TransactionRepository {
           PartitionKeyID: string
           SortKeyID: string
         }),
-        ...thinTransactionAttributes,
+        ...transaction,
       }))
   }
 
@@ -696,7 +680,7 @@ export class TransactionRepository {
   }
   public async hasAnySendingTransaction(
     userId: string,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<boolean> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
@@ -713,11 +697,13 @@ export class TransactionRepository {
 
   private async hasAnySendingTransactionPrivate(
     userId: string,
-    transactionType?: TransactionType,
-    filterOptions?: ThinTransactionsFilterOptions
+    transactionType: TransactionType | undefined,
+    filterOptions: TransactionsFilterOptions
   ): Promise<boolean> {
-    const transactionFilterQuery =
-      this.getThinTransactionFilterQueryInput(filterOptions)
+    const transactionFilterQuery = this.getTransactionFilterQueryInput(
+      filterOptions,
+      []
+    )
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -731,21 +717,23 @@ export class TransactionRepository {
         ).PartitionKeyID,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
+      ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
       Limit: 1,
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
     return !!result.Count
   }
 
-  public async getLastNUserSendingThinTransactions(
+  public async getLastNUserSendingTransactions(
     userId: string,
     n: number,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getLastNThinTransactions(
+          this.getLastNTransactions(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -753,22 +741,24 @@ export class TransactionRepository {
               transactionType
             ).PartitionKeyID,
             n,
-            filterOptions
+            filterOptions,
+            attributesToFetch
           )
       )
     )
     return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  public async getLastNUserReceivingThinTransactions(
+  public async getLastNUserReceivingTransactions(
     userId: string,
     n: number,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getLastNThinTransactions(
+          this.getLastNTransactions(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -776,20 +766,24 @@ export class TransactionRepository {
               transactionType
             ).PartitionKeyID,
             n,
-            filterOptions
+            filterOptions,
+            attributesToFetch
           )
       )
     )
     return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  private async getLastNThinTransactions(
+  private async getLastNTransactions(
     partitionKeyId: string,
     n: number,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
-    const transactionFilterQuery =
-      this.getThinTransactionFilterQueryInput(filterOptions)
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
+    const transactionFilterQuery = this.getTransactionFilterQueryInput(
+      filterOptions,
+      attributesToFetch
+    )
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -798,67 +792,77 @@ export class TransactionRepository {
         ':pk': partitionKeyId,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
+      ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
+      ProjectionExpression: transactionFilterQuery.ProjectionExpression,
       Limit: n,
       ScanIndexForward: false,
     }
     const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (
-      result.Items?.map((item) => ({
-        transactionId: item.transactionId,
-        timestamp: parseInt(item.SortKeyID),
-        senderKeyId: item.senderKeyId,
-        receiverKeyId: item.receiverKeyId,
-        originUserId: item.originUserId,
-        destinationUserId: item.destinationUserId,
-      })) || []
-    )
+    return (result.Items?.map((item) =>
+      _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+    ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
-  public async getGenericUserSendingThinTransactions(
+  public async getGenericUserSendingTransactions(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<ThinTransaction>> {
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     return userId && !matchPaymentMethodDetails
-      ? this.getUserSendingThinTransactions(userId, timeRange, filterOptions)
+      ? this.getUserSendingTransactions(
+          userId,
+          timeRange,
+          filterOptions,
+          attributesToFetch
+        )
       : paymentDetails
-      ? this.getNonUserSendingThinTransactions(
+      ? this.getNonUserSendingTransactions(
           paymentDetails,
           timeRange,
-          filterOptions
+          filterOptions,
+          attributesToFetch
         )
       : []
   }
 
-  public async getGenericUserReceivingThinTransactions(
+  public async getGenericUserReceivingTransactions(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions,
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>,
     matchPaymentMethodDetails?: boolean
-  ): Promise<Array<ThinTransaction>> {
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     return userId && !matchPaymentMethodDetails
-      ? this.getUserReceivingThinTransactions(userId, timeRange, filterOptions)
+      ? this.getUserReceivingTransactions(
+          userId,
+          timeRange,
+          filterOptions,
+          attributesToFetch
+        )
       : paymentDetails
-      ? this.getNonUserReceivingThinTransactions(
+      ? this.getNonUserReceivingTransactions(
           paymentDetails,
           timeRange,
-          filterOptions
+          filterOptions,
+          attributesToFetch
         )
       : []
   }
 
-  public async getUserSendingThinTransactions(
+  public async getUserSendingTransactions(
     userId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getThinTransactions(
+          this.getDynamoDBTransactions(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -866,22 +870,24 @@ export class TransactionRepository {
               transactionType
             ).PartitionKeyID,
             timeRange,
-            filterOptions
+            filterOptions,
+            attributesToFetch
           )
       )
     )
     return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  public async getUserReceivingThinTransactions(
+  public async getUserReceivingTransactions(
     userId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getThinTransactions(
+          this.getDynamoDBTransactions(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -889,7 +895,8 @@ export class TransactionRepository {
               transactionType
             ).PartitionKeyID,
             timeRange,
-            filterOptions
+            filterOptions,
+            attributesToFetch
           )
       )
     )
@@ -900,7 +907,7 @@ export class TransactionRepository {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ) {
     return userId
       ? (
@@ -925,7 +932,7 @@ export class TransactionRepository {
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ) {
     return userId
       ? (
@@ -949,12 +956,12 @@ export class TransactionRepository {
   public async getUserSendingTransactionsCount(
     userId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<QueryCountResult> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getUserThinTransactionsCount(
+          this.getUserTransactionsCount(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -981,12 +988,12 @@ export class TransactionRepository {
   public async getUserReceivingTransactionsCount(
     userId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<QueryCountResult> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) =>
-          this.getUserThinTransactionsCount(
+          this.getUserTransactionsCount(
             DynamoDbKeys.USER_TRANSACTION(
               this.tenantId,
               userId,
@@ -1013,7 +1020,7 @@ export class TransactionRepository {
   public async getNonUserSendingTransactionsCount(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<QueryCountResult> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
@@ -1025,7 +1032,7 @@ export class TransactionRepository {
             transactionType
           )?.PartitionKeyID
           return partitionKeyId
-            ? this.getUserThinTransactionsCount(
+            ? this.getUserTransactionsCount(
                 partitionKeyId,
                 timeRange,
                 filterOptions
@@ -1049,7 +1056,7 @@ export class TransactionRepository {
   public async getNonUserReceivingTransactionsCount(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<QueryCountResult> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
@@ -1061,7 +1068,7 @@ export class TransactionRepository {
             transactionType
           )?.PartitionKeyID
           return partitionKeyId
-            ? this.getUserThinTransactionsCount(
+            ? this.getUserTransactionsCount(
                 partitionKeyId,
                 timeRange,
                 filterOptions
@@ -1082,11 +1089,12 @@ export class TransactionRepository {
     )
   }
 
-  public async getNonUserSendingThinTransactions(
+  public async getNonUserSendingTransactions(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) => {
@@ -1097,7 +1105,12 @@ export class TransactionRepository {
             transactionType
           )?.PartitionKeyID
           return partitionKeyId
-            ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+            ? this.getDynamoDBTransactions(
+                partitionKeyId,
+                timeRange,
+                filterOptions,
+                attributesToFetch
+              )
             : []
         }
       )
@@ -1105,11 +1118,12 @@ export class TransactionRepository {
     return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  public async getNonUserReceivingThinTransactions(
+  public async getNonUserReceivingTransactions(
     paymentDetails: PaymentDetails,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const results = await Promise.all(
       getTransactionTypes(filterOptions?.transactionTypes).map(
         (transactionType) => {
@@ -1120,7 +1134,12 @@ export class TransactionRepository {
             transactionType
           )?.PartitionKeyID
           return partitionKeyId
-            ? this.getThinTransactions(partitionKeyId, timeRange, filterOptions)
+            ? this.getDynamoDBTransactions(
+                partitionKeyId,
+                timeRange,
+                filterOptions,
+                attributesToFetch
+              )
             : []
         }
       )
@@ -1128,24 +1147,30 @@ export class TransactionRepository {
     return sortTransactionsDescendingTimestamp(results.flatMap((t) => t))
   }
 
-  public async getIpAddressThinTransactions(
+  public async getIpAddressTransactions(
     ipAddress: string,
-    timeRange: TimeRange
-  ): Promise<Array<ThinTransaction>> {
-    return this.getThinTransactions(
+    timeRange: TimeRange,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
+    return this.getDynamoDBTransactions(
       DynamoDbKeys.IP_ADDRESS_TRANSACTION(this.tenantId, ipAddress)
         .PartitionKeyID,
-      timeRange
+      timeRange,
+      {},
+      attributesToFetch
     )
   }
 
   private getTransactionsQuery(
     partitionKeyId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): AWS.DynamoDB.DocumentClient.QueryInput {
-    const transactionFilterQuery =
-      this.getThinTransactionFilterQueryInput(filterOptions)
+    const transactionFilterQuery = this.getTransactionFilterQueryInput(
+      filterOptions,
+      attributesToFetch
+    )
     return {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       KeyConditionExpression:
@@ -1157,38 +1182,44 @@ export class TransactionRepository {
         ':skto': `${timeRange.beforeTimestamp - 1}`,
         ...transactionFilterQuery.ExpressionAttributeValues,
       },
+      ExpressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
+      ProjectionExpression: transactionFilterQuery.ProjectionExpression,
       ScanIndexForward: false,
     }
   }
 
-  private async getThinTransactions(
+  private async getDynamoDBTransactions(
     partitionKeyId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
-  ): Promise<Array<ThinTransaction>> {
+    filterOptions: TransactionsFilterOptions,
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
+  ): Promise<Array<AuxiliaryIndexTransaction>> {
     const result = await paginateQuery(
       this.dynamoDb,
-      this.getTransactionsQuery(partitionKeyId, timeRange, filterOptions)
+      this.getTransactionsQuery(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        attributesToFetch
+      )
     )
-    return (
-      result.Items?.map((item) => ({
-        transactionId: item.transactionId,
-        timestamp: parseInt(item.SortKeyID),
-        senderKeyId: item.senderKeyId,
-        receiverKeyId: item.receiverKeyId,
-        originUserId: item.originUserId,
-        destinationUserId: item.destinationUserId,
-      })) || []
-    )
+    return (result.Items?.map((item) =>
+      _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+    ) || []) as Array<AuxiliaryIndexTransaction>
   }
 
-  private async getUserThinTransactionsCount(
+  private async getUserTransactionsCount(
     partitionKeyId: string,
     timeRange: TimeRange,
-    filterOptions?: ThinTransactionsFilterOptions
+    filterOptions: TransactionsFilterOptions
   ): Promise<QueryCountResult> {
     const result = await paginateQuery(this.dynamoDb, {
-      ...this.getTransactionsQuery(partitionKeyId, timeRange, filterOptions),
+      ...this.getTransactionsQuery(
+        partitionKeyId,
+        timeRange,
+        filterOptions,
+        []
+      ),
       Select: 'COUNT',
     })
     return {
@@ -1197,30 +1228,64 @@ export class TransactionRepository {
     }
   }
 
-  private getThinTransactionFilterQueryInput(
-    filterOptions: ThinTransactionsFilterOptions = {}
+  private getTransactionFilterQueryInput(
+    filterOptions: TransactionsFilterOptions = {},
+    attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Partial<AWS.DynamoDB.DocumentClient.QueryInput> {
     const filters = [
       filterOptions.transactionState && 'transactionState = :transactionState',
       filterOptions.receiverKeyId && 'receiverKeyId = :receiverKeyId',
       filterOptions.senderKeyId && 'senderKeyId = :senderKeyId',
       filterOptions.originPaymentMethod &&
-        'originPaymentMethod = :originPaymentMethod',
+        '#originPaymentDetails.#method = :originPaymentMethod',
       filterOptions.destinationPaymentMethod &&
-        'destinationPaymentMethod = :destinationPaymentMethod',
+        '#destinationPaymentDetails.#method = :destinationPaymentMethod',
     ].filter(Boolean)
-    if (filters.length === 0) {
+
+    if (_.isEmpty(filters) && _.isEmpty(attributesToFetch)) {
       return {}
     }
+
+    const expressionAttributeNames = _.merge(
+      filterOptions.originPaymentMethod ||
+        filterOptions.destinationPaymentMethod
+        ? _.omitBy(
+            {
+              '#originPaymentDetails':
+                filterOptions.originPaymentMethod && 'originPaymentDetails',
+              '#destinationPaymentDetails':
+                filterOptions.destinationPaymentMethod &&
+                'destinationPaymentDetails',
+              '#method':
+                filterOptions.originPaymentMethod ||
+                filterOptions.destinationPaymentMethod
+                  ? 'method'
+                  : undefined,
+            },
+            _.isNil
+          )
+        : undefined,
+      attributesToFetch &&
+        Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
+    )
+
     return {
-      FilterExpression: filters.join(' AND '),
-      ExpressionAttributeValues: {
-        ':transactionState': filterOptions.transactionState,
-        ':senderKeyId': filterOptions.senderKeyId,
-        ':receiverKeyId': filterOptions.receiverKeyId,
-        ':originPaymentMethod': filterOptions.originPaymentMethod,
-        ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
-      },
+      FilterExpression: _.isEmpty(filters) ? undefined : filters.join(' AND '),
+      ExpressionAttributeNames: _.isEmpty(expressionAttributeNames)
+        ? undefined
+        : expressionAttributeNames,
+      ExpressionAttributeValues: _.isEmpty(filters)
+        ? undefined
+        : {
+            ':transactionState': filterOptions.transactionState,
+            ':senderKeyId': filterOptions.senderKeyId,
+            ':receiverKeyId': filterOptions.receiverKeyId,
+            ':originPaymentMethod': filterOptions.originPaymentMethod,
+            ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
+          },
+      ProjectionExpression: _.isEmpty(attributesToFetch)
+        ? undefined
+        : attributesToFetch.map((name) => `#${name}`).join(', '),
     }
   }
 
@@ -1271,11 +1336,11 @@ export class TransactionRepository {
 }
 
 function sortTransactionsDescendingTimestamp(
-  transactions: ThinTransaction[]
-): ThinTransaction[] {
+  transactions: AuxiliaryIndexTransaction[]
+): AuxiliaryIndexTransaction[] {
   return transactions.sort(
     (transaction1, transaction2) =>
-      transaction2.timestamp - transaction1.timestamp
+      (transaction2.timestamp || 0) - (transaction1.timestamp || 0)
   )
 }
 

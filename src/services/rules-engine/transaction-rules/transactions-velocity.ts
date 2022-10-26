@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
 import {
-  ThinTransaction,
-  ThinTransactionsFilterOptions,
+  TransactionsFilterOptions,
   TransactionRepository,
+  AuxiliaryIndexTransaction,
 } from '../repositories/transaction-repository'
 import { isUserInList, isUserType } from '../utils/user-rule-utils'
 import {
@@ -29,7 +29,6 @@ import {
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { UserType } from '@/@types/user/user-type'
-import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
 export type TransactionsVelocityRuleParameters =
@@ -215,12 +214,12 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       afterTimestamp,
       beforeTimestamp: this.transaction.timestamp!,
     }
-    const originFilterOptions: ThinTransactionsFilterOptions = {
+    const originFilterOptions: TransactionsFilterOptions = {
       transactionState: this.parameters.transactionState,
       transactionTypes: this.parameters.transactionTypes,
       originPaymentMethod: this.parameters.paymentMethod,
     }
-    const destinationFilterOptions: ThinTransactionsFilterOptions = {
+    const destinationFilterOptions: TransactionsFilterOptions = {
       transactionState: this.parameters.transactionState,
       transactionTypes: this.parameters.transactionTypes,
 
@@ -231,11 +230,12 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         ? onlyCheckKnownUsers
           ? (async () =>
               this.getTransactionsCountForKnownUsers(
-                await transactionRepository.getGenericUserSendingThinTransactions(
+                await transactionRepository.getGenericUserSendingTransactions(
                   userId,
                   paymentDetails,
                   timeRange,
-                  originFilterOptions
+                  originFilterOptions,
+                  ['originUserId', 'destinationUserId']
                 ),
                 'sending'
               ))()
@@ -250,11 +250,12 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         ? onlyCheckKnownUsers
           ? (async () =>
               this.getTransactionsCountForKnownUsers(
-                await transactionRepository.getGenericUserReceivingThinTransactions(
+                await transactionRepository.getGenericUserReceivingTransactions(
                   userId,
                   paymentDetails,
                   timeRange,
-                  destinationFilterOptions
+                  destinationFilterOptions,
+                  ['originUserId', 'destinationUserId']
                 ),
                 'receiving'
               ))()
@@ -270,15 +271,13 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
   }
 
   private getTransactionsCountForKnownUsers(
-    thinTransactions: ThinTransaction[],
+    transactions: AuxiliaryIndexTransaction[],
     direction: 'sending' | 'receiving'
   ): number {
-    return thinTransactions.filter((thinTransaction) =>
-      keyHasUserId(
-        (direction === 'sending'
-          ? thinTransaction.receiverKeyId
-          : thinTransaction.senderKeyId) || ''
-      )
+    return transactions.filter((transaction) =>
+      direction === 'sending'
+        ? transaction.originUserId
+        : transaction.destinationUserId
     ).length
   }
 }

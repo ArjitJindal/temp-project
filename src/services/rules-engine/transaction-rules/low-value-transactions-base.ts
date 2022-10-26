@@ -74,29 +74,25 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
     const userId = this.getTransactionUserId()
     if (userId) {
       const lastNTransactionsToCheck = lowTransactionCount - 1
-      const thinTransactionIds = (
-        await (this.getDirection() === 'receiving'
-          ? transactionRepository.getLastNUserReceivingThinTransactions(
+      const transactions = (
+        (await (this.getDirection() === 'receiving'
+          ? transactionRepository.getLastNUserReceivingTransactions(
               userId,
               lastNTransactionsToCheck,
-              { transactionState }
+              { transactionState },
+              ['originAmountDetails', 'destinationAmountDetails']
             )
-          : transactionRepository.getLastNUserSendingThinTransactions(
+          : transactionRepository.getLastNUserSendingTransactions(
               userId,
               lastNTransactionsToCheck,
-              { transactionState }
-            ))
-      ).map((transaction) => transaction.transactionId)
-      if (thinTransactionIds.length < lastNTransactionsToCheck) {
+              { transactionState },
+              ['originAmountDetails', 'destinationAmountDetails']
+            ))) as Transaction[]
+      ).concat(this.transaction)
+      if (transactions.length <= lastNTransactionsToCheck) {
         return undefined
       }
 
-      const transactions = [
-        ...(await transactionRepository.getTransactionsByIds(
-          thinTransactionIds
-        )),
-        this.transaction,
-      ]
       const areAllTransactionsLowValue = await everyAsync(
         transactions,
         async (transaction) => {
@@ -121,7 +117,7 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
               this.getDirection() === 'sending' ? 'origin' : 'destination'
             ),
             transactionCountDelta:
-              lowTransactionCount - thinTransactionIds.length,
+              lowTransactionCount - transactions.length + 1,
           },
         }
       }

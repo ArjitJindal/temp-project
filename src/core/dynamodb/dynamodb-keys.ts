@@ -308,7 +308,3 @@ export const DynamoDbKeys = {
 function getTransactionTypeKey(transactionType: string | undefined): string {
   return `${TYPE_PREFIX}${transactionType || 'all'}`
 }
-
-export function keyHasUserId(key: string) {
-  return key.includes(USER_ID_PREFIX)
-}

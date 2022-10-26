@@ -1,6 +1,6 @@
 import * as _ from 'lodash'
 import {
-  ThinTransaction,
+  AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { subtractTime } from './time-utils'
@@ -160,10 +160,11 @@ async function getTransactions(
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
     matchPaymentMethodDetails?: boolean
-  }
+  },
+  attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
-  sendingTransactions: ThinTransaction[]
-  receivingTransactions: ThinTransaction[]
+  sendingTransactions: Transaction[]
+  receivingTransactions: Transaction[]
 }> {
   const {
     checkType,
@@ -175,7 +176,7 @@ async function getTransactions(
   } = options
   const [sendingTransactions, receivingTransactions] = await Promise.all([
     checkType === 'sending' || checkType === 'all'
-      ? transactionRepository.getGenericUserSendingThinTransactions(
+      ? transactionRepository.getGenericUserSendingTransactions(
           userId,
           paymentDetails,
           {
@@ -186,11 +187,12 @@ async function getTransactions(
             transactionState,
             transactionTypes,
           },
+          attributesToFetch,
           matchPaymentMethodDetails
         )
       : Promise.resolve([]),
     checkType === 'receiving' || checkType === 'all'
-      ? transactionRepository.getGenericUserReceivingThinTransactions(
+      ? transactionRepository.getGenericUserReceivingTransactions(
           userId,
           paymentDetails,
           {
@@ -201,6 +203,7 @@ async function getTransactions(
             transactionState,
             transactionTypes,
           },
+          attributesToFetch,
           matchPaymentMethodDetails
         )
       : Promise.resolve([]),
@@ -280,7 +283,8 @@ export async function getTransactionUserPastTransactions(
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
     matchPaymentMethodDetails?: boolean
-  }
+  },
+  attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
   senderSendingTransactions: Transaction[]
   senderReceivingTransactions: Transaction[]
@@ -310,7 +314,8 @@ export async function getTransactionUserPastTransactions(
             transactionState,
             transactionTypes,
             matchPaymentMethodDetails,
-          }
+          },
+          attributesToFetch
         )
       : Promise.resolve({
           sendingTransactions: [],
@@ -329,48 +334,22 @@ export async function getTransactionUserPastTransactions(
             transactionState,
             transactionTypes,
             matchPaymentMethodDetails,
-          }
+          },
+          attributesToFetch
         )
       : Promise.resolve({
           sendingTransactions: [],
           receivingTransactions: [],
         })
-  const [senderThinTransactions, receiverThinTransactions] = await Promise.all([
+  const [senderTransactions, receiverTransactions] = await Promise.all([
     senderTransactionsPromise,
     receiverTransactionsPromise,
   ])
-  const [
-    senderSendingTransactions,
-    senderReceivingTransactions,
-    receiverSendingTransactions,
-    receiverReceivingTransactions,
-  ] = await Promise.all([
-    transactionRepository.getTransactionsByIds(
-      senderThinTransactions.sendingTransactions.map(
-        (transaction) => transaction.transactionId
-      )
-    ),
-    transactionRepository.getTransactionsByIds(
-      senderThinTransactions.receivingTransactions.map(
-        (transaction) => transaction.transactionId
-      )
-    ),
-    transactionRepository.getTransactionsByIds(
-      receiverThinTransactions.sendingTransactions.map(
-        (transaction) => transaction.transactionId
-      )
-    ),
-    transactionRepository.getTransactionsByIds(
-      receiverThinTransactions.receivingTransactions.map(
-        (transaction) => transaction.transactionId
-      )
-    ),
-  ])
   return {
-    senderSendingTransactions,
-    senderReceivingTransactions,
-    receiverSendingTransactions,
-    receiverReceivingTransactions,
+    senderSendingTransactions: senderTransactions.sendingTransactions,
+    senderReceivingTransactions: senderTransactions.receivingTransactions,
+    receiverSendingTransactions: receiverTransactions.sendingTransactions,
+    receiverReceivingTransactions: receiverTransactions.receivingTransactions,
   }
 }
 

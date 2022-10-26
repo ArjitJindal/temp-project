@@ -13,7 +13,8 @@ export default class FirstPaymentRule extends TransactionRule<any> {
     const isFirstPayment =
       this.transaction.originUserId &&
       !(await transactionRepository.hasAnySendingTransaction(
-        this.transaction.originUserId
+        this.transaction.originUserId,
+        {}
       ))
     if (isFirstPayment) {
       return {

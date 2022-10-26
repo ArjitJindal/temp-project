@@ -88,7 +88,7 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
       dynamoDb: this.dynamoDb,
     })
     const sendingTransactions = (
-      await transactionRepository.getUserSendingThinTransactions(
+      await transactionRepository.getUserSendingTransactions(
         this.transaction.originUserId as string,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)
@@ -96,20 +96,18 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        { transactionTypes, transactionState }
+        { transactionTypes, transactionState },
+        ['receiverKeyId']
       )
-    ).concat([
-      {
-        transactionId: this.transaction.transactionId as string,
-        timestamp: this.transaction.timestamp!,
-        receiverKeyId: getReceiverKeys(
-          this.tenantId,
-          this.transaction,
-          this.transaction.type
-        )?.PartitionKeyID,
-        senderKeyId: undefined,
-      },
-    ])
+    ).concat({
+      ...this.transaction,
+      receiverKeyId: getReceiverKeys(
+        this.tenantId,
+        this.transaction,
+        this.transaction.type
+      )?.PartitionKeyID,
+      senderKeyId: undefined,
+    })
     return sendingTransactions.filter((transaction) =>
       possibleReceiverKeyIds.has(transaction.receiverKeyId)
     )

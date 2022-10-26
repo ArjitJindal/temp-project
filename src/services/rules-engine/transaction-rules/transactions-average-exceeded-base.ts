@@ -16,7 +16,10 @@ import {
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '@/services/rules-engine/repositories/transaction-repository'
 import {
   subtractTime,
   toGranularity,
@@ -173,8 +176,6 @@ export default class TransactionAverageExceededBaseRule<
     const { min: numMin1, max: numMax1 } = transactionsNumberThreshold ?? {}
     const { min: numMin2, max: numMax2 } = transactionsNumberThreshold2 ?? {}
 
-    const repo = this.transactionRepository as TransactionRepository
-
     const afterTimestamp1 = subtractTime(
       dayjs(this.transaction.timestamp),
       period1
@@ -196,7 +197,7 @@ export default class TransactionAverageExceededBaseRule<
         ? this.transaction.originPaymentDetails
         : this.transaction.destinationPaymentDetails
 
-    const [ids1, ids2] = await Promise.all([
+    const [transactions1, transactions2] = await Promise.all([
       this.getTransactionsInTimeWindow(
         userId,
         paymentDetails,
@@ -219,8 +220,8 @@ export default class TransactionAverageExceededBaseRule<
     const includeCurrentTransaction =
       checkOriginSending || checkDestinationReceiving
 
-    let num1 = ids1.length
-    let num2 = ids2.length
+    let num1 = transactions1.length
+    let num2 = transactions2.length
 
     if (includeCurrentTransaction && this.transaction.transactionId) {
       num1++
@@ -239,11 +240,6 @@ export default class TransactionAverageExceededBaseRule<
     let result: [number, number]
     const avgMethod = this.getAvgMethod()
     if (avgMethod === 'AMOUNT') {
-      const [transactions1, transactions2] = await Promise.all([
-        repo.getTransactionsByIds(ids1),
-        repo.getTransactionsByIds(ids2),
-      ])
-
       if (includeCurrentTransaction) {
         transactions1.push(this.transaction)
         if (!excludePeriod1) {
@@ -311,7 +307,7 @@ export default class TransactionAverageExceededBaseRule<
     afterTimestamp: number,
     beforeTimestamp: number,
     direction: Direction
-  ): Promise<string[]> {
+  ): Promise<AuxiliaryIndexTransaction[]> {
     const repo = this.transactionRepository as TransactionRepository
 
     const timeRange = {
@@ -323,22 +319,21 @@ export default class TransactionAverageExceededBaseRule<
       transactionTypes: this.parameters.transactionTypes,
     }
 
-    const result =
-      direction === 'sending'
-        ? await repo.getGenericUserSendingThinTransactions(
-            userId,
-            paymentDetails,
-            timeRange,
-            filterOptions
-          )
-        : await repo.getGenericUserReceivingThinTransactions(
-            userId,
-            paymentDetails,
-            timeRange,
-            filterOptions
-          )
-
-    return result.map(({ transactionId }) => transactionId)
+    return direction === 'sending'
+      ? await repo.getGenericUserSendingTransactions(
+          userId,
+          paymentDetails,
+          timeRange,
+          filterOptions,
+          ['originAmountDetails', 'destinationAmountDetails']
+        )
+      : await repo.getGenericUserReceivingTransactions(
+          userId,
+          paymentDetails,
+          timeRange,
+          filterOptions,
+          ['originAmountDetails', 'destinationAmountDetails']
+        )
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {

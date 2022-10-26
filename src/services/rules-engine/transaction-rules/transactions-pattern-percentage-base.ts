@@ -104,7 +104,8 @@ export default class TransactionsPatternPercentageBaseRule<
         checkReceiver,
         transactionState,
         transactionTypes,
-      }
+      },
+      this.getNeededTransactionFields()
     )
 
     const senderTransactions = senderSendingTransactions
@@ -161,6 +162,10 @@ export default class TransactionsPatternPercentageBaseRule<
     _transaction: Transaction,
     _direction?: 'origin' | 'destination'
   ): boolean {
+    throw new Error('Not implemented')
+  }
+
+  protected getNeededTransactionFields(): Array<keyof Transaction> {
     throw new Error('Not implemented')
   }
 }

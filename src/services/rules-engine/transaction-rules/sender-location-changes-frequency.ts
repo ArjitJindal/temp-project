@@ -4,6 +4,7 @@ import { TransactionRepository } from '../repositories/transaction-repository'
 import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { MissingRuleParameter } from './errors'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 export type SenderLocationChangesFrequencyRuleParameters =
   DefaultTransactionRuleParameters & {
@@ -50,8 +51,8 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const thinTransactions =
-      await transactionRepository.getUserSendingThinTransactions(
+    const transactionsWithIpAddress = (
+      (await transactionRepository.getUserSendingTransactions(
         this.transaction.originUserId,
         {
           afterTimestamp: dayjs(this.transaction.timestamp)
@@ -59,14 +60,12 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        { transactionState }
-      )
-    const transactionsWithIpAddress = [
-      ...(await transactionRepository.getTransactionsByIds(
-        thinTransactions.map((thinTransaction) => thinTransaction.transactionId)
-      )),
-      this.transaction,
-    ].filter((transaction) => transaction.deviceData?.ipAddress)
+        { transactionState },
+        ['deviceData']
+      )) as Transaction[]
+    )
+      .concat(this.transaction)
+      .filter((transaction) => transaction.deviceData?.ipAddress)
     const geoIp = await import('fast-geoip')
     const ipInfos = await Promise.all(
       transactionsWithIpAddress.map((transaction) =>

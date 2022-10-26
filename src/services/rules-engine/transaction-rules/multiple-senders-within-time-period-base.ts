@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import {
-  ThinTransaction,
+  AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import {
@@ -10,7 +10,6 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
-import { keyHasUserId } from '@/core/dynamodb/dynamodb-keys'
 import { subtractTime } from '@/services/rules-engine/utils/time-utils'
 
 export type MultipleSendersWithinTimePeriodRuleParameters =
@@ -57,38 +56,38 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
       dayjs(this.transaction.timestamp),
       timeWindow
     )
-    let senderTransactions: ThinTransaction[] = []
+    let senderTransactions: AuxiliaryIndexTransaction[] = []
     if (receiverTypes.includes('USER') && this.transaction.destinationUserId) {
       senderTransactions =
-        await transactionRepository.getUserReceivingThinTransactions(
+        await transactionRepository.getUserReceivingTransactions(
           this.transaction.destinationUserId,
           {
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
           },
-          { transactionState }
+          { transactionState },
+          ['senderKeyId', 'originUserId']
         )
     } else if (
       receiverTypes.includes('NON_USER') &&
       this.transaction.destinationPaymentDetails
     ) {
       senderTransactions =
-        await transactionRepository.getNonUserReceivingThinTransactions(
+        await transactionRepository.getNonUserReceivingTransactions(
           this.transaction.destinationPaymentDetails,
           {
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
           },
-          { transactionState }
+          { transactionState },
+          ['senderKeyId', 'originUserId']
         )
     }
     const uniqueSenders = new Set(
       senderTransactions
         .filter(
           (transaction) =>
-            (senderTypes.includes('USER') &&
-              transaction.senderKeyId &&
-              keyHasUserId(transaction.senderKeyId)) ||
+            (senderTypes.includes('USER') && transaction.originUserId) ||
             senderTypes.includes('NON_USER')
         )
         .map((transaction) => transaction.senderKeyId)

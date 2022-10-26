@@ -48,7 +48,7 @@ describe('R-123 description formatting', () => {
         originAmountDetails: {
           country: 'AF',
           transactionAmount: 800,
-          transactionCurrency: 'AFS',
+          transactionCurrency: 'AFN',
         },
         timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
       }),
@@ -56,7 +56,7 @@ describe('R-123 description formatting', () => {
         originAmountDetails: {
           country: 'RU',
           transactionAmount: 800,
-          transactionCurrency: 'AFS',
+          transactionCurrency: 'AFN',
         },
         timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
       }),

@@ -76,4 +76,8 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
       ? this.isHighRiskCountry(transaction.destinationAmountDetails?.country)
       : false
   }
+
+  protected getNeededTransactionFields(): Array<keyof Transaction> {
+    return ['originAmountDetails', 'destinationAmountDetails']
+  }
 }

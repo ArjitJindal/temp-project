@@ -69,15 +69,17 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     })
 
     const [targetTransactions, ...otherTransactionsList] = await Promise.all([
-      transactionRepository.getLastNUserSendingThinTransactions(
+      transactionRepository.getLastNUserSendingTransactions(
         this.transaction.originUserId as string,
         targetTransactionsThreshold,
-        { transactionTypes: transactionTypes, transactionState }
+        { transactionTypes: transactionTypes, transactionState },
+        ['timestamp']
       ),
-      transactionRepository.getLastNUserSendingThinTransactions(
+      transactionRepository.getLastNUserSendingTransactions(
         this.transaction.originUserId as string,
         1,
-        { transactionTypes: otherTransactionTypes, transactionState }
+        { transactionTypes: otherTransactionTypes, transactionState },
+        ['timestamp']
       ),
     ])
 
