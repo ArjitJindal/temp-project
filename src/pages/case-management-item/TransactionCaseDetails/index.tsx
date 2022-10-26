@@ -26,6 +26,7 @@ export default function TransactionCaseDetails(props: Props) {
       caseId,
       limit: 1,
       skip: 0,
+      includeUsers: true,
     });
   });
 
