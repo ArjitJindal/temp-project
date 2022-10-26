@@ -2,6 +2,7 @@ import UserManualRiskPanel from '../UserDetails/UserManualRiskPanel';
 import KycStatusEditor from '../UserDetails/KycStatusEditor';
 import UserStateEditor from '../UserDetails/UserStateEditor';
 import KycRiskDisplay from '../UserDetails/KycRiskDisplay';
+import DynamicRiskDisplay from '../UserDetails/DynamicRiskDisplay';
 import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
@@ -35,6 +36,13 @@ export default function Header(props: { user: InternalConsumerUser | InternalBus
           <Feature name="PULSE_KRS_CALCULATION">
             <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
               <KycRiskDisplay userId={user.userId} />
+            </Form.Layout.Label>
+          </Feature>
+        </div>
+        <div>
+          <Feature name="PULSE_ARS_CALCULATION">
+            <Form.Layout.Label icon={<HospitalIcon />} title={'Dynamic Risk Score'}>
+              <DynamicRiskDisplay userId={user.userId} />
             </Form.Layout.Label>
           </Feature>
         </div>
