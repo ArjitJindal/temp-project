@@ -32,10 +32,10 @@ export async function migrateTenant(
       },
     },
     {
-      sort: { tiemstamp: -1 },
       projection: Object.fromEntries(
         Transaction.attributeTypeMap.map((attribute) => [attribute.name, 1])
       ),
+      allowDiskUse: true,
     }
   )
 
