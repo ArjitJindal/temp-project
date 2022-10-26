@@ -327,7 +327,7 @@ const TableList = () => {
         actionsHeader={[
           ({ params, setParams }) => (
             <div className={styles.flex}>
-              <div className={styles.filterbuttons}>
+              <div className={styles.filterButtons}>
                 <UserSearchButton
                   initialMode={params.params.userFilterMode ?? 'ALL'}
                   userId={params.params.userId ?? null}
