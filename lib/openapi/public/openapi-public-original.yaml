@@ -55,12 +55,14 @@ paths:
             type: string
           in: query
           name: validateOriginUserId
-          description: Boolean string whether Flagright should validate if provided
+          description:
+            Boolean string whether Flagright should validate if provided
             originUserId exist. True by default
         - schema:
             type: string
           in: query
-          description: Boolean string whether Flagright should validate if provided
+          description:
+            Boolean string whether Flagright should validate if provided
             destinationUserId exist. True by default
           name: validateDestinationUserId
       requestBody:
@@ -134,14 +136,16 @@ paths:
                     executedRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
                     hitRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
         '400':
@@ -235,14 +239,16 @@ paths:
                     executedRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
                     hitRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
         '401':
@@ -374,14 +380,16 @@ paths:
                     executedRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
                         ruleHit: true
                     hitRules:
                       - ruleId: R-1a
                         ruleName: Proof of funds for high value transactions
-                        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+                        ruleDescription:
+                          If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
         '400':
@@ -1365,7 +1373,8 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           description: Additional information that can be added via tags
-      description: Model for a generic individual - different from User model by not
+      description:
+        Model for a generic individual - different from User model by not
         having userId field
       example:
         generalDetails:
@@ -1427,7 +1436,8 @@ components:
             milliseconds)
         documentExpirationDate:
           type: number
-          description: User's identity document expiration date (UNIX timestamp in
+          description:
+            User's identity document expiration date (UNIX timestamp in
             milliseconds)
         documentIssuedCountry:
           type: string
@@ -1439,7 +1449,8 @@ components:
           description: Additional information that can be added via tags
         nameOnDocument:
           $ref: '#/components/schemas/ConsumerName'
-      description: "LegalDocument model generalizes User's identity document type (ex:
+      description:
+        "LegalDocument model generalizes User's identity document type (ex:
         Passport)"
       example:
         documentType: passport
@@ -1465,7 +1476,8 @@ components:
           minLength: 1
           type: string
           description: Value for a given key when you are creating a custom variable
-      description: Generic key-value pair model to append a custom variable being sent
+      description:
+        Generic key-value pair model to append a custom variable being sent
         to Flagright API
       example:
         key: customKey
@@ -1578,7 +1590,8 @@ components:
           description: UserId for where the transaction originates from
         destinationUserId:
           type: string
-          description: UserId for transaction's destination. In other words, where the
+          description:
+            UserId for transaction's destination. In other words, where the
             value is being transferred to.
         originAmountDetails:
           $ref: '#/components/schemas/TransactionAmountDetails'
@@ -1595,7 +1608,8 @@ components:
             - $ref: '#/components/schemas/UPIDetails'
             - $ref: '#/components/schemas/WalletDetails'
             - $ref: '#/components/schemas/CheckDetails'
-          description: Payment details of the origin. It can be a bank account number,
+          description:
+            Payment details of the origin. It can be a bank account number,
             wallet ID, card fingerprint etc.
         destinationPaymentDetails:
           oneOf:
@@ -1614,11 +1628,13 @@ components:
             cardIssuedCountry: TR
             transactionReferenceField: Deposit
             3dsDone: true
-          description: Payment details of the destination. It can be a bank account
+          description:
+            Payment details of the destination. It can be a bank account
             number, wallet ID, card fingerprint etc.
         relatedTransactionIds:
           type: array
-          description: 'IDs of transactions related to this transaction. Ex: refund, split
+          description:
+            'IDs of transactions related to this transaction. Ex: refund, split
             bills'
           items:
             type: string
@@ -1631,7 +1647,8 @@ components:
         reference:
           minLength: 1
           type: string
-          description: Reference field for the transaction indicating the purpose of the
+          description:
+            Reference field for the transaction indicating the purpose of the
             transaction etc.
         deviceData:
           $ref: '#/components/schemas/DeviceData'
@@ -1746,14 +1763,16 @@ components:
           executedRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
           hitRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
     DeviceData:
@@ -1762,7 +1781,8 @@ components:
       properties:
         batteryLevel:
           type: number
-          description: Battery level of the device used for a transaction or event at a
+          description:
+            Battery level of the device used for a transaction or event at a
             given timestamp
         deviceLatitude:
           type: number
@@ -1773,7 +1793,8 @@ components:
         ipAddress:
           minLength: 1
           type: string
-          description: IP address of the device at a given timestamp for an event or
+          description:
+            IP address of the device at a given timestamp for an event or
             transaction
         deviceIdentifier:
           minLength: 1
@@ -1785,27 +1806,32 @@ components:
         operatingSystem:
           minLength: 1
           type: string
-          description: Operating system of the device at a given timestamp for an event or
+          description:
+            Operating system of the device at a given timestamp for an event or
             transaction
         deviceMaker:
           minLength: 1
           type: string
-          description: The maker of the device at a given timestamp for an event or
+          description:
+            The maker of the device at a given timestamp for an event or
             transaction
         deviceModel:
           minLength: 1
           type: string
-          description: The model of the device at a given timestamp for an event or
+          description:
+            The model of the device at a given timestamp for an event or
             transaction
         deviceYear:
           minLength: 1
           type: string
-          description: The year the device was manufactured at a given timestamp for an
+          description:
+            The year the device was manufactured at a given timestamp for an
             event or transaction
         appVersion:
           minLength: 1
           type: string
-          description: The version of the app your user is using on their device at a
+          description:
+            The version of the app your user is using on their device at a
             given timestamp for an event or transaction
       description: Model for device data
     TransactionMonitoringResult:
@@ -1825,14 +1851,16 @@ components:
           executedRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
           hitRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
     TransactionEventMonitoringResult:
@@ -1896,14 +1924,16 @@ components:
           executedRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
           hitRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
       title: ''
@@ -1926,14 +1956,16 @@ components:
         executedRules:
           - ruleId: R-1a
             ruleName: Proof of funds for high value transactions
-            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+            ruleDescription:
+              If a user makes a remittance transaction >= 1800 in EUR - ask
               for proof of funds
             ruleAction: BLOCK
             ruleHit: true
         hitRules:
           - ruleId: R-1a
             ruleName: Proof of funds for high value transactions
-            ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+            ruleDescription:
+              If a user makes a remittance transaction >= 1800 in EUR - ask
               for proof of funds
             ruleAction: BLOCK
       x-examples:
@@ -1942,14 +1974,16 @@ components:
           executedRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
               ruleHit: true
           hitRules:
             - ruleId: R-1a
               ruleName: Proof of funds for high value transactions
-              ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+              ruleDescription:
+                If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
       properties:
@@ -1972,7 +2006,8 @@ components:
       example:
         ruleId: R-1a
         ruleName: Proof of funds for high value transactions
-        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+        ruleDescription:
+          If a user makes a remittance transaction >= 1800 in EUR - ask
           for proof of funds
         ruleAction: BLOCK
         ruleHit: true
@@ -2011,7 +2046,8 @@ components:
       example:
         ruleId: R-1a
         ruleName: Proof of funds for high value transactions
-        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+        ruleDescription:
+          If a user makes a remittance transaction >= 1800 in EUR - ask
           for proof of funds
         ruleAction: BLOCK
         ruleHit: true
@@ -2047,7 +2083,8 @@ components:
       example:
         ruleId: R-1a
         ruleName: Proof of funds for high value transactions
-        ruleDescription: If a user makes a remittance transaction >= 1800 in EUR - ask
+        ruleDescription:
+          If a user makes a remittance transaction >= 1800 in EUR - ask
           for proof of funds
         failureException:
           exceptionName: MISSING_DATA
@@ -2319,7 +2356,8 @@ components:
         registrationIdentifier:
           minLength: 1
           type: string
-          description: Commercial registry registration number for the company in its
+          description:
+            Commercial registry registration number for the company in its
             registration country
         registrationCountry:
           minLength: 1
@@ -2838,7 +2876,8 @@ components:
           $ref: '#/components/schemas/KYCStatusDetails'
         shareHolders:
           type: array
-          description: Shareholders (beneficiaries) of the company that hold at least 25%
+          description:
+            Shareholders (beneficiaries) of the company that hold at least 25%
             ownership. Can be another company or an individual
           items:
             $ref: '#/components/schemas/Person'
@@ -2909,7 +2948,8 @@ components:
         cardFingerprint:
           minLength: 1
           type: string
-          description: Unique card fingerprint that helps identify a specific card without
+          description:
+            Unique card fingerprint that helps identify a specific card without
             having to use explicit card number. This is likely available at your
             card payment scheme provider
         cardIssuedCountry:
@@ -3011,7 +3051,8 @@ components:
         BIC:
           minLength: 1
           type: string
-          description: Identifier for the bank. Can be routing number, BIK number, SWIFT
+          description:
+            Identifier for the bank. Can be routing number, BIK number, SWIFT
             code, BIC number etc.
         bankName:
           minLength: 1
@@ -3029,7 +3070,8 @@ components:
           $ref: '#/components/schemas/Tag'
         bankBranchCode:
           type: string
-          description: Branch code of the bank. In some countries, this can be the same as
+          description:
+            Branch code of the bank. In some countries, this can be the same as
             the bank's SWIFT code
         paymentChannel:
           type: string
@@ -3045,7 +3087,8 @@ components:
           $ref: '#/components/schemas/WalletPaymentMethod'
         walletType:
           type: string
-          description: Wallet type if there are various types of wallets belonging to the
+          description:
+            Wallet type if there are various types of wallets belonging to the
             same user. E.g. Checking, savings, vault, different currency wallets
             etc.
         walletId:
@@ -3198,7 +3241,8 @@ components:
           description: Name of the bank
         bankCode:
           type: string
-          description: Unique identifier of the bank. In some countries, this can be the
+          description:
+            Unique identifier of the bank. In some countries, this can be the
             same as the bank's SWIFT code
         name:
           type: string
@@ -3288,7 +3332,8 @@ components:
         - SUSPEND
       x-examples:
         example-1: ALLOW
-      description: Model for rule action if a rule is hit. This is returned in the API
+      description:
+        Model for rule action if a rule is hit. This is returned in the API
         response and can be configured on Console by operational accounts like a
         Compliance Analyst
     RuleHitMeta:
@@ -3379,7 +3424,8 @@ components:
         employeeId:
           type: string
           minLength: 1
-          description: Employee ID the event pertains to. E.g. Employee login event on
+          description:
+            Employee ID the event pertains to. E.g. Employee login event on
             behalf of an end user
         metaData:
           $ref: '#/components/schemas/DeviceData'
@@ -3466,7 +3512,8 @@ components:
         employeeId:
           type: string
           minLength: 1
-          description: Employee ID the event pertains to. E.g. Employee login event on
+          description:
+            Employee ID the event pertains to. E.g. Employee login event on
             behalf of an end user
         updatedConsumerUserAttributes:
           $ref: '#/components/schemas/UserOptional'
@@ -3550,7 +3597,8 @@ components:
         employeeId:
           type: string
           minLength: 1
-          description: Employee ID the event pertains to. E.g. Employee login event on
+          description:
+            Employee ID the event pertains to. E.g. Employee login event on
             behalf of an end user
         updatedBusinessUserAttributes:
           $ref: '#/components/schemas/BusinessOptional'
@@ -3589,7 +3637,8 @@ components:
             - INVESTIGATION_COMPLETED
             - DOCUMENTS_COLLECTED
             - OTHER
-          description: Case status reason. E.g. Closed & False Positive, Closed &
+          description:
+            Case status reason. E.g. Closed & False Positive, Closed &
             Investigation Completed etc.
         transactionId:
           type: string

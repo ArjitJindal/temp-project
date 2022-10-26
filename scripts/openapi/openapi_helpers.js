@@ -1,8 +1,8 @@
-const fs = require("fs-extra");
+const fs = require('fs-extra')
 const yaml = require('yaml')
 const path = require('path')
 
-const PROJECT_DIR = path.resolve(__dirname, '..', '..');
+const PROJECT_DIR = path.resolve(__dirname, '..', '..')
 
 const formatOptions = {
   defaultKeyType: 'PLAIN',
@@ -32,7 +32,7 @@ async function localizeRefs(tree) {
   async function localizeRef(ref) {
     const match = ref.match(/^(.*\.yaml)#(.*)$/)
     if (!match) {
-      return ref;
+      return ref
     }
     const [_, file, path] = match
 
@@ -42,7 +42,7 @@ async function localizeRefs(tree) {
 
   async function traverse(tree) {
     if (tree == null) {
-      return tree;
+      return tree
     }
     if (Array.isArray(tree)) {
       return Promise.all(tree.map(traverse))
@@ -56,9 +56,9 @@ async function localizeRefs(tree) {
           result[key] = await traverse(value)
         }
       }
-      return result;
+      return result
     }
-    return tree;
+    return tree
   }
 
   return await traverse(tree)
