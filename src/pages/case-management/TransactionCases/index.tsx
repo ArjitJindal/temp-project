@@ -6,11 +6,10 @@ import { TableSearchParams } from '../types';
 import { AddToSlackButton } from '../components/AddToSlackButton';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { CasesStatusChangeForm, CaseStatusChangeForm } from '../components/CaseStatusChangeForm';
-import styles from './style.module.less';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
-import { currencies } from '@/utils/currencies';
+import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { Case, CasesListResponse, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
@@ -36,7 +35,6 @@ import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUse
 import { QueryResult } from '@/utils/queries/types';
 import { useTableData } from '@/pages/case-management/TransactionCases/helpers';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
-import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -495,7 +493,7 @@ export default function TransactionCases(props: Props) {
         width: 120,
         valueType: 'select',
         fieldProps: {
-          options: currencies,
+          options: CURRENCIES_SELECT_OPTIONS,
           allowClear: true,
           mode: 'multiple',
         },
@@ -506,7 +504,7 @@ export default function TransactionCases(props: Props) {
         width: 120,
         valueType: 'select',
         fieldProps: {
-          options: currencies,
+          options: CURRENCIES_SELECT_OPTIONS,
           allowClear: true,
           mode: 'multiple',
         },
@@ -593,70 +591,62 @@ export default function TransactionCases(props: Props) {
 
   return (
     <QueryResultsTable<CaseManagementItem, TableSearchParams>
+      showResultsInfo
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
       actionsHeader={[
         ({ params, setParams }) => (
           <>
-            <div className={styles.flex}>
-              <div className={styles.filterButtons}>
-                <CaseStatusButtons
-                  status={params.caseStatus ?? 'OPEN'}
-                  onChange={(newStatus) => {
-                    setParams((state) => ({
-                      ...state,
-                      caseStatus: newStatus,
-                    }));
-                  }}
-                />
-                <Divider type="vertical" style={{ height: '32px' }} />
-                <UserSearchButton
-                  initialMode={params.userFilterMode ?? 'ALL'}
-                  userId={params.userId ?? null}
-                  onConfirm={(userId, mode) => {
-                    setParams((state) => ({
-                      ...state,
-                      userId: userId ?? undefined,
-                      userFilterMode: mode ?? 'ALL',
-                    }));
-                  }}
-                />
-                <StateSearchButton
-                  transactionState={params.transactionState ?? undefined}
-                  onConfirm={(value) => {
-                    setParams((state) => ({
-                      ...state,
-                      transactionState: value ?? undefined,
-                    }));
-                  }}
-                />
-                <TagSearchButton
-                  initialState={{
-                    key: params.tagKey ?? null,
-                    value: params.tagValue ?? null,
-                  }}
-                  onConfirm={(value) => {
-                    setParams((state) => ({
-                      ...state,
-                      tagKey: value.key ?? undefined,
-                      tagValue: value.value ?? undefined,
-                    }));
-                  }}
-                />
-                <Divider type="vertical" style={{ height: '32px' }} />
-                <CasesStatusChangeForm
-                  caseIds={selectedEntities}
-                  onSaved={reloadTable}
-                  newCaseStatus={params.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
-                />
-              </div>
-              <div className={styles.count}>
-                <AsyncResourceRenderer resource={tableQueryResult.data}>
-                  {({ total }) => <div>Displaying {total} results </div>}
-                </AsyncResourceRenderer>
-              </div>
-            </div>
+            <CaseStatusButtons
+              status={params.caseStatus ?? 'OPEN'}
+              onChange={(newStatus) => {
+                setParams((state) => ({
+                  ...state,
+                  caseStatus: newStatus,
+                }));
+              }}
+            />
+            <Divider type="vertical" style={{ height: '32px' }} />
+            <UserSearchButton
+              initialMode={params.userFilterMode ?? 'ALL'}
+              userId={params.userId ?? null}
+              onConfirm={(userId, mode) => {
+                setParams((state) => ({
+                  ...state,
+                  userId: userId ?? undefined,
+                  userFilterMode: mode ?? 'ALL',
+                }));
+              }}
+            />
+            <StateSearchButton
+              transactionState={params.transactionState ?? undefined}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  transactionState: value ?? undefined,
+                }));
+              }}
+            />
+            <TagSearchButton
+              initialState={{
+                key: params.tagKey ?? null,
+                value: params.tagValue ?? null,
+              }}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  tagKey: value.key ?? undefined,
+                  tagValue: value.value ?? undefined,
+                }));
+              }}
+            />
+            <Divider type="vertical" style={{ height: '32px' }} />
+            <CasesStatusChangeForm
+              caseIds={selectedEntities}
+              onSaved={reloadTable}
+              newCaseStatus={params.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
+            />
           </>
         ),
       ]}

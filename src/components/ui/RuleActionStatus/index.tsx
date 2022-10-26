@@ -13,7 +13,7 @@ export const RuleActionStatus: React.FC<Props> = ({ ruleAction }) => {
   const settings = useSettings();
   const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
   return (
-    <div className={s.badge}>
+    <div className={s.root}>
       <div className={cn(s.icon, s[`ruleAction-${ruleAction}`])}></div>
       <div>{getRuleActionTitle(alias || ruleAction)}</div>
     </div>

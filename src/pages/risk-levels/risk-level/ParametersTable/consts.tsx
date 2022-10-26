@@ -8,7 +8,7 @@ import {
 } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
 import { PAYMENT_METHODS } from '@/utils/payments';
-import { currencies } from '@/utils/currencies';
+import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/ui/Slider';
@@ -270,7 +270,7 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
     );
   },
   CURRENCY: (props) => {
-    return <MultipleSelect options={currencies} {...props} />;
+    return <MultipleSelect options={CURRENCIES_SELECT_OPTIONS} {...props} />;
   },
   CONSUMER_USER_TYPE: (props) => {
     return <MultipleSelect options={consumerType} {...props} />;
@@ -316,7 +316,7 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
 export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
   STRING: ({ value }) => <span>{value}</span>,
   CURRENCY: ({ value }) => (
-    <span>{currencies.find((currency) => currency.value === value)?.label}</span>
+    <span>{CURRENCIES_SELECT_OPTIONS.find((currency) => currency.value === value)?.label}</span>
   ),
   COUNTRY: ({ value }) => {
     if (value == null) {

@@ -1,5 +1,27 @@
 import { useEffect, useState } from 'react';
 
+export interface CommonContainerProps {
+  justify?: 'start' | 'end' | 'space-between' | 'evenly';
+  align?: 'start' | 'end' | 'stretch';
+  spacing?: 'none' | 'default' | 'double';
+}
+
+export function getCommonContainerClasses(
+  s: Record<string, string>,
+  props: CommonContainerProps,
+  defaults: Partial<CommonContainerProps> = {},
+) {
+  const {
+    justify = 'start',
+    align = 'stretch',
+    spacing = 'none',
+  } = {
+    ...props,
+    ...defaults,
+  };
+  return [s[`justify-${justify}`], s[`align-${align}`], s[`spacing-${spacing}`]];
+}
+
 export type CollapseKey = (string | number)[];
 
 export function useLocalStorageState(

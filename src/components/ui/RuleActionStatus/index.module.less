@@ -1,9 +1,10 @@
 @import 'src/components/ui/colors';
 
-.badge {
+.root {
   display: flex;
   flex-direction: row;
   position: relative;
+  align-items: center;
 }
 
 .icon {
@@ -11,7 +12,6 @@
   height: 7px;
   border-radius: 50%;
   margin-right: 8px;
-  margin-top: 8px;
 
   &.ruleAction-ALLOW {
     background-color: @fr-colors-brandBlue;
@@ -23,7 +23,7 @@
     background-color: @fr-colors-red;
   }
   &.ruleAction-WHITELIST {
-    background-color: @fr-colors-brandBlue;
+    background-color: @fr-colors-skyBlue;
   }
   &.ruleAction-FLAG {
     background-color: @fr-colors-purpleGrayTint;

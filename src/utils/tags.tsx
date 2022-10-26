@@ -1,4 +1,5 @@
 // todo: move this tags to common UI package
+import _ from 'lodash';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
@@ -55,3 +56,13 @@ export const transactionType: { value: string; label: any }[] = [
     label: <TransactionTypeTag transactionType="TRANSFER" />,
   },
 ];
+
+/*
+  Turns "SOME_CONSTANT" to "Some Constant"
+ */
+export function humanizeCamelCase(text: string): string {
+  return text
+    .split('_')
+    .map((part) => _.capitalize(part))
+    .join(' ');
+}

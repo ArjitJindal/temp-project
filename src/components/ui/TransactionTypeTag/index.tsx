@@ -10,6 +10,21 @@ import style from './index.module.less';
 import { TransactionType } from '@/apis/models/TransactionType';
 import { neverReturn } from '@/utils/lang';
 
+export function getTransactionTypeColor(transactionType: TransactionType) {
+  if (transactionType === 'DEPOSIT') {
+    return 'green';
+  } else if (transactionType === 'EXTERNAL_PAYMENT') {
+    return 'blue';
+  } else if (transactionType === 'WITHDRAWAL') {
+    return 'orange';
+  } else if (transactionType === 'REFUND') {
+    return 'red';
+  } else if (transactionType === 'TRANSFER') {
+    return 'geekblue';
+  }
+  return neverReturn(transactionType, 'white');
+}
+
 interface Props {
   transactionType: TransactionType | undefined;
 }
@@ -20,23 +35,18 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
   }
   let transactionTypeDisplay: string;
   let transactionTypeIcon = <SwapOutlined />;
-  let tagColor = 'geekblue';
 
   if (transactionType === 'DEPOSIT') {
     transactionTypeDisplay = 'Deposit';
-    tagColor = 'green';
     transactionTypeIcon = <ArrowDownOutlined />;
   } else if (transactionType === 'EXTERNAL_PAYMENT') {
     transactionTypeDisplay = 'External Payment';
-    tagColor = 'blue';
     transactionTypeIcon = <ArrowsAltOutlined />;
   } else if (transactionType === 'WITHDRAWAL') {
     transactionTypeDisplay = 'Withdrawal';
-    tagColor = 'orange';
     transactionTypeIcon = <ArrowUpOutlined />;
   } else if (transactionType === 'REFUND') {
     transactionTypeDisplay = 'Refund';
-    tagColor = 'red';
     transactionTypeIcon = <UndoOutlined />;
   } else if (transactionType === 'TRANSFER') {
     transactionTypeDisplay = 'Transfer';
@@ -46,7 +56,7 @@ export const TransactionTypeTag: React.FC<Props> = ({ transactionType }) => {
 
   return (
     <span className={style.tag}>
-      <Tag color={tagColor}>
+      <Tag color={getTransactionTypeColor(transactionType)}>
         {transactionTypeIcon} {transactionTypeDisplay}
       </Tag>
     </span>

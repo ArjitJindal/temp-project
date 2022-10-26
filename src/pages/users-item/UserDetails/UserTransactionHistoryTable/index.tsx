@@ -82,15 +82,15 @@ export function Content(props: { userId: string }) {
     }
 
     if (statusFilter.indexOf('ALLOW') !== -1) {
-      newParams.filterStatus = 'ALLOW';
+      newParams.filterStatus = ['ALLOW'];
     } else if (statusFilter.indexOf('FLAG') !== -1) {
-      newParams.filterStatus = 'FLAG';
+      newParams.filterStatus = ['FLAG'];
     } else if (statusFilter.indexOf('BLOCK') !== -1) {
-      newParams.filterStatus = 'BLOCK';
+      newParams.filterStatus = ['BLOCK'];
     } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-      newParams.filterStatus = 'SUSPEND';
+      newParams.filterStatus = ['SUSPEND'];
     } else if (statusFilter.indexOf('WHITELIST') !== -1) {
-      newParams.filterStatus = 'WHITELIST';
+      newParams.filterStatus = ['WHITELIST'];
     }
 
     return api.getTransactionsList(newParams).then((result) => ({

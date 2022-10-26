@@ -1,6 +1,9 @@
 import _ from 'lodash';
 import { RuleAction, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
+import COLORS from '@/components/ui/colors';
+
+export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'WHITELIST', 'FLAG', 'BLOCK', 'SUSPEND'];
 
 export function isRuleAction(value: unknown): value is RuleAction {
   const asRuleAction = value as RuleAction;
@@ -35,16 +38,21 @@ export function getRuleActionTitle(ruleAction: RuleAction | string): string {
   return _.capitalize(ruleAction);
 }
 
-export function useRuleActionColor(ruleAction: RuleAction): string {
+export function getRuleActionColor(ruleAction: RuleAction): string {
   if (ruleAction === 'ALLOW') {
-    return 'green';
-  } else if (ruleAction === 'BLOCK') {
-    return 'red';
-  } else if (ruleAction === 'FLAG') {
-    return 'orange';
-  } else if (ruleAction === 'WHITELIST') {
-    return 'lime';
-  } else {
-    return 'yellow';
+    return COLORS.brandBlue.base;
   }
+  if (ruleAction === 'SUSPEND') {
+    return COLORS.orange.base;
+  }
+  if (ruleAction === 'BLOCK') {
+    return COLORS.red.base;
+  }
+  if (ruleAction === 'WHITELIST') {
+    return COLORS.brandBlue.base;
+  }
+  if (ruleAction === 'FLAG') {
+    return COLORS.purpleGray.tint;
+  }
+  return neverReturn(ruleAction, 'yellow');
 }

@@ -1,4 +1,4 @@
-export const currencies: { value: string; label: string }[] = [
+export const CURRENCIES = [
   { value: 'ADA', label: 'ADA (Cardano)' },
   { value: 'AED', label: 'AED (United Arab Emirates Dirham)' },
   { value: 'AFN', label: 'AFN (Afghan afghani)' },
@@ -205,4 +205,25 @@ export const currencies: { value: string; label: string }[] = [
   { value: 'ZMK', label: 'ZMK (Zambian kwacha)' },
   { value: 'ZMW', label: 'ZMW (Zambian Kwacha)' },
   { value: 'ZWL', label: 'ZWL (Zimbabwean Dollar' },
-];
+] as const;
+
+export type Currency = typeof CURRENCIES[number]['value'];
+
+export const CURRENCIES_SELECT_OPTIONS = [...CURRENCIES];
+
+export function formatCurrency(amount: number, currency: Currency) {
+  let symbol: string = currency;
+  let left = false;
+  if (currency === 'USD') {
+    symbol = '$';
+    left = true;
+  } else if (currency === 'EUR') {
+    symbol = '€';
+    left = true;
+  }
+
+  if (left) {
+    return `${symbol}${amount.toFixed(2)}`;
+  }
+  return `${amount.toFixed(2)} ${symbol}`;
+}

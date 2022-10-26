@@ -78,6 +78,7 @@ export interface Props<T extends object, Params extends object, ValueType>
   actionsHeader?: ActionRenderer<Params>[];
   onChangeParams?: (newState: AllParams<Params>) => void;
   columns: TableColumn<T>[];
+  headerSubtitle?: React.ReactNode;
   onReload?: () => void;
   onReset?: () => void;
 }
@@ -96,6 +97,7 @@ export default function Table<
     options,
     actionRef,
     headerTitle,
+    headerSubtitle,
     actionsHeader,
     rowSelection,
     loading,
@@ -245,13 +247,18 @@ export default function Table<
         columns={adjustedColumns}
         rowKey={rowKey}
         headerTitle={
-          actionsHeader != null && params != null
-            ? renderActionHeader<Params>(actionsHeader, {
-                params,
-                setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
-                  onChangeParams(cb(params)),
-              })
-            : headerTitle
+          (actionsHeader || headerTitle || headerSubtitle) && (
+            <div className={style.actionsHeaderWrapper}>
+              {actionsHeader != null && params != null
+                ? renderActionHeader<Params>(actionsHeader, {
+                    params,
+                    setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
+                      onChangeParams(cb(params)),
+                  })
+                : headerTitle}
+              {headerSubtitle && <div className={style.subtitle}>{headerSubtitle}</div>}
+            </div>
+          )
         }
         className={cn(style.table, className, {
           [style.disableExpandedRowPadding]: disableExpandedRowPadding,
@@ -313,7 +320,7 @@ export default function Table<
           className={style.pagination}
           size="small"
           showSizeChanger={false}
-          pageSize={DEFAULT_PAGE_SIZE}
+          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
           showTitle={true}
           total={data.total ?? dataItems.length}
           current={params?.page}

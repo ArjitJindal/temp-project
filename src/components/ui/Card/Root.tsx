@@ -31,7 +31,11 @@ export default function Root(props: Props) {
             setCollapsed={setCollapsed}
           />
         )}
-        {collapsable && !isCollapsed && <div className={s.container}>{children}</div>}
+        {collapsable && !isCollapsed && (
+          <div className={s.container}>
+            <Column>{children}</Column>
+          </div>
+        )}
       </Column>
     </div>
   );

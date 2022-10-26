@@ -26,6 +26,15 @@ export const USERS_ITEM_TRANSACTIONS_HISTORY = (
 ): QueryKey => ['users', userId, 'transactions-history', params];
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
+export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
+  'transactions',
+  'list',
+  searchParams,
+];
+export const TRANSACTIONS_STATS = (
+  type: 'by-type' | 'by-date',
+  searchParams: AnyParameters,
+): QueryKey => ['transactions', 'stats', type, searchParams];
 export const TRANSACTIONS_TAG_LIST = (): QueryKey => ['transactions', 'tags', 'list'];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',

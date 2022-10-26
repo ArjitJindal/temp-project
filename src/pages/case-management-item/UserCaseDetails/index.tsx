@@ -1,6 +1,7 @@
 import React from 'react';
+import CommentsCard from '../components/CommentsCard';
 import RulesHitCard from './RulesHitCard';
-import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
+import InsightsCard from './InsightsCard';
 import { Case } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
@@ -25,6 +26,7 @@ export default function UserCaseDetails(props: Props) {
           onCaseUpdate({ ...caseItem, comments: newComments });
         }}
       />
+      {user?.userId && <InsightsCard userId={user.userId} />}
     </>
   );
 }
