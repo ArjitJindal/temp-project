@@ -2703,7 +2703,6 @@ components:
         - IMPORT_FILES
         - DASHBOARD_BLOCK_USER
         - LISTS
-        - CASE_CREATION_TYPE
         - HELP_CENTER
         - GOOGLE_SSO
         - SANCTIONS
