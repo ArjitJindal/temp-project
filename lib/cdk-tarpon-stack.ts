@@ -66,6 +66,7 @@ import {
   createAPIGatewayThrottlingAlarm,
   createLambdaErrorPercentageAlarm,
   createLambdaThrottlingAlarm,
+  createLambdaDurationAlarm,
   createLambdaConsumerIteratorAgeAlarm,
 } from './cdk-cw-alarms'
 import { LAMBDAS } from './lambdas'
@@ -361,6 +362,11 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
+    createLambdaDurationAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME
+    )
 
     /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
@@ -368,6 +374,11 @@ export class CdkTarponStack extends cdk.Stack {
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
+    createLambdaDurationAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME
+    )
 
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
