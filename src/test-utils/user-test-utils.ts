@@ -1,3 +1,4 @@
+import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -87,4 +88,13 @@ export function setUpConsumerUsersHooks(tenantId: string, users: Array<User>) {
   afterAll(async () => {
     await Promise.all(cleanups.map((cleanup) => cleanup()))
   })
+}
+
+export function getTestBusiness(business: Partial<Business> = {}): Business {
+  return {
+    createdTimestamp: 1641654664,
+    userId: 'test-business-id',
+    legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
+    ...business,
+  }
 }

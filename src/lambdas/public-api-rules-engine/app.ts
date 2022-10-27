@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { BadRequest } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -166,6 +166,9 @@ export const transactionHandler = lambdaApi()(
       const result = await transactionRepository.getTransactionById(
         transactionId
       )
+      if (!result) {
+        throw new NotFound(`Transaction ${transactionId} not found`)
+      }
       return result
     }
     throw new Error('Unhandled request')

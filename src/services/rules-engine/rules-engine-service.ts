@@ -154,7 +154,7 @@ export class RulesEngineService {
     )
     if (!transaction) {
       throw new NotFound(
-        `transaction ${transactionEvent.transactionId} not found`
+        `Transaction ${transactionEvent.transactionId} not found`
       )
     }
     const updatedTransaction: TransactionWithRulesResult = _.merge(

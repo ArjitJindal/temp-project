@@ -3,6 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -45,7 +46,9 @@ export const userHandler = lambdaApi()(
       const user = isConsumerUser
         ? await userRepository.getConsumerUser(userId)
         : await userRepository.getBusinessUser(userId)
-      logger.info(user)
+      if (!user) {
+        throw new NotFound(`User ${userId} not found`)
+      }
       return user
     } else if (event.httpMethod === 'POST' && event.body) {
       const userPayload = JSON.parse(event.body)
