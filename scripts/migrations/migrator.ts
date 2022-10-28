@@ -78,7 +78,7 @@ async function main() {
     exit(1)
   }
 
-  if (migrationType === 'POST_DEPLOYMENT') {
+  if (migrationType === 'POST_DEPLOYMENT' && !process.argv.includes('create')) {
     await syncMongoDbIndices()
     await syncRulesLibrary()
   }
