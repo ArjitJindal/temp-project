@@ -57,6 +57,17 @@ export class CaseService {
       caseStatus: updateRequest.caseStatus,
     }
     await this.caseRepository.updateCases(caseIds, updates)
+    if (updateRequest.caseStatus) {
+      await Promise.all(
+        caseIds.map((caseId) =>
+          this.saveCaseComment(caseId, {
+            userId,
+            body: `Case Status Changed to ${updateRequest.caseStatus}`,
+            files: updateRequest.files,
+          })
+        )
+      )
+    }
     return 'OK'
   }
 
