@@ -55,6 +55,7 @@ export async function migrateTenant(
 
   await migrateTransactions(transactionsCursor, async (transactionsBatch) => {
     let batch = 0
+    let transactionsCount = 0
     const CHUNK_SIZE = 10
     const mongodb = await getMongoDbClient(
       StackConstants.MONGO_DB_DATABASE_NAME
@@ -85,10 +86,9 @@ export async function migrateTenant(
           }
         })
       )
+      transactionsCount += transactionsBatch.length
       console.info(
-        `${new Date().toISOString()} Migrated transactions batch (${
-          batch * CHUNK_SIZE
-        } / ${totalTransactions} )`
+        `${new Date().toISOString()} Migrated transactions (${transactionsCount} / ${totalTransactions} )`
       )
       if (batch % 100 === 0) {
         // Persisnt migration progress then we don't re-migrate the transaction on re-try
@@ -119,7 +119,7 @@ export const up = async () => {
         tenant,
         0,
         new Date('2022-10-26').valueOf(),
-        '2022.10.20T19.31.06.kill-thin-transaction'
+        `2022.10.20T19.31.06.kill-thin-transaction-${tenant.id}`
       )
     )
   }

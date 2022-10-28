@@ -120,6 +120,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         }),
         environment: {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
+          computeType: ComputeType.LARGE,
         },
         role: devCodeDeployRole,
         // Max timeout: 480 minutes (https://docs.aws.amazon.com/codebuild/latest/userguide/limits.html)
