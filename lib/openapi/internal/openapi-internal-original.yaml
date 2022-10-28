@@ -697,9 +697,9 @@ paths:
           name: sortOrder
       x-internal: false
     parameters: []
-  /transactions/tags/keys:
+  /transactions/uniques:
     get:
-      summary: Transaction - Export
+      summary: Transaction - Unique values for different fields
       tags: []
       responses:
         '200':
@@ -707,10 +707,8 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-      operationId: get-transactions-tag-key-list
+                $ref: '#/components/schemas/TransactionsUniquesResponse'
+      operationId: get-transactions-uniques
   '/transactions/{transactionId}':
     parameters:
       - schema:
@@ -3591,6 +3589,20 @@ components:
                   type: string
         score:
           type: number
+    TransactionsUniquesResponse:
+      type: object
+      properties:
+        transactionState:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+        tagsKey:
+          type: array
+          items:
+            type: string
+      required:
+        - transactionState
+        - tagsKey
   securitySchemes:
     Authorization:
       type: http

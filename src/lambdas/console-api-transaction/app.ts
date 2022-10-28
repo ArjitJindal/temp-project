@@ -394,9 +394,9 @@ export const transactionsViewHandler = lambdaApi()(
       )
     } else if (
       event.httpMethod === 'GET' &&
-      event.path.endsWith('/transactions/tags/keys')
+      event.path.endsWith('/transactions/uniques')
     ) {
-      return await transactionService.getTagKeys()
+      return await transactionService.getUniques()
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/transactions') &&

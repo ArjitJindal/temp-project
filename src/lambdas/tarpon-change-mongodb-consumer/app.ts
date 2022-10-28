@@ -70,7 +70,8 @@ async function transactionHandler(
       (await transactionsRepo.getTransactionCaseManagementById(transactionId))
         ?.status ?? null
   }
-  const newStatus = (await transactionsRepo.addCaseToMongo(transaction)).status
+  const transactionInMongo = await transactionsRepo.addCaseToMongo(transaction)
+  const newStatus = transactionInMongo.status
   logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)
   logger.info(`Case Creation Completed`)
@@ -80,9 +81,6 @@ async function transactionHandler(
     logger.info(`Calculation of ARS & DRS Completed`)
   }
 
-  // TODO: this is not very efficient, because we recalculate all the
-  // statistics for each transaction. Need to implement updating
-  // a single record in DB using transaction date
   await dashboardStatsRepository.refreshStats(transaction.timestamp)
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.

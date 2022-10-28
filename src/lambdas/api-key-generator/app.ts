@@ -113,6 +113,12 @@ export const createMongoDBCollections = async (
     await transactionCollection.createIndex({
       'originPaymentDetails.method': 1,
     })
+    await transactionCollection.createIndex({
+      transactionState: 1,
+    })
+    await transactionCollection.createIndex({
+      'tags.key': 1,
+    })
 
     try {
       await db.createCollection(USERS_COLLECTION(tenantId))

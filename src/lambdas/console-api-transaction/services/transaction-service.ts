@@ -10,6 +10,7 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { Currency } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
+import { TransactionsUniquesResponse } from '@/@types/openapi-internal/TransactionsUniquesResponse'
 
 export class TransactionService {
   transactionRepository: TransactionRepository
@@ -179,7 +180,7 @@ export class TransactionService {
     })
   }
 
-  public async getTagKeys(): Promise<string[]> {
-    return this.transactionRepository.getTagKeys()
+  public async getUniques(): Promise<TransactionsUniquesResponse> {
+    return this.transactionRepository.getUniques()
   }
 }

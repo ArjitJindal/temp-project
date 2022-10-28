@@ -49,6 +49,7 @@ import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/Tran
 import dayjs, { duration } from '@/utils/dayjs'
 import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
+import { TransactionsUniquesResponse } from '@/@types/openapi-internal/TransactionsUniquesResponse'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -259,9 +260,9 @@ export class TransactionRepository {
     return { $and: conditions }
   }
 
-  public async getTransactionsCursor(
+  public getTransactionsCursor(
     params: DefaultApiGetTransactionsListRequest
-  ): Promise<AggregationCursor<TransactionCaseManagement>> {
+  ): AggregationCursor<TransactionCaseManagement> {
     const query = this.getTransactionsMongoQuery(params)
     return this.getDenormalizedTransactions(query, params)
   }
@@ -1313,48 +1314,23 @@ export class TransactionRepository {
     }
   }
 
-  public async getTagKeys(): Promise<string[]> {
+  public async getUniques(): Promise<TransactionsUniquesResponse> {
     const db = this.mongoDb.db()
-    const casesCollection = db.collection<Transaction>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-    const documents = await casesCollection
-      .aggregate([
-        {
-          $match: {
-            tags: {
-              $ne: null,
-            },
-          },
-        },
-        {
-          $project: {
-            key: {
-              $map: {
-                input: '$tags',
-                as: 'tag',
-                in: '$$tag.key',
-              },
-            },
-          },
-        },
-        {
-          $unwind: {
-            path: '$key',
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            keys: {
-              $addToSet: '$key',
-            },
-          },
-        },
-      ])
-      .toArray()
+    const name = TRANSACTIONS_COLLECTION(this.tenantId)
+    const collection = db.collection<TransactionCaseManagement>(name)
 
-    return documents[0]?.keys ?? []
+    const distinctStatesPromise = collection
+      .distinct('transactionState')
+      .then((values) => values.filter((x): x is TransactionState => x != null))
+
+    const tagKeysPromise = collection
+      .distinct('tags.key')
+      .then((values: string[]) => values.filter((x): x is string => x != null))
+
+    return {
+      transactionState: await distinctStatesPromise,
+      tagsKey: await tagKeysPromise,
+    }
   }
 
   public async getStatsByType(
