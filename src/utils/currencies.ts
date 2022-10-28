@@ -1,3 +1,5 @@
+import { Amount } from '@/apis';
+
 export const CURRENCIES = [
   { value: 'ADA', label: 'ADA (Cardano)' },
   { value: 'AED', label: 'AED (United Arab Emirates Dirham)' },
@@ -210,6 +212,13 @@ export const CURRENCIES = [
 export type Currency = typeof CURRENCIES[number]['value'];
 
 export const CURRENCIES_SELECT_OPTIONS = [...CURRENCIES];
+
+export function formatAmount(amount: Amount | undefined) {
+  if (!amount) {
+    return '-';
+  }
+  return formatCurrency(amount.amountValue, amount.amountCurrency as Currency);
+}
 
 export function formatCurrency(amount: number, currency: Currency) {
   let symbol: string = currency;
