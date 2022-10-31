@@ -3,40 +3,24 @@ import cn from 'clsx';
 import _ from 'lodash';
 import s from './style.module.less';
 import { TransactionState } from '@/apis';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
+import { getOr, isLoading, map } from '@/utils/asyncResource';
+import TransactionStateTag from '@/components/ui/TransactionState';
 
 interface Props {
   onSelectState: (user: TransactionState | undefined) => void;
 }
 
-const data: { State: TransactionState | undefined }[] = [
-  {
-    State: 'CREATED',
-  },
-  {
-    State: 'PROCESSING',
-  },
-  {
-    State: 'SENT',
-  },
-  {
-    State: 'EXPIRED',
-  },
-  {
-    State: 'SUSPENDED',
-  },
-  {
-    State: 'REFUNDED',
-  },
-  {
-    State: 'SUCCESSFUL',
-  },
-  {
-    State: 'DECLINED',
-  },
-];
-
 export default function StateList(props: Props) {
   const { onSelectState } = props;
+
+  const api = useApi();
+  const result = useQuery(TRANSACTIONS_UNIQUES(), async () => {
+    return await api.getTransactionsUniques();
+  });
+  const statesRes = map(result.data, ({ transactionState }) => transactionState);
 
   // todo: i18n
   return (
@@ -50,23 +34,18 @@ export default function StateList(props: Props) {
         }}
       >
         <List
-          dataSource={data}
-          renderItem={(value) => (
+          dataSource={getOr(statesRes, [])}
+          loading={isLoading(statesRes)}
+          renderItem={(state) => (
             <List.Item
               className={cn(s.root)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                onSelectState(value.State);
+                onSelectState(state);
               }}
             >
-              <List.Item.Meta
-                title={
-                  <span className={s.userName}>
-                    {value.State !== undefined ? _.capitalize(value.State) : <></>}
-                  </span>
-                }
-              />
+              <TransactionStateTag transactionState={state} />
             </List.Item>
           )}
         ></List>

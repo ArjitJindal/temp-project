@@ -35,7 +35,7 @@ export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,
 ): QueryKey => ['transactions', 'stats', type, searchParams];
-export const TRANSACTIONS_TAG_LIST = (): QueryKey => ['transactions', 'tags', 'list'];
+export const TRANSACTIONS_UNIQUES = (): QueryKey => ['transactions', 'uniques'];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'search',
