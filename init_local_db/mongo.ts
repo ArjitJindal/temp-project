@@ -1,13 +1,15 @@
 #!/usr/bin/env ts-node
 import { MongoClient } from 'mongodb'
 
-import transactions from './mongo_transactions'
-import users from './mongo_users'
-import transactionEvents from './mongo_events'
+import transactions from './data/transactions'
+import users from './data/users'
+import cases from './data/cases'
+import transactionEvents from './data/transaction_events'
 import { DB_NAME, TENANT } from './settings'
 
 const collections = [
   [`${TENANT}-transactions`, transactions],
+  [`${TENANT}-cases`, cases],
   [`${TENANT}-users`, users],
   [`${TENANT}-transaction-events`, transactionEvents],
 ]

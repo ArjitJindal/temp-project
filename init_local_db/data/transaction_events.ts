@@ -1,11 +1,21 @@
-import { TransactionEvent } from '../src/@types/openapi-public/TransactionEvent'
+import transactionsData from './transactions'
+import { sampleGuid } from './samplers/id'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { prng } from '@/utils/prng'
 
+const transaction = transactionsData[0]
+
+const transactionId = transaction.transactionId as string
+const timestamp = transaction.timestamp as number
+
+const random = prng()
+const eventId = sampleGuid(random())
 const data: TransactionEvent[] = [
   {
     transactionState: 'CREATED',
-    timestamp: 1658834541713,
-    transactionId: 'transaction-1',
-    eventId: undefined,
+    timestamp: timestamp,
+    transactionId: transactionId,
+    eventId: eventId,
     reason: undefined,
     eventDescription: undefined,
     employeeId: undefined,
@@ -14,9 +24,9 @@ const data: TransactionEvent[] = [
   },
   {
     transactionState: 'SUSPENDED',
-    timestamp: 1658834541713 + 3600000,
-    transactionId: 'transaction-1',
-    eventId: '62dfd4329004dd72acadb5a7',
+    timestamp: timestamp + 3600000,
+    transactionId: transactionId,
+    eventId: sampleGuid(random()),
     reason:
       'Some quite long reason here. It should take several lines to check work wrap',
     eventDescription:
@@ -27,9 +37,9 @@ const data: TransactionEvent[] = [
   },
   {
     transactionState: 'REFUNDED',
-    timestamp: 1658834541713 + 3600000 + 3600000,
-    transactionId: 'transaction-1',
-    eventId: undefined,
+    timestamp: timestamp + 3600000 + 3600000,
+    transactionId: transactionId,
+    eventId: sampleGuid(random()),
     reason: undefined,
     eventDescription: undefined,
     employeeId: undefined,

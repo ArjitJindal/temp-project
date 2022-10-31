@@ -1,6 +1,20 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
-import usersMain from './dynamo_users'
+import { TENANT } from './settings'
+import usersData from './data/users'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { UserType } from '@/@types/user/user-type'
+
+async function users() {
+  const dynamoDb = getDynamoDbClient()
+  const userRepo = new UserRepository(TENANT, {
+    dynamoDb: dynamoDb,
+  })
+  for (const user of usersData) {
+    await userRepo.saveUser(user, (user as any).type as UserType)
+  }
+}
 
 async function main() {
   console.log('Create Dynamo tables')
@@ -17,7 +31,7 @@ async function main() {
   }
 
   console.log('Create users')
-  await usersMain()
+  await users()
 
   console.log('Done')
 }

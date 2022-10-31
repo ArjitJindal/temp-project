@@ -1,9 +1,9 @@
-import { Tag } from '../src/@types/openapi-internal/Tag'
-import { User } from '../src/@types/openapi-public/User'
-import { Business } from '../src/@types/openapi-public/Business'
-import { InternalBusinessUser } from '../src/@types/openapi-internal/InternalBusinessUser'
-import { InternalConsumerUser } from '../src/@types/openapi-internal/InternalConsumerUser'
-import { LegalDocument } from '../src/@types/openapi-internal/LegalDocument'
+import { Tag } from '@/@types/openapi-internal/Tag'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 
 const generateRandomTimestamp = () => {
   let rand = Math.random() * 100000
