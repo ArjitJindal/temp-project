@@ -3162,6 +3162,7 @@ components:
         - Suspicious activity reported (SAR)
         - Documents not collected
         - Investigation completed
+        - Escalated
     MissingUser:
       title: MissingUser
       type: object
