@@ -50,11 +50,9 @@ export function LegalDocumentsTable(prop: Props) {
               title: 'Date of Issue',
               render: (_, document) => {
                 {
-                  return (
-                    moment(document.documentIssuedCountry).format(
-                      DEFAULT_DATE_TIME_DISPLAY_FORMAT,
-                    ) ?? '-'
-                  );
+                  return document.documentIssuedDate
+                    ? moment(document.documentIssuedDate).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)
+                    : -'-';
                 }
               },
             },
@@ -62,11 +60,11 @@ export function LegalDocumentsTable(prop: Props) {
               title: 'Date of Expiry',
               render: (_, document) => {
                 {
-                  return (
-                    moment(document.documentExpirationDate).format(
-                      DEFAULT_DATE_TIME_DISPLAY_FORMAT,
-                    ) ?? '-'
-                  );
+                  return document.documentExpirationDate
+                    ? moment(document.documentExpirationDate).format(
+                        DEFAULT_DATE_TIME_DISPLAY_FORMAT,
+                      )
+                    : '-';
                 }
               },
             },
