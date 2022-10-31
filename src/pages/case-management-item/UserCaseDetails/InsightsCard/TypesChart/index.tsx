@@ -22,9 +22,9 @@ export default function AmountsChart(props: Props) {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(result) => {
         const data: PieData = result.map((x) => ({
-          category: humanizeCamelCase(x.transactionType),
+          category: humanizeCamelCase(x.transactionType as TransactionType),
           value: x.count,
-          color: getTransactionTypeColor(x.transactionType),
+          color: getTransactionTypeColor(x.transactionType as TransactionType),
         }));
         return (
           <div className={cn(s.root)}>

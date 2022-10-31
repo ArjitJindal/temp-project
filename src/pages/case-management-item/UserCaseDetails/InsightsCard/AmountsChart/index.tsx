@@ -39,7 +39,7 @@ export default function AmountsChart(props: Props) {
         {(response) => (
           <Chart
             data={response.map((x) => ({
-              title: humanizeCamelCase(x.transactionType),
+              title: humanizeCamelCase(x.transactionType as TransactionType),
               maximum: x.max,
               minimum: x.min,
               average: x.average,
