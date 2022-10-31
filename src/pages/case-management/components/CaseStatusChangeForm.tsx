@@ -34,6 +34,7 @@ const CLOSING_REASONS = [
   'Transaction Rejected',
   'User Blacklisted',
   'User Terminated',
+  'Escalated',
 ];
 
 interface FormValues {
