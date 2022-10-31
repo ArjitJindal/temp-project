@@ -43,7 +43,7 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
     return COLORS.brandBlue.base;
   }
   if (ruleAction === 'SUSPEND') {
-    return COLORS.orange.base;
+    return COLORS.yellow.base;
   }
   if (ruleAction === 'BLOCK') {
     return COLORS.red.base;
@@ -52,7 +52,7 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
     return COLORS.brandBlue.base;
   }
   if (ruleAction === 'FLAG') {
-    return COLORS.purpleGray.tint;
+    return COLORS.orange.base;
   }
-  return neverReturn(ruleAction, 'yellow');
+  return neverReturn(ruleAction, 'gray');
 }

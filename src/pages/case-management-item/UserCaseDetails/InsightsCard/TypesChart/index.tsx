@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import cn from 'clsx';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
@@ -10,20 +10,31 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { humanizeCamelCase } from '@/utils/tags';
+import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import { Currency } from '@/utils/currencies';
 
 interface Props {
+  currency: Currency | null;
   queryResult: QueryResult<TransactionsStatsByTypesResponseData[]>;
 }
 
 export default function AmountsChart(props: Props) {
-  const { queryResult } = props;
+  const { queryResult, currency } = props;
+
+  const [highlighted, setHighlighted] = useState<string | null>(null);
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(result) => {
+        if (result.length === 0) {
+          return <NoData />;
+        }
         const data: PieData = result.map((x) => ({
-          category: humanizeCamelCase(x.transactionType as TransactionType),
-          value: x.count,
+          category:
+            x.transactionType == null
+              ? '(unknown)'
+              : humanizeCamelCase(x.transactionType as TransactionType),
+          value: currency === null ? x.count : x.sum ?? 0,
           color: getTransactionTypeColor(x.transactionType as TransactionType),
         }));
         return (
@@ -32,13 +43,19 @@ export default function AmountsChart(props: Props) {
               {(width) => (
                 <div className={s.pieContainer} style={{ height: Math.min(width, 400) }}>
                   <div className={s.pieWrapper}>
-                    <Pie diameter={Math.min(width, 400)} data={data} />
+                    <Pie
+                      currency={currency}
+                      diameter={Math.min(width, 400)}
+                      data={data}
+                      highlighted={highlighted}
+                      onChangeHighlighted={setHighlighted}
+                    />
                   </div>
                 </div>
               )}
             </ContainerWidthMeasure>
 
-            <Legend data={data} />
+            <Legend data={data} highlighted={highlighted} onChangeHighlighted={setHighlighted} />
           </div>
         );
       }}
@@ -46,7 +63,8 @@ export default function AmountsChart(props: Props) {
   );
 }
 
-export function getTransactionTypeColor(transactionType: TransactionType): string {
+// todo: generalize
+export function getTransactionTypeColor(transactionType: TransactionType | undefined): string {
   if (transactionType === 'DEPOSIT') {
     return COLORS.brandBlue.base;
   } else if (transactionType === 'EXTERNAL_PAYMENT') {
@@ -57,6 +75,8 @@ export function getTransactionTypeColor(transactionType: TransactionType): strin
     return COLORS.purpleGray.base;
   } else if (transactionType === 'TRANSFER') {
     return COLORS.purpleGray.shade;
+  } else if (transactionType == null) {
+    return COLORS.turquoise.tint;
   }
   return neverReturn(transactionType, 'gray');
 }

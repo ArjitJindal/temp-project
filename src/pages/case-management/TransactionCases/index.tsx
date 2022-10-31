@@ -28,7 +28,7 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import KeyValueTag from '@/components/ui/KeyValueTag';
-import TransactionState from '@/components/ui/TransactionState';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
@@ -202,7 +202,7 @@ export default function TransactionCases(props: Props) {
         sorter: true,
         onCell: onTransactionCell,
         render: (_, entity) => {
-          return <TransactionState transactionState={entity.transaction?.transactionState} />;
+          return <TransactionStateTag transactionState={entity.transaction?.transactionState} />;
         },
       },
       {

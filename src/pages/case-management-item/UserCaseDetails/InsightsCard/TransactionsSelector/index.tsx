@@ -5,7 +5,6 @@ import TransactionCountChart from './Chart';
 import s from './styles.module.less';
 import SwitchButton from './SwitchButton';
 import ContainerWidthMeasure from '@/components/utils/ContainerWidthMeasure';
-import { RULE_ACTION_VALUES } from '@/utils/rules';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RuleAction } from '@/apis/models/RuleAction';
 import * as Form from '@/components/ui/Form';
@@ -17,6 +16,8 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
+import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/types';
+import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -58,7 +59,7 @@ export default function TransactionsSelector(props: Props) {
           >
             All
           </SwitchButton>
-          {RULE_ACTION_VALUES.map((ruleAction) => {
+          {PARTIAL_RULE_ACTIONS.map((ruleAction) => {
             const checked = params.selectedRuleActions.indexOf(ruleAction) !== -1;
             return (
               <SwitchButton
@@ -128,6 +129,9 @@ export default function TransactionsSelector(props: Props) {
         {(width) => (
           <AsyncResourceRenderer resource={response.data}>
             {(data) => {
+              if (data.length === 0) {
+                return <NoData />;
+              }
               return (
                 <TransactionCountChart
                   currency={params.displayBy === 'AMOUNT' ? currency : null}
@@ -138,19 +142,15 @@ export default function TransactionsSelector(props: Props) {
                   }}
                   data={data.map((x) => ({
                     series: x.series,
-                    values: ['ALLOW', 'WHITELIST', 'FLAG', 'BLOCK', 'SUSPEND']
-                      .map((category) => [
-                        category,
-                        x.values[category]?.[params.displayBy === 'COUNT' ? 'count' : 'amount'] ??
-                          0,
-                      ])
-                      .reduce((acc, [category, value]) => ({ ...acc, [category]: value }), {
-                        ALLOW: 0,
-                        WHITELIST: 0,
-                        FLAG: 0,
-                        BLOCK: 0,
-                        SUSPEND: 0,
-                      }),
+                    values: PARTIAL_RULE_ACTIONS.map((category) => [
+                      category,
+                      x.values[category]?.[params.displayBy === 'COUNT' ? 'count' : 'amount'] ?? 0,
+                    ]).reduce((acc, [category, value]) => ({ ...acc, [category]: value }), {
+                      ALLOW: 0,
+                      FLAG: 0,
+                      BLOCK: 0,
+                      SUSPEND: 0,
+                    }),
                   }))}
                 />
               );

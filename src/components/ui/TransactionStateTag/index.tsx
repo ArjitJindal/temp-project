@@ -15,7 +15,7 @@ interface Props {
   transactionState: ApiTransactionState | undefined;
 }
 
-export default function TransactionState(props: Props) {
+export default function TransactionStateTag(props: Props) {
   const { transactionState } = props;
   if (!transactionState) {
     return <>-</>;

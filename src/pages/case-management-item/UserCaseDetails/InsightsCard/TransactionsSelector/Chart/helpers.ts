@@ -1,26 +1,44 @@
+import { useMemo } from 'react';
+import {
+  CalculatedParams,
+  DataItem,
+  Series,
+} from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/types';
+import { calculateScaleMax } from '@/utils/charts';
+
 export const TOP_PADDING = 10;
-export const BOTTOM_PADDING = 20;
+export const BOTTOM_PADDING = 60;
 export const LEFT_PADDING = 80;
-export const RIGHT_PADDING = 0;
-export const GAP = 10;
+export const RIGHT_PADDING = 40;
 export const MAX_COLUMN_WIDTH = 150;
+export const Y_TICKS_COUNT = 5;
 
-export function calculateScaleMax(maxValue: number): number {
-  let order = 0;
-  let value = maxValue;
-  while (value > 1) {
-    order++;
-    value = value / 10;
-  }
+export function useColumnParams(
+  data: DataItem[],
+  seriesList: Series[],
+  usefulWidth: number,
+): CalculatedParams {
+  const seriesCount = seriesList.length;
+  const widthSpace = usefulWidth / seriesCount;
+  const gap = widthSpace > 20 ? 10 : 1;
+  const columnWidth = Math.min(
+    (usefulWidth - gap * (seriesCount - 1)) / seriesCount,
+    MAX_COLUMN_WIDTH,
+  );
+  const xLabelFontSize = widthSpace > 40 ? 14 : 10;
 
-  if (value <= 0.25) {
-    value = 0.25;
-  } else if (value <= 0.5) {
-    value = 0.5;
-  } else if (value <= 0.75) {
-    value = 0.75;
-  } else {
-    value = 1;
-  }
-  return value * Math.pow(10, order);
+  const max = calculateScaleMax(
+    data
+      .map((dataItem) => Object.values(dataItem.values).reduce((acc, x) => acc + x, 0))
+      .reduce((acc, x) => Math.max(acc, x), 1),
+  );
+
+  return useMemo(() => {
+    return {
+      xLabelFontSize,
+      yMax: max,
+      gap,
+      columnWidth,
+    };
+  }, [max, gap, columnWidth, xLabelFontSize]);
 }

@@ -17,8 +17,9 @@ export default function UserCaseDetails(props: Props) {
   return (
     <>
       <UserIdNameCard user={user} />
-      <UserDetails user={user} isEmbedded={true} collapsedByDefault={true} />
+      <UserDetails user={user} isEmbedded={true} collapsedByDefault={true} hideHistory={true} />
       <RulesHitCard caseItem={caseItem} />
+      {user?.userId && <InsightsCard userId={user.userId} />}
       <CommentsCard
         caseId={caseItem.caseId}
         comments={caseItem.comments ?? []}
@@ -26,7 +27,6 @@ export default function UserCaseDetails(props: Props) {
           onCaseUpdate({ ...caseItem, comments: newComments });
         }}
       />
-      {user?.userId && <InsightsCard userId={user.userId} />}
     </>
   );
 }

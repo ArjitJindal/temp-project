@@ -1,5 +1,4 @@
 import UserDetails from '../ConsumerUserDetails/UserDetails/index';
-import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
 import { LegalDocumentsTable } from './LegalDocuments';
 import { InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
@@ -19,7 +18,6 @@ export default function ConsumerUserDetails(props: Props) {
     <>
       <UserDetails user={user} collapsedByDefault={collapsedByDefault} />
       <LegalDocumentsTable person={user} collapsedByDefault={collapsedByDefault} />
-      <UserTransactionHistoryTable userId={userId} collapsedByDefault={collapsedByDefault} />
       <DocumentsCard
         user={user}
         collapsedByDefault={collapsedByDefault}

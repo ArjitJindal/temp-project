@@ -48,4 +48,17 @@ const COLORS = {
   ...SEMANTIC_COLORS,
 };
 
+/*
+  Color to use for text when it's over the specified color
+ */
+export function getLabelColor(backgroundColor: string): string {
+  if (backgroundColor === COLORS.purpleGray.tint) {
+    return COLORS.purpleGray.base;
+  }
+  if (backgroundColor === COLORS.turquoise.tint) {
+    return COLORS.purpleGray.base;
+  }
+  return 'white';
+}
+
 export default COLORS;

@@ -8,6 +8,7 @@ import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { CommonParams } from '@/components/ui/Table';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
+import { map } from '@/utils/queries/types';
 
 interface Props {
   userId: string;
@@ -38,37 +39,40 @@ export default function TransactionsList(props: Props) {
   }, [selectorParams]);
 
   const api = useApi();
-  const transactionListResult = useQuery(
+  const transactionListResponse = useQuery(
     TRANSACTIONS_LIST({
       ...tableParams,
       ...selectorParams,
       userId,
     }),
-    async () => {
-      const response = await api.getTransactionsList({
+    () =>
+      api.getTransactionsList({
         ...FIXED_API_PARAMS,
         limit: tableParams.pageSize,
         skip: ((tableParams?.page ?? 1) - 1) * tableParams.pageSize,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
-      });
-      let total = response.total;
-      if (selectorParams.transactionsCount === 'LAST_10') {
-        total = 10;
-      } else if (selectorParams.transactionsCount === 'LAST_50') {
-        total = 50;
-      }
-      return {
-        items: response.data,
-        total: total,
-      };
-    },
+        includeEvents: true,
+        includeUsers: true,
+      }),
   );
+  const transactionList = map(transactionListResponse, (response) => {
+    let total = response.total;
+    if (selectorParams.transactionsCount === 'LAST_10') {
+      total = Math.min(total, 10);
+    } else if (selectorParams.transactionsCount === 'LAST_50') {
+      total = Math.min(total, 50);
+    }
+    return {
+      items: response.data,
+      total: total,
+    };
+  });
   return (
     <TransactionsTable
       hideSearchForm
       disableSorting
-      queryResult={transactionListResult}
+      queryResult={transactionList}
       params={tableParams}
       onChangeParams={setTableParams}
     />

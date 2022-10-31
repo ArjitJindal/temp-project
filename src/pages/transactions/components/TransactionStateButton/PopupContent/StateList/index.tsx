@@ -1,13 +1,12 @@
 import { List } from 'antd';
 import cn from 'clsx';
-import _ from 'lodash';
 import s from './style.module.less';
 import { TransactionState } from '@/apis';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { getOr, isLoading, map } from '@/utils/asyncResource';
-import TransactionStateTag from '@/components/ui/TransactionState';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
 
 interface Props {
   onSelectState: (user: TransactionState | undefined) => void;

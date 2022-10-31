@@ -59,7 +59,7 @@ export default function RulesHitCard(props: Props) {
       header={{
         title: 'Rules Hits',
         collapsable: true,
-        collapsedByDefault: false,
+        collapsedByDefault: true,
       }}
     >
       <Card.Section>

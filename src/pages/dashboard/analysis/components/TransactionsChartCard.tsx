@@ -9,15 +9,15 @@ import { each, groupBy } from 'lodash';
 import { Annotation } from '@antv/g2plot';
 import {
   browserName,
-  deviceType,
   browserVersion,
-  osName,
+  deviceType,
   mobileModel,
   mobileVendor,
+  osName,
 } from 'react-device-detect';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
-import { getRuleActionTitle } from '../../../../utils/rules';
+import { getRuleActionColor, getRuleActionTitle } from '../../../../utils/rules';
 import header from './dashboardutils';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -284,13 +284,15 @@ const TransactionsChartCard = () => {
                       yField={key !== 'totalTransactions' ? 'y' : 'value'}
                       color={({ type }) => {
                         if (key === 'totalTransactions') {
-                          if (type === `${suspendAlias}`) return '#F5E25A';
-                          if (type === `${flagAlias}`) return '#F6A429';
-                          if (type === `${blockAlias}`) return '#FF4D4F';
-                          return '#1169F9';
-                        } else if (key === FLAGGED_TRANSACTIONS_KEY) return '#F6A429';
-                        else if (key === STOPPED_TRANSACTIONS_KEY) return '#FF4D4F';
-                        return '#F5E25A';
+                          if (type === `${suspendAlias}`) return getRuleActionColor('SUSPEND');
+                          if (type === `${flagAlias}`) return getRuleActionColor('FLAG');
+                          if (type === `${blockAlias}`) return getRuleActionColor('BLOCK');
+                          return getRuleActionColor('ALLOW');
+                        } else if (key === FLAGGED_TRANSACTIONS_KEY)
+                          return getRuleActionColor('FLAG');
+                        else if (key === STOPPED_TRANSACTIONS_KEY)
+                          return getRuleActionColor('FLAG');
+                        return getRuleActionColor('SUSPEND');
                       }}
                       xAxis={{
                         label: {

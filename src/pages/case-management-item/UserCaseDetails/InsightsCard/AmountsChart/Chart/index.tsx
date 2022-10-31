@@ -3,25 +3,13 @@ import cn from 'clsx';
 import s from './styles.module.less';
 import Popover from './Popover';
 import { P } from '@/components/ui/Typography';
-import { Currency, formatCurrency } from '@/utils/currencies';
-import { calculateScaleMax } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/helpers';
-
-export interface Colors {
-  maximum: string;
-  minimum: string;
-  average: string;
-  median: string;
-}
-
-export interface DataItem {
-  title: string;
-  maximum?: number;
-  minimum?: number;
-  average?: number;
-  median?: number;
-}
-
-export type Data = DataItem[];
+import { Currency } from '@/utils/currencies';
+import {
+  Colors,
+  Data,
+} from '@/pages/case-management-item/UserCaseDetails/InsightsCard/AmountsChart/Chart/types';
+import { useCalculatedParams } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/AmountsChart/Chart/helpers';
+import Money from '@/components/ui/Money';
 
 interface Props {
   data: Data;
@@ -31,18 +19,15 @@ interface Props {
 
 export default function Chart(props: Props) {
   const { currency, data, colors } = props;
-  const max = calculateScaleMax(
-    data.reduce(
-      (acc, { maximum, minimum, median, average }) =>
-        Math.max(acc, maximum ?? 0, minimum ?? 0, median ?? 0, average ?? 0),
-      0,
-    ),
-  );
+
   const [focused, setFocused] = useState<string | null>(null);
+
+  const calculatedParams = useCalculatedParams(data);
+
   return (
     <div className={s.root}>
       <div className={s.content}>
-        <Grid data={data} max={max} currency={currency} />
+        <Grid data={data} max={calculatedParams.yMax} currency={currency} />
         {data.map((dataItem) => {
           const { title, maximum, minimum, average, median } = dataItem;
           const isFocused = focused === title;
@@ -76,32 +61,40 @@ export default function Chart(props: Props) {
                     setFocused(null);
                   }}
                 >
-                  {maximum && (
+                  {maximum != null && (
                     <div
-                      title={`Maximum: ${formatCurrency(maximum, currency)}`}
                       className={cn(s.indicator, s.maximum)}
-                      style={{ width: `${(maximum / max) * 100}%`, background: colors.maximum }}
+                      style={{
+                        width: `${(maximum / calculatedParams.yMax) * 100}%`,
+                        background: colors.maximum,
+                      }}
                     />
                   )}
-                  {minimum && (
+                  {minimum != null && (
                     <div
-                      title={`Minimum: ${formatCurrency(minimum, currency)}`}
                       className={cn(s.indicator, s.minimum)}
-                      style={{ width: `${(minimum / max) * 100}%`, background: colors.minimum }}
+                      style={{
+                        width: `${(minimum / calculatedParams.yMax) * 100}%`,
+                        background: colors.minimum,
+                      }}
                     />
                   )}
-                  {average && (
+                  {average != null && (
                     <div
-                      title={`Average: ${formatCurrency(average, currency)}`}
                       className={cn(s.indicator, s.average)}
-                      style={{ width: `${(average / max) * 100}%`, background: colors.average }}
+                      style={{
+                        width: `${(average / calculatedParams.yMax) * 100}%`,
+                        background: colors.average,
+                      }}
                     />
                   )}
-                  {median && (
+                  {median != null && (
                     <div
-                      title={`Median: ${formatCurrency(median, currency)}`}
                       className={cn(s.indicator, s.median)}
-                      style={{ left: `${(median / max) * 100}%`, background: colors.median }}
+                      style={{
+                        left: `${(median / calculatedParams.yMax) * 100}%`,
+                        background: colors.median,
+                      }}
                     />
                   )}
                 </div>
@@ -122,7 +115,12 @@ function Grid(props: { data: Data; max: number; currency: Currency }) {
     <div className={s.grid}>
       {[...new Array(GRID_STEPS_COUNT)].map((_, i) => (
         <div key={i} className={s.gridLine}>
-          <span>{formatCurrency((max / (GRID_STEPS_COUNT - 1)) * i, currency)}</span>
+          <Money
+            className={s.gridLabel}
+            currency={currency}
+            value={(max / (GRID_STEPS_COUNT - 1)) * i}
+            compact
+          />
         </div>
       ))}
     </div>

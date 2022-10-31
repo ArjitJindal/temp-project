@@ -9,6 +9,7 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { humanizeCamelCase } from '@/utils/tags';
 import { Currency } from '@/utils/currencies';
+import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
 
 const CHART_COLORS = {
   maximum: COLORS.purpleGray.tint,
@@ -36,28 +37,38 @@ export default function AmountsChart(props: Props) {
   return (
     <div className={cn(s.root)}>
       <AsyncResourceRenderer resource={props.queryResult.data}>
-        {(response) => (
-          <Chart
-            data={response.map((x) => ({
-              title: humanizeCamelCase(x.transactionType as TransactionType),
-              maximum: x.max,
-              minimum: x.min,
-              average: x.average,
-              median: x.median,
-            }))}
-            colors={CHART_COLORS}
-            currency={currency}
-          />
-        )}
+        {(response) => {
+          if (response.length === 0) {
+            return <NoData />;
+          }
+          return (
+            <>
+              <Chart
+                data={response.map((x) => ({
+                  title:
+                    x.transactionType != null
+                      ? humanizeCamelCase(x.transactionType as TransactionType)
+                      : '(unknown)',
+                  maximum: x.max,
+                  minimum: x.min,
+                  average: x.average,
+                  median: x.median,
+                }))}
+                colors={CHART_COLORS}
+                currency={currency}
+              />
+              <Legend
+                data={[
+                  { category: 'Maximum', color: CHART_COLORS.maximum },
+                  { category: 'Minimum', color: CHART_COLORS.minimum },
+                  { category: 'Average', color: CHART_COLORS.average },
+                  { category: 'Median', color: CHART_COLORS.median },
+                ]}
+              />
+            </>
+          );
+        }}
       </AsyncResourceRenderer>
-      <Legend
-        data={[
-          { category: 'Maximum', color: CHART_COLORS.maximum },
-          { category: 'Minimum', color: CHART_COLORS.minimum },
-          { category: 'Average', color: CHART_COLORS.average },
-          { category: 'Median', color: CHART_COLORS.median },
-        ]}
-      />
     </div>
   );
 }

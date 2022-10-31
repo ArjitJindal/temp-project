@@ -118,7 +118,6 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           filterId: caseId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
-          filterOutStatus: caseStatus !== 'CLOSED' ? 'ALLOW' : undefined,
           filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
           filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
           filterTransactionState: transactionState,

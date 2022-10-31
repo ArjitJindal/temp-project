@@ -14,13 +14,14 @@ interface Props {
     bottom?: number;
     left?: number;
   };
-  children: string;
+  fontSize?: number;
+  children: React.ReactNode;
 }
 
 export default function Label(props: Props) {
-  const { className, position = {}, size = {}, children } = props;
+  const { className, position = {}, size = {}, fontSize, children } = props;
   return (
-    <div className={cn(s.root, className)} style={{ ...position, ...size }}>
+    <div className={cn(s.root, className)} style={{ ...position, ...size, fontSize }}>
       {children}
     </div>
   );

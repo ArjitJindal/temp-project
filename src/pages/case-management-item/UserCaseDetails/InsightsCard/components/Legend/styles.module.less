@@ -1,3 +1,5 @@
+@import 'src/components/ui/animation.less';
+
 .root {
   display: flex;
   flex-wrap: wrap;
@@ -9,6 +11,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: opacity @default-animation-speed @default-animation-function;
+  cursor: default;
+
+  &.isShadowed {
+    opacity: 0.5;
+  }
 }
 
 .circle {

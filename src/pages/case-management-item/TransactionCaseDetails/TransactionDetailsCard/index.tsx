@@ -1,7 +1,7 @@
 import * as Card from '@/components/ui/Card';
 import UserDetails from '@/pages/transactions-item/UserDetails';
 import { CaseTransaction } from '@/apis';
-import TransactionInfoCard from '@/pages/case-management-item/components/TransactionDetailsCard/TransactionInfoCard';
+import TransactionInfoCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard/TransactionInfoCard';
 
 interface Props {
   transaction: CaseTransaction;

@@ -15,8 +15,9 @@ export function H1(
       children?: React.ReactNode;
     },
 ) {
+  const { className, variant, ...rest } = props;
   return (
-    <h1 {...props} className={cn(s.h1, s[`variant-${props.variant}`], props.className)}>
+    <h1 {...rest} className={cn(s.h1, s[`variant-${variant}`], className)}>
       {props.children}
     </h1>
   );
@@ -24,8 +25,9 @@ export function H1(
 export function H2(
   props: SharedProps & HTMLAttributes<HTMLHeadingElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <h2 {...props} className={cn(s.h2, props.bold && s.bold, props.className)} style={props.style}>
+    <h2 {...rest} className={cn(s.h2, bold && s.bold, className)}>
       {props.children}
     </h2>
   );
@@ -33,8 +35,9 @@ export function H2(
 export function H3(
   props: SharedProps & HTMLAttributes<HTMLHeadingElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <h3 {...props} className={cn(s.h3, props.bold && s.bold, props.className)} style={props.style}>
+    <h3 {...rest} className={cn(s.h3, bold && s.bold, className)} style={props.style}>
       {props.children}
     </h3>
   );
@@ -42,8 +45,9 @@ export function H3(
 export function H4(
   props: SharedProps & HTMLAttributes<HTMLHeadingElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <h4 {...props} className={cn(s.h4, props.bold && s.bold, props.className)} style={props.style}>
+    <h4 {...rest} className={cn(s.h4, bold && s.bold, className)} style={props.style}>
       {props.children}
     </h4>
   );
@@ -51,8 +55,9 @@ export function H4(
 export function H5(
   props: SharedProps & HTMLAttributes<HTMLHeadingElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <h5 {...props} className={cn(s.h5, props.bold && s.bold, props.className)} style={props.style}>
+    <h5 {...rest} className={cn(s.h5, bold && s.bold, className)} style={props.style}>
       {props.children}
     </h5>
   );
@@ -60,8 +65,9 @@ export function H5(
 export function H6(
   props: SharedProps & HTMLAttributes<HTMLHeadingElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <h6 {...props} className={cn(s.h6, props.bold && s.bold, props.className)} style={props.style}>
+    <h6 {...rest} className={cn(s.h6, bold && s.bold, className)} style={props.style}>
       {props.children}
     </h6>
   );
@@ -73,10 +79,11 @@ export function P(
       children?: React.ReactNode;
     },
 ) {
+  const { className, bold, variant, ...rest } = props;
   return (
     <p
-      {...props}
-      className={cn(s.p, props.bold && s.bold, s[`variant-${props.variant}`], props.className)}
+      {...rest}
+      className={cn(s.p, bold && s.bold, s[`variant-${variant}`], className)}
       style={props.style}
     >
       {props.children}
@@ -86,12 +93,9 @@ export function P(
 export function Small(
   props: SharedProps & HTMLAttributes<HTMLDivElement> & { children?: React.ReactNode },
 ) {
+  const { className, bold, ...rest } = props;
   return (
-    <small
-      {...props}
-      className={cn(s.small, props.bold && s.bold, props.className)}
-      style={props.style}
-    >
+    <small {...rest} className={cn(s.small, bold && s.bold, className)}>
       {props.children}
     </small>
   );

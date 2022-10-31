@@ -3,7 +3,7 @@ import * as Card from '@/components/ui/Card';
 import { InternalBusinessUser } from '@/apis';
 import Calander2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
-import { formatAmount } from '@/utils/currencies';
+import Money from '@/components/ui/Money';
 
 interface Props {
   user: InternalBusinessUser;
@@ -41,7 +41,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Card.Row className={s.row}>
             {
               <div className={s.inner}>
-                {formatAmount(user.transactionLimits?.maximumDailyTransactionLimit)}
+                <Money amount={user.transactionLimits?.maximumDailyTransactionLimit} />
               </div>
             }
           </Card.Row>
@@ -51,7 +51,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Card.Row className={s.row}>
             {
               <div className={s.inner}>
-                {formatAmount(user.transactionLimits?.maximumWeeklyTransactionLimit)}
+                <Money amount={user.transactionLimits?.maximumWeeklyTransactionLimit} />
               </div>
             }
           </Card.Row>
@@ -61,7 +61,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Card.Row className={s.row}>
             {
               <div className={s.inner}>
-                {formatAmount(user.transactionLimits?.maximumMonthlyTransactionLimit)}
+                <Money amount={user.transactionLimits?.maximumMonthlyTransactionLimit} />
               </div>
             }
           </Card.Row>
@@ -71,7 +71,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Card.Row className={s.row}>
             {
               <div className={s.inner}>
-                {formatAmount(user.transactionLimits?.maximumQuarterlyTransactionLimit)}
+                <Money amount={user.transactionLimits?.maximumQuarterlyTransactionLimit} />
               </div>
             }
           </Card.Row>
@@ -81,7 +81,7 @@ export default function ExpectedTransactionLimits(props: Props) {
           <Card.Row className={s.row}>
             {
               <div className={s.inner}>
-                {formatAmount(user.transactionLimits?.maximumYearlyTransactionLimit)}
+                <Money amount={user.transactionLimits?.maximumYearlyTransactionLimit} />
               </div>
             }
           </Card.Row>

@@ -6,8 +6,9 @@ import { TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { paymentMethod, transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import { getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName } from '@/utils/api/users';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
@@ -16,6 +17,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import { ActionRenderer, AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
+import Id from '@/components/ui/Id';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -98,6 +100,26 @@ export default function TransactionsTable(props: Props) {
         dataIndex: 'transactionState',
         hideInSearch: true,
         sorter: !disableSorting,
+        render: (_, entity) => {
+          return <TransactionStateTag transactionState={entity.transactionState} />;
+        },
+      },
+      {
+        title: 'Last transaction state',
+        width: 130,
+        render: (_, entity) => {
+          if (entity.events == null) {
+            return <></>;
+          }
+          if (entity.events.length === 0) {
+            return <></>;
+          }
+          return (
+            <TransactionStateTag
+              transactionState={entity.events[entity.events.length - 1].transactionState}
+            />
+          );
+        },
       },
       {
         title: 'Origin User ID',
@@ -106,7 +128,7 @@ export default function TransactionsTable(props: Props) {
         dataIndex: 'originUserId',
         hideInSearch: true,
         render: (dom, entity) => {
-          return entity.originUserId;
+          return <Id to={getUserLink(entity.originUser)}>{entity.originUserId}</Id>;
         },
       },
       {
@@ -163,7 +185,7 @@ export default function TransactionsTable(props: Props) {
         dataIndex: 'destinationUserId',
         hideInSearch: true,
         render: (dom, entity) => {
-          return entity.destinationUserId;
+          return <Id to={getUserLink(entity.destinationUser)}>{entity.destinationUserId}</Id>;
         },
       },
       {
@@ -300,7 +322,7 @@ export default function TransactionsTable(props: Props) {
               labelWidth: 120,
             }
       }
-      scroll={{ x: 1300 }}
+      scroll={{ x: 1500 }}
       queryResults={queryResult}
       columns={columns}
       columnsState={{

@@ -1,15 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import s from './styles.module.less';
 import Column from './Column';
-import { DataItem, Settings } from './types';
+import { DataItem, Series, Settings } from './types';
 import {
   BOTTOM_PADDING,
-  calculateScaleMax,
-  GAP,
   LEFT_PADDING,
-  MAX_COLUMN_WIDTH,
   RIGHT_PADDING,
   TOP_PADDING,
+  useColumnParams,
+  Y_TICKS_COUNT,
 } from './helpers';
 import AxisX from './AxisX';
 import AxisY from './AxisY';
@@ -17,7 +16,7 @@ import { Currency } from '@/utils/currencies';
 
 interface Props {
   settings: Settings;
-  seriesList: { name: string; label: string }[];
+  seriesList: Series[];
   data: DataItem[];
   currency: Currency | null;
 }
@@ -27,16 +26,11 @@ export default function CountChart(props: Props) {
   const { width, height } = settings;
   const usefulWidth = width - LEFT_PADDING - RIGHT_PADDING;
   const usefulHeight = height - TOP_PADDING - BOTTOM_PADDING;
-  const columnWidth = Math.min(
-    (usefulWidth - GAP * (seriesList.length - 1)) / seriesList.length,
-    MAX_COLUMN_WIDTH,
-  );
-  const TICKS_COUNT = 5;
-  const max = calculateScaleMax(
-    data
-      .map((dataItem) => Object.values(dataItem.values).reduce((acc, x) => acc + x, 0))
-      .reduce((acc, x) => Math.max(acc, x), 10),
-  );
+
+  const calculatedParams = useColumnParams(data, seriesList, usefulWidth);
+
+  const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null);
+
   return (
     <div className={s.root} style={{ width, height }}>
       <div
@@ -49,11 +43,13 @@ export default function CountChart(props: Props) {
         }}
       >
         <div className={s.grid}>
-          <AxisX seriesList={seriesList} columnWidth={columnWidth} />
+          <AxisX seriesList={seriesList} calculatedParams={calculatedParams} />
           <AxisY
-            max={max}
+            max={calculatedParams.yMax}
             totalHeight={usefulHeight}
-            ticks={[...new Array(TICKS_COUNT + 1)].map((_, i) => (max / TICKS_COUNT) * i)}
+            ticks={[...new Array(Y_TICKS_COUNT + 1)].map(
+              (_, i) => (calculatedParams.yMax / Y_TICKS_COUNT) * i,
+            )}
             currency={currency}
           />
         </div>
@@ -66,12 +62,18 @@ export default function CountChart(props: Props) {
             const total = Object.values(dataItem.values).reduce((acc, x) => acc + x, 0);
             return (
               <Column
+                index={i}
+                isHighlighted={highlightedColumn != null && series.name === highlightedColumn}
+                isShadowed={highlightedColumn != null && series.name !== highlightedColumn}
                 key={series.name}
                 item={dataItem}
-                width={columnWidth}
-                height={height * (total / max)}
-                left={(GAP + columnWidth) * i}
+                series={series}
+                calculatedParams={calculatedParams}
+                height={height * (total / calculatedParams.yMax)}
                 currency={currency}
+                onHighlight={(highlighted) => {
+                  setHighlightedColumn(highlighted ? series.name : null);
+                }}
               />
             );
           })}

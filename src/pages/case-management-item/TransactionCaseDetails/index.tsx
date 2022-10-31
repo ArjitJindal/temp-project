@@ -1,9 +1,9 @@
 import React from 'react';
 import { Alert } from 'antd';
-import TransactionDetailsCard from '@/pages/case-management-item/components/TransactionDetailsCard';
-import RulesHitCard from '@/pages/case-management-item/components/RulesHitCard';
+import TransactionDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard';
+import RulesHitCard from '@/pages/case-management-item/TransactionCaseDetails/RulesHitCard';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
-import UserDetailsCard from '@/pages/case-management-item/components/UserDetailsCard';
+import UserDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/UserDetailsCard';
 import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
 import { Case } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';

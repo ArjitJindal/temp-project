@@ -1,4 +1,5 @@
 import React from 'react';
+import cn from 'clsx';
 import s from './styles.module.less';
 
 interface Props {
@@ -6,6 +7,8 @@ interface Props {
     category: string;
     color: string;
   }[];
+  highlighted?: string | null;
+  onChangeHighlighted?: (category: string | null) => void;
 }
 
 export function ColorIndicator(props: { color: string }) {
@@ -13,16 +16,32 @@ export function ColorIndicator(props: { color: string }) {
 }
 
 export default function Legend(props: Props) {
-  const { data } = props;
+  const { data, highlighted, onChangeHighlighted } = props;
 
   return (
     <div className={s.root}>
-      {data.map((item) => (
-        <div className={s.item} key={item.category}>
-          <ColorIndicator color={item.color} />
-          {item.category}
-        </div>
-      ))}
+      {data.map((item) => {
+        const isShadowed = highlighted != null && highlighted !== item.category;
+        return (
+          <div
+            className={cn(s.item, isShadowed && s.isShadowed)}
+            key={item.category}
+            onMouseEnter={() => {
+              if (onChangeHighlighted != null) {
+                onChangeHighlighted(item.category);
+              }
+            }}
+            onMouseLeave={() => {
+              if (onChangeHighlighted != null) {
+                onChangeHighlighted(null);
+              }
+            }}
+          >
+            <ColorIndicator color={item.color} />
+            {item.category}
+          </div>
+        );
+      })}
     </div>
   );
 }

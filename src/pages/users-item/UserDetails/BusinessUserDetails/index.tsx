@@ -1,4 +1,3 @@
-import UserTransactionHistoryTable from '../UserTransactionHistoryTable';
 import PersonsTable from './PersonsTable';
 import UserDetails from './UserDetails';
 import ExpectedTransactionLimits from './TransactionLimits';
@@ -52,7 +51,6 @@ export default function BusinessUserDetails(props: Props) {
       >
         {user.directors && user.directors.length > 0 && <PersonsTable persons={user.directors} />}
       </Card.Root>
-      <UserTransactionHistoryTable userId={user.userId} />
       <DocumentsCard
         user={user}
         collapsedByDefault={collapsedByDefault}

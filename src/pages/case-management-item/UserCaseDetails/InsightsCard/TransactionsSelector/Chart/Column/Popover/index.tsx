@@ -1,17 +1,16 @@
 import React from 'react';
 import { Popover as AntPopover } from 'antd';
+import { DataItem, Series } from '../../types';
 import s from './styles.module.less';
 import { P } from '@/components/ui/Typography';
 import { Currency } from '@/utils/currencies';
 import { ColorIndicator } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/Legend';
-import {
-  Colors,
-  DataItem,
-} from '@/pages/case-management-item/UserCaseDetails/InsightsCard/AmountsChart/Chart/types';
+import { getRuleActionColor, getRuleActionTitle } from '@/utils/rules';
+import { RuleAction } from '@/apis';
 import Money from '@/components/ui/Money';
 
 interface Props {
-  colors: Colors;
+  series: Series;
   dataItem: DataItem;
   isVisible: boolean;
   children: React.ReactNode;
@@ -19,42 +18,33 @@ interface Props {
 }
 
 export default function Popover(props: Props) {
-  const { isVisible, dataItem, children, colors, currency } = props;
+  const { isVisible, series, dataItem, children, currency } = props;
   const content = (
     <div className={s.root}>
       <P className={s.title} variant="sml" bold>
-        {`Transaction amount for ${dataItem.title}`}
+        {`Transactions ${currency == null ? 'count' : 'amount'} on ${series.label}`}
       </P>
       <div className={s.indicatorsTable}>
-        <IndicatorRow
-          color={colors.maximum}
-          title={'Maximum'}
-          value={dataItem.maximum}
-          currency={currency}
-        />
-        <IndicatorRow
-          color={colors.minimum}
-          title={'Minimum'}
-          value={dataItem.minimum}
-          currency={currency}
-        />
-        <IndicatorRow
-          color={colors.average}
-          title={'Average'}
-          value={dataItem.average}
-          currency={currency}
-        />
-        <IndicatorRow
-          color={colors.median}
-          title={'Median'}
-          value={dataItem.median}
-          currency={currency}
-        />
+        {Object.entries(dataItem.values).map(([ruleAction, value]) => (
+          <IndicatorRow
+            key={ruleAction}
+            color={getRuleActionColor(ruleAction as RuleAction)}
+            title={getRuleActionTitle(ruleAction)}
+            value={value}
+            currency={currency}
+          />
+        ))}
       </div>
     </div>
   );
   return (
-    <AntPopover visible={isVisible} content={content} placement="topLeft">
+    <AntPopover
+      overlayClassName={s.root}
+      key={`${isVisible}`}
+      visible={isVisible}
+      content={content}
+      placement="top"
+    >
       {children}
     </AntPopover>
   );

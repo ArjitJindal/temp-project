@@ -59,7 +59,10 @@ export default function InsightsCard(props: Props) {
       <Card.Row className={s.insights} justify="evenly">
         <Card.Section className={s.gray}>
           <InsightCard title="Transaction types">
-            <TypesChart queryResult={statsQueryResult} />
+            <TypesChart
+              currency={selectorParams.displayBy === 'AMOUNT' ? selectorParams.currency : null}
+              queryResult={statsQueryResult}
+            />
           </InsightCard>
         </Card.Section>
         <Card.Section>

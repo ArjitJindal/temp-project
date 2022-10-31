@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import moment from 'moment';
-import ActionRiskDisplay from '../case-management-item/components/TransactionDetailsCard/ActionRiskDisplay';
+import ActionRiskDisplay from '../case-management-item/TransactionCaseDetails/TransactionDetailsCard/ActionRiskDisplay';
 import SenderReceiverDetails from './SenderReceiverDetails';
 import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
@@ -18,7 +18,7 @@ import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react
 import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import TransactionState from '@/components/ui/TransactionState';
+import TransactionState from '@/components/ui/TransactionStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
