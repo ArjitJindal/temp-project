@@ -238,7 +238,13 @@ export default function TransactionCases(props: Props) {
             hideInSearch: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
-              return getUserName(entity.transaction?.originUser);
+              const originUser = entity.transaction?.originUser;
+
+              return originUser ? (
+                <UserLink user={originUser}>{getUserName(originUser)}</UserLink>
+              ) : (
+                <>{getUserName(originUser)}</>
+              );
             },
           },
           {
@@ -328,7 +334,13 @@ export default function TransactionCases(props: Props) {
             hideInSearch: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
-              return getUserName(entity.transaction?.destinationUser);
+              const destinationUser = entity.transaction?.destinationUser;
+
+              return destinationUser ? (
+                <UserLink user={destinationUser}>{getUserName(destinationUser)}</UserLink>
+              ) : (
+                <>{getUserName(destinationUser)}</>
+              );
             },
           },
           {
