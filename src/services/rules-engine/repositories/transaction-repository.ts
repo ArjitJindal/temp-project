@@ -1343,9 +1343,8 @@ export class TransactionRepository {
     const query = this.getTransactionsMongoQuery(params)
 
     const result: {
-      [key in TransactionType]?: {
+      [key in TransactionType | 'null']?: {
         amounts: number[]
-        sum: number
         min: number | null
         max: number | null
       }
@@ -1356,19 +1355,17 @@ export class TransactionRepository {
       limit: params.limit,
     })
     for await (const next of cursor) {
-      if (next.type) {
-        const acc = result[next.type] ?? {
-          amounts: [],
-          sum: 0,
-          min: null,
-          max: null,
-        }
-        result[next.type] = acc
-        const amount = await this.getAmount(next, referenceCurrency)
-        acc.amounts.push(amount)
-        acc.min = acc.min != null ? Math.min(acc.min, amount) : amount
-        acc.max = acc.max != null ? Math.max(acc.max, amount) : amount
+      const transactionType = next.type ?? 'null'
+      const acc = result[transactionType] ?? {
+        amounts: [],
+        min: null,
+        max: null,
       }
+      result[transactionType] = acc
+      const amount = await this.getAmount(next, referenceCurrency)
+      acc.amounts.push(amount)
+      acc.min = acc.min != null ? Math.min(acc.min, amount) : amount
+      acc.max = acc.max != null ? Math.max(acc.max, amount) : amount
     }
 
     return Object.entries(result).map(([transactionType, acc]) => {
@@ -1377,8 +1374,12 @@ export class TransactionRepository {
       const count = amounts.length
       const sum = amounts.reduce((acc: number, x) => acc + (x ?? 0), 0)
       return {
-        transactionType: transactionType as TransactionType,
+        transactionType:
+          transactionType === 'null'
+            ? undefined
+            : (transactionType as TransactionType),
         count,
+        sum,
         average: (sum / count || 0) ?? undefined,
         min: acc.min ?? undefined,
         max: acc.max ?? undefined,
@@ -1397,23 +1398,37 @@ export class TransactionRepository {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<TransactionCaseManagement>(name)
-    const query = this.getTransactionsMongoQuery(params)
+    const query = this.getTransactionsMongoQuery({
+      ...params,
+      sortField: 'timestamp',
+      sortOrder: 'descend',
+    })
 
-    const minMax = await collection
-      .aggregate<{ oldest: number; youngest: number }>([
-        { $match: query },
-        {
-          $group: {
-            _id: '_id',
-            oldest: {
-              $min: '$timestamp',
-            },
-            youngest: {
-              $max: '$timestamp',
-            },
-          },
+    const minMaxPipeline: Document[] = []
+    minMaxPipeline.push({ $match: query })
+    if (params.skip) {
+      minMaxPipeline.push({
+        $skip: params.skip,
+      })
+    }
+    if (params.limit) {
+      minMaxPipeline.push({
+        $limit: params.limit,
+      })
+    }
+    minMaxPipeline.push({
+      $group: {
+        _id: '_id',
+        oldest: {
+          $min: '$timestamp',
         },
-      ])
+        youngest: {
+          $max: '$timestamp',
+        },
+      },
+    })
+    const minMax = await collection
+      .aggregate<{ oldest: number; youngest: number }>(minMaxPipeline)
       .next()
     if (minMax == null) {
       return []
@@ -1451,11 +1466,11 @@ export class TransactionRepository {
       values: {},
     }))
 
-    const aggregationCursor = collection.find(query, {
+    const transactionsCursor = collection.find(query, {
       skip: params.skip,
       limit: params.limit,
     })
-    for await (const transaction of aggregationCursor) {
+    for await (const transaction of transactionsCursor) {
       if (transaction.timestamp) {
         const series = dayjs(transaction.timestamp).format(seriesFormat)
         const label = dayjs(transaction.timestamp).format(labelFormat)

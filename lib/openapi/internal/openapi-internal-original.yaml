@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -2404,6 +2404,9 @@ components:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
               count:
                 type: number
+              sum:
+                type: number
+                nullable: true
               average:
                 type: number
                 nullable: true
@@ -2417,7 +2420,6 @@ components:
                 type: number
                 nullable: true
             required:
-              - transactionType
               - count
       required:
         - data
@@ -2522,7 +2524,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
