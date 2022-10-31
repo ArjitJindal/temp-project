@@ -7,7 +7,7 @@ require('dotenv').config()
 
 const OUTPUT_DIR = path.resolve(__dirname, '..', 'config');
 
-const BRANCH = process.env.STOPLIGHT_BRANCH || 'main';
+const BRANCH = process.env.STOPLIGHT_BRANCH ? process.env.STOPLIGHT_BRANCH.replace(/\//g, '-') : 'main';
 const ACCOUNT = process.env.STOPLIGHT_ACCOUNT || `flagright-internal`;
 const PROJECT = process.env.STOPLIGHT_PROJECT || `flagright-internal-api`;
 const FILE_NAME = process.env.STOPLIGHT_FILE_NAME || `openapi-internal-original.yaml`;

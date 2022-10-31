@@ -5,7 +5,7 @@ import StateSearchButton from '../../transactions/components/TransactionStateBut
 import { TableSearchParams } from '../types';
 import { AddToSlackButton } from '../components/AddToSlackButton';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
-import { CasesStatusChangeForm, CaseStatusChangeForm } from '../components/CaseStatusChangeForm';
+import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -417,8 +417,8 @@ export default function TransactionCases(props: Props) {
         render: (dom, entity) => {
           return (
             entity?.caseId && (
-              <CaseStatusChangeForm
-                caseId={entity.caseId}
+              <CasesStatusChangeForm
+                caseIds={[entity.caseId]}
                 newCaseStatus={params.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
                 onSaved={reloadTable}
               />

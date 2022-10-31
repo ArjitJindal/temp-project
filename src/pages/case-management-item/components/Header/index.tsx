@@ -12,7 +12,7 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { useAuth0User } from '@/utils/user-utils';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
-import { CaseStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
+import { CasesStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
 import CaseTypeTag from '@/components/ui/CaseTypeTag';
 
 interface Props {
@@ -88,8 +88,8 @@ export default function Header(props: Props) {
               {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
             </Tag>
           </Form.Layout.Label>
-          <CaseStatusChangeForm
-            caseId={caseId as string}
+          <CasesStatusChangeForm
+            caseIds={[caseId as string]}
             newCaseStatus={caseItem.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
             onSaved={() => {
               onReload();

@@ -1,15 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
-import { CaseStatus } from '@/apis';
+import { CaseStatus, FileInfo } from '@/apis';
 import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
-
-interface Props {
-  caseId: string;
-  newCaseStatus: CaseStatus;
-  onSaved: () => void;
-}
+import { UploadFilesList } from '@/components/files/UploadFilesList';
 
 interface CasesProps {
   caseIds: string[];
@@ -46,147 +41,6 @@ interface FormValues {
   reasonOther: string | null;
 }
 
-export function CaseStatusChangeForm(props: Props) {
-  const { caseId, onSaved, newCaseStatus } = props;
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [isOtherReason, setIsOtherReason] = useState(false);
-  const [isSaving, setSaving] = useState(false);
-  const [form] = Form.useForm<FormValues>();
-  const api = useApi();
-
-  const reopenCase = useCallback(async () => {
-    const hideMessage = message.loading(`Saving...`, 0);
-    try {
-      setSaving(true);
-      await api.postCases({
-        CasesUpdateRequest: {
-          caseIds: [caseId],
-          updates: {
-            caseStatus: newCaseStatus,
-          },
-        },
-      });
-      message.success('Case Reopened');
-      setModalVisible(false);
-      onSaved();
-    } catch (e) {
-      message.error('Failed to save');
-    } finally {
-      hideMessage();
-      setSaving(false);
-    }
-  }, [onSaved, caseId, api, newCaseStatus]);
-
-  const handleUpdateTransaction = useCallback(
-    async (values: FormValues) => {
-      const hideMessage = message.loading(`Saving...`, 0);
-      try {
-        setSaving(true);
-        await api.postCases({
-          CasesUpdateRequest: {
-            caseIds: [caseId],
-            updates: {
-              caseStatus: newCaseStatus,
-              otherReason:
-                values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
-              reason: values.reasons,
-            },
-          },
-        });
-        message.success('Saved');
-        setModalVisible(false);
-        onSaved();
-      } catch (e) {
-        message.error('Failed to save');
-      } finally {
-        hideMessage();
-        setSaving(false);
-      }
-    },
-    [onSaved, caseId, api, newCaseStatus],
-  );
-
-  const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
-  // todo: i18n
-  return (
-    <>
-      <Button
-        analyticsName="UpdateCaseStatus"
-        onClick={() => {
-          if (newCaseStatus === 'CLOSED') {
-            setModalVisible(true);
-          } else {
-            reopenCase();
-          }
-        }}
-      >
-        {caseStatusToOperationName(newCaseStatus)}
-      </Button>
-      <Modal
-        title="Update case status"
-        visible={isModalVisible}
-        okButtonProps={{
-          disabled: isSaving,
-        }}
-        onOk={() => {
-          form
-            .validateFields()
-            .then((values) => {
-              return handleUpdateTransaction(values);
-              // onCreate(values);
-            })
-            .then(() => {
-              form.resetFields();
-              setIsOtherReason(false);
-            })
-            .catch((info) => {
-              console.log('Validate Failed:', info);
-            });
-        }}
-        onCancel={() => {
-          setModalVisible(false);
-        }}
-      >
-        <Form<FormValues>
-          form={form}
-          layout="vertical"
-          name="form_in_modal"
-          initialValues={{
-            reasons: [],
-            reasonOther: null,
-          }}
-        >
-          <Form.Item
-            name="reasons"
-            label="Reason"
-            rules={[{ required: true, message: 'Please enter a Reason' }]}
-          >
-            <Select<string[]>
-              mode="multiple"
-              onChange={(value) => setIsOtherReason(value.includes(OTHER_REASON))}
-            >
-              {possibleReasons.map((label) => (
-                <Select.Option key={label} value={label}>
-                  {label}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          {isOtherReason && (
-            <Form.Item
-              name="reasonOther"
-              label="Describe the reason"
-              rules={[{ required: true, message: 'Please describe the reason', max: 150 }]}
-            >
-              <Input />
-            </Form.Item>
-          )}
-        </Form>
-      </Modal>
-    </>
-  );
-}
-
 export function CasesStatusChangeForm(props: CasesProps) {
   const { caseIds, onSaved, newCaseStatus } = props;
   const [isModalVisible, setModalVisible] = useState(false);
@@ -195,6 +49,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
   const [form] = Form.useForm<FormValues>();
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>();
+  const [files, setFiles] = useState<FileInfo[]>([]);
   const api = useApi();
 
   const reopenCase = useCallback(async () => {
@@ -233,6 +88,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
               otherReason:
                 values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
               reason: values.reasons,
+              files,
             },
           },
         });
@@ -246,14 +102,15 @@ export function CasesStatusChangeForm(props: CasesProps) {
         setSaving(false);
       }
     },
-    [onSaved, caseIds, api, newCaseStatus],
+    [api, caseIds, newCaseStatus, files, onSaved],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
   // todo: i18n
   const modalTitle = caseIds.length == 1 ? 'Close case' : `Close ${caseIds.length}  cases`;
   const modalMessagePrefix = 'Are you sure you want to';
-  const modalMessageSuffix = `${caseIds.length} case` + (caseIds.length == 1 ? '?' : 's?');
+  const modalMessageSuffix = `${caseIds.length} case${caseIds.length == 1 ? ' :' : 's :'}`;
+  const caseIdsString = caseIds.join(', ');
 
   return (
     <>
@@ -322,6 +179,19 @@ export function CasesStatusChangeForm(props: CasesProps) {
               <Input />
             </Form.Item>
           )}
+          <Form.Item name="documents" label="Attach documents">
+            <UploadFilesList
+              files={files}
+              onFileUploaded={async (file) => {
+                setFiles((prevFiles) => prevFiles.concat(file));
+              }}
+              onFileRemoved={async (fileS3Key) => {
+                setFiles((prevFiles) =>
+                  prevFiles.filter((prevFile) => prevFile.s3Key !== fileS3Key),
+                );
+              }}
+            />
+          </Form.Item>
         </Form>
       </Modal>
       <Modal
@@ -357,7 +227,8 @@ export function CasesStatusChangeForm(props: CasesProps) {
           setModalVisible(false);
         }}
       >
-        {modalMessagePrefix} <b>{caseStatusToOperationName(newCaseStatus)}</b> {modalMessageSuffix}
+        {modalMessagePrefix} <b>{caseStatusToOperationName(newCaseStatus)}</b> {modalMessageSuffix}{' '}
+        <b>{caseIdsString}</b> ?
       </Modal>
     </>
   );

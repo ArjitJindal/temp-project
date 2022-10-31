@@ -49,7 +49,7 @@ export default function CommentsCard(props: Props) {
       header={{
         title: `Comments (${comments.length})`,
         collapsable: true,
-        collapsedByDefault: true,
+        collapsedByDefault: false,
       }}
     >
       <Card.Section>

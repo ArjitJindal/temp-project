@@ -3,7 +3,7 @@ import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
 import StateSearchButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
-import { CasesStatusChangeForm, CaseStatusChangeForm } from '../components/CaseStatusChangeForm';
+import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { QueryResult } from '@/utils/queries/types';
 import { CasesListResponse, CaseUpdateRequest } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -188,8 +188,8 @@ export default function UserCases(props: Props) {
         render: (dom, entity) => {
           return (
             entity?.caseId && (
-              <CaseStatusChangeForm
-                caseId={entity.caseId}
+              <CasesStatusChangeForm
+                caseIds={[entity.caseId]}
                 newCaseStatus={params.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
                 onSaved={reloadTable}
               />
