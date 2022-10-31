@@ -23,7 +23,7 @@ setUpRulesHooks(TEST_TENANT_ID, [
     type: 'TRANSACTION',
     ruleImplementationName: 'card-holder-name-levensthein-distance',
     defaultParameters: {
-      allowedDistance: 1,
+      allowedDistancePercentage: 10,
     } as CardHolderNameRuleParameter,
   },
 ])

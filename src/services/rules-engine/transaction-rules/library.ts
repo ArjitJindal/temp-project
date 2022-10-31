@@ -593,7 +593,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     },
     () => {
       const defaultParameters: CardHolderNameRuleParameter = {
-        allowedDistance: 3,
+        allowedDistancePercentage: 30,
       }
       return {
         id: 'R-118',

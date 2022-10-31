@@ -6,7 +6,7 @@ import { User } from '@/@types/openapi-public/User'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type CardHolderNameRuleParameter = {
-  allowedDistance: number
+  allowedDistancePercentage: number
 }
 
 export default class CardHolderNameRule extends TransactionRule<CardHolderNameRuleParameter> {
@@ -14,13 +14,16 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
     return {
       type: 'object',
       properties: {
-        allowedDistance: {
+        allowedDistancePercentage: {
           type: 'integer',
-          title:
-            'Maximum number of single-character edits (Levenshtein distance)',
+          title: 'Fuzziness (Levenshtein distance)',
+          description:
+            'For example specifying 50% means that allowed Levenshtein distance will be half of the number of characters in username.',
+          minimum: 0,
+          maximum: 100,
         },
       },
-      required: ['allowedDistance'],
+      required: ['allowedDistancePercentage'],
     }
   }
 
@@ -33,18 +36,18 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
   }
 
   public async computeRule() {
-    const { allowedDistance } = this.parameters
+    const { allowedDistancePercentage } = this.parameters
     const userName = getConsumerName(
       (this.senderUser as User).userDetails!.name,
       true
     )
-
+    const userNameLength = userName.length
     const cardName = getConsumerName(
       (this.transaction.originPaymentDetails as CardDetails).nameOnCard!,
       true
     )
     const distance = levenshtein.get(userName, cardName)
-    if (distance > allowedDistance) {
+    if (distance > (allowedDistancePercentage / 100) * userNameLength) {
       const vars = super.getTransactionVars('origin')
       let cardFingerprint = null
       const originPaymentDetails = this.transaction.originPaymentDetails
