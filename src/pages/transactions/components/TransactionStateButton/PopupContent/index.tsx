@@ -18,9 +18,7 @@ export default function PopupContent(props: Props) {
   const { value, onConfirm } = props;
 
   const api = useApi();
-  const result = useQuery(TRANSACTIONS_UNIQUES(), async () => {
-    return await api.getTransactionsUniques();
-  });
+  const result = useQuery(TRANSACTIONS_UNIQUES(), () => api.getTransactionsUniques());
   const statesRes = map(result.data, ({ transactionState }) => transactionState);
 
   return (
@@ -38,7 +36,7 @@ export default function PopupContent(props: Props) {
           loading={isLoading(statesRes)}
           renderItem={(item) => (
             <List.Item
-              className={cn(s.item, !value.includes(item) && s.isActive)}
+              className={cn(s.item, value.includes(item) && s.isActive)}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
