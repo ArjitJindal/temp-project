@@ -3,7 +3,8 @@ import numeral from 'numeral';
 import { Pie, PieConfig } from '@ant-design/charts';
 import styles from '../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
-import { getRuleInstanceDisplay, RuleInstanceMap, RulesMap } from '@/pages/rules/utils';
+import { getRuleInstanceDisplay } from '@/pages/rules/utils';
+import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
 const transformData = (
   data: DashboardStatsRulesCountData[] | [],

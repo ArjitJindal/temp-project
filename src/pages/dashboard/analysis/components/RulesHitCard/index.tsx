@@ -13,13 +13,9 @@ import { useApi } from '@/api';
 import { RequestTable } from '@/components/RequestTable';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
-import {
-  getRuleInstanceDisplay,
-  getRuleInstanceDisplayId,
-  RuleInstanceMap,
-  RulesMap,
-} from '@/pages/rules/utils';
+import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
 export default function RuleHitCard() {
   const api = useApi();

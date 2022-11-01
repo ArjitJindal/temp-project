@@ -1,7 +1,11 @@
 import _ from 'lodash';
-import { RuleAction, TransactionState } from '@/apis';
+import { useMemo } from 'react';
+import { useQuery } from './queries/hooks';
+import { RULES, RULE_INSTANCES } from './queries/keys';
+import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
+import { useApi } from '@/api';
 
 export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'WHITELIST', 'FLAG', 'BLOCK', 'SUSPEND'];
 
@@ -55,4 +59,32 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
     return COLORS.orange.base;
   }
   return neverReturn(ruleAction, 'gray');
+}
+
+export type RuleInstanceMap = { [key: string]: RuleInstance };
+export type RulesMap = { [key: string]: Rule };
+
+export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } {
+  const api = useApi();
+  const rulesResults = useQuery(RULES(), (): Promise<Rule[]> => api.getRules({}));
+  const ruleInstanceResults = useQuery(
+    RULE_INSTANCES(),
+    (): Promise<RuleInstance[]> => api.getRuleInstances({}),
+  );
+  const rulesMap = useMemo(() => {
+    if (rulesResults.data.kind === 'SUCCESS') {
+      return _.keyBy(rulesResults.data.value, 'id');
+    } else {
+      return {};
+    }
+  }, [rulesResults.data]);
+  const ruleInstancesMap = useMemo(() => {
+    if (ruleInstanceResults.data.kind === 'SUCCESS') {
+      return _.keyBy(ruleInstanceResults.data.value, 'id');
+    } else {
+      return {};
+    }
+  }, [ruleInstanceResults.data]);
+
+  return { rules: rulesMap, ruleInstances: ruleInstancesMap };
 }

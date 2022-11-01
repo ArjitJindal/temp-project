@@ -46,4 +46,6 @@ export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
   'search',
   searchId,
 ];
+export const RULES = (): QueryKey => ['rules'];
+export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];

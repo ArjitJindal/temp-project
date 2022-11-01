@@ -1,8 +1,6 @@
-import { CaseType, CasePriority, RuleInstance, Rule } from '@/apis';
+import { CaseType, CasePriority } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
-
-export type RuleInstanceMap = { [key: string]: RuleInstance };
-export type RulesMap = { [key: string]: Rule };
+import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 
 export const RULE_ACTION_OPTIONS: { label: string; value: RuleAction }[] = [
   { label: 'Flag', value: 'FLAG' },
