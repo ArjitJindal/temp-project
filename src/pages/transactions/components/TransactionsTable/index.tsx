@@ -24,7 +24,7 @@ export interface TransactionsTableParams extends CommonParams {
   timestamp?: string;
   transactionId?: string;
   type?: string;
-  transactionState?: TransactionState;
+  transactionState?: TransactionState[];
   originCurrenciesFilter?: string[];
   destinationCurrenciesFilter?: string[];
   userId?: string;

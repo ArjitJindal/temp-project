@@ -161,8 +161,6 @@ export const RequestTable = <
   const prevState = usePrevious(paramsState);
   useDeepEqualEffect(() => {
     if (prevState != null && !isEqual(prevState?.params, paramsState.params)) {
-      console.log('prevState?.params', prevState?.params);
-      console.log('paramsState.params', paramsState.params);
       rowSelection?.onChange([]);
       setParamsState((state) => ({ ...state, page: 1 }));
     }

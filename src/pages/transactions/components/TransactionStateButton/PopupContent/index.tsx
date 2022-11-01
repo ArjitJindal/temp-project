@@ -1,23 +1,58 @@
+import React from 'react';
+import { List } from 'antd';
+import cn from 'clsx';
 import s from './style.module.less';
-import StateList from './StateList';
 import { TransactionState } from '@/apis';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
+import { getOr, isLoading, map } from '@/utils/asyncResource';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
 
 interface Props {
-  onConfirm: (status: TransactionState | undefined) => void;
+  value: TransactionState[];
+  onConfirm: (status: TransactionState[]) => void;
 }
 
 export default function PopupContent(props: Props) {
-  const { onConfirm } = props;
+  const { value, onConfirm } = props;
 
-  function handleSelect(status: TransactionState | undefined) {
-    onConfirm(status);
-  }
+  const api = useApi();
+  const result = useQuery(TRANSACTIONS_UNIQUES(), async () => {
+    return await api.getTransactionsUniques();
+  });
+  const statesRes = map(result.data, ({ transactionState }) => transactionState);
 
-  // todo: i18n
   return (
     <div className={s.root}>
-      <div className={s.content}>
-        <StateList onSelectState={handleSelect} />
+      <div
+        id="scrollableDiv"
+        style={{
+          maxHeight: 200,
+          overflow: 'auto',
+          width: 200,
+        }}
+      >
+        <List
+          dataSource={getOr(statesRes, [])}
+          loading={isLoading(statesRes)}
+          renderItem={(item) => (
+            <List.Item
+              className={cn(s.item, !value.includes(item) && s.isActive)}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onConfirm(
+                  !value.includes(item) ? [...value, item] : value.filter((x) => x !== item),
+                );
+              }}
+            >
+              <List.Item.Meta
+                title={<TransactionStateTag titleClassName={s.itemTitle} transactionState={item} />}
+              />
+            </List.Item>
+          )}
+        />
       </div>
     </div>
   );

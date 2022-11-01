@@ -19,10 +19,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userId: params.userId,
       userFilterMode: params.userFilterMode,
       type: params.type,
-      status: params.status,
+      status: params.status?.join(','),
       originMethodFilter: params.originMethodFilter,
       destinationMethodFilter: params.destinationMethodFilter,
-      transactionState: params.transactionState,
+      transactionState: params.transactionState?.join(','),
       sort: (params.sort ?? [])
         .map(([key, order]) => {
           if (order === 'descend') {
@@ -53,10 +53,13 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userId: raw.userId,
       userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
       type: raw.type,
-      status: isRuleAction(raw.status) ? raw.status : undefined,
+      status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
       originMethodFilter: raw.originMethodFilter,
       destinationMethodFilter: raw.destinationMethodFilter,
-      transactionState: isTransactionState(raw.transactionState) ? raw.transactionState : undefined,
+      transactionState:
+        raw.transactionState != null
+          ? raw.transactionState.split(',').filter(isTransactionState)
+          : undefined,
       sort:
         raw.sort?.split(',').map((key) => {
           if (key.startsWith('-')) {

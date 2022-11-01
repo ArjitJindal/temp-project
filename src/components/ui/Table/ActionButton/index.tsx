@@ -12,10 +12,20 @@ interface Props {
   onClear?: () => void;
   children: string;
   color?: 'GREEN' | 'ORANGE' | 'BLUE' | 'TURQUOISE';
+  title?: string;
 }
 
 export default function ActionButton(props: Props) {
-  const { icon, color = 'GREEN', onClick, onClear, children, isActive, analyticsName } = props;
+  const {
+    icon,
+    color = 'GREEN',
+    onClick,
+    onClear,
+    children,
+    isActive,
+    analyticsName,
+    title,
+  } = props;
 
   const analytics = useAnalytics();
 
@@ -40,6 +50,7 @@ export default function ActionButton(props: Props) {
     <button
       className={cn(s.root, isActive && s.isActive, s[`color-${color}`])}
       onClick={handleClick}
+      title={title}
     >
       <div className={s.icon} role="presentation">
         {icon}

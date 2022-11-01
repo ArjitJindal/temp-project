@@ -12,7 +12,7 @@ import TransactionsTable, {
 import { useQuery } from '@/utils/queries/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import StateSearchButton from '@/pages/transactions/components/TransactionStateButton';
+import TransactionStateButton from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 
@@ -95,12 +95,12 @@ const TableList = () => {
                   }));
                 }}
               />
-              <StateSearchButton
-                transactionState={params.transactionState ?? undefined}
+              <TransactionStateButton
+                transactionState={params.transactionState ?? []}
                 onConfirm={(value) => {
                   setParams((state) => ({
                     ...state,
-                    params: { ...state, transactionState: value ?? undefined },
+                    transactionState: value ?? undefined,
                   }));
                 }}
               />

@@ -1,34 +1,30 @@
 import React, { useState } from 'react';
 import { Popover } from 'antd';
-import _ from 'lodash';
 import s from './style.module.less';
 import PopupContent from './PopupContent';
 import HealthLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { TransactionState } from '@/apis';
+import { getTransactionStateTitle } from '@/components/ui/TransactionStateTag';
 
 interface Props {
-  transactionState: TransactionState | undefined;
-  onConfirm: (state: TransactionState | undefined) => void;
+  transactionState: TransactionState[];
+  onConfirm: (state: TransactionState[]) => void;
 }
 
-export default function StateSearchButton(props: Props) {
+export default function TransactionStateButton(props: Props) {
   const { transactionState, onConfirm } = props;
   const [visible, setVisible] = useState(false);
 
+  const buttonText =
+    transactionState.length > 0
+      ? transactionState.map((x) => getTransactionStateTitle(x)).join(', ')
+      : 'Transaction State';
   return (
     <Popover
       overlayClassName={s.popover}
       overlayInnerStyle={{ padding: 0 }}
-      content={
-        <PopupContent
-          key={`${visible}`}
-          onConfirm={(transactionState) => {
-            onConfirm(transactionState);
-            setVisible(false);
-          }}
-        />
-      }
+      content={<PopupContent value={transactionState} key={`${visible}`} onConfirm={onConfirm} />}
       trigger="click"
       placement="bottomLeft"
       visible={visible}
@@ -38,12 +34,13 @@ export default function StateSearchButton(props: Props) {
         color="TURQUOISE"
         icon={<HealthLineIcon />}
         analyticsName="state-filter"
-        isActive={transactionState != null}
+        isActive={transactionState.length !== 0}
         onClear={() => {
-          onConfirm(undefined);
+          onConfirm([]);
         }}
+        title={buttonText}
       >
-        {transactionState ? _.capitalize(transactionState) : 'Transaction State'}
+        {buttonText}
       </ActionButton>
     </Popover>
   );

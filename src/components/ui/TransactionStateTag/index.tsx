@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import { neverReturn } from '@/utils/lang';
@@ -10,52 +11,66 @@ import PauseCircleLineIcon from '@/components/ui/icons/Remix/media/pause-circle-
 import ExchangeDollarLineIcon from '@/components/ui/icons/Remix/finance/exchange-dollar-line.react.svg';
 import CheckDoubleLineIcon from '@/components/ui/icons/Remix/system/check-double-line.react.svg';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-circle-line.react.svg';
+import { humanizeCamelCase } from '@/utils/tags';
 
 interface Props {
   transactionState: ApiTransactionState | undefined;
+  titleClassName?: string;
 }
 
 export default function TransactionStateTag(props: Props) {
-  const { transactionState } = props;
+  const { transactionState, titleClassName } = props;
   if (!transactionState) {
-    return <>-</>;
+    return <span className={titleClassName}>-</span>;
   }
-  let title: string;
-  let icon: React.ReactNode = null;
-
-  if (transactionState === 'CREATED') {
-    title = 'Created';
-    icon = <CheckLineIcon />;
-  } else if (transactionState === 'PROCESSING') {
-    title = 'Processing';
-    icon = <RefreshLineIcon />;
-  } else if (transactionState === 'SENT') {
-    title = 'Sent';
-    icon = <SendPlaneLineIcon />;
-  } else if (transactionState === 'EXPIRED') {
-    title = 'Expired';
-    icon = <TimeLineIcon />;
-  } else if (transactionState === 'DECLINED') {
-    title = 'Declined';
-    icon = <CloseCircleLineIcon />;
-  } else if (transactionState === 'SUSPENDED') {
-    title = 'Suspended';
-    icon = <PauseCircleLineIcon />;
-  } else if (transactionState === 'REFUNDED') {
-    title = 'Refunded';
-    icon = <ExchangeDollarLineIcon />;
-  } else if (transactionState === 'SUCCESSFUL') {
-    title = 'Successful';
-    icon = <CheckDoubleLineIcon />;
-  } else {
-    title = neverReturn(transactionState, 'Unknown');
-    icon = neverReturn(transactionState, null);
-  }
-
+  const title: string = getTransactionStateTitle(transactionState);
+  const icon: React.ReactNode = getTransactionStateIcon(transactionState);
   return (
     <div className={s.root}>
       <div className={cn(s.icon, s[`transactionState-${transactionState}`])}>{icon}</div>
-      <span>{title}</span>
+      <span className={titleClassName}>{title}</span>
     </div>
   );
+}
+
+export function getTransactionStateTitle(transactionState: ApiTransactionState) {
+  if (transactionState === 'CREATED') {
+    return 'Created';
+  } else if (transactionState === 'PROCESSING') {
+    return 'Processing';
+  } else if (transactionState === 'SENT') {
+    return 'Sent';
+  } else if (transactionState === 'EXPIRED') {
+    return 'Expired';
+  } else if (transactionState === 'DECLINED') {
+    return 'Declined';
+  } else if (transactionState === 'SUSPENDED') {
+    return 'Suspended';
+  } else if (transactionState === 'REFUNDED') {
+    return 'Refunded';
+  } else if (transactionState === 'SUCCESSFUL') {
+    return 'Successful';
+  }
+  return neverReturn(transactionState, humanizeCamelCase(transactionState));
+}
+
+export function getTransactionStateIcon(transactionState: ApiTransactionState): React.ReactNode {
+  if (transactionState === 'CREATED') {
+    return <CheckLineIcon />;
+  } else if (transactionState === 'PROCESSING') {
+    return <RefreshLineIcon />;
+  } else if (transactionState === 'SENT') {
+    return <SendPlaneLineIcon />;
+  } else if (transactionState === 'EXPIRED') {
+    return <TimeLineIcon />;
+  } else if (transactionState === 'DECLINED') {
+    return <CloseCircleLineIcon />;
+  } else if (transactionState === 'SUSPENDED') {
+    return <PauseCircleLineIcon />;
+  } else if (transactionState === 'REFUNDED') {
+    return <ExchangeDollarLineIcon />;
+  } else if (transactionState === 'SUCCESSFUL') {
+    return <CheckDoubleLineIcon />;
+  }
+  return neverReturn(transactionState, null);
 }

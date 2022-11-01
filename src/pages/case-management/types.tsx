@@ -14,8 +14,8 @@ export type TableSearchParams = Partial<{
   userFilterMode: UserSearchMode;
   userId: string;
   type: string;
-  status: RuleAction;
-  transactionState: TransactionState;
+  status: RuleAction[];
+  transactionState: TransactionState[];
   originMethodFilter: string;
   destinationMethodFilter: string;
   tagKey: string;

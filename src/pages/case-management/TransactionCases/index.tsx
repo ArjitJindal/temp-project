@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
-import StateSearchButton from '../../transactions/components/TransactionStateButton';
+import TransactionStateButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { AddToSlackButton } from '../components/AddToSlackButton';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
@@ -169,11 +169,13 @@ export default function TransactionCases(props: Props) {
         title: 'Rule Action',
         sorter: true,
         dataIndex: 'status',
-        hideInSearch: true,
+        // hideInSearch: true,
         valueType: 'select',
         fieldProps: {
           options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
           allowClear: true,
+          multiple: true,
+          mode: 'multiple',
         },
         width: 200,
         render: (dom, entity) => {
@@ -631,8 +633,8 @@ export default function TransactionCases(props: Props) {
                 }));
               }}
             />
-            <StateSearchButton
-              transactionState={params.transactionState ?? undefined}
+            <TransactionStateButton
+              transactionState={params.transactionState ?? []}
               onConfirm={(value) => {
                 setParams((state) => ({
                   ...state,
