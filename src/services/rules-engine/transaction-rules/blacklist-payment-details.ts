@@ -39,7 +39,7 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
               },
               cardLast4Digits: {
                 type: 'string',
-                title: 'Card Number Suffix',
+                title: 'Card Last 4 Digits',
                 nullable: true,
               },
               cardExpiry: {
