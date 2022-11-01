@@ -27,14 +27,14 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
     }
   }
 
-  public getFilters() {
-    return [
-      () => this.transaction.originPaymentDetails?.method === 'CARD',
-      () => this.transaction.originUserId !== undefined,
-    ]
-  }
-
   public async computeRule() {
+    if (
+      !this.transaction.originUserId ||
+      this.transaction.originPaymentDetails?.method !== 'CARD'
+    ) {
+      return
+    }
+
     const { uniqueCardsCountThreshold, timeWindowInDays } = this.parameters
     if (
       uniqueCardsCountThreshold === undefined ||

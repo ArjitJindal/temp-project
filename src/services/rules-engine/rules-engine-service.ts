@@ -13,6 +13,7 @@ import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_FILTERS } from './user-filters'
+import { TRANSACTION_FILTERS } from './transaction-filters'
 import { PartyVars } from './transaction-rules/rule'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
@@ -34,7 +35,6 @@ import {
 } from '@/core/utils/context'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
-import { everyAsync } from '@/core/utils/array'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionEventMonitoringResult } from '@/@types/openapi-public/TransactionEventMonitoringResult'
@@ -350,25 +350,18 @@ export class RulesEngineService {
             senderUser: data.senderUser,
             receiverUser: data.receiverUser,
           },
-          { parameters, action },
+          { parameters, filters: ruleInstance.filters, action },
           this.dynamoDb
         )
 
         const shouldCompute = await this.computeRuleFilters(
           ruleInstance.filters,
-          data.senderUser,
-          data.receiverUser
+          data
         )
 
-        // TODO: Migrate to new filters
-        const shouldComputeLegacy = await everyAsync(
-          ruleClassInstance.getFilters(),
-          async (ruleFilter) => ruleFilter()
-        )
-        const ruleResult =
-          shouldCompute && shouldComputeLegacy
-            ? await ruleClassInstance.computeRule()
-            : null
+        const ruleResult = shouldCompute
+          ? await ruleClassInstance.computeRule()
+          : null
         const ruleHit = !_.isNil(ruleResult)
 
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
@@ -429,15 +422,37 @@ export class RulesEngineService {
 
   private async computeRuleFilters(
     ruleFilters: { [key: string]: any },
-    senderUser: User | Business | undefined,
-    receiverUser: User | Business | undefined
+    data: {
+      transaction: Transaction
+      senderUser?: User | Business
+      receiverUser?: User | Business
+    }
   ) {
     for (const filterKey in ruleFilters) {
-      if (USER_FILTERS[filterKey]) {
-        const RuleFilterClass = USER_FILTERS[filterKey]
-        const ruleFilter = new RuleFilterClass(
+      const UserRuleFilterClass = USER_FILTERS[filterKey]
+      if (UserRuleFilterClass && ruleFilters[filterKey]) {
+        const results = await Promise.all(
+          [data.senderUser, data.receiverUser]
+            .filter(Boolean)
+            .map(async (user) => {
+              const ruleFilter = new UserRuleFilterClass(
+                this.tenantId,
+                { user: user! },
+                { [filterKey]: ruleFilters[filterKey] },
+                this.dynamoDb
+              )
+              return ruleFilter.predicate()
+            })
+        )
+        if (results.includes(false)) {
+          return false
+        }
+      }
+      const TransactionRuleFilterClass = TRANSACTION_FILTERS[filterKey]
+      if (TransactionRuleFilterClass && ruleFilters[filterKey]) {
+        const ruleFilter = new TransactionRuleFilterClass(
           this.tenantId,
-          { senderUser, receiverUser },
+          { transaction: data.transaction },
           { [filterKey]: ruleFilters[filterKey] },
           this.dynamoDb
         )

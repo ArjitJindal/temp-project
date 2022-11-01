@@ -10,17 +10,11 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  PaymentDetails,
+  PaymentMethod,
+} from '@/@types/tranasction/payment-type'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-
-export function isTransactionInTargetTypes(
-  transactionType: TransactionType | undefined,
-  targetTypes: TransactionType[] | undefined
-) {
-  return (
-    !targetTypes || targetTypes.includes(transactionType as TransactionType)
-  )
-}
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -88,25 +82,6 @@ export async function checkTransactionAmountBetweenThreshold(
   return null
 }
 
-export function isTransactionWithinTimeWindow(
-  transaction: Transaction,
-  timeWindow:
-    | {
-        from?: string // format: 00:00:00+00:00
-        to?: string
-      }
-    | undefined
-) {
-  if (!timeWindow || !timeWindow.from || !timeWindow.to) {
-    return true
-  }
-  const transactionTime = dayjs(transaction.timestamp)
-  const transactionDateString = transactionTime.format('YYYY-MM-DD')
-  const fromTime = dayjs(`${transactionDateString}T${timeWindow.from}`)
-  const toTime = dayjs(`${transactionDateString}T${timeWindow.to}`)
-  return fromTime <= transactionTime && toTime >= transactionTime
-}
-
 export async function getTransactionsTotalAmount(
   amountDetailsList: (TransactionAmountDetails | undefined)[],
   targetCurrency: string
@@ -159,6 +134,7 @@ async function getTransactions(
     checkType: 'sending' | 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
@@ -172,6 +148,7 @@ async function getTransactions(
     afterTimestamp,
     transactionState,
     transactionTypes,
+    paymentMethod,
     matchPaymentMethodDetails,
   } = options
   const [sendingTransactions, receivingTransactions] = await Promise.all([
@@ -186,6 +163,7 @@ async function getTransactions(
           {
             transactionState,
             transactionTypes,
+            originPaymentMethod: paymentMethod,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -202,6 +180,7 @@ async function getTransactions(
           {
             transactionState,
             transactionTypes,
+            destinationPaymentMethod: paymentMethod,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -224,6 +203,7 @@ async function getTransactionsCount(
     checkType: 'sending' | 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    paymentMethod?: PaymentMethod
   }
 ): Promise<{
   sendingTransactionsCount: number | null
@@ -235,6 +215,7 @@ async function getTransactionsCount(
     afterTimestamp,
     transactionState,
     transactionTypes,
+    paymentMethod,
   } = options
   const [sendingTransactionsCount, receivingTransactionsCount] =
     await Promise.all([
@@ -249,6 +230,7 @@ async function getTransactionsCount(
             {
               transactionState,
               transactionTypes,
+              originPaymentMethod: paymentMethod,
             }
           )
         : Promise.resolve(null),
@@ -263,6 +245,7 @@ async function getTransactionsCount(
             {
               transactionState,
               transactionTypes,
+              destinationPaymentMethod: paymentMethod,
             }
           )
         : Promise.resolve(null),
@@ -282,6 +265,7 @@ export async function getTransactionUserPastTransactions(
     checkReceiver: 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
@@ -297,6 +281,7 @@ export async function getTransactionUserPastTransactions(
     timeWindow,
     transactionState,
     transactionTypes,
+    paymentMethod,
     matchPaymentMethodDetails,
   } = options
   const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
@@ -313,6 +298,7 @@ export async function getTransactionUserPastTransactions(
             checkType: checkSender,
             transactionState,
             transactionTypes,
+            paymentMethod,
             matchPaymentMethodDetails,
           },
           attributesToFetch
@@ -333,6 +319,7 @@ export async function getTransactionUserPastTransactions(
             checkType: checkReceiver,
             transactionState,
             transactionTypes,
+            paymentMethod,
             matchPaymentMethodDetails,
           },
           attributesToFetch
@@ -362,6 +349,7 @@ export async function getTransactionUserPastTransactionsCount(
     checkReceiver: 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
+    paymentMethod?: PaymentMethod
   }
 ): Promise<{
   senderSendingTransactionsCount: number | null
@@ -375,6 +363,7 @@ export async function getTransactionUserPastTransactionsCount(
     timeWindow,
     transactionState,
     transactionTypes,
+    paymentMethod,
   } = options
   const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
   const beforeTimestamp = transaction.timestamp!
@@ -390,6 +379,7 @@ export async function getTransactionUserPastTransactionsCount(
             checkType: checkSender,
             transactionState,
             transactionTypes,
+            paymentMethod,
           }
         )
       : Promise.resolve({
@@ -408,6 +398,7 @@ export async function getTransactionUserPastTransactionsCount(
             checkType: checkReceiver,
             transactionState,
             transactionTypes,
+            paymentMethod,
           }
         )
       : Promise.resolve({

@@ -24,15 +24,16 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
     }
   }
 
-  public getFilters() {
-    return [
-      () => this.transaction.deviceData?.ipAddress !== undefined,
-      () => this.senderUser !== undefined && isConsumerUser(this.senderUser),
-      () => !!(this.senderUser as User).userDetails,
-    ]
-  }
-
   public async computeRule() {
+    if (
+      !this.transaction.deviceData?.ipAddress ||
+      !this.senderUser ||
+      !isConsumerUser(this.senderUser) ||
+      (this.senderUser as User).userDetails == null
+    ) {
+      return
+    }
+
     const geoIp = await import('fast-geoip')
     const ipAddress = this.transaction.deviceData?.ipAddress as string
     const ipInfo = await geoIp.lookup(ipAddress)

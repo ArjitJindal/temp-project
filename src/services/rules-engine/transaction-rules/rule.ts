@@ -5,7 +5,6 @@ import { Business } from '@/@types/openapi-public/Business'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
-import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -38,16 +37,13 @@ export interface TransactionVars<P> extends Vars {
   parameters: P
 }
 
-export type DefaultTransactionRuleParameters = {
-  transactionState?: TransactionState
-}
-
-export class TransactionRule<P> extends Rule {
+export class TransactionRule<P, T extends object = object> extends Rule {
   tenantId: string
   transaction: Transaction
   senderUser?: User | Business
   receiverUser?: User | Business
   parameters: P
+  filters: T
   action: RuleAction
   dynamoDb: DynamoDBDocumentClient
 
@@ -60,6 +56,7 @@ export class TransactionRule<P> extends Rule {
     },
     params: {
       parameters: P
+      filters: T
       action: RuleAction
     },
     dynamoDb: DynamoDBDocumentClient
@@ -70,17 +67,9 @@ export class TransactionRule<P> extends Rule {
     this.senderUser = data.senderUser
     this.receiverUser = data.receiverUser
     this.parameters = params.parameters
+    this.filters = params.filters || {}
     this.action = params.action
     this.dynamoDb = dynamoDb
-  }
-
-  public getFilters() {
-    const parameters = this.parameters as DefaultTransactionRuleParameters
-    return [
-      () =>
-        !parameters.transactionState ||
-        this.transaction.transactionState === parameters.transactionState,
-    ]
   }
 
   private getTransactionDescriptionVars(

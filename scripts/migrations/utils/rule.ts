@@ -6,6 +6,8 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { UserFilters } from '@/services/rules-engine/user-filters'
+import { TransactionFilters } from '@/services/rules-engine/transaction-filters'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
@@ -20,12 +22,14 @@ export async function getRulesById(): Promise<{ [key: string]: Rule }> {
 
 export async function renameRuleParameter(
   ruleImplementationNames: string[] | undefined,
+  excludedRuleImplementationNames: string[],
   oldParameterPath: string,
   newParameterPath: string,
   converterCallback: (value: any) => any
 ) {
   await renameRuleParameterPrivate(
     ruleImplementationNames,
+    excludedRuleImplementationNames,
     oldParameterPath,
     newParameterPath,
     converterCallback
@@ -33,6 +37,7 @@ export async function renameRuleParameter(
   await migrateAllTenants((tenant) =>
     renameRuleParameterPrivate(
       ruleImplementationNames,
+      excludedRuleImplementationNames,
       oldParameterPath,
       newParameterPath,
       converterCallback,
@@ -43,6 +48,7 @@ export async function renameRuleParameter(
 
 async function renameRuleParameterPrivate(
   ruleImplementationNames: string[] | undefined, //  if undefined, run for all rules
+  excludedRuleImplementationNames: string[],
   oldParameterPath: string,
   newParameterPath: string,
   converterCallback: (value: any) => any,
@@ -61,8 +67,11 @@ async function renameRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      ruleImplementationNames &&
-      !ruleImplementationNames.includes(
+      (ruleImplementationNames &&
+        !ruleImplementationNames.includes(
+          rulesById[ruleId].ruleImplementationName
+        )) ||
+      excludedRuleImplementationNames.includes(
         rulesById[ruleId].ruleImplementationName
       )
     ) {
@@ -112,15 +121,18 @@ async function renameRuleParameterPrivate(
 
 export async function deleteUnusedRuleParameter(
   ruleImplementationNames: string[] | undefined, // if undefined, run for all rules
+  excludedRuleImplementationNames: string[],
   parameterPaths: string[]
 ) {
   await deleteUnusedRuleParameterPrivate(
     ruleImplementationNames,
+    excludedRuleImplementationNames,
     parameterPaths
   )
   await migrateAllTenants((tenant) =>
     deleteUnusedRuleParameterPrivate(
       ruleImplementationNames,
+      excludedRuleImplementationNames,
       parameterPaths,
       tenant.id
     )
@@ -129,6 +141,7 @@ export async function deleteUnusedRuleParameter(
 
 async function deleteUnusedRuleParameterPrivate(
   ruleImplementationNames: string[] | undefined,
+  excludedRuleImplementationNames: string[],
   parameterPaths: string[],
   tenantId?: string
 ) {
@@ -145,8 +158,11 @@ async function deleteUnusedRuleParameterPrivate(
       ? (rule as Rule).id
       : (rule as RuleInstance).ruleId
     if (
-      ruleImplementationNames &&
-      !ruleImplementationNames.includes(
+      (ruleImplementationNames &&
+        !ruleImplementationNames.includes(
+          rulesById[ruleId].ruleImplementationName
+        )) ||
+      excludedRuleImplementationNames.includes(
         rulesById[ruleId].ruleImplementationName
       )
     ) {
@@ -192,5 +208,53 @@ async function deleteUnusedRuleParameterPrivate(
         )
       }
     }
+  }
+}
+
+export async function addRuleFilters(
+  ruleIds: string[] | undefined,
+  filters: UserFilters & TransactionFilters
+) {
+  await migrateAllTenants((tenant) =>
+    addRuleFiltersPrivate(ruleIds, filters, tenant.id)
+  )
+}
+
+async function addRuleFiltersPrivate(
+  ruleIds: string[] | undefined, //  if undefined, run for all rules
+  filters: UserFilters & TransactionFilters,
+  tenantId?: string
+) {
+  const dynamoDb = await getDynamoDbClient()
+  const ruleRepository = tenantId
+    ? new RuleInstanceRepository(tenantId, { dynamoDb })
+    : new RuleRepository(FLAGRIGHT_TENANT_ID, { dynamoDb })
+  const rules = tenantId
+    ? await (ruleRepository as RuleInstanceRepository).getAllRuleInstances()
+    : await (ruleRepository as RuleRepository).getAllRules()
+  for (const rule of rules) {
+    const ruleId = isRule(rule)
+      ? (rule as Rule).id
+      : (rule as RuleInstance).ruleId
+    if (ruleIds && !ruleIds.includes(ruleId)) {
+      continue
+    }
+
+    if (tenantId) {
+      ;(rule as RuleInstance).filters = {
+        ...(rule as RuleInstance).filters,
+        filters,
+      }
+      await (
+        ruleRepository as RuleInstanceRepository
+      ).createOrUpdateRuleInstance(rule as RuleInstance)
+    } else {
+      ;(rule as Rule).defaultFilters = {
+        ...(rule as Rule).defaultFilters,
+        filters,
+      }
+      await (ruleRepository as RuleRepository).createOrUpdateRule(rule as Rule)
+    }
+    console.info(`Updated ${tenantId ? 'rule instance' : 'rule'} ${rule.id}`)
   }
 }

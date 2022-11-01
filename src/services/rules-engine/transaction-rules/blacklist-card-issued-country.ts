@@ -21,22 +21,32 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
     }
   }
 
-  public getFilters() {
-    return [() => this.transaction.originPaymentDetails?.method === 'CARD']
-  }
-
   public async computeRule() {
     const blacklistedCountries = expandCountryGroup(
       this.parameters.blacklistedCountries
     )
 
-    const { cardIssuedCountry } = this.transaction
-      .originPaymentDetails as CardDetails
+    const { cardIssuedCountry: originCardIssuedCountry } = (this.transaction
+      .originPaymentDetails || {}) as CardDetails
+    const { cardIssuedCountry: destinationCardIssuedCountry } = (this
+      .transaction.destinationPaymentDetails || {}) as CardDetails
 
-    if (cardIssuedCountry && blacklistedCountries.includes(cardIssuedCountry)) {
+    if (
+      originCardIssuedCountry &&
+      blacklistedCountries.includes(originCardIssuedCountry)
+    ) {
       return {
         action: this.action,
         vars: super.getTransactionVars('origin'),
+      }
+    }
+    if (
+      destinationCardIssuedCountry &&
+      blacklistedCountries.includes(destinationCardIssuedCountry)
+    ) {
+      return {
+        action: this.action,
+        vars: super.getTransactionVars('destination'),
       }
     }
   }

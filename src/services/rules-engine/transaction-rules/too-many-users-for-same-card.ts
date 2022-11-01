@@ -28,11 +28,11 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
     }
   }
 
-  public getFilters() {
-    return [() => this.transaction.originPaymentDetails?.method === 'CARD']
-  }
-
   public async computeRule() {
+    if (this.transaction.originPaymentDetails?.method !== 'CARD') {
+      return
+    }
+
     const { uniqueUsersCountThreshold, timeWindowInDays } = this.parameters
     const cardUser = this.transaction.originPaymentDetails?.method
     if (

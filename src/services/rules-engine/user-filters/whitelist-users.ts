@@ -43,10 +43,7 @@ export default class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUs
 
   public async predicate(): Promise<boolean> {
     const { listIds, userIds } = this.parameters.whitelistUsers!
-    const inputUserIds = [
-      this.senderUser?.userId,
-      this.receiverUser?.userId,
-    ].filter(Boolean) as string[]
+    const inputUserIds = [this.user.userId]
     if (userIds && _.intersection(inputUserIds, userIds).length > 0) {
       return false
     }

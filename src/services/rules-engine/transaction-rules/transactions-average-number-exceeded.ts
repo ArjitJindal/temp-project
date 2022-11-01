@@ -56,11 +56,6 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
             'averageThreshold',
             'checkSender',
             'checkReceiver',
-            'ageRange',
-            'userType',
-            'paymentMethod',
-            'transactionState',
-            'transactionTypes',
           ],
         },
       }

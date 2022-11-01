@@ -87,18 +87,6 @@ describe.each<TransactionRuleTestCase>([
     expectedHits: [true],
   },
   {
-    name: 'non-card origin payment - not hit',
-    transactions: [
-      getTestTransaction({
-        originPaymentDetails: {
-          method: 'GENERIC_BANK_ACCOUNT',
-          accountNumber: '123',
-        },
-      }),
-    ],
-    expectedHits: [false],
-  },
-  {
     name: 'missing origin payment details - not hit',
     transactions: [
       getTestTransaction({

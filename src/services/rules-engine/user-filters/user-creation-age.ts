@@ -41,10 +41,7 @@ export default class UserCreationAgeRuleFilter extends UserRuleFilter<UserCreati
   }
 
   public async predicate(): Promise<boolean> {
-    return (
-      this.isUserBetweenAge(this.senderUser) &&
-      this.isUserBetweenAge(this.receiverUser)
-    )
+    return this.isUserBetweenAge(this.user)
   }
 
   private isUserBetweenAge(user: User | Business | undefined): boolean {

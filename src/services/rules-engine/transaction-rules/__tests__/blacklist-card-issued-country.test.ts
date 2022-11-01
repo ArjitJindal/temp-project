@@ -54,6 +54,7 @@ describe.each<TransactionRuleTestCase>([
           method: 'CARD',
           cardIssuedCountry: 'DE',
         },
+        destinationPaymentDetails: undefined,
       }),
     ],
     expectedHits: [true],
@@ -66,18 +67,7 @@ describe.each<TransactionRuleTestCase>([
           method: 'CARD',
           cardIssuedCountry: 'TW',
         },
-      }),
-    ],
-    expectedHits: [false],
-  },
-  {
-    name: 'Non-card origin payment - not hit',
-    transactions: [
-      getTestTransaction({
-        originPaymentDetails: {
-          method: 'GENERIC_BANK_ACCOUNT',
-          accountNumber: '123',
-        },
+        destinationPaymentDetails: undefined,
       }),
     ],
     expectedHits: [false],
@@ -90,6 +80,7 @@ describe.each<TransactionRuleTestCase>([
           method: 'CARD',
           cardIssuedCountry: undefined,
         },
+        destinationPaymentDetails: undefined,
       }),
     ],
     expectedHits: [false],
@@ -99,6 +90,7 @@ describe.each<TransactionRuleTestCase>([
     transactions: [
       getTestTransaction({
         originPaymentDetails: undefined,
+        destinationPaymentDetails: undefined,
       }),
     ],
     expectedHits: [false],

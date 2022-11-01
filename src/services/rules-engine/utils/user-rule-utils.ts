@@ -4,7 +4,6 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DeviceData } from '@/@types/openapi-public/DeviceData'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
-import { UserType } from '@/@types/user/user-type'
 
 export function isUserBetweenAge(
   user: User | Business | undefined,
@@ -50,42 +49,16 @@ export function isBusinessUser(user: User | Business) {
 }
 
 export function getConsumerName(
-  name: ConsumerName,
+  name: ConsumerName | undefined,
   ignoreMiddlename?: boolean
-): string {
-  if (name !== undefined) {
-    if (ignoreMiddlename === true) {
-      return name.firstName + ' ' + name.lastName
-    }
-    return name.firstName + ' ' + name.middleName + ' ' + name.lastName
+): string | undefined {
+  if (!name) {
+    return undefined
   }
-  return ' '
-}
-
-export function isUserInList(
-  user: User | Business | undefined,
-  userIds: string[] | undefined
-) {
-  if (!userIds || userIds.length === 0) {
-    return true
+  if (ignoreMiddlename === true) {
+    return name.firstName + ' ' + name.lastName
   }
-  return !user || userIds.includes(user.userId)
-}
-
-export function isUserType(
-  user: User | Business | undefined,
-  userType: UserType | undefined
-) {
-  if (!userType) {
-    return true
-  }
-  if (!user) {
-    return false
-  }
-  if (userType === 'CONSUMER') {
-    return isConsumerUser(user)
-  }
-  return isBusinessUser(user)
+  return name.firstName + ' ' + name.middleName + ' ' + name.lastName
 }
 
 export function isIpAddressInList(

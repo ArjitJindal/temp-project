@@ -321,41 +321,6 @@ describe('Filters', () => {
     TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
   >([
     {
-      name: 'User age filter',
-      transactions: [
-        getTestTransaction({
-          originUserId: '1',
-          destinationUserId: '2',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: undefined,
-          timestamp: now.valueOf(),
-        }),
-      ],
-      ruleParams: {
-        ageRange: {
-          minAge: 18,
-          maxAge: 20,
-        },
-      },
-      expectedHits: [false],
-    },
-    {
-      name: 'User type filter',
-      transactions: [
-        getTestTransaction({
-          originUserId: '1',
-          destinationUserId: '2',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: undefined,
-          timestamp: now.valueOf(),
-        }),
-      ],
-      ruleParams: {
-        userType: 'BUSINESS',
-      },
-      expectedHits: [false],
-    },
-    {
       name: "Minimum transaction number in period2 wouldn't let rule to trigger",
       transactions: [
         getTestTransaction({

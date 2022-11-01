@@ -83,24 +83,6 @@ describe('Public Management API - Rule', () => {
           parametersSchema: {
             type: 'object',
             properties: {
-              ageRange: {
-                type: 'object',
-                title: 'Target Age Range',
-                nullable: true,
-                properties: {
-                  maxAge: {
-                    type: 'integer',
-                    title: 'Max Age',
-                    nullable: true,
-                  },
-                  minAge: {
-                    type: 'integer',
-                    title: 'Min Age',
-                    nullable: true,
-                  },
-                },
-                required: [],
-              },
               transactionAmountThreshold: {
                 additionalProperties: {
                   type: 'integer',
@@ -108,44 +90,6 @@ describe('Public Management API - Rule', () => {
                 type: 'object',
                 title: 'Transactions Amount Threshold',
                 required: [],
-              },
-              paymentMethod: {
-                type: 'string',
-                title: 'Payment Method',
-                nullable: true,
-                enum: [
-                  'ACH',
-                  'CARD',
-                  'IBAN',
-                  'SWIFT',
-                  'UPI',
-                  'WALLET',
-                  'MPESA',
-                  'GENERIC_BANK_ACCOUNT',
-                  'CHECK',
-                ],
-              },
-              userType: {
-                type: 'string',
-                title: 'User Type',
-                nullable: true,
-                enum: ['CONSUMER', 'BUSINESS'],
-              },
-              transactionTypes: {
-                type: 'array',
-                title: 'Target Transaction Types',
-                nullable: true,
-                items: {
-                  type: 'string',
-                  enum: [
-                    'DEPOSIT',
-                    'TRANSFER',
-                    'EXTERNAL_PAYMENT',
-                    'WITHDRAWAL',
-                    'REFUND',
-                  ],
-                },
-                uniqueItems: true,
               },
             },
             required: ['transactionAmountThreshold'],

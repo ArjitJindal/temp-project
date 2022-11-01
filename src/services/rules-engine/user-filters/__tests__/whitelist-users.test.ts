@@ -13,29 +13,19 @@ test('Empty parameter', async () => {
   expect(
     await new WhitelistUsersRuleFilter(
       getTestTenantId(),
-      { senderUser: getTestUser({ userId: '1' }) },
+      { user: getTestUser({ userId: '1' }) },
       { whitelistUsers: {} },
       dynamodb
     ).predicate()
   ).toBe(true)
 })
 
-test('sender/receiver is in the whitelist user IDs - false', async () => {
+test('User is in the whitelist user IDs - false', async () => {
   expect(
     await new WhitelistUsersRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({ userId: '1' }),
-      },
-      { whitelistUsers: { userIds: ['1'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-  expect(
-    await new WhitelistUsersRuleFilter(
-      getTestTenantId(),
-      {
-        receiverUser: getTestUser({ userId: '1' }),
+        user: getTestUser({ userId: '1' }),
       },
       { whitelistUsers: { userIds: ['1'] } },
       dynamodb
@@ -43,22 +33,12 @@ test('sender/receiver is in the whitelist user IDs - false', async () => {
   ).toBe(false)
 })
 
-test('sender/receiver is not in the whitelist user IDs - true', async () => {
+test('User is not in the whitelist user IDs - true', async () => {
   expect(
     await new WhitelistUsersRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({ userId: '2' }),
-      },
-      { whitelistUsers: { userIds: ['1'] } },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-  expect(
-    await new WhitelistUsersRuleFilter(
-      getTestTenantId(),
-      {
-        receiverUser: getTestUser({ userId: '2' }),
+        user: getTestUser({ userId: '2' }),
       },
       { whitelistUsers: { userIds: ['1'] } },
       dynamodb
@@ -66,7 +46,7 @@ test('sender/receiver is not in the whitelist user IDs - true', async () => {
   ).toBe(true)
 })
 
-test('sender/receiver is in the whitelist lists - false', async () => {
+test('User is in the whitelist lists - false', async () => {
   const TEST_TENANT_ID = getTestTenantId()
   const listRepo = new ListRepository(TEST_TENANT_ID, dynamodb)
   const { listId: listId1 } = await listRepo.createList('USERS-WHITELISTS', {
@@ -79,17 +59,7 @@ test('sender/receiver is in the whitelist lists - false', async () => {
     await new WhitelistUsersRuleFilter(
       TEST_TENANT_ID,
       {
-        senderUser: getTestUser({ userId: '1' }),
-      },
-      { whitelistUsers: { listIds: [listId1, listId2] } },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
-  expect(
-    await new WhitelistUsersRuleFilter(
-      TEST_TENANT_ID,
-      {
-        receiverUser: getTestUser({ userId: '3' }),
+        user: getTestUser({ userId: '1' }),
       },
       { whitelistUsers: { listIds: [listId1, listId2] } },
       dynamodb
@@ -97,7 +67,7 @@ test('sender/receiver is in the whitelist lists - false', async () => {
   ).toBe(false)
 })
 
-test('sender/receiver is not in the whitelist lists - true', async () => {
+test('User is not in the whitelist lists - true', async () => {
   const TEST_TENANT_ID = getTestTenantId()
   const listRepo = new ListRepository(TEST_TENANT_ID, dynamodb)
   const { listId: listId1 } = await listRepo.createList('USERS-WHITELISTS', {
@@ -110,17 +80,7 @@ test('sender/receiver is not in the whitelist lists - true', async () => {
     await new WhitelistUsersRuleFilter(
       TEST_TENANT_ID,
       {
-        senderUser: getTestUser({ userId: '11' }),
-      },
-      { whitelistUsers: { listIds: [listId1, listId2] } },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-  expect(
-    await new WhitelistUsersRuleFilter(
-      TEST_TENANT_ID,
-      {
-        receiverUser: getTestUser({ userId: '22' }),
+        user: getTestUser({ userId: '11' }),
       },
       { whitelistUsers: { listIds: [listId1, listId2] } },
       dynamodb

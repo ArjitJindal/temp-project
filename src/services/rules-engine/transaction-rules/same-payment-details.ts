@@ -2,22 +2,19 @@ import { JSONSchemaType } from 'ajv'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 
-export type SamePaymentDetailsParameters = DefaultTransactionRuleParameters & {
+export type SamePaymentDetailsParameters = {
   timeWindow: TimeWindow
   threshold: number
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
-  paymentMethod?: string
 }
 
 export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentDetailsParameters> {
@@ -33,26 +30,11 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
           title:
             'Number of times payment details need to be used to trigger the rule',
         },
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
       },
       required: ['timeWindow', 'threshold'],
     }
-  }
-
-  public getFilters() {
-    const { paymentMethod } = this.parameters
-
-    const result = [...super.getFilters()]
-    if (paymentMethod != null) {
-      result.push(
-        () => this.transaction.originPaymentDetails?.method === paymentMethod
-      )
-    }
-
-    return result
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {

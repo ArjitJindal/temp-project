@@ -3,27 +3,26 @@ import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import {
-  TimeWindow,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TIME_WINDOW_SCHEMA,
-} from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { subtractTime } from '@/services/rules-engine/utils/time-utils'
 
-export type MultipleSendersWithinTimePeriodRuleParameters =
-  DefaultTransactionRuleParameters & {
-    sendersCount: number
-    timeWindow: TimeWindow
-  }
+export type MultipleSendersWithinTimePeriodRuleParameters = {
+  sendersCount: number
+  timeWindow: TimeWindow
+}
 
 export type SenderReceiverTypes = {
   senderTypes: Array<'USER' | 'NON_USER'>
   receiverTypes: Array<'USER' | 'NON_USER'>
 }
 
-export default class MultipleSendersWithinTimePeriodRuleBase extends TransactionRule<MultipleSendersWithinTimePeriodRuleParameters> {
+export default class MultipleSendersWithinTimePeriodRuleBase extends TransactionRule<
+  MultipleSendersWithinTimePeriodRuleParameters,
+  TransactionFilters
+> {
   public static getSchema(): JSONSchemaType<MultipleSendersWithinTimePeriodRuleParameters> {
     return {
       type: 'object',
@@ -35,7 +34,6 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             'rule is run when the senders count per time window is greater than the threshold',
         },
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['sendersCount', 'timeWindow'],
     }
@@ -46,7 +44,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
   }
 
   public async computeRule() {
-    const { timeWindow, sendersCount, transactionState } = this.parameters
+    const { timeWindow, sendersCount } = this.parameters
     const { senderTypes, receiverTypes } = this.getSenderReceiverTypes()
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -65,7 +63,11 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
           },
-          { transactionState },
+          {
+            transactionState: this.filters.transactionState,
+            transactionTypes: this.filters.transactionTypes,
+            destinationPaymentMethod: this.filters.paymentMethod,
+          },
           ['senderKeyId', 'originUserId']
         )
     } else if (
@@ -79,7 +81,11 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             afterTimestamp,
             beforeTimestamp: this.transaction.timestamp!,
           },
-          { transactionState },
+          {
+            transactionState: this.filters.transactionState,
+            transactionTypes: this.filters.transactionTypes,
+            destinationPaymentMethod: this.filters.paymentMethod,
+          },
           ['senderKeyId', 'originUserId']
         )
     }

@@ -1,19 +1,21 @@
 import { JSONSchemaType } from 'ajv'
 import dayjs = require('dayjs')
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { TransactionFilters } from '../transaction-filters'
 import { MissingRuleParameter } from './errors'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
-export type SenderLocationChangesFrequencyRuleParameters =
-  DefaultTransactionRuleParameters & {
-    uniqueCitiesCountThreshold: number
-    // We could add more granularities like region, timezone and country
-    timeWindowInDays: number
-  }
+export type SenderLocationChangesFrequencyRuleParameters = {
+  uniqueCitiesCountThreshold: number
+  // We could add more granularities like region, timezone and country
+  timeWindowInDays: number
+}
 
-export default class SenderLocationChangesFrequencyRule extends TransactionRule<SenderLocationChangesFrequencyRuleParameters> {
+export default class SenderLocationChangesFrequencyRule extends TransactionRule<
+  SenderLocationChangesFrequencyRuleParameters,
+  TransactionFilters
+> {
   public static getSchema(): JSONSchemaType<SenderLocationChangesFrequencyRuleParameters> {
     return {
       type: 'object',
@@ -25,15 +27,13 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
             'rule is run when the cities count per time window is greater than the threshold',
         },
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['uniqueCitiesCountThreshold', 'timeWindowInDays'],
     }
   }
 
   public async computeRule() {
-    const { uniqueCitiesCountThreshold, timeWindowInDays, transactionState } =
-      this.parameters
+    const { uniqueCitiesCountThreshold, timeWindowInDays } = this.parameters
     if (
       uniqueCitiesCountThreshold === undefined ||
       timeWindowInDays === undefined
@@ -60,7 +60,11 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        { transactionState },
+        {
+          transactionState: this.filters.transactionState,
+          transactionTypes: this.filters.transactionTypes,
+          originPaymentMethod: this.filters.paymentMethod,
+        },
         ['deviceData']
       )) as Transaction[]
     )

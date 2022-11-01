@@ -1,22 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import {
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
-} from '../utils/rule-parameter-schemas'
-import { isUserType } from '../utils/user-rule-utils'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { UserType } from '@/@types/user/user-type'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 
-export type FirstActivityAfterLongTimeRuleParameters =
-  DefaultTransactionRuleParameters & {
-    dormancyPeriodDays: number
-    // optional parameter
-    userType?: UserType
-  }
+export type FirstActivityAfterLongTimeRuleParameters = {
+  dormancyPeriodDays: number
+}
 
-export default class FirstActivityAfterLongTimeRule extends TransactionRule<FirstActivityAfterLongTimeRuleParameters> {
+export default class FirstActivityAfterLongTimeRule extends TransactionRule<
+  FirstActivityAfterLongTimeRuleParameters,
+  TransactionFilters
+> {
   public static getSchema(): JSONSchemaType<FirstActivityAfterLongTimeRuleParameters> {
     return {
       type: 'object',
@@ -25,20 +20,13 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
           type: 'integer',
           title: 'Dormancy Period Threshold (Days)',
         },
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['dormancyPeriodDays'],
     }
   }
 
-  public getFilters() {
-    const { userType } = this.parameters
-    return [() => isUserType(this.senderUser, userType)]
-  }
-
   public async computeRule() {
-    const { dormancyPeriodDays, transactionState } = this.parameters
+    const { dormancyPeriodDays } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -49,7 +37,11 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<Firs
         await transactionRepository.getLastNUserSendingTransactions(
           this.transaction.originUserId,
           1,
-          { transactionState },
+          {
+            transactionState: this.filters.transactionState,
+            transactionTypes: this.filters.transactionTypes,
+            originPaymentMethod: this.filters.paymentMethod,
+          },
           ['timestamp']
         )
       )[0]

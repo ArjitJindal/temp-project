@@ -21,13 +21,11 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
     }
   }
 
-  public getFilters() {
-    return [
-      () => this.transaction.destinationPaymentDetails?.method === 'WALLET',
-    ]
-  }
-
   public async computeRule() {
+    if (this.transaction.destinationPaymentDetails?.method !== 'WALLET') {
+      return
+    }
+
     const { merchantNames } = this.parameters
     const receiverName = (
       this.transaction.destinationPaymentDetails as WalletDetails

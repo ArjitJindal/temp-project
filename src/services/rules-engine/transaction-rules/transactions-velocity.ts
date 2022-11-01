@@ -1,57 +1,39 @@
 import { JSONSchemaType } from 'ajv'
+import { TransactionFilters } from '../transaction-filters'
 import {
   TransactionsFilterOptions,
   TransactionRepository,
   AuxiliaryIndexTransaction,
 } from '../repositories/transaction-repository'
-import { isUserInList, isUserType } from '../utils/user-rule-utils'
-import {
-  isTransactionInTargetTypes,
-  isTransactionWithinTimeWindow,
-} from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import dayjs from '@/utils/dayjs'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
-import { UserType } from '@/@types/user/user-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
-export type TransactionsVelocityRuleParameters =
-  DefaultTransactionRuleParameters & {
-    transactionsLimit: number
-    timeWindow: TimeWindow
+export type TransactionsVelocityRuleParameters = {
+  transactionsLimit: number
+  timeWindow: TimeWindow
 
-    checkSender?: 'sending' | 'all' | 'none'
-    checkReceiver?: 'receiving' | 'all' | 'none'
+  checkSender?: 'sending' | 'all' | 'none'
+  checkReceiver?: 'receiving' | 'all' | 'none'
 
-    // Optional parameters
-    userIdsToCheck?: string[] // If empty, all users will be checked
-    checkTimeWindow?: {
-      from?: string // e.g 20:20:39+03:00
-      to?: string
-    }
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    userType?: UserType
-    onlyCheckKnownUsers?: boolean
-  }
+  // Optional parameters
+  userIdsToCheck?: string[] // If empty, all users will be checked
+  onlyCheckKnownUsers?: boolean
+}
 
-export default class TransactionsVelocityRule extends TransactionRule<TransactionsVelocityRuleParameters> {
+export default class TransactionsVelocityRule extends TransactionRule<
+  TransactionsVelocityRuleParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<TransactionsVelocityRuleParameters> {
@@ -62,31 +44,10 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
         userIdsToCheck: {
           type: 'array',
           title: 'Target User IDs',
           items: { type: 'string' },
-          nullable: true,
-        },
-        checkTimeWindow: {
-          type: 'object',
-          title: 'Time Window',
-          properties: {
-            from: {
-              type: 'string',
-              title: 'From (format: 00:00:00+00:00)',
-              nullable: true,
-            },
-            to: {
-              type: 'string',
-              title: 'To (format: 00:00:00+00:00)',
-              nullable: true,
-            },
-          },
           nullable: true,
         },
         onlyCheckKnownUsers: {
@@ -99,34 +60,6 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
     }
   }
 
-  public getFilters() {
-    const {
-      userIdsToCheck,
-      checkTimeWindow,
-      transactionTypes,
-      paymentMethod,
-      userType,
-      onlyCheckKnownUsers,
-    } = this.parameters
-    return super
-      .getFilters()
-      .concat([
-        () => isUserInList(this.senderUser, userIdsToCheck),
-        () => isTransactionWithinTimeWindow(this.transaction, checkTimeWindow),
-        () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-        () =>
-          !paymentMethod ||
-          this.transaction.originPaymentDetails?.method === paymentMethod,
-        () => isUserType(this.senderUser, userType),
-        () =>
-          onlyCheckKnownUsers
-            ? !!this.transaction.originUserId &&
-              !!this.transaction.destinationUserId
-            : true,
-      ])
-  }
-
   public async computeRule() {
     const {
       transactionsLimit,
@@ -134,7 +67,25 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       checkSender,
       checkReceiver,
       onlyCheckKnownUsers,
+      userIdsToCheck,
     } = this.parameters
+
+    if (
+      this.senderUser &&
+      userIdsToCheck &&
+      userIdsToCheck.length > 0 &&
+      !userIdsToCheck?.includes(this.senderUser.userId)
+    ) {
+      return
+    }
+
+    if (
+      onlyCheckKnownUsers &&
+      (!this.transaction.originUserId || !this.transaction.destinationUserId)
+    ) {
+      return
+    }
+
     if (transactionsLimit === undefined) {
       throw new MissingRuleParameter()
     }
@@ -215,15 +166,14 @@ export default class TransactionsVelocityRule extends TransactionRule<Transactio
       beforeTimestamp: this.transaction.timestamp!,
     }
     const originFilterOptions: TransactionsFilterOptions = {
-      transactionState: this.parameters.transactionState,
-      transactionTypes: this.parameters.transactionTypes,
-      originPaymentMethod: this.parameters.paymentMethod,
+      transactionState: this.filters.transactionState,
+      transactionTypes: this.filters.transactionTypes,
+      originPaymentMethod: this.filters.paymentMethod,
     }
     const destinationFilterOptions: TransactionsFilterOptions = {
-      transactionState: this.parameters.transactionState,
-      transactionTypes: this.parameters.transactionTypes,
-
-      destinationPaymentMethod: this.parameters.paymentMethod,
+      transactionState: this.filters.transactionState,
+      transactionTypes: this.filters.transactionTypes,
+      destinationPaymentMethod: this.filters.paymentMethod,
     }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'

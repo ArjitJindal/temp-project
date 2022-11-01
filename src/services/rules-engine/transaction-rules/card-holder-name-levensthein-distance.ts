@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
-import { getConsumerName, isUserType } from '../utils/user-rule-utils'
+import { getConsumerName } from '../utils/user-rule-utils'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
@@ -27,37 +27,59 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
     }
   }
 
-  public getFilters() {
-    return [
-      () => this.transaction.originPaymentDetails?.method === 'CARD',
-      () => isUserType(this.senderUser, 'CONSUMER'),
-      () => !!(this.senderUser as User).userDetails,
-    ]
-  }
-
   public async computeRule() {
     const { allowedDistancePercentage } = this.parameters
-    const userName = getConsumerName(
-      (this.senderUser as User).userDetails!.name,
+    const originUserName = getConsumerName(
+      (this.senderUser as User)?.userDetails?.name,
       true
     )
-    const userNameLength = userName.length
-    const cardName = getConsumerName(
-      (this.transaction.originPaymentDetails as CardDetails).nameOnCard!,
+    const destinatinoUserName = getConsumerName(
+      (this.receiverUser as User)?.userDetails?.name,
       true
     )
-    const distance = levenshtein.get(userName, cardName)
-    if (distance > (allowedDistancePercentage / 100) * userNameLength) {
+    const originCardName = getConsumerName(
+      (this.transaction.originPaymentDetails as CardDetails)?.nameOnCard,
+      true
+    )
+    const destinationCardName = getConsumerName(
+      (this.transaction.destinationPaymentDetails as CardDetails)?.nameOnCard,
+      true
+    )
+
+    if (
+      originCardName &&
+      originUserName &&
+      levenshtein.get(originUserName, originCardName) >
+        (allowedDistancePercentage / 100) * originUserName.length
+    ) {
       const vars = super.getTransactionVars('origin')
-      let cardFingerprint = null
-      const originPaymentDetails = this.transaction.originPaymentDetails
-      if (originPaymentDetails?.method === 'CARD') {
-        cardFingerprint = originPaymentDetails.cardFingerprint
-      }
 
       return {
         action: this.action,
-        vars: { ...vars, cardFingerprint },
+        vars: {
+          ...vars,
+          cardFingerprint: (
+            this.transaction.originPaymentDetails as CardDetails
+          )?.cardFingerprint,
+        },
+      }
+    }
+    if (
+      destinationCardName &&
+      destinatinoUserName &&
+      levenshtein.get(destinatinoUserName, destinationCardName) >
+        (allowedDistancePercentage / 100) * destinatinoUserName.length
+    ) {
+      const vars = super.getTransactionVars('destination')
+
+      return {
+        action: this.action,
+        vars: {
+          ...vars,
+          cardFingerprint: (
+            this.transaction.destinationPaymentDetails as CardDetails
+          )?.cardFingerprint,
+        },
       }
     }
   }

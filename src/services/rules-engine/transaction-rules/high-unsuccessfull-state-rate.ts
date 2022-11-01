@@ -3,32 +3,29 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_STATE_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
   CHECK_SENDER_SCHEMA,
   CHECK_RECEIVER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleResult } from '@/services/rules-engine/rule'
-import {
-  getTransactionUserPastTransactionsCount,
-  isTransactionInTargetTypes,
-} from '@/services/rules-engine/utils/transaction-rule-utils'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
-export type HighUnsuccessfullStateRateParameters =
-  DefaultTransactionRuleParameters & {
-    transactionState: TransactionState
-    transactionTypes?: TransactionType[]
-    timeWindow: TimeWindow
-    threshold: number
-    minimumTransactions: number
-    checkSender: 'sending' | 'all' | 'none'
-    checkReceiver: 'receiving' | 'all' | 'none'
-  }
+export type HighUnsuccessfullStateRateParameters = {
+  transactionState: TransactionState
+  timeWindow: TimeWindow
+  threshold: number
+  minimumTransactions: number
+  checkSender: 'sending' | 'all' | 'none'
+  checkReceiver: 'receiving' | 'all' | 'none'
+}
 
-export default class HighUnsuccessfullStateRateRule extends TransactionRule<HighUnsuccessfullStateRateParameters> {
+export default class HighUnsuccessfullStateRateRule extends TransactionRule<
+  HighUnsuccessfullStateRateParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<HighUnsuccessfullStateRateParameters> {
@@ -49,7 +46,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
         },
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
       },
       required: [
         'transactionState',
@@ -58,14 +54,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
         'checkReceiver',
       ],
     }
-  }
-
-  public getFilters() {
-    const { transactionTypes } = this.parameters
-    return [
-      ...super.getFilters(),
-      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-    ]
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
@@ -85,7 +73,6 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
         timeWindow: this.parameters.timeWindow,
         checkSender: this.parameters.checkSender,
         checkReceiver: this.parameters.checkReceiver,
-        transactionTypes: this.parameters.transactionTypes,
       }
     )
 
@@ -101,8 +88,9 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<High
         timeWindow: this.parameters.timeWindow,
         checkSender: this.parameters.checkSender,
         checkReceiver: this.parameters.checkReceiver,
-        transactionTypes: this.parameters.transactionTypes,
+        transactionTypes: this.filters.transactionTypes,
         transactionState: this.parameters.transactionState,
+        paymentMethod: this.filters.paymentMethod,
       }
     )
 

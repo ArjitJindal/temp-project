@@ -6,6 +6,7 @@ export const up = async () => {
       'multiple-user-senders-within-time-period',
       'multiple-counterparty-senders-within-time-period',
     ],
+    [],
     ['timePeriodDays']
   )
 }

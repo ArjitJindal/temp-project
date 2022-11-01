@@ -4,6 +4,9 @@
  * Spreadsheet: https://docs.google.com/spreadsheets/d/1xAl3cqF6cGMyFTpiIOXguyq7P_EGlTldbOWCYj0lMA8
  */
 
+import { PaymentMethodRuleFilterParameter } from '../transaction-filters/payment-method'
+import { TransactionFilters } from '../transaction-filters'
+import { UserFilters } from '../user-filters'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -260,6 +263,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       const defaultParameters: MerchantReceiverNameRuleParameters = {
         merchantNames: [],
       }
+      const defaultFilters: TransactionFilters = {
+        paymentMethod: 'WALLET',
+      }
       return {
         id: 'R-13',
         type: 'TRANSACTION',
@@ -267,6 +273,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         description: 'Merchant name is in the blacklist',
         descriptionTemplate: '{{ receiverName }} is blacklisted',
         defaultParameters,
+        defaultFilters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'merchant-receiver-name',
         labels: ['AML', 'Risk Appetite', 'List'],
@@ -288,6 +295,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           'AF',
         ],
       }
+      const defaultFilters: PaymentMethodRuleFilterParameter = {
+        paymentMethod: 'CARD',
+      }
       return {
         id: 'R-22',
         type: 'TRANSACTION',
@@ -297,6 +307,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           "{{ if-sender 'Sender’s' 'Receiver’s' }} card is issued from {{ if-sender origin.payment.country destination.payment.country }}, a blacklisted country",
         defaultParameters,
         defaultAction: 'FLAG',
+        defaultFilters,
         ruleImplementationName: 'blacklist-card-issued-country',
         labels: ['AML', 'Risk Appetite', 'List'],
         defaultCasePriority: 'P1',
@@ -387,6 +398,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         uniqueUsersCountThreshold: 10,
         timeWindowInDays: 1,
       }
+      const defaultFilters: TransactionFilters = {
+        paymentMethod: 'CARD',
+      }
       return {
         id: 'R-53',
         type: 'TRANSACTION',
@@ -395,6 +409,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         descriptionTemplate:
           'Same card ({{ cardFingerprint }}) used by {{ uniqueUserCount }} unique users',
         defaultParameters,
+        defaultFilters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'too-many-users-for-same-card',
         labels: ['Fraud'],
@@ -407,6 +422,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         uniqueCardsCountThreshold: 10,
         timeWindowInDays: 1,
       }
+      const defaultFilters: TransactionFilters = {
+        paymentMethod: 'CARD',
+      }
       return {
         id: 'R-54',
         type: 'TRANSACTION',
@@ -416,6 +434,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         descriptionTemplate:
           "{{ if-sender 'Sender' 'Receiver' }} used {{ uniqueCardsCount }} unique cards above the limit of {{ parameters.uniqueCardsCountThreshold }}",
         defaultParameters,
+        defaultFilters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'same-user-using-too-many-cards',
         labels: ['Fraud'],
@@ -475,6 +494,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       }
     },
     () => {
+      const defaultFilters: UserFilters = {
+        userType: 'CONSUMER',
+      }
       return {
         id: 'R-88',
         type: 'TRANSACTION',
@@ -484,6 +506,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         descriptionTemplate:
           "{{ if-sender 'Sender’s' 'Receiver’s' }} ip-bases country ({{ format-country ipCountry }}) is not country of origin ({{ format-country hitParty.user.userDetails.countryOfResidence }}) or country of nationality ({{ format-country hitParty.user.userDetails.countryOfNationality }})",
         defaultParameters: {},
+        defaultFilters,
         defaultAction: 'FLAG',
         ruleImplementationName: 'ip-address-unexpected-location',
         labels: ['AML', 'Fraud'],
@@ -555,6 +578,9 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       const defaultParameters: CardIssuedCountryRuleParameters = {
         allowedCountries: [],
       }
+      const defaultFilters: TransactionFilters = {
+        paymentMethod: 'CARD',
+      }
       return {
         id: 'R-114',
         type: 'TRANSACTION',
@@ -564,6 +590,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         descriptionTemplate:
           "{{ if-sender 'Sender’s' 'Receiver’s' }} card country {{ hitParty.payment.country }} is not whitelisted",
         defaultParameters,
+        defaultFilters,
         defaultAction: 'BLOCK',
         ruleImplementationName: 'card-issued-country',
         labels: ['Fraud'],
@@ -595,6 +622,10 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       const defaultParameters: CardHolderNameRuleParameter = {
         allowedDistancePercentage: 30,
       }
+      const defaultFilters: TransactionFilters | UserFilters = {
+        paymentMethod: 'CARD',
+        userType: 'CONSUMER',
+      }
       return {
         id: 'R-118',
         type: 'TRANSACTION',
@@ -605,6 +636,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           "{{ if-sender 'Sender’s' 'Receiver’s' }} name does not match name on {{ if-sender 'sender’s' 'receiver’s' }} card ({{ cardFingerprint }})",
         defaultParameters,
         defaultAction: 'FLAG',
+        defaultFilters,
         ruleImplementationName: 'card-holder-name-levensthein-distance',
         labels: ['Fraud'],
         defaultCasePriority: 'P1',
@@ -791,7 +823,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           },
           transactionsLimit: 2,
           highRiskCountries: [],
-          transactionTypes: ['DEPOSIT'],
           checkSender: 'all',
           checkReceiver: 'all',
         }
@@ -818,7 +849,6 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           granularity: 'hour',
         },
         transactionsLimit: 2,
-        transactionTypes: ['DEPOSIT'],
         checkSender: 'all',
         checkReceiver: 'all',
       }

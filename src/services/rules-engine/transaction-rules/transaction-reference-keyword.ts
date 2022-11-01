@@ -24,15 +24,11 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
     }
   }
 
-  public getFilters() {
-    return [
-      () =>
-        this.transaction.reference !== undefined &&
-        this.transaction.reference.trim() !== '',
-    ]
-  }
-
   public async computeRule() {
+    if (!this.transaction.reference?.trim()) {
+      return
+    }
+
     const { keywords, allowedDistance } = this.parameters
     const referenceWords = (this.transaction.reference as string)
       .toLowerCase()

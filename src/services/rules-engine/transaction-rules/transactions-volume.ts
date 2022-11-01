@@ -4,31 +4,21 @@ import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactions,
   isTransactionAmountAboveThreshold,
-  isTransactionInTargetTypes,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
-type Filters = DefaultTransactionRuleParameters & {
-  transactionTypes?: TransactionType[]
-  paymentMethod?: PaymentMethod
-}
-
-export type TransactionsVolumeRuleParameters = Filters & {
+export type TransactionsVolumeRuleParameters = {
   initialTransactions?: number
   transactionVolumeThreshold: {
     [currency: string]: number
@@ -39,7 +29,10 @@ export type TransactionsVolumeRuleParameters = Filters & {
   matchPaymentMethodDetails?: boolean
 }
 
-export default class TransactionsVolumeRule extends TransactionRule<TransactionsVolumeRuleParameters> {
+export default class TransactionsVolumeRule extends TransactionRule<
+  TransactionsVolumeRuleParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<TransactionsVolumeRuleParameters> {
@@ -53,9 +46,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         timeWindow: TIME_WINDOW_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
         matchPaymentMethodDetails: {
           type: 'boolean',
           title: 'Match Payment Method Details',
@@ -68,23 +58,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
     }
   }
 
-  public getFilters() {
-    const filters = super.getFilters()
-    const { transactionTypes, paymentMethod } = this.parameters
-    const result = [
-      ...filters,
-      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-    ]
-    if (paymentMethod != null) {
-      result.push(
-        () =>
-          this.transaction.originPaymentDetails?.method === paymentMethod ||
-          this.transaction.destinationPaymentDetails?.method === paymentMethod
-      )
-    }
-    return result
-  }
-
   private async computeHits(): Promise<{
     isSenderHit: boolean
     isReceiverHit: boolean
@@ -95,8 +68,6 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
       checkReceiver,
       transactionVolumeThreshold,
       timeWindow,
-      transactionState,
-      transactionTypes,
       matchPaymentMethodDetails,
       initialTransactions,
     } = this.parameters
@@ -117,8 +88,9 @@ export default class TransactionsVolumeRule extends TransactionRule<Transactions
         timeWindow,
         checkSender,
         checkReceiver,
-        transactionState,
-        transactionTypes,
+        transactionState: this.filters.transactionState,
+        transactionTypes: this.filters.transactionTypes,
+        paymentMethod: this.filters.paymentMethod,
         matchPaymentMethodDetails,
       },
       [

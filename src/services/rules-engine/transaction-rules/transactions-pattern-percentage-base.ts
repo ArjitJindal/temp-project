@@ -1,44 +1,30 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isUserType } from '../utils/user-rule-utils'
-import {
-  getTransactionUserPastTransactions,
-  isTransactionInTargetTypes,
-} from '../utils/transaction-rule-utils'
+import { getTransactionUserPastTransactions } from '../utils/transaction-rule-utils'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
   INITIAL_TRANSACTIONS_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import { UserType } from '@/@types/user/user-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
-export type TransactionsPatternPercentageRuleParameters =
-  DefaultTransactionRuleParameters & {
-    patternPercentageLimit: number
-    timeWindow: TimeWindow
-    initialTransactions: number
+export type TransactionsPatternPercentageRuleParameters = {
+  patternPercentageLimit: number
+  timeWindow: TimeWindow
+  initialTransactions: number
 
-    // Optional parameters
-    checkSender?: 'sending' | 'all' | 'none'
-    checkReceiver?: 'receiving' | 'all' | 'none'
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    userType?: UserType
-  }
+  // Optional parameters
+  checkSender?: 'sending' | 'all' | 'none'
+  checkReceiver?: 'receiving' | 'all' | 'none'
+}
 
 export default class TransactionsPatternPercentageBaseRule<
   T extends TransactionsPatternPercentageRuleParameters
-> extends TransactionRule<T> {
+> extends TransactionRule<T, TransactionFilters> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): JSONSchemaType<TransactionsPatternPercentageRuleParameters> {
@@ -53,35 +39,16 @@ export default class TransactionsPatternPercentageBaseRule<
         },
         initialTransactions: INITIAL_TRANSACTIONS_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
       },
       required: ['initialTransactions', 'patternPercentageLimit', 'timeWindow'],
     }
   }
-  public getFilters() {
-    const { transactionTypes, paymentMethod, userType } = this.parameters
-    return super
-      .getFilters()
-      .concat([
-        () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-        () =>
-          !paymentMethod ||
-          this.transaction.originPaymentDetails?.method === paymentMethod,
-        () => isUserType(this.senderUser, userType),
-      ])
-  }
 
   public async computeRule() {
     const {
       timeWindow,
-      transactionState,
-      transactionTypes,
       patternPercentageLimit,
       initialTransactions,
       checkSender = 'all',
@@ -102,8 +69,9 @@ export default class TransactionsPatternPercentageBaseRule<
         timeWindow,
         checkSender,
         checkReceiver,
-        transactionState,
-        transactionTypes,
+        transactionState: this.filters.transactionState,
+        transactionTypes: this.filters.transactionTypes,
+        paymentMethod: this.filters.paymentMethod,
       },
       this.getNeededTransactionFields()
     )

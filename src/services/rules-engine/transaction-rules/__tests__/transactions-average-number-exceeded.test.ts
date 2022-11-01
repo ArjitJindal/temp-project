@@ -338,9 +338,6 @@ describe('Customer cases', () => {
       ],
       expectedHits: [true],
       ruleParams: {
-        ageRange: {
-          maxAge: 2,
-        },
         checkSender: 'all',
         period2: {
           granularity: 'day',

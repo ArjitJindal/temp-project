@@ -7,15 +7,11 @@ export default class TransactionAmountUserLimitRule extends TransactionRule<unkn
     return {}
   }
 
-  public getFilters() {
-    return [
-      () =>
-        this.senderUser?.transactionLimits?.maximumTransactionLimit !==
-        undefined,
-    ]
-  }
-
   public async computeRule() {
+    if (!this.senderUser?.transactionLimits?.maximumTransactionLimit) {
+      return
+    }
+
     const transactionLimit = this.senderUser?.transactionLimits
       ?.maximumTransactionLimit as Amount
     if (

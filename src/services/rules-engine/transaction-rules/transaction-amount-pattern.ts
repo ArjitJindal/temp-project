@@ -26,15 +26,11 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
     }
   }
 
-  public getFilters() {
-    return [
-      () =>
-        this.transaction.originAmountDetails !== undefined &&
-        this.transaction.originAmountDetails?.transactionAmount !== undefined,
-    ]
-  }
-
   public async computeRule() {
+    if (!this.transaction.originAmountDetails?.transactionAmount) {
+      return
+    }
+
     const { patterns, checkDecimal } = this.parameters
     const originTransactionAmount =
       this.transaction.originAmountDetails?.transactionAmount

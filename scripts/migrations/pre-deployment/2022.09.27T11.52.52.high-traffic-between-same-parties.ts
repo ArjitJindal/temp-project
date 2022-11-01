@@ -4,6 +4,7 @@ import { TimeWindow } from '@/services/rules-engine/utils/rule-parameter-schemas
 export const up = async () => {
   await renameRuleParameter(
     ['high-traffic-between-same-parties'],
+    [],
     'timeWindowInDays',
     'timeWindow',
     (timeWindowInDays: number) => ({
@@ -15,6 +16,7 @@ export const up = async () => {
 export const down = async () => {
   await renameRuleParameter(
     ['high-traffic-between-same-parties'],
+    [],
     'timeWindow',
     'timeWindowInDays',
     (timeWindow: TimeWindow) => {

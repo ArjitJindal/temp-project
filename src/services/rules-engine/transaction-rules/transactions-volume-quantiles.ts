@@ -5,15 +5,12 @@ import {
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
 import { AggregationRepository } from '../repositories/aggregation-repository'
-import { isUserType } from '../utils/user-rule-utils'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
-import { UserType } from '@/@types/user/user-type'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
 export type TransactionsVolumeQuantilesRuleParameters = {
@@ -24,7 +21,6 @@ export type TransactionsVolumeQuantilesRuleParameters = {
   }
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
-  userType?: UserType
 }
 
 export default class TransactionsVolumeQuantilesRule extends TransactionRule<TransactionsVolumeQuantilesRuleParameters> {
@@ -68,15 +64,9 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         },
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['transactionVolumeThresholds'],
     }
-  }
-
-  public getFilters() {
-    const { userType } = this.parameters
-    return [() => isUserType(this.senderUser, userType)]
   }
 
   public async computeRule() {

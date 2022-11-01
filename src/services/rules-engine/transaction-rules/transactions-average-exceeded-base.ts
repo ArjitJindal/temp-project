@@ -1,21 +1,12 @@
-import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import {
-  AGE_RANGE_OPTIONAL_SCHEMA,
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TIME_WINDOW_SCHEMA,
   TimeWindow,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
-import {
-  PaymentDetails,
-  PaymentMethod,
-} from '@/@types/tranasction/payment-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
@@ -29,48 +20,35 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
-import {
-  isUserBetweenAge,
-  isUserType,
-} from '@/services/rules-engine/utils/user-rule-utils'
-import { UserType } from '@/@types/user/user-type'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
 
 type UserParty = 'origin' | 'destination'
 type Direction = 'sending' | 'receiving'
 
-export type TransactionsAverageExceededParameters =
-  DefaultTransactionRuleParameters & {
-    period1: TimeWindow
-    period2: TimeWindow
-    excludePeriod1?: boolean
-    ageRange?: {
-      minAge?: number
-      maxAge?: number
-    }
-    userType?: UserType
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    checkSender: 'sending' | 'all' | 'none'
-    checkReceiver: 'receiving' | 'all' | 'none'
-    transactionsNumberThreshold?: {
-      min?: number
-      max?: number
-    }
-    transactionsNumberThreshold2?: {
-      min?: number
-      max?: number
-    }
-    averageThreshold?: {
-      min?: number
-      max?: number
-    }
+export type TransactionsAverageExceededParameters = {
+  period1: TimeWindow
+  period2: TimeWindow
+  excludePeriod1?: boolean
+  checkSender: 'sending' | 'all' | 'none'
+  checkReceiver: 'receiving' | 'all' | 'none'
+  transactionsNumberThreshold?: {
+    min?: number
+    max?: number
   }
+  transactionsNumberThreshold2?: {
+    min?: number
+    max?: number
+  }
+  averageThreshold?: {
+    min?: number
+    max?: number
+  }
+}
 
 export default class TransactionAverageExceededBaseRule<
   Params extends TransactionsAverageExceededParameters
-> extends TransactionRule<Params> {
+> extends TransactionRule<Params, TransactionFilters> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsAverageExceededParameters> {
@@ -121,13 +99,8 @@ export default class TransactionAverageExceededBaseRule<
           required: [],
           nullable: true,
         },
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
         checkSender: CHECK_SENDER_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
-        ageRange: AGE_RANGE_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['period1', 'period2', 'checkSender', 'checkReceiver'],
       'ui:schema': {
@@ -135,13 +108,8 @@ export default class TransactionAverageExceededBaseRule<
           'period1',
           'period2',
           'excludePeriod1',
-          'paymentMethod',
-          'transactionState',
-          'transactionTypes',
           'checkSender',
           'checkReceiver',
-          'ageRange',
-          'userType',
           'transactionsNumberThreshold',
           'transactionsNumberThreshold2',
           'averageThreshold',
@@ -287,20 +255,6 @@ export default class TransactionAverageExceededBaseRule<
     return result
   }
 
-  public getFilters() {
-    const { paymentMethod, transactionTypes, ageRange, userType } =
-      this.parameters
-    return [
-      ...super.getFilters(),
-      () => !ageRange || isUserBetweenAge(this.senderUser, ageRange),
-      () => isUserType(this.senderUser, userType),
-      () =>
-        !paymentMethod ||
-        this.transaction.originPaymentDetails?.method === paymentMethod,
-      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-    ]
-  }
-
   private async getTransactionsInTimeWindow(
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined,
@@ -315,8 +269,8 @@ export default class TransactionAverageExceededBaseRule<
       beforeTimestamp,
     }
     const filterOptions = {
-      transactionState: this.parameters.transactionState,
-      transactionTypes: this.parameters.transactionTypes,
+      transactionState: this.filters.transactionState,
+      transactionTypes: this.filters.transactionTypes,
     }
 
     return direction === 'sending'
@@ -324,14 +278,17 @@ export default class TransactionAverageExceededBaseRule<
           userId,
           paymentDetails,
           timeRange,
-          filterOptions,
+          { ...filterOptions, originPaymentMethod: this.filters.paymentMethod },
           ['originAmountDetails', 'destinationAmountDetails']
         )
       : await repo.getGenericUserReceivingTransactions(
           userId,
           paymentDetails,
           timeRange,
-          filterOptions,
+          {
+            ...filterOptions,
+            destinationPaymentMethod: this.filters.paymentMethod,
+          },
           ['originAmountDetails', 'destinationAmountDetails']
         )
   }

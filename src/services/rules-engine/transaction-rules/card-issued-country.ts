@@ -21,11 +21,11 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
     }
   }
 
-  public getFilters() {
-    return [() => this.transaction.originPaymentDetails?.method === 'CARD']
-  }
-
   public async computeRule() {
+    if (this.transaction.originPaymentDetails?.method !== 'CARD') {
+      return
+    }
+
     const allowedCountries = expandCountryGroup(
       this.parameters.allowedCountries
     )

@@ -1,25 +1,26 @@
 import _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   TRANSACTION_TYPES_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
-export type ConsecutiveTransactionSameTypeRuleParameters =
-  DefaultTransactionRuleParameters & {
-    targetTransactionsThreshold: number
-    transactionTypes: TransactionType[]
-    otherTransactionTypes: TransactionType[]
-    timeWindowInDays: number
-  }
+export type ConsecutiveTransactionSameTypeRuleParameters = {
+  targetTransactionsThreshold: number
+  transactionTypes: TransactionType[]
+  otherTransactionTypes: TransactionType[]
+  timeWindowInDays: number
+}
 
-export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<ConsecutiveTransactionSameTypeRuleParameters> {
+export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
+  ConsecutiveTransactionSameTypeRuleParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<ConsecutiveTransactionSameTypeRuleParameters> {
@@ -33,7 +34,6 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
         otherTransactionTypes: TRANSACTION_TYPES_SCHEMA({
           title: 'Other Transaction Types',
         }),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
         timeWindowInDays: { type: 'integer', title: 'Time Window (Days)' },
       },
       required: [
@@ -45,24 +45,22 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
     }
   }
 
-  public getFilters() {
-    const { transactionTypes } = this.parameters
-    return super
-      .getFilters()
-      .concat([
-        () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-        () => this.transaction.originUserId !== undefined,
-      ])
-  }
-
   public async computeRule() {
+    if (!this.transaction.originUserId) {
+      return
+    }
+    if (
+      this.transaction.type &&
+      !this.parameters.transactionTypes.includes(this.transaction.type)
+    ) {
+      return
+    }
+
     const {
       transactionTypes,
       otherTransactionTypes,
       targetTransactionsThreshold,
       timeWindowInDays,
-      transactionState,
     } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -72,13 +70,21 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       transactionRepository.getLastNUserSendingTransactions(
         this.transaction.originUserId as string,
         targetTransactionsThreshold,
-        { transactionTypes: transactionTypes, transactionState },
+        {
+          transactionTypes: transactionTypes,
+          transactionState: this.filters.transactionState,
+          originPaymentMethod: this.filters.paymentMethod,
+        },
         ['timestamp']
       ),
       transactionRepository.getLastNUserSendingTransactions(
         this.transaction.originUserId as string,
         1,
-        { transactionTypes: otherTransactionTypes, transactionState },
+        {
+          transactionTypes: otherTransactionTypes,
+          transactionState: this.filters.transactionState,
+          originPaymentMethod: this.filters.paymentMethod,
+        },
         ['timestamp']
       ),
     ])

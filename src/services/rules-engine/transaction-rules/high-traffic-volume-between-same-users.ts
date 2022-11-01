@@ -3,41 +3,24 @@ import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
-  isTransactionInTargetTypes,
 } from '../utils/transaction-rule-utils'
 import { subtractTime } from '../utils/time-utils'
 import {
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
   TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { TransactionFilters } from '../transaction-filters'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
 import dayjs from '@/utils/dayjs'
 import { RuleResult } from '@/services/rules-engine/rule'
-import {
-  DefaultTransactionRuleParameters,
-  TransactionRule,
-} from '@/services/rules-engine/transaction-rules/rule'
-import { isUserType } from '@/services/rules-engine/utils/user-rule-utils'
+import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
-import { UserType } from '@/@types/user/user-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
-type Filters = DefaultTransactionRuleParameters & {
-  transactionTypes?: TransactionType[]
-  paymentMethod?: PaymentMethod
-  userType?: UserType
-}
-
-export type HighTrafficVolumeBetweenSameUsersParameters = Filters & {
+export type HighTrafficVolumeBetweenSameUsersParameters = {
   timeWindow: TimeWindow
   transactionVolumeThreshold: {
     [currency: string]: number
@@ -45,7 +28,10 @@ export type HighTrafficVolumeBetweenSameUsersParameters = Filters & {
   transactionsLimit?: number
 }
 
-export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<HighTrafficVolumeBetweenSameUsersParameters> {
+export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
+  HighTrafficVolumeBetweenSameUsersParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<HighTrafficVolumeBetweenSameUsersParameters> {
@@ -57,31 +43,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
         }),
         transactionsLimit: TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['timeWindow', 'transactionVolumeThreshold'],
     }
-  }
-
-  public getFilters() {
-    const filters = super.getFilters()
-    const { transactionTypes, paymentMethod, userType } = this.parameters
-    const result = [
-      ...filters,
-      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-    ]
-    if (paymentMethod != null) {
-      result.push(
-        () => this.transaction.originPaymentDetails?.method === paymentMethod
-      )
-    }
-    if (userType != null) {
-      result.push(() => isUserType(this.senderUser, userType))
-    }
-    return result
   }
 
   public async computeRule(): Promise<RuleResult | undefined> {
@@ -127,6 +91,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
             .parameters as HighTrafficVolumeBetweenSameUsersParameters & {
             transactionsLimit: number
           },
+          filters: this.filters,
           action: this.action,
         },
         this.dynamoDb
@@ -182,11 +147,11 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<H
         afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
       },
       {
-        transactionState: this.parameters.transactionState,
-        transactionTypes: this.parameters.transactionTypes,
+        transactionState: this.filters.transactionState,
+        transactionTypes: this.filters.transactionTypes,
         receiverKeyId: getReceiverKeys(this.tenantId, transaction)
           ?.PartitionKeyID,
-        originPaymentMethod: this.parameters.paymentMethod,
+        originPaymentMethod: this.filters.paymentMethod,
       },
       ['originAmountDetails']
     )

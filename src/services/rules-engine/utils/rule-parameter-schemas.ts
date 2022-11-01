@@ -237,29 +237,6 @@ export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
     required: [],
   } as const)
 
-export type AgeRange = {
-  minAge?: number
-  maxAge?: number
-}
-
-export const AGE_RANGE_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    type: 'object',
-    title: options?.title || 'Target Age Range',
-    description: options?.description,
-    properties: {
-      minAge: { type: 'integer', title: 'Min Age', nullable: true },
-      maxAge: { type: 'integer', title: 'Max Age', nullable: true },
-    },
-    required: [],
-  } as const)
-
-export const AGE_RANGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...AGE_RANGE_SCHEMA(options),
-    nullable: true,
-  } as const)
-
 export const INITIAL_TRANSACTIONS_SCHEMA = () =>
   ({
     type: 'integer',

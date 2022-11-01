@@ -1,37 +1,22 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
 import {
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { subtractTime } from '../utils/time-utils'
+import { TransactionFilters } from '../transaction-filters'
 import dayjs from '@/utils/dayjs'
 import {
-  DefaultTransactionRuleParameters,
   TransactionRule,
   TransactionVars,
 } from '@/services/rules-engine/transaction-rules/rule'
-import { isUserType } from '@/services/rules-engine/utils/user-rule-utils'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
-import { UserType } from '@/@types/user/user-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
-type Filters = DefaultTransactionRuleParameters & {
-  transactionTypes?: TransactionType[]
-  paymentMethod?: PaymentMethod
-  userType?: UserType
-}
-
-export type HighTrafficBetweenSamePartiesParameters = Filters & {
+export type HighTrafficBetweenSamePartiesParameters = {
   timeWindow: TimeWindow
   transactionsLimit: number
 }
@@ -44,7 +29,10 @@ type HighTrafficBetweenSamePartiesRuleResult = {
   }
 }
 
-export default class HighTrafficBetweenSameParties extends TransactionRule<HighTrafficBetweenSamePartiesParameters> {
+export default class HighTrafficBetweenSameParties extends TransactionRule<
+  HighTrafficBetweenSamePartiesParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<HighTrafficBetweenSamePartiesParameters> {
@@ -53,31 +41,9 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
       properties: {
         transactionsLimit: TRANSACTIONS_THRESHOLD_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['timeWindow', 'transactionsLimit'],
     }
-  }
-
-  public getFilters() {
-    const filters = super.getFilters()
-    const { transactionTypes, paymentMethod, userType } = this.parameters
-    const result = [
-      ...filters,
-      () => isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-    ]
-    if (paymentMethod != null) {
-      result.push(
-        () => this.transaction.originPaymentDetails?.method === paymentMethod
-      )
-    }
-    if (userType != null) {
-      result.push(() => isUserType(this.senderUser, userType))
-    }
-    return result
   }
 
   public async computeRule(): Promise<
@@ -125,9 +91,9 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<HighT
           afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
         },
         {
-          transactionState: this.parameters.transactionState,
-          originPaymentMethod: this.parameters.paymentMethod,
-          transactionTypes: this.parameters.transactionTypes,
+          transactionState: this.filters.transactionState,
+          originPaymentMethod: this.filters.paymentMethod,
+          transactionTypes: this.filters.transactionTypes,
           receiverKeyId: getReceiverKeys(this.tenantId, transaction)
             ?.PartitionKeyID,
         }

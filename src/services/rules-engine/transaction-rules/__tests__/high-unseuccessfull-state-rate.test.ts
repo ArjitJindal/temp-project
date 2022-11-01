@@ -156,38 +156,6 @@ describe('Core login', () => {
       ],
       expectedHits: [false, false],
     },
-    {
-      name: `Transactions of wrong type doesn't count`,
-      ruleParams: {
-        minimumTransactions: 2,
-        threshold: 0,
-        transactionTypes: ['DEPOSIT'],
-      },
-      transactions: [
-        getTestTransaction({
-          type: 'WITHDRAWAL',
-          originUserId: '111',
-          destinationUserId: '222',
-          timestamp: now.subtract(2, 'hour').valueOf(),
-          transactionState: 'REFUNDED',
-        }),
-        getTestTransaction({
-          type: 'DEPOSIT',
-          originUserId: '111',
-          destinationUserId: '222',
-          timestamp: now.subtract(1, 'hour').valueOf(),
-          transactionState: 'REFUNDED',
-        }),
-        getTestTransaction({
-          type: 'DEPOSIT',
-          originUserId: '111',
-          destinationUserId: '222',
-          timestamp: now.valueOf(),
-          transactionState: 'REFUNDED',
-        }),
-      ],
-      expectedHits: [false, false, true],
-    },
   ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 

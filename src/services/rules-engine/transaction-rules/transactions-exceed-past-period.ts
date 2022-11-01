@@ -1,43 +1,30 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { isUserType } from '../utils/user-rule-utils'
-import {
-  getTransactionUserPastTransactionsCount,
-  isTransactionInTargetTypes,
-} from '../utils/transaction-rule-utils'
+import { getTransactionUserPastTransactionsCount } from '../utils/transaction-rule-utils'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
   CHECK_SENDER_OPTIONAL_SCHEMA,
-  PAYMENT_METHOD_OPTIONAL_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-  USER_TYPE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
-import { PaymentMethod } from '@/@types/tranasction/payment-type'
-import { UserType } from '@/@types/user/user-type'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
-export type TransactionsExceedPastPeriodRuleParameters =
-  DefaultTransactionRuleParameters & {
-    minTransactionsInTimeWindow1?: number
-    multiplierThreshold: number
-    timeWindow1: TimeWindow
-    timeWindow2: TimeWindow
+export type TransactionsExceedPastPeriodRuleParameters = {
+  minTransactionsInTimeWindow1?: number
+  multiplierThreshold: number
+  timeWindow1: TimeWindow
+  timeWindow2: TimeWindow
 
-    checkSender?: 'sending' | 'all' | 'none'
-    checkReceiver?: 'receiving' | 'all' | 'none'
+  checkSender?: 'sending' | 'all' | 'none'
+  checkReceiver?: 'receiving' | 'all' | 'none'
+}
 
-    // Optional parameters
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    userType?: UserType
-  }
-
-export default class TransactionsExceedPastPeriodRule extends TransactionRule<TransactionsExceedPastPeriodRuleParameters> {
+export default class TransactionsExceedPastPeriodRule extends TransactionRule<
+  TransactionsExceedPastPeriodRuleParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<TransactionsExceedPastPeriodRuleParameters> {
@@ -65,27 +52,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
         },
         checkSender: CHECK_SENDER_OPTIONAL_SCHEMA(),
         checkReceiver: CHECK_RECEIVER_OPTIONAL_SCHEMA(),
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
       },
       required: ['multiplierThreshold', 'timeWindow1', 'timeWindow2'],
     }
-  }
-
-  public getFilters() {
-    const { transactionTypes, paymentMethod, userType } = this.parameters
-    return super
-      .getFilters()
-      .concat([
-        () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-        () =>
-          !paymentMethod ||
-          this.transaction.originPaymentDetails?.method === paymentMethod,
-        () => isUserType(this.senderUser, userType),
-      ])
   }
 
   public async computeRule() {
@@ -96,8 +65,6 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
       timeWindow2,
       checkSender,
       checkReceiver,
-      transactionTypes,
-      transactionState,
     } = this.parameters
     if (multiplierThreshold === undefined) {
       throw new MissingRuleParameter()
@@ -115,8 +82,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
           timeWindow: timeWindow1,
           checkSender: checkSender || 'all',
           checkReceiver: checkReceiver || 'all',
-          transactionTypes,
-          transactionState,
+          transactionTypes: this.filters.transactionTypes,
+          transactionState: this.filters.transactionState,
+          paymentMethod: this.filters.paymentMethod,
         }
       ),
       getTransactionUserPastTransactionsCount(
@@ -126,8 +94,9 @@ export default class TransactionsExceedPastPeriodRule extends TransactionRule<Tr
           timeWindow: timeWindow2,
           checkSender: checkSender || 'all',
           checkReceiver: checkReceiver || 'all',
-          transactionTypes,
-          transactionState,
+          transactionTypes: this.filters.transactionTypes,
+          transactionState: this.filters.transactionState,
+          paymentMethod: this.filters.paymentMethod,
         }
       ),
     ])

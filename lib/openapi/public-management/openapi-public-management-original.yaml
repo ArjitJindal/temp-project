@@ -263,6 +263,8 @@ components:
       properties:
         ruleId:
           type: string
+        filters:
+          type: object
         parameters:
           type: object
         ruleNameAlias:

@@ -1,28 +1,28 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import {
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_AMOUNT_RANGE_SCHEMA,
-} from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TRANSACTION_AMOUNT_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
 
-export type LowValueTransactionsRuleParameters =
-  DefaultTransactionRuleParameters & {
-    lowTransactionValues: {
-      [currency: string]: {
-        max: number
-        min: number
-      }
+export type LowValueTransactionsRuleParameters = {
+  lowTransactionValues: {
+    [currency: string]: {
+      max: number
+      min: number
     }
-    lowTransactionCount: number
   }
+  lowTransactionCount: number
+}
 
-export default class LowValueTransactionsRule extends TransactionRule<LowValueTransactionsRuleParameters> {
+export default class LowValueTransactionsRule extends TransactionRule<
+  LowValueTransactionsRuleParameters,
+  TransactionFilters
+> {
   public static getSchema(): JSONSchemaType<LowValueTransactionsRuleParameters> {
     return {
       type: 'object',
@@ -34,7 +34,6 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
           type: 'integer',
           title: 'Low-value Transactions Count Threshold',
         },
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],
     }
@@ -66,8 +65,7 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
   }
 
   public async computeRule() {
-    const { lowTransactionCount, lowTransactionValues, transactionState } =
-      this.parameters
+    const { lowTransactionCount, lowTransactionValues } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -79,13 +77,21 @@ export default class LowValueTransactionsRule extends TransactionRule<LowValueTr
           ? transactionRepository.getLastNUserReceivingTransactions(
               userId,
               lastNTransactionsToCheck,
-              { transactionState },
+              {
+                transactionState: this.filters.transactionState,
+                transactionTypes: this.filters.transactionTypes,
+                destinationPaymentMethod: this.filters.paymentMethod,
+              },
               ['originAmountDetails', 'destinationAmountDetails']
             )
           : transactionRepository.getLastNUserSendingTransactions(
               userId,
               lastNTransactionsToCheck,
-              { transactionState },
+              {
+                transactionState: this.filters.transactionState,
+                transactionTypes: this.filters.transactionTypes,
+                originPaymentMethod: this.filters.paymentMethod,
+              },
               ['originAmountDetails', 'destinationAmountDetails']
             ))) as Transaction[]
       ).concat(this.transaction)

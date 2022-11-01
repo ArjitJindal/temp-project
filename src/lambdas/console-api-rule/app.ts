@@ -11,6 +11,7 @@ import { RuleRepository } from '@/services/rules-engine/repositories/rule-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { USER_FILTERS } from '@/services/rules-engine/user-filters'
+import { TRANSACTION_FILTERS } from '@/services/rules-engine/transaction-filters'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -34,9 +35,10 @@ export const ruleHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.resource === '/rule-filters'
     ) {
-      const filters = Object.values(USER_FILTERS).map(
-        (filterClass) => (filterClass.getSchema() as any)?.properties || {}
-      )
+      const filters = [
+        ...Object.values(USER_FILTERS),
+        ...Object.values(TRANSACTION_FILTERS),
+      ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
       return {
         type: 'object',
         properties: _.merge({}, ...filters),

@@ -10,7 +10,7 @@ test('Empty parameter', async () => {
   expect(
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
-      { senderUser: getTestUser({ userId: '1' }) },
+      { user: getTestUser({ userId: '1' }) },
       { userCreationAgeRange: {} },
       dynamodb
     ).predicate()
@@ -22,7 +22,7 @@ test('Only min age set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
         }),
@@ -35,7 +35,7 @@ test('Only min age set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
         }),
@@ -51,7 +51,7 @@ test('Only max age set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
         }),
@@ -64,7 +64,7 @@ test('Only max age set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
         }),
@@ -80,7 +80,7 @@ test('Both min age and max age are set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(2, 'year').valueOf(),
         }),
@@ -98,7 +98,7 @@ test('Both min age and max age are set', async () => {
     await new UserCreationAgeRuleFilter(
       getTestTenantId(),
       {
-        senderUser: getTestUser({
+        user: getTestUser({
           userId: '1',
           createdTimestamp: dayjs().subtract(6, 'month').valueOf(),
         }),
@@ -112,33 +112,4 @@ test('Both min age and max age are set', async () => {
       dynamodb
     ).predicate()
   ).toBe(true)
-})
-
-test('Receiver user is checked as well', async () => {
-  expect(
-    await new UserCreationAgeRuleFilter(
-      getTestTenantId(),
-      {
-        receiverUser: getTestUser({
-          userId: '1',
-          createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
-        }),
-      },
-      { userCreationAgeRange: { minAge: { units: 1, granularity: 'month' } } },
-      dynamodb
-    ).predicate()
-  ).toBe(true)
-  expect(
-    await new UserCreationAgeRuleFilter(
-      getTestTenantId(),
-      {
-        receiverUser: getTestUser({
-          userId: '1',
-          createdTimestamp: dayjs().subtract(2, 'month').valueOf(),
-        }),
-      },
-      { userCreationAgeRange: { minAge: { units: 3, granularity: 'month' } } },
-      dynamodb
-    ).predicate()
-  ).toBe(false)
 })

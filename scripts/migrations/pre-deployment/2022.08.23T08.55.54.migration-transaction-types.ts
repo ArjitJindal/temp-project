@@ -5,12 +5,14 @@ import { TransactionType } from '@/@types/openapi-public/TransactionType'
 export const up: MigrationFn = async () => {
   await renameRuleParameter(
     undefined,
+    [],
     'transactionType',
     'transactionTypes',
     (transactionType: TransactionType) => [transactionType]
   )
   await renameRuleParameter(
     undefined,
+    [],
     'targetTransactionType',
     'transactionTypes',
     (transactionType: TransactionType) => [transactionType]

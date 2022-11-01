@@ -7,6 +7,7 @@ export const up = async () => {
       'multiple-user-senders-within-time-period',
       'multiple-counterparty-senders-within-time-period',
     ],
+    [],
     'timePeriodDays',
     'timeWindow',
     (timePeriodDays: number) => ({
@@ -21,6 +22,7 @@ export const down = async () => {
       'multiple-user-senders-within-time-period',
       'multiple-counterparty-senders-within-time-period',
     ],
+    [],
     'timeWindow',
     'timePeriodDays',
     (timeWindow: TimeWindow) => {

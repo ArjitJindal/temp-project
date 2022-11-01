@@ -1,24 +1,20 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
-import { isTransactionInTargetTypes } from '../utils/transaction-rule-utils'
-import {
-  TRANSACTION_STATE_OPTIONAL_SCHEMA,
-  TRANSACTION_TYPES_OPTIONAL_SCHEMA,
-} from '../utils/rule-parameter-schemas'
-import { DefaultTransactionRuleParameters, TransactionRule } from './rule'
+import { TransactionFilters } from '../transaction-filters'
+import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
-import { TransactionType } from '@/@types/openapi-public/TransactionType'
 
-export type UserTransactionPairsRuleParameters =
-  DefaultTransactionRuleParameters & {
-    userPairsThreshold: number
-    timeWindowInSeconds: number
-    transactionTypes: TransactionType[]
-    excludedUserIds?: string[]
-  }
+export type UserTransactionPairsRuleParameters = {
+  userPairsThreshold: number
+  timeWindowInSeconds: number
+  excludedUserIds?: string[]
+}
 
-export default class UserTransactionPairsRule extends TransactionRule<UserTransactionPairsRuleParameters> {
+export default class UserTransactionPairsRule extends TransactionRule<
+  UserTransactionPairsRuleParameters,
+  TransactionFilters
+> {
   transactionRepository?: TransactionRepository
 
   public static getSchema(): JSONSchemaType<UserTransactionPairsRuleParameters> {
@@ -33,8 +29,6 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
           type: 'integer',
           title: 'Time Window (Seconds)',
         },
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
-        transactionTypes: TRANSACTION_TYPES_OPTIONAL_SCHEMA(),
         excludedUserIds: {
           type: 'array',
           title: 'Excluded User IDs',
@@ -46,26 +40,20 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
     }
   }
 
-  public getFilters() {
-    const { transactionTypes, excludedUserIds } = this.parameters
-    return super
-      .getFilters()
-      .concat([
-        () =>
-          isTransactionInTargetTypes(this.transaction.type, transactionTypes),
-        () =>
-          this.transaction.originUserId !== undefined &&
-          this.transaction.destinationUserId !== undefined,
-        () =>
-          excludedUserIds === undefined ||
-          (!excludedUserIds.includes(this.transaction.originUserId as string) &&
-            !excludedUserIds.includes(
-              this.transaction.destinationUserId as string
-            )),
-      ])
-  }
-
   public async computeRule() {
+    const { excludedUserIds } = this.parameters
+    if (
+      !this.transaction.originUserId ||
+      !this.transaction.destinationUserId ||
+      (excludedUserIds &&
+        (excludedUserIds.includes(this.transaction.originUserId as string) ||
+          excludedUserIds.includes(
+            this.transaction.destinationUserId as string
+          )))
+    ) {
+      return
+    }
+
     const { userPairsThreshold } = this.parameters
     const sendingTransactions = await this.getSenderSendingTransactions()
 
@@ -75,10 +63,9 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
   }
 
   protected async getSenderSendingTransactions() {
-    const { timeWindowInSeconds, transactionTypes, transactionState } =
-      this.parameters
+    const { timeWindowInSeconds } = this.parameters
     const possibleReceiverKeyIds = new Set(
-      (transactionTypes || [undefined]).map(
+      (this.filters.transactionTypes || [undefined]).map(
         (transactionType) =>
           getReceiverKeys(this.tenantId, this.transaction, transactionType)
             ?.PartitionKeyID
@@ -96,7 +83,11 @@ export default class UserTransactionPairsRule extends TransactionRule<UserTransa
             .valueOf(),
           beforeTimestamp: this.transaction.timestamp!,
         },
-        { transactionTypes, transactionState },
+        {
+          transactionTypes: this.filters.transactionTypes,
+          transactionState: this.filters.transactionState,
+          originPaymentMethod: this.filters.paymentMethod,
+        },
         ['receiverKeyId']
       )
     ).concat({

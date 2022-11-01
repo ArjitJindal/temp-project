@@ -16,7 +16,6 @@ import {
 } from '@/@types/tranasction/payment-type'
 
 const PAYMENT_METHOD_1: PaymentMethod = 'CARD'
-const PAYMENT_METHOD_2: PaymentMethod = 'IBAN'
 
 const PAYMENT_DETAILS_1 = {
   method: PAYMENT_METHOD_1,
@@ -98,49 +97,6 @@ describe('Core login', () => {
           }),
         ],
         expectedHits: [false, false, true],
-      },
-    ]
-  )('', ({ name, transactions, expectedHits, ruleParams }) => {
-    const TEST_TENANT_ID = getTestTenantId()
-
-    setUpRulesHooks(TEST_TENANT_ID, [
-      {
-        type: 'TRANSACTION',
-        ruleImplementationName: 'same-payment-details',
-        defaultParameters: {
-          ...defaultParams,
-          ...ruleParams,
-        },
-      },
-    ])
-
-    createTransactionRuleTestCase(
-      name,
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
-  })
-})
-
-describe('Filters', () => {
-  const now = dayjs('2022-01-01T00:00:00.000Z')
-
-  describe.each<TransactionRuleTestCase<Partial<SamePaymentDetailsParameters>>>(
-    [
-      {
-        name: 'Single transaction triggers when threshold is 0, but filtered out by payment method',
-        transactions: [
-          getTestTransaction({
-            originPaymentDetails: PAYMENT_DETAILS_1,
-            timestamp: now.valueOf(),
-          }),
-        ],
-        expectedHits: [false],
-        ruleParams: {
-          threshold: 0,
-          paymentMethod: PAYMENT_METHOD_2,
-        },
       },
     ]
   )('', ({ name, transactions, expectedHits, ruleParams }) => {
