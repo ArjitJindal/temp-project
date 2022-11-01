@@ -119,6 +119,9 @@ export const createMongoDBCollections = async (
     await transactionCollection.createIndex({
       'tags.key': 1,
     })
+    await transactionCollection.createIndex({
+      'hitRules.ruleAction': 1,
+    })
 
     try {
       await db.createCollection(USERS_COLLECTION(tenantId))

@@ -139,7 +139,9 @@ export const transactionsViewHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
-        filterTransactionState,
+        filterTransactionState: filterTransactionState
+          ? filterTransactionState.split(',')
+          : undefined,
         filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
@@ -208,7 +210,9 @@ export const transactionsViewHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
-        filterTransactionState,
+        filterTransactionState: filterTransactionState
+          ? filterTransactionState.split(',')
+          : undefined,
         filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
@@ -282,7 +286,9 @@ export const transactionsViewHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
-        filterTransactionState,
+        filterTransactionState: filterTransactionState
+          ? filterTransactionState.split(',')
+          : undefined,
         filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted

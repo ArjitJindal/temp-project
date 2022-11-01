@@ -79,8 +79,10 @@ export const casesHandler = lambdaApi()(
         filterId,
         filterOutStatus,
         filterOutCaseStatus,
-        filterTransactionState,
-        filterStatus,
+        filterTransactionState: filterTransactionState
+          ? filterTransactionState.split(',')
+          : undefined,
+        filterStatus: filterStatus ? filterStatus.split(',') : undefined,
         filterCaseStatus,
         filterRulesExecuted: filterRulesExecuted
           ? filterRulesExecuted.split(',')

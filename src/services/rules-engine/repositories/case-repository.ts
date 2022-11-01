@@ -125,14 +125,14 @@ export class CaseRepository {
     if (params.filterTransactionState != null) {
       conditions.push({
         'caseTransactions.transactionState': {
-          $eq: params.filterTransactionState,
+          $in: params.filterTransactionState,
         },
       })
       requiresTransactions = true
     }
     if (params.filterStatus != null) {
       conditions.push({
-        'caseTransactions.status': { $eq: params.filterStatus },
+        'caseTransactions.status': { $in: params.filterStatus },
       })
       requiresTransactions = true
     }

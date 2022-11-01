@@ -160,7 +160,7 @@ export class TransactionRepository {
     }
     if (params.filterTransactionState != null) {
       conditions.push({
-        transactionState: { $eq: params.filterTransactionState },
+        transactionState: { $in: params.filterTransactionState },
       })
     }
     if (params.filterStatus != null) {

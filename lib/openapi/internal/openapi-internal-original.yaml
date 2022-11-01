@@ -584,7 +584,9 @@ paths:
           in: query
           name: filterDestinationPaymentMethod
         - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
     post:
@@ -857,7 +859,9 @@ paths:
           in: query
           name: filterDestinationPaymentMethod
         - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
         - schema:
@@ -992,7 +996,9 @@ paths:
           in: query
           name: filterDestinationPaymentMethod
         - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
         - schema:
@@ -1895,7 +1901,9 @@ paths:
           in: query
           name: filterDestinationUserId
         - schema:
-            $ref: '#/components/schemas/RuleAction'
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
         - schema:
@@ -1911,7 +1919,9 @@ paths:
           in: query
           name: filterDestinationPaymentMethod
         - schema:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
           in: query
           name: filterTransactionState
         - schema:
