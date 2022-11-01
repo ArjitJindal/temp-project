@@ -23,7 +23,10 @@ const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
-export type TenantSettingName = 'features' | 'ruleActionAliases'
+export type TenantSettingName =
+  | 'features'
+  | 'ruleActionAliases'
+  | 'transactionStateAliases'
 
 export const TRANSACTION_PRIMARY_KEY_IDENTIFIER = 'transaction#primary'
 export const USER_PRIMARY_KEY_IDENTIFIER = 'user#primary'

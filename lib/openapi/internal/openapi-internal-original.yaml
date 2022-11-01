@@ -2303,6 +2303,17 @@ components:
       required:
         - action
         - alias
+    TransactionStateAlias:
+      type: object
+      title: TransactionStateAlias
+      properties:
+        state:
+          $ref: '#/components/schemas/TransactionState'
+        alias:
+          type: string
+      required:
+        - state
+        - alias
     CaseType:
       type: string
       title: CaseType
@@ -2866,6 +2877,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleActionAlias'
+        transactionStateAlias:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionStateAlias'
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
