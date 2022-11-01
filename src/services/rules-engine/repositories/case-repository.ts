@@ -171,7 +171,7 @@ export class CaseRepository {
       executedRulesFilters.push({
         $elemMatch: {
           ruleHit: true,
-          ruleId: { $in: params.filterRulesHit },
+          ruleInstanceId: { $in: params.filterRulesHit },
         },
       })
     }
