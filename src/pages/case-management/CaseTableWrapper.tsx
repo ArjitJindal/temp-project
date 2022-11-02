@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { message } from 'antd';
 import moment from 'moment';
 import { useNavigate } from 'react-router';
@@ -11,6 +11,7 @@ import {
   CaseType,
   CaseUpdateRequest,
   RuleAction,
+  RuleInstance,
 } from '@/apis';
 import { useApi } from '@/api';
 import { useAnalytics } from '@/utils/segment/context';
@@ -25,6 +26,7 @@ import { CASES_LIST } from '@/utils/queries/keys';
 import UserCases from '@/pages/case-management/UserCases';
 import { neverReturn } from '@/utils/lang';
 import TransactionCases from '@/pages/case-management/TransactionCases';
+import { useRules } from '@/utils/rules';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -224,6 +226,18 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
     updateCasesMutation.error,
   ]);
 
+  const rules = useRules();
+
+  const getRulesAndInstances = useMemo(() => {
+    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
+      const ruleName = rulesInstance.ruleNameAlias || rules.rules[rulesInstance.ruleId]?.name;
+      return {
+        value: rulesInstance.id,
+        label: `${ruleName} ${rulesInstance.ruleId} (${rulesInstance.id})`,
+      };
+    });
+  }, [rules.ruleInstances, rules.rules]);
+
   if (caseType === 'USER') {
     return (
       <UserCases
@@ -233,6 +247,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           updateCasesMutation.mutate({ caseIds, updates });
         }}
         onChangeParams={handleChangeParams}
+        rules={getRulesAndInstances}
       />
     );
   }
@@ -245,6 +260,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         onUpdateCases={(caseIds, updates) => {
           updateCasesMutation.mutate({ caseIds, updates });
         }}
+        rules={getRulesAndInstances}
       />
     );
   }

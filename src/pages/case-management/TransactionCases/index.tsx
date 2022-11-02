@@ -11,7 +11,6 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { Case, CasesListResponse, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
-import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
@@ -52,6 +51,7 @@ interface Props {
   queryResult: QueryResult<CasesListResponse>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
+  rules: { value: string | undefined; label: string | undefined }[];
 }
 
 export default function TransactionCases(props: Props) {
@@ -59,7 +59,6 @@ export default function TransactionCases(props: Props) {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const api = useApi();
   const [users, loadingUsers] = useUsers();
 
   const tableQueryResult = useTableData(queryResult);
@@ -469,34 +468,12 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Rules Hit',
+        dataIndex: 'rulesHitFilter',
         hideInTable: true,
         width: 120,
         valueType: 'select',
-        request: async () => {
-          const rules = await api.getRules();
-          return rules.map((rule) => ({
-            value: rule.id,
-            label: `${rule.name} (${rule.id})`,
-          }));
-        },
         fieldProps: {
-          allowClear: true,
-          mode: 'multiple',
-        },
-      },
-      {
-        title: 'Rules Executed',
-        hideInTable: true,
-        width: 120,
-        valueType: 'select',
-        request: async () => {
-          const rules = await api.getRules();
-          return rules.map((rule) => ({
-            value: rule.id,
-            label: `${rule.name} (${rule.id})`,
-          }));
-        },
-        fieldProps: {
+          options: props.rules,
           allowClear: true,
           mode: 'multiple',
         },
@@ -601,7 +578,15 @@ export default function TransactionCases(props: Props) {
       );
     }
     return mergedColumns;
-  }, [params.caseStatus, api, reloadTable, users, loadingUsers, user.userId, onUpdateCases]);
+  }, [
+    params.caseStatus,
+    reloadTable,
+    users,
+    loadingUsers,
+    user.userId,
+    onUpdateCases,
+    props.rules,
+  ]);
 
   return (
     <QueryResultsTable<CaseManagementItem, TableSearchParams>

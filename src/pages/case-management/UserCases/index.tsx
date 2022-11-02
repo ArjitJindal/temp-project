@@ -36,6 +36,7 @@ interface Props {
   queryResult: QueryResult<CasesListResponse>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
+  rules: { value: string | undefined; label: string | undefined }[];
 }
 
 export default function UserCases(props: Props) {
@@ -154,6 +155,18 @@ export default function UserCases(props: Props) {
         },
       },
       {
+        title: 'Rules Hit',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        dataIndex: 'rulesHitFilter',
+        fieldProps: {
+          options: props.rules,
+          allowClear: true,
+          mode: 'multiple',
+        },
+      },
+      {
         title: 'Assignees',
         hideInSearch: true,
         width: 250,
@@ -262,7 +275,15 @@ export default function UserCases(props: Props) {
       );
     }
     return mergedColumns;
-  }, [user.userId, params.caseStatus, reloadTable, users, loadingUsers, onUpdateCases]);
+  }, [
+    user.userId,
+    params.caseStatus,
+    reloadTable,
+    users,
+    loadingUsers,
+    onUpdateCases,
+    props.rules,
+  ]);
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
