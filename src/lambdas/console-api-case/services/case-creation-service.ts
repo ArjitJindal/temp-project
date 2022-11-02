@@ -102,7 +102,10 @@ export class CaseCreationService {
       caseUsers.origin?.userId != null &&
       caseUsers.destination?.userId != null
     ) {
-      hitDirections = ruleResultHitDirections
+      // For now, we don't use hit direction from rule results, as
+      // decided here: https://www.notion.so/flagright/Create-User-Cases-for-destination-c63393869c584279bd1f81268edd2b72
+      hitDirections = ['ORIGIN', 'DESTINATION']
+      // hitDirections = ruleResultHitDirections
     } else if (caseUsers.origin?.userId != null) {
       hitDirections = ['ORIGIN']
     } else if (caseUsers.destination?.userId != null) {
@@ -116,12 +119,12 @@ export class CaseCreationService {
           ? caseUsers.origin?.userId
           : caseUsers.destination?.userId
       if (userId != null) {
-        const newVar = await this.caseRepository.getCasesByUserId(
+        const cases = await this.caseRepository.getCasesByUserId(
           userId,
           hitDirection,
           'USER'
         )
-        const existedCase = newVar.find(
+        const existedCase = cases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
         if (existedCase != null) {
@@ -159,7 +162,7 @@ export class CaseCreationService {
     )
     const ruleInstances =
       await this.ruleInstanceRepository.getRuleInstancesByIds(
-        transaction.hitRules.map((ruleInstance) => ruleInstance.ruleInstanceId)
+        transaction.hitRules.map((hitRule) => hitRule.ruleInstanceId)
       )
     const casePriority = CaseRepository.getPriority(
       ruleInstances.map((ruleInstance) => ruleInstance.casePriority)
@@ -264,8 +267,30 @@ export class CaseCreationService {
       }
     }
 
-    return await Promise.all(
+    const savedCases = await Promise.all(
       result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
     )
+    if (savedCases.length > 1) {
+      return await Promise.all(
+        savedCases.map((nextCase) => {
+          const relatedCases = nextCase.relatedCases ?? []
+          return this.caseRepository.addCaseMongo({
+            ...nextCase,
+            relatedCases: [
+              ...relatedCases,
+              ...savedCases
+                .map(({ caseId }) => caseId)
+                .filter(
+                  (caseId): caseId is string =>
+                    caseId != null &&
+                    caseId !== nextCase.caseId &&
+                    !relatedCases.includes(caseId)
+                ),
+            ],
+          })
+        })
+      )
+    }
+    return savedCases
   }
 }

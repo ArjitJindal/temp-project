@@ -17,6 +17,7 @@ import {
   setUpConsumerUsersHooks,
 } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
+import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 
 dynamoDbSetupHook()
 
@@ -109,7 +110,9 @@ describe('User cases', () => {
 
   describe('Run #3', () => {
     const TEST_TENANT_ID = getTestTenantId()
-    setup(TEST_TENANT_ID)
+    setup(TEST_TENANT_ID, {
+      hitDirections: [],
+    })
     test('Both users, no prior cases', async () => {
       const caseCreationService = await getService(TEST_TENANT_ID)
 
@@ -129,12 +132,16 @@ describe('User cases', () => {
         ...result,
       })
       expect(cases.length).toEqual(2)
-      expectUserCase(cases, {
+      const case1 = expectUserCase(cases, {
         originUserId: TEST_USER_1.userId,
       })
-      expectUserCase(cases, {
+      const case2 = expectUserCase(cases, {
         destinationUserId: TEST_USER_2.userId,
       })
+      expect(case1.relatedCases).toHaveLength(1)
+      expect(case2.relatedCases).toHaveLength(1)
+      expect(case1.relatedCases?.[0]).toEqual(case2.caseId)
+      expect(case2.relatedCases?.[0]).toEqual(case1.caseId)
     })
   })
 
@@ -193,12 +200,20 @@ describe('User cases', () => {
   Helpers
  */
 
-function setup(tenantId: string) {
+function setup(
+  tenantId: string,
+  parameters: {
+    hitDirections?: RuleHitDirection[]
+  } = {}
+) {
   setUpRulesHooks(tenantId, [
     {
       type: 'TRANSACTION',
       ruleImplementationName: 'tests/test-always-hit-rule',
       defaultCaseCreationType: 'USER',
+      parameters: {
+        hitDirections: parameters.hitDirections,
+      },
     },
   ])
   setUpConsumerUsersHooks(tenantId, [TEST_USER_1, TEST_USER_2])
@@ -210,7 +225,7 @@ function expectUserCase(
     originUserId?: string
     destinationUserId?: string
   } = {}
-) {
+): Case {
   const caseItem = cases.find((x) => {
     if (x.caseType !== 'USER') {
       return false
@@ -238,6 +253,7 @@ function expectUserCase(
       params.destinationUserId
     )
   }
+  return caseItem as Case
 }
 
 // function expectTransactionCase(
