@@ -113,7 +113,7 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Transaction ID',
-        dataIndex: 'transactionId',
+        dataIndex: 'caseTransactions.transactionId',
         width: 130,
         copyable: true,
         ellipsis: true,
@@ -135,7 +135,7 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Transaction Type',
-        dataIndex: 'type',
+        dataIndex: 'caseTransactions.type',
         width: 175,
         onCell: onTransactionCell,
         valueType: 'select',
@@ -167,7 +167,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Rule Action',
         sorter: true,
-        dataIndex: 'status',
+        dataIndex: 'caseTransactions.status',
         // hideInSearch: true,
         valueType: 'select',
         fieldProps: {
@@ -198,7 +198,7 @@ export default function TransactionCases(props: Props) {
         title: 'Transaction State',
         width: 130,
         ellipsis: true,
-        dataIndex: 'transactionState',
+        dataIndex: 'caseTransactions.transactionState',
         hideInSearch: true,
         sorter: true,
         onCell: onTransactionCell,
@@ -216,7 +216,7 @@ export default function TransactionCases(props: Props) {
             width: 200,
             copyable: true,
             ellipsis: true,
-            dataIndex: 'originUserId',
+            dataIndex: 'caseTransactions.originUserId',
             hideInSearch: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
@@ -263,7 +263,7 @@ export default function TransactionCases(props: Props) {
           },
           {
             title: 'Amount',
-            dataIndex: 'originAmountDetails.transactionAmount',
+            dataIndex: 'caseTransactions.originAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
             width: 150,
@@ -311,7 +311,7 @@ export default function TransactionCases(props: Props) {
           {
             title: 'User ID',
             tooltip: 'Destination is the Receiver in a transaction',
-            dataIndex: 'destinationUserId',
+            dataIndex: 'caseTransactions.destinationUserId',
             copyable: true,
             ellipsis: true,
             hideInSearch: true,
@@ -360,7 +360,7 @@ export default function TransactionCases(props: Props) {
           {
             title: 'Amount',
             width: 200,
-            dataIndex: 'destnationAmountDetails.transactionAmount',
+            dataIndex: 'caseTransactions.destnationAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
             onCell: onTransactionCell,
