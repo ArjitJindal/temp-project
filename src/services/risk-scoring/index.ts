@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import { getAgeFromTimestamp, riskLevelPrecendence } from './utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -36,8 +37,7 @@ export const updateInitialRiskScores = async (
     ?.filter(
       (parameterAttributeDetails) =>
         parameterAttributeDetails.isActive &&
-        (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER' ||
-          parameterAttributeDetails.riskEntityType === 'BUSINESS')
+        parameterAttributeDetails.riskScoreType === 'KRS'
     )
     .forEach((parameterAttributeDetails) => {
       if (parameterAttributeDetails.isDerived) {
@@ -90,25 +90,49 @@ export const updateDynamicRiskScores = async (
   transaction: Transaction
 ): Promise<any> => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+  const userRepository = new UserRepository(tenantId, { dynamoDb })
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
   const riskClassificationValues = await riskRepository.getRiskClassification()
   const riskScoresList: number[] = []
 
-  parameterRiskScores
-    ?.filter(
+  const relevantParameters =
+    parameterRiskScores?.filter(
       (parameterAttributeDetails) =>
         parameterAttributeDetails.isActive &&
-        !parameterAttributeDetails.isDerived &&
-        parameterAttributeDetails.riskEntityType === 'TRANSACTION'
-    )
-    .forEach((parameterAttributeDetails) => {
+        parameterAttributeDetails.riskScoreType === 'ARS'
+    ) ?? []
+
+  for (const parameterAttributeDetails of relevantParameters) {
+    if (parameterAttributeDetails.isDerived) {
+      if (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER') {
+        if (parameterAttributeDetails.parameter === 'createdTimestamp') {
+          const users = await getUsersFromTransaction(
+            transaction,
+            userRepository
+          )
+          if (users.length) {
+            users.map((user) => {
+              const riskLevel = getAgeDerivedRiskLevel(
+                parameterAttributeDetails.parameter,
+                user,
+                parameterAttributeDetails.riskLevelAssignmentValues
+              )
+              riskScoresList.push(
+                getRiskScore(riskClassificationValues, riskLevel)
+              )
+            })
+          }
+        }
+      }
+    } else if (parameterAttributeDetails.riskEntityType === 'TRANSACTION') {
       const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
         parameterAttributeDetails.parameter,
         transaction,
         parameterAttributeDetails.riskLevelAssignmentValues
       )
       riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
-    })
+    }
+  }
   const arsScore = riskScoresList.length
     ? _.mean(riskScoresList)
     : getDefaultRiskValue(riskClassificationValues)
@@ -146,11 +170,26 @@ const calculateAndUpdateDRS = async (
   transactionId: string,
   riskRepository: RiskRepository
 ) => {
-  const krsScore = await riskRepository.getKrsScore(userId)
-  const currentDrsValue = (await riskRepository.getDrsScore(userId)) ?? krsScore
+  const krsScore = (await riskRepository.getKrsScore(userId)).krsScore
+  const currentDrsValue =
+    (await riskRepository.getDrsScore(userId)).drsValue ?? krsScore
 
   const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
   await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)
+}
+
+const getUsersFromTransaction = async (
+  transaction: Transaction,
+  userRepository: UserRepository
+) => {
+  const userIds = []
+  if (transaction.originUserId) {
+    userIds.push(transaction.originUserId)
+  }
+  if (transaction.destinationUserId) {
+    userIds.push(transaction.destinationUserId)
+  }
+  return await userRepository.getUsers(userIds)
 }
 
 const getSchemaAttributeRiskLevel = (

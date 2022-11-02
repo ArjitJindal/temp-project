@@ -3014,6 +3014,7 @@ components:
             - legalEntity.companyGeneralDetails.businessIndustry
             - userDetails.dateOfBirth
             - legalEntity.companyRegistrationDetails.dateOfRegistration
+            - createdTimestamp
         isActive:
           type: boolean
         isDerived:
@@ -3047,6 +3048,11 @@ components:
           type: string
           enum:
             - generalDetails.countryOfNationality
+        riskScoreType:
+          type: string
+          enum:
+            - KRS
+            - ARS
       required:
         - parameter
         - isActive
