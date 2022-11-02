@@ -29,6 +29,7 @@ import UserStateTag from '@/components/ui/UserStateTag';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
+import UserLink from '@/components/UserLink';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -105,7 +106,13 @@ export default function UserCases(props: Props) {
         title: 'User Name',
         width: 150,
         render: (_, entity) => {
-          return <>{getUserName(entity.user)}</>;
+          const user = entity.user;
+
+          return user ? (
+            <UserLink user={user}>{getUserName(user)}</UserLink>
+          ) : (
+            <>{getUserName(user)}</>
+          );
         },
       },
       {
