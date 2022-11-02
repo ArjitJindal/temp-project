@@ -24,7 +24,7 @@ Object.entries(config.application).forEach((entry) => {
 process.env['AWS_SDK_LOAD_CONFIG'] = '1'
 process.env['ENV'] = 'local'
 process.env['EXEC_SOURCE'] = 'cli'
-process.env['MONGO_URI'] = 'mongodb://localhost:27017'
+process.env['MONGO_URI'] = 'mongodb://localhost:27018'
 process.env['DYNAMODB_URI'] = 'http://localhost:8000'
 
 const optionDefinitions = [

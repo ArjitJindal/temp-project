@@ -15,7 +15,9 @@ const collections = [
 ]
 
 async function main() {
-  const client = await MongoClient.connect(`mongodb://localhost/${DB_NAME}`)
+  const client = await MongoClient.connect(
+    `mongodb://localhost:27018/${DB_NAME}`
+  )
   const db = await client.db()
   for (const [collectionName, data] of collections) {
     console.log(`Re-create collection: ${collectionName}`)

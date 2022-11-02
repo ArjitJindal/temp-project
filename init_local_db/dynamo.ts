@@ -1,5 +1,6 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
+import _ from 'lodash'
 import { TENANT } from './settings'
 import usersData from './data/users'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -12,7 +13,7 @@ async function users() {
     dynamoDb: dynamoDb,
   })
   for (const user of usersData) {
-    await userRepo.saveUser(user, (user as any).type as UserType)
+    await userRepo.saveUser(_.omit(user, '_id'), (user as any).type as UserType)
   }
 }
 

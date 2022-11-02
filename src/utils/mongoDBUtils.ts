@@ -22,11 +22,11 @@ export async function getMongoDbClient(
   }
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
-      process.env.MONGO_URI || `mongodb://localhost:27017/${dbName}`
+      process.env.MONGO_URI || `mongodb://localhost:27018/${dbName}`
     )
   }
   if (process.env.ENV === 'local') {
-    return await MongoClient.connect(`mongodb://localhost:27017/${dbName}`)
+    return await MongoClient.connect(`mongodb://localhost:27018/${dbName}`)
   }
 
   const credentials = await getCredentials()

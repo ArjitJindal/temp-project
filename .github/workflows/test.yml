@@ -38,6 +38,7 @@ jobs:
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4.0
+          mongodb-port: 27018
       - run: npm run test:silent -- --ci
   # If we'll have more than one job in the future and we require all jobs to pass before we can
   # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
