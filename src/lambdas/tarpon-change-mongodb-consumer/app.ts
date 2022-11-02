@@ -25,8 +25,9 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { updateLogMetadata, hasFeature } from '@/core/utils/context'
+import { updateLogMetadata } from '@/core/utils/context'
 import { updateDynamicRiskScores } from '@/services/risk-scoring'
+import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
 const sqs = new AWS.SQS()
 
@@ -75,7 +76,7 @@ async function transactionHandler(
   logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)
   logger.info(`Case Creation Completed`)
-  if (hasFeature('PULSE_ARS_CALCULATION')) {
+  if (await tenantHasFeature(tenantId, 'PULSE_ARS_CALCULATION')) {
     logger.info(`Calculating ARS & DRS`)
     updateDynamicRiskScores(tenantId, dynamoDb, transaction)
     logger.info(`Calculation of ARS & DRS Completed`)
