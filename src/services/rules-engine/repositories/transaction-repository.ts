@@ -1342,6 +1342,10 @@ export class TransactionRepository {
     const collection = db.collection<TransactionCaseManagement>(name)
     const query = this.getTransactionsMongoQuery(params)
 
+    const sortField =
+      params?.sortField !== undefined ? params?.sortField : 'timestamp'
+    const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
+
     const result: {
       [key in TransactionType | 'null']?: {
         amounts: number[]
@@ -1353,6 +1357,7 @@ export class TransactionRepository {
     const cursor = await collection.find(query, {
       skip: params.skip,
       limit: params.limit,
+      sort: { [sortField]: sortOrder },
     })
     for await (const next of cursor) {
       const transactionType = next.type ?? 'null'
@@ -1400,12 +1405,15 @@ export class TransactionRepository {
     const collection = db.collection<TransactionCaseManagement>(name)
     const query = this.getTransactionsMongoQuery({
       ...params,
-      sortField: 'timestamp',
-      sortOrder: 'descend',
     })
+
+    const sortField =
+      params?.sortField !== undefined ? params?.sortField : 'timestamp'
+    const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
     const minMaxPipeline: Document[] = []
     minMaxPipeline.push({ $match: query })
+    minMaxPipeline.push({ $sort: { [sortField]: sortOrder } })
     if (params.skip) {
       minMaxPipeline.push({
         $skip: params.skip,
@@ -1469,6 +1477,7 @@ export class TransactionRepository {
     const transactionsCursor = collection.find(query, {
       skip: params.skip,
       limit: params.limit,
+      sort: { [sortField]: sortOrder },
     })
     for await (const transaction of transactionsCursor) {
       if (transaction.timestamp) {
