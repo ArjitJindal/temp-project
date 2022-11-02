@@ -1,6 +1,5 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { Input, message, Radio, Row, Space } from 'antd';
-import { AjvError } from '@rjsf/core';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
 import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '../../utils';
@@ -60,7 +59,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           }
         : undefined),
   );
-  const [validationErrors, setValidationErrors] = useState<AjvError[]>([]);
   const [caseCreationType, setCaseCreationType] = useState(ruleInstance.caseCreationType);
   const [casePriority, setCasePriority] = useState(ruleInstance.casePriority);
   const handleCancelEditing = useCallback(() => {
@@ -76,23 +74,20 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     ruleInstance.caseCreationType,
     ruleInstance.casePriority,
   ]);
-  const handleParametersChange = useCallback((newParameters: object, errors: AjvError[]) => {
+  const handleParametersChange = useCallback((newParameters: object) => {
     setParameters(newParameters);
-    setValidationErrors(errors);
   }, []);
-  const handleFiltersChange = useCallback((newFilters: object, errors: AjvError[]) => {
+  const handleFiltersChange = useCallback((newFilters: object) => {
     setFilters(newFilters);
-    setValidationErrors(errors);
   }, []);
   const handleRiskLevelParametersChange = useCallback(
-    (riskLevel: RiskLevel, newParameters: object, errors: AjvError[]) => {
+    (riskLevel: RiskLevel, newParameters: object) => {
       if (riskLevelParameters) {
         setRiskLevelParameters({
           ...riskLevelParameters,
           [riskLevel]: newParameters,
         });
       }
-      setValidationErrors(errors);
     },
     [riskLevelParameters],
   );
@@ -155,7 +150,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
               type="primary"
               size="small"
               onClick={handleUpdateRuleInstance}
-              disabled={validationErrors.length > 0}
               loading={saving}
             >
               Save
