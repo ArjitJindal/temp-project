@@ -3,6 +3,7 @@ import { TransactionEvent } from '@/apis';
 import Table from '@/components/ui/Table';
 import Id from '@/components/ui/Id';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import TransactionStateTag from '@/components/ui/TransactionStateTag';
 
 interface Props {
   events: Array<TransactionEvent>;
@@ -24,8 +25,10 @@ export default function TransactionEventsTable({ events }: Props) {
         },
         {
           title: 'Transaction state',
-          dataIndex: 'transactionState',
           width: 100,
+          render: (_, entity) => {
+            return <TransactionStateTag transactionState={entity.transactionState} />;
+          },
         },
         {
           title: 'Event Time',

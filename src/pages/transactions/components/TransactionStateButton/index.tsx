@@ -6,6 +6,7 @@ import HealthLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { TransactionState } from '@/apis';
 import { getTransactionStateTitle } from '@/components/ui/TransactionStateTag';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   transactionState: TransactionState[];
@@ -13,12 +14,19 @@ interface Props {
 }
 
 export default function TransactionStateButton(props: Props) {
+  const settings = useSettings();
   const { transactionState, onConfirm } = props;
   const [visible, setVisible] = useState(false);
 
   const buttonText =
     transactionState.length > 0
-      ? transactionState.map((x) => getTransactionStateTitle(x)).join(', ')
+      ? transactionState
+          .map(
+            (x) =>
+              settings.transactionStateAlias?.find((item) => item.state === x)?.alias ||
+              getTransactionStateTitle(x),
+          )
+          .join(', ')
       : 'Transaction State';
   return (
     <Popover

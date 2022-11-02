@@ -12,6 +12,7 @@ import ExchangeDollarLineIcon from '@/components/ui/icons/Remix/finance/exchange
 import CheckDoubleLineIcon from '@/components/ui/icons/Remix/system/check-double-line.react.svg';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-circle-line.react.svg';
 import { humanizeCamelCase } from '@/utils/tags';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   transactionState: ApiTransactionState | undefined;
@@ -19,16 +20,20 @@ interface Props {
 }
 
 export default function TransactionStateTag(props: Props) {
+  const settings = useSettings();
   const { transactionState, titleClassName } = props;
   if (!transactionState) {
     return <span className={titleClassName}>-</span>;
   }
   const title: string = getTransactionStateTitle(transactionState);
   const icon: React.ReactNode = getTransactionStateIcon(transactionState);
+  const alias = settings.transactionStateAlias?.find(
+    (item) => item.state === transactionState,
+  )?.alias;
   return (
     <div className={s.root}>
       <div className={cn(s.icon, s[`transactionState-${transactionState}`])}>{icon}</div>
-      <span className={titleClassName}>{title}</span>
+      <span className={titleClassName}>{alias || title}</span>
     </div>
   );
 }
