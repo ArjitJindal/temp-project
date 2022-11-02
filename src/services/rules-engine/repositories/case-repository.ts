@@ -264,7 +264,7 @@ export class CaseRepository {
     const { filter, requiresTransactions: queryRequiresTransactions } =
       this.getCasesMongoQuery(params)
 
-    const pipeline: Document[] = [{ $sort: { [sortField]: sortOrder } }]
+    const pipeline: Document[] = []
     const requiresTransactions =
       queryRequiresTransactions ||
       params?.includeTransactions ||
@@ -409,6 +409,7 @@ export class CaseRepository {
     if (!params.includeTransactions) {
       pipeline.push({ $unset: 'caseTransactions' })
     }
+    pipeline.push({ $sort: { [sortField]: sortOrder } })
     return pipeline
   }
 
