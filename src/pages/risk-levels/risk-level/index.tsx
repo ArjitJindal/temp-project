@@ -54,6 +54,7 @@ export default function () {
               isDerived: riskLevelTableItem.isDerived,
               parameter,
               parameterType: riskLevelTableItem.parameterType,
+              riskScoreType: riskLevelTableItem.riskScoreType,
               matchType: riskLevelTableItem.matchType,
               targetIterableParameter: riskLevelTableItem.targetIterableParameter,
               riskEntityType: riskLevelTableItem.entity,

@@ -6,6 +6,7 @@ import {
   ParameterAttributeRiskValuesParameterTypeEnum,
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
   ParameterAttributeRiskValuesMatchTypeEnum,
+  ParameterAttributeRiskValuesRiskScoreTypeEnum,
 } from '@/apis';
 
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
@@ -23,6 +24,7 @@ export interface RiskLevelTableItem {
   entity: ParameterAttributeRiskValuesRiskEntityTypeEnum;
   isDerived: boolean;
   dataType: DataTypes;
+  riskScoreType: ParameterAttributeRiskValuesRiskScoreTypeEnum;
   parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
   matchType: ParameterAttributeRiskValuesMatchTypeEnum;
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
