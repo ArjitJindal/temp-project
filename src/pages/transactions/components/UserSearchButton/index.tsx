@@ -34,12 +34,16 @@ export default function UserSearchButton(props: Props) {
 
     let isCanceled = false;
     setUserRest(loading());
-    Promise.any([api.getConsumerUsersItem({ userId }), api.getBusinessUsersItem({ userId })])
-      .then((user) => {
+    Promise.all([api.getConsumerUsersItem({ userId }), api.getBusinessUsersItem({ userId })])
+      .then(([consumerUser, businessUser]) => {
         if (isCanceled) {
           return;
         }
-        setUserRest(success(user));
+        if (consumerUser.userDetails != null) {
+          setUserRest(success(consumerUser));
+        } else {
+          setUserRest(success(businessUser));
+        }
       })
       .catch((e) => {
         if (isCanceled) {
