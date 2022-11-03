@@ -25,7 +25,7 @@
     "synth:prod:us-1": "export ENV=prod:us-1 && npm run openapi:augment && cdk synth --quiet prod-tarpon --profile=AWSAdministratorAccess-870721492449",
     "synth:pipeline": "cdk synth --quiet tarpon-pipeline",
     "deploy:dev": "ENV=dev cdk deploy dev-tarpon",
-    "deploy:dev:user": "ENV=dev:user cdk deploy dev-tarpon-$GITHUB_USER$S_NO",
+    "deploy:dev:user": "ENV=dev:user cdk deploy dev-tarpon-$GITHUB_USER$S_NO --require-approval never",
     "deploy:dev:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && ENV=dev npm run build && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:dev:user:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && ENV=dev npm run build && npm run synth:dev:user && npm run deploy:dev:user -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-tarpon",
