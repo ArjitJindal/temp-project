@@ -214,6 +214,7 @@ const MyRule = () => {
         request={request}
         pagination={false}
         search={false}
+        scroll={{ x: 1000 }}
         rowKey="id"
         columnsState={{
           persistenceType: 'localStorage',

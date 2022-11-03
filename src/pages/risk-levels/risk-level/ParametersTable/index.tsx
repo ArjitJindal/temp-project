@@ -43,6 +43,7 @@ export default function ParametersTable(props: Props) {
       headerTitle="Select Parameter"
       rowKey="parameter"
       search={false}
+      scroll={{ x: 1000 }}
       columns={[
         { title: 'Parameter Name', dataIndex: 'title' },
         {
