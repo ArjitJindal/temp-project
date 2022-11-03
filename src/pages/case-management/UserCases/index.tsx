@@ -106,6 +106,8 @@ export default function UserCases(props: Props) {
       {
         title: 'User Name',
         width: 150,
+        sorter: true,
+        dataIndex: '_userName',
         render: (_, entity) => {
           const user = entity.user;
 

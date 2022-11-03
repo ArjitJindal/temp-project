@@ -237,6 +237,8 @@ export default function TransactionCases(props: Props) {
             tooltip: 'Origin is the Sender in a transaction',
             width: 220,
             hideInSearch: true,
+            sorter: true,
+            dataIndex: '_originUserName',
             onCell: onTransactionCell,
             render: (dom, entity) => {
               const originUser = entity.transaction?.originUser;
@@ -333,6 +335,8 @@ export default function TransactionCases(props: Props) {
             tooltip: 'Destination is the Receiver in a transaction',
             width: 180,
             hideInSearch: true,
+            sorter: true,
+            dataIndex: '_destinationUserName',
             onCell: onTransactionCell,
             render: (dom, entity) => {
               const destinationUser = entity.transaction?.destinationUser;
