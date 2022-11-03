@@ -20,6 +20,7 @@ import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { TableColumn, TableRow } from '@/components/ui/Table/types';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 
 const BusinessUsersTab = () => {
   const api = useApi();
@@ -62,6 +63,24 @@ const BusinessUsersTab = () => {
         search={{
           labelWidth: 120,
         }}
+        actionsHeader={[
+          ({ params, setParams }) => {
+            return (
+              <UserSearchButton
+                initialMode={'ALL'}
+                userId={params.userId ?? null}
+                showOriginAndDestination={false}
+                onConfirm={(userId, mode) => {
+                  setParams((state) => ({
+                    ...state,
+                    userId: userId ?? undefined,
+                    userFilterMode: mode ?? undefined,
+                  }));
+                }}
+              />
+            );
+          },
+        ]}
         className={styles.table}
         scroll={{ x: 1300 }}
         request={request}
@@ -129,6 +148,24 @@ const ConsumerUsersTab = () => {
         search={{
           labelWidth: 120,
         }}
+        actionsHeader={[
+          ({ params, setParams }) => {
+            return (
+              <UserSearchButton
+                initialMode={'ALL'}
+                userId={params.userId ?? null}
+                showOriginAndDestination={false}
+                onConfirm={(userId, mode) => {
+                  setParams((state) => ({
+                    ...state,
+                    userId: userId ?? undefined,
+                    userFilterMode: mode ?? undefined,
+                  }));
+                }}
+              />
+            );
+          },
+        ]}
         className={styles.table}
         scroll={{ x: 500 }}
         request={request}

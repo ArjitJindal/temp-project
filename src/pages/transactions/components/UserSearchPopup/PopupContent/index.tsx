@@ -16,10 +16,17 @@ interface Props {
   isVisible: boolean;
   onConfirm: (user: User, mode: Mode | null) => void;
   onCancel: () => void;
+  showOriginAndDestination: boolean;
 }
 
 export default function PopupContent(props: Props) {
-  const { isVisible, initialSearch, initialMode, onConfirm } = props;
+  const {
+    isVisible,
+    initialSearch,
+    initialMode,
+    onConfirm,
+    showOriginAndDestination = true,
+  } = props;
 
   const [search, setSearch] = useState(initialSearch);
   const [mode, setMode] = useState<Mode | null>(initialMode ?? null);
@@ -74,8 +81,12 @@ export default function PopupContent(props: Props) {
             value={mode}
           >
             <Radio value={'ALL'}>All users</Radio>
-            <Radio value={'ORIGIN'}>Origin (Sender)</Radio>
-            <Radio value={'DESTINATION'}>Destination (Receiver)</Radio>
+            {showOriginAndDestination && (
+              <>
+                <Radio value={'ORIGIN'}>Origin (Sender)</Radio>
+                <Radio value={'DESTINATION'}>Destination (Receiver)</Radio>
+              </>
+            )}
           </Radio.Group>
         )}
       </div>

@@ -13,10 +13,11 @@ interface Props {
   userId: string | null;
   initialMode?: Mode;
   onConfirm: (userId: string | null, mode: Mode | null) => void;
+  showOriginAndDestination?: boolean;
 }
 
 export default function UserSearchButton(props: Props) {
-  const { initialMode, userId, onConfirm } = props;
+  const { initialMode, userId, onConfirm, showOriginAndDestination = true } = props;
   const [userRest, setUserRest] = useState<
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
@@ -65,6 +66,7 @@ export default function UserSearchButton(props: Props) {
         setUserRest(success(user));
         onConfirm(user?.userId ?? null, mode ?? null);
       }}
+      showOriginAndDestination={showOriginAndDestination}
     >
       <ActionButton
         color="GREEN"

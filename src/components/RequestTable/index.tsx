@@ -42,6 +42,7 @@ type ParamsState<Params extends object> = {
   pageSize: number;
   params: Params;
   sort: Record<string, SortOrder>;
+  userId?: string;
 };
 
 type PickedUpProps<T extends object, Params, ValueType> = Pick<
@@ -143,7 +144,12 @@ export const RequestTable = <
     if (request != null) {
       setResponseData((state) => makeLoading(getOr(state, null)));
       request(
-        { ...paramsState.params, current: paramsState.page, pageSize: paramsState.pageSize },
+        {
+          ...paramsState.params,
+          ...paramsState,
+          current: paramsState.page,
+          pageSize: paramsState.pageSize,
+        },
         paramsState.sort,
         {},
       )
@@ -237,6 +243,7 @@ export const RequestTable = <
         const { page, pageSize, sort, ...params } = paramsState;
         setParamsState((state) => ({
           ...state,
+          ...paramsState,
           params: params as Params,
           page,
           pageSize,

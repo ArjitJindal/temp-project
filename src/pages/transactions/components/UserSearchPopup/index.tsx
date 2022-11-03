@@ -11,6 +11,7 @@ interface Props {
   initialSearch: string | null;
   initialMode?: Mode | null;
   onConfirm: (user: User, mode: Mode | null) => void;
+  showOriginAndDestination?: boolean;
 }
 
 export default function UserSearchPopup(props: Props) {
@@ -20,6 +21,7 @@ export default function UserSearchPopup(props: Props) {
     initialMode = null,
     placement = 'bottomLeft',
     onConfirm,
+    showOriginAndDestination = true,
   } = props;
   const [visible, setVisible] = useState(false);
 
@@ -33,6 +35,7 @@ export default function UserSearchPopup(props: Props) {
           initialMode={initialMode}
           isVisible={visible}
           key={`${visible}`}
+          showOriginAndDestination={showOriginAndDestination}
           onConfirm={(user, mode) => {
             onConfirm(user, mode);
             setVisible(false);
