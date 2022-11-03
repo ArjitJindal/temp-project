@@ -12,11 +12,13 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
+  PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import dayjs from '@/utils/dayjs'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type TransactionsVelocityRuleParameters = {
   transactionsLimit: number
@@ -28,6 +30,7 @@ export type TransactionsVelocityRuleParameters = {
   // Optional parameters
   userIdsToCheck?: string[] // If empty, all users will be checked
   onlyCheckKnownUsers?: boolean
+  paymentChannel?: string
 }
 
 export default class TransactionsVelocityRule extends TransactionRule<
@@ -55,6 +58,7 @@ export default class TransactionsVelocityRule extends TransactionRule<
           title: 'Only check transactions from known users (with user ID)',
           nullable: true,
         },
+        paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },
       required: ['transactionsLimit', 'timeWindow'],
     }
@@ -68,13 +72,17 @@ export default class TransactionsVelocityRule extends TransactionRule<
       checkReceiver,
       onlyCheckKnownUsers,
       userIdsToCheck,
+      paymentChannel,
     } = this.parameters
 
     if (
-      this.senderUser &&
-      userIdsToCheck &&
-      userIdsToCheck.length > 0 &&
-      !userIdsToCheck?.includes(this.senderUser.userId)
+      (this.senderUser &&
+        userIdsToCheck &&
+        userIdsToCheck.length > 0 &&
+        !userIdsToCheck?.includes(this.senderUser.userId)) ||
+      (paymentChannel &&
+        (this.transaction.originPaymentDetails as CardDetails)
+          .paymentChannel !== paymentChannel)
     ) {
       return
     }

@@ -1,14 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import { TRANSACTION_AMOUNT_RANGE_SCHEMA } from '../utils/rule-parameter-schemas'
+import {
+  TRANSACTION_AMOUNT_RANGE_SCHEMA,
+  PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
-
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 export type LowValueTransactionsRuleParameters = {
   lowTransactionValues: {
     [currency: string]: {
@@ -17,6 +20,7 @@ export type LowValueTransactionsRuleParameters = {
     }
   }
   lowTransactionCount: number
+  paymentChannel?: string
 }
 
 export default class LowValueTransactionsRule extends TransactionRule<
@@ -34,6 +38,7 @@ export default class LowValueTransactionsRule extends TransactionRule<
           type: 'integer',
           title: 'Low-value Transactions Count Threshold',
         },
+        paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },
       required: ['lowTransactionValues', 'lowTransactionCount'],
     }
@@ -65,7 +70,15 @@ export default class LowValueTransactionsRule extends TransactionRule<
   }
 
   public async computeRule() {
-    const { lowTransactionCount, lowTransactionValues } = this.parameters
+    const { lowTransactionCount, lowTransactionValues, paymentChannel } =
+      this.parameters
+    if (
+      paymentChannel &&
+      (this.transaction.originPaymentDetails as CardDetails).paymentChannel !==
+        paymentChannel
+    ) {
+      return
+    }
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })

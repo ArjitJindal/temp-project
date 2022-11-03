@@ -215,3 +215,115 @@ describe('Core logic', () => {
     )
   })
 })
+
+describe('Optional parameters - Payment Channel', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-amount',
+      defaultParameters: {
+        transactionAmountThreshold: { EUR: 1000 },
+        paymentChannel: 'ATM',
+      } as TransactionAmountRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Transaction amount above threshold with same paymentchannel - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+    {
+      name: 'Transaction amount above threshold with different paymentchannel - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'GOOGLE_PAY',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'Transaction amount below threshold with same paymentchannel - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'Transaction amount below threshold with different paymentchannel - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'GOOGLE_PAY',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+    {
+      name: 'Transaction amount above threshold with different paymentchannel and different payment method - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '2',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+      ],
+      expectedHits: [false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

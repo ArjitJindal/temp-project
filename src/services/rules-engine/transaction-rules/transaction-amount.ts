@@ -1,13 +1,18 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
-import { TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA } from '../utils/rule-parameter-schemas'
+import {
+  TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
+  PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
     [currency: string]: number
   }
+  paymentChannel?: string
 }
 
 export default class TransactionAmountRule extends TransactionRule<TransactionAmountRuleParameters> {
@@ -16,13 +21,21 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
       type: 'object',
       properties: {
         transactionAmountThreshold: TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA(),
+        paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },
       required: ['transactionAmountThreshold'],
     }
   }
 
   public async computeRule() {
-    const { transactionAmountThreshold } = this.parameters
+    const { transactionAmountThreshold, paymentChannel } = this.parameters
+    if (
+      paymentChannel &&
+      (this.transaction.originPaymentDetails as CardDetails).paymentChannel !==
+        paymentChannel
+    ) {
+      return
+    }
 
     const thresholdHit = await checkTransactionAmountBetweenThreshold(
       this.transaction.originAmountDetails,

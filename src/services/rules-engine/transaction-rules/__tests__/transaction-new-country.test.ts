@@ -331,3 +331,152 @@ describe.each<TransactionRuleTestCase>([
     expectedHits
   )
 })
+
+describe('Optional parameters - Payment Channel', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transaction-new-country',
+      defaultParameters: {
+        initialTransactions: 2,
+        paymentChannel: 'ATM',
+      } as TransactionNewCountryRuleParameters,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'country transaction with same user and same payment channel- hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'GB',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'AF',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+    {
+      name: 'country transaction with same user and different payment channel- hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'GB',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'AF',
+            transactionAmount: 800,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

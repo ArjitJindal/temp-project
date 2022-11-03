@@ -1,10 +1,15 @@
 import { JSONSchemaType } from 'ajv'
 import { AggregationRepository } from '../repositories/aggregation-repository'
-import { INITIAL_TRANSACTIONS_SCHEMA } from '../utils/rule-parameter-schemas'
+import {
+  INITIAL_TRANSACTIONS_SCHEMA,
+  PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
+} from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type TransactionNewCountryRuleParameters = {
   initialTransactions: number
+  paymentChannel?: string
 }
 
 export default class TransactionNewCountryRule extends TransactionRule<TransactionNewCountryRuleParameters> {
@@ -13,7 +18,9 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
       type: 'object',
       properties: {
         initialTransactions: INITIAL_TRANSACTIONS_SCHEMA(),
+        paymentChannel: PAYMENT_CHANNEL_OPTIONAL_SCHEMA(),
       },
+
       required: ['initialTransactions'],
     }
   }
@@ -64,6 +71,14 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
   }
 
   public async computeRule() {
+    const { paymentChannel } = this.parameters
+    if (
+      paymentChannel &&
+      (this.transaction.originPaymentDetails as CardDetails).paymentChannel !==
+        paymentChannel
+    ) {
+      return
+    }
     const { hitReceiver, hitSender } = await this.computeHits()
     if (hitReceiver || hitSender) {
       let direction: 'origin' | 'destination' | null = null

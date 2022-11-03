@@ -694,3 +694,103 @@ describe('Anonymous sender/receiver', () => {
     )
   })
 })
+
+describe('Optional parameters - Payment Channel', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-velocity',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 5,
+          granularity: 'second',
+        },
+        paymentChannel: 'ATM',
+        checkSender: 'all',
+        checkReceiver: 'all',
+      } as TransactionsVelocityRuleParameters,
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'Too frequent sending transactions with same payment channel- hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true],
+    },
+    {
+      name: 'Too frequent sending transactions with different payment channel - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+          timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-3',
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-4',
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

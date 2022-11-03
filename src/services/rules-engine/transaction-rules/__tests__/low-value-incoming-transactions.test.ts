@@ -115,3 +115,121 @@ describe.each<TransactionRuleTestCase>([
     expectedHits
   )
 })
+
+describe('Optional parameters - Payment Channel', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'low-value-incoming-transactions',
+      defaultParameters: {
+        lowTransactionValues: {
+          EUR: {
+            min: 2,
+            max: 10,
+          },
+        },
+        lowTransactionCount: 2,
+        paymentChannel: 'ATM',
+      },
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'With same paymentchannel - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 6,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 6,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 7,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 7,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'CARD',
+            paymentChannel: 'ATM',
+          },
+        }),
+      ],
+      expectedHits: [false, true],
+    },
+    {
+      name: 'With different paymentchannel - not hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 6,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 6,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '1-1',
+          destinationUserId: '1-2',
+          originAmountDetails: {
+            country: 'DE',
+            transactionAmount: 7,
+            transactionCurrency: 'EUR',
+          },
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionAmount: 7,
+            transactionCurrency: 'EUR',
+          },
+          originPaymentDetails: {
+            method: 'WALLET',
+            paymentChannel: 'Random',
+            walletType: 'Checking',
+          },
+        }),
+      ],
+      expectedHits: [false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})

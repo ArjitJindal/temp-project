@@ -170,6 +170,19 @@ export const USER_TYPE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
+export const PAYMENT_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    title: options?.title || 'Payment Channel',
+    description: options?.description,
+  } as const)
+
+export const PAYMENT_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...PAYMENT_CHANNEL_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
