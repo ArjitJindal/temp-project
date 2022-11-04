@@ -582,6 +582,7 @@ export class CdkTarponStack extends cdk.Stack {
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
     })
     tarponDynamoDbTable.grantReadWriteData(userAlias)
+    hammerheadDynamoDbTable.grantReadWriteData(userAlias)
 
     /* List Importer */
     const { alias: listsAlias } = this.createFunction({
@@ -790,6 +791,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
     tarponRuleDynamoDbTable.grantReadData(
       tarponChangeCaptureKinesisConsumerRetryAlias
+    )
+    hammerheadDynamoDbTable.grantReadWriteData(
+      tarponChangeCaptureKinesisConsumerAlias
     )
 
     // Webhook handler
