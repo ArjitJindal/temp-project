@@ -79,3 +79,15 @@ To deploy to your stack for dev:
 ```bash
 GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
 ```
+
+## Integration Tests
+
+In order for integration tests to work, you need to have a cypress env file: `cypress.env.json` with the username and password of the integration test account. You can find this in 1Password shared workspace under `Cypress Test User`.
+
+### Visual Testing
+
+For running integs locally, install Cypress and run `npm run cypress:open`. This will open the Cypress window, choose your browser engine and manually run the test.
+
+### Test in Command line
+
+For testing in command line itself, run: `npm run cypress:test:dev`.

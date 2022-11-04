@@ -53,7 +53,7 @@ export default function PageWrapper(props: Props) {
       {(title || description || backButton) && (
         <header className={s.head}>
           {title && (
-            <Typography.Title level={2} className={s.title}>
+            <Typography.Title id={title} level={2} className={s.title}>
               {title}
             </Typography.Title>
           )}

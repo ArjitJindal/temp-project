@@ -15,6 +15,14 @@ Cypress.Commands.add('loginByForm', (username: string, password: string) => {
   );
 });
 
+Cypress.on('uncaught:exception', (err) => {
+  if (err.message.includes('ResizeObserver loop limit exceeded')) {
+    console.error('Cypress caught "> ResizeObserver loop limit exceeded", continuing tests', err);
+    return false; // test continues
+  }
+  return true; // test fails
+});
+
 Cypress.Commands.add('loginByRequest', (username: string, password: string) => {
   const scope = 'openid profile email offline_access';
   const client_id = Cypress.env('auth0_client_id');
