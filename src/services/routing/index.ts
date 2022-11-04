@@ -157,7 +157,7 @@ export function useRoutes(): RouteItem[] {
             redirect:
               lastActiveRuleTab === 'my-rules'
                 ? '/rules/my-rules'
-                : lastActiveRuleTab === 'create-rule'
+                : lastActiveRuleTab === 'rules-library'
                 ? '/rules/create-rule'
                 : '/rules/request-new',
           },

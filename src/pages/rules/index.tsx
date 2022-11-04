@@ -9,7 +9,7 @@ import PageWrapper from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 
 const TableList = () => {
-  const { rule = 'create-rule' } = useParams<'rule'>();
+  const { rule = 'rules-library' } = useParams<'rule'>();
   const navigate = useNavigate();
   const [, setLocalStorageActiveTab] = useLocalStorageState('rule-active-tab', rule);
   useEffect(() => {
@@ -23,7 +23,7 @@ const TableList = () => {
           navigate(`/rules/${key}`, { replace: true });
         }}
       >
-        <Tabs.TabPane tab="Create Rule" key="create-rule">
+        <Tabs.TabPane tab="Rules Library" key="rules-library">
           <StepForm />
         </Tabs.TabPane>
         <Tabs.TabPane tab="My Rules" key="my-rules">
