@@ -186,7 +186,7 @@ describe('Verify list repository', () => {
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const { listId } = await listRepo.createList(LIST_TYPE)
-    const items = [...new Array(1000)].map((_, i) => ({
+    const items = [...new Array(100)].map((_, i) => ({
       key: i.toString(),
       metadata: { f1: Math.round(Math.cos(i) * Number.MAX_SAFE_INTEGER) },
     }))

@@ -99,6 +99,15 @@ To deploy to your stack for dev:
 GITHUB_USER=<username> S_NO=<1/2/3> npm run deploy:dev:user:clean
 ```
 
+_NOTE_: If it's your first time deploying to your own dev stack. Please follow the instructions below
+
+1. Run `aws configure sso`
+2. SSO start URL [None]: `https://d-9a6713bec9.awsapps.com/start#/`
+3. SSO Region [None]: leave it empty
+4. Select account: `DevsAtFlagright`
+5. Select role: `AWSAdministratorAccess`
+6. Press enter till the end
+
 ### TenantID when running API Locally
 
 - When running the Public API locally (and testing through Postman), tarpon does not check the x-api-key to fetch the tenant ID. You need to set the tenant ID using the request header with key: `tenant-id` and value to the local tenant (`flagright`).

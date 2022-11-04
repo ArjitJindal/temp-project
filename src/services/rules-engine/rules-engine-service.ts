@@ -43,6 +43,7 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
+import { addNewSubsegment } from '@/core/xray'
 
 const RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD = 3000
 
@@ -112,6 +113,10 @@ export class RulesEngineService {
     const { executedRules, hitRules } = await this.verifyTransactionIdempotent(
       transaction
     )
+    const saveTransactionSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Save Transaction/Event'
+    )
     const initialTransactionState = transaction.transactionState || 'CREATED'
     const savedTransaction = await this.transactionRepository.saveTransaction(
       {
@@ -136,6 +141,7 @@ export class RulesEngineService {
         hitRules,
       }
     )
+    saveTransactionSegment?.close()
 
     await this.updateAggregation(savedTransaction)
 
@@ -169,6 +175,10 @@ export class RulesEngineService {
       updatedTransaction
     )
 
+    const saveTransactionSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Save Transaction/Event'
+    )
     const eventId = await this.transactionEventRepository.saveTransactionEvent(
       transactionEvent,
       {
@@ -176,12 +186,12 @@ export class RulesEngineService {
         hitRules,
       }
     )
-
     // Update transaction with the latest payload
     await this.transactionRepository.saveTransaction(updatedTransaction, {
       executedRules,
       hitRules,
     })
+    saveTransactionSegment?.close()
 
     // For duplicated transaction events with the same state, we don't re-aggregated
     // but this won't prevent re-aggregation if we have the states like [CREATED, APPROVED, CREATED]
@@ -242,6 +252,10 @@ export class RulesEngineService {
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesResult[]
   }> {
+    const getInitialDataSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Get Initial Data'
+    )
     const [senderUser, receiverUser, ruleInstances] = await Promise.all([
       transaction.originUserId
         ? this.userRepository.getUser<User | Business>(transaction.originUserId)
@@ -253,8 +267,6 @@ export class RulesEngineService {
         : undefined,
       this.ruleInstanceRepository.getActiveRuleInstances('TRANSACTION'),
     ])
-    logger.info(`Running rules`)
-
     const rulesById = _.keyBy(
       await this.ruleRepository.getRulesByIds(
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId)
@@ -262,6 +274,10 @@ export class RulesEngineService {
       'id'
     )
     const userRiskLevel = await this.getUserRiskLevel(senderUser)
+    getInitialDataSegment?.close()
+
+    const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
+    logger.info(`Running rules`)
     const ruleResults = (
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
@@ -274,7 +290,12 @@ export class RulesEngineService {
         )
       )
     ).filter(Boolean) as ExecutedRulesResult[]
+    runRulesSegment?.close()
 
+    const updateStatsSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Update Rules Stats'
+    )
     // Update rule execution stats
     const hitRuleInstanceIds = ruleResults
       .filter((ruleResult) => ruleResult.ruleHit)
@@ -283,6 +304,7 @@ export class RulesEngineService {
       ruleInstances.map((ruleInstance) => ruleInstance.id as string),
       hitRuleInstanceIds
     )
+    updateStatsSegment?.close()
 
     const executedRules = ruleResults
       .filter((result) => result.ruleAction)
@@ -354,14 +376,36 @@ export class RulesEngineService {
           this.dynamoDb
         )
 
+        const segmentNamespace = `Rules Engine, ${ruleInstance.ruleId} (${ruleInstance.id})`
+        let filterSegment = undefined
+        if (!_.isEmpty(ruleInstance.filters)) {
+          filterSegment = await addNewSubsegment(
+            segmentNamespace,
+            'Rule Filtering'
+          )
+        }
         const shouldCompute = await this.computeRuleFilters(
           ruleInstance.filters,
           data
         )
+        if (!_.isEmpty(ruleInstance.filters)) {
+          filterSegment?.close()
+        }
 
+        let runSegment = undefined
+        if (shouldCompute) {
+          runSegment = await addNewSubsegment(
+            segmentNamespace,
+            'Rule Execution'
+          )
+        }
         const ruleResult = shouldCompute
           ? await ruleClassInstance.computeRule()
           : null
+        if (shouldCompute) {
+          runSegment?.close()
+        }
+
         const ruleHit = !_.isNil(ruleResult)
 
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
@@ -498,6 +542,10 @@ export class RulesEngineService {
   }
 
   private async updateAggregation(transaction: Transaction) {
+    const updateAggregationsSegment = await addNewSubsegment(
+      'Rules Engine',
+      'Update Aggregations'
+    )
     logger.info(`Updating Aggregations`)
     await Promise.all(
       Aggregators.map(async (Aggregator) => {
@@ -519,5 +567,6 @@ export class RulesEngineService {
       })
     )
     logger.info(`Updated Aggregations`)
+    updateAggregationsSegment?.close()
   }
 }

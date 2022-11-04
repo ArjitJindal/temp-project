@@ -1,3 +1,6 @@
+import { initTracing } from '../xray'
+initTracing()
+
 import { compose } from './compose'
 import { contextProvider } from './context-provider'
 import { featureProtected } from './feature-protected'

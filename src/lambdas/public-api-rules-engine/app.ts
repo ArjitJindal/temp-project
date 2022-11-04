@@ -19,6 +19,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
+import { addNewSubsegment } from '@/core/xray'
 
 type MissingUserIdMap = { field: string; userId: string }
 
@@ -124,6 +125,7 @@ export const transactionHandler = lambdaApi()(
     const transactionId = event.pathParameters?.transactionId
 
     if (event.httpMethod === 'POST' && event.body) {
+      const validationSegment = await addNewSubsegment('API', 'Validation')
       const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
       updateLogMetadata({ transactionId: getNewTransactionID(transaction) })
@@ -155,6 +157,7 @@ export const transactionHandler = lambdaApi()(
       }
 
       logger.info(`Verifying transaction`)
+      validationSegment?.close()
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
       const result = await rulesEngine.verifyTransaction(transaction)
       logger.info(`Completed processing transaction`)

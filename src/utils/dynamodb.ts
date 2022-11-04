@@ -29,6 +29,8 @@ import {
   DYNAMODB_WRITE_CAPACITY_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
+import { addNewSubsegment } from '@/core/xray'
+import { getContext } from '@/core/utils/context'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -202,6 +204,15 @@ export async function paginateQuery(
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   options?: { skip?: number; limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
+  const segmentNamespaceSuffix = getContext()?.metricDimensions?.ruleId
+    ? ` , ${getContext()?.metricDimensions?.ruleId} (${
+        getContext()?.metricDimensions?.ruleInstanceId
+      })`
+    : ''
+  const paginateQuerySegment = await addNewSubsegment(
+    `DynamoDB${segmentNamespaceSuffix}`,
+    'Paginate Query'
+  )
   let newQuery = query
   if (options?.skip) {
     const skipQuery: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -220,10 +231,12 @@ export async function paginateQuery(
       Limit: options?.limit,
     }
   }
-  return paginateQueryInternal(dynamoDb, newQuery, 0, {
+  const result = await paginateQueryInternal(dynamoDb, newQuery, 0, {
     limit: options?.limit,
     pagesLimit: options?.pagesLimit,
   })
+  paginateQuerySegment?.close()
+  return result
 }
 
 async function paginateQueryInternal(
