@@ -69,6 +69,7 @@ import {
   createLambdaThrottlingAlarm,
   createLambdaDurationAlarm,
   createLambdaConsumerIteratorAgeAlarm,
+  createLambdaMemoryUtilizationAlarm,
 } from './cdk-cw-alarms'
 import { LAMBDAS } from './lambdas'
 import {
@@ -1109,6 +1110,11 @@ export class CdkTarponStack extends cdk.Stack {
       name
     )
     createLambdaThrottlingAlarm(this, this.betterUptimeCloudWatchTopic, name)
+    createLambdaMemoryUtilizationAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      name
+    )
 
     // Alias is required for setting provisioned concurrency. We always create
     // an alias for a lambda even it has no provisioned concurrency.

@@ -390,3 +390,38 @@ export const createLambdaThrottlingAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+
+export const createLambdaMemoryUtilizationAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  lambdaName: string
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${lambdaName}MemoryUtilization`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: 90,
+    evaluationPeriods: 3,
+    datapointsToAlarm: 3,
+    alarmName: `Lambda-${lambdaName}MemoryUtilization`,
+    alarmDescription: `Covers memory utilization percentage in ${lambdaName} in the AWS account. 
+    Alarm triggers when memory utilization percentage exceedes 90% for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    metric: new MathExpression({
+      expression: 'm1',
+      usingMetrics: {
+        m1: new Metric({
+          label: 'Lambda memory utilization %',
+          namespace: 'LambdaInsights',
+          metricName: 'memory_utilization',
+          dimensionsMap: {
+            FunctionName: lambdaName,
+          },
+        }).with({
+          period: Duration.seconds(300),
+          statistic: 'Maximum',
+        }),
+      },
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}
