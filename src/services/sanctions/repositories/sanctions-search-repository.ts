@@ -21,7 +21,6 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
-    console.log(SANCTIONS_SEARCHES_COLLECTION(this.tenantId))
     await collection.insertOne({
       _id: request._id as any,
       request,

@@ -5,10 +5,12 @@ import {
 import { APIGateway } from 'aws-sdk'
 import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { logger } from '@/core/logger'
 
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
+  AUDITLOG_COLLECTION,
   CASES_COLLECTION,
   getMongoDbClient,
   TRANSACTIONS_COLLECTION,
@@ -198,6 +200,18 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({
       'caseTransactions.originPaymentDetails.method': 1,
     })
+
+    try {
+      await db.createCollection(AUDITLOG_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const auditlogCollection = db.collection<AuditLog>(
+      AUDITLOG_COLLECTION(tenantId)
+    )
+    await auditlogCollection.createIndex({ auditlogId: 1 })
+    await auditlogCollection.createIndex({ timestamp: -1 })
+    await auditlogCollection.createIndex({ type: 1, action: 1 })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)
   }

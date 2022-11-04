@@ -3639,6 +3639,47 @@ components:
       required:
         - transactionState
         - tagsKey
+    AuditLog:
+      title: AuditLog
+      x-stoplight:
+        id: 9g0tn4wlwv7rs
+      type: object
+      properties:
+        auditlogId:
+          type: string
+        type:
+          type: string
+          enum:
+            - RULE
+            - ACCOUNT
+            - CASE
+            - USER
+            - PULSE
+        action:
+          type: string
+          enum:
+            - CREATE
+            - DELETE
+            - DEACTIVATE
+            - VIEW
+            - DOWNLOAD
+            - CALCULATE
+            - UPDATE
+        timestamp:
+          type: number
+        entityId:
+          type: string
+        oldImage:
+          type: object
+        newImage:
+          type: object
+        logMetadata:
+          type: object
+        user:
+          $ref: '#/components/schemas/Account'
+      required:
+        - type
+        - action
   securitySchemes:
     Authorization:
       type: http

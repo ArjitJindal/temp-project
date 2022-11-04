@@ -49,6 +49,7 @@ import {
 import { LogGroup } from 'aws-cdk-lib/aws-logs'
 
 import _ from 'lodash'
+import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
   getNameForGlobalResource,
   getResourceName,
@@ -78,6 +79,9 @@ import { TransactionViewConfig } from '@/lambdas/console-api-transaction/app'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
 
 const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
+const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
+  DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
+)
 
 type InternalFunctionProps = {
   name: string
@@ -89,6 +93,8 @@ export class CdkTarponStack extends cdk.Stack {
   config: Config
   cwInsightsLayer: LayerVersion
   betterUptimeCloudWatchTopic: Topic
+  auditLogTopic: Topic
+
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, {
       env: config.env,
@@ -130,9 +136,7 @@ export class CdkTarponStack extends cdk.Stack {
       this,
       StackConstants.SLACK_ALERT_QUEUE_NAME,
       {
-        visibilityTimeout: Duration.seconds(
-          DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
-        ),
+        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
       }
     )
 
@@ -157,6 +161,23 @@ export class CdkTarponStack extends cdk.Stack {
         },
       }
     )
+
+    this.auditLogTopic = new Topic(this, StackConstants.AUDIT_LOG_TOPIC_NAME, {
+      displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
+      topicName: StackConstants.AUDIT_LOG_TOPIC_NAME,
+    })
+    const auditLogDeadLetterQueue = new Queue(
+      this,
+      StackConstants.AUDIT_LOG_DLQ_NAME
+    )
+    const auditLogQueue = new Queue(this, StackConstants.AUDIT_LOG_QUEUE_NAME, {
+      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+      deadLetterQueue: {
+        queue: auditLogDeadLetterQueue,
+        maxReceiveCount: 3,
+      },
+    })
+    this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
 
     /*
      * Kinesis Data Streams
@@ -630,6 +651,7 @@ export class CdkTarponStack extends cdk.Stack {
       new SqsEventSource(slackAlertQueue, { batchSize: 1 })
     )
 
+    /* Webhook */
     const { alias: webhookDelivererAlias } = this.createFunction(
       {
         name: StackConstants.WEBHOOK_DELIVERER_FUNCTION_NAME,
@@ -659,6 +681,17 @@ export class CdkTarponStack extends cdk.Stack {
       'webhooks',
       'READ_WRITE'
     )
+
+    /* Audit Log */
+    const { alias: auditLogConsumerAlias } = this.createFunction(
+      {
+        name: StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+    this.grantMongoDbAccess(auditLogConsumerAlias)
+    auditLogQueue.grantConsumeMessages(auditLogConsumerAlias)
+    auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
 
     /*
      * Hammerhead console functions
@@ -1058,6 +1091,7 @@ export class CdkTarponStack extends cdk.Stack {
               {}
             ),
           },
+          AUDITLOG_TOPIC_ARN: this.auditLogTopic?.topicArn,
         },
       },
     })
@@ -1092,6 +1126,7 @@ export class CdkTarponStack extends cdk.Stack {
       )
     )
     Metric.grantPutMetricData(alias)
+    this.auditLogTopic?.grantPublish(alias)
     return { alias, func }
   }
 

@@ -148,4 +148,8 @@ export const LAMBDAS: {
     codePath: 'hammerhead-change-capture-kinesis-consumer',
     handlerName: 'hammerheadChangeCaptureHandler',
   },
+  [StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'audit-log-consumer',
+    handlerName: 'auditLogConsumerHandler',
+  },
 }

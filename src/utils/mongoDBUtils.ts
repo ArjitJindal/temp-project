@@ -155,6 +155,10 @@ export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-searches`
 }
 
+export const AUDITLOG_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-auditlog`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 export const MONTH_DATE_FORMAT = '%Y-%m'

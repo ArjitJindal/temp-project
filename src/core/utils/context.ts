@@ -10,6 +10,9 @@ import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { Account } from '@/@types/openapi-internal/Account'
+import { JWTAuthorizerResult } from '@/@types/jwt'
+import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 
 type LogMetaData = {
   tenantId?: string
@@ -19,19 +22,27 @@ type Context = LogMetaData & {
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
+  user?: Partial<Account>
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
 
 export async function getInitialContext(
   event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+    APIGatewayEventLambdaAuthorizerContext<
+      AWS.STS.Credentials & JWTAuthorizerResult
+    >
   >,
   lambdaContext: LambdaContext
 ): Promise<Context> {
   try {
     let features = undefined
-    const tenantId = event.requestContext?.authorizer?.principalId
+    const {
+      principalId: tenantId,
+      verifiedEmail,
+      userId,
+      role,
+    } = event.requestContext?.authorizer || {}
     if (tenantId) {
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
@@ -48,6 +59,13 @@ export async function getInitialContext(
         functionName: lambdaContext?.functionName,
       },
       features,
+      user: userId
+        ? {
+            id: userId,
+            email: verifiedEmail,
+            role: role as AccountRole,
+          }
+        : undefined,
     }
     return context
   } catch (e) {

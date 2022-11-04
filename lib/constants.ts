@@ -140,6 +140,12 @@ export const StackConstants = {
   LAMBDA_LATEST_ALIAS_NAME: 'LATEST',
   JWT_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
   API_KEY_AUTHORIZER_CACHE_TTL_SECONDS: 3600,
+  AUDIT_LOG_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'AuditLogConsumerFunction'
+  ),
+  AUDIT_LOG_TOPIC_NAME: getResourceName('AuditLogTopic'),
+  AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
+  AUDIT_LOG_DLQ_NAME: getResourceName('AuditLogDeadLetterQueue'),
   BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME: getResourceName(
     'BetterUptimeCloudWatchTopic'
   ),
