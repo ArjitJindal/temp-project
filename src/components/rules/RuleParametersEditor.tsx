@@ -1,17 +1,15 @@
-import { Theme } from '@rjsf/antd';
-import { AjvError, IChangeEvent, withTheme } from '@rjsf/core';
+import { AjvError, IChangeEvent } from '@rjsf/core';
 import { Radio, Tabs, Typography } from 'antd';
 import { Fragment, useCallback, useState } from 'react';
 import _ from 'lodash';
 import { useLocalStorageState } from 'ahooks';
+import { JsonSchemaForm } from '../JsonSchemaForm';
 import { RuleActionTag } from './RuleActionTag';
 import styles from './RuleParametersEditor.module.less';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RiskLevelRuleActions, RuleAction } from '@/apis';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-
-const JSONSchemaForm = withTheme(Theme);
 
 const RISK_LEVELS: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
 
@@ -108,7 +106,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
         <Tabs activeKey={activeTab} type="line" onChange={handleChangeActiveRiskLevel}>
           {RISK_LEVELS.map((riskLevel) => (
             <Tabs.TabPane tab={riskLevelToLabel(riskLevel)} key={riskLevel}>
-              <JSONSchemaForm
+              <JsonSchemaForm
                 schema={getFixedSchema(parametersSchema)}
                 formData={riskLevelParameters?.[riskLevel] || {}}
                 onChange={(event) => handleRiskLevelParametersChange(riskLevel, event)}
@@ -118,12 +116,12 @@ export const RuleParametersEditor: React.FC<Props> = ({
               >
                 {/* Add a dummy fragment for disabling the submit button */}
                 <Fragment />
-              </JSONSchemaForm>
+              </JsonSchemaForm>
             </Tabs.TabPane>
           ))}
         </Tabs>
       ) : (
-        <JSONSchemaForm
+        <JsonSchemaForm
           schema={getFixedSchema(parametersSchema)}
           formData={parameters}
           onChange={handleParametersChange}
@@ -133,7 +131,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
         >
           {/* Add a dummy fragment for disabling the submit button */}
           <Fragment />
-        </JSONSchemaForm>
+        </JsonSchemaForm>
       )}
 
       <div style={{ paddingBottom: 10 }}>
