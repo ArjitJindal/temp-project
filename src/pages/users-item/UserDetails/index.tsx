@@ -4,6 +4,7 @@ import ConsumerUserDetails from './ConsumerUserDetails';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
 import { Small } from '@/components/ui/Typography';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
+import InsightsCard from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
@@ -36,6 +37,7 @@ export default function UserDetails(props: Props) {
       {!hideHistory && (
         <UserTransactionHistoryTable userId={user.userId} collapsedByDefault={false} />
       )}
+      <InsightsCard userId={user.userId} />
     </>
   );
 }
