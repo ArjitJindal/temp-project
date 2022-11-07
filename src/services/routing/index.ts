@@ -28,7 +28,7 @@ export function useRoutes(): RouteItem[] {
   const isListsFeatureEnabled = useFeature('LISTS');
   const isSanctionsEnabled = useFeature('SANCTIONS');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
-  const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'create-rule');
+  const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
 
@@ -158,7 +158,7 @@ export function useRoutes(): RouteItem[] {
               lastActiveRuleTab === 'my-rules'
                 ? '/rules/my-rules'
                 : lastActiveRuleTab === 'rules-library'
-                ? '/rules/create-rule'
+                ? '/rules/rules-library'
                 : '/rules/request-new',
           },
           {

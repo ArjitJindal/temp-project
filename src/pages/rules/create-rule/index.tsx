@@ -37,7 +37,7 @@ const StepForm: React.FC<Record<string, any>> = () => {
   const i18n = useI18n();
   return (
     <PageWrapper
-      title={i18n('menu.rules.create-rule')}
+      title={i18n('menu.rules.rules-library')}
       description="Create a transaction monitoring rule with a straight-forward 3 step process"
     >
       <Card bordered={false}>
