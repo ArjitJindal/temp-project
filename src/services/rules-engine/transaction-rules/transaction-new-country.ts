@@ -5,11 +5,14 @@ import {
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
-import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import {
+  CardDetails,
+  CardDetailsPaymentChannelEnum,
+} from '@/@types/openapi-public/CardDetails'
 
 export type TransactionNewCountryRuleParameters = {
   initialTransactions: number
-  paymentChannel?: string
+  paymentChannel?: CardDetailsPaymentChannelEnum
 }
 
 export default class TransactionNewCountryRule extends TransactionRule<TransactionNewCountryRuleParameters> {

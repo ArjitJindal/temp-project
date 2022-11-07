@@ -173,6 +173,7 @@ export const USER_TYPE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const PAYMENT_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
+    enum: ['GOOGLE_PAY', 'APPLE_PAY', 'ATM', 'SAMSUNG_PAY'],
     title: options?.title || 'Payment Channel',
     description: options?.description,
   } as const)

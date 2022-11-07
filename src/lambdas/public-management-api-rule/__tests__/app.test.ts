@@ -95,6 +95,7 @@ describe('Public Management API - Rule', () => {
                 type: 'string',
                 title: 'Payment Channel',
                 nullable: true,
+                enum: ['GOOGLE_PAY', 'APPLE_PAY', 'ATM', 'SAMSUNG_PAY'],
               },
             },
             required: ['transactionAmountThreshold'],

@@ -18,7 +18,10 @@ import { TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import dayjs from '@/utils/dayjs'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import {
+  CardDetails,
+  CardDetailsPaymentChannelEnum,
+} from '@/@types/openapi-public/CardDetails'
 
 export type TransactionsVelocityRuleParameters = {
   transactionsLimit: number
@@ -30,7 +33,7 @@ export type TransactionsVelocityRuleParameters = {
   // Optional parameters
   userIdsToCheck?: string[] // If empty, all users will be checked
   onlyCheckKnownUsers?: boolean
-  paymentChannel?: string
+  paymentChannel?: CardDetailsPaymentChannelEnum
 }
 
 export default class TransactionsVelocityRule extends TransactionRule<
