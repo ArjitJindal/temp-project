@@ -376,7 +376,7 @@ export class RulesEngineService {
           this.dynamoDb
         )
 
-        const segmentNamespace = `Rules Engine, ${ruleInstance.ruleId} (${ruleInstance.id})`
+        const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
         let filterSegment = undefined
         if (!_.isEmpty(ruleInstance.filters)) {
           filterSegment = await addNewSubsegment(

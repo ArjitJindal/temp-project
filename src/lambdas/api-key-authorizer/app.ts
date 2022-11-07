@@ -8,6 +8,8 @@ import {
 } from 'aws-lambda'
 import { StackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
+import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
+import { updateLogMetadata } from '@/core/utils/context'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -47,40 +49,45 @@ function getTenantIdFromApiKey(apiKey: string) {
   return base62.decode(apiKey).toString().split('.')[0]
 }
 
-export const apiKeyAuthorizer = async (
-  event: APIGatewayRequestAuthorizerEvent
-): Promise<APIGatewayAuthorizerResult> => {
-  const arn = ARN.parse(event.methodArn)
-  const { apiId, stage, accountId, requestId } = event.requestContext
-  const apiKey = event.headers?.['x-api-key']
-  if (!apiKey) {
-    throw new Error('x-api-key header is missing')
-  }
+export const apiKeyAuthorizer = lambdaAuthorizer()(
+  async (
+    event: APIGatewayRequestAuthorizerEvent
+  ): Promise<APIGatewayAuthorizerResult> => {
+    const arn = ARN.parse(event.methodArn)
+    const { apiId, stage, accountId, requestId } = event.requestContext
+    const apiKey = event.headers?.['x-api-key']
+    if (!apiKey) {
+      throw new Error('x-api-key header is missing')
+    }
+    updateLogMetadata({ apiKeySuffix: apiKey.substring(apiKey.length - 5) })
 
-  const tenantId = getTenantIdFromApiKey(apiKey)
-  const tenantScopeCredentials = await getTenantScopeCredentials(
-    tenantId,
-    accountId,
-    requestId
-  )
+    const tenantId = getTenantIdFromApiKey(apiKey)
+    updateLogMetadata({ tenantId })
 
-  return {
-    principalId: tenantId,
-    policyDocument: {
-      Version: '2012-10-17',
-      Statement: [
-        {
-          Effect: 'Allow',
-          Action: 'execute-api:Invoke',
-          // ARN format: https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
-          Resource: [
-            `arn:aws:execute-api:${arn.region}:${accountId}:${apiId}/${stage}/*/*`,
-          ],
-        },
-      ],
-    },
-    context:
-      tenantScopeCredentials as unknown as APIGatewayAuthorizerResultContext,
-    usageIdentifierKey: apiKey,
+    const tenantScopeCredentials = await getTenantScopeCredentials(
+      tenantId,
+      accountId,
+      requestId
+    )
+
+    return {
+      principalId: tenantId,
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: 'execute-api:Invoke',
+            // ARN format: https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
+            Resource: [
+              `arn:aws:execute-api:${arn.region}:${accountId}:${apiId}/${stage}/*/*`,
+            ],
+          },
+        ],
+      },
+      context:
+        tenantScopeCredentials as unknown as APIGatewayAuthorizerResultContext,
+      usageIdentifierKey: apiKey,
+    }
   }
-}
+)

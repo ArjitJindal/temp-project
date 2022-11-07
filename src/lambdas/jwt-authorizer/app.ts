@@ -11,6 +11,8 @@ import jwksClient from 'jwks-rsa'
 import { StackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
 import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
+import { updateLogMetadata } from '@/core/utils/context'
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
@@ -73,58 +75,64 @@ export const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
   return match[1]
 }
 
-export const jwtAuthorizer = async (
-  event: APIGatewayRequestAuthorizerEvent
-): Promise<APIGatewayAuthorizerResult> => {
-  const arn = ARN.parse(event.methodArn)
-  const { apiId, stage, accountId, requestId } = event.requestContext
-  const token = getToken(event)
-  const decoded = jwt.decode(token, { complete: true })
-  if (!decoded || !decoded.header || !decoded.header.kid) {
-    throw new Error('invalid token')
-  }
-  const key = await jwks.getSigningKey(decoded.header.kid)
-  const signingKey = key.getPublicKey()
-  const verifiedDecoded = jwt.verify(
-    token,
-    signingKey,
-    jwtOptions
-  ) as jwt.JwtPayload
+export const jwtAuthorizer = lambdaAuthorizer()(
+  async (
+    event: APIGatewayRequestAuthorizerEvent
+  ): Promise<APIGatewayAuthorizerResult> => {
+    const arn = ARN.parse(event.methodArn)
+    const { apiId, stage, accountId, requestId } = event.requestContext
+    const token = getToken(event)
+    updateLogMetadata({ jwtToken: token })
 
-  // TODO: Use role
-  const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]
-  const tenantId = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantId`]
-  const tenantName =
-    verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
-  const verifiedEmail =
-    verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
-  const tenantScopeCredentials = await getTenantScopeCredentials(
-    tenantId,
-    accountId,
-    requestId
-  )
+    const decoded = jwt.decode(token, { complete: true })
+    if (!decoded || !decoded.header || !decoded.header.kid) {
+      throw new Error('invalid token')
+    }
+    const key = await jwks.getSigningKey(decoded.header.kid)
+    const signingKey = key.getPublicKey()
+    const verifiedDecoded = jwt.verify(
+      token,
+      signingKey,
+      jwtOptions
+    ) as jwt.JwtPayload
+    updateLogMetadata({ verifiedJwtPayload: verifiedDecoded })
 
-  return {
-    principalId: tenantId,
-    policyDocument: {
-      Version: '2012-10-17',
-      Statement: [
-        {
-          Effect: 'Allow',
-          Action: 'execute-api:Invoke',
-          // ARN format: https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
-          Resource: [
-            `arn:aws:execute-api:${arn.region}:${accountId}:${apiId}/${stage}/*/*`,
-          ],
-        },
-      ],
-    },
-    context: {
-      ...tenantScopeCredentials,
-      userId: verifiedDecoded.sub,
-      role: isValidRole(role) ? role : 'user',
-      verifiedEmail,
-      tenantName,
-    } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
+    // TODO: Use role
+    const role = verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/role`]
+    const tenantId =
+      verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantId`]
+    const tenantName =
+      verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
+    const verifiedEmail =
+      verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
+    const tenantScopeCredentials = await getTenantScopeCredentials(
+      tenantId,
+      accountId,
+      requestId
+    )
+
+    return {
+      principalId: tenantId,
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: 'execute-api:Invoke',
+            // ARN format: https://docs.aws.amazon.com/apigateway/latest/developerguide/arn-format-reference.html
+            Resource: [
+              `arn:aws:execute-api:${arn.region}:${accountId}:${apiId}/${stage}/*/*`,
+            ],
+          },
+        ],
+      },
+      context: {
+        ...tenantScopeCredentials,
+        userId: verifiedDecoded.sub,
+        role: isValidRole(role) ? role : 'user',
+        verifiedEmail,
+        tenantName,
+      } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
+    }
   }
-}
+)

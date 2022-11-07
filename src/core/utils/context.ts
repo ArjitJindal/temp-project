@@ -74,9 +74,7 @@ export async function getInitialContext(
   }
 }
 
-export function updateLogMetadata(addedMetadata: {
-  [key: string]: string | undefined
-}) {
+export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
   const context = asyncLocalStorage.getStore()
   if (context) {
     context.logMetadata = _.omitBy(
