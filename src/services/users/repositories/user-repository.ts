@@ -199,7 +199,7 @@ export class UserRepository {
 
     const users = await collection
       .find(query)
-      .sort({ timestamp: -1 })
+      .sort({ createdTimestamp: -1 })
       .limit(params.limit)
       .skip(params.skip)
       .toArray()
