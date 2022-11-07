@@ -199,6 +199,7 @@ export default function Table<
 
     adjustedColumns.unshift({
       search: false,
+      hideInSetting: true,
       title: (
         <Checkbox
           checked={allSelected}
