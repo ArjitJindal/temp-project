@@ -1,8 +1,10 @@
 import * as Sentry from '@sentry/serverless'
 import { Subsegment } from 'aws-xray-sdk-core'
 
+const xrayDisabled = process.env.ENV === 'local' || !!process.env.MIGRATION_TYPE
+
 export async function initTracing() {
-  if (process.env.ENV === 'local') {
+  if (xrayDisabled) {
     return
   }
   const AWSXRay = await import('aws-xray-sdk-core')
@@ -17,7 +19,7 @@ export async function addNewSubsegment(
   namespace: string,
   segmentName: string
 ): Promise<Subsegment | undefined> {
-  if (process.env.ENV === 'local') {
+  if (xrayDisabled) {
     return
   }
   const AWSXRay = await import('aws-xray-sdk-core')

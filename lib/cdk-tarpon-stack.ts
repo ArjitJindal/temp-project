@@ -1096,6 +1096,7 @@ export class CdkTarponStack extends cdk.Stack {
               {}
             ),
           },
+          AWS_XRAY_CONTEXT_MISSING: 'LOG_ERROR',
           AUDITLOG_TOPIC_ARN: this.auditLogTopic?.topicArn,
         },
       },
