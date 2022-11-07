@@ -409,7 +409,94 @@ export class CaseRepository {
     if (!params.includeTransactions) {
       pipeline.push({ $unset: 'caseTransactions' })
     }
+
+    if (params?.filterCaseType === 'USER' && params.sortField === '_userName') {
+      pipeline.push(
+        ...[
+          {
+            $set: {
+              _userName: {
+                $ifNull: [
+                  {
+                    $ifNull: [
+                      {
+                        $concat: [
+                          '$caseUsers.origin.userDetails.name.firstName',
+                          '$caseUsers.origin.userDetails.name.middleName',
+                          '$caseUsers.origin.userDetails.name.lastName',
+                        ],
+                      },
+                      {
+                        $concat: [
+                          '$caseUsers.destination.userDetails.name.firstName',
+                          '$caseUsers.destination.userDetails.name.middleName',
+                          '$caseUsers.destination.userDetails.name.lastName',
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    $ifNull: [
+                      '$caseUsers.destination.legalEntity.companyGeneralDetails.legalName',
+                      '$caseUsers.origin.legalEntity.companyGeneralDetails.legalName',
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ]
+      )
+    } else if (
+      params?.filterCaseType === 'TRANSACTION' &&
+      (params.sortField === '_originUserName' ||
+        params.sortField === '_destinationUserName')
+    ) {
+      const sortField =
+        params.sortField === '_originUserName' ? 'origin' : 'destination'
+
+      pipeline.push(
+        ...[
+          {
+            $set: {
+              caseTransaction: {
+                $arrayElemAt: ['$caseTransactions', 0],
+              },
+            },
+          },
+          {
+            $set: {
+              caseTransactionCompanyName: `$caseTransaction.${sortField}User.legalEntity.companyGeneralDetails.legalName`,
+              caseTransactionUserName: {
+                $concat: [
+                  `$caseTransaction.${sortField}User.userDetails.name.firstName`,
+                  `$caseTransaction.${sortField}User.userDetails.name.lastName`,
+                ],
+              },
+            },
+          },
+          {
+            $set: {
+              [`_${sortField}UserName`]: {
+                $ifNull: [
+                  '$caseTransactionCompanyName',
+                  '$caseTransactionUserName',
+                ],
+              },
+            },
+          },
+        ]
+      )
+    }
+
     pipeline.push({ $sort: { [sortField]: sortOrder } })
+    pipeline.push({
+      $project: {
+        _originUserName: false,
+        _destinationUserName: false,
+        _userName: false,
+      },
+    })
     return pipeline
   }
 
