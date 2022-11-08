@@ -16,6 +16,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
+import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 export type DataItem = {
   index: number;
@@ -322,6 +323,7 @@ export function Content(props: { userId: string }) {
 interface Props {
   userId: string | undefined;
   collapsedByDefault?: boolean;
+  userTransactionHistoryRef?: React.Ref<ExpandTabRef>;
 }
 
 export default function UserTransactionHistoryTable(props: Props) {
@@ -333,6 +335,7 @@ export default function UserTransactionHistoryTable(props: Props) {
         title: 'Transaction History',
         collapsedByDefault,
       }}
+      ref={props.userTransactionHistoryRef}
     >
       {userId && <Content userId={userId} />}
     </Card.Root>

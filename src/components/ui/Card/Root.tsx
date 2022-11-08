@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import Column from './Column';
@@ -12,7 +12,11 @@ interface Props {
   children: React.ReactNode;
 }
 
-export default function Root(props: Props) {
+interface ExpandCardRef {
+  expand: () => void;
+}
+
+const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
   const { disabled, className, header, children } = props;
   const { collapsable = true, collapsableKey, collapsedByDefault = false } = header ?? {};
 
@@ -20,6 +24,10 @@ export default function Root(props: Props) {
     collapsableKey,
     collapsable && collapsedByDefault,
   );
+
+  useImperativeHandle(ref, () => ({
+    expand: () => setCollapsed(false),
+  }));
 
   return (
     <div className={cn(s.root, className, disabled && s.disabled)}>
@@ -39,4 +47,6 @@ export default function Root(props: Props) {
       </Column>
     </div>
   );
-}
+});
+
+export default Root;

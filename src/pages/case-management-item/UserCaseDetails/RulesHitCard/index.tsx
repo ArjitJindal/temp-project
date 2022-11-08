@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ExpandTabRef } from '../../UserCaseDetails';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
 import * as Card from '@/components/ui/Card';
@@ -29,6 +30,7 @@ export function expandedRowRender(transaction: CaseTransaction) {
 
 interface Props {
   caseItem: Case;
+  reference?: React.Ref<ExpandTabRef>;
 }
 
 export default function RulesHitCard(props: Props) {
@@ -61,6 +63,7 @@ export default function RulesHitCard(props: Props) {
         collapsable: true,
         collapsedByDefault: true,
       }}
+      ref={props.reference}
     >
       <Card.Section>
         <QueryResultsTable<CaseTransaction, CommonParams>

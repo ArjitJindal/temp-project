@@ -8,10 +8,12 @@ import Table from '@/components/ui/Table';
 import * as Card from '@/components/ui/Card';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import KeyValueTag from '@/components/ui/KeyValueTag';
+import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   person: InternalConsumerUser;
   collapsedByDefault?: boolean;
+  legalDocumentsRef?: React.Ref<ExpandTabRef>;
 }
 
 export function LegalDocumentsTable(prop: Props) {
@@ -21,6 +23,7 @@ export function LegalDocumentsTable(prop: Props) {
       header={{
         title: 'Legal Documents',
       }}
+      ref={prop.legalDocumentsRef}
     >
       <div className={s.expandedRow}>
         <Table<LegalDocument & { i: number }>

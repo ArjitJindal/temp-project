@@ -14,6 +14,7 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
+import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -24,6 +25,7 @@ export const FIXED_API_PARAMS = {
 
 interface Props {
   userId: string;
+  reference?: React.Ref<ExpandTabRef>;
 }
 
 export default function InsightsCard(props: Props) {
@@ -43,6 +45,7 @@ export default function InsightsCard(props: Props) {
         title: 'Transaction Insights',
         collapsedByDefault: true,
       }}
+      ref={props.reference}
     >
       <Card.Section className={s.root}>
         <TransactionsSelector

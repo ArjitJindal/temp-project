@@ -1,4 +1,4 @@
-import React from 'react';
+import { forwardRef, Ref, useImperativeHandle, useRef } from 'react';
 import { Alert } from 'antd';
 import TransactionDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard';
 import RulesHitCard from '@/pages/case-management-item/TransactionCaseDetails/RulesHitCard';
@@ -10,13 +10,18 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
+import { ExpandTabsRef } from '@/pages/case-management-item';
 
 interface Props {
   caseItem: Case;
   onCaseUpdate: (caseItem: Case) => void;
 }
 
-export default function TransactionCaseDetails(props: Props) {
+export interface ExpandTabRef {
+  expand: () => void;
+}
+
+function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
   const { caseItem, onCaseUpdate } = props;
   const api = useApi();
 
@@ -29,6 +34,24 @@ export default function TransactionCaseDetails(props: Props) {
       includeUsers: true,
     });
   });
+
+  const transactionDetailsCardRef = useRef<ExpandTabRef>(null);
+  const rulesHitCardRef = useRef<ExpandTabRef>(null);
+  const transactionEventsCardRef = useRef<ExpandTabRef>(null);
+  const originUserDetailsCardRef = useRef<ExpandTabRef>(null);
+  const destinationUserDetailsCardRef = useRef<ExpandTabRef>(null);
+  const commentsCardRef = useRef<ExpandTabRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    expand: () => {
+      transactionDetailsCardRef.current?.expand();
+      rulesHitCardRef.current?.expand();
+      transactionEventsCardRef.current?.expand();
+      originUserDetailsCardRef.current?.expand();
+      destinationUserDetailsCardRef.current?.expand();
+      commentsCardRef.current?.expand();
+    },
+  }));
 
   if (caseItem.caseTransactionsIds && caseItem.caseTransactionsIds?.length > 1) {
     console.warn('Case have more than one transaction, it is not supported for a moment');
@@ -56,15 +79,27 @@ export default function TransactionCaseDetails(props: Props) {
           );
         }
         const [transaction] = caseTransactions.data;
+
         return (
           <>
-            <TransactionDetailsCard transaction={transaction} />
-            <RulesHitCard rulesHit={transaction.hitRules} />
-            <TransactionEventsCard events={transaction.events ?? []} />
-            <UserDetailsCard title="Origin (Sender) User Details" user={transaction.originUser} />
+            <TransactionDetailsCard
+              transaction={transaction}
+              reference={transactionDetailsCardRef}
+            />
+            <RulesHitCard rulesHit={transaction.hitRules} reference={rulesHitCardRef} />
+            <TransactionEventsCard
+              events={transaction.events ?? []}
+              reference={transactionEventsCardRef}
+            />
+            <UserDetailsCard
+              title="Origin (Sender) User Details"
+              user={transaction.originUser}
+              reference={originUserDetailsCardRef}
+            />
             <UserDetailsCard
               title="Destination (Receiver) User Details"
               user={transaction.destinationUser}
+              reference={destinationUserDetailsCardRef}
             />
             <CommentsCard
               caseId={caseItem.caseId}
@@ -72,6 +107,7 @@ export default function TransactionCaseDetails(props: Props) {
               onCommentsUpdate={(newComments) => {
                 onCaseUpdate({ ...caseItem, comments: newComments });
               }}
+              reference={commentsCardRef}
             />
           </>
         );
@@ -79,3 +115,5 @@ export default function TransactionCaseDetails(props: Props) {
     </AsyncResourceRenderer>
   );
 }
+
+export default forwardRef(TransactionCaseDetails);

@@ -13,6 +13,7 @@ interface MainPallete {
   brandBlue: ColorSet;
   turquoise: ColorSet;
   purpleGray: ColorSet;
+  lightBlue: ColorSet;
   leafGreen: ColorSet;
   red: ColorSet;
   orange: ColorSet;
@@ -34,6 +35,7 @@ const MAIN_PALLETE: MainPallete = {
   yellow: { base: '#f5e25a', tint: '#fcf9e3', shade: '#b2a542' }, // Graphs,Primary
   skyBlue: { base: '#78cbeb', tint: '#e6f8ff', shade: '#267999' }, // Graphs,Primary
   limeGreen: { base: '#bff35a', tint: '#f4fce3', shade: '#86a745' }, // Graphs,Primary
+  lightBlue: { base: '#1890ff', tint: '#e6f7ff', shade: '#096dd9' }, // Graphs,Primary
 };
 
 const SEMANTIC_COLORS = {

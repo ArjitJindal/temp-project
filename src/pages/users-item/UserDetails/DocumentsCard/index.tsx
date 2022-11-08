@@ -1,6 +1,7 @@
 import * as Card from '@/components/ui/Card';
 import { FileInfo, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
+import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -8,6 +9,7 @@ interface Props {
   collapsedByDefault?: boolean;
   onFileUploaded: (file: FileInfo) => Promise<void>;
   onFileRemoved: (s3Key: string) => Promise<void>;
+  documentsRef?: React.Ref<ExpandTabRef>;
 }
 
 export default function DocumentsCard(props: Props) {
@@ -20,6 +22,7 @@ export default function DocumentsCard(props: Props) {
         title: 'Documents',
         collapsedByDefault,
       }}
+      ref={props.documentsRef}
     >
       <Card.Section>
         <UploadFilesList

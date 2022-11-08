@@ -3,11 +3,15 @@ import { LegalDocumentsTable } from './LegalDocuments';
 import { InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import DocumentsCard from '@/pages/users-item/UserDetails/DocumentsCard';
+import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   user: InternalConsumerUser;
   isEmbedded?: boolean;
   collapsedByDefault?: boolean;
+  userDetailsRef?: React.Ref<ExpandTabRef>;
+  legalDocumentsRef?: React.Ref<ExpandTabRef>;
+  documentsRef?: React.Ref<ExpandTabRef>;
 }
 
 export default function ConsumerUserDetails(props: Props) {
@@ -16,12 +20,21 @@ export default function ConsumerUserDetails(props: Props) {
   const userId = user.userId;
   return (
     <>
-      <UserDetails user={user} collapsedByDefault={collapsedByDefault} />
-      <LegalDocumentsTable person={user} collapsedByDefault={collapsedByDefault} />
+      <UserDetails
+        user={user}
+        collapsedByDefault={collapsedByDefault}
+        userDetailsRef={props.userDetailsRef}
+      />
+      <LegalDocumentsTable
+        person={user}
+        collapsedByDefault={collapsedByDefault}
+        legalDocumentsRef={props.legalDocumentsRef}
+      />
       <DocumentsCard
         user={user}
         collapsedByDefault={collapsedByDefault}
         isEmbedded={isEmbedded}
+        documentsRef={props.documentsRef}
         onFileUploaded={async (file) => {
           await api.postConsumerUsersUserIdFiles({
             userId: userId,

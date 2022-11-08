@@ -1,4 +1,5 @@
 import React from 'react';
+import { ExpandTabRef } from '../../UserCaseDetails';
 import * as Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { HitRulesResult } from '@/apis';
@@ -6,6 +7,7 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 
 interface Props {
   rulesHit: HitRulesResult[];
+  reference?: React.Ref<ExpandTabRef>;
 }
 
 export default function RulesHitCard(props: Props) {
@@ -15,8 +17,9 @@ export default function RulesHitCard(props: Props) {
       header={{
         title: 'Rules Hits',
         collapsable: true,
-        collapsedByDefault: false,
+        collapsedByDefault: true,
       }}
+      ref={props.reference}
     >
       <Card.Section>
         <Table

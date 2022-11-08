@@ -7,11 +7,13 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { Comment as TransactionComment } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
+import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetails';
 
 interface Props {
   caseId: string | undefined;
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
+  reference?: React.Ref<ExpandTabRef>;
 }
 
 export default function CommentsCard(props: Props) {
@@ -51,6 +53,7 @@ export default function CommentsCard(props: Props) {
         collapsable: true,
         collapsedByDefault: false,
       }}
+      ref={props.reference}
     >
       <Card.Section>
         {comments.length > 0 && (

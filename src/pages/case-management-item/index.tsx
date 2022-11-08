@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
@@ -14,6 +14,11 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CASES_ITEM } from '@/utils/queries/keys';
 import TransactionCaseDetails from '@/pages/case-management-item/TransactionCaseDetails';
 import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
+import Button from '@/components/ui/Button';
+
+export interface ExpandTabsRef {
+  expand: () => void;
+}
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
@@ -34,6 +39,9 @@ function CaseManagementItemPage() {
     queryClient.setQueryData(CASES_ITEM(caseId), caseItem);
   };
 
+  const transactionRef = useRef<ExpandTabsRef>(null);
+  const userRef = useRef<ExpandTabsRef>(null);
+
   return (
     <PageWrapper
       backButton={{
@@ -53,12 +61,38 @@ function CaseManagementItemPage() {
                   }}
                 />
               </Card.Section>
+              <Button
+                type={'text'}
+                onClick={
+                  caseItem.caseType === 'TRANSACTION'
+                    ? () => transactionRef.current?.expand()
+                    : () => userRef.current?.expand()
+                }
+                analyticsName={'case-management-item-expand-button'}
+                style={{
+                  width: 'max-content',
+                  margin: '1rem 1.5rem',
+                  color: '#1890ff',
+                  borderColor: '#1890ff',
+                }}
+              >
+                Expand All
+              </Button>
               <Card.Section>
                 {caseItem.caseType === 'TRANSACTION' && (
-                  <TransactionCaseDetails caseItem={caseItem} onCaseUpdate={handleCaseUpdate} />
+                  <TransactionCaseDetails
+                    caseItem={caseItem}
+                    onCaseUpdate={handleCaseUpdate}
+                    ref={transactionRef}
+                  />
                 )}
+
                 {caseItem.caseType === 'USER' && (
-                  <UserCaseDetails caseItem={caseItem} onCaseUpdate={handleCaseUpdate} />
+                  <UserCaseDetails
+                    caseItem={caseItem}
+                    onCaseUpdate={handleCaseUpdate}
+                    ref={userRef}
+                  />
                 )}
               </Card.Section>
             </>
