@@ -145,6 +145,25 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
       })
+    } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterName,
+        filterOperator,
+      } = event.queryStringParameters as any
+      return userService.getUsers({
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterName,
+        filterOperator,
+      })
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/consumer/users/{userId}' &&

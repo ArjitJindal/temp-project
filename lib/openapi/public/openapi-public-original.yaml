@@ -3349,38 +3349,6 @@ components:
       enum:
         - ORIGIN
         - DESTINATION
-    InternalUser:
-      description: Internal user- employees
-      type: object
-      x-examples:
-        example-1:
-          employeeID: 8cdeb166147a406b957dd9e709907b89
-          employeeLevel: L4
-          employeeDesignation: Senior Analyst
-          employeeName: Baran Ozkan
-          employeeNationality: IN
-      title: InternalUser
-      properties:
-        employeeID:
-          type: string
-          minLength: 1
-          description: Employee ID number
-        employeeLevel:
-          type: string
-          minLength: 1
-          description: Employee seniority level
-        employeeDesignation:
-          type: string
-          minLength: 1
-          description: Employee designation or title
-        employeeName:
-          type: string
-          minLength: 1
-          description: Employee name
-        employeeNationality:
-          $ref: '#/components/schemas/CountryCode'
-      required:
-        - employeeID
     TransactionEvent:
       description: Model for transaction-related events
       type: object

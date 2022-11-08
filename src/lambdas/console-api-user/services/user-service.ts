@@ -5,6 +5,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
+  DefaultApiGetAllUsersListRequest,
   DefaultApiGetBusinessUsersListRequest,
   DefaultApiGetConsumerUsersListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
@@ -14,6 +15,8 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class UserService {
   userRepository: UserRepository
@@ -65,6 +68,18 @@ export class UserService {
       ...result,
       data: result.data.map((user) =>
         this.getAugmentedUser<InternalConsumerUser>(user)
+      ),
+    }
+  }
+
+  public async getUsers(
+    params: DefaultApiGetAllUsersListRequest
+  ): Promise<AllUsersListResponse> {
+    const result = await this.userRepository.getMongoAllUsers(params)
+    return {
+      ...result,
+      data: result.data.map((user) =>
+        this.getAugmentedUser<InternalUser>(user)
       ),
     }
   }

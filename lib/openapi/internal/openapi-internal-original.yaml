@@ -1052,6 +1052,53 @@ paths:
           in: query
           name: filterOperator
     parameters: []
+  /users:
+    get:
+      summary: All Users - List
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsersListResponse'
+              examples: {}
+      operationId: get-all-users-list
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            $ref: '#/components/schemas/FilterOperator'
+          in: query
+          name: filterOperator
+    parameters: []
   '/consumer/users/{userId}':
     get:
       summary: Consumer Users - Item - GET
@@ -2542,6 +2589,19 @@ components:
       required:
         - total
         - data
+    AllUsersListResponse:
+      title: AllUsersListResponse
+      type: object
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalUser'
+      required:
+        - total
+        - data
     DashboardStatsTransactionsCount:
       type: object
       x-examples:
@@ -2641,6 +2701,11 @@ components:
                 $ref: '#/components/schemas/FileInfo'
           required:
             - type
+    InternalUser:
+      title: InternalUser
+      oneOf:
+        - $ref: '#/components/schemas/InternalConsumerUser'
+        - $ref: '#/components/schemas/InternalBusinessUser'
     DashboardStatsHitsPerUser:
       type: object
       title: DashboardStatsHitsPerUser

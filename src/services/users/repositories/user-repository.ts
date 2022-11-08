@@ -18,6 +18,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -66,6 +67,24 @@ export class UserRepository {
     }
   }
 
+  public async getMongoAllUsers(params: {
+    limit: number
+    skip: number
+    afterTimestamp?: number
+    beforeTimestamp: number
+    filterId?: string
+    filterName?: string
+    filterOperator?: FilterOperator
+  }): Promise<{
+    total: number
+    data: Array<InternalUser>
+  }> {
+    return (await this.getMongoUsers(params)) as {
+      total: number
+      data: Array<InternalUser>
+    }
+  }
+
   public async saveMongoUserFile(
     userId: string,
     file: FileInfo
@@ -110,10 +129,10 @@ export class UserRepository {
       filterName?: string
       filterOperator?: FilterOperator
     },
-    userType: UserType
+    userType?: UserType
   ): Promise<{
     total: number
-    data: Array<InternalBusinessUser | InternalConsumerUser>
+    data: Array<InternalBusinessUser | InternalConsumerUser | InternalUser>
   }> {
     const db = this.mongoDb.db()
 
@@ -177,7 +196,7 @@ export class UserRepository {
           $gte: params.afterTimestamp || 0,
           $lte: params.beforeTimestamp,
         },
-        type: userType,
+        ...(userType ? { type: userType } : {}),
       },
     ]
 
