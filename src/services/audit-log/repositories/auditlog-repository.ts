@@ -24,7 +24,7 @@ export class AuditLogRepository {
       ...auditLog,
     }
     await collection.insertOne({
-      _id: auditLog.auditlogId as any,
+      _id: newAuditLog.auditlogId as any,
       ...newAuditLog,
     })
     return newAuditLog

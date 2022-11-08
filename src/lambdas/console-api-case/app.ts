@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
 import { CaseService } from './services/case-service'
+import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 
@@ -39,6 +40,7 @@ export const casesHandler = lambdaApi()(
       TMP_BUCKET,
       DOCUMENT_BUCKET
     )
+    const caseAuditLogService = new CaseAuditLogService(caseService, tenantId)
     if (event.httpMethod === 'GET' && event.resource === '/cases') {
       const {
         limit,
@@ -118,7 +120,14 @@ export const casesHandler = lambdaApi()(
     ) {
       const updateRequest = JSON.parse(event.body) as CasesUpdateRequest
       const caseIds = updateRequest?.caseIds || []
-      return caseService.updateCases(userId, caseIds, updateRequest.updates)
+      const { updates } = updateRequest
+      const updateResult = await caseService.updateCases(
+        userId,
+        caseIds,
+        updates
+      )
+      await caseAuditLogService.handleAuditLogForCaseUpdate(caseIds, updates)
+      return updateResult
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}' &&
@@ -140,10 +149,18 @@ export const casesHandler = lambdaApi()(
       event.body
     ) {
       const comment = JSON.parse(event.body) as Comment
-      return caseService.saveCaseComment(event.pathParameters.caseId, {
-        ...comment,
-        userId,
-      })
+      const saveCommentResult = await caseService.saveCaseComment(
+        event.pathParameters.caseId,
+        {
+          ...comment,
+          userId,
+        }
+      )
+      await caseAuditLogService.handleAuditLogForComments(
+        event.pathParameters.caseId,
+        comment
+      )
+      return saveCommentResult
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}/transactions' &&

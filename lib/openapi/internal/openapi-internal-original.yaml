@@ -3720,6 +3720,11 @@ components:
             - CASE
             - USER
             - PULSE
+        subtype:
+          type: string
+          enum:
+            - COMMENT
+            - DOCUMENT
         action:
           type: string
           enum:
