@@ -415,7 +415,7 @@ export const createLambdaMemoryUtilizationAlarm = (
           namespace: 'LambdaInsights',
           metricName: 'memory_utilization',
           dimensionsMap: {
-            FunctionName: lambdaName,
+            function_name: lambdaName,
           },
         }).with({
           period: Duration.seconds(300),
