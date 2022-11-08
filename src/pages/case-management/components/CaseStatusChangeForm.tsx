@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
 import { CaseStatus, FileInfo } from '@/apis';
@@ -10,6 +10,10 @@ interface CasesProps {
   caseIds: string[];
   newCaseStatus: CaseStatus;
   onSaved: () => void;
+}
+
+interface RemoveAllFilesRef {
+  removeAllFiles: () => void;
 }
 
 const caseStatusToOperationName = (caseStatus: CaseStatus) => {
@@ -112,6 +116,12 @@ export function CasesStatusChangeForm(props: CasesProps) {
   const modalMessagePrefix = 'Are you sure you want to';
   const modalMessageSuffix = `${caseIds.length} case${caseIds.length == 1 ? ' :' : 's :'}`;
   const caseIdsString = caseIds.join(', ');
+  const uploadRef = useRef<RemoveAllFilesRef>(null);
+
+  const removeFiles = useCallback(() => {
+    setFiles([]);
+    uploadRef.current?.removeAllFiles();
+  }, []);
 
   return (
     <>
@@ -136,12 +146,14 @@ export function CasesStatusChangeForm(props: CasesProps) {
         }}
         onOk={() => {
           form.validateFields().then((values) => {
+            removeFiles();
             setFormValues(values);
             setAwaitingConfirmation(true);
             setModalVisible(false);
           });
         }}
         onCancel={() => {
+          removeFiles();
           setAwaitingConfirmation(false);
           setModalVisible(false);
         }}
@@ -191,6 +203,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
                   prevFiles.filter((prevFile) => prevFile.s3Key !== fileS3Key),
                 );
               }}
+              ref={uploadRef}
             />
           </Form.Item>
         </Form>
@@ -206,6 +219,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           if (newCaseStatus === 'CLOSED') {
             handleUpdateTransaction(formValues as FormValues)
               .then(() => {
+                removeFiles();
                 form.resetFields();
                 setIsOtherReason(false);
                 setAwaitingConfirmation(false);
@@ -216,6 +230,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           } else {
             reopenCase()
               .then(() => {
+                removeFiles();
                 setAwaitingConfirmation(false);
               })
               .catch(() => {
@@ -224,6 +239,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           }
         }}
         onCancel={() => {
+          removeFiles();
           setAwaitingConfirmation(false);
           setModalVisible(false);
         }}

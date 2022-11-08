@@ -1,6 +1,6 @@
 import { message, Upload } from 'antd';
 import filesize from 'filesize';
-import { useCallback, useState } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import axios from 'axios';
 import { UploadOutlined } from '@ant-design/icons';
 import Button from '../ui/Button';
@@ -14,13 +14,24 @@ interface Props {
   onFileRemoved: (s3Key: string) => Promise<void>;
 }
 
-export const UploadFilesList: React.FC<Props> = (props) => {
+interface RemoveAllFilesRef {
+  removeAllFiles: () => void;
+}
+
+export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAllFilesRef>) => {
   const api = useApi();
   const [files, setFiles] = useState<FileInfo[]>(props.files);
   const removeFile = useCallback(
     (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file.s3Key !== s3Key)),
     [],
   );
+
+  useImperativeHandle(ref, () => ({
+    removeAllFiles: () => {
+      setFiles([]);
+    },
+  }));
+
   return (
     <Upload
       multiple={true}
@@ -77,4 +88,4 @@ export const UploadFilesList: React.FC<Props> = (props) => {
       )}
     </Upload>
   );
-};
+});
