@@ -44,6 +44,12 @@ elif [ "$env" == "prod-eu-1" ]; then
     managementApiId=akxtug4fh2
     profile="AWSAdministratorAccess-870721492449"
     region="eu-central-1"
+elif [ "$env" == "prod-eu-2" ]; then
+    apiPrefix="eu-2."
+    apiId=axoppr09ui
+    managementApiId=yz827gk7l0
+    profile="AWSAdministratorAccess-870721492449"
+    region="eu-west-2"
 elif [ "$env" == "prod-us-1" ]; then
     apiPrefix="us-1."
     apiId=eb7lsu6eqb
@@ -56,7 +62,6 @@ else
 fi
 
 echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to ~/.aws/credentials (profile: $profile)"
-echo "TODO: https://flagright.atlassian.net/jira/software/projects/FDT/boards/1?selectedIssue=FDT-216"
 npm run aws-sso-login --profile=$profile
 
 existingTenantId=$(aws apigateway get-usage-plans \
