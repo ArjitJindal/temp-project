@@ -8,7 +8,6 @@ import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { isEqual } from '@/utils/lang';
-import COUNTRIES from '@/utils/countries';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -36,7 +35,7 @@ export default function ValuesTable(props: Props) {
   const handleUpdateValues = (cb: (oldValues: ParameterValues) => ParameterValues) => {
     setValues((oldValues) => {
       const result = cb(oldValues);
-      result.sort((x, y) => COUNTRIES[x.parameterValue].localeCompare(COUNTRIES[y.parameterValue]));
+      result.sort((x, y) => x.parameterValue.localeCompare(y.parameterValue));
       return result;
     });
   };
