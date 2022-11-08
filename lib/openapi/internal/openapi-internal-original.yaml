@@ -1999,6 +1999,10 @@ paths:
             type: boolean
           in: query
           name: includeTransactionEvents
+        - schema:
+            type: string
+          in: query
+          name: filterTransactionId
     post:
       summary: Cases - Update
       operationId: post-cases

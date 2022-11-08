@@ -161,6 +161,12 @@ export class CaseRepository {
       }
     }
 
+    if (params.filterTransactionId != null) {
+      conditions.push({
+        'caseTransactions.transactionId': { $eq: params.filterTransactionId },
+      })
+    }
+
     const executedRulesFilters = []
     if (params.filterRulesExecuted != null) {
       executedRulesFilters.push({
