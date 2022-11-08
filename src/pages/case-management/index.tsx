@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocalStorageState } from 'ahooks';
 import { Tabs } from 'antd';
 import { useNavigate, useParams } from 'react-router';
 import PageWrapper from '@/components/PageWrapper';
@@ -11,6 +12,11 @@ function TableList() {
   const i18n = useI18n();
   const navigate = useNavigate();
   const { list = 'transaction' } = useParams<'list' | 'id'>();
+  const [_, setTransactionLastActiveTab] = useLocalStorageState('cases-active-tab', list);
+
+  useEffect(() => {
+    setTransactionLastActiveTab(list);
+  }, [list, setTransactionLastActiveTab]);
 
   // todo: i18n
   return (

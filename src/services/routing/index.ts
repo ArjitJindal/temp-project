@@ -31,6 +31,7 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
+  const [lastCasesActiveTab] = useLocalStorageState('cases-active-tab', 'transaction');
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -71,7 +72,10 @@ export function useRoutes(): RouteItem[] {
           },
           {
             path: '/case-management',
-            redirect: '/case-management/transaction',
+            redirect:
+              lastCasesActiveTab === 'user'
+                ? '/case-management/user'
+                : '/case-management/transaction',
           },
         ],
       },
@@ -307,5 +311,6 @@ export function useRoutes(): RouteItem[] {
     lastActiveList,
     isSanctionsEnabled,
     lastActiveSanctionsTab,
+    lastCasesActiveTab,
   ]);
 }
