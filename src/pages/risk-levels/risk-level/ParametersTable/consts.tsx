@@ -8,6 +8,7 @@ import {
 } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
 import { PAYMENT_METHODS } from '@/utils/payments';
+import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
@@ -248,6 +249,18 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     matchType: 'DIRECT',
   },
+  {
+    parameter: 'type',
+    title: 'Transaction Type',
+    description: 'Risk value based on type of transaction',
+    type: 'DISCRETE',
+    entity: 'TRANSACTION',
+    dataType: 'TRANSACTION_TYPES',
+    riskScoreType: 'ARS',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -323,6 +336,14 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
       />
     );
   },
+  TRANSACTION_TYPES: (props) => {
+    return (
+      <MultipleSelect
+        options={TRANSACTION_TYPES.map((type) => ({ value: type, label: type }))}
+        {...props}
+      />
+    );
+  },
   RANGE: ({ disabled, values, onChange }) => {
     const range = (values[0] ?? '0,0').split(',').map((x) => parseInt(x) || 0);
     return (
@@ -360,6 +381,7 @@ export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
     return <span>{COUNTRIES[value]}</span>;
   },
   PAYMENT_METHOD: ({ value }) => <span>{value}</span>,
+  TRANSACTION_TYPES: ({ value }) => <span>{value}</span>,
   CONSUMER_USER_TYPE: ({ value }) => {
     if (value == null) {
       return null;
