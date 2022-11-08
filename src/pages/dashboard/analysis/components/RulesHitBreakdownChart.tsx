@@ -44,6 +44,12 @@ const RulesHitBreakdownChart = ({
       style={{
         height: '100%',
       }}
+      bodyStyle={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
+      }}
     >
       {!data.length ? (
         <Empty />
