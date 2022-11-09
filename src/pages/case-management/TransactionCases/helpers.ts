@@ -2,10 +2,12 @@ import { QueryResult } from '@/utils/queries/types';
 import { TableData, TableDataItem } from '@/components/ui/Table/types';
 import { map } from '@/utils/asyncResource';
 import { CaseManagementItem } from '@/pages/case-management/TransactionCases';
-import { CasesListResponse } from '@/apis';
+import { CaseCreationType, CasesListResponse } from '@/apis';
+import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 export function useTableData(
   queryResult: QueryResult<CasesListResponse>,
+  caseType: CaseCreationType,
 ): QueryResult<TableData<CaseManagementItem>> {
   const result: QueryResult<TableData<CaseManagementItem>> = {
     data: map(queryResult.data, (response) => {
@@ -35,18 +37,20 @@ export function useTableData(
                   },
                 ];
               }
-              return transaction.hitRules.map((rule, i): CaseManagementItem => {
-                return {
-                  ...dataItem,
-                  rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
-                  transaction: transaction,
-                  ruleName: rule.ruleName,
-                  ruleDescription: rule.ruleDescription,
-                  ruleAction: rule.ruleAction,
-                  transactionsRowsCount: transaction.hitRules.length,
-                  transactionFirstRow: i === 0,
-                };
-              });
+              return filterRulesHitByCaseCreationType(transaction.hitRules, caseType).map(
+                (rule, i): CaseManagementItem => {
+                  return {
+                    ...dataItem,
+                    rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
+                    transaction: transaction,
+                    ruleName: rule.ruleName,
+                    ruleDescription: rule.ruleDescription,
+                    ruleAction: rule.ruleAction,
+                    transactionsRowsCount: transaction.hitRules.length,
+                    transactionFirstRow: i === 0,
+                  };
+                },
+              );
             }),
           };
         },

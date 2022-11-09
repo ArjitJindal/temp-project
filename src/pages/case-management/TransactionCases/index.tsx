@@ -61,7 +61,7 @@ export default function TransactionCases(props: Props) {
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers();
 
-  const tableQueryResult = useTableData(queryResult);
+  const tableQueryResult = useTableData(queryResult, 'TRANSACTION');
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   const reloadTable = useCallback(() => {

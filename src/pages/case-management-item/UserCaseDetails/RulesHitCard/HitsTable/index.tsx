@@ -1,6 +1,7 @@
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { CaseTransaction } from '@/apis';
 import Table from '@/components/ui/Table';
+import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 interface Props {
   transaction: CaseTransaction;
@@ -31,7 +32,7 @@ export default function RulesHitDetailsTable({ transaction }: Props) {
         },
       ]}
       data={{
-        items: transaction.hitRules,
+        items: filterRulesHitByCaseCreationType(transaction.hitRules, 'USER'),
       }}
       pagination={false}
       search={false}
