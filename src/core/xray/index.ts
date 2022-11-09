@@ -7,17 +7,7 @@ const ALLOWED_SPECIAL_CHAR_REGEX = /[`,~!#$^*()|?;'"<>{}[\]/]/g
 
 const xrayDisabled = process.env.ENV === 'local' || !!process.env.MIGRATION_TYPE
 
-export async function initTracing() {
-  if (xrayDisabled) {
-    return
-  }
-  const AWSXRay = await import('aws-xray-sdk-core')
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  AWSXRay.captureHTTPsGlobal(require('http'))
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  AWSXRay.captureHTTPsGlobal(require('https'))
-  AWSXRay.capturePromise()
-}
+let xrayInitialized = false
 
 export async function addNewSubsegment(
   namespace: string,
@@ -27,6 +17,12 @@ export async function addNewSubsegment(
     return
   }
   const AWSXRay = await import('aws-xray-sdk-core')
+
+  if (!xrayInitialized) {
+    AWSXRay.capturePromise()
+    xrayInitialized = true
+  }
+
   const name = `${namespace}: ${segmentName}`.replace(
     ALLOWED_SPECIAL_CHAR_REGEX,
     ' '

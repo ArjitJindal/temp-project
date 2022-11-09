@@ -204,15 +204,19 @@ export async function paginateQuery(
   query: AWS.DynamoDB.DocumentClient.QueryInput,
   options?: { skip?: number; limit?: number; pagesLimit?: number }
 ): Promise<AWS.DynamoDB.DocumentClient.QueryOutput> {
-  const segmentNamespaceSuffix = getContext()?.metricDimensions?.ruleId
+  const ruleInfo = getContext()?.metricDimensions?.ruleId
     ? ` , ${getContext()?.metricDimensions?.ruleId} (${
         getContext()?.metricDimensions?.ruleInstanceId
       })`
-    : ''
-  const paginateQuerySegment = await addNewSubsegment(
-    `DynamoDB${segmentNamespaceSuffix}`,
-    'Paginate Query'
-  )
+    : undefined
+
+  let paginateQuerySegment = undefined
+  if (ruleInfo) {
+    paginateQuerySegment = await addNewSubsegment(
+      `DynamoDB${ruleInfo}`,
+      'Paginate Query'
+    )
+  }
   let newQuery = query
   if (options?.skip) {
     const skipQuery: AWS.DynamoDB.DocumentClient.QueryInput = {

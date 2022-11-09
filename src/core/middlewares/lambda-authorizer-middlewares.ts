@@ -1,6 +1,3 @@
-import { initTracing } from '../xray'
-initTracing()
-
 import { compose } from './compose'
 import { initSentry } from './init-sentry'
 import { genericErrorHandler } from './generic-error-handler'
