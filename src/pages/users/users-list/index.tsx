@@ -8,10 +8,11 @@ import styles from './UsersList.module.less';
 import UserRiskTag from './UserRiskTag';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
+import { getAllUserColumns } from './all-user-columns';
 import { RequestTable } from '@/components/RequestTable';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { InternalBusinessUser, InternalConsumerUser, InternalUser } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -179,6 +180,76 @@ const ConsumerUsersTab = () => {
   );
 };
 
+const AllUsersTab = () => {
+  const api = useApi();
+  const columns: TableColumn<InternalUser>[] = getAllUserColumns();
+  const analytics = useAnalytics();
+  const request = useCallback(
+    async (params) => {
+      const { pageSize, current, userId, createdTimestamp } = params;
+      const [response, time] = await measure(() =>
+        api.getAllUsersList({
+          limit: pageSize!,
+          skip: (current! - 1) * pageSize!,
+          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      return {
+        items: response.data,
+        success: true,
+        total: response.total,
+      };
+    },
+    [analytics, api],
+  );
+
+  return (
+    <>
+      <RequestTable<InternalUser, TableListPagination>
+        form={{
+          labelWrap: true,
+        }}
+        rowKey="userId"
+        search={{
+          labelWidth: 120,
+        }}
+        actionsHeader={[
+          ({ params, setParams }) => {
+            return (
+              <UserSearchButton
+                initialMode={'ALL'}
+                userId={params.userId ?? null}
+                showOriginAndDestination={false}
+                onConfirm={(userId, mode) => {
+                  setParams((state) => ({
+                    ...state,
+                    userId: userId ?? undefined,
+                    userFilterMode: mode ?? undefined,
+                  }));
+                }}
+              />
+            );
+          },
+        ]}
+        className={styles.table}
+        scroll={{ x: 500 }}
+        request={request}
+        columns={columns}
+        columnsState={{
+          persistenceType: 'localStorage',
+          persistenceKey: 'users-list',
+        }}
+      />
+    </>
+  );
+};
+
 export default function UsersList() {
   const { list = 'consumer' } = useParams<'list' | 'id'>();
   const navigate = useNavigate();
@@ -195,6 +266,9 @@ export default function UsersList() {
           navigate(makeUrl(`/users/list/:list/all`, { list: key }), { replace: true });
         }}
       >
+        <Tabs.TabPane tab={'All Users'} key="all">
+          <AllUsersTab />
+        </Tabs.TabPane>
         <Tabs.TabPane tab="Consumer Users" key="consumer">
           <ConsumerUsersTab />
         </Tabs.TabPane>

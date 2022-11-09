@@ -128,6 +128,8 @@ export function useRoutes(): RouteItem[] {
                 redirect:
                   lastActiveTab === 'consumer'
                     ? '/users/list/consumer/all'
+                    : lastActiveTab === 'all'
+                    ? '/users/list/all/all'
                     : '/users/list/business/all',
               },
               {
