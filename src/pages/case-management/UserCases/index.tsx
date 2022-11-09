@@ -64,26 +64,43 @@ export default function UserCases(props: Props) {
 
     const mergedColumns: TableColumn<TableItem>[] = [
       {
-        title: 'Case ID',
-        dataIndex: 'caseId',
+        title: (
+          <p>
+            Case ID <br /> Priority
+          </p>
+        ),
+        dataIndex: 'priority',
         width: 130,
         copyable: true,
         ellipsis: true,
+        hideInSearch: true,
+        sorter: true,
         onCell: onCaseCell,
         render: (dom, entity) => {
           return (
-            <Id
-              id={entity.caseId}
-              to={addBackUrlToRoute(
-                makeUrl(`/case-management/case/:caseId`, {
-                  caseId: entity.caseId,
-                }),
-              )}
-            >
-              {entity.caseId}
-            </Id>
+            <>
+              <Id
+                id={entity.caseId}
+                to={addBackUrlToRoute(
+                  makeUrl(`/case-management/case/:caseId`, {
+                    caseId: entity.caseId,
+                  }),
+                )}
+              >
+                {entity.caseId}
+              </Id>
+              <br />
+              {entity.priority && <p>Priority: {entity.priority}</p>}
+            </>
           );
         },
+      },
+      {
+        title: 'Case ID',
+        dataIndex: 'caseId',
+        hideInTable: true,
+        valueType: 'text',
+        width: 130,
       },
       {
         title: 'Created on',
