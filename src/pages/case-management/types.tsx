@@ -21,4 +21,5 @@ export type TableSearchParams = Partial<{
   tagKey: string;
   tagValue: string;
   caseStatus: 'OPEN' | 'CLOSED';
+  transactionId: string;
 }>;

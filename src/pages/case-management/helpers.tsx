@@ -37,6 +37,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus,
+      transactionId: params.transactionId,
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -72,6 +73,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
       caseStatus: raw.caseStatus === 'CLOSED' ? 'CLOSED' : 'OPEN',
+      transactionId: raw.transactionId,
     };
   },
 };

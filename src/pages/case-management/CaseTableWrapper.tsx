@@ -109,6 +109,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         tagKey,
         tagValue,
         caseStatus,
+        transactionId,
       } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
       const [response, time] = await measure(() =>
@@ -139,6 +140,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           filterTransactionTagKey: tagKey,
           filterTransactionTagValue: tagValue,
           filterCaseType: caseType,
+          filterTransactionId: transactionId,
         }),
       );
       analytics.event({

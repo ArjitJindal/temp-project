@@ -113,7 +113,7 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Transaction ID',
-        dataIndex: 'caseTransactions.transactionId',
+        dataIndex: 'transactionId',
         width: 130,
         copyable: true,
         ellipsis: true,
