@@ -78,7 +78,7 @@ async function transactionHandler(
   logger.info(`Case Creation Completed`)
   if (await tenantHasFeature(tenantId, 'PULSE_ARS_CALCULATION')) {
     logger.info(`Calculating ARS & DRS`)
-    updateDynamicRiskScores(tenantId, dynamoDb, transaction)
+    await updateDynamicRiskScores(tenantId, dynamoDb, transaction)
     logger.info(`Calculation of ARS & DRS Completed`)
   }
 
