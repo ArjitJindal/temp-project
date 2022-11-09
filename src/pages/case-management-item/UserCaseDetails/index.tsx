@@ -52,6 +52,7 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
         isEmbedded={true}
         collapsedByDefault={true}
         hideHistory={true}
+        hideInsights={true}
         ref={userDetailsRef}
       />
       <RulesHitCard caseItem={caseItem} reference={rulesHitRef} />

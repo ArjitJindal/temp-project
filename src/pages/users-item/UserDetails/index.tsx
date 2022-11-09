@@ -12,10 +12,11 @@ interface Props {
   isEmbedded?: boolean;
   collapsedByDefault?: boolean;
   hideHistory?: boolean;
+  hideInsights?: boolean;
 }
 
 function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
-  const { user, isEmbedded, hideHistory = false } = props;
+  const { user, isEmbedded, hideHistory = false, hideInsights = false } = props;
 
   const userDetailsRef = React.useRef<ExpandTabRef>(null);
   const expectedTransactionsRef = React.useRef<ExpandTabRef>(null);
@@ -24,6 +25,7 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
   const documentsRef = React.useRef<ExpandTabRef>(null);
   const legalDocumentsRef = React.useRef<ExpandTabRef>(null);
   const userTransactionHistoryRef = React.useRef<ExpandTabRef>(null);
+  const insightsRef = React.useRef<ExpandTabRef>(null);
 
   useImperativeHandle(ref, () => ({
     expand: () => {
@@ -34,6 +36,7 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
       documentsRef.current?.expand();
       legalDocumentsRef.current?.expand();
       userTransactionHistoryRef.current?.expand();
+      insightsRef.current?.expand();
     },
   }));
 
@@ -71,7 +74,7 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
           userTransactionHistoryRef={userTransactionHistoryRef}
         />
       )}
-      <InsightsCard userId={user.userId} />
+      {!hideInsights && <InsightsCard userId={user.userId} reference={insightsRef} />}
     </>
   );
 }
