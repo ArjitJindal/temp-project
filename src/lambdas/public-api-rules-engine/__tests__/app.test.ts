@@ -144,7 +144,10 @@ describe('Public API - Verify a transaction', () => {
           ruleDescription: 'test rule description',
           ruleAction: 'FLAG',
           ruleHit: true,
-          ruleHitMeta: { hitDirections: ['ORIGIN', 'DESTINATION'] },
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN', 'DESTINATION'],
+            caseCreationType: 'TRANSACTION',
+          },
         },
       ],
       hitRules: [
@@ -154,7 +157,10 @@ describe('Public API - Verify a transaction', () => {
           ruleName: 'test rule name',
           ruleDescription: 'test rule description',
           ruleAction: 'FLAG',
-          ruleHitMeta: { hitDirections: ['ORIGIN', 'DESTINATION'] },
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN', 'DESTINATION'],
+            caseCreationType: 'TRANSACTION',
+          },
         },
       ],
     })

@@ -59,6 +59,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
+              caseCreationType: 'TRANSACTION',
             },
           },
         ],
@@ -71,6 +72,7 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
+              caseCreationType: 'TRANSACTION',
             },
           },
         ],
@@ -304,6 +306,7 @@ describe('Verify Transaction Event', () => {
               ruleHit: true,
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
+                caseCreationType: 'TRANSACTION',
               },
             },
           ],
@@ -316,6 +319,7 @@ describe('Verify Transaction Event', () => {
               ruleAction: 'BLOCK',
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
+                caseCreationType: 'TRANSACTION',
               },
             },
           ],
@@ -339,6 +343,7 @@ describe('Verify Transaction Event', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
+              caseCreationType: 'TRANSACTION',
             },
           },
         ],
@@ -351,6 +356,7 @@ describe('Verify Transaction Event', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
+              caseCreationType: 'TRANSACTION',
             },
           },
         ],

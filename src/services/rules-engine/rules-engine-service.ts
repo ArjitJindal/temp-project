@@ -454,6 +454,7 @@ export class RulesEngineService {
           ruleHitMeta: ruleHit
             ? {
                 hitDirections: ruleHitDirections,
+                caseCreationType: ruleInstance.caseCreationType,
               }
             : undefined,
         }

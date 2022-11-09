@@ -3343,12 +3343,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleHitDirection'
+        caseCreationType:
+          $ref: '#/components/schemas/CaseCreationType'
     RuleHitDirection:
       type: string
       title: RuleHitDirection
       enum:
         - ORIGIN
         - DESTINATION
+    CaseCreationType:
+      type: string
+      title: CaseCreationType
+      enum:
+        - TRANSACTION
+        - USER
     TransactionEvent:
       description: Model for transaction-related events
       type: object
