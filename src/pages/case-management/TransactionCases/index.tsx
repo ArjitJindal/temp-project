@@ -167,7 +167,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Rule Action',
         sorter: true,
-        dataIndex: 'caseTransactions.status',
+        dataIndex: 'status',
         // hideInSearch: true,
         valueType: 'select',
         fieldProps: {
