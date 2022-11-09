@@ -68,7 +68,21 @@ describe('Public Management API - Rule', () => {
           type: 'TRANSACTION',
           name: 'First payment of a Customer',
           description: 'First transaction of a user',
-          parametersSchema: {},
+          parametersSchema: {
+            type: 'object',
+            properties: {
+              transactionAmountThreshold: {
+                additionalProperties: {
+                  type: 'integer',
+                },
+                type: 'object',
+                title: 'Transactions Amount Threshold',
+                nullable: true,
+                required: [],
+              },
+            },
+            required: [],
+          },
           defaultParameters: {},
           defaultAction: 'FLAG',
           labels: ['AML'],
@@ -131,7 +145,21 @@ describe('Public Management API - Rule', () => {
         type: 'TRANSACTION',
         name: 'First payment of a Customer',
         description: 'First transaction of a user',
-        parametersSchema: {},
+        parametersSchema: {
+          type: 'object',
+          properties: {
+            transactionAmountThreshold: {
+              additionalProperties: {
+                type: 'integer',
+              },
+              type: 'object',
+              title: 'Transactions Amount Threshold',
+              nullable: true,
+              required: [],
+            },
+          },
+          required: [],
+        },
         defaultParameters: {},
         defaultAction: 'FLAG',
         labels: ['AML'],

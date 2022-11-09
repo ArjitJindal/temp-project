@@ -1,4 +1,5 @@
 import { getTransactionRuleByRuleId } from '../library'
+import { FirstPaymentRuleParameter } from '../first-payment'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -28,10 +29,6 @@ describe('R-1 description formatting', () => {
     [
       getTestTransaction({
         originUserId: '1',
-        originAmountDetails: {
-          transactionAmount: 10000,
-          transactionCurrency: 'EUR',
-        },
       }),
     ],
     {
@@ -92,4 +89,65 @@ describe.each<TransactionRuleTestCase>([
     transactions,
     expectedHits
   )
+})
+
+describe('Transaction Amount Threshold', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'first-payment',
+      defaultParameters: {
+        transactionAmountThreshold: { EUR: 1000 },
+      } as FirstPaymentRuleParameter,
+      defaultAction: 'FLAG',
+    },
+  ])
+
+  describe.each<TransactionRuleTestCase>([
+    {
+      name: 'First payment with transaction amount above threshold - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '4-1',
+          destinationUserId: '4-2',
+          originAmountDetails: {
+            transactionAmount: 10000,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [true],
+    },
+    {
+      name: 'First payment with transaction amount below threshold - hit',
+      transactions: [
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        }),
+        getTestTransaction({
+          originUserId: '5-1',
+          destinationUserId: '5-2',
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        }),
+      ],
+      expectedHits: [false, false],
+    },
+  ])('', ({ name, transactions, expectedHits }) => {
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
 })
