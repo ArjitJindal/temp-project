@@ -38,7 +38,8 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
   protected matchPattern(
     transaction: Transaction,
     direction: 'origin' | 'destination',
-    userType: 'sender' | 'receiver'
+    userType: 'sender' | 'receiver',
+    pure: boolean
   ): boolean {
     const country =
       direction === 'origin'
@@ -51,7 +52,9 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
     if (this.uniqueCountries[userType].has(country)) {
       return false
     }
-    this.uniqueCountries[userType].add(country)
+    if (!pure) {
+      this.uniqueCountries[userType].add(country)
+    }
     return true
   }
 

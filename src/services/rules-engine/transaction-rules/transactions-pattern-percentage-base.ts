@@ -47,6 +47,15 @@ export default class TransactionsPatternPercentageBaseRule<
   }
 
   public async computeRule() {
+    const originMatchPattern = this.matchPattern(this.transaction, 'origin')
+    const destinationMatchPattern = this.matchPattern(
+      this.transaction,
+      'destination'
+    )
+    if (!originMatchPattern && !destinationMatchPattern) {
+      return
+    }
+
     const {
       timeWindow,
       patternPercentageLimit,
@@ -67,8 +76,8 @@ export default class TransactionsPatternPercentageBaseRule<
       this.transactionRepository,
       {
         timeWindow,
-        checkSender,
-        checkReceiver,
+        checkSender: originMatchPattern ? checkSender : 'none',
+        checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
         transactionState: this.filters.transactionState,
         transactionTypes: this.filters.transactionTypes,
         paymentMethod: this.filters.paymentMethod,
@@ -76,52 +85,62 @@ export default class TransactionsPatternPercentageBaseRule<
       this.getNeededTransactionFields()
     )
 
-    const senderTransactions = senderSendingTransactions
-      .concat(senderReceivingTransactions)
-      .concat(this.transaction)
-    const senderMatchedTransactions = [
-      ...senderSendingTransactions
+    if (originMatchPattern) {
+      const senderTransactions = senderSendingTransactions
+        .concat(senderReceivingTransactions)
         .concat(this.transaction)
-        .filter((transaction) => this.matchPattern(transaction, 'origin')),
-      ...senderReceivingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'destination')
-      ),
-    ]
-    const senderMatchPercentage =
-      (senderMatchedTransactions.length / senderTransactions.length) * 100
-    const receiverTransactions = receiverSendingTransactions
-      .concat(receiverReceivingTransactions)
-      .concat(this.transaction)
-    const receiverMatchedTransactions = [
-      ...receiverSendingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'origin')
-      ),
-      ...receiverReceivingTransactions
-        .concat(this.transaction)
-        .filter((transaction) => this.matchPattern(transaction, 'destination')),
-    ]
-    const receiverMatchPercentage =
-      (receiverMatchedTransactions.length / receiverTransactions.length) * 100
+      const senderMatchedTransactions = [
+        ...senderSendingTransactions
+          .concat(this.transaction)
+          .filter((transaction) => this.matchPattern(transaction, 'origin')),
+        ...senderReceivingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'destination')
+        ),
+      ]
+      const senderMatchPercentage =
+        (senderMatchedTransactions.length / senderTransactions.length) * 100
 
-    if (
-      senderTransactions.length > initialTransactions &&
-      senderMatchPercentage > patternPercentageLimit
-    ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('origin'),
-        },
+      if (
+        senderTransactions.length > initialTransactions &&
+        senderMatchPercentage > patternPercentageLimit
+      ) {
+        return {
+          action: this.action,
+          vars: {
+            ...super.getTransactionVars('origin'),
+          },
+        }
       }
-    } else if (
-      receiverTransactions.length > initialTransactions &&
-      receiverMatchPercentage > patternPercentageLimit
-    ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('destination'),
-        },
+    }
+
+    if (destinationMatchPattern) {
+      const receiverTransactions = receiverSendingTransactions
+        .concat(receiverReceivingTransactions)
+        .concat(this.transaction)
+      const receiverMatchedTransactions = [
+        ...receiverSendingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'origin')
+        ),
+        ...receiverReceivingTransactions
+          .concat(this.transaction)
+          .filter((transaction) =>
+            this.matchPattern(transaction, 'destination')
+          ),
+      ]
+      const receiverMatchPercentage =
+        (receiverMatchedTransactions.length / receiverTransactions.length) * 100
+
+      if (
+        destinationMatchPattern &&
+        receiverTransactions.length > initialTransactions &&
+        receiverMatchPercentage > patternPercentageLimit
+      ) {
+        return {
+          action: this.action,
+          vars: {
+            ...super.getTransactionVars('destination'),
+          },
+        }
       }
     }
   }

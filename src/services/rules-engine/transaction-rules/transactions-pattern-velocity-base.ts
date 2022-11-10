@@ -43,6 +43,22 @@ export default class TransactionsPatternVelocityBaseRule<
   }
 
   public async computeRule() {
+    const originMatchPattern = this.matchPattern(
+      this.transaction,
+      'origin',
+      'sender',
+      true
+    )
+    const destinationMatchPattern = this.matchPattern(
+      this.transaction,
+      'destination',
+      'receiver',
+      true
+    )
+    if (!originMatchPattern && !destinationMatchPattern) {
+      return
+    }
+
     const {
       timeWindow,
       transactionsLimit,
@@ -63,8 +79,8 @@ export default class TransactionsPatternVelocityBaseRule<
       this.transactionRepository,
       {
         timeWindow,
-        checkSender,
-        checkReceiver,
+        checkSender: originMatchPattern ? checkSender : 'none',
+        checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
         transactionState: this.filters.transactionState,
         transactionTypes: this.filters.transactionTypes,
         paymentMethod: this.filters.paymentMethod,
@@ -72,56 +88,62 @@ export default class TransactionsPatternVelocityBaseRule<
       this.getNeededTransactionFields()
     )
 
-    const senderMatchedTransactions = [
-      ...senderSendingTransactions
-        .concat(this.transaction)
-        .filter((transaction) =>
-          this.matchPattern(transaction, 'origin', 'sender')
+    if (originMatchPattern) {
+      const senderMatchedTransactions = [
+        ...senderSendingTransactions
+          .concat(this.transaction)
+          .filter((transaction) =>
+            this.matchPattern(transaction, 'origin', 'sender')
+          ),
+        ...senderReceivingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'destination', 'sender')
         ),
-      ...senderReceivingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'destination', 'sender')
-      ),
-    ]
-    const receiverMatchedTransactions = [
-      ...receiverSendingTransactions.filter((transaction) =>
-        this.matchPattern(transaction, 'origin', 'receiver')
-      ),
-      ...receiverReceivingTransactions
-        .concat(this.transaction)
-        .filter((transaction) =>
-          this.matchPattern(transaction, 'destination', 'receiver')
-        ),
-    ]
-    const senderMatchedTransactionGroups = this.groupTransactions(
-      senderMatchedTransactions
-    )
-    const receiverMatchedTransactionGroups = this.groupTransactions(
-      receiverMatchedTransactions
-    )
+      ]
+      const senderMatchedTransactionGroups = this.groupTransactions(
+        senderMatchedTransactions
+      )
 
-    for (const group of senderMatchedTransactionGroups) {
-      if (
-        (!initialTransactions || group.length > initialTransactions!) &&
-        group.length > transactionsLimit
-      ) {
-        return {
-          action: this.action,
-          vars: {
-            ...super.getTransactionVars('origin'),
-          },
+      for (const group of senderMatchedTransactionGroups) {
+        if (
+          (!initialTransactions || group.length > initialTransactions!) &&
+          group.length > transactionsLimit
+        ) {
+          return {
+            action: this.action,
+            vars: {
+              ...super.getTransactionVars('origin'),
+            },
+          }
         }
       }
     }
-    for (const group of receiverMatchedTransactionGroups) {
-      if (
-        (!initialTransactions || group.length > initialTransactions!) &&
-        group.length > transactionsLimit
-      ) {
-        return {
-          action: this.action,
-          vars: {
-            ...super.getTransactionVars('destination'),
-          },
+
+    if (destinationMatchPattern) {
+      const receiverMatchedTransactions = [
+        ...receiverSendingTransactions.filter((transaction) =>
+          this.matchPattern(transaction, 'origin', 'receiver')
+        ),
+        ...receiverReceivingTransactions
+          .concat(this.transaction)
+          .filter((transaction) =>
+            this.matchPattern(transaction, 'destination', 'receiver')
+          ),
+      ]
+      const receiverMatchedTransactionGroups = this.groupTransactions(
+        receiverMatchedTransactions
+      )
+
+      for (const group of receiverMatchedTransactionGroups) {
+        if (
+          (!initialTransactions || group.length > initialTransactions!) &&
+          group.length > transactionsLimit
+        ) {
+          return {
+            action: this.action,
+            vars: {
+              ...super.getTransactionVars('destination'),
+            },
+          }
         }
       }
     }
@@ -133,7 +155,8 @@ export default class TransactionsPatternVelocityBaseRule<
   protected matchPattern(
     _transaction: Transaction,
     _direction?: 'origin' | 'destination',
-    _userType?: 'sender' | 'receiver'
+    _userType?: 'sender' | 'receiver',
+    _pure?: boolean
   ): boolean {
     throw new Error('Not implemented')
   }

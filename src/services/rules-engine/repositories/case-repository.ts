@@ -31,6 +31,8 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
+export const MAX_TRANSACTION_IN_A_CASE = 1000
+
 export class CaseRepository {
   mongoDb: MongoClient
   tenantId: string
@@ -279,6 +281,13 @@ export class CaseRepository {
     if (requiresTransactions) {
       pipeline.push(
         ...[
+          {
+            $set: {
+              caseTransactionsIds: {
+                $slice: ['$caseTransactionsIds', MAX_TRANSACTION_IN_A_CASE],
+              },
+            },
+          },
           {
             $lookup: {
               from: TRANSACTIONS_COLLECTION(this.tenantId),
