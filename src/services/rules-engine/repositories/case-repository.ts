@@ -690,21 +690,34 @@ export class CaseRepository {
 
   public async getCasesByUserId(
     userId: string,
-    direction: 'ORIGIN' | 'DESTINATION',
-    caseType: CaseType
+    caseType: CaseType,
+    directions?: ('ORIGIN' | 'DESTINATION')[]
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    const directionFilters = []
+    if (directions == null || directions.includes('ORIGIN')) {
+      directionFilters.push({
+        'caseUsers.origin.userId': userId,
+      })
+    }
+    if (directions == null || directions.includes('DESTINATION')) {
+      directionFilters.push({
+        'caseUsers.destination.userId': userId,
+      })
+    }
+
     return await casesCollection
       .find({
-        caseType,
-        ...(direction === 'ORIGIN'
-          ? {
-              'caseUsers.origin.userId': userId,
-            }
-          : {
-              'caseUsers.destination.userId': userId,
-            }),
+        $and: [
+          {
+            caseType,
+          },
+          {
+            $or: directionFilters,
+          },
+        ],
       })
       .toArray()
   }

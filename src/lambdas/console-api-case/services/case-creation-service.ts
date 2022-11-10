@@ -119,11 +119,7 @@ export class CaseCreationService {
           ? caseUsers.origin?.userId
           : caseUsers.destination?.userId
       if (userId != null) {
-        const cases = await this.caseRepository.getCasesByUserId(
-          userId,
-          hitDirection,
-          'USER'
-        )
+        const cases = await this.caseRepository.getCasesByUserId(userId, 'USER')
         const existedCase = cases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )

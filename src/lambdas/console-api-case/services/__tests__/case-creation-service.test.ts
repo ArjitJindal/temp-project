@@ -194,6 +194,57 @@ describe('User cases', () => {
       }
     })
   })
+
+  describe('Run #5', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID)
+    test('Previous case should be updated when user is a different party', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      // Create case
+      let firstCase: Case
+      {
+        const transaction = getTestTransaction({
+          transactionId: '111',
+          originUserId: TEST_USER_1.userId,
+          destinationUserId: undefined,
+        })
+        const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+          transaction,
+        ])
+        expect(results.length).not.toEqual(0)
+        const [result] = results
+        const cases = await caseCreationService.handleTransaction({
+          ...transaction,
+          ...result,
+        })
+        firstCase = cases[0]
+      }
+
+      // Add transaction, same user but as destination, it should land into existed case
+      {
+        const transaction = getTestTransaction({
+          transactionId: '222',
+          originUserId: undefined,
+          destinationUserId: TEST_USER_1.userId,
+        })
+        const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+          transaction,
+        ])
+        expect(results.length).not.toEqual(0)
+        const [result] = results
+        const cases = await caseCreationService.handleTransaction({
+          ...transaction,
+          ...result,
+        })
+
+        expect(results.length).toEqual(1)
+        const nextCase = cases[0]
+        expect(firstCase.caseId).toEqual(nextCase.caseId)
+        expect(nextCase.caseTransactionsIds).toHaveLength(2)
+      }
+    })
+  })
 })
 
 /*
