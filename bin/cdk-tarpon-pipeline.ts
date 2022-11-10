@@ -129,7 +129,17 @@ if (process.env.ENV === 'prod:eu-1') {
 }
 
 if (process.env.ENV === 'prod:eu-2') {
-  new CdkTarponStack(app, `${prodConfigEu2.stage}-tarpon`, prodConfigEu2)
+  const tarponStack = new CdkTarponStack(
+    app,
+    `${prodConfigEu2.stage}-tarpon`,
+    prodConfigEu2
+  )
+  new CdkTarponAlarmsStack(
+    app,
+    `${prodConfigUS1.stage}-tarpon-alarms`,
+    prodConfigUS1,
+    tarponStack.betterUptimeCloudWatchTopic
+  )
 }
 
 if (process.env.ENV === 'prod:us-1') {
