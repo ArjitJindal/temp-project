@@ -57,20 +57,7 @@ import {
   StackConstants,
 } from './constants'
 import { Config } from './configs/config'
-import {
-  createTarponOverallLambdaAlarm,
-  createKinesisAlarm,
-  createAPIGatewayAlarm,
-  dynamoTableOperations,
-  createDynamoDBAlarm,
-  dynamoTableOperationMetrics,
-  createAPIGatewayThrottlingAlarm,
-  createLambdaErrorPercentageAlarm,
-  createLambdaThrottlingAlarm,
-  createLambdaDurationAlarm,
-  createLambdaConsumerIteratorAgeAlarm,
-  createLambdaMemoryUtilizationAlarm,
-} from './cdk-cw-alarms'
+import { createAPIGatewayThrottlingAlarm } from './cdk-cw-alarms'
 import { LAMBDAS } from './lambdas'
 import {
   FileImportConfig,
@@ -384,11 +371,6 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
-    createLambdaDurationAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME
-    )
 
     /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
@@ -396,11 +378,6 @@ export class CdkTarponStack extends cdk.Stack {
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
-    createLambdaDurationAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME
-    )
 
     /*  User Event */
     const { alias: userEventAlias } = this.createFunction({
@@ -901,13 +878,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicApi, logGroup: publicApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_API_NAME)
 
-    createAPIGatewayAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      StackConstants.TARPON_API_GATEWAY_ALARM_NAME,
-      publicApi.restApiName
-    )
-
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
@@ -920,13 +890,6 @@ export class CdkTarponStack extends cdk.Stack {
     const { api: publicConsoleApi, logGroup: publicConsoleApiLogGroup } =
       this.createApiGateway(StackConstants.TARPON_MANAGEMENT_API_NAME)
 
-    createAPIGatewayAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      StackConstants.TARPON_MANAGEMENT_API_GATEWAY_ALARM_NAME,
-      publicConsoleApi.restApiName
-    )
-
     createAPIGatewayThrottlingAlarm(
       this,
       this.betterUptimeCloudWatchTopic,
@@ -938,13 +901,6 @@ export class CdkTarponStack extends cdk.Stack {
     // Console API
     const { api: consoleApi, logGroup: consoleApiLogGroup } =
       this.createApiGateway(StackConstants.CONSOLE_API_NAME)
-
-    createAPIGatewayAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      StackConstants.CONSOLE_API_GATEWAY_ALARM_NAME,
-      consoleApi.restApiName
-    )
 
     createAPIGatewayThrottlingAlarm(
       this,
@@ -1018,10 +974,6 @@ export class CdkTarponStack extends cdk.Stack {
       'AUTHORIZER_BASE_ROLE_ARN',
       jwtAuthorizerBaseRole.roleArn
     )
-
-    if (!isDevUserStack) {
-      createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
-    }
 
     /**
      * Outputs
@@ -1107,19 +1059,6 @@ export class CdkTarponStack extends cdk.Stack {
     // This is needed to allow using ${Function.Arn} in openapi.yaml
     ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
 
-    /* Alarms */
-    createLambdaErrorPercentageAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      name
-    )
-    createLambdaThrottlingAlarm(this, this.betterUptimeCloudWatchTopic, name)
-    createLambdaMemoryUtilizationAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      name
-    )
-
     // Alias is required for setting provisioned concurrency. We always create
     // an alias for a lambda even it has no provisioned concurrency.
     const alias = new Alias(
@@ -1200,55 +1139,6 @@ export class CdkTarponStack extends cdk.Stack {
     )
   }
 
-  private createDynamoDbAlarms(tableName: string) {
-    dynamoTableOperationMetrics.map((metric) => {
-      dynamoTableOperations.map((operation) => {
-        createDynamoDBAlarm(
-          this,
-          this.betterUptimeCloudWatchTopic,
-          `Dynamo${tableName}${operation}${metric}`,
-          tableName,
-          metric,
-          {
-            threshold: 1,
-            period: Duration.minutes(5),
-            dimensions: { Operation: operation },
-          }
-        )
-      })
-    })
-
-    if (this.config.stage === 'prod') {
-      // We only monitor consumed read/write capacity for production as we use on-demand
-      // mode only in production
-
-      createDynamoDBAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        `Dynamo${tableName}ConsumedReadCapacityUnits`,
-        tableName,
-        'ConsumedReadCapacityUnits',
-        {
-          threshold: 600,
-          statistic: 'Maximum',
-          period: Duration.minutes(1),
-        }
-      )
-      createDynamoDBAlarm(
-        this,
-        this.betterUptimeCloudWatchTopic,
-        `Dynamo${tableName}ConsumedWriteCapacityUnits`,
-        tableName,
-        'ConsumedWriteCapacityUnits',
-        {
-          threshold: 300,
-          statistic: 'Maximum',
-          period: Duration.minutes(1),
-        }
-      )
-    }
-  }
-
   private createDynamodbTable(tableName: string, kinesisStream?: IStream) {
     const isDevUserStack = process.env.ENV === 'dev:user'
     if (isDevUserStack) {
@@ -1267,7 +1157,6 @@ export class CdkTarponStack extends cdk.Stack {
           ? RemovalPolicy.DESTROY
           : RemovalPolicy.RETAIN,
     })
-    this.createDynamoDbAlarms(tableName)
     return table
   }
 
@@ -1291,12 +1180,6 @@ export class CdkTarponStack extends cdk.Stack {
       stream.applyRemovalPolicy(RemovalPolicy.DESTROY)
     }
 
-    createKinesisAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      `${streamId}PutRecordErrorRate`,
-      stream.streamName
-    )
     return stream
   }
 
@@ -1312,12 +1195,6 @@ export class CdkTarponStack extends cdk.Stack {
       ...props,
     })
     alias.addEventSource(eventSource)
-
-    createLambdaConsumerIteratorAgeAlarm(
-      this,
-      this.betterUptimeCloudWatchTopic,
-      functionName
-    )
   }
 
   private createKinesisEventSourceForRetry(

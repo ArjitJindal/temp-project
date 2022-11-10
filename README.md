@@ -10,6 +10,7 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
   - Rules Engine
 - events - Invocation events that you can use to invoke the function.
 - lib/cdk-tarpon-stack.ts - The CDK configuration of the application's AWS resources.
+- lib/cdk-alarms-stack.ts - The CDK configuration of the application's Alarms.
 
 ## Prerequisites
 
