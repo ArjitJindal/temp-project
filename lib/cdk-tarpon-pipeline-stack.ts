@@ -5,7 +5,10 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as codebuild from 'aws-cdk-lib/aws-codebuild'
 
 import { Construct } from 'constructs'
-import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
+import {
+  BuildEnvironmentVariableType,
+  ComputeType,
+} from 'aws-cdk-lib/aws-codebuild'
 import { Duration } from 'aws-cdk-lib'
 import { config as deployConfig } from './configs/config-deployment'
 import { config as devConfig } from './configs/config-dev'
@@ -46,6 +49,47 @@ export class CdkTarponPipelineStack extends cdk.Stack {
       }
     )
 
+    // Define pipeline stage output artifacts
+    const sourceOutput = new codepipeline.Artifact()
+    const buildOutput = new codepipeline.Artifact('BuildOutput')
+
+    const getSentryReleaseSpec = (production: boolean) => {
+      return {
+        commands: [
+          production
+            ? undefined
+            : './node_modules/.bin/sentry-cli releases files latest-version delete --all',
+          `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/tarpon@$RELEASE_COMMIT`,
+          `./node_modules/.bin/sentry-cli releases files $RELEASE_VERSION upload-sourcemaps --ext js --ext map --ignore-file .sentryignore dist`,
+          `./node_modules/.bin/sentry-cli releases finalize $RELEASE_VERSION`,
+        ].filter(Boolean),
+        env: {
+          'secrets-manager': {
+            SENTRY_AUTH_TOKEN:
+              'arn:aws:secretsmanager:eu-central-1:911899431626:secret:sentryCreds-WEnffs:authToken',
+          },
+          variables: {
+            SENTRY_ORG: 'flagright-data-technologies-in',
+            SENTRY_PROJECT: 'tarpon',
+          },
+        },
+        actionEnv: {
+          RELEASE_VERSION: {
+            type: BuildEnvironmentVariableType.PLAINTEXT,
+            value: production
+              ? '#{SourceVariables.CommitId}'
+              : 'latest-version',
+          },
+          RELEASE_COMMIT: {
+            type: BuildEnvironmentVariableType.PLAINTEXT,
+            value: '#{SourceVariables.CommitId}',
+          },
+        },
+      }
+    }
+    const devSandboxSentryReleaseSpec = getSentryReleaseSpec(false)
+    const prodSentryReleaseSpec = getSentryReleaseSpec(true)
+
     // Build definition
     const buildProject = new codebuild.PipelineProject(this, 'TarponBuild', {
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -58,7 +102,10 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             commands: ['npm ci'],
           },
           build: {
-            commands: ['npm run build'],
+            commands: [
+              'npm run build',
+              ...devSandboxSentryReleaseSpec.commands,
+            ],
           },
         },
         cache: {
@@ -68,11 +115,13 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           'base-directory': '.',
           files: GENERATED_DIRS.map((dir) => `${dir}/**/*`),
         },
+        env: devSandboxSentryReleaseSpec.env,
       }),
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         computeType: ComputeType.LARGE,
       },
+      role: devCodeDeployRole,
     })
     const getDeployCodeBuildProject = (config: Config) => {
       const env = config.stage + (config.region ? `:${config.region}` : '')
@@ -84,6 +133,8 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
         'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
       ]
+      const shouldReleaseSentry =
+        config.stage === 'prod' && config.region === 'eu-1'
       return new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
@@ -106,8 +157,11 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                   (dir) =>
                     `mv "$CODEBUILD_SRC_DIR_${buildOutput.artifactName}"/${dir} ${dir}`
                 ),
+                ...(shouldReleaseSentry ? prodSentryReleaseSpec.commands : []),
                 `npm run migration:pre:up`,
                 ...assumeRuleCommands,
+                // Don't upload soure maps to Lambda
+                'rm dist/**/*.js.map',
                 `npm run synth:${env}`,
                 `npm run deploy:${env} -- --require-approval=never`,
                 `npm run migration:post:up`,
@@ -118,6 +172,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
             'base-directory': 'cdk.out',
             files: ['*.json'],
           },
+          env: shouldReleaseSentry ? prodSentryReleaseSpec.env : undefined,
         }),
         environment: {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
@@ -128,10 +183,6 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         timeout: Duration.hours(8),
       })
     }
-
-    // Define pipeline stage output artifacts
-    const sourceOutput = new codepipeline.Artifact()
-    const buildOutput = new codepipeline.Artifact('BuildOutput')
 
     // Pipeline definition
     new codepipeline.Pipeline(this, PIPELINE_NAME, {
@@ -147,6 +198,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               branch: deployConfig.github.BRANCH,
               output: sourceOutput,
               connectionArn: deployConfig.github.GITHUB_CONNECTION_ARN,
+              variablesNamespace: 'SourceVariables',
             }),
           ],
         },
@@ -158,6 +210,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: buildProject,
               input: sourceOutput,
               outputs: [buildOutput],
+              environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
             }),
           ],
         },
@@ -169,6 +222,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: getDeployCodeBuildProject(devConfig),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
             }),
           ],
         },
@@ -180,6 +234,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: getDeployCodeBuildProject(sandboxConfig),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: devSandboxSentryReleaseSpec.actionEnv,
             }),
           ],
         },
@@ -200,30 +255,35 @@ export class CdkTarponPipelineStack extends cdk.Stack {
               project: getDeployCodeBuildProject(prodAisa1Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_asia-2',
               project: getDeployCodeBuildProject(prodAisa2Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_eu-1',
               project: getDeployCodeBuildProject(prodEU1Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_eu-2',
               project: getDeployCodeBuildProject(prodEU2Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
             new codepipeline_actions.CodeBuildAction({
               actionName: 'Deploy_us-1',
               project: getDeployCodeBuildProject(prodUS1Config),
               input: sourceOutput,
               extraInputs: [buildOutput],
+              environmentVariables: prodSentryReleaseSpec.actionEnv,
             }),
           ],
         },

@@ -1098,6 +1098,9 @@ export class CdkTarponStack extends cdk.Stack {
           },
           AWS_XRAY_CONTEXT_MISSING: 'LOG_ERROR',
           AUDITLOG_TOPIC_ARN: this.auditLogTopic?.topicArn,
+          // NOTE: RELEASE_VERSION and LAMBDA_CODE_PATH used for Sentry
+          RELEASE_VERSION: process.env.RELEASE_VERSION as string,
+          LAMBDA_CODE_PATH: LAMBDAS[name].codePath,
         },
       },
     })

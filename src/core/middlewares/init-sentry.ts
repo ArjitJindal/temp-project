@@ -5,6 +5,7 @@ import {
   APIGatewayProxyResult,
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
+import { RewriteFrames } from '@sentry/integrations'
 import { getContext } from '../utils/context'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
@@ -29,6 +30,12 @@ export const initSentry =
       dsn: 'https://ecefa05b5cfb4b5998ccc8d4907012c8@o1295082.ingest.sentry.io/6567808', // I think we can hardcode this for now since it is same for all lambdas
       tracesSampleRate: 0.02,
       environment: process.env.ENV || 'local',
+      release: process.env.RELEASE_VERSION,
+      integrations: [
+        new RewriteFrames({
+          prefix: `app:///${process.env.LAMBDA_CODE_PATH}/`,
+        }) as any,
+      ],
     })
 
     return Sentry.AWSLambda.wrapHandler(
