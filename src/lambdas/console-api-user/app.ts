@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
 import { UserService } from './services/user-service'
+import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getS3Client } from '@/utils/s3'
@@ -69,6 +70,10 @@ export const businessUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
+      const caseAuditLogService = new UserAuditLogService(tenantId)
+      await caseAuditLogService.handleAuditLogForuserViewed(
+        event.pathParameters?.userId
+      )
       return user
     } else if (
       event.httpMethod === 'POST' &&
@@ -175,6 +180,10 @@ export const consumerUsersViewHandler = lambdaApi()(
       if (user == null) {
         throw new NotFound(`Unable to find user by id`)
       }
+      const caseAuditLogService = new UserAuditLogService(tenantId)
+      await caseAuditLogService.handleAuditLogForuserViewed(
+        event.pathParameters?.userId
+      )
       return user
     } else if (
       event.httpMethod === 'POST' &&
