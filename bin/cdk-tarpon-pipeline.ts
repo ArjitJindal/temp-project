@@ -136,8 +136,8 @@ if (process.env.ENV === 'prod:eu-2') {
   )
   new CdkTarponAlarmsStack(
     app,
-    `${prodConfigUS1.stage}-tarpon-alarms`,
-    prodConfigUS1,
+    `${prodConfigEu2.stage}-tarpon-alarms`,
+    prodConfigEu2,
     tarponStack.betterUptimeCloudWatchTopic
   )
 }
