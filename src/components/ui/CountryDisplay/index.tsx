@@ -19,7 +19,7 @@ export default function CountryDisplay(props: Props): JSX.Element {
   return (
     <Space align="start">
       {name && <ReactCountryFlag countryCode={code} svg />}
-      <span>{name || code}</span>
+      <span>{name || code}</span>{' '}
     </Space>
   );
 }
