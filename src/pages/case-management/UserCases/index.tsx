@@ -138,6 +138,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Transactions Hit',
         width: 150,
+        sorter: (a, b) => a.caseTransactionsIds!.length - b.caseTransactionsIds!.length,
         render: (_, entity) => {
           return <>{entity.caseTransactionsIds?.length ?? 0}</>;
         },
