@@ -93,8 +93,9 @@ export default function TransactionsTable(props: Props) {
           return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
       },
+
       {
-        title: 'Transaction State',
+        title: 'Last transaction state',
         width: 130,
         ellipsis: true,
         dataIndex: 'transactionState',
@@ -102,23 +103,6 @@ export default function TransactionsTable(props: Props) {
         sorter: !disableSorting,
         render: (_, entity) => {
           return <TransactionStateTag transactionState={entity.transactionState} />;
-        },
-      },
-      {
-        title: 'Last transaction state',
-        width: 130,
-        render: (_, entity) => {
-          if (entity.events == null) {
-            return <></>;
-          }
-          if (entity.events.length === 0) {
-            return <></>;
-          }
-          return (
-            <TransactionStateTag
-              transactionState={entity.events[entity.events.length - 1].transactionState}
-            />
-          );
         },
       },
       {
