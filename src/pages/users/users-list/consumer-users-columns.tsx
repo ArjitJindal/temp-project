@@ -92,6 +92,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       title: 'User State',
       hideInSearch: true,
       hideInDescriptions: true,
+      width: 120,
       render: (dom, entity) => {
         return entity.userStateDetails?.state;
       },
