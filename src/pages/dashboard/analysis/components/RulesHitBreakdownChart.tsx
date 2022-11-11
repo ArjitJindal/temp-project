@@ -74,7 +74,7 @@ const RulesHitBreakdownChart = ({
               visible: false,
             }}
             label={{
-              //type: 'spider',
+              type: 'outer',
               content: (text, item) => {
                 // eslint-disable-next-line no-underscore-dangle
                 return `${item._origin.x}: ${numeral(item._origin.y).format('0,0')} Hits`;
