@@ -8,6 +8,7 @@ export interface LeafRouteItem extends RouteCommonProps {
   icon?: string;
   hideInMenu?: boolean;
   component: React.FC<any>; // todo: improve types
+  disabled?: boolean;
 }
 
 export interface TreeRouteItem extends RouteCommonProps {
@@ -16,10 +17,12 @@ export interface TreeRouteItem extends RouteCommonProps {
   routes: RouteItem[];
   hideInMenu?: boolean;
   hideChildrenInMenu?: boolean;
+  disabled?: boolean;
 }
 
 export interface RedirectRouteItem extends RouteCommonProps {
   redirect: string;
+  disabled?: boolean;
 }
 
 export type RouteItem = LeafRouteItem | TreeRouteItem | RedirectRouteItem;

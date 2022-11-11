@@ -1,4 +1,4 @@
-import { Menu as AntMenu } from 'antd';
+import { Menu as AntMenu, Popover } from 'antd';
 import {
   BarChartOutlined,
   FlagOutlined,
@@ -75,6 +75,11 @@ function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {
   }
   return result;
 }
+const disabledMessage = (
+  <div>
+    Please <a href="mailto:support@flagright.com">contact us</a> to access this feature.
+  </div>
+);
 function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18n): ItemType[] {
   return items
     .filter((route) => ('redirect' in route ? false : !route.hideInMenu))
@@ -96,11 +101,16 @@ function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18
         : {
             key: item.name,
             icon: icon,
-            label: (
+            label: item.disabled ? (
+              <Popover content={disabledMessage}>
+                <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>
+              </Popover>
+            ) : (
               <Link to={item.path} className={s.links}>
                 <span className={s.menuItem}>{i18n(fullKey as TranslationId)}</span>
               </Link>
             ),
+            disabled: item.disabled,
             title: i18n(fullKey as TranslationId),
           };
     });

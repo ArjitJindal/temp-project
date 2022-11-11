@@ -251,31 +251,34 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isSanctionsEnabled && {
+      {
         path: '/sanctions',
         name: 'sanctions',
         icon: 'GlobalOutlined',
         hideChildrenInMenu: true,
         position: 'top',
-        routes: [
-          {
-            path: '/sanctions',
-            redirect:
-              lastActiveSanctionsTab === 'search'
-                ? '/sanctions/search'
-                : '/sanctions/search-history',
-          },
-          {
-            path: '/sanctions/:type',
-            name: 'sanctions',
-            component: SanctionsPage,
-          },
-          {
-            path: '/sanctions/search/:searchId',
-            component: SanctionsPage,
-            name: 'search-history-item',
-          },
-        ],
+        disabled: !isSanctionsEnabled,
+        routes: isSanctionsEnabled
+          ? [
+              {
+                path: '/sanctions',
+                redirect:
+                  lastActiveSanctionsTab === 'search'
+                    ? '/sanctions/search'
+                    : '/sanctions/search-history',
+              },
+              {
+                path: '/sanctions/:type',
+                name: 'sanctions',
+                component: SanctionsPage,
+              },
+              {
+                path: '/sanctions/search/:searchId',
+                component: SanctionsPage,
+                name: 'search-history-item',
+              },
+            ]
+          : [],
       },
       {
         path: '/settings',
