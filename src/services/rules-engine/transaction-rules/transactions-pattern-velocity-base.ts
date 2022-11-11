@@ -1,5 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
 import { getTransactionUserPastTransactions } from '../utils/transaction-rule-utils'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
@@ -148,12 +151,14 @@ export default class TransactionsPatternVelocityBaseRule<
       }
     }
   }
-  protected groupTransactions(transactions: Transaction[]): Transaction[][] {
+  protected groupTransactions(
+    transactions: AuxiliaryIndexTransaction[]
+  ): AuxiliaryIndexTransaction[][] {
     return [transactions]
   }
 
   protected matchPattern(
-    _transaction: Transaction,
+    _transaction: AuxiliaryIndexTransaction,
     _direction?: 'origin' | 'destination',
     _userType?: 'sender' | 'receiver',
     _pure?: boolean

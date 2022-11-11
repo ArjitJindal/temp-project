@@ -1,5 +1,8 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionRepository } from '../repositories/transaction-repository'
+import {
+  AuxiliaryIndexTransaction,
+  TransactionRepository,
+} from '../repositories/transaction-repository'
 import { getTransactionUserPastTransactions } from '../utils/transaction-rule-utils'
 import {
   TimeWindow,
@@ -146,7 +149,7 @@ export default class TransactionsPatternPercentageBaseRule<
   }
 
   protected matchPattern(
-    _transaction: Transaction,
+    _transaction: AuxiliaryIndexTransaction,
     _direction?: 'origin' | 'destination'
   ): boolean {
     throw new Error('Not implemented')

@@ -139,8 +139,8 @@ async function getTransactions(
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
-  sendingTransactions: Transaction[]
-  receivingTransactions: Transaction[]
+  sendingTransactions: AuxiliaryIndexTransaction[]
+  receivingTransactions: AuxiliaryIndexTransaction[]
 }> {
   const {
     checkType,
@@ -270,10 +270,10 @@ export async function getTransactionUserPastTransactions(
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
-  senderSendingTransactions: Transaction[]
-  senderReceivingTransactions: Transaction[]
-  receiverSendingTransactions: Transaction[]
-  receiverReceivingTransactions: Transaction[]
+  senderSendingTransactions: AuxiliaryIndexTransaction[]
+  senderReceivingTransactions: AuxiliaryIndexTransaction[]
+  receiverSendingTransactions: AuxiliaryIndexTransaction[]
+  receiverReceivingTransactions: AuxiliaryIndexTransaction[]
 }> {
   const {
     checkSender,
