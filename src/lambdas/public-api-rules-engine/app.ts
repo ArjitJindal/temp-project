@@ -195,8 +195,23 @@ export const transactionEventHandler = lambdaApi()(
       })
       logger.info(`Processing Transaction Event`) // Need to log to show on the logs
 
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
-      return rulesEngine.verifyTransactionEvent(transactionEvent)
+      let missingUsers: (MissingUserIdMap | undefined)[] = []
+      if (transactionEvent.updatedTransactionAttributes) {
+        missingUsers = await getTransactionMissingUsers(
+          transactionEvent.updatedTransactionAttributes,
+          tenantId,
+          dynamoDb
+        )
+      }
+      const isValidPayload =
+        !transactionEvent.updatedTransactionAttributes ||
+        missingUsers.length === 0
+      if (isValidPayload) {
+        const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+        return rulesEngine.verifyTransactionEvent(transactionEvent)
+      } else {
+        throw new BadRequest(getMissingUsersMessage(missingUsers))
+      }
     }
     throw new Error('Unhandled request')
   }

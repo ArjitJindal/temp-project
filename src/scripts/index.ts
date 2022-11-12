@@ -134,7 +134,6 @@ export const createAndUploadTestData = async (
 
   for (let i = 0; i < numberOfTransactions; i++) {
     transactionObject = {
-      transactionId: `transaction-${i}`,
       originUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       destinationUserId: userIds[getRandomIntInclusive(0, numberOfUsers)],
       timestamp:

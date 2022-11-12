@@ -247,7 +247,6 @@ describe('Public API - Create a Transaction Event', () => {
     const transaction = getTestTransaction({
       transactionId: 'foo',
       transactionState: 'CREATED',
-      timestamp: 100,
     })
     await transactionHandler(
       getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', transaction, {
@@ -264,9 +263,7 @@ describe('Public API - Create a Transaction Event', () => {
       transactionId: 'foo',
       transactionState: 'DECLINED',
       updatedTransactionAttributes: {
-        originPaymentDetails: {
-          method: 'CARD',
-        },
+        timestamp: 100,
       },
     })
     const response = await transactionEventHandler(
@@ -285,9 +282,6 @@ describe('Public API - Create a Transaction Event', () => {
         ...transaction,
         transactionState: 'DECLINED',
         timestamp: 100,
-        originPaymentDetails: {
-          method: 'CARD',
-        },
       },
       executedRules: [],
       hitRules: [],
