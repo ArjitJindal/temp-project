@@ -515,9 +515,7 @@ export class RulesEngineService {
     if (!user?.userId || !hasFeature('PULSE')) {
       return undefined
     }
-    const riskItem = await this.riskRepository.getManualDRSRiskItem(
-      user?.userId
-    )
+    const riskItem = await this.riskRepository.getDRSRiskItem(user?.userId)
     return riskItem?.riskLevel
   }
 

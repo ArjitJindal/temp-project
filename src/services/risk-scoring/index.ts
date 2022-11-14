@@ -2,7 +2,11 @@ import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
-import { getAgeFromTimestamp, riskLevelPrecendence } from './utils'
+import {
+  DEFAULT_RISK_LEVEL,
+  getAgeFromTimestamp,
+  riskLevelPrecendence,
+} from './utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -11,8 +15,6 @@ import { logger } from '@/core/logger'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-
-const DEFAULT_RISK_LEVEL = 'VERY_HIGH' // defaults to very high risk for now - will be configurable in the future
 
 const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
   let riskScore = 75 // Make this configurable

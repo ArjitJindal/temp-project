@@ -89,7 +89,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/pulse/risk-classification':
     StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
-  '/pulse/manual-risk-assignment':
+  '/pulse/risk-assignment':
     StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-parameter':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,

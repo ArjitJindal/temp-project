@@ -10,6 +10,23 @@ export const riskLevelPrecendence: OptionRequirements = {
   HIGH: 4,
   VERY_HIGH: 5,
 }
+export const DEFAULT_RISK_LEVEL = 'VERY_HIGH' // defaults to very high risk for now - will be configurable in the future
+
+export const getRiskLevelFromScore = (
+  riskClassificationValues: Array<any>,
+  riskScore: number
+): RiskLevel => {
+  let riskLevel: RiskLevel | undefined
+  riskClassificationValues.map((value) => {
+    if (
+      riskScore >= value.lowerBoundRiskScore &&
+      riskScore < value.upperBoundRiskScore
+    ) {
+      riskLevel = value.riskLevel
+    }
+  })
+  return riskLevel ? riskLevel : DEFAULT_RISK_LEVEL
+}
 
 export const getAgeFromTimestamp = (timestamp: number) => {
   return dayjs().diff(dayjs(timestamp), 'year')

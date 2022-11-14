@@ -1589,7 +1589,7 @@ paths:
               items:
                 $ref: '#/components/schemas/RiskClassificationScore'
     parameters: []
-  /pulse/manual-risk-assignment:
+  /pulse/risk-assignment:
     parameters: []
     post:
       summary: Risk Level - Manual Assignment
@@ -1603,8 +1603,9 @@ paths:
               properties:
                 riskLevel:
                   $ref: '#/components/schemas/RiskLevel'
-              required:
-                - riskLevel
+                isUpdatable:
+                  type: boolean
+        description: ''
       responses:
         '200':
           description: OK
@@ -1623,7 +1624,7 @@ paths:
           description: UserID of the user whose risk is being manually assigned
     get:
       summary: Risk Level - Get Manual Assignment
-      operationId: get-pulse-manual-risk-assignment
+      operationId: get-pulse-risk-assignment
       responses:
         '200':
           description: OK

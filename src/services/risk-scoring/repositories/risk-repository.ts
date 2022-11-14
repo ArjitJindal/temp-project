@@ -7,6 +7,7 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { ArsItem, DrsItem, KrsItem } from '../types'
+import { getRiskLevelFromScore } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -239,7 +240,7 @@ export class RiskRepository {
     return newRiskClassificationValues
   }
 
-  async getManualDRSRiskItem(
+  async getDRSRiskItem(
     userId: string
   ): Promise<ManualRiskAssignmentUserState | null> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -253,21 +254,40 @@ export class RiskRepository {
     }
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0
-        ? (result.Items[0] as ManualRiskAssignmentUserState)
-        : DEFAULT_DRS_RISK_ITEM
+      const manualDRSItem =
+        result.Items && result.Items.length > 0
+          ? (result.Items[0] as ManualRiskAssignmentUserState)
+          : DEFAULT_DRS_RISK_ITEM
+      if (!manualDRSItem.isUpdatable) {
+        return manualDRSItem
+      }
+      const drsScore = await this.getDrsScore(userId)
+      const riskClassificationValues = await this.getRiskClassification()
+      const drsRiskLevel = getRiskLevelFromScore(
+        riskClassificationValues,
+        drsScore
+      )
+      return {
+        isManualOverride: manualDRSItem.isManualOverride,
+        isUpdatable: manualDRSItem.isUpdatable,
+        riskLevel: drsRiskLevel,
+      }
     } catch (e) {
       logger.error(e)
       return null
     }
   }
 
-  async createOrUpdateManualDRSRiskItem(userId: string, riskLevel: RiskLevel) {
+  async createOrUpdateManualDRSRiskItem(
+    userId: string,
+    riskLevel: RiskLevel,
+    isUpdatable?: boolean
+  ) {
     const now = Date.now()
     const newDRSRiskItem: any = {
       riskLevel: riskLevel,
       isManualOverride: true,
-      isUpdatable: false,
+      isUpdatable: isUpdatable ?? true,
       createdAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {

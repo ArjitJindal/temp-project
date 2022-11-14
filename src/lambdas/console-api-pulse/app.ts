@@ -134,7 +134,7 @@ export const manualRiskAssignmentHandler = lambdaApi({
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     if (
       event.httpMethod === 'POST' &&
-      event.resource === '/pulse/manual-risk-assignment'
+      event.resource === '/pulse/risk-assignment'
     ) {
       if (!event.body) {
         throw new BadRequest('Empty body')
@@ -147,13 +147,14 @@ export const manualRiskAssignmentHandler = lambdaApi({
       }
       return riskRepository.createOrUpdateManualDRSRiskItem(
         userId,
-        body.riskLevel
+        body.riskLevel,
+        body.isUpdatable
       )
     } else if (
       event.httpMethod === 'GET' &&
-      event.resource === '/pulse/manual-risk-assignment'
+      event.resource === '/pulse/risk-assignment'
     ) {
-      return riskRepository.getManualDRSRiskItem(userId)
+      return riskRepository.getDRSRiskItem(userId)
     }
     throw new BadRequest('Unhandled request')
   }
