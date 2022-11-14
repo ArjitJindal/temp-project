@@ -18,7 +18,6 @@ const data: TransactionEvent[] = [
     eventId: eventId,
     reason: undefined,
     eventDescription: undefined,
-    employeeId: undefined,
     metaData: undefined,
     updatedTransactionAttributes: undefined,
   },
@@ -31,7 +30,6 @@ const data: TransactionEvent[] = [
       'Some quite long reason here. It should take several lines to check work wrap',
     eventDescription:
       'Some quite long description here. It should take several lines to check work wrap',
-    employeeId: undefined,
     metaData: undefined,
     updatedTransactionAttributes: undefined,
   },
@@ -42,7 +40,6 @@ const data: TransactionEvent[] = [
     eventId: sampleGuid(random()),
     reason: undefined,
     eventDescription: undefined,
-    employeeId: undefined,
     metaData: undefined,
     updatedTransactionAttributes: undefined,
   },
