@@ -16,7 +16,7 @@ export default function UserRiskTag(props: Props) {
     let isCanceled = false;
     setSyncState(loading());
     api
-      .getPulseManualRiskAssignment({ userId })
+      .getPulseRiskAssignment({ userId })
       .then((result) => {
         if (isCanceled) {
           return;
