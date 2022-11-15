@@ -34,11 +34,22 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
           }),
           averageThreshold: {
             type: 'object',
-            title:
-              "Rule doesn't trigger if average transactions number in period1 in less than 'Min' or more than 'Max' (as a percentage)",
+            title: 'Average number threshold (period 1)',
+            description:
+              "Rule doesn't trigger if average transactions number in period1 in less than 'Min' or more than 'Max'",
             properties: {
-              min: PERCENT_SCHEMA({ title: 'Min', maximum: 'NO_MAXIMUM' }),
-              max: PERCENT_SCHEMA({ title: 'Max', maximum: 'NO_MAXIMUM' }),
+              min: {
+                type: 'number',
+                title: 'Min',
+                minimum: 0,
+                nullable: true,
+              } as const,
+              max: {
+                type: 'number',
+                title: 'Max',
+                minimum: 0,
+                nullable: true,
+              } as const,
             },
             required: [],
             nullable: true,

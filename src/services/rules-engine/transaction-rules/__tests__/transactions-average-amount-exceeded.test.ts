@@ -255,42 +255,6 @@ describe('Core logic', () => {
         },
       },
     },
-    {
-      name: 'Average threshold',
-      transactions: [
-        getTestTransaction({
-          transactionId: '111',
-          originUserId: 'Nick',
-          destinationUserId: 'Mike',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: undefined,
-          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
-        }),
-        getTestTransaction({
-          originUserId: 'Nick',
-          destinationUserId: 'Mike',
-          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
-          destinationAmountDetails: undefined,
-          timestamp: now.valueOf(),
-        }),
-      ],
-      expectedHits: [false, false],
-      ruleParams: {
-        period1: {
-          granularity: 'day',
-          units: 1,
-          rollingBasis: true,
-        },
-        period2: {
-          granularity: 'day',
-          units: 2,
-          rollingBasis: true,
-        },
-        averageThreshold: {
-          max: 9999,
-        },
-      },
-    },
   ])('', ({ name, transactions, expectedHits, ruleParams }) => {
     const TEST_TENANT_ID = getTestTenantId()
 
@@ -350,6 +314,71 @@ describe('Filters', () => {
         },
       }),
     ])
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-average-amount-exceeded',
+        defaultParameters: {
+          ...defaultParams,
+          ...ruleParams,
+        },
+      },
+    ])
+
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
+describe('Average threshold', () => {
+  const now = dayjs('2022-01-01T00:00:00.000Z')
+
+  describe.each<
+    TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+  >([
+    {
+      name: 'First and last transaction should trigger, but average threshold prevent it',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(2, 'day').subtract(2, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '222',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '333',
+          originUserId: 'Nick',
+          destinationUserId: 'Mike',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+          destinationAmountDetails: undefined,
+          timestamp: now.valueOf(),
+        }),
+      ],
+      ruleParams: {
+        averageThreshold: {
+          min: 150,
+          max: 250,
+        },
+      },
+      expectedHits: [false, false, false],
+    },
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
 
     setUpRulesHooks(TEST_TENANT_ID, [
       {

@@ -319,6 +319,73 @@ describe('Different directions', () => {
   })
 })
 
+describe('Average threshold', () => {
+  const now = dayjs('2022-01-01T00:00:00.000Z')
+
+  describe.each<
+    TransactionRuleTestCase<Partial<TransactionsAverageExceededParameters>>
+  >([
+    {
+      name: 'Sender -> sending',
+      transactions: [
+        getTestTransaction({
+          transactionId: '111',
+          originUserId: 'Nick',
+          destinationUserId: 'Anon#1',
+          timestamp: now.subtract(2, 'day').subtract(3, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '222',
+          originUserId: 'Nick',
+          destinationUserId: 'Anon#2',
+          timestamp: now.subtract(1, 'day').subtract(2, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '333',
+          originUserId: 'Nick',
+          destinationUserId: 'Anon#3',
+          timestamp: now.subtract(1, 'day').subtract(1, 'second').valueOf(),
+        }),
+        getTestTransaction({
+          transactionId: '444',
+          originUserId: 'Nick',
+          destinationUserId: 'Anon#4',
+          timestamp: now.subtract(1, 'day').valueOf(),
+        }),
+      ],
+      expectedHits: [false, false, true, false],
+      ruleParams: {
+        checkSender: 'sending',
+        checkReceiver: 'none',
+        averageThreshold: {
+          min: 2,
+          max: 2,
+        },
+      },
+    },
+  ])('', ({ name, transactions, expectedHits, ruleParams }) => {
+    const TEST_TENANT_ID = getTestTenantId()
+
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'transactions-average-number-exceeded',
+        defaultParameters: {
+          ...defaultParams,
+          ...ruleParams,
+        },
+      },
+    ])
+
+    createTransactionRuleTestCase(
+      name,
+      TEST_TENANT_ID,
+      transactions,
+      expectedHits
+    )
+  })
+})
+
 describe('Customer cases', () => {
   const now = dayjs('2022-01-01T00:00:00.000Z')
   describe.each<

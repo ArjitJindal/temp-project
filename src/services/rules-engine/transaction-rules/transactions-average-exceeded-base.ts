@@ -90,7 +90,8 @@ export default class TransactionAverageExceededBaseRule<
         },
         averageThreshold: {
           type: 'object',
-          title:
+          title: 'Average threshold (period 1)',
+          description:
             "Rule doesn't trigger if average in period1 in less than 'Min' or more than 'Max'",
           properties: {
             min: { type: 'integer', title: 'Min', nullable: true },
@@ -246,8 +247,8 @@ export default class TransactionAverageExceededBaseRule<
     }
 
     if (
-      (avgMin != null && multiplierToPercents(result[0]) < avgMin) ||
-      (avgMax != null && multiplierToPercents(result[0]) > avgMax)
+      (avgMin != null && result[0] < avgMin) ||
+      (avgMax != null && result[0] > avgMax)
     ) {
       return
     }
