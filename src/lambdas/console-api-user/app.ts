@@ -49,6 +49,7 @@ export const businessUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterBusinessIndustry,
       } = event.queryStringParameters as any
       return userService.getBusinessUsers({
         limit: parseInt(limit),
@@ -58,6 +59,7 @@ export const businessUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterBusinessIndustry,
       })
     } else if (
       event.httpMethod === 'GET' &&

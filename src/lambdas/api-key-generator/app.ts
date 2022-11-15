@@ -149,6 +149,9 @@ export const createMongoDBCollections = async (
     await usersCollection.createIndex({
       'legalEntity.companyGeneralDetails.legalName': 1,
     })
+    await usersCollection.createIndex({
+      'legalEntity.companyGeneralDetails.businessIndustry': 1,
+    })
 
     try {
       await db.createCollection(TRANSACTION_EVENTS_COLLECTION(tenantId))

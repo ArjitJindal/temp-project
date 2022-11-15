@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -1210,10 +1210,26 @@ paths:
           in: query
           name: filterName
         - schema:
+            type: string
+          in: query
+          name: filterBusinessIndustry
+        - schema:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
     parameters: []
+  /business/users/uniques:
+    get:
+      summary: User - Unique values for different fields
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersUniquesResponse'
+      operationId: get-users-uniques
   '/business/users/{userId}':
     get:
       summary: Business Users - Item - Get
@@ -2612,7 +2628,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -3709,6 +3725,15 @@ components:
       required:
         - transactionState
         - tagsKey
+    UsersUniquesResponse:
+      type: object
+      properties:
+        businessIndustry:
+          type: array
+          items:
+            type: string
+      required:
+        - businessIndustry
     AuditLog:
       title: AuditLog
       x-stoplight:

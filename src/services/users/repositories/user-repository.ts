@@ -18,6 +18,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
+import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class UserRepository {
@@ -45,6 +46,7 @@ export class UserRepository {
     filterId?: string
     filterName?: string
     filterOperator?: FilterOperator
+    filterBusinessIndustry?: string
   }): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
       total: number
@@ -128,6 +130,7 @@ export class UserRepository {
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
+      filterBusinessIndustry?: string
     },
     userType?: UserType
   ): Promise<{
@@ -144,10 +147,16 @@ export class UserRepository {
     const filterConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = []
+    const filterIndustryConditions: Filter<InternalBusinessUser>[] = []
 
     if (params.filterId != null) {
       filterConditions.push({
         userId: { $regex: params.filterId },
+      })
+    }
+    if (params.filterBusinessIndustry != null) {
+      filterIndustryConditions.push({
+        businessIndustry: { $regex: params.filterBusinessIndustry },
       })
     }
     if (params.filterName != null) {
@@ -382,5 +391,19 @@ export class UserRepository {
       Key: DynamoDbKeys.USER(this.tenantId, userId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+  }
+
+  public async getUniques(): Promise<UsersUniquesResponse> {
+    const db = this.mongoDb.db()
+    const name = USERS_COLLECTION(this.tenantId)
+    const collection = db.collection<Business>(name)
+
+    const distinctBusinessIndustryPromise = collection
+      .distinct('legalEntity.companyGeneralDetails.businessIndustry')
+      .then((values: string[]) => values.filter((x): x is string => x != null))
+
+    return {
+      businessIndustry: await distinctBusinessIndustryPromise,
+    }
   }
 }

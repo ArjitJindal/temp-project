@@ -1332,7 +1332,6 @@ export class TransactionRepository {
       tagsKey: await tagKeysPromise,
     }
   }
-
   public async getStatsByType(
     params: DefaultApiGetTransactionsListRequest,
     referenceCurrency: Currency
