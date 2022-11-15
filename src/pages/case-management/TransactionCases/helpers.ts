@@ -37,20 +37,19 @@ export function useTableData(
                   },
                 ];
               }
-              return filterRulesHitByCaseCreationType(transaction.hitRules, caseType).map(
-                (rule, i): CaseManagementItem => {
-                  return {
-                    ...dataItem,
-                    rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
-                    transaction: transaction,
-                    ruleName: rule.ruleName,
-                    ruleDescription: rule.ruleDescription,
-                    ruleAction: rule.ruleAction,
-                    transactionsRowsCount: transaction.hitRules.length,
-                    transactionFirstRow: i === 0,
-                  };
-                },
-              );
+              const hitRules = filterRulesHitByCaseCreationType(transaction.hitRules, caseType);
+              return hitRules.map((rule, i): CaseManagementItem => {
+                return {
+                  ...dataItem,
+                  rowKey: `${item.caseId}#${transaction.transactionId}#${i}`,
+                  transaction: transaction,
+                  ruleName: rule.ruleName,
+                  ruleDescription: rule.ruleDescription,
+                  ruleAction: rule.ruleAction,
+                  transactionsRowsCount: hitRules.length,
+                  transactionFirstRow: i === 0,
+                };
+              });
             }),
           };
         },
