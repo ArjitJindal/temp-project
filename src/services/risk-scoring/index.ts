@@ -15,6 +15,7 @@ import { logger } from '@/core/logger'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 
 const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
   let riskScore = 75 // Make this configurable
@@ -198,6 +199,37 @@ const getUsersFromTransaction = async (
   return await userRepository.getUsers(userIds)
 }
 
+export const matchParameterValue = (
+  valueToMatch: unknown,
+  parameterValue: RiskParameterValue
+): boolean => {
+  const parameterValueContent = parameterValue.content
+  if (
+    parameterValueContent.kind === 'LITERAL' &&
+    parameterValueContent === valueToMatch
+  ) {
+    return true
+  }
+  if (
+    parameterValueContent.kind === 'MULTIPLE' &&
+    parameterValueContent.values.some((x) => x.content === valueToMatch)
+  ) {
+    return true
+  }
+  if (parameterValueContent.kind === 'RANGE') {
+    if (
+      typeof valueToMatch === 'number' &&
+      (parameterValueContent.start == null ||
+        valueToMatch >= parameterValueContent.start) &&
+      (parameterValueContent.end == null ||
+        valueToMatch <= parameterValueContent.end)
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
 const getSchemaAttributeRiskLevel = (
   paramName: string,
   entity: User | Business | Transaction,
@@ -206,9 +238,9 @@ const getSchemaAttributeRiskLevel = (
   const endValue = _.get(entity, paramName)
 
   if (endValue) {
-    for (const idx in riskLevelAssignmentValues) {
-      if (riskLevelAssignmentValues[idx].parameterValue === endValue) {
-        return riskLevelAssignmentValues[idx].riskLevel
+    for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
+      if (matchParameterValue(endValue, parameterValue)) {
+        return riskLevel
       }
     }
   }
@@ -251,13 +283,15 @@ const getIterableAttributeRiskLevel = (
     let hasRiskValueMatch = false
     iterableValue.forEach((value: any) => {
       const { riskLevelAssignmentValues } = parameterAttributeDetails
-      for (const idx in riskLevelAssignmentValues) {
-        if (riskLevelAssignmentValues[idx].parameterValue === value) {
+      for (const riskLevelAssignmentValue of riskLevelAssignmentValues) {
+        if (
+          matchParameterValue(value, riskLevelAssignmentValue.parameterValue)
+        ) {
           if (
-            riskLevelPrecendence[riskLevelAssignmentValues[idx].riskLevel] >=
+            riskLevelPrecendence[riskLevelAssignmentValue.riskLevel] >=
             riskLevelPrecendence[iterableMaxRiskLevel]
           ) {
-            iterableMaxRiskLevel = riskLevelAssignmentValues[idx].riskLevel
+            iterableMaxRiskLevel = riskLevelAssignmentValue.riskLevel
             hasRiskValueMatch = true
           }
         }
@@ -276,17 +310,9 @@ const getAgeDerivedRiskLevel = (
   const endValue = _.get(entity, paramName)
   if (endValue) {
     const age = getAgeFromTimestamp(dayjs(endValue).valueOf())
-    let lowerBound
-    let upperBound
-    let bounds
-    for (const idx in riskLevelAssignmentValues) {
-      bounds = riskLevelAssignmentValues[idx].parameterValue.split(',')
-      if (bounds && bounds.length == 2) {
-        lowerBound = parseFloat(bounds[0])
-        upperBound = parseFloat(bounds[1])
-        if (age >= lowerBound && age < upperBound) {
-          return riskLevelAssignmentValues[idx].riskLevel
-        }
+    for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
+      if (matchParameterValue(age, parameterValue)) {
+        return riskLevel
       }
     }
   }

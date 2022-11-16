@@ -98,7 +98,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return riskRepository.createOrUpdateParameterRiskItem(
+      return await riskRepository.createOrUpdateParameterRiskItem(
         parameterRiskLevels.parameterAttributeRiskValues
       )
     } else if (
@@ -112,7 +112,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         throw new BadRequest(`"parameter" is a requred query parameter`)
       }
 
-      return riskRepository.getParameterRiskItem(parameter)
+      return await riskRepository.getParameterRiskItem(parameter)
     }
     throw new BadRequest('Unhandled request')
   }

@@ -28,14 +28,16 @@ export const jsonSerializer =
       }
     }
     const response = await handler(event, context, callback)
-    let body = 'OK'
     let headers = {}
 
+    let body
     if (response?.headers && response?.body) {
       headers = response.headers
       body = response.body
     } else if (response) {
       body = JSON.stringify(response)
+    } else {
+      body = JSON.stringify(null)
     }
 
     return {

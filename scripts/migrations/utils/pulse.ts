@@ -28,7 +28,7 @@ async function addNewPulseRiskParameterFieldPrivate(
   const { newField, parameterName } = parameterNewFieldRequest
   for (const parameterAttributeDetails of parameters) {
     if (parameterName === parameterAttributeDetails.parameter) {
-      riskRepository.createOrUpdateParameterRiskItem({
+      await riskRepository.createOrUpdateParameterRiskItem({
         ...parameterAttributeDetails,
         ...newField,
       })

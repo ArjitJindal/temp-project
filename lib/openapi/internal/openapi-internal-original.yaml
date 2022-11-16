@@ -3063,12 +3063,64 @@ components:
       title: RiskParameterLevelKeyValue
       properties:
         parameterValue:
-          type: string
+          $ref: '#/components/schemas/RiskParameterValue'
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
       required:
         - parameterValue
         - riskLevel
+    RiskParameterValue:
+      type: object
+      properties:
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/RiskParameterValueLiteral'
+            - $ref: '#/components/schemas/RiskParameterValueRange'
+            - $ref: '#/components/schemas/RiskParameterValueMultiple'
+      required:
+        - content
+    RiskParameterValueLiteral:
+      title: RiskParameterValueLiteral
+      properties:
+        kind:
+          type: string
+          enum:
+            - LITERAL
+        content:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+      required:
+        - kind
+        - content
+    RiskParameterValueRange:
+      title: RiskParameterValueRange
+      properties:
+        kind:
+          type: string
+          enum:
+            - RANGE
+        start:
+          type: number
+        end:
+          type: number
+      required:
+        - kind
+    RiskParameterValueMultiple:
+      title: RiskParameterValueMultiple
+      properties:
+        kind:
+          type: string
+          enum:
+            - MULTIPLE
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskParameterValueLiteral'
+      required:
+        - kind
+        - values
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object
@@ -3076,7 +3128,6 @@ components:
         example-1:
           parameter: userDetails.countryOfResidence
           riskEntityType: CONSUMER_USER
-          riskValueType: DISCRETE
           riskLevelAssignmentValues:
             DE: LOW
             TR: HIGH
@@ -3111,11 +3162,6 @@ components:
             - CONSUMER_USER
             - TRANSACTION
             - BUSINESS
-        riskValueType:
-          type: string
-          enum:
-            - RANGE
-            - DISCRETE
         riskLevelAssignmentValues:
           type: array
           items:
@@ -3144,7 +3190,6 @@ components:
         - isActive
         - isDerived
         - riskEntityType
-        - riskValueType
         - riskLevelAssignmentValues
     Feature:
       type: string
