@@ -8,12 +8,14 @@ export function multiplierToPercents(multiplier: number): number {
 
 export const PERCENT_SCHEMA = (params: {
   title?: string
+  description?: string | undefined
   maximum?: number | 'NO_MAXIMUM'
 }) => {
-  const { maximum, title } = params
+  const { maximum, title, description } = params
   return {
     type: 'number',
     title: title,
+    description,
     minimum: 0,
     maximum: maximum === 'NO_MAXIMUM' ? undefined : maximum ?? 100,
     nullable: true,

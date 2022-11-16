@@ -28,8 +28,9 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
         type: 'object',
         properties: {
           multiplierThreshold: PERCENT_SCHEMA({
-            title:
-              'Maximum multiplier (as a percentage). For example, specifying 200 (%) means that period2 average should be twice as big as period1 average to trigger the rule',
+            title: 'Maximum multiplier (as a percentage)',
+            description:
+              'For example, specifying 200 (%) means that period 1 average should be twice as big as period 2 average to trigger the rule',
             maximum: 'NO_MAXIMUM',
           }),
           averageThreshold: {

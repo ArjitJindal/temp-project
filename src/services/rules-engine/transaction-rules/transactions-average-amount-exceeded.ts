@@ -36,12 +36,14 @@ export default class TransactionAverageAmountExceededRule extends TransactionAve
             title: 'Maximum multiplier',
             properties: {
               currency: CURRENCY_SCHEMA({
-                title:
-                  'Currency code to count amount. All the transactions in other currencies are converted to this currency before calculating the average',
+                title: 'Currency code to count amount',
+                description:
+                  'All the transactions in other currencies are converted to this currency before calculating the average',
               }),
               value: PERCENT_SCHEMA({
-                title:
-                  'Multiplier as a percentage. For example, specifying 200 (%) means that period2 average should be twice as big as period1 average to trigger the rule',
+                title: 'Multiplier as a percentage',
+                description:
+                  'For example, specifying 200 (%) means that period 1 average should be twice as big as period 2 average to trigger the rule',
                 maximum: 'NO_MAXIMUM',
               }),
             },
