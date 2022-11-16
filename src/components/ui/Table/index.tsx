@@ -3,13 +3,16 @@ import React, { useCallback, useEffect, useImperativeHandle, useState } from 're
 import { Checkbox, Pagination } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
+import { ProColumns, ProColumnType } from '@ant-design/pro-table/es/typing';
 import style from './style.module.less';
 import { flatItems, handleResize, TABLE_LOCALE } from './utils';
 import { DEFAULT_PAGE_SIZE } from './consts';
-import { isMultiRows, SortOrder, TableColumn, TableData, TableRow } from './types';
+import { isGroupColumn, isMultiRows, SortOrder, TableColumn, TableData, TableRow } from './types';
 import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
+import DownloadButton from '@/components/ui/Table/DownloadButton';
+import { PaginatedQueryParams } from '@/utils/queries/hooks';
 
 export type TableActionType = {
   reload: () => void;
@@ -81,6 +84,7 @@ export interface Props<T extends object, Params extends object, ValueType>
   headerSubtitle?: React.ReactNode;
   onReload?: () => void;
   onReset?: () => void;
+  onPaginateExportData?: (params: PaginatedQueryParams) => Promise<TableData<T>>;
 }
 
 export default function Table<
@@ -168,26 +172,34 @@ export default function Table<
 
   function adjustColumns<T extends object>(
     columns: TableColumn<T>[] | undefined | null,
-  ): TableColumn<T>[] {
-    return (columns ?? []).map(
-      (col: TableColumn<T>, index): TableColumn<T> => ({
+  ): ProColumns<TableRow<T>>[] {
+    return (columns ?? []).map((col: TableColumn<T>, index): ProColumns<TableRow<T>> => {
+      const sortOrder = params?.sort.find(([field]) => field === col.dataIndex)?.[1];
+      const width = updatedColumnWidth[index] || col.width;
+      const onHeaderCell = (column: unknown) => ({
+        width: (column as TableColumn<T>).width,
+        onResize: handleResize(index, setUpdatedColumnWidth),
+      });
+      const sharedProps = {
         ...col,
-        sortOrder: params?.sort.find(([field]) => field === col.dataIndex)?.[1],
-        width: updatedColumnWidth[index] || col.width,
-        onHeaderCell: (column) => ({
-          width: (column as TableColumn<T>).width,
-          onResize: handleResize(index, setUpdatedColumnWidth),
-        }),
-        ...('children' in col
-          ? {
-              children: adjustColumns(col.children),
-            }
-          : {}),
-      }),
-    );
+        sortOrder,
+        width,
+        onHeaderCell,
+      };
+
+      if (isGroupColumn(col)) {
+        return {
+          ...sharedProps,
+          children: adjustColumns(col.children),
+        };
+      }
+      return {
+        ...sharedProps,
+      };
+    });
   }
 
-  const adjustedColumns: TableColumn<T>[] = adjustColumns(columns);
+  const adjustedColumns: ProColumnType<TableRow<T>>[] = adjustColumns(columns);
 
   if (rowSelection != null) {
     const allSelected =
@@ -198,6 +210,8 @@ export default function Table<
       dataKeys.length > 0 && dataKeys.some((key) => rowSelection?.selectedKeys.indexOf(key) !== -1);
 
     adjustedColumns.unshift({
+      hideInSearch: true,
+      hideInTable: true,
       search: false,
       hideInSetting: true,
       title: (
@@ -243,7 +257,26 @@ export default function Table<
   return (
     <div className={style.root}>
       <ProTable<TableRow<T>, Params>
-        toolBarRender={toolBarRender}
+        toolBarRender={(action, rows) => {
+          const result = [];
+
+          if (toolBarRender != null && toolBarRender !== false) {
+            result.push(...toolBarRender(action, rows));
+          }
+
+          if (props.onPaginateExportData) {
+            result.push(
+              <DownloadButton
+                currentPage={params?.page ?? 1}
+                rowKey={rowKey}
+                onExportData={props.onPaginateExportData}
+                columns={columns}
+              />,
+            );
+          }
+
+          return result;
+        }}
         columnsState={columnsState}
         columns={adjustedColumns}
         rowKey={rowKey}

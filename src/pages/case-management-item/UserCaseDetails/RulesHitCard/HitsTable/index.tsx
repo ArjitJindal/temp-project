@@ -8,6 +8,7 @@ interface Props {
 }
 
 export default function RulesHitDetailsTable({ transaction }: Props) {
+  const hitRules = filterRulesHitByCaseCreationType(transaction.hitRules, 'USER');
   return (
     <Table
       rowKey={'ruleInstanceId'}
@@ -32,7 +33,8 @@ export default function RulesHitDetailsTable({ transaction }: Props) {
         },
       ]}
       data={{
-        items: filterRulesHitByCaseCreationType(transaction.hitRules, 'USER'),
+        total: hitRules.length,
+        items: hitRules,
       }}
       pagination={false}
       search={false}

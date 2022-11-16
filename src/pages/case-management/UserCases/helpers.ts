@@ -1,34 +1,37 @@
 import { TableItem } from './types';
-import { QueryResult } from '@/utils/queries/types';
+import { map, QueryResult } from '@/utils/queries/types';
 import { TableData, TableDataItem } from '@/components/ui/Table/types';
-import { map } from '@/utils/asyncResource';
-import { CasesListResponse } from '@/apis';
+import { Case } from '@/apis';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 export function useTableData(
-  queryResult: QueryResult<CasesListResponse>,
+  queryResult: QueryResult<PaginatedData<Case>>,
 ): QueryResult<TableData<TableItem>> {
-  const result: QueryResult<TableData<TableItem>> = {
-    data: map(queryResult.data, (response) => {
-      const items: TableDataItem<TableItem>[] = response.data.map(
-        (item, index): TableDataItem<TableItem> => {
-          const caseUser = item.caseUsers ?? {};
-          const user = caseUser.origin ?? caseUser.destination ?? undefined;
-          const dataItem: TableItem = {
-            index,
-            userId: user?.userId ?? null,
-            user: user != null && 'type' in user ? user : null,
-            ...item,
-          };
-          return dataItem;
-        },
-      );
-      return {
-        items,
-        success: true,
-        total: response.total,
-      };
-    }),
-    refetch: queryResult.refetch,
-  };
-  return result;
+  return map(queryResult, (response) => {
+    const items: TableDataItem<TableItem>[] = response.items.map(
+      (item, index): TableDataItem<TableItem> => {
+        const caseUser = item.caseUsers ?? {};
+        const user = caseUser.origin ?? caseUser.destination ?? undefined;
+        const lastStatusChange = item.statusChanges?.[item.statusChanges?.length - 1] ?? null;
+        const dataItem: TableItem = {
+          index,
+          userId: user?.userId ?? null,
+          user: user != null && 'type' in user ? user : null,
+          lastStatusChange,
+          lastStatusChangeReasons: lastStatusChange
+            ? {
+                reasons: lastStatusChange.reason ?? [],
+                otherReason: lastStatusChange.otherReason ?? null,
+              }
+            : null,
+          ...item,
+        };
+        return dataItem;
+      },
+    );
+    return {
+      items,
+      total: response.total,
+    };
+  });
 }

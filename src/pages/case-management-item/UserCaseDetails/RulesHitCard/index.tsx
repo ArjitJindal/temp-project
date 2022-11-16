@@ -79,6 +79,7 @@ export default function RulesHitCard(props: Props) {
           columns={[
             {
               title: 'Transaction ID',
+              exportData: 'transactionId',
               width: 100,
               ellipsis: true,
               render: (_, entity) => (
@@ -90,6 +91,7 @@ export default function RulesHitCard(props: Props) {
             {
               title: 'Transaction Type',
               dataIndex: 'type',
+              exportData: 'type',
               width: 100,
               valueType: 'select',
               ellipsis: true,
@@ -106,6 +108,7 @@ export default function RulesHitCard(props: Props) {
               width: 130,
               ellipsis: true,
               dataIndex: 'timestamp',
+              exportData: 'timestamp',
               valueType: 'dateTimeRange',
               render: (_, entity) => {
                 return <TimestampDisplay timestamp={entity?.timestamp} />;
@@ -122,6 +125,7 @@ export default function RulesHitCard(props: Props) {
                   copyable: true,
                   ellipsis: true,
                   dataIndex: 'originUserId',
+                  exportData: 'originUserId',
                   hideInSearch: true,
                   render: (dom, entity) => {
                     if (entity == null) {
@@ -136,6 +140,7 @@ export default function RulesHitCard(props: Props) {
                 {
                   title: 'Origin User Name',
                   tooltip: 'Origin is the Sender in a transaction',
+                  exportData: (entity) => getUserName(entity.originUser),
                   width: 220,
                   hideInSearch: true,
                   render: (dom, entity) => {
@@ -145,6 +150,7 @@ export default function RulesHitCard(props: Props) {
                 {
                   title: 'Origin Method',
                   width: 160,
+                  exportData: 'originPaymentDetails.method',
                   hideInSearch: true,
                   render: (dom, entity) => {
                     return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
@@ -152,6 +158,7 @@ export default function RulesHitCard(props: Props) {
                 },
                 {
                   title: 'Origin Amount',
+                  exportData: 'originAmountDetails.transactionAmount',
                   hideInSearch: true,
                   width: 150,
                   render: (dom, entity) => {
@@ -166,6 +173,7 @@ export default function RulesHitCard(props: Props) {
                 },
                 {
                   title: 'Origin Currency',
+                  exportData: 'originAmountDetails.transactionCurrency',
                   hideInSearch: true,
                   width: 140,
                   render: (dom, entity) => {
@@ -174,6 +182,7 @@ export default function RulesHitCard(props: Props) {
                 },
                 {
                   title: 'Origin Country',
+                  exportData: 'originAmountDetails.country',
                   hideInSearch: true,
                   width: 140,
                   render: (dom, entity) => {
@@ -190,6 +199,7 @@ export default function RulesHitCard(props: Props) {
                   title: 'Destination User ID',
                   tooltip: 'Destination is the Receiver in a transaction',
                   dataIndex: 'destinationUserId',
+                  exportData: 'destinationUserId',
                   copyable: true,
                   ellipsis: true,
                   hideInSearch: true,
@@ -210,12 +220,14 @@ export default function RulesHitCard(props: Props) {
                   tooltip: 'Destination is the Receiver in a transaction',
                   width: 180,
                   hideInSearch: true,
+                  exportData: (entity) => getUserName(entity.destinationUser),
                   render: (dom, entity) => {
                     return getUserName(entity.destinationUser);
                   },
                 },
                 {
                   title: 'Destination Method',
+                  exportData: 'destinationPaymentDetails.method',
                   width: 160,
                   hideInSearch: true,
                   render: (dom, entity) => {
@@ -228,6 +240,7 @@ export default function RulesHitCard(props: Props) {
                   title: 'Destination Amount',
                   width: 200,
                   dataIndex: 'destnationAmountDetails.transactionAmount',
+                  exportData: 'destinationAmountDetails.transactionAmount',
                   hideInSearch: true,
                   render: (dom, entity) => {
                     if (entity.destinationAmountDetails?.transactionAmount !== undefined) {
@@ -241,6 +254,7 @@ export default function RulesHitCard(props: Props) {
                 },
                 {
                   title: 'Destination Currency',
+                  exportData: 'destinationAmountDetails.transactionCurrency',
                   width: 200,
                   hideInSearch: true,
                   render: (dom, entity) => {
@@ -249,6 +263,7 @@ export default function RulesHitCard(props: Props) {
                 },
                 {
                   title: 'Destination Country',
+                  exportData: 'destinationAmountDetails.country',
                   width: 200,
                   hideInSearch: true,
                   render: (dom, entity) => {

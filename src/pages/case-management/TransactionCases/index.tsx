@@ -10,8 +10,7 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
-import { Case, CasesListResponse, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
-import { getUserName } from '@/utils/api/users';
+import { Case, CaseUpdateRequest } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
@@ -34,21 +33,13 @@ import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUse
 import { QueryResult } from '@/utils/queries/types';
 import { useTableData } from '@/pages/case-management/TransactionCases/helpers';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
-
-export type CaseManagementItem = Case & {
-  index: number;
-  rowKey: string;
-  ruleName?: string | null;
-  ruleDescription?: string | null;
-  ruleAction?: RuleAction | null;
-  transaction: CaseTransaction | null;
-  transactionFirstRow: boolean;
-  transactionsRowsCount: number;
-};
+import { PaginatedData } from '@/utils/queries/hooks';
+import { TableItem } from '@/pages/case-management/TransactionCases/types';
+import { getUserName } from '@/utils/api/users';
 
 interface Props {
   params: AllParams<TableSearchParams>;
-  queryResult: QueryResult<CasesListResponse>;
+  queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string | undefined; label: string | undefined }[];
@@ -69,16 +60,16 @@ export default function TransactionCases(props: Props) {
   }, []);
 
   // todo: i18n
-  const columns: TableColumn<CaseManagementItem>[] = useMemo(() => {
-    const onTransactionCell = (row: TableRow<CaseManagementItem>) => ({
+  const columns: TableColumn<TableItem>[] = useMemo(() => {
+    const onTransactionCell = (row: TableRow<TableItem>) => ({
       rowSpan: row.transactionFirstRow ? row.transactionsRowsCount : 0,
     });
 
-    const onCaseCell = (row: TableRow<CaseManagementItem>) => ({
+    const onCaseCell = (row: TableRow<TableItem>) => ({
       rowSpan: row.isFirstRow ? row.rowsCount : 0,
     });
 
-    const mergedColumns: TableColumn<CaseManagementItem>[] = [
+    const mergedColumns: TableColumn<TableItem>[] = [
       {
         title: (
           <p>
@@ -86,6 +77,7 @@ export default function TransactionCases(props: Props) {
           </p>
         ),
         dataIndex: 'priority',
+        exportData: 'caseId',
         width: 130,
         hideInSearch: true,
         copyable: true,
@@ -121,6 +113,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
+        exportData: 'createdTimestamp',
         onCell: onCaseCell,
         sorter: true,
         width: 150,
@@ -131,6 +124,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Transaction ID',
         dataIndex: 'transactionId',
+        exportData: 'transaction.transactionId',
         width: 130,
         copyable: true,
         ellipsis: true,
@@ -153,6 +147,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Transaction Type',
         dataIndex: 'caseTransactions.type',
+        exportData: 'transaction.type',
         width: 175,
         onCell: onTransactionCell,
         valueType: 'select',
@@ -168,6 +163,7 @@ export default function TransactionCases(props: Props) {
         title: 'Rules Hit',
         hideInSearch: true,
         width: 150,
+        exportData: 'ruleName',
         render: (_, entity) => {
           return <>{entity.ruleName}</>;
         },
@@ -177,6 +173,7 @@ export default function TransactionCases(props: Props) {
         tooltip: 'Describes the conditions required for this rule to be hit.',
         width: 270,
         hideInSearch: true,
+        exportData: 'ruleDescription',
         render: (_, entity) => {
           return <>{entity.ruleDescription}</>;
         },
@@ -185,6 +182,7 @@ export default function TransactionCases(props: Props) {
         title: 'Rule Action',
         sorter: true,
         dataIndex: 'status',
+        exportData: 'ruleAction',
         // hideInSearch: true,
         valueType: 'select',
         fieldProps: {
@@ -207,6 +205,7 @@ export default function TransactionCases(props: Props) {
         ellipsis: true,
         valueType: 'dateTimeRange',
         onCell: onTransactionCell,
+        exportData: 'createdTimestamp',
         render: (_, entity) => {
           return <TimestampDisplay timestamp={entity.createdTimestamp} />;
         },
@@ -219,6 +218,7 @@ export default function TransactionCases(props: Props) {
         hideInSearch: true,
         sorter: true,
         onCell: onTransactionCell,
+        exportData: 'transaction.transactionState',
         render: (_, entity) => {
           return <TransactionStateTag transactionState={entity.transaction?.transactionState} />;
         },
@@ -234,6 +234,7 @@ export default function TransactionCases(props: Props) {
             copyable: true,
             ellipsis: true,
             dataIndex: 'caseTransactions.originUserId',
+            exportData: 'transaction.originUserId',
             hideInSearch: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
@@ -257,13 +258,15 @@ export default function TransactionCases(props: Props) {
             sorter: true,
             dataIndex: '_originUserName',
             onCell: onTransactionCell,
+            exportData: (entity): string => getUserName(entity.transaction?.originUser),
             render: (dom, entity) => {
+              const userName = getUserName(entity.transaction?.originUser);
               const originUser = entity.transaction?.originUser;
 
               return originUser ? (
-                <UserLink user={originUser}>{getUserName(originUser)}</UserLink>
+                <UserLink user={originUser}>{userName}</UserLink>
               ) : (
-                <>{getUserName(originUser)}</>
+                <>{userName}</>
               );
             },
           },
@@ -272,6 +275,7 @@ export default function TransactionCases(props: Props) {
             width: 160,
             hideInSearch: true,
             onCell: onTransactionCell,
+            exportData: 'transaction.originPaymentDetails.method',
             render: (dom, entity) => {
               return (
                 <PaymentMethodTag
@@ -283,6 +287,7 @@ export default function TransactionCases(props: Props) {
           {
             title: 'Amount',
             dataIndex: 'caseTransactions.originAmountDetails.transactionAmount',
+            exportData: 'transaction.originAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
             width: 150,
@@ -303,6 +308,7 @@ export default function TransactionCases(props: Props) {
           },
           {
             title: 'Currency',
+            exportData: 'transaction.originAmountDetails.transactionCurrency',
             hideInSearch: true,
             width: 140,
             onCell: onTransactionCell,
@@ -315,6 +321,7 @@ export default function TransactionCases(props: Props) {
             hideInSearch: true,
             width: 140,
             dataIndex: 'caseTransactions.originAmountDetails.country',
+            exportData: 'transaction.originAmountDetails.country',
             sorter: true,
             onCell: onTransactionCell,
             render: (dom, entity) => {
@@ -331,6 +338,7 @@ export default function TransactionCases(props: Props) {
             title: 'User ID',
             tooltip: 'Destination is the Receiver in a transaction',
             dataIndex: 'caseTransactions.destinationUserId',
+            exportData: 'transaction.destinationUserId',
             copyable: true,
             ellipsis: true,
             hideInSearch: true,
@@ -355,13 +363,14 @@ export default function TransactionCases(props: Props) {
             sorter: true,
             dataIndex: '_destinationUserName',
             onCell: onTransactionCell,
+            exportData: (entity) => getUserName(entity.transaction?.destinationUser),
             render: (dom, entity) => {
               const destinationUser = entity.transaction?.destinationUser;
-
+              const userName = getUserName(destinationUser);
               return destinationUser ? (
-                <UserLink user={destinationUser}>{getUserName(destinationUser)}</UserLink>
+                <UserLink user={destinationUser}>{userName}</UserLink>
               ) : (
-                <>{getUserName(destinationUser)}</>
+                <>{userName}</>
               );
             },
           },
@@ -370,6 +379,7 @@ export default function TransactionCases(props: Props) {
             width: 160,
             hideInSearch: true,
             onCell: onTransactionCell,
+            exportData: 'transaction.destinationPaymentDetails.method',
             render: (dom, entity) => {
               return (
                 <PaymentMethodTag
@@ -382,6 +392,7 @@ export default function TransactionCases(props: Props) {
             title: 'Amount',
             width: 200,
             dataIndex: 'caseTransactions.destnationAmountDetails.transactionAmount',
+            exportData: 'transaction.destinationAmountDetails.transactionAmount',
             hideInSearch: true,
             sorter: true,
             onCell: onTransactionCell,
@@ -400,6 +411,7 @@ export default function TransactionCases(props: Props) {
             width: 200,
             onCell: onTransactionCell,
             hideInSearch: true,
+            exportData: 'transaction.destinationAmountDetails.transactionCurrency',
             render: (dom, entity) => {
               return entity.transaction?.destinationAmountDetails?.transactionCurrency;
             },
@@ -410,6 +422,7 @@ export default function TransactionCases(props: Props) {
             hideInSearch: true,
             onCell: onTransactionCell,
             dataIndex: 'caseTransactions.destinationAmountDetails.country',
+            exportData: 'transaction.destinationAmountDetails.country',
             sorter: true,
             render: (dom, entity) => {
               return (
@@ -421,6 +434,7 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Tags',
+        exportData: 'transaction.tags',
         hideInSearch: true,
         width: 250,
         onCell: onTransactionCell,
@@ -436,6 +450,7 @@ export default function TransactionCases(props: Props) {
       },
       {
         title: 'Case Status',
+        exportData: 'caseStatus',
         onCell: onCaseCell,
         width: 150,
         render: (_, entity) => {
@@ -448,6 +463,7 @@ export default function TransactionCases(props: Props) {
         fixed: 'right',
         width: 120,
         onCell: onCaseCell,
+        exportData: 'caseId',
         render: (dom, entity) => {
           return (
             entity?.caseId && (
@@ -467,6 +483,7 @@ export default function TransactionCases(props: Props) {
         ellipsis: true,
         fixed: 'right',
         onCell: onCaseCell,
+        exportData: 'caseId',
         render: (dom, entity) => {
           // const caseItem = updatedCases[entity.caseId as string] || entity;
           return (
@@ -548,14 +565,21 @@ export default function TransactionCases(props: Props) {
           {
             title: 'Closing reason',
             tooltip: 'Reason provided for closing a case',
+            exportData: (entity) => {
+              const lastChange = entity?.statusChanges?.[entity.statusChanges?.length - 1];
+              return {
+                closingReasons: lastChange?.reason,
+                otherReason: lastChange?.otherReason,
+              };
+            },
             width: 300,
             hideInSearch: true,
             onCell: onCaseCell,
             render: (dom, entity) => {
-              return entity.statusChanges?.length ? (
+              return entity.lastStatusChange ? (
                 <ClosingReasonTag
-                  closingReasons={entity.statusChanges[entity.statusChanges.length - 1].reason}
-                  otherReason={entity.statusChanges[entity.statusChanges.length - 1].otherReason}
+                  closingReasons={entity.lastStatusChange?.reason}
+                  otherReason={entity.lastStatusChange?.otherReason}
                 />
               ) : (
                 '-'
@@ -567,10 +591,13 @@ export default function TransactionCases(props: Props) {
             width: 250,
             hideInSearch: true,
             onCell: onCaseCell,
+            exportData: (entity) => ({
+              userId: entity?.lastStatusChange?.userId,
+            }),
             render: (dom, entity) => {
-              return entity.statusChanges?.length ? (
+              return entity?.lastStatusChange?.userId ? (
                 <ConsoleUserAvatar
-                  userId={entity.statusChanges[entity.statusChanges.length - 1].userId}
+                  userId={entity?.lastStatusChange?.userId}
                   users={users}
                   loadingUsers={loadingUsers}
                 />
@@ -585,17 +612,16 @@ export default function TransactionCases(props: Props) {
             hideInSearch: true,
             valueType: 'dateTimeRange',
             onCell: onCaseCell,
+            exportData: 'lastStatusChange.timestamp',
             render: (dom, entity) => {
               return entity.statusChanges?.length ? (
-                <TimestampDisplay
-                  timestamp={entity.statusChanges[entity.statusChanges.length - 1].timestamp}
-                />
+                <TimestampDisplay timestamp={entity?.lastStatusChange?.timestamp} />
               ) : (
                 '-'
               );
             },
           },
-        ] as TableColumn<TableRow<CaseManagementItem>>[]),
+        ] as TableColumn<TableItem>[]),
       );
     }
     return mergedColumns;
@@ -610,7 +636,7 @@ export default function TransactionCases(props: Props) {
   ]);
 
   return (
-    <QueryResultsTable<CaseManagementItem, TableSearchParams>
+    <QueryResultsTable<TableItem, TableSearchParams>
       showResultsInfo
       queryResults={tableQueryResult}
       params={params}

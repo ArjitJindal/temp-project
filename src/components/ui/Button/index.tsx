@@ -11,7 +11,7 @@ interface ExtraProps {
 }
 
 export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & ExtraProps) {
-  const { analyticsName, type, ...rest } = props;
+  const { analyticsName, type, icon, size, children, ...rest } = props;
   const analytics = useAnalytics();
   const handleClick = function (this: unknown, ...args: any) {
     if (props.onClick) {
@@ -26,12 +26,16 @@ export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & E
   };
   return (
     <AntButton
+      size={size}
       type={type === 'skeleton' ? 'default' : type}
-      className={cn(s.root, {
+      className={cn(s.root, s[`size-${size}`], {
         [s.typeSkeleton]: type === 'skeleton',
       })}
       {...rest}
       onClick={handleClick}
-    />
+    >
+      {icon && <div className={s.icon}>{icon}</div>}
+      {children}
+    </AntButton>
   );
 }

@@ -254,6 +254,22 @@ export const RequestTable = <
       defaultSize={defaultSize}
       tooltip={tooltip}
       onReload={handleRequest}
+      onPaginateExportData={
+        request
+          ? ({ page }) => {
+              return request(
+                {
+                  ...paramsState.params,
+                  ...paramsState,
+                  pageSize: paramsState.pageSize,
+                  current: page,
+                },
+                paramsState.sort,
+                {},
+              );
+            }
+          : undefined
+      }
     />
   );
 };

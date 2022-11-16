@@ -38,14 +38,18 @@ export default function Id(props: ButtonProps & ExtraProps) {
     );
   }
 
-  return (
-    <a className={style.root} href="#" title={children} onClick={handleClickCopy}>
-      <div className={style.inner}>
-        <span className={style.id}>{children}</span>
-        <div>
-          <FileCopyLineIcon className={style.icon} />
+  if (children != null) {
+    return (
+      <a className={style.root} href="#" title={children} onClick={handleClickCopy}>
+        <div className={style.inner}>
+          <span className={style.id}>{children}</span>
+          <div>
+            <FileCopyLineIcon className={style.icon} />
+          </div>
         </div>
-      </div>
-    </a>
-  );
+      </a>
+    );
+  }
+
+  return <>-</>;
 }

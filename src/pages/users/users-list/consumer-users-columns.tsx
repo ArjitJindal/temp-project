@@ -16,6 +16,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     {
       title: 'User ID',
       dataIndex: 'userId',
+      exportData: 'userId',
       width: 100,
       tip: 'Unique identification of user.',
       render: (dom, entity) => {
@@ -33,6 +34,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'Name',
+      exportData: (entity) => getFullName(entity.userDetails),
       width: 100,
       hideInSearch: true,
       render: (dom, entity) => {
@@ -42,6 +44,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'Date of Birth',
+      exportData: 'userDetails.dateOfBirth',
       width: 120,
       hideInSearch: true,
       render: (dom, entity) => {
@@ -53,6 +56,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'Country of residence',
+      exportData: 'userDetails.countryOfResidence',
       hideInSearch: true,
       width: 150,
       render: (dom, entity) => {
@@ -62,6 +66,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'Country of nationality',
+      exportData: 'userDetails.countryOfNationality',
       hideInSearch: true,
       width: 180,
       render: (dom, entity) => {
@@ -71,6 +76,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'KYC Status',
+      exportData: 'kycStatusDetails.status',
       hideInSearch: true,
       width: 120,
       render: (dom, entity) => {
@@ -80,8 +86,9 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'KYC Status Reason',
+      exportData: 'kycStatusDetails.reason',
       hideInSearch: true,
-      hideInTable: true,
+      hideInTable: false,
       width: 180,
       render: (dom, entity) => {
         return entity.kycStatusDetails?.reason;
@@ -90,6 +97,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     },
     {
       title: 'User State',
+      exportData: 'userStateDetails.state',
       hideInSearch: true,
       hideInDescriptions: true,
       width: 120,
@@ -101,14 +109,14 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     {
       title: 'Tags',
       hideInSearch: true,
-      dataIndex: 'tags',
+      exportData: 'tags',
       hideInForm: true,
       width: 100,
-      render: (tags: any) => {
-        if (tags instanceof Array) {
+      render: (dom, entity) => {
+        if (entity.tags instanceof Array) {
           return (
             <>
-              {tags?.map((tag: any) => (
+              {entity.tags?.map((tag: any) => (
                 <KeyValueTag key={tag.key} tag={tag} />
               ))}
             </>
@@ -121,6 +129,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       width: 150,
       sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',
+      exportData: 'createdTimestamp',
       valueType: 'dateTimeRange',
       render: (_, user) => {
         return convertToDateString(user.createdTimestamp);

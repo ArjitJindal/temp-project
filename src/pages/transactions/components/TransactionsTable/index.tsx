@@ -53,6 +53,7 @@ export default function TransactionsTable(props: Props) {
       {
         title: 'Transaction ID',
         dataIndex: 'transactionId',
+        exportData: 'transactionId',
         width: 130,
         copyable: true,
         ellipsis: true,
@@ -71,6 +72,7 @@ export default function TransactionsTable(props: Props) {
       {
         title: 'Transaction Type',
         dataIndex: 'type',
+        exportData: 'type',
         width: 175,
         ellipsis: true,
         valueType: 'select',
@@ -87,18 +89,19 @@ export default function TransactionsTable(props: Props) {
         width: 180,
         ellipsis: true,
         dataIndex: 'timestamp',
+        exportData: 'timestamp',
         valueType: 'dateTimeRange',
         sorter: !disableSorting,
         render: (_, transaction) => {
           return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
         },
       },
-
       {
         title: 'Last transaction state',
         width: 130,
         ellipsis: true,
         dataIndex: 'transactionState',
+        exportData: 'transactionState',
         hideInSearch: true,
         sorter: !disableSorting,
         render: (_, entity) => {
@@ -110,6 +113,7 @@ export default function TransactionsTable(props: Props) {
         tooltip: 'Origin is the Sender in a transaction',
         width: 200,
         dataIndex: 'originUserId',
+        exportData: 'originUserId',
         hideInSearch: true,
         render: (dom, entity) => {
           return <Id to={getUserLink(entity.originUser)}>{entity.originUserId}</Id>;
@@ -118,6 +122,7 @@ export default function TransactionsTable(props: Props) {
       {
         title: 'Origin User Name',
         tooltip: 'Origin is the Sender in a transaction',
+        exportData: (entity) => getUserName(entity.originUser),
         width: 220,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -126,6 +131,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Origin Method',
+        exportData: 'originPaymentDetails.method',
         width: 180,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -135,7 +141,7 @@ export default function TransactionsTable(props: Props) {
       {
         title: 'Origin Amount',
         width: 150,
-        dataIndex: 'originAmountDetails.transactionAmount',
+        exportData: 'originAmountDetails.transactionAmount',
         hideInSearch: true,
         sorter: !disableSorting,
         render: (dom, entity) => {
@@ -148,6 +154,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Origin Currency',
+        exportData: 'originAmountDetails.transactionCurrency',
         width: 140,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -156,6 +163,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Origin Country',
+        exportData: 'originAmountDetails.country',
         width: 140,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -167,6 +175,7 @@ export default function TransactionsTable(props: Props) {
         tooltip: 'Destination is the Receiver in a transaction',
         width: 170,
         dataIndex: 'destinationUserId',
+        exportData: 'destinationUserId',
         hideInSearch: true,
         render: (dom, entity) => {
           return <Id to={getUserLink(entity.destinationUser)}>{entity.destinationUserId}</Id>;
@@ -174,6 +183,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Destination User Name',
+        exportData: (entity) => getUserName(entity.destinationUser),
         tooltip: 'Destination is the Receiver in a transaction',
         width: 180,
         hideInSearch: true,
@@ -183,6 +193,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Destination Method',
+        exportData: 'destinationPaymentDetails.method',
         width: 160,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -191,7 +202,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Destination Amount',
-        dataIndex: 'destnationAmountDetails.transactionAmount',
+        exportData: 'destinationAmountDetails.transactionAmount',
         width: 200,
         hideInSearch: true,
         sorter: !disableSorting,
@@ -207,6 +218,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Destination Currency',
+        exportData: 'destinationAmountDetails.transactionCurrency',
         width: 200,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -215,6 +227,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Destination Country',
+        exportData: 'destinationAmountDetails.country',
         width: 200,
         hideInSearch: true,
         render: (dom, entity) => {
@@ -269,6 +282,7 @@ export default function TransactionsTable(props: Props) {
       },
       {
         title: 'Tags',
+        exportData: 'tags',
         hideInSearch: true,
         width: 150,
         onCell: (row) => ({

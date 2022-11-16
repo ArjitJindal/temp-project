@@ -9,7 +9,7 @@ import '../../components/ui/colors';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TransactionStateButton from '@/pages/transactions/components/TransactionStateButton';
@@ -26,7 +26,7 @@ const TableList = () => {
     pageSize: DEFAULT_PAGE_SIZE,
     sort: [],
   });
-  const queryResult = useQuery(TRANSACTIONS_LIST(params), async () => {
+  const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async ({ page: _page }) => {
     const {
       pageSize,
       page,
@@ -47,7 +47,7 @@ const TableList = () => {
     const [response, time] = await measure(() =>
       api.getTransactionsList({
         limit: pageSize,
-        skip: (page - 1) * pageSize,
+        skip: ((_page ?? page) - 1) * pageSize,
         afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
         beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
         filterId: transactionId,

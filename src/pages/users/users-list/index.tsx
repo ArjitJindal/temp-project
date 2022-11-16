@@ -20,13 +20,13 @@ import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
-import { TableColumn, TableRow } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/ui/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 
 const BusinessUsersTab = () => {
   const api = useApi();
 
-  const columns: TableColumn<TableRow<InternalBusinessUser>>[] = getBusinessUserColumns();
+  const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
 
   const analytics = useAnalytics();
   const request = useCallback(
@@ -104,6 +104,7 @@ const ConsumerUsersTab = () => {
       columns.push({
         title: 'Risk Level',
         dataIndex: 'labels',
+        exportData: () => 'N/A',
         tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
         search: false,
         render: (dom, entity) => {

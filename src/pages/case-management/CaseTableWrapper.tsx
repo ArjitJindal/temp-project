@@ -6,7 +6,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TableSearchParams } from './types';
 import {
   Case,
-  CasesListResponse,
   CaseTransaction,
   CaseType,
   CaseUpdateRequest,
@@ -19,7 +18,7 @@ import { measure } from '@/utils/time-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
-import { useQuery } from '@/utils/queries/hooks';
+import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { CASES_LIST } from '@/utils/queries/keys';
@@ -87,9 +86,9 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
     }));
   }, [parsedParams]);
 
-  const queryResults = useQuery<CasesListResponse>(
+  const queryResults = usePaginatedQuery<Case>(
     CASES_LIST(caseType, { ...params }),
-    async () => {
+    async ({ page: _page }) => {
       const {
         sort,
         page,
@@ -115,7 +114,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       const [response, time] = await measure(() =>
         api.getCaseList({
           limit: DEFAULT_PAGE_SIZE!,
-          skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
+          skip: ((_page ?? page)! - 1) * DEFAULT_PAGE_SIZE!,
           afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
           beforeTimestamp: Number.MAX_SAFE_INTEGER,
           filterId: caseId,
@@ -147,7 +146,10 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         title: 'Table Loaded',
         time,
       });
-      return response;
+      return {
+        total: response.total,
+        items: response.data,
+      };
     },
   );
 
@@ -173,16 +175,16 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         const { caseIds, updates } = event;
         const cases = CASES_LIST(caseType, { ...params });
         const previousState = queryClient.getQueryData<CaseUpdateRequest>(cases);
-        queryClient.setQueryData<CasesListResponse>(
+        queryClient.setQueryData<PaginatedData<Case>>(
           cases,
-          (prevState): CasesListResponse | undefined => {
+          (prevState): PaginatedData<Case> | undefined => {
             if (prevState == null) {
               return prevState;
             }
             return {
               ...prevState,
-              data:
-                prevState?.data.map((caseItem): Case => {
+              items:
+                prevState?.items.map((caseItem): Case => {
                   if (caseItem.caseId == null || caseIds.indexOf(caseItem.caseId) === -1) {
                     return caseItem;
                   }

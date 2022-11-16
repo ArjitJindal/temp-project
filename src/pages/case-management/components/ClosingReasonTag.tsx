@@ -5,7 +5,7 @@ import COLORS from '@/components/ui/colors';
 
 interface Props {
   closingReasons: string[] | undefined;
-  otherReason?: string;
+  otherReason?: string | null;
 }
 
 export const ClosingReasonTag: React.FC<Props> = ({ closingReasons, otherReason }) => {

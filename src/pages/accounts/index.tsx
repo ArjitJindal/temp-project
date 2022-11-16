@@ -14,7 +14,7 @@ import { TableActionType } from '@/components/ui/Table';
 import { useI18n } from '@/locales';
 import COLORS from '@/components/ui/colors';
 import { TableColumn } from '@/components/ui/Table/types';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import RoleTag from '@/components/ui/RoleTag';
@@ -36,16 +36,19 @@ export default function () {
       title: 'ID',
       width: 10,
       dataIndex: 'id',
+      exportData: 'id',
       sorter: true,
     },
     {
       title: 'Email',
       width: 300,
       dataIndex: 'email',
+      exportData: 'email',
       sorter: true,
     },
     {
       title: 'Role',
+      exportData: 'role',
       width: 100,
       render: (_, item) => <RoleTag role={item.role} />,
     },
@@ -53,6 +56,7 @@ export default function () {
       title: 'Verified',
       width: 10,
       dataIndex: 'emailVerified',
+      exportData: 'emailVerified',
       sorter: true,
       render: (_, { emailVerified }) => {
         return (
@@ -74,6 +78,7 @@ export default function () {
       width: 10,
       sorter: false,
       fixed: 'right',
+      exportData: false,
       render: (_, item) => {
         if (user.userId === item.id) {
           return null;
@@ -108,7 +113,7 @@ export default function () {
 
   const analytics = useAnalytics();
 
-  const accountsResult = useQuery(ACCOUNT_LIST(), async () => {
+  const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
     const [accounts, time] = await measure(() => api.getAccounts());
     analytics.event({
       title: 'Table Loaded',

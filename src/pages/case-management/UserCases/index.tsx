@@ -5,7 +5,7 @@ import TransactionStateSearchButton from '../../transactions/components/Transact
 import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { QueryResult } from '@/utils/queries/types';
-import { CasesListResponse, CaseUpdateRequest } from '@/apis';
+import { Case, CaseUpdateRequest } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
@@ -27,13 +27,14 @@ import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/ui/UserStateTag';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
+import UserLink from '@/components/UserLink';
+import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import UserLink from '@/components/UserLink';
 
 interface Props {
   params: AllParams<TableSearchParams>;
-  queryResult: QueryResult<CasesListResponse>;
+  queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   onUpdateCases: (caseIds: string[], updates: CaseUpdateRequest) => void;
   rules: { value: string | undefined; label: string | undefined }[];
@@ -70,6 +71,7 @@ export default function UserCases(props: Props) {
           </p>
         ),
         dataIndex: 'priority',
+        exportData: 'caseId',
         width: 130,
         copyable: true,
         ellipsis: true,
@@ -98,6 +100,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Case ID',
         dataIndex: 'caseId',
+        exportData: 'caseId',
         hideInTable: true,
         valueType: 'text',
         width: 130,
@@ -105,6 +108,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
+        exportData: 'createdTimestamp',
         sorter: true,
         width: 150,
         render: (_, entity) => {
@@ -113,6 +117,7 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'User ID',
+        exportData: 'userId',
         width: 150,
         hideInSearch: true,
         render: (_, entity) => {
@@ -122,21 +127,18 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'User Name',
+        exportData: (entity): string => getUserName(entity.user),
         width: 150,
         sorter: true,
         dataIndex: '_userName',
         render: (_, entity) => {
-          const user = entity.user;
-
-          return user ? (
-            <UserLink user={user}>{getUserName(user)}</UserLink>
-          ) : (
-            <>{getUserName(user)}</>
-          );
+          const userName = getUserName(entity.user);
+          return entity.user ? <UserLink user={entity.user}>{userName}</UserLink> : <>{userName}</>;
         },
       },
       {
         title: 'Transactions Hit',
+        exportData: (entity): number => entity.caseTransactionsIds?.length ?? 0,
         width: 150,
         sorter: (a, b) => a.caseTransactionsIds!.length - b.caseTransactionsIds!.length,
         render: (_, entity) => {
@@ -152,6 +154,7 @@ export default function UserCases(props: Props) {
       // },
       {
         title: 'User Status',
+        exportData: 'user.userStateDetails.state',
         width: 150,
         render: (_, entity) => {
           const userState = entity.user?.userStateDetails?.state;
@@ -160,6 +163,7 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'KYC Status',
+        exportData: 'user.kycStatusDetails',
         width: 150,
         render: (_, entity) => {
           const kycStatusDetails = entity.user?.kycStatusDetails;
@@ -168,6 +172,7 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'User Risk Level',
+        exportData: 'user.riskLevel',
         width: 150,
         render: (_, entity) => {
           const riskLevel = entity.user?.riskLevel;
@@ -188,6 +193,7 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'Assignees',
+        exportData: 'assignments',
         hideInSearch: true,
         width: 250,
         ellipsis: true,
@@ -214,6 +220,7 @@ export default function UserCases(props: Props) {
       },
       {
         title: 'Case Status',
+        exportData: 'caseStatus',
         width: 150,
         render: (_, entity) => {
           return entity.caseStatus && <CaseStatusTag caseStatus={entity.caseStatus} />;
@@ -222,6 +229,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Operations',
         hideInSearch: true,
+        exportData: false,
         fixed: 'right',
         width: 120,
         onCell: onCaseCell,
@@ -244,14 +252,16 @@ export default function UserCases(props: Props) {
           {
             title: 'Closing reason',
             tooltip: 'Reason provided for closing a case',
+            exportData: 'lastStatusChangeReasons', // todo: is this enough
             width: 300,
             hideInSearch: true,
             onCell: onCaseCell,
             render: (dom, entity) => {
-              return entity.statusChanges?.length ? (
+              const lastStatusChangeReasons = entity.lastStatusChangeReasons;
+              return lastStatusChangeReasons ? (
                 <ClosingReasonTag
-                  closingReasons={entity.statusChanges[entity.statusChanges.length - 1].reason}
-                  otherReason={entity.statusChanges[entity.statusChanges.length - 1].otherReason}
+                  closingReasons={lastStatusChangeReasons.reasons}
+                  otherReason={lastStatusChangeReasons.otherReason}
                 />
               ) : (
                 '-'
@@ -260,13 +270,14 @@ export default function UserCases(props: Props) {
           },
           {
             title: 'Closed By',
+            exportData: 'lastStatusChange.userId',
             width: 250,
             hideInSearch: true,
             onCell: onCaseCell,
             render: (dom, entity) => {
-              return entity.statusChanges?.length ? (
+              return entity.lastStatusChange ? (
                 <ConsoleUserAvatar
-                  userId={entity.statusChanges[entity.statusChanges.length - 1].userId}
+                  userId={entity.lastStatusChange.userId}
                   users={users}
                   loadingUsers={loadingUsers}
                 />
@@ -277,21 +288,20 @@ export default function UserCases(props: Props) {
           },
           {
             title: 'Last Update Time',
+            exportData: 'lastStatusChange.timestamp',
             width: 160,
             hideInSearch: true,
             valueType: 'dateTimeRange',
             onCell: onCaseCell,
             render: (dom, entity) => {
-              return entity.statusChanges?.length ? (
-                <TimestampDisplay
-                  timestamp={entity.statusChanges[entity.statusChanges.length - 1].timestamp}
-                />
+              return entity.lastStatusChange ? (
+                <TimestampDisplay timestamp={entity.lastStatusChange.timestamp} />
               ) : (
                 '-'
               );
             },
           },
-        ] as TableColumn<TableRow<TableItem>>[]),
+        ] as TableColumn<TableItem>[]),
       );
     }
     return mergedColumns;

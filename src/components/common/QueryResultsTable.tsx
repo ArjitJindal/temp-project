@@ -7,11 +7,11 @@ import { TableData } from '@/components/ui/Table/types';
 import { getOr, isFailed, isLoading, isSuccess } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
-type Props<T extends object, Params extends object = ParamsType, ValueType = 'text'> = Omit<
-  TableProps<T, Params, ValueType>,
+type Props<Item extends object, Params extends object = ParamsType, ValueType = 'text'> = Omit<
+  TableProps<Item, Params, ValueType>,
   'data' | 'loading'
 > & {
-  queryResults: QueryResult<TableData<T>>;
+  queryResults: QueryResult<TableData<Item>>;
   showResultsInfo?: boolean;
 };
 
@@ -49,6 +49,7 @@ export default function QueryResultsTable<
       data={getOr(queryResults.data, {
         items: [],
       })}
+      onPaginateExportData={queryResults.paginate}
     />
   );
 }

@@ -16,6 +16,8 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
+import Money from '@/components/ui/Money';
+import { Currency } from '@/utils/currencies';
 import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 export type DataItem = {
@@ -31,12 +33,6 @@ export type DataItem = {
   events: Array<TransactionEvent>;
   ruleName: string | null;
   ruleDescription: string | null;
-};
-
-const createCurrencyStringFromTransactionAmount = (
-  amount: TransactionAmountDetails | undefined,
-) => {
-  return amount ? `${amount.transactionAmount} ${amount.transactionCurrency}` : '-';
 };
 
 export function Content(props: { userId: string }) {
@@ -123,6 +119,7 @@ export function Content(props: { userId: string }) {
             {
               title: 'Transaction ID',
               dataIndex: 'transactionId',
+              exportData: 'transactionId',
               hideInSearch: true,
               key: 'transactionId',
               onCell: (_) => ({
@@ -151,14 +148,17 @@ export function Content(props: { userId: string }) {
             {
               title: 'Rules Hit',
               dataIndex: 'ruleName',
+              exportData: 'ruleName',
             },
             {
               title: 'Rules Description',
               tooltip: 'Describes the conditions required for this rule to be hit.',
               dataIndex: 'ruleDescription',
+              exportData: 'ruleDescription',
             },
             {
               title: 'Last transaction state',
+              exportData: (entity) => entity.events?.[entity.events.length - 1]?.transactionState,
               render: (_, entity) => {
                 if (entity.events.length === 0) {
                   return <></>;
@@ -173,6 +173,7 @@ export function Content(props: { userId: string }) {
             {
               title: 'Transaction Time',
               dataIndex: 'timestamp',
+              exportData: 'timestamp',
               hideInSearch: true,
               valueType: 'dateTime',
               key: 'transactionTime',
@@ -187,6 +188,7 @@ export function Content(props: { userId: string }) {
             {
               title: 'Status',
               dataIndex: 'status',
+              exportData: 'status',
               sorter: true,
               filters: true,
               onFilter: false,
@@ -225,6 +227,7 @@ export function Content(props: { userId: string }) {
             {
               title: 'Transaction Direction',
               dataIndex: 'direction',
+              exportData: 'direction',
               filters: true,
               onFilter: false,
               filterMultiple: false,
@@ -253,10 +256,14 @@ export function Content(props: { userId: string }) {
                 {
                   title: 'Origin Amount',
                   hideInSearch: true,
+                  exportData: 'originAmountDetails',
                   render: (dom, entity) => {
-                    return `${createCurrencyStringFromTransactionAmount(
-                      entity.originAmountDetails,
-                    )}`;
+                    return (
+                      <Money
+                        value={entity.originAmountDetails?.transactionAmount}
+                        currency={entity.originAmountDetails?.transactionCurrency as Currency}
+                      />
+                    );
                   },
                   onCell: (_) => ({
                     rowSpan: _.isFirstRow ? _.rowsCount : 0,
@@ -265,6 +272,7 @@ export function Content(props: { userId: string }) {
                 {
                   title: 'Origin Country',
                   hideInSearch: true,
+                  exportData: 'originAmountDetails.country',
                   render: (dom, entity) => {
                     return entity.originAmountDetails?.country;
                   },
@@ -281,11 +289,15 @@ export function Content(props: { userId: string }) {
               children: [
                 {
                   title: 'Destination Amount',
+                  exportData: 'destinationAmountDetails',
                   hideInSearch: true,
                   render: (dom, entity) => {
-                    return `${createCurrencyStringFromTransactionAmount(
-                      entity.destinationAmountDetails,
-                    )}`;
+                    return (
+                      <Money
+                        value={entity.destinationAmountDetails?.transactionAmount}
+                        currency={entity.destinationAmountDetails?.transactionCurrency as Currency}
+                      />
+                    );
                   },
                   onCell: (_) => ({
                     rowSpan: _.isFirstRow ? _.rowsCount : 0,
@@ -294,6 +306,7 @@ export function Content(props: { userId: string }) {
                 {
                   title: 'Destination Country',
                   hideInSearch: true,
+                  exportData: 'destinationAmountDetails.country',
                   render: (dom, entity) => {
                     return entity.destinationAmountDetails?.country;
                   },

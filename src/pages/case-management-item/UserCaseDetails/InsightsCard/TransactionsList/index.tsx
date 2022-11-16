@@ -3,7 +3,7 @@ import { Params } from '../TransactionsSelector';
 import { FIXED_API_PARAMS } from '../../InsightsCard';
 import TransactionsTable from '@/pages/transactions/components/TransactionsTable';
 import { useApi } from '@/api';
-import { useQuery } from '@/utils/queries/hooks';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { CommonParams } from '@/components/ui/Table';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
@@ -39,32 +39,34 @@ export default function TransactionsList(props: Props) {
   }, [selectorParams]);
 
   const api = useApi();
-  const transactionListResponse = useQuery(
+  const transactionListResponse = usePaginatedQuery(
     TRANSACTIONS_LIST({
       ...tableParams,
       ...selectorParams,
       userId,
     }),
-    () =>
-      api.getTransactionsList({
+    async ({ page: _page }) => {
+      const { data, total } = await api.getTransactionsList({
         ...FIXED_API_PARAMS,
         limit: tableParams.pageSize,
-        skip: ((tableParams?.page ?? 1) - 1) * tableParams.pageSize,
+        skip: ((_page ?? tableParams?.page ?? 1) - 1) * tableParams.pageSize,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         includeEvents: true,
         includeUsers: true,
-      }),
+      });
+      return { items: data, total };
+    },
   );
   const transactionList = map(transactionListResponse, (response) => {
-    let total = response.total;
+    let { total } = response;
     if (selectorParams.transactionsCount === 'LAST_10') {
-      total = Math.min(total, 10);
+      total = Math.min(total ?? response.items.length, 10);
     } else if (selectorParams.transactionsCount === 'LAST_50') {
-      total = Math.min(total, 50);
+      total = Math.min(total ?? response.items.length, 50);
     }
     return {
-      items: response.data,
+      items: response.items,
       total: total,
     };
   });

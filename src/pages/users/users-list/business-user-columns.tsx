@@ -2,18 +2,16 @@ import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
-import { Amount, InternalBusinessUser } from '@/apis';
+import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
-
-const createCurrencyStringFromAmount = (amount: Amount | undefined) => {
-  return amount ? `${amount.amountValue} ${amount.amountCurrency}` : '-';
-};
+import Money from '@/components/ui/Money';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
   return [
     {
       title: 'User ID',
       dataIndex: 'userId',
+      exportData: 'userId',
       tip: 'Unique identification of user.',
       width: 180,
       render: (dom, entity) => {
@@ -31,6 +29,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
     },
     {
       title: 'Legal Name',
+      exportData: 'legalEntity.companyGeneralDetails.legalName',
       width: 120,
       hideInSearch: true,
       render: (dom, entity) => {
@@ -40,6 +39,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
     },
     {
       title: 'Industry',
+      exportData: 'legalEntity.companyGeneralDetails.businessIndustry',
       width: 150,
       hideInSearch: true,
       render: (dom, entity) => {
@@ -58,21 +58,25 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
     {
       title: 'Expected Transaction Amount Per Month',
       width: 300,
+      exportData: 'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth',
       hideInSearch: true,
       render: (dom, entity) => {
-        return createCurrencyStringFromAmount(
-          entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth,
+        return (
+          <Money
+            amount={entity.legalEntity.companyFinancialDetails?.expectedTransactionAmountPerMonth}
+          />
         );
       },
       valueType: 'textarea',
     },
     {
       title: 'Expected Turnover Amount Per Month',
+      exportData: 'legalEntity.companyFinancialDetails.expectedTurnoverPerMonth',
       width: 300,
       hideInSearch: true,
       render: (dom, entity) => {
-        return createCurrencyStringFromAmount(
-          entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
+        return (
+          <Money amount={entity.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth} />
         );
       },
       valueType: 'textarea',
@@ -81,13 +85,17 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       title: 'Maximum Daily Transaction Limit',
       width: 300,
       hideInSearch: true,
-      dataIndex: 'maximumDailyTransactionLimit',
+      exportData: 'transactionLimits.maximumDailyTransactionLimit',
       valueType: 'textarea',
+      render: (_, entity) => {
+        return <Money amount={entity.transactionLimits?.maximumDailyTransactionLimit} />;
+      },
     },
     {
       title: 'Registration Identifier',
       width: 200,
       hideInSearch: true,
+      exportData: 'legalEntity.companyRegistrationDetails.registrationIdentifier',
       render: (dom, entity) => {
         return entity.legalEntity.companyRegistrationDetails?.registrationIdentifier;
       },
@@ -95,6 +103,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
     },
     {
       title: 'Registration Country',
+      exportData: 'legalEntity.companyRegistrationDetails.registrationCountry',
       width: 200,
       hideInSearch: true,
       render: (dom, entity) => {
@@ -107,6 +116,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       width: 150,
       sorter: true,
       dataIndex: 'createdTimestamp',
+      exportData: 'createdTimestamp',
       valueType: 'dateTimeRange',
       render: (_, user) => {
         return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);

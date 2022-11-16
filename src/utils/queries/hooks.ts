@@ -44,3 +44,36 @@ export function useQuery<
   }
   throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
 }
+
+export type PaginatedData<T> = {
+  success?: boolean;
+  total?: number;
+  items: Array<T>;
+};
+
+export type PaginatedQueryParams = {
+  page?: number;
+};
+
+export type PaginatedQueryFunction<T = unknown> = (
+  paginationParams: PaginatedQueryParams,
+) => Promise<PaginatedData<T>>;
+
+export function usePaginatedQuery<TData = unknown, TQueryKey extends QueryKey = QueryKey>(
+  queryKey: TQueryKey,
+  queryFn: PaginatedQueryFunction<TData>,
+  options?: Omit<
+    UseQueryOptions<PaginatedData<TData>, string, PaginatedData<TData>, TQueryKey>,
+    'queryKey' | 'queryFn' | 'initialData'
+  > & { initialData?: () => undefined },
+): QueryResult<PaginatedData<TData>> {
+  const result: QueryResult<PaginatedData<TData>> = useQuery<
+    PaginatedData<TData>,
+    PaginatedData<TData>,
+    TQueryKey
+  >(queryKey, () => queryFn({}), options);
+  return {
+    ...result,
+    paginate: queryFn,
+  };
+}
