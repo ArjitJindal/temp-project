@@ -360,21 +360,25 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
 
-    /* Transaction */
-    const { alias: transactionAlias } = this.createFunction({
-      name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
+    /* Transaction and Transaction Event */
+    const transactionFunctionProps = {
       provisionedConcurrency:
         config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
       layers: [fastGeoIpLayer],
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
+    }
+
+    const { alias: transactionAlias } = this.createFunction({
+      name: StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
+      ...transactionFunctionProps,
     })
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
 
-    /* Transaction Event */
     const { alias: transactionEventAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
+      ...transactionFunctionProps,
     })
     tarponDynamoDbTable.grantReadWriteData(transactionEventAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionEventAlias)
