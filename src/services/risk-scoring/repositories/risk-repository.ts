@@ -150,7 +150,7 @@ export class RiskRepository {
     return score
   }
 
-  async getDrsScore(userId: string): Promise<any> {
+  async getDrsScore(userId: string): Promise<number | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
@@ -166,7 +166,7 @@ export class RiskRepository {
     }
     delete drsScoreItem.PartitionKeyID
     delete drsScoreItem.SortKeyID
-    return drsScoreItem
+    return drsScoreItem.drsScore
   }
 
   async createOrUpdateDrsScore(

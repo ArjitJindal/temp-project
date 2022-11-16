@@ -178,8 +178,7 @@ const calculateAndUpdateDRS = async (
     return
   }
 
-  const currentDrsValue =
-    (await riskRepository.getDrsScore(userId))?.drsValue ?? krsScore
+  const currentDrsValue = (await riskRepository.getDrsScore(userId)) ?? krsScore
 
   const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
   await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)

@@ -14,8 +14,12 @@ export const DEFAULT_RISK_LEVEL = 'VERY_HIGH' // defaults to very high risk for 
 
 export const getRiskLevelFromScore = (
   riskClassificationValues: Array<any>,
-  riskScore: number
+  riskScore: number | null
 ): RiskLevel => {
+  if (riskScore === null) {
+    return DEFAULT_RISK_LEVEL
+  }
+
   let riskLevel: RiskLevel | undefined
   riskClassificationValues.map((value) => {
     if (
