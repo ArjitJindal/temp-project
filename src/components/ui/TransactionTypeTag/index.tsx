@@ -1,9 +1,9 @@
 import { Tag } from 'antd';
 import {
-  SwapOutlined,
-  ArrowsAltOutlined,
   ArrowDownOutlined,
+  ArrowsAltOutlined,
   ArrowUpOutlined,
+  SwapOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
 import style from './index.module.less';

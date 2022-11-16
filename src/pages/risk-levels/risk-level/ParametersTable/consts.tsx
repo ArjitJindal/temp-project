@@ -1,27 +1,65 @@
 import React from 'react';
 import { Input, Select } from 'antd';
 import {
-  DataTypes,
+  DataType,
   ParameterName,
   ParameterValues,
   RiskLevelTable,
+  riskValueLiteral,
+  riskValueMultiple,
+  riskValueRange,
+  RiskValueType,
 } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
-import { PAYMENT_METHODS } from '@/utils/payments';
+import { getPaymentMethodTitle, isPaymentMethod, PAYMENT_METHODS } from '@/utils/payments';
 import { TRANSACTION_TYPES } from '@/utils/transactionType';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/ui/Slider';
+import {
+  RiskParameterValueLiteral,
+  RiskParameterValueMultiple,
+  RiskParameterValueRange,
+} from '@/apis';
+import CountryDisplay from '@/components/ui/CountryDisplay';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import { isTransactionType } from '@/utils/api/transactions';
+import { humanizeCamelCase } from '@/utils/tags';
 
-type InputRendererProps = {
+type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
-  values: string[];
-  onChange: (values: string[]) => void;
+  value?: RiskValueContentByType<T> | null;
+  existedValues?: RiskValueContentByType<T>[];
+  onChange: (values: RiskValueContentByType<T>) => void;
 };
-export type InputRenderer = (props: InputRendererProps) => React.ReactNode;
+export type InputRenderer<T extends RiskValueType> = (
+  props: InputRendererProps<T>,
+) => React.ReactNode;
 
-export type ValueRenderer = (props: { value: string | null }) => React.ReactNode;
+export type ValueRenderer<T extends RiskValueType> = (props: {
+  value?: RiskValueContentByType<T>;
+}) => React.ReactNode;
+
+type RiskValueContentByType<T extends RiskValueType> = T extends 'LITERAL'
+  ? RiskParameterValueLiteral
+  : T extends 'RANGE'
+  ? RiskParameterValueRange
+  : T extends 'MULTIPLE'
+  ? RiskParameterValueMultiple
+  : never;
+
+export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
+  STRING: 'LITERAL',
+  RANGE: 'RANGE',
+  COUNTRY: 'MULTIPLE',
+  CURRENCY: 'MULTIPLE',
+  PAYMENT_METHOD: 'MULTIPLE',
+  CONSUMER_USER_TYPE: 'MULTIPLE',
+  BUSINESS_USER_TYPE: 'MULTIPLE',
+  TRANSACTION_TYPES: 'MULTIPLE',
+};
 
 // todo: i18n
 export const USER_RISK_PARAMETERS: RiskLevelTable = [
@@ -29,7 +67,6 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'type',
     title: 'Customer Type',
     description: 'Risk value for consumer (individuals) users',
-    type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'CONSUMER_USER_TYPE',
     riskScoreType: 'KRS',
@@ -41,7 +78,6 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'userDetails.countryOfResidence',
     title: 'Country of Residence',
     description: 'Risk based on customer residence country',
-    type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
     riskScoreType: 'KRS',
@@ -53,7 +89,6 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'userDetails.countryOfNationality',
     title: 'Country of Nationality',
     description: 'Risk based on customer nationality country',
-    type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'COUNTRY',
     riskScoreType: 'KRS',
@@ -65,7 +100,6 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'userDetails.dateOfBirth',
     title: 'Customer Age',
     description: 'Risk based on customer age range',
-    type: 'RANGE',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
     riskScoreType: 'KRS',
@@ -80,7 +114,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'type',
     title: 'Customer Type',
     description: 'Risk value for businesses (merchants/legal entities) users',
-    type: 'DISCRETE',
     entity: 'BUSINESS',
     dataType: 'BUSINESS_USER_TYPE',
     riskScoreType: 'KRS',
@@ -92,7 +125,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'legalEntity.companyRegistrationDetails.registrationCountry',
     title: 'Business Registration Country',
     description: 'Risk value based on registration country of the business',
-    type: 'DISCRETE',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
     riskScoreType: 'KRS',
@@ -104,7 +136,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'shareHolders',
     title: 'Shareholders Country of Nationality',
     description: 'Risk value based on shareholder country of the nationality',
-    type: 'DISCRETE',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
     riskScoreType: 'KRS',
@@ -117,7 +148,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'directors',
     title: 'Directors Country of Nationality',
     description: 'Risk value based on director country of the nationality',
-    type: 'DISCRETE',
     entity: 'BUSINESS',
     dataType: 'COUNTRY',
     riskScoreType: 'KRS',
@@ -130,7 +160,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'legalEntity.companyGeneralDetails.businessIndustry',
     title: 'Business Industry',
     description: 'Risk value based on the industry in which the business operates',
-    type: 'DISCRETE',
     entity: 'BUSINESS',
     dataType: 'STRING',
     riskScoreType: 'KRS',
@@ -142,7 +171,6 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     title: 'Company Age',
     description: 'Risk based on business age range',
-    type: 'RANGE',
     entity: 'BUSINESS',
     dataType: 'RANGE',
     riskScoreType: 'KRS',
@@ -157,7 +185,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'originPaymentDetails.method',
     title: 'Origin Payment Method',
     description: 'Risk based on transaction origin payment method',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
     riskScoreType: 'ARS',
@@ -169,7 +196,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'destinationPaymentDetails.method',
     title: 'Destination Payment Method',
     description: 'Risk based on transaction destination payment method',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'PAYMENT_METHOD',
     riskScoreType: 'ARS',
@@ -181,7 +207,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'originAmountDetails.country',
     title: 'Origin Country',
     description: 'Risk based on transaction origin country',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     riskScoreType: 'ARS',
@@ -193,7 +218,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'destinationAmountDetails.country',
     title: 'Destination Country',
     description: 'Risk based on transaction destination country',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     riskScoreType: 'ARS',
@@ -205,7 +229,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'originAmountDetails.transactionCurrency',
     title: 'Origin Currency',
     description: 'Risk based on transaction origin currency',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
     riskScoreType: 'ARS',
@@ -217,7 +240,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'destinationAmountDetails.transactionCurrency',
     title: 'Destination Currency',
     description: 'Risk based on transaction destination currency',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'CURRENCY',
     riskScoreType: 'ARS',
@@ -229,7 +251,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'createdTimestamp',
     title: 'Consumer User age on Platform',
     description: 'Risk based on how long a consumer has been using your platform',
-    type: 'DISCRETE',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
     riskScoreType: 'ARS',
@@ -241,7 +262,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'ipAddressCountry',
     title: 'IP Address Country',
     description: 'Risk based on IP address country',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'COUNTRY',
     riskScoreType: 'ARS',
@@ -253,7 +273,6 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameter: 'type',
     title: 'Transaction Type',
     description: 'Risk value based on type of transaction',
-    type: 'DISCRETE',
     entity: 'TRANSACTION',
     dataType: 'TRANSACTION_TYPES',
     riskScoreType: 'ARS',
@@ -270,14 +289,22 @@ export const ALL_RISK_PARAMETERS = [
 ];
 
 const MultipleSelect: React.FC<
-  InputRendererProps & { options: Array<{ value: string; label: string }> }
-> = ({ values, disabled, onChange, options }) => {
+  InputRendererProps<'MULTIPLE'> & {
+    options: Array<{ value: string; label: string }>;
+  }
+> = (props) => {
+  const { value, disabled, onChange, options, existedValues = [] } = props;
+  const disabledOptions: string[] = existedValues.flatMap((x) =>
+    x.values.map((y) => `${y.content}`),
+  );
   return (
     <Select<string[]>
       mode="multiple"
       style={{ width: '100%' }}
-      value={values}
-      onChange={onChange}
+      value={value?.values.map(({ content }) => `${content}`) ?? []}
+      onChange={(value) => {
+        onChange(riskValueMultiple(value.map((x) => riskValueLiteral(x))));
+      }}
       showSearch={true}
       disabled={disabled}
       filterOption={(input, option) => {
@@ -289,63 +316,61 @@ const MultipleSelect: React.FC<
       }}
     >
       {options.map(({ value, label }) => (
-        <Select.Option value={value}>{label}</Select.Option>
+        <Select.Option disabled={disabledOptions.includes(value)} key={value} value={value}>
+          {label}
+        </Select.Option>
       ))}
     </Select>
   );
 };
 
-export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
-  STRING: ({ disabled, values, onChange }) => (
+export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
+  STRING: (({ disabled, value, onChange }) => (
     <Input
       disabled={disabled}
-      value={values[0] ?? ''}
-      onChange={(e) => onChange([e.target.value])}
+      value={`${value?.content ?? ''}`}
+      onChange={(e) => onChange(riskValueLiteral(e.target.value))}
     />
-  ),
-  COUNTRY: (props) => {
+  )) as InputRenderer<'LITERAL'>,
+  COUNTRY: ((props) => {
     return (
       <MultipleSelect
         options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
         {...props}
       />
     );
-  },
-  CURRENCY: (props) => {
+  }) as InputRenderer<'MULTIPLE'>,
+  CURRENCY: ((props) => {
     return <MultipleSelect options={CURRENCIES_SELECT_OPTIONS} {...props} />;
-  },
-  CONSUMER_USER_TYPE: (props) => {
+  }) as InputRenderer<'MULTIPLE'>,
+  CONSUMER_USER_TYPE: ((props) => {
     return <MultipleSelect options={consumerType} {...props} />;
-  },
-  BUSINESS_USER_TYPE: (props) => {
+  }) as InputRenderer<'MULTIPLE'>,
+  BUSINESS_USER_TYPE: ((props) => {
     return <MultipleSelect options={businessType} {...props} />;
-  },
-  BUSINESS_REGISTRATION_COUNTRY: (props) => {
+  }) as InputRenderer<'MULTIPLE'>,
+  PAYMENT_METHOD: ((props) => {
     return (
       <MultipleSelect
-        options={Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] }))}
+        options={PAYMENT_METHODS.map((method) => ({
+          value: method,
+          label: getPaymentMethodTitle(method),
+        }))}
         {...props}
       />
     );
-  },
-  PAYMENT_METHOD: (props) => {
+  }) as InputRenderer<'MULTIPLE'>,
+  TRANSACTION_TYPES: ((props) => {
     return (
       <MultipleSelect
-        options={PAYMENT_METHODS.map((method) => ({ value: method, label: method }))}
+        options={TRANSACTION_TYPES.map((type) => ({ value: type, label: humanizeCamelCase(type) }))}
         {...props}
       />
     );
-  },
-  TRANSACTION_TYPES: (props) => {
-    return (
-      <MultipleSelect
-        options={TRANSACTION_TYPES.map((type) => ({ value: type, label: type }))}
-        {...props}
-      />
-    );
-  },
-  RANGE: ({ disabled, values, onChange }) => {
-    const range = (values[0] ?? '0,0').split(',').map((x) => parseInt(x) || 0);
+  }) as InputRenderer<'MULTIPLE'>,
+  RANGE: (({ disabled, value, onChange }) => {
+    // const range = (values[0] ?? '0,0').split(',').map((x) => parseInt(x) || 0);
+    const range = [value?.start ?? 0, value?.end ?? 0];
     return (
       <>
         <Slider
@@ -355,76 +380,143 @@ export const INPUT_RENDERERS: { [key in DataTypes]: InputRenderer } = {
           value={[range[0], range[1]]}
           disabled={disabled}
           onChange={(value) => {
-            onChange([value.map((x) => `${x}`).join(',')]);
+            // onChange([value.map((x) => `${x}`).join(',')]);
+            onChange(riskValueRange(value[0], value[1]));
           }}
         />
       </>
     );
-  },
+  }) as InputRenderer<'RANGE'>,
 };
 
-export const VALUE_RENDERERS: { [key in DataTypes]: ValueRenderer } = {
-  STRING: ({ value }) => <span>{value}</span>,
-  CURRENCY: ({ value }) => (
-    <span>{CURRENCIES_SELECT_OPTIONS.find((currency) => currency.value === value)?.label}</span>
-  ),
-  COUNTRY: ({ value }) => {
+const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
+  if (value == null) {
+    return null;
+  }
+  return (
+    <span>
+      {value.values
+        .map((item) => item.content)
+        .filter((x) => !!x)
+        .join(', ')}
+    </span>
+  );
+};
+
+const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
+  if (value == null) {
+    return null;
+  }
+  const marks = {};
+
+  if (value.start != null) {
+    marks[value.start] = value.start;
+  }
+  if (value.end != null) {
+    marks[value.end] = value.end;
+  }
+  return (
+    <Slider
+      range
+      endExclusive={true}
+      marks={marks}
+      defaultValue={[value.start ?? 0, value.end ?? 0]}
+      disabled={true}
+    />
+  );
+};
+
+const DEFAULT_STRING_RENDERER: ValueRenderer<'LITERAL'> = ({ value }) => (
+  <span>{value?.content ?? ''}</span>
+);
+
+export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
+  STRING: DEFAULT_STRING_RENDERER,
+  CURRENCY: (({ value }) => {
     if (value == null) {
       return null;
     }
-    return <span>{COUNTRIES[value]}</span>;
-  },
-  BUSINESS_REGISTRATION_COUNTRY: ({ value }) => {
-    if (value == null) {
-      return null;
-    }
-    return <span>{COUNTRIES[value]}</span>;
-  },
-  PAYMENT_METHOD: ({ value }) => <span>{value}</span>,
-  TRANSACTION_TYPES: ({ value }) => <span>{value}</span>,
-  CONSUMER_USER_TYPE: ({ value }) => {
-    if (value == null) {
-      return null;
-    }
-    return <span>{value}</span>;
-  },
-  BUSINESS_USER_TYPE: ({ value }) => {
-    if (value == null) {
-      return null;
-    }
-    return <span>{value}</span>;
-  },
-  RANGE: ({ value }) => {
-    const range = value?.split(',').map((x) => parseInt(x)) ?? [];
     return (
-      <Slider
-        range
-        endExclusive={true}
-        marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
-        defaultValue={[range[0] ?? 0, range[1] ?? 0]}
-        disabled={true}
-      />
+      <span>
+        {value.values
+          .map(
+            (item) =>
+              CURRENCIES_SELECT_OPTIONS.find((currency) => currency.value === item.content)?.label,
+          )
+          .filter((x) => !!x)
+          .join(', ')}
+      </span>
     );
-  },
+  }) as ValueRenderer<'MULTIPLE'>,
+  COUNTRY: (({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return (
+      <span>
+        {value.values.map((item) => (
+          <CountryDisplay key={`${item.content}`} isoCode={`${item.content}`} />
+        ))}
+      </span>
+    );
+  }) as ValueRenderer<'MULTIPLE'>,
+  PAYMENT_METHOD: (({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return (
+      <>
+        {value.values.map((item) => {
+          const itemValue = `${item.content}`;
+          if (!isPaymentMethod(itemValue)) {
+            return <span key={itemValue}>{itemValue}</span>;
+          }
+          return <PaymentMethodTag key={itemValue} paymentMethod={itemValue} />;
+        })}
+      </>
+    );
+  }) as ValueRenderer<'MULTIPLE'>,
+  TRANSACTION_TYPES: (({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return (
+      <>
+        {value.values.map((item) => {
+          const itemValue = `${item.content}`;
+          if (!isTransactionType(itemValue)) {
+            return <span key={itemValue}>{itemValue}</span>;
+          }
+          return <TransactionTypeTag key={itemValue} transactionType={itemValue} />;
+        })}
+      </>
+    );
+  }) as ValueRenderer<'MULTIPLE'>,
+  CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
+  BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
+  RANGE: DEFAULT_RANGE_RENDERER,
 };
 
-type Validation = (params: {
+type Validation<T extends RiskValueType> = (params: {
   newParameterName: ParameterName;
-  newValue: string[];
+  newValue: RiskValueContentByType<T>;
   newRiskLevel: RiskLevel | null;
   previousValues: ParameterValues;
 }) => null | string;
 
-export const NEW_VALUE_VALIDATIONS: Validation[] = [
+export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
   ({ newParameterName, newValue, previousValues }) => {
     if (
       newParameterName === 'userDetails.dateOfBirth' ||
       newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration'
     ) {
-      for (const valueItem of newValue) {
-        const [x1, x2] = valueItem.split(',').map((x) => parseInt(x));
+      if (newValue.kind === 'RANGE') {
+        const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
         const hasOverlaps = previousValues.some(({ parameterValue }) => {
-          const [y1, y2] = parameterValue.split(',').map((x) => parseInt(x));
+          if (parameterValue.content.kind !== 'RANGE') {
+            return false;
+          }
+          const { start: y1 = 0, end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
           return x1 < y2 && y1 < x2;
         });
         if (hasOverlaps) {

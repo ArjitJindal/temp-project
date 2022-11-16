@@ -58,7 +58,7 @@ export default function () {
               matchType: riskLevelTableItem.matchType,
               targetIterableParameter: riskLevelTableItem.targetIterableParameter,
               riskEntityType: riskLevelTableItem.entity,
-              riskValueType: riskLevelTableItem.type,
+              // riskValueType: riskLevelTableItem.type,
               riskLevelAssignmentValues: settings.values,
             },
           },

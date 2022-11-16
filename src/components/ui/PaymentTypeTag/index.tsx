@@ -1,61 +1,56 @@
 import { Tag } from 'antd';
 import {
-  CreditCardOutlined,
-  WalletOutlined,
   BankOutlined,
-  MobileOutlined,
+  CreditCardOutlined,
   FileDoneOutlined,
+  MobileOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import style from './index.module.less';
+import { neverReturn } from '@/utils/lang';
+import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
 
 interface Props {
-  paymentMethod: string | undefined;
+  paymentMethod: PaymentMethod | undefined;
 }
 
 export const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
   if (!paymentMethod) {
     return <>-</>;
   }
-  let paymentMethodDisplay: string;
   let paymentIcon = <BankOutlined />;
-  let tagColor = 'green';
+  let tagColor;
 
   if (paymentMethod === 'IBAN') {
-    paymentMethodDisplay = 'IBAN Transfer';
+    tagColor = 'green';
   } else if (paymentMethod === 'ACH') {
-    paymentMethodDisplay = 'ACH Transfer';
+    tagColor = 'green';
   } else if (paymentMethod === 'SWIFT') {
-    paymentMethodDisplay = 'SWIFT Transfer';
+    tagColor = 'green';
   } else if (paymentMethod === 'GENERIC_BANK_ACCOUNT') {
-    paymentMethodDisplay = 'Bank Transfer';
+    tagColor = 'green';
   } else if (paymentMethod === 'WALLET') {
-    paymentMethodDisplay = 'Wallet';
     tagColor = 'purple';
     paymentIcon = <WalletOutlined />;
   } else if (paymentMethod === 'UPI') {
-    paymentMethodDisplay = 'UPI';
     tagColor = 'magenta';
     paymentIcon = <MobileOutlined />;
   } else if (paymentMethod === 'CARD') {
-    paymentMethodDisplay = 'Card';
     tagColor = 'volcano';
     paymentIcon = <CreditCardOutlined />;
   } else if (paymentMethod === 'MPESA') {
-    paymentMethodDisplay = 'Mpesa';
-    paymentIcon = <MobileOutlined />;
     tagColor = 'red';
+    paymentIcon = <MobileOutlined />;
   } else if (paymentMethod === 'CHECK') {
-    paymentMethodDisplay = 'Check';
-    paymentIcon = <FileDoneOutlined />;
     tagColor = 'orange';
+    paymentIcon = <FileDoneOutlined />;
   } else {
-    paymentMethodDisplay = paymentMethod;
+    tagColor = neverReturn(paymentMethod, 'green');
   }
-
   return (
     <span className={style.tag}>
       <Tag color={tagColor}>
-        {paymentIcon} {paymentMethodDisplay}
+        {paymentIcon} {getPaymentMethodTitle(paymentMethod)}
       </Tag>
     </span>
   );

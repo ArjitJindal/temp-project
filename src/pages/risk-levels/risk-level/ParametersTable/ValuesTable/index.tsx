@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
-import { ParameterName, ParameterValues, RiskLevelTableItem } from '../types';
+import { ParameterName, ParameterValues, RiskLevelTableItem, RiskValueContent } from '../types';
 import { INPUT_RENDERERS, NEW_VALUE_VALIDATIONS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
 import { isEqual } from '@/utils/lang';
-import COUNTRIES from '@/utils/countries';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -30,29 +29,25 @@ export default function ValuesTable(props: Props) {
   const isChanged = !isEqual(lastValues, values);
   const loading = isLoading(currentValuesRes);
 
-  const [newValue, setNewValue] = useState<string[]>([]);
+  const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
   const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
 
   const handleUpdateValues = (cb: (oldValues: ParameterValues) => ParameterValues) => {
-    setValues((oldValues) => {
-      const result = cb(oldValues);
-      result.sort((x, y) => COUNTRIES[x.parameterValue].localeCompare(COUNTRIES[y.parameterValue]));
-      return result;
-    });
+    setValues(cb);
   };
 
   const handleAdd = () => {
     if (newValue && newRiskLevel != null) {
-      for (const value of newValue) {
-        handleUpdateValues((values) => [
-          ...values.filter((x) => x.parameterValue !== value),
-          {
-            parameterValue: value,
-            riskLevel: newRiskLevel,
+      handleUpdateValues((oldValues) => [
+        ...oldValues,
+        {
+          parameterValue: {
+            content: newValue,
           },
-        ]);
-      }
-      setNewValue([]);
+          riskLevel: newRiskLevel,
+        },
+      ]);
+      setNewValue(null);
       setNewRiskLevel(null);
     }
   };
@@ -67,7 +62,7 @@ export default function ValuesTable(props: Props) {
 
   const newValueValidationMessage: string | null = NEW_VALUE_VALIDATIONS.reduce<string | null>(
     (acc, validation): string | null => {
-      if (acc != null) {
+      if (newValue == null || acc != null) {
         return acc;
       }
       return validation({
@@ -107,10 +102,10 @@ export default function ValuesTable(props: Props) {
           };
 
           return (
-            <React.Fragment key={parameterValue}>
+            <React.Fragment key={JSON.stringify(parameterValue)}>
               <div>
                 {VALUE_RENDERERS[dataType]({
-                  value: parameterValue,
+                  value: parameterValue.content,
                 })}
               </div>
               <div>
@@ -137,7 +132,8 @@ export default function ValuesTable(props: Props) {
           <div>
             {INPUT_RENDERERS[dataType]({
               disabled: loading,
-              values: newValue,
+              value: newValue,
+              existedValues: values.map((x) => x.parameterValue.content),
               onChange: setNewValue,
             })}
           </div>
@@ -151,7 +147,7 @@ export default function ValuesTable(props: Props) {
               }
               onClick={handleAdd}
             >
-              Set
+              Add
             </Button>
           </div>
         </>
