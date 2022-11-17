@@ -76,7 +76,7 @@ function getConfigChunk(
 // add one more 'CHUNK=N webpack' for 'npm run build' if we hit OOM again.
 const NUM_CHUNKS = 2
 
-const step = Math.floor(lambdaEntries.length / NUM_CHUNKS)
+const step = Math.ceil(lambdaEntries.length / NUM_CHUNKS)
 if (process.env.CHUNK == null) {
   throw new Error(`Please specify CHUNK env var 0..${NUM_CHUNKS - 1}`)
 }

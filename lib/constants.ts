@@ -188,6 +188,7 @@ export const StackConstants = {
   CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME: getResourceNameForHammerhead(
     'ConsoleApiRiskLevelAndScoreFunction'
   ),
+  AUDIT_LOG_FUNCTION_NAME: getResourceNameForHammerhead('AuditLogFunction'),
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',

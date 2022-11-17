@@ -90,6 +90,10 @@ export const LAMBDAS: {
     codePath: 'console-api-case',
     handlerName: 'casesHandler',
   },
+  [StackConstants.AUDIT_LOG_FUNCTION_NAME]: {
+    codePath: 'console-api-audit-log',
+    handlerName: 'auditLogHandler',
+  },
   [StackConstants.SLACK_APP_FUNCTION_NAME]: {
     codePath: 'slack-app',
     handlerName: 'slackAppHandler',

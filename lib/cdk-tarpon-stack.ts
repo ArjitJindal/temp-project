@@ -594,6 +594,20 @@ export class CdkTarponStack extends cdk.Stack {
     s3DocumentBucket.grantWrite(caseAlias)
     this.grantMongoDbAccess(caseAlias)
 
+    /* AuditLog */
+    const { alias: auditLogAlias } = this.createFunction(
+      {
+        name: StackConstants.AUDIT_LOG_FUNCTION_NAME,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+        },
+      }
+    )
+    this.grantMongoDbAccess(auditLogAlias)
+
     /* Slack App */
     const { alias: slackAppAlias } = this.createFunction(
       {

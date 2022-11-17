@@ -12,6 +12,7 @@
     "aws-sso-login:prod": "npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449",
     "aws-sso-login:all": "npm run aws-sso-login:dev && npm run aws-sso-login:sandbox && npm run aws-sso-login:prod",
     "build": "npm run openapi:build && export NODE_OPTIONS='--max-old-space-size=7000' && CHUNK=0 webpack && CHUNK=1 webpack",
+    "build:local": "export ENV=local && npm run build",
     "build:watch": "npm run openapi:build && ENV=local webpack --watch --progress",
     "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth --quiet",

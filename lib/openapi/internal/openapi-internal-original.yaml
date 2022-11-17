@@ -1720,6 +1720,58 @@ paths:
           name: userId
           required: true
           description: UserID of the user to get Dynamic Risk Score
+  /auditlog:
+    parameters: []
+    get:
+      summary: AuditLog
+      operationId: get-auditlog
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '403':
+          description: Not enough privileges
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: limit
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: skip
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            type: string
+          in: query
+          name: sortOrder
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterTypes
+      description: ''
   /pulse/risk-parameter:
     parameters: []
     post:
@@ -3399,6 +3451,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Case'
+      required:
+        - total
+        - data
+    AuditLogListResponse:
+      title: AuditLogListResponse
+      type: object
+      description: ''
+      x-examples: {}
+      properties:
+        total:
+          type: number
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
       required:
         - total
         - data
