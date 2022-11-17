@@ -86,8 +86,6 @@ export function Content(props: { userId: string }) {
       newParams.filterStatus = ['BLOCK'];
     } else if (statusFilter.indexOf('SUSPEND') !== -1) {
       newParams.filterStatus = ['SUSPEND'];
-    } else if (statusFilter.indexOf('WHITELIST') !== -1) {
-      newParams.filterStatus = ['WHITELIST'];
     }
 
     return api.getTransactionsList(newParams).then((result) => ({
@@ -207,9 +205,6 @@ export function Content(props: { userId: string }) {
                 },
                 BLOCK: {
                   text: 'BLOCK',
-                },
-                WHITELIST: {
-                  text: 'WHITELIST',
                 },
                 SUSPEND: {
                   text: 'SUSPEND',

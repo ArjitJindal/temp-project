@@ -211,7 +211,6 @@ export default function Table<
 
     adjustedColumns.unshift({
       hideInSearch: true,
-      hideInTable: true,
       search: false,
       hideInSetting: true,
       title: (

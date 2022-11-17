@@ -68,7 +68,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
         });
         const { total, items } = await onExportData({ page });
         const totalItemsCount = total ?? items.length;
-        if (totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
+        if (pagesMode === 'ALL' && totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
           message.error(
             `There is too much items to export (> ${MAXIMUM_EXPORT_ITEMS}). Try to change filters or export only current page.`,
           );

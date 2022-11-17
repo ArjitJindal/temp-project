@@ -130,6 +130,7 @@ export default function SuperAdminPanel() {
               options={tenantOptions}
               onChange={handleChangeTenant}
               value={user.tenantId}
+              showSearch={true}
             />
             <b>{`${user.tenantId}`}</b>
           </Form.Item>

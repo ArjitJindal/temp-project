@@ -14,7 +14,7 @@ import { neverReturn } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
 import { useApi } from '@/api';
 
-export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'WHITELIST', 'FLAG', 'BLOCK', 'SUSPEND'];
+export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'FLAG', 'BLOCK', 'SUSPEND'];
 
 export function isRuleAction(value: unknown): value is RuleAction {
   const asRuleAction = value as RuleAction;
@@ -22,7 +22,6 @@ export function isRuleAction(value: unknown): value is RuleAction {
     case 'ALLOW':
     case 'FLAG':
     case 'BLOCK':
-    case 'WHITELIST':
     case 'SUSPEND':
       return true;
   }
@@ -58,9 +57,6 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
   }
   if (ruleAction === 'BLOCK') {
     return COLORS.red.base;
-  }
-  if (ruleAction === 'WHITELIST') {
-    return COLORS.brandBlue.base;
   }
   if (ruleAction === 'FLAG') {
     return COLORS.orange.base;

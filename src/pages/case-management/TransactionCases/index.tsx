@@ -186,7 +186,7 @@ export default function TransactionCases(props: Props) {
         // hideInSearch: true,
         valueType: 'select',
         fieldProps: {
-          options: ['FLAG', 'BLOCK', 'SUSPEND', 'WHITELIST'],
+          options: ['FLAG', 'BLOCK', 'SUSPEND'],
           allowClear: true,
           multiple: true,
           mode: 'multiple',

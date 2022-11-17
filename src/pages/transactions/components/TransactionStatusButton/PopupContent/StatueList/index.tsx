@@ -18,9 +18,6 @@ const data: { Status: RuleAction | undefined }[] = [
   {
     Status: 'SUSPEND',
   },
-  {
-    Status: 'WHITELIST',
-  },
 ];
 
 export default function StatusList(props: Props) {
