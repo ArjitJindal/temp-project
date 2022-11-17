@@ -39,6 +39,7 @@ export default {
   'menu.account.logout': 'Logout',
   'menu.accounts': 'Team Management',
   'menu.settings': 'Settings',
+  'menu.auditlog': 'Audit Log',
   'menu.risk-levels': 'Risk Scoring',
   'menu.risk-levels.configure': 'Risk Levels',
   'menu.risk-levels.risk-level': 'Risk Factors',

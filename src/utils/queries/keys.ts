@@ -31,6 +31,7 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'list',
   searchParams,
 ];
+export const AUDIT_LOGS_LIST = (searchParams: AnyParameters): QueryKey => [searchParams];
 export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,

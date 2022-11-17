@@ -21,12 +21,14 @@ import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
+import AuditLogPage from '@/pages/auditlog';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
   const isImportFilesEnabled = useFeature('IMPORT_FILES');
   const isListsFeatureEnabled = useFeature('LISTS');
   const isSanctionsEnabled = useFeature('SANCTIONS');
+  const isAuditLogEnabled = useFeature('AUDIT_LOGS');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -280,6 +282,13 @@ export function useRoutes(): RouteItem[] {
             ]
           : [],
       },
+      isAuditLogEnabled && {
+        path: '/auditlog',
+        icon: 'ContainerOutlined',
+        name: 'auditlog',
+        position: 'bottom',
+        component: AuditLogPage,
+      },
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -315,6 +324,7 @@ export function useRoutes(): RouteItem[] {
     isListsFeatureEnabled,
     lastActiveList,
     isSanctionsEnabled,
+    isAuditLogEnabled,
     lastActiveSanctionsTab,
     lastCasesActiveTab,
   ]);
