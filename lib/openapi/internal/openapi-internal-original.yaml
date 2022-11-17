@@ -2369,7 +2369,6 @@ components:
       enum:
         - FLAG
         - BLOCK
-        - WHITELIST
         - ALLOW
         - SUSPEND
     RuleActionAlias:

@@ -3180,7 +3180,6 @@ components:
       title: RuleAction
       enum:
         - ALLOW
-        - WHITELIST
         - FLAG
         - BLOCK
         - SUSPEND
