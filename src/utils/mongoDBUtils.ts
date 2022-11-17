@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
+import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 
 interface DBCredentials {
   username: string
@@ -22,7 +23,7 @@ export async function getMongoDbClient(
   }
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
-      process.env.MONGO_URI || `mongodb://localhost:27018/${dbName}`
+      process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
     )
   }
   if (process.env.ENV === 'local') {

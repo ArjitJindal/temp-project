@@ -3,7 +3,6 @@ import { CaseCreationService } from '@/lambdas/console-api-case/services/case-cr
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoClient } from '@/test-utils/mongo-test-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -18,12 +17,13 @@ import {
 } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 dynamoDbSetupHook()
 
 async function getService(tenantId: string) {
   const dynamoDb = getDynamoDbClient()
-  const mongoDb = await getMongoClient()
+  const mongoDb = await getMongoDbClient()
   const caseRepository = new CaseRepository(tenantId, {
     mongoDb,
   })
@@ -47,8 +47,8 @@ async function getService(tenantId: string) {
   return caseCreationService
 }
 
-const TEST_USER_1 = getTestUser()
-const TEST_USER_2 = getTestUser()
+const TEST_USER_1 = getTestUser({ userId: 'test_user_id_1' })
+const TEST_USER_2 = getTestUser({ userId: 'test_user_id_2' })
 
 describe('User cases', () => {
   describe('Run #1', () => {
@@ -243,6 +243,32 @@ describe('User cases', () => {
         expect(firstCase.caseId).toEqual(nextCase.caseId)
         expect(nextCase.caseTransactionsIds).toHaveLength(2)
       }
+    })
+  })
+
+  describe('Run #6', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID)
+
+    test('Check that cases are not created for missing users', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: 'this_user_id_does_not_exists',
+        destinationUserId: 'this_user_id_does_not_exists_2',
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(0)
     })
   })
 })

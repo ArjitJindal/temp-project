@@ -8,8 +8,8 @@ import dayjs from '@/utils/dayjs'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getMongoClient } from '@/test-utils/mongo-test-utils'
 import { logger } from '@/core/logger'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 dynamoDbSetupHook()
 
@@ -209,7 +209,7 @@ describe('Verify hits-per-user statistics', () => {
 })
 
 afterAll(async () => {
-  const mongoDb = await getMongoClient()
+  const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
 
   try {

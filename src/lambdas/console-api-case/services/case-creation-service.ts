@@ -10,7 +10,6 @@ import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
-import { MissingUser } from '@/@types/openapi-internal/MissingUser'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -46,17 +45,14 @@ export class CaseCreationService {
 
   private async getUser(
     userId: string | undefined
-  ): Promise<InternalConsumerUser | InternalBusinessUser | MissingUser> {
+  ): Promise<InternalConsumerUser | InternalBusinessUser | null> {
     if (userId == null) {
-      return {
-        userId,
-      }
+      return null
     }
     const user = await this.userRepository.getMongoUser(userId)
-    if (user == null) {
-      return {
-        userId,
-      }
+    // Do not use MissingUser wrapper to prevent case creation for missing users. Discussion: https://www.notion.so/flagright/Hide-cases-for-unknown-user-IDs-for-Kevin-3052119fc63c48058d6100d0de12bb29
+    if (user == null || !('type' in user)) {
+      return null
     }
     return user
   }
@@ -66,8 +62,8 @@ export class CaseCreationService {
   ): Promise<CaseCaseUsers> {
     const { destinationUserId, originUserId } = transaction
     return {
-      origin: await this.getUser(originUserId),
-      destination: await this.getUser(destinationUserId),
+      origin: (await this.getUser(originUserId)) ?? undefined,
+      destination: (await this.getUser(destinationUserId)) ?? undefined,
     }
   }
 

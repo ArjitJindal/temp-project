@@ -376,7 +376,11 @@ export class UserRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
-    if (process.env.NODE_ENV === 'development') {
+    if (
+      process.env.NODE_ENV === 'development' ||
+      process.env.NODE_ENV === 'local' ||
+      process.env.NODE_ENV === 'test'
+    ) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
