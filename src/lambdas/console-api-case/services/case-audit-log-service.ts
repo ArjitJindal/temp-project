@@ -32,9 +32,7 @@ export class CaseAuditLogService {
     updates: CaseUpdateRequest
   ): Promise<void> {
     for (const caseId of caseIds) {
-      if (updates.caseStatus === 'CLOSED') {
-        await this.handleCaseUpdateAuditLog(caseId, 'UPDATE', updates)
-      }
+      await this.handleCaseUpdateAuditLog(caseId, 'UPDATE', updates)
     }
   }
 
