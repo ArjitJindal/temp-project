@@ -10,7 +10,7 @@ import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
-import { Case, CaseUpdateRequest } from '@/apis';
+import { Case, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
@@ -33,9 +33,21 @@ import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUse
 import { QueryResult } from '@/utils/queries/types';
 import { useTableData } from '@/pages/case-management/TransactionCases/helpers';
 import CaseStatusTag from '@/components/ui/CaseStatusTag';
-import { PaginatedData } from '@/utils/queries/hooks';
 import { TableItem } from '@/pages/case-management/TransactionCases/types';
+import TransactionSearchButton from '@/pages/transactions/components/TransactionSerachButton';
+import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
+
+export type CaseManagementItem = Case & {
+  index: number;
+  rowKey: string;
+  ruleName?: string | null;
+  ruleDescription?: string | null;
+  ruleAction?: RuleAction | null;
+  transaction: CaseTransaction | null;
+  transactionFirstRow: boolean;
+  transactionsRowsCount: number;
+};
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -684,6 +696,15 @@ export default function TransactionCases(props: Props) {
                   ...state,
                   tagKey: value.key ?? undefined,
                   tagValue: value.value ?? undefined,
+                }));
+              }}
+            />
+            <TransactionSearchButton
+              transactionId={params.transactionId ?? null}
+              onConfirm={(transactionId) => {
+                setParams((state) => ({
+                  ...state,
+                  transactionId: transactionId ?? undefined,
                 }));
               }}
             />

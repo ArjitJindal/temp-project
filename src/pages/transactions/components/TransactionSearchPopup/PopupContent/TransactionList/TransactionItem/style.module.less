@@ -1,0 +1,29 @@
+@import 'src/components/ui/colors';
+
+.root {
+  padding: 4px 20px !important;
+  border: none !important;
+  cursor: pointer;
+
+  &:hover,
+  &.isActive {
+    background: @fr-colors-brandBlueTint;
+  }
+
+  &.isActive {
+    .transactionName {
+      color: @fr-colors-brandBlue;
+    }
+  }
+}
+
+.meta {
+  margin-right: 1rem;
+}
+
+.id {
+  display: inline-block;
+  max-width: 300px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

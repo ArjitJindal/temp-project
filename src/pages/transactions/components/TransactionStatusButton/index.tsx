@@ -34,7 +34,7 @@ export default function StatusSearchButton(props: Props) {
       onVisibleChange={setVisible}
     >
       <ActionButton
-        color="BLUE"
+        color="SKY_BLUE"
         icon={<UserProfileIcon />}
         analyticsName="status-filter"
         isActive={status != null}

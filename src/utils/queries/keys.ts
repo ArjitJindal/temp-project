@@ -25,6 +25,12 @@ export const USERS_ITEM_TRANSACTIONS_HISTORY = (
   params: AnyParameters,
 ): QueryKey => ['users', userId, 'transactions-history', params];
 export const USERS_FIND = (search: string): QueryKey => ['users', 'list', 'search', search];
+export const TRANSACTIONS_FIND = (search: string): QueryKey => [
+  'transactions',
+  'list',
+  'search',
+  search,
+];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'transactions',
