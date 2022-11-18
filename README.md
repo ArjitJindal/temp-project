@@ -170,28 +170,15 @@ ENV=local npm run migration:post:up
 
 ### Run migrations in Dev/Sandbox/Prod manually
 
-1. Refresh aws credentials
-
-```
-npm run aws-sso-login:dev
-```
-
-2. Copy and paste the credentials printed from the previous step to the terminal
+1. Go to https://d-9a6713bec9.awsapps.com/start#/ and select the profile you want to use, and click "Command line or programmatic access", and copy the text in "Option 1: Set AWS environment variables" and paste it to your terminal
 
 ```bash
-AWS Credentials:
-====================================
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_SESSION_TOKEN=...
-====================================
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_SESSION_TOKEN="..."
 ```
 
-3. Run the migration with env vars `ENV`, `AWS_REGION`, `SM_SECRET_ARN` being set
-
-```bash
-ENV=dev AWS_REGION=eu-central-1 SM_SECRET_ARN='arn:aws:secretsmanager:eu-central-1:911899431626:secret:mongoAtlasCreds-RvzMVI' npm run migration:pre:up
-```
+2. Run the migration with env vars `ENV`, `AWS_REGION`,
 
 ## Resources
 
