@@ -18,6 +18,7 @@ import {
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { CaseType } from '@/@types/openapi-public-management/CaseType'
 
 dynamoDbSetupHook()
 
@@ -273,6 +274,66 @@ describe('User cases', () => {
   })
 })
 
+describe('Transaction cases', () => {
+  describe('Run #1', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      defaultCaseCreationType: 'TRANSACTION',
+    })
+
+    test('No prior cases', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: undefined,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(1)
+      expectTransactionCase(cases, {
+        transactionIds: [transaction.transactionId],
+      })
+    })
+  })
+
+  describe('Run #2', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      defaultCaseCreationType: 'TRANSACTION',
+    })
+
+    test('Check that cases are not created for missing users', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: 'this_user_id_does_not_exists',
+        destinationUserId: 'this_user_id_does_not_exists_2',
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(0)
+    })
+  })
+})
 /*
   Helpers
  */
@@ -281,13 +342,14 @@ function setup(
   tenantId: string,
   parameters: {
     hitDirections?: RuleHitDirection[]
+    defaultCaseCreationType?: CaseType
   } = {}
 ) {
   setUpRulesHooks(tenantId, [
     {
       type: 'TRANSACTION',
       ruleImplementationName: 'tests/test-always-hit-rule',
-      defaultCaseCreationType: 'USER',
+      defaultCaseCreationType: parameters.defaultCaseCreationType ?? 'USER',
       parameters: {
         hitDirections: parameters.hitDirections,
       },
@@ -333,22 +395,21 @@ function expectUserCase(
   return caseItem as Case
 }
 
-// function expectTransactionCase(
-//   cases: Case[],
-//   params: {
-//     transactionIds?: string[]
-//   } = {}
-// ) {
-//   const caseItem = cases.find((x) => x.caseType === 'TRANSACTION')
-//   expect(caseItem).not.toBeNull()
-//   if (params.transactionIds != null) {
-//     const caseTransactions = caseItem?.caseTransactions ?? []
-//     expect(caseTransactions).toEqual(
-//       expect.arrayContaining(
-//         params.transactionIds.map((transactionId) =>
-//           expect.objectContaining({ transactionId })
-//         )
-//       )
-//     )
-//   }
-// }
+function expectTransactionCase(
+  cases: Case[],
+  params: {
+    transactionIds?: string[]
+  } = {}
+) {
+  const caseItems = cases.filter((x) => x.caseType === 'TRANSACTION')
+  expect(caseItems).not.toHaveLength(0)
+  if (params.transactionIds != null) {
+    expect(caseItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          caseTransactionsIds: expect.arrayContaining(params.transactionIds),
+        }),
+      ])
+    )
+  }
+}

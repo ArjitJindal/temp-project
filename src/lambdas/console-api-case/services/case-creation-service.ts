@@ -229,33 +229,37 @@ export class CaseCreationService {
 
     // Handle transaction cases
     if (updateTransactionCase) {
-      const existingTransactionCases =
-        await this.caseRepository.getCasesByTransactionId(
-          transaction.transactionId as string,
-          'TRANSACTION'
+      if (caseUsers.origin != null || caseUsers.destination != null) {
+        const existingTransactionCases =
+          await this.caseRepository.getCasesByTransactionId(
+            transaction.transactionId as string,
+            'TRANSACTION'
+          )
+        const existingCase = existingTransactionCases.find(
+          ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
-      const existingCase = existingTransactionCases.find(
-        ({ caseStatus }) => caseStatus !== 'CLOSED'
-      )
-      if (transactionStatus != 'ALLOW' && !existingCase) {
-        const caseEntity: Case = {
-          createdTimestamp: now,
-          latestTransactionArrivalTimestamp: now,
-          caseType: 'TRANSACTION',
-          caseStatus: 'OPEN',
-          caseTransactionsIds: [transaction.transactionId as string],
-          caseUsers: caseUsers,
-          priority: casePriority,
+        if (transactionStatus != 'ALLOW' && !existingCase) {
+          const caseEntity: Case = {
+            createdTimestamp: now,
+            latestTransactionArrivalTimestamp: now,
+            caseType: 'TRANSACTION',
+            caseStatus: 'OPEN',
+            caseTransactionsIds: [transaction.transactionId as string],
+            caseUsers: caseUsers,
+            priority: casePriority,
+          }
+          result.push(caseEntity)
         }
-        result.push(caseEntity)
-      }
-      if (existingCase) {
-        if (Object.keys(caseUsers).length) {
-          existingCase.caseUsers = caseUsers
+        if (existingCase) {
+          if (Object.keys(caseUsers).length) {
+            existingCase.caseUsers = caseUsers
+          }
+          existingCase.priority = casePriority
+          existingCase.caseTransactionsIds = [
+            transaction.transactionId as string,
+          ]
+          result.push(existingCase)
         }
-        existingCase.priority = casePriority
-        existingCase.caseTransactionsIds = [transaction.transactionId as string]
-        result.push(existingCase)
       }
     }
 
