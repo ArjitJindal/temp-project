@@ -74,7 +74,7 @@ function getConfigChunk(
 
 // IMPORTANT: We're using 15GB memory for the building codebuild project. Increase NUM_CHUNKS and
 // add one more 'CHUNK=N webpack' for 'npm run build' if we hit OOM again.
-const NUM_CHUNKS = 2
+const NUM_CHUNKS = 3
 
 const step = Math.ceil(lambdaEntries.length / NUM_CHUNKS)
 if (process.env.CHUNK == null) {
