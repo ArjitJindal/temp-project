@@ -99,7 +99,7 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'userDetails.dateOfBirth',
     title: 'Customer Age',
-    description: 'Risk based on customer age range',
+    description: 'Risk based on customer age range (Years)',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
     riskScoreType: 'KRS',
@@ -170,7 +170,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     title: 'Company Age',
-    description: 'Risk based on business age range',
+    description: 'Risk based on business age range (Years)',
     entity: 'BUSINESS',
     dataType: 'RANGE',
     riskScoreType: 'KRS',
@@ -250,7 +250,7 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'createdTimestamp',
     title: 'Consumer User age on Platform',
-    description: 'Risk based on how long a consumer has been using your platform',
+    description: 'Risk based on how long a consumer has been using your platform (Years)',
     entity: 'CONSUMER_USER',
     dataType: 'RANGE',
     riskScoreType: 'ARS',
@@ -508,7 +508,8 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
   ({ newParameterName, newValue, previousValues }) => {
     if (
       newParameterName === 'userDetails.dateOfBirth' ||
-      newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration'
+      newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration' ||
+      newParameterName === 'createdTimestamp'
     ) {
       if (newValue.kind === 'RANGE') {
         const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
