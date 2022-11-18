@@ -163,7 +163,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 // Don't upload soure maps to Lambda
                 'rm dist/**/*.js.map',
                 `npm run synth:${env}`,
-                `npm run deploy:${env} -- --require-approval=never`,
+                `npm run deploy:${env}`,
                 `npm run migration:post:up`,
               ],
             },
