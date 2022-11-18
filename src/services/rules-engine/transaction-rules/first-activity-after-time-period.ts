@@ -26,16 +26,20 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
   }
 
   public async computeRule() {
+    if (!this.senderUser) {
+      return
+    }
+
     const { dormancyPeriodDays } = this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
     const lastSendingTransaction =
-      this.transaction.originUserId &&
+      this.senderUser?.userId &&
       (
         await transactionRepository.getLastNUserSendingTransactions(
-          this.transaction.originUserId,
+          this.senderUser?.userId,
           1,
           {
             transactionState: this.filters.transactionState,
