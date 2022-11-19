@@ -20,7 +20,7 @@ export default function Header(props: { user: InternalConsumerUser | InternalBus
       <UserIdNameCard user={user} />
       <div className={s.items}>
         <Feature name="PULSE_MANUAL_USER_RISK_LEVEL">
-          <Form.Layout.Label icon={<Spam2LineIcon />} title={'Risk Level'}>
+          <Form.Layout.Label icon={<Spam2LineIcon />} title={'DRS Risk Level'}>
             <UserManualRiskPanel userId={userId} />
           </Form.Layout.Label>
         </Feature>

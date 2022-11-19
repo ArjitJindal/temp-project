@@ -46,7 +46,7 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
 
   return (
     <>
-      <UserIdNameCard user={user} />
+      <UserIdNameCard user={user} showRiskLevel={true} />
       <UserDetails
         user={user}
         isEmbedded={true}

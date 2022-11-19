@@ -24,7 +24,7 @@ export default function UserDetailsCard(props: Props) {
       ref={props.reference}
     >
       <Card.Section>
-        <UserIdNameCard user={user} />
+        <UserIdNameCard user={user} showRiskLevel={true} />
       </Card.Section>
       <Card.Section>
         <UserDetails user={user} isEmbedded={true} collapsedByDefault={true} />
