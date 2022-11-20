@@ -111,7 +111,7 @@ export function useUserName(userId: string | null | undefined): string {
 }
 
 export function useUser(userId: string | null | undefined): Account | null {
-  const [users, isLoading] = useUsers();
+  const [users, isLoading] = useUsers(true);
   if (isLoading || !userId) {
     return null;
   }
