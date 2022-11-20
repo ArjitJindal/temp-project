@@ -15,6 +15,7 @@ import { ExpandTabsRef } from '@/pages/case-management-item';
 interface Props {
   caseItem: Case;
   onCaseUpdate: (caseItem: Case) => void;
+  onReload: () => void;
 }
 
 export interface ExpandTabRef {
@@ -103,11 +104,13 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
             />
             <CommentsCard
               caseId={caseItem.caseId}
+              caseStatus={caseItem.caseStatus}
               comments={caseItem.comments ?? []}
               onCommentsUpdate={(newComments) => {
                 onCaseUpdate({ ...caseItem, comments: newComments });
               }}
               reference={commentsCardRef}
+              onReload={props.onReload}
             />
           </>
         );

@@ -28,7 +28,7 @@ export interface FlagrightAuth0User {
   tenantApiAudience: string;
 }
 
-let cachedUsers: Promise<{ [userId: string]: Account }> | null = null;
+let cachedUsers: Promise<Account[]> | null = null;
 
 const NAMESPACE = 'https://flagright.com';
 
@@ -77,28 +77,28 @@ export function isAtLeastAdmin(user: FlagrightAuth0User | null) {
   return isAtLeast(user, UserRole.ADMIN);
 }
 
-export function useUsers(): [{ [userId: string]: Account }, boolean] {
-  const [users, setUsers] = useState<{ [userId: string]: Account }>({});
+export function useUsers(includeRootUsers = false): [{ [userId: string]: Account }, boolean] {
+  const [users, setUsers] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const api = useApi();
   useEffect(() => {
     if (!cachedUsers) {
       cachedUsers = api
         .getAccounts({})
-        .then((accounts: Account[]) =>
-          _.keyBy(
-            accounts.filter((account) => parseUserRole(account.role) !== UserRole.ROOT),
-            'id',
-          ),
-        )
-        .catch(() => ({}));
+        .then((accounts: Account[]) => accounts)
+        .catch(() => []);
     }
     cachedUsers.then((users) => {
       setUsers(users);
       setLoading(false);
     });
   }, [api, users]);
-  return [users, loading];
+
+  let tempUsers = users;
+  if (!includeRootUsers) {
+    tempUsers = users.filter((user) => parseUserRole(user.role) !== UserRole.ROOT);
+  }
+  return [_.keyBy(tempUsers, 'id'), loading];
 }
 
 export function useUserName(userId: string | null | undefined): string {
@@ -108,6 +108,14 @@ export function useUserName(userId: string | null | undefined): string {
     return userId ?? 'Unknown user';
   }
   return users[userId]?.name ?? userId ?? 'Unknown user';
+}
+
+export function useUser(userId: string | null | undefined): Account | null {
+  const [users, isLoading] = useUsers();
+  if (isLoading || !userId) {
+    return null;
+  }
+  return users[userId];
 }
 
 const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);

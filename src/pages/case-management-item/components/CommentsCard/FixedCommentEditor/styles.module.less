@@ -1,0 +1,41 @@
+@import '../../../../../components/ui/colors.less';
+
+.comment {
+  position: sticky !important;
+  bottom: 0;
+  z-index: 100;
+  border-radius: 0.0625rem;
+  background: white;
+  border: 1px solid @fr-colors-purpleGrayTint !important;
+}
+
+.commentTitle {
+  margin-bottom: 0;
+  color: @fr-colors-brandBlue;
+  background-color: white;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem;
+  background-color: white;
+  gap: 1rem;
+}
+
+.commentTitleParent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.commentBody {
+  padding: 1rem;
+  background-color: @fr-colors-purpleGrayTint !important;
+}

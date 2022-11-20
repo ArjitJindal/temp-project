@@ -1,7 +1,7 @@
 import * as Ant from 'antd';
 import styles from './index.module.less';
 import { Comment as ApiComment } from '@/apis';
-import { useUserName } from '@/utils/user-utils';
+import { useUser } from '@/utils/user-utils';
 import { FilesList } from '@/components/files/FilesList';
 
 interface Props {
@@ -13,31 +13,49 @@ interface Props {
 
 export default function Comment(props: Props) {
   const { comment, currentUserId, deletingCommentIds, onDelete } = props;
-  const userName = useUserName(comment.userId);
-  // todo: i18n
+  const user = useUser(comment.userId);
+
   return (
     <Ant.Comment
-      actions={
-        currentUserId === comment.userId
-          ? [
-              comment.id && deletingCommentIds.includes(comment.id) ? (
-                <span>Deleting...</span>
-              ) : (
-                <Ant.Tooltip key="delete" title="Delete">
-                  <span onClick={() => deletingCommentIds.length === 0 && onDelete()}>Delete</span>
-                </Ant.Tooltip>
-              ),
-            ]
-          : []
-      }
       content={
         <>
           <div className={styles.commentBody}>{comment.body}</div>
-          {comment.files && <FilesList files={comment.files} />}
+          <div className={styles.filesListContainer}>
+            <FilesList files={comment.files ? comment.files : []} showGreyBackground={true} />
+          </div>
+          <div className={styles.commentDetailsContainer}>
+            {comment.createdAt && (
+              <div className={styles.commentDetailsBodyText} style={{ width: 'fit-content' }}>
+                Added On: {new Date(comment.createdAt).toLocaleString()}
+              </div>
+            )}
+            <div className={styles.commentDetailsBodyText} style={{ width: 'fit-content' }}>
+              Added By: {user?.name}
+            </div>
+            {currentUserId === comment.userId && (
+              <>
+                {comment.id && deletingCommentIds.includes(comment.id) ? (
+                  <span>Deleting...</span>
+                ) : (
+                  <Ant.Tooltip
+                    key="delete"
+                    title="Delete"
+                    className={styles.commentDetailsBodyText}
+                  >
+                    <span
+                      onClick={() => deletingCommentIds.length === 0 && onDelete()}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Delete
+                    </span>
+                  </Ant.Tooltip>
+                )}
+              </>
+            )}
+          </div>
         </>
       }
-      datetime={comment.createdAt && new Date(comment.createdAt).toDateString()}
-      author={userName}
+      avatar={<Ant.Avatar src={user?.picture} alt={user?.name || comment.userId} />}
     />
   );
 }

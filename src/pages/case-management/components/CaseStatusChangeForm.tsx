@@ -5,11 +5,14 @@ import { CaseStatus, FileInfo } from '@/apis';
 import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
+import COLORS from '@/components/ui/colors';
 
 interface CasesProps {
   caseIds: string[];
   newCaseStatus: CaseStatus;
   onSaved: () => void;
+  isBlue?: boolean;
+  rounded?: boolean;
 }
 
 interface RemoveAllFilesRef {
@@ -127,6 +130,11 @@ export function CasesStatusChangeForm(props: CasesProps) {
     <>
       <Button
         analyticsName="UpdateCaseStatus"
+        style={{
+          backgroundColor: props.isBlue ? COLORS.brandBlue.base : 'white',
+          borderRadius: props.rounded ? '0.5rem' : '0',
+          color: props.isBlue ? 'white' : 'black',
+        }}
         onClick={() => {
           if (newCaseStatus === 'CLOSED') {
             setModalVisible(true);

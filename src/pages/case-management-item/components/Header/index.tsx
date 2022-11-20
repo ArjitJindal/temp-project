@@ -18,10 +18,11 @@ import CaseTypeTag from '@/components/ui/CaseTypeTag';
 interface Props {
   caseItem: Case;
   onReload: () => void;
+  showCloseButton?: boolean;
 }
 
 export default function Header(props: Props) {
-  const { caseItem, onReload } = props;
+  const { caseItem, onReload, showCloseButton = true } = props;
   const { caseId } = caseItem;
 
   const api = useApi();
@@ -88,13 +89,15 @@ export default function Header(props: Props) {
               {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
             </Tag>
           </Form.Layout.Label>
-          <CasesStatusChangeForm
-            caseIds={[caseId as string]}
-            newCaseStatus={caseItem.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
-            onSaved={() => {
-              onReload();
-            }}
-          />
+          {showCloseButton && (
+            <CasesStatusChangeForm
+              caseIds={[caseId as string]}
+              newCaseStatus={caseItem.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
+              onSaved={() => {
+                onReload();
+              }}
+            />
+          )}
         </div>
       </EntityHeader>
       {caseItem.caseStatus === 'CLOSED' && statusChanges.length > 0 && (

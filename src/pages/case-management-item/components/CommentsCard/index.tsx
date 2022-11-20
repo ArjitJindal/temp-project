@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { Avatar, Comment as AntComment, List, message } from 'antd';
-import CommentEditor from './CommentEditor';
+import ReactDOM from 'react-dom';
+import { List, message } from 'antd';
 import Comment from './Comment';
+import FixedCommentEditor from './FixedCommentEditor';
 import * as Card from '@/components/ui/Card';
 import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
-import { Comment as TransactionComment } from '@/apis';
+import { CaseStatus, Comment as TransactionComment } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetails';
 
@@ -14,13 +15,14 @@ interface Props {
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
   reference?: React.Ref<ExpandTabRef>;
+  caseStatus?: CaseStatus;
+  onReload: () => void;
 }
 
 export default function CommentsCard(props: Props) {
-  const { comments, caseId, onCommentsUpdate } = props;
+  const { comments, caseId, onCommentsUpdate, caseStatus } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
-
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const api = useApi();
 
@@ -47,40 +49,47 @@ export default function CommentsCard(props: Props) {
   );
 
   return (
-    <Card.Root
-      header={{
-        title: `Comments (${comments.length})`,
-        collapsable: true,
-        collapsedByDefault: false,
-      }}
-      ref={props.reference}
-    >
-      <Card.Section>
-        {comments.length > 0 && (
-          <List<TransactionComment>
-            dataSource={comments}
-            itemLayout="horizontal"
-            renderItem={(comment: TransactionComment) => (
-              <Comment
-                comment={comment}
-                currentUserId={currentUserId}
-                deletingCommentIds={deletingCommentIds}
-                onDelete={() => {
-                  if (comment.id != null && caseId != null) {
-                    handleDeleteComment(caseId, comment.id);
-                  }
-                }}
-              />
-            )}
-          />
+    <>
+      <Card.Root
+        header={{
+          title: `Comments (${comments.length})`,
+          collapsable: true,
+          collapsedByDefault: false,
+        }}
+        ref={props.reference}
+      >
+        <Card.Section>
+          {comments.length > 0 && (
+            <List<TransactionComment>
+              dataSource={comments}
+              itemLayout="horizontal"
+              renderItem={(comment: TransactionComment) => (
+                <Comment
+                  comment={comment}
+                  currentUserId={currentUserId}
+                  deletingCommentIds={deletingCommentIds}
+                  onDelete={() => {
+                    if (comment.id != null && caseId != null) {
+                      handleDeleteComment(caseId, comment.id);
+                    }
+                  }}
+                />
+              )}
+            />
+          )}
+        </Card.Section>
+      </Card.Root>
+      {caseId &&
+        ReactDOM.createPortal(
+          <FixedCommentEditor
+            caseId={caseId}
+            user={user}
+            handleCommentAdded={handleCommentAdded}
+            caseStatus={caseStatus}
+            onReload={props.onReload}
+          />,
+          document.getElementById('page-wrapper-root') as HTMLElement,
         )}
-        {caseId != null && (
-          <AntComment
-            avatar={<Avatar src={user?.picture} />}
-            content={<CommentEditor caseId={caseId} onCommentAdded={handleCommentAdded} />}
-          />
-        )}
-      </Card.Section>
-    </Card.Root>
+    </>
   );
 }

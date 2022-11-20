@@ -10,6 +10,7 @@ import {
   mobileVendor,
 } from 'react-device-detect';
 import ErrorBoundary from '../ErrorBoundary';
+import Footer from '../AppWrapper/Footer';
 import s from './styles.module.less';
 import { useAnalytics } from '@/utils/segment/context';
 import { useAuth0User } from '@/utils/user-utils';
@@ -49,7 +50,7 @@ export default function PageWrapper(props: Props) {
     });
   }, [analytics, tenantId, location.pathname, user.verifiedEmail, user.tenantName]);
   return (
-    <div className={s.root}>
+    <div className={s.root} id="page-wrapper-root">
       {(title || description || backButton) && (
         <header className={s.head}>
           {title && (
@@ -71,6 +72,7 @@ export default function PageWrapper(props: Props) {
       <div className={s.body}>
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
+      <Footer />
     </div>
   );
 }

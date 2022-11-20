@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import _ from 'lodash';
 import Header from './components/Header';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
@@ -39,6 +40,10 @@ function CaseManagementItemPage() {
     queryClient.setQueryData(CASES_ITEM(caseId), caseItem);
   };
 
+  const onReload = () => {
+    queryResults.refetch();
+  };
+
   const transactionRef = useRef<ExpandTabsRef>(null);
   const userRef = useRef<ExpandTabsRef>(null);
 
@@ -54,12 +59,7 @@ function CaseManagementItemPage() {
           {(caseItem) => (
             <>
               <Card.Section>
-                <Header
-                  caseItem={caseItem}
-                  onReload={() => {
-                    queryResults.refetch();
-                  }}
-                />
+                <Header caseItem={caseItem} onReload={onReload} showCloseButton={false} />
               </Card.Section>
               <Button
                 type={'text'}
@@ -84,6 +84,7 @@ function CaseManagementItemPage() {
                     caseItem={caseItem}
                     onCaseUpdate={handleCaseUpdate}
                     ref={transactionRef}
+                    onReload={onReload}
                   />
                 )}
 
@@ -92,6 +93,7 @@ function CaseManagementItemPage() {
                     caseItem={caseItem}
                     onCaseUpdate={handleCaseUpdate}
                     ref={userRef}
+                    onReload={onReload}
                   />
                 )}
               </Card.Section>

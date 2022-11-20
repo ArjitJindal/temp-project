@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Providers from './Providers';
 import Menu from './Menu';
 import Header from './Header';
-import Footer from './Footer';
 import s from './styles.module.less';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
@@ -30,7 +29,6 @@ export default function AppWrapper(props: Props) {
           </aside>
           <main className={s.main}>
             <ErrorBoundary>{props.children}</ErrorBoundary>
-            <Footer />
           </main>
         </div>
       </ErrorBoundary>
