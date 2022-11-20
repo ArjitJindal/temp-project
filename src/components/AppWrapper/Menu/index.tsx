@@ -10,6 +10,7 @@ import {
   UnorderedListOutlined,
   UsergroupAddOutlined,
   GlobalOutlined,
+  ContainerOutlined,
 } from '@ant-design/icons';
 
 import {
@@ -51,6 +52,7 @@ const icons = {
   table: <Table />,
   ImportOutlined: <ImportOutlined />,
   GlobalOutlined: <GlobalOutlined />,
+  ContainerOutlined: <ContainerOutlined />,
 };
 
 function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {
