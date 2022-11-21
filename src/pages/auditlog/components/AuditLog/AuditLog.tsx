@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Typography } from 'antd';
 import { TableItem, TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import { QueryResult } from '@/utils/queries/types';
@@ -35,9 +36,17 @@ export default function AuditLogs(props: Props) {
     {
       title: 'Entity',
       dataIndex: 'type',
-      hideInTable: true,
       valueType: 'text',
       width: 130,
+      render: (_, entity) => {
+        return (
+          <>
+            <Typography.Text>{entity.type}</Typography.Text>
+            <br />
+            <Typography.Text type={'secondary'}>{entity.entityId}</Typography.Text>
+          </>
+        );
+      },
     },
     {
       title: 'Event',
