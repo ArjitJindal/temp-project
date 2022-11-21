@@ -10,23 +10,24 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
-const TEST_TRANSACTION_AMOUNT_100 = {
+const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 100,
 }
 
-const TEST_TRANSACTION_AMOUNT_101 = {
+const TEST_TRANSACTION_AMOUNT_101: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 101,
 }
 
-const TEST_TRANSACTION_AMOUNT_200 = {
+const TEST_TRANSACTION_AMOUNT_200: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 200,
 }
 
-const TEST_TRANSACTION_AMOUNT_300 = {
+const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 300,
 }

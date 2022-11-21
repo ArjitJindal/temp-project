@@ -18,6 +18,7 @@ import { CardPaymentMethod } from '@/@types/openapi-public/CardPaymentMethod'
 import { IBANPaymentMethod } from '@/@types/openapi-public/IBANPaymentMethod'
 import { logger } from '@/core/logger'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 /*
 FIXME: USE TYPESCRIPT TYPES Generated from OPENAPI plx
@@ -37,7 +38,7 @@ const createBusinessUsers = (
   dynamoDb: DynamoDBDocumentClient,
   tenantId: string,
   numberOfUsers: number,
-  currency: string,
+  currency: CurrencyCode,
   country: CountryCode
 ) => {
   const userIDs: string[] = []

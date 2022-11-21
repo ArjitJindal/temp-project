@@ -12,6 +12,7 @@ import {
 import { TransactionRule } from './rule'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type TransactionsVolumeQuantilesRuleParameters = {
   transactionVolumeThresholds: {
@@ -203,7 +204,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         senderTransactionsVolume?.sendingTransactionsVolume,
         this.transaction.originAmountDetails,
       ],
-      senderTargetCurrency as string
+      senderTargetCurrency as CurrencyCode
     )
     const senderReceivingAmount =
       senderTransactionsVolume?.receivingTransactionsVolume
@@ -218,7 +219,7 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         receiverTransactionsVolume?.receivingTransactionsVolume,
         this.transaction.destinationAmountDetails,
       ],
-      receiverTargetCurrency as string
+      receiverTargetCurrency as CurrencyCode
     )
 
     const senderSum = senderReceivingAmount

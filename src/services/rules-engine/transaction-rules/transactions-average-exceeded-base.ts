@@ -12,6 +12,7 @@ import {
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
@@ -132,7 +133,10 @@ export default class TransactionAverageExceededBaseRule<
     }
   }
 
-  protected getMultiplierThresholds(): { currency: string; value: number } {
+  protected getMultiplierThresholds(): {
+    currency: CurrencyCode
+    value: number
+  } {
     throw new Error('Not implemented')
   }
 
@@ -143,7 +147,7 @@ export default class TransactionAverageExceededBaseRule<
   private async avg(
     period1AmountDetails: (TransactionAmountDetails | undefined)[],
     period2AmountDetails: (TransactionAmountDetails | undefined)[],
-    currency: string
+    currency: CurrencyCode
   ): Promise<[number, number] | undefined> {
     const {
       averageThreshold,
@@ -576,7 +580,7 @@ export default class TransactionAverageExceededBaseRule<
 
 async function avgTransactionAmount(
   details: TransactionAmountDetails[],
-  currency: string,
+  currency: CurrencyCode,
   units: number
 ): Promise<number> {
   if (details.length === 0) {

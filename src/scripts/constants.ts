@@ -1,13 +1,14 @@
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 
-export const currencies: string[] = [
+export const currencies: CurrencyCode[] = [
   'USD',
   'EUR',
   'JPY',
   'GBP',
   'INR',
-  'NTD',
+  'TWD',
   'RUB',
   'SGD',
   'TRY',

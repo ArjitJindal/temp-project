@@ -16,13 +16,14 @@ import {
   setUpConsumerUsersHooks,
 } from '@/test-utils/user-test-utils'
 import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
+import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
-const TEST_TRANSACTION_AMOUNT_100 = {
+const TEST_TRANSACTION_AMOUNT_100: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 100,
 }
 
-const TEST_TRANSACTION_AMOUNT_300 = {
+const TEST_TRANSACTION_AMOUNT_300: TransactionAmountDetails = {
   transactionCurrency: 'EUR',
   transactionAmount: 300,
 }

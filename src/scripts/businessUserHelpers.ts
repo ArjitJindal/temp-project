@@ -12,8 +12,9 @@ import {
   documentTypes,
 } from './constants'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
-const createCompanyFinanceDetails = (currency: string) => {
+const createCompanyFinanceDetails = (currency: CurrencyCode) => {
   return {
     expectedTransactionAmountPerMonth: {
       amountValue: getRandomIntInclusive(1, 25000),
@@ -33,7 +34,10 @@ const createCompanyRegistrationDetails = (country: CountryCode) => {
   }
 }
 
-export const createLegalEntity = (currency: string, country: CountryCode) => {
+export const createLegalEntity = (
+  currency: CurrencyCode,
+  country: CountryCode
+) => {
   const businessIndustry =
     businessIndustries[getRandomIntInclusive(0, businessIndustries.length - 1)]
   return {

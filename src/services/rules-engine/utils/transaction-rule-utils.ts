@@ -15,6 +15,7 @@ import {
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -66,7 +67,7 @@ export async function checkTransactionAmountBetweenThreshold(
     ? transactionAmountDefails
     : await getTargetCurrencyAmount(
         transactionAmountDefails,
-        Object.keys(thresholds)[0]
+        Object.keys(thresholds)[0] as CurrencyCode
       )
   const { min, max } =
     thresholds[convertedTransactionAmount.transactionCurrency]
@@ -84,7 +85,7 @@ export async function checkTransactionAmountBetweenThreshold(
 
 export async function getTransactionsTotalAmount(
   amountDetailsList: (TransactionAmountDetails | undefined)[],
-  targetCurrency: string
+  targetCurrency: CurrencyCode
 ): Promise<TransactionAmountDetails> {
   let totalAmount: TransactionAmountDetails = {
     transactionAmount: 0,

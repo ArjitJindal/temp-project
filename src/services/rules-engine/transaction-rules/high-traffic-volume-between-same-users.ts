@@ -19,6 +19,7 @@ import { RuleResult } from '@/services/rules-engine/rule'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type HighTrafficVolumeBetweenSameUsersParameters = {
   timeWindow: TimeWindow
@@ -52,7 +53,9 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
     const { transactionVolumeThreshold, transactionsLimit } = this.parameters
     const { transactions } = await this.computeResults()
 
-    const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
+    const targetCurrency = Object.keys(
+      transactionVolumeThreshold
+    )[0] as CurrencyCode
     const transactionAmounts = await getTransactionsTotalAmount(
       transactions
         .concat(this.transaction)

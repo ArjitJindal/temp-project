@@ -2,6 +2,7 @@ import fetch from 'node-fetch'
 import _ from 'lodash'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { logger } from '@/core/logger'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 // todo: make a proper enum type
 export type Currency = string
@@ -41,7 +42,7 @@ export async function getCurrencyExchangeRate(
 
 export async function getTargetCurrencyAmount(
   transactionAmountDefails: TransactionAmountDetails,
-  targetCurrency: string
+  targetCurrency: CurrencyCode
 ): Promise<TransactionAmountDetails> {
   const sourceCurrency = transactionAmountDefails.transactionCurrency
   if (sourceCurrency === targetCurrency) {

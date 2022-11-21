@@ -6,6 +6,7 @@ import TransactionAverageExceededBaseRule, {
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { PERCENT_SCHEMA } from '@/services/rules-engine/utils/math-utils'
 import { CURRENCY_SCHEMA } from '@/services/rules-engine/utils/currencies-utils'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 type TransactionsAverageAmountExceededPartialParameters = {
   multiplierThreshold: {
@@ -98,9 +99,12 @@ export default class TransactionAverageAmountExceededRule extends TransactionAve
     return 'AMOUNT'
   }
 
-  protected getMultiplierThresholds(): { currency: string; value: number } {
+  protected getMultiplierThresholds(): {
+    currency: CurrencyCode
+    value: number
+  } {
     return {
-      currency: this.parameters.multiplierThreshold.currency,
+      currency: this.parameters.multiplierThreshold.currency as CurrencyCode,
       value: this.parameters.multiplierThreshold.value,
     }
   }

@@ -17,6 +17,7 @@ import {
 import { TransactionFilters } from '../transaction-filters'
 import { TransactionRule } from './rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type TransactionsVolumeRuleParameters = {
   initialTransactions?: number
@@ -121,7 +122,9 @@ export default class TransactionsVolumeRule extends TransactionRule<
     }
 
     // Sum up the transactions amount
-    const targetCurrency = Object.keys(transactionVolumeThreshold)[0]
+    const targetCurrency = Object.keys(
+      transactionVolumeThreshold
+    )[0] as CurrencyCode
     const senderSendingAmount = await getTransactionsTotalAmount(
       senderSendingTransactions
         .concat(this.transaction)

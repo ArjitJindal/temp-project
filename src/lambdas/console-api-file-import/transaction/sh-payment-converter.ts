@@ -5,6 +5,7 @@ import { ConverterInterface } from '../converter-interface'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 const ShPaymentTransaction = t.type({
   No: t.string,
@@ -77,7 +78,7 @@ export class ShPaymentTransactionConverter
         this.accountToUserId[rawTransaction['Creditor account']],
       originAmountDetails: {
         transactionAmount: parseFloat(transactionAmount),
-        transactionCurrency,
+        transactionCurrency: transactionCurrency as CurrencyCode,
       },
       originPaymentDetails: {
         method: 'IBAN',
