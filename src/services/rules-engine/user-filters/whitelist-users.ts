@@ -29,7 +29,7 @@ export default class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUs
             },
             userIds: {
               type: 'array',
-              title: 'Whiltelist User IDs',
+              title: 'Whitelist User IDs',
               items: { type: 'string' },
               nullable: true,
             },
