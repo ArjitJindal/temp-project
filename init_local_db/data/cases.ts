@@ -11,7 +11,7 @@ const random = prng(1)
 
 for (let i = 0; i < 2; i += 1) {
   data.push({
-    ...sampleTransactionCase(transactions[0].transactionId as string, random()),
+    ...sampleTransactionCase(transactions[0], random()),
     caseStatus: i === 0 ? 'CLOSED' : 'OPEN',
   })
 }
@@ -20,10 +20,7 @@ for (let i = 0; i < 2; i += 1) {
   data.push({
     ...sampleUserCase(
       {
-        transactionIds:
-          i < 2
-            ? transactions.map(({ transactionId }) => transactionId as string)
-            : [],
+        transactions: i < 2 ? transactions : [],
         user:
           i === 0
             ? {

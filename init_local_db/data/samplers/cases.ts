@@ -3,9 +3,10 @@ import { sampleGuid } from './id'
 import { Case } from '@/@types/openapi-internal/Case'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 
 export function sampleTransactionCase(
-  transactionId: string,
+  transaction: CaseTransaction,
   seed?: number
 ): Case {
   return {
@@ -19,13 +20,14 @@ export function sampleTransactionCase(
     statusChanges: [],
     priority: 'P1',
     relatedCases: [],
-    caseTransactionsIds: [transactionId],
+    caseTransactionsIds: [transaction.transactionId!],
+    caseTransactions: [transaction],
   }
 }
 
 export function sampleUserCase(
   params: {
-    transactionIds: string[]
+    transactions: CaseTransaction[]
     user:
       | {
           origin: Business | User
@@ -36,7 +38,7 @@ export function sampleUserCase(
   },
   seed?: number
 ): Case {
-  const { transactionIds, user } = params
+  const { transactions, user } = params
   return {
     caseId: `case-transaction-${sampleGuid(seed)}`,
     caseType: 'USER',
@@ -53,6 +55,7 @@ export function sampleUserCase(
       destination: undefined,
       ...user,
     },
-    caseTransactionsIds: transactionIds,
+    caseTransactionsIds: transactions.map((t) => t.transactionId!),
+    caseTransactions: transactions,
   }
 }

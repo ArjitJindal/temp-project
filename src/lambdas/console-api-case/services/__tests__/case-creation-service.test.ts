@@ -19,6 +19,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { CaseType } from '@/@types/openapi-public-management/CaseType'
+import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 
 dynamoDbSetupHook()
 
@@ -191,7 +192,7 @@ describe('User cases', () => {
 
         const nextCase = cases[0]
         expect(firstCase.caseId).toEqual(nextCase.caseId)
-        expect(nextCase.caseTransactionsIds).toHaveLength(2)
+        expect(nextCase.caseTransactions).toHaveLength(2)
       }
     })
   })
@@ -242,7 +243,7 @@ describe('User cases', () => {
         expect(results.length).toEqual(1)
         const nextCase = cases[0]
         expect(firstCase.caseId).toEqual(nextCase.caseId)
-        expect(nextCase.caseTransactionsIds).toHaveLength(2)
+        expect(nextCase.caseTransactions).toHaveLength(2)
       }
     })
   })
@@ -301,7 +302,7 @@ describe('Transaction cases', () => {
       })
       expect(cases.length).toEqual(1)
       expectTransactionCase(cases, {
-        transactionIds: [transaction.transactionId],
+        transactions: [transaction as CaseTransaction],
       })
     })
   })
@@ -398,18 +399,18 @@ function expectUserCase(
 function expectTransactionCase(
   cases: Case[],
   params: {
-    transactionIds?: string[]
+    transactions?: CaseTransaction[]
   } = {}
 ) {
   const caseItems = cases.filter((x) => x.caseType === 'TRANSACTION')
   expect(caseItems).not.toHaveLength(0)
-  if (params.transactionIds != null) {
-    expect(caseItems).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          caseTransactionsIds: expect.arrayContaining(params.transactionIds),
-        }),
-      ])
-    )
+  if (params.transactions != null) {
+    const transactionIds = params.transactions.map((t) => t.transactionId)
+    caseItems.forEach((caseItem) => {
+      expect(caseItem.caseTransactionsIds).toEqual(transactionIds)
+      expect(caseItem.caseTransactions?.map((t) => t.transactionId)).toEqual(
+        transactionIds
+      )
+    })
   }
 }

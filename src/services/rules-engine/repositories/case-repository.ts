@@ -12,7 +12,6 @@ import {
   CASES_COLLECTION,
   COUNTER_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
-  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -95,9 +94,7 @@ export class CaseRepository {
 
   private getCasesMongoQuery(params: DefaultApiGetCaseListRequest): {
     filter: Filter<Case>
-    requiresTransactions: boolean
   } {
-    let requiresTransactions = false
     const conditions: Filter<Case>[] = []
     conditions.push({
       createdTimestamp: {
@@ -113,13 +110,11 @@ export class CaseRepository {
       conditions.push({
         'caseTransactions.type': { $regex: params.transactionType },
       })
-      requiresTransactions = true
     }
     if (params.filterOutStatus != null) {
       conditions.push({
         'caseTransactions.status': { $ne: params.filterOutStatus },
       })
-      requiresTransactions = true
     }
     if (params.filterOutCaseStatus != null) {
       conditions.push({ caseStatus: { $ne: params.filterOutCaseStatus } })
@@ -130,13 +125,11 @@ export class CaseRepository {
           $in: params.filterTransactionState,
         },
       })
-      requiresTransactions = true
     }
     if (params.filterStatus != null) {
       conditions.push({
         'caseTransactions.status': { $in: params.filterStatus },
       })
-      requiresTransactions = true
     }
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
@@ -189,7 +182,6 @@ export class CaseRepository {
           $all: executedRulesFilters,
         },
       })
-      requiresTransactions = true
     }
 
     if (params.filterOriginCurrencies != null) {
@@ -198,7 +190,6 @@ export class CaseRepository {
           $in: params.filterOriginCurrencies,
         },
       })
-      requiresTransactions = true
     }
     if (params.filterDestinationCurrencies != null) {
       conditions.push({
@@ -206,7 +197,6 @@ export class CaseRepository {
           $in: params.filterDestinationCurrencies,
         },
       })
-      requiresTransactions = true
     }
     if (params.filterOriginPaymentMethod != null) {
       conditions.push({
@@ -214,7 +204,6 @@ export class CaseRepository {
           $eq: params.filterOriginPaymentMethod,
         },
       })
-      requiresTransactions = true
     }
     if (params.filterDestinationPaymentMethod != null) {
       conditions.push({
@@ -222,7 +211,6 @@ export class CaseRepository {
           $eq: params.filterDestinationPaymentMethod,
         },
       })
-      requiresTransactions = true
     }
     if (params.filterCaseType != null) {
       conditions.push({
@@ -254,53 +242,46 @@ export class CaseRepository {
           $elemMatch: elemCondition,
         },
       })
-      requiresTransactions = true
     }
     return {
       filter: { $and: conditions },
-      requiresTransactions,
     }
   }
 
-  public getCasesMongoPipeline(
-    params: DefaultApiGetCaseListRequest
-  ): Document[] {
+  public getCasesMongoPipeline(params: DefaultApiGetCaseListRequest): {
+    // Pipeline stages to be run before `limit`
+    preLimitPipeline: Document[]
+    // Pipeline stages to be run after `limit` - for augmentation-purpose only. The fields
+    // added here cannot be filtered / sorted.
+    postLimitPipeline: Document[]
+  } {
     const sortField =
-      params?.sortField !== undefined ? params?.sortField : 'createdTimestamp'
+      params?.sortField !== undefined && params?.sortField !== 'undefined'
+        ? params?.sortField
+        : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const { filter, requiresTransactions: queryRequiresTransactions } =
-      this.getCasesMongoQuery(params)
+    const { filter } = this.getCasesMongoQuery(params)
 
-    const pipeline: Document[] = []
-    const requiresTransactions =
-      queryRequiresTransactions ||
-      params?.includeTransactions ||
-      params?.includeTransactionUsers ||
-      params?.includeTransactionEvents
-    if (requiresTransactions) {
-      pipeline.push(
-        ...[
-          {
-            $set: {
-              caseTransactionsIds: {
-                $slice: ['$caseTransactionsIds', MAX_TRANSACTION_IN_A_CASE],
-              },
-            },
-          },
-          {
-            $lookup: {
-              from: TRANSACTIONS_COLLECTION(this.tenantId),
-              localField: 'caseTransactionsIds',
-              foreignField: 'transactionId',
-              as: 'caseTransactions',
-            },
-          },
-        ]
-      )
-    }
-    if (params?.includeTransactionUsers) {
-      pipeline.push(
+    const preLimitPipeline: Document[] = []
+    const postLimitPipeline: Document[] = []
+
+    preLimitPipeline.push({ $match: filter })
+
+    const sortUserCaseUserName =
+      params?.filterCaseType === 'USER' && params.sortField === '_userName'
+    const sortTransactionCaseUserName =
+      params?.filterCaseType === 'TRANSACTION' &&
+      (params.sortField === '_originUserName' ||
+        params.sortField === '_destinationUserName')
+
+    if (params?.includeTransactionUsers || sortTransactionCaseUserName) {
+      // NOTE: we don't store originUser/destinationUser in caseTransactions. Sorting by
+      // user name will not be performant
+      ;(sortTransactionCaseUserName
+        ? preLimitPipeline
+        : postLimitPipeline
+      ).push(
         ...[
           {
             $lookup: {
@@ -372,8 +353,93 @@ export class CaseRepository {
         ]
       )
     }
+
+    if (sortUserCaseUserName) {
+      preLimitPipeline.push(
+        ...[
+          {
+            $set: {
+              _userName: {
+                $ifNull: [
+                  {
+                    $ifNull: [
+                      {
+                        $concat: [
+                          '$caseUsers.origin.userDetails.name.firstName',
+                          '$caseUsers.origin.userDetails.name.middleName',
+                          '$caseUsers.origin.userDetails.name.lastName',
+                        ],
+                      },
+                      {
+                        $concat: [
+                          '$caseUsers.destination.userDetails.name.firstName',
+                          '$caseUsers.destination.userDetails.name.middleName',
+                          '$caseUsers.destination.userDetails.name.lastName',
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    $ifNull: [
+                      '$caseUsers.destination.legalEntity.companyGeneralDetails.legalName',
+                      '$caseUsers.origin.legalEntity.companyGeneralDetails.legalName',
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        ]
+      )
+    } else if (sortTransactionCaseUserName) {
+      const sortField =
+        params.sortField === '_originUserName' ? 'origin' : 'destination'
+
+      preLimitPipeline.push(
+        ...[
+          {
+            $set: {
+              caseTransaction: {
+                $arrayElemAt: ['$caseTransactions', 0],
+              },
+            },
+          },
+          {
+            $set: {
+              caseTransactionCompanyName: `$caseTransaction.${sortField}User.legalEntity.companyGeneralDetails.legalName`,
+              caseTransactionUserName: {
+                $concat: [
+                  `$caseTransaction.${sortField}User.userDetails.name.firstName`,
+                  `$caseTransaction.${sortField}User.userDetails.name.lastName`,
+                ],
+              },
+            },
+          },
+          {
+            $set: {
+              [`_${sortField}UserName`]: {
+                $ifNull: [
+                  '$caseTransactionCompanyName',
+                  '$caseTransactionUserName',
+                ],
+              },
+            },
+          },
+        ]
+      )
+    }
+
+    preLimitPipeline.push({ $sort: { [sortField]: sortOrder } })
+    preLimitPipeline.push({
+      $project: {
+        _originUserName: false,
+        _destinationUserName: false,
+        _userName: false,
+      },
+    })
+
     if (params?.includeTransactionEvents) {
-      pipeline.push(
+      postLimitPipeline.push(
         ...[
           {
             $lookup: {
@@ -420,112 +486,26 @@ export class CaseRepository {
         ]
       )
     }
-    pipeline.push({ $match: filter })
+
     if (!params.includeTransactions) {
-      pipeline.push({ $unset: 'caseTransactions' })
+      postLimitPipeline.push({ $unset: 'caseTransactions' })
     }
 
-    if (params?.filterCaseType === 'USER' && params.sortField === '_userName') {
-      pipeline.push(
-        ...[
-          {
-            $set: {
-              _userName: {
-                $ifNull: [
-                  {
-                    $ifNull: [
-                      {
-                        $concat: [
-                          '$caseUsers.origin.userDetails.name.firstName',
-                          '$caseUsers.origin.userDetails.name.middleName',
-                          '$caseUsers.origin.userDetails.name.lastName',
-                        ],
-                      },
-                      {
-                        $concat: [
-                          '$caseUsers.destination.userDetails.name.firstName',
-                          '$caseUsers.destination.userDetails.name.middleName',
-                          '$caseUsers.destination.userDetails.name.lastName',
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    $ifNull: [
-                      '$caseUsers.destination.legalEntity.companyGeneralDetails.legalName',
-                      '$caseUsers.origin.legalEntity.companyGeneralDetails.legalName',
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        ]
-      )
-    } else if (
-      params?.filterCaseType === 'TRANSACTION' &&
-      (params.sortField === '_originUserName' ||
-        params.sortField === '_destinationUserName')
-    ) {
-      const sortField =
-        params.sortField === '_originUserName' ? 'origin' : 'destination'
-
-      pipeline.push(
-        ...[
-          {
-            $set: {
-              caseTransaction: {
-                $arrayElemAt: ['$caseTransactions', 0],
-              },
-            },
-          },
-          {
-            $set: {
-              caseTransactionCompanyName: `$caseTransaction.${sortField}User.legalEntity.companyGeneralDetails.legalName`,
-              caseTransactionUserName: {
-                $concat: [
-                  `$caseTransaction.${sortField}User.userDetails.name.firstName`,
-                  `$caseTransaction.${sortField}User.userDetails.name.lastName`,
-                ],
-              },
-            },
-          },
-          {
-            $set: {
-              [`_${sortField}UserName`]: {
-                $ifNull: [
-                  '$caseTransactionCompanyName',
-                  '$caseTransactionUserName',
-                ],
-              },
-            },
-          },
-        ]
-      )
-    }
-
-    pipeline.push({ $sort: { [sortField]: sortOrder } })
-    pipeline.push({
-      $project: {
-        _originUserName: false,
-        _destinationUserName: false,
-        _userName: false,
-      },
-    })
-    return pipeline
+    return { preLimitPipeline, postLimitPipeline }
   }
 
   public getCasesCursor(
     params: DefaultApiGetCaseListRequest
   ): AggregationCursor<Case> {
-    const pipeline = this.getCasesMongoPipeline(params)
+    const { preLimitPipeline, postLimitPipeline } =
+      this.getCasesMongoPipeline(params)
     if (params?.skip) {
-      pipeline.push({ $skip: params.skip })
+      preLimitPipeline.push({ $skip: params.skip })
     }
     if (params?.limit) {
-      pipeline.push({ $limit: params.limit })
+      preLimitPipeline.push({ $limit: params.limit })
     }
-    return this.getDenormalizedCases(pipeline)
+    return this.getDenormalizedCases(preLimitPipeline.concat(postLimitPipeline))
   }
 
   private getDenormalizedCases(pipeline: Document[]) {
@@ -539,7 +519,9 @@ export class CaseRepository {
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const pipeline = this.getCasesMongoPipeline(params)
+    const { preLimitPipeline, postLimitPipeline } =
+      this.getCasesMongoPipeline(params)
+    const pipeline = preLimitPipeline.concat(postLimitPipeline)
     pipeline.push({
       $count: 'count',
     })
@@ -656,16 +638,19 @@ export class CaseRepository {
     if (caseItem == null) {
       throw new NotFound(`Case not found: ${caseId}`)
     }
-    const caseTransactionsIds = caseItem.caseTransactionsIds
-    if (caseTransactionsIds == null) {
+    const caseTransactions = caseItem.caseTransactions
+    if (caseTransactions == null) {
       return {
         total: 0,
         data: [],
       }
     }
 
+    // TODO: Don't use transactionsRepo.getTransactions and handle params.includeUsers here
     return await transactionsRepo.getTransactions({
-      filterIdList: caseTransactionsIds,
+      filterIdList: caseTransactions.map(
+        (transaction) => transaction.transactionId as string
+      ),
       afterTimestamp: 0,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
       limit: params.limit,

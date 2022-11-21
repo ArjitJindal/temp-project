@@ -1,4 +1,7 @@
-import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import {
+  CaseRepository,
+  MAX_TRANSACTION_IN_A_CASE,
+} from '@/services/rules-engine/repositories/case-repository'
 import { Case } from '@/@types/openapi-internal/Case'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -119,7 +122,11 @@ export class CaseCreationService {
         const existedCase = cases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
-        if (existedCase != null) {
+        if (
+          existedCase &&
+          (existedCase.caseTransactionsIds || []).length <
+            MAX_TRANSACTION_IN_A_CASE
+        ) {
           result.push({
             ...existedCase,
             latestTransactionArrivalTimestamp:
@@ -127,6 +134,10 @@ export class CaseCreationService {
             caseTransactionsIds: [
               ...(existedCase.caseTransactionsIds ?? []),
               params.transaction.transactionId as string,
+            ],
+            caseTransactions: [
+              ...(existedCase.caseTransactions ?? []),
+              params.transaction,
             ],
           })
         } else {
@@ -136,6 +147,7 @@ export class CaseCreationService {
             latestTransactionArrivalTimestamp:
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds: [params.transaction.transactionId as string],
+            caseTransactions: [params.transaction],
           })
         }
       }
@@ -245,6 +257,7 @@ export class CaseCreationService {
             caseType: 'TRANSACTION',
             caseStatus: 'OPEN',
             caseTransactionsIds: [transaction.transactionId as string],
+            caseTransactions: [transaction],
             caseUsers: caseUsers,
             priority: casePriority,
           }
@@ -258,6 +271,7 @@ export class CaseCreationService {
           existingCase.caseTransactionsIds = [
             transaction.transactionId as string,
           ]
+          existingCase.caseTransactions = [transaction]
           result.push(existingCase)
         }
       }

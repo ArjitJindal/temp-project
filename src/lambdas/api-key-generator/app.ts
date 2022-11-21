@@ -95,7 +95,6 @@ export const createMongoDBCollections = async (
       timestamp: -1,
     })
     await transactionCollection.createIndex({
-      caseStatus: 1,
       type: 1,
       status: 1,
       timestamp: -1,
@@ -176,6 +175,11 @@ export const createMongoDBCollections = async (
     }
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     await casesCollection.createIndex({ caseId: 1 })
+    await casesCollection.createIndex({
+      caseStatus: 1,
+      caseType: 1,
+      createdTimestamp: 1,
+    })
     await casesCollection.createIndex({ 'caseUsers.origin.userId': 1 })
     await casesCollection.createIndex({ 'caseUsers.destination.userId': 1 })
     await casesCollection.createIndex({
