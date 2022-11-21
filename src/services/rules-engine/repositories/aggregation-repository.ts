@@ -2,14 +2,17 @@ import { StackConstants } from '@cdk/constants'
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  PutCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import AWS from 'aws-sdk'
+import _ from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys, TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
+import { batchWrite, paginateQuery } from '@/utils/dynamodb'
 
 type UserAggregationAttributes = {
   sendingFromCountries: Set<string>
@@ -269,5 +272,117 @@ export class AggregationRepository {
       case 'year':
         return dayjs(timestamp).format('YYYY')
     }
+  }
+
+  /**
+   *  User rule time aggregation
+   */
+
+  public async refreshUserRuleTimeAggregations(
+    userKeyId: string,
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    aggregationData: {
+      [hour: string]: any
+    },
+    version: string
+  ) {
+    const writeRequests = Object.entries(aggregationData).map((entry) => ({
+      PutRequest: {
+        Item: {
+          ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+            this.tenantId,
+            userKeyId,
+            ruleInstanceId,
+            direction,
+            version,
+            entry[0]
+          ),
+          ...entry[1],
+        },
+      },
+    }))
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    )
+  }
+
+  public async getUserRuleTimeAggregations<T>(
+    userKeyId: string,
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    afterTimestamp: number,
+    beforeTimestamp: number,
+    timeLabelFormat: string,
+    version: string
+  ): Promise<Array<T & { hour: string }> | undefined> {
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression:
+        'PartitionKeyID = :pk AND SortKeyID BETWEEN :skfrom AND :skto',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
+          this.tenantId,
+          userKeyId,
+          ruleInstanceId,
+          direction,
+          version
+        ).PartitionKeyID,
+        ':skfrom': dayjs(afterTimestamp).format(timeLabelFormat),
+        ':skto': dayjs(beforeTimestamp - 1).format(timeLabelFormat),
+      },
+    }
+    const result = await paginateQuery(this.dynamoDb, queryInput)
+    return (result?.Items?.length || 0) > 0
+      ? result?.Items?.map((item) => ({
+          ...(_.omit(item, ['PartitionKeyID', 'SortKeyID']) as T),
+          hour: item.SortKeyID,
+        }))
+      : undefined
+  }
+
+  public async markTransactionApplied(
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    version: string,
+    transactionId: string,
+    ttl: number
+  ): Promise<void> {
+    const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
+          this.tenantId,
+          ruleInstanceId,
+          direction,
+          version,
+          transactionId
+        ),
+        ttl,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+  }
+
+  public async isTransactionApplied(
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    version: string,
+    transactionId: string
+  ): Promise<boolean> {
+    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
+        this.tenantId,
+        ruleInstanceId,
+        direction,
+        version,
+        transactionId
+      ),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return Boolean(result.Item)
   }
 }

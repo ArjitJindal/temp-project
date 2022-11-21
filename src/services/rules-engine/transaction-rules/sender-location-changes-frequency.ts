@@ -1,10 +1,10 @@
 import { JSONSchemaType } from 'ajv'
-import dayjs = require('dayjs')
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { TransactionFilters } from '../transaction-filters'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import dayjs from '@/utils/dayjs'
 
 export type SenderLocationChangesFrequencyRuleParameters = {
   uniqueCitiesCountThreshold: number

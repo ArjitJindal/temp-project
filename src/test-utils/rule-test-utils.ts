@@ -15,6 +15,7 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export async function createRule(
   testTenantId: string,
@@ -235,4 +236,21 @@ export interface UserRuleTestCase {
   name: string
   userEvents: ConsumerUserEvent[]
   expectedHits: boolean[]
+}
+
+// For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag
+export function ruleAggregationTest(jestCallback: () => void) {
+  const feature: Feature = 'RULES_ENGINE_RULE_BASED_AGGREGATION'
+  describe('With Rule Aggregation', () => {
+    beforeAll(() => {
+      process.env.TEST_ENABLED_FEATURES = `${process.env.JEST_WORKER_ID}${feature}`
+    })
+    jestCallback()
+  })
+  describe('Without Rule Aggregation', () => {
+    beforeAll(() => {
+      process.env.TEST_ENABLED_FEATURES = ''
+    })
+    jestCallback()
+  })
 }

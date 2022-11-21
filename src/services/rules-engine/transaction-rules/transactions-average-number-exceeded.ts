@@ -82,9 +82,10 @@ export default class TransactionAverageNumberExceededRule extends TransactionAve
     return 'NUMBER'
   }
 
-  protected getMultiplierThresholds(): { [currency: string]: number } {
+  protected getMultiplierThresholds(): { currency: string; value: number } {
     return {
-      STUB_CURRENCY: this.parameters.multiplierThreshold,
+      currency: 'STUB_CURRENCY',
+      value: this.parameters.multiplierThreshold,
     }
   }
 }

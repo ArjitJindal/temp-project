@@ -7,6 +7,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export type RuleResult = {
   action: RuleAction
@@ -45,6 +46,7 @@ export class TransactionRule<P, T extends object = object> extends Rule {
   parameters: P
   filters: T
   action: RuleAction
+  ruleInstance: RuleInstance
   dynamoDb: DynamoDBDocumentClient
 
   constructor(
@@ -59,6 +61,9 @@ export class TransactionRule<P, T extends object = object> extends Rule {
       filters: T
       action: RuleAction
     },
+    context: {
+      ruleInstance: RuleInstance
+    },
     dynamoDb: DynamoDBDocumentClient
   ) {
     super()
@@ -69,6 +74,7 @@ export class TransactionRule<P, T extends object = object> extends Rule {
     this.parameters = params.parameters
     this.filters = params.filters || {}
     this.action = params.action
+    this.ruleInstance = context.ruleInstance
     this.dynamoDb = dynamoDb
   }
 

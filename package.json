@@ -44,7 +44,7 @@
     "deploy:prod:us-1:clean": "npm run clear && npm install && npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449 && npm run build && npm run synth:prod:us-1 && npm run deploy:prod:us-1 -- --profile=AWSAdministratorAccess-870721492449",
     "deploy:pipeline": "cdk deploy tarpon-pipeline --profile=AWSAdministratorAccess-911899431626",
     "deploy:pipeline:clean": "npm run aws-sso-login:dev && npm run synth:pipeline && npm run deploy:pipeline",
-    "test": "ENV=test jest --forceExit",
+    "test": "jest --forceExit",
     "test:silent": "npm run test -- --silent",
     "test:watch": "npm run test -- --watch",
     "format": "prettier --write .",

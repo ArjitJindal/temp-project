@@ -18,6 +18,7 @@ import { PartyVars } from './transaction-rules/rule'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { UserEventRepository } from './repositories/user-event-repository'
+import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -373,6 +374,7 @@ export class RulesEngineService {
             receiverUser: data.receiverUser,
           },
           { parameters, filters: ruleInstance.filters, action },
+          { ruleInstance },
           this.dynamoDb
         )
 
@@ -403,6 +405,12 @@ export class RulesEngineService {
           ? await ruleClassInstance.computeRule()
           : null
         if (shouldCompute) {
+          if (ruleClassInstance instanceof TransactionAggregationRule) {
+            await Promise.all([
+              ruleClassInstance.updateAggregation('origin'),
+              ruleClassInstance.updateAggregation('destination'),
+            ])
+          }
           runSegment?.close()
         }
 

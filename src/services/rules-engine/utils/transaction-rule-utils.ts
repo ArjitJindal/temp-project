@@ -3,7 +3,7 @@ import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '../repositories/transaction-repository'
-import { subtractTime } from './time-utils'
+import { getTimestampRange } from './time-utils'
 import { TimeWindow } from './rule-parameter-schemas'
 import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -284,8 +284,10 @@ export async function getTransactionUserPastTransactions(
     paymentMethod,
     matchPaymentMethodDetails,
   } = options
-  const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
-  const beforeTimestamp = transaction.timestamp!
+  const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+    transaction.timestamp!,
+    timeWindow
+  )
   const senderTransactionsPromise =
     checkSender !== 'none'
       ? getTransactions(
@@ -365,8 +367,10 @@ export async function getTransactionUserPastTransactionsCount(
     transactionTypes,
     paymentMethod,
   } = options
-  const afterTimestamp = subtractTime(dayjs(transaction.timestamp), timeWindow)
-  const beforeTimestamp = transaction.timestamp!
+  const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+    transaction.timestamp!,
+    timeWindow
+  )
   const senderTransactionsCountPromise =
     checkSender !== 'none'
       ? getTransactionsCount(
@@ -421,4 +425,18 @@ export async function getTransactionUserPastTransactionsCount(
     receiverReceivingTransactionsCount:
       receiverTransactionsCount.receivingTransactionsCount,
   }
+}
+
+export async function groupTransactionsByHour<T>(
+  transactions: AuxiliaryIndexTransaction[],
+  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
+): Promise<{ [hourKey: string]: T }> {
+  const groups = _.groupBy(transactions, (transaction) =>
+    dayjs(transaction.timestamp).format('YYYYMMDDHH')
+  )
+  const newGroups: { [key: string]: T } = {}
+  for (const group in groups) {
+    newGroups[group] = await aggregator(groups[group])
+  }
+  return newGroups
 }

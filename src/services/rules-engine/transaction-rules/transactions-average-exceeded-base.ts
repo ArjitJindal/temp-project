@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
@@ -5,26 +6,34 @@ import {
   TimeWindow,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
-import { TransactionRule } from './rule'
-import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import {
+  getTransactionsTotalAmount,
+  getTransactionUserPastTransactions,
+  groupTransactionsByHour,
+} from '../utils/transaction-rule-utils'
+import { TransactionAggregationRule } from './aggregation-rule'
 import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '@/services/rules-engine/repositories/transaction-repository'
 import {
-  subtractTime,
+  getTimestampRange,
   toGranularity,
 } from '@/services/rules-engine/utils/time-utils'
-import dayjs from '@/utils/dayjs'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RuleResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
+import { logger } from '@/core/logger'
 
 type UserParty = 'origin' | 'destination'
-type Direction = 'sending' | 'receiving'
+
+type AggregationData = {
+  count?: number
+  amount?: number
+}
 
 export type TransactionsAverageExceededParameters = {
   period1: TimeWindow
@@ -48,7 +57,11 @@ export type TransactionsAverageExceededParameters = {
 
 export default class TransactionAverageExceededBaseRule<
   Params extends TransactionsAverageExceededParameters
-> extends TransactionRule<Params, TransactionFilters> {
+> extends TransactionAggregationRule<
+  Params,
+  TransactionFilters,
+  AggregationData
+> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): ExtendedJSONSchemaType<TransactionsAverageExceededParameters> {
@@ -119,7 +132,7 @@ export default class TransactionAverageExceededBaseRule<
     }
   }
 
-  protected getMultiplierThresholds(): { [currency: string]: number } {
+  protected getMultiplierThresholds(): { currency: string; value: number } {
     throw new Error('Not implemented')
   }
 
@@ -128,120 +141,67 @@ export default class TransactionAverageExceededBaseRule<
   }
 
   private async avg(
-    user: UserParty,
-    direction: Direction,
+    period1AmountDetails: (TransactionAmountDetails | undefined)[],
+    period2AmountDetails: (TransactionAmountDetails | undefined)[],
     currency: string
   ): Promise<[number, number] | undefined> {
     const {
-      period1,
-      period2,
       averageThreshold,
       transactionsNumberThreshold,
       transactionsNumberThreshold2,
-      excludePeriod1,
     } = this.parameters
 
     const { min: avgMin, max: avgMax } = averageThreshold ?? {}
-    const { min: numMin1, max: numMax1 } = transactionsNumberThreshold ?? {}
-    const { min: numMin2, max: numMax2 } = transactionsNumberThreshold2 ?? {}
+    const {
+      min: period1TransactionsNumberMin,
+      max: period1TransactionsNumberMax,
+    } = transactionsNumberThreshold ?? {}
+    const {
+      min: period2TransactionsNumberMin,
+      max: period2TransactionsNumberMax,
+    } = transactionsNumberThreshold2 ?? {}
+    const period1TransactionsCount = period1AmountDetails.length
+    const period2TransactionsCount = period2AmountDetails.length
 
-    const afterTimestamp1 = subtractTime(
-      dayjs(this.transaction.timestamp),
-      period1
-    )
-    const afterTimestamp2 = subtractTime(
-      dayjs(this.transaction.timestamp),
-      period2
-    )
-
-    const beforeTimestamp1 = this.transaction.timestamp ?? Date.now()
-    const beforeTimestamp2 = excludePeriod1 ? afterTimestamp1 : beforeTimestamp1
-
-    const userId =
-      user === 'origin'
-        ? this.transaction.originUserId
-        : this.transaction.destinationUserId
-    const paymentDetails =
-      user === 'origin'
-        ? this.transaction.originPaymentDetails
-        : this.transaction.destinationPaymentDetails
-
-    const [transactions1, transactions2] = await Promise.all([
-      this.getTransactionsInTimeWindow(
-        userId,
-        paymentDetails,
-        afterTimestamp1,
-        beforeTimestamp1,
-        direction
-      ),
-      this.getTransactionsInTimeWindow(
-        userId,
-        paymentDetails,
-        afterTimestamp2,
-        beforeTimestamp2,
-        direction
-      ),
-    ])
-
-    const checkOriginSending = user === 'origin' && direction === 'sending'
-    const checkDestinationReceiving =
-      user === 'destination' && direction === 'receiving'
-    const includeCurrentTransaction =
-      checkOriginSending || checkDestinationReceiving
-
-    let num1 = transactions1.length
-    let num2 = transactions2.length
-
-    if (includeCurrentTransaction && this.transaction.transactionId) {
-      num1++
-      if (!excludePeriod1) {
-        num2++
-      }
-    }
-
-    if ((numMin1 && num1 < numMin1) || (numMax1 && num1 > numMax1)) {
+    if (
+      (period1TransactionsNumberMin &&
+        period1TransactionsCount < period1TransactionsNumberMin) ||
+      (period1TransactionsNumberMax &&
+        period1TransactionsCount > period1TransactionsNumberMax)
+    ) {
       return
     }
-    if ((numMin2 && num2 < numMin2) || (numMax2 && num2 > numMax2)) {
+    if (
+      (period2TransactionsNumberMin &&
+        period2TransactionsCount < period2TransactionsNumberMin) ||
+      (period2TransactionsNumberMax &&
+        period2TransactionsCount > period2TransactionsNumberMax)
+    ) {
       return
     }
 
     let result: [number, number]
     const avgMethod = this.getAvgMethod()
     if (avgMethod === 'AMOUNT') {
-      if (includeCurrentTransaction) {
-        transactions1.push(this.transaction)
-        if (!excludePeriod1) {
-          transactions2.push(this.transaction)
-        }
-      }
+      const amountDetails1 = period1AmountDetails.filter(
+        Boolean
+      ) as TransactionAmountDetails[]
+      const amountDetails2 = period2AmountDetails.filter(
+        Boolean
+      ) as TransactionAmountDetails[]
 
-      const amountDetails1 = transactions1
-        .map((x) =>
-          direction === 'sending'
-            ? x.originAmountDetails
-            : x.destinationAmountDetails
-        )
-        .filter((x): x is TransactionAmountDetails => x != null)
-      const amountDetails2 = transactions2
-        .map((x) =>
-          direction === 'sending'
-            ? x.originAmountDetails
-            : x.destinationAmountDetails
-        )
-        .filter((x): x is TransactionAmountDetails => x != null)
-
-      const units1 = period1.units
-      const units2 = excludePeriod1
-        ? toGranularity(period2, period1.granularity).units - period1.units
-        : period2.units
+      const { units1, units2 } = this.getPeriodUnits()
 
       result = await Promise.all([
         avgTransactionAmount(amountDetails1, currency, units1),
         avgTransactionAmount(amountDetails2, currency, units2),
       ])
     } else if (avgMethod === 'NUMBER') {
-      result = [num1 / period1.units, num2 / period2.units]
+      const { units1, units2 } = this.getPeriodUnits()
+      result = [
+        period1TransactionsCount / units1,
+        period2TransactionsCount / units2,
+      ]
     } else {
       throw neverThrow(avgMethod, `Method not supported: ${avgMethod}`)
     }
@@ -256,95 +216,361 @@ export default class TransactionAverageExceededBaseRule<
     return result
   }
 
-  private async getTransactionsInTimeWindow(
-    userId: string | undefined,
-    paymentDetails: PaymentDetails | undefined,
-    afterTimestamp: number,
-    beforeTimestamp: number,
-    direction: Direction
-  ): Promise<AuxiliaryIndexTransaction[]> {
-    const repo = this.transactionRepository as TransactionRepository
-
-    const timeRange = {
-      afterTimestamp,
-      beforeTimestamp,
+  public async computeRule(): Promise<RuleResult | undefined> {
+    const {
+      checkSender,
+      checkReceiver,
+      period1,
+      period2,
+      excludePeriod1,
+      averageThreshold,
+    } = this.parameters
+    const { min: avgMin, max: avgMax } = averageThreshold ?? {}
+    const directions: Array<'origin' | 'destination'> = []
+    if (checkSender !== 'none') {
+      directions.push('origin')
     }
-    const filterOptions = {
-      transactionState: this.filters.transactionState,
-      transactionTypes: this.filters.transactionTypes,
+    if (checkReceiver !== 'none') {
+      directions.push('destination')
+    }
+    let missingAggregation = false
+    for (const direction of directions) {
+      const {
+        afterTimestamp: afterTimestampP1,
+        beforeTimestamp: beforeTimestampP1,
+      } = getTimestampRange(this.transaction.timestamp!, period1)
+      const userAggregationDataP1 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestampP1,
+          beforeTimestampP1
+        )
+      const {
+        afterTimestamp: afterTimestampP2,
+        beforeTimestamp: beforeTimestampP2,
+      } = this.getPeriod2TimeRange()
+      const userAggregationDataP2 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestampP2,
+          beforeTimestampP2
+        )
+      if (!userAggregationDataP1 && !userAggregationDataP2) {
+        missingAggregation = true
+        break
+      }
+      const avgMethod = this.getAvgMethod()
+      const { units1, units2 } = this.getPeriodUnits()
+      let avg1 = 0
+      let avg2 = 0
+      if (avgMethod === 'NUMBER') {
+        avg1 =
+          (_.sumBy(userAggregationDataP1, (data) => data.count!) + 1) / units1
+        avg2 =
+          (_.sumBy(userAggregationDataP2, (data) => data.count!) +
+            (excludePeriod1 ? 0 : 1)) /
+          units2
+      } else if (avgMethod === 'AMOUNT') {
+        const amountDetails =
+          direction === 'origin'
+            ? this.transaction.originAmountDetails!
+            : this.transaction.destinationAmountDetails!
+        const currentAmount = amountDetails
+          ? (
+              await getTargetCurrencyAmount(
+                amountDetails,
+                this.getMultiplierThresholds().currency
+              )
+            ).transactionAmount
+          : 0
+        avg1 =
+          (_.sumBy(userAggregationDataP1, (data) => data.amount!) +
+            currentAmount) /
+          units1
+        avg2 =
+          (_.sumBy(userAggregationDataP2, (data) => data.amount!) +
+            (excludePeriod1 ? 0 : currentAmount)) /
+          units2
+      }
+
+      const multiplier = avg1 / avg2
+      const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
+      const result = multiplierToPercents(multiplier) > maxMultiplier
+      const isWithinAvgThresholds =
+        (!avgMin || avg1 >= avgMin) && (!avgMax || avg1 <= avgMax)
+      if (result && isWithinAvgThresholds) {
+        const vars = {
+          ...super.getTransactionVars(direction),
+          period1,
+          period2,
+          multiplier,
+          user: direction,
+          currency,
+        }
+        return {
+          action: this.action,
+          vars,
+        }
+      }
     }
 
-    return direction === 'sending'
-      ? await repo.getGenericUserSendingTransactions(
-          userId,
-          paymentDetails,
-          timeRange,
-          { ...filterOptions, originPaymentMethod: this.filters.paymentMethod },
-          ['originAmountDetails', 'destinationAmountDetails']
-        )
-      : await repo.getGenericUserReceivingTransactions(
-          userId,
-          paymentDetails,
-          timeRange,
-          {
-            ...filterOptions,
-            destinationPaymentMethod: this.filters.paymentMethod,
-          },
-          ['originAmountDetails', 'destinationAmountDetails']
-        )
+    if (missingAggregation) {
+      return this.computeRuleExpensive()
+    }
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRuleExpensive(): Promise<RuleResult | undefined> {
+    logger.info('Running expensive path...')
+
     this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
     const { period1, period2, checkSender, checkReceiver } = this.parameters
 
-    const toCheck: [UserParty, Direction][] = []
+    const toCheck: UserParty[] = []
     if (checkSender !== 'none') {
-      toCheck.push(['origin', 'sending'])
-      if (checkSender === 'all') {
-        toCheck.push(['origin', 'receiving'])
-      }
+      toCheck.push('origin')
     }
     if (checkReceiver !== 'none') {
-      toCheck.push(['destination', 'receiving'])
-      if (checkReceiver === 'all') {
-        toCheck.push(['destination', 'sending'])
-      }
+      toCheck.push('destination')
     }
 
-    for (const [currency, maxMultiplier] of Object.entries(
-      this.getMultiplierThresholds()
-    )) {
-      for (const [user, direction] of toCheck) {
-        const avgs = await this.avg(user, direction, currency)
-        if (avgs == null) {
-          return
+    const {
+      senderSendingTransactions,
+      senderReceivingTransactions,
+      receiverSendingTransactions,
+      receiverReceivingTransactions,
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: period2,
+        checkSender,
+        checkReceiver,
+        transactionState: this.filters.transactionState,
+        transactionTypes: this.filters.transactionTypes,
+        paymentMethod: this.filters.paymentMethod,
+      },
+      ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
+    )
+    const senderAmountDetailsP1 = this.getPeriod1Transactions(
+      senderSendingTransactions.concat(this.transaction)
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod1Transactions(senderReceivingTransactions).map(
+          (transaction) => transaction.destinationAmountDetails
+        )
+      )
+    const receiverAmountDetailsP1 = this.getPeriod1Transactions(
+      receiverSendingTransactions
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod1Transactions(
+          receiverReceivingTransactions.concat(this.transaction)
+        ).map((transaction) => transaction.destinationAmountDetails)
+      )
+    const senderAmountDetailsP2 = this.getPeriod2Transactions(
+      senderSendingTransactions.concat(this.transaction)
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod2Transactions(senderReceivingTransactions).map(
+          (transaction) => transaction.destinationAmountDetails
+        )
+      )
+    const receiverAmountDetailsP2 = this.getPeriod2Transactions(
+      receiverSendingTransactions
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod2Transactions(
+          receiverReceivingTransactions.concat(this.transaction)
+        ).map((transaction) => transaction.destinationAmountDetails)
+      )
+
+    // Update aggregations
+    await Promise.all([
+      this.parameters.checkSender !== 'none'
+        ? this.refreshRuleAggregations(
+            'origin',
+            await this.getTimeAggregatedResult(
+              senderSendingTransactions,
+              senderReceivingTransactions
+            )
+          )
+        : Promise.resolve(),
+      this.parameters.checkReceiver !== 'none'
+        ? this.refreshRuleAggregations(
+            'destination',
+            await this.getTimeAggregatedResult(
+              receiverSendingTransactions,
+              receiverReceivingTransactions
+            )
+          )
+        : Promise.resolve(),
+    ])
+
+    const { currency, value: maxMultiplier } = this.getMultiplierThresholds()
+    for (const userParty of toCheck) {
+      const period1AmountDetails =
+        userParty === 'origin' ? senderAmountDetailsP1 : receiverAmountDetailsP1
+      const period2AmountDetails =
+        userParty === 'origin' ? senderAmountDetailsP2 : receiverAmountDetailsP2
+      const avgs = await this.avg(
+        period1AmountDetails,
+        period2AmountDetails,
+        currency
+      )
+      if (avgs == null) {
+        return
+      }
+      const [avg1, avg2] = avgs
+      const multiplier = avg1 / avg2
+      const result = multiplierToPercents(multiplier) > maxMultiplier
+      if (result) {
+        const vars = {
+          ...super.getTransactionVars(userParty),
+          period1,
+          period2,
+          multiplier,
+          user: userParty,
+          currency,
         }
-        const [avg1, avg2] = avgs
-        const multiplier = avg1 / avg2
-        const result = multiplierToPercents(multiplier) > maxMultiplier
-        if (result) {
-          const vars = {
-            ...super.getTransactionVars(user),
-            period1,
-            period2,
-            multiplier,
-            user,
-            currency,
-            direction,
-          }
-          return {
-            action: this.action,
-            vars,
-          }
+        return {
+          action: this.action,
+          vars,
         }
       }
     }
 
     return undefined
+  }
+
+  private getPeriod1Transactions(
+    transactions: AuxiliaryIndexTransaction[]
+  ): AuxiliaryIndexTransaction[] {
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      this.parameters.period1
+    )
+    return transactions.filter(
+      (transaction) =>
+        transaction.timestamp! >= afterTimestamp &&
+        transaction.timestamp! <= beforeTimestamp
+    )
+  }
+
+  private getPeriod2Transactions(
+    transactions: AuxiliaryIndexTransaction[]
+  ): AuxiliaryIndexTransaction[] {
+    const { afterTimestamp, beforeTimestamp } = this.getPeriod2TimeRange()
+    return transactions.filter(
+      (transaction) =>
+        transaction.timestamp! >= afterTimestamp &&
+        transaction.timestamp! <= beforeTimestamp
+    )
+  }
+
+  private getPeriod2TimeRange(): {
+    afterTimestamp: number
+    beforeTimestamp: number
+  } {
+    const {
+      afterTimestamp: afterTimestampP1,
+      beforeTimestamp: beforeTimestampP1,
+    } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
+    const { afterTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      this.parameters.period2
+    )
+    const beforeTimestamp = this.parameters.excludePeriod1
+      ? afterTimestampP1
+      : beforeTimestampP1
+    return { afterTimestamp, beforeTimestamp }
+  }
+
+  private getPeriodUnits() {
+    const { period1, period2, excludePeriod1 } = this.parameters
+    const units1 = period1.units
+    const units2 = excludePeriod1
+      ? toGranularity(period2, period1.granularity).units - period1.units
+      : period2.units
+    return {
+      units1,
+      units2,
+    }
+  }
+
+  protected async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    targetAggregationData: AggregationData | undefined
+  ): Promise<AggregationData> {
+    const avgMethod = this.getAvgMethod()
+    const { currency } = this.getMultiplierThresholds()
+    let amount = 0
+    if (avgMethod === 'AMOUNT') {
+      if (direction === 'origin' && this.transaction.originAmountDetails) {
+        amount = (
+          await getTargetCurrencyAmount(
+            this.transaction.originAmountDetails,
+            currency
+          )
+        ).transactionAmount
+      } else if (
+        direction === 'destination' &&
+        this.transaction.destinationAmountDetails
+      ) {
+        amount = (
+          await getTargetCurrencyAmount(
+            this.transaction.destinationAmountDetails,
+            currency
+          )
+        ).transactionAmount
+      }
+    }
+    return {
+      count: (targetAggregationData?.count ?? 0) + 1,
+      amount:
+        avgMethod === 'AMOUNT'
+          ? (targetAggregationData?.amount || 0) + amount
+          : undefined,
+    }
+  }
+
+  protected getMaxTimeWindow(): TimeWindow {
+    return this.parameters.period2
+  }
+
+  private async getTimeAggregatedResult(
+    sendingTransactions: AuxiliaryIndexTransaction[],
+    receivingTransactions: AuxiliaryIndexTransaction[]
+  ) {
+    const transactions = [
+      ...sendingTransactions,
+      ...receivingTransactions.map((t) => ({
+        ...t,
+        originAmountDetails: t.destinationAmountDetails,
+      })),
+    ]
+
+    return groupTransactionsByHour<AggregationData>(
+      transactions,
+      async (group) => ({
+        count: group.length,
+        amount:
+          this.getAvgMethod() === 'AMOUNT'
+            ? (
+                await getTransactionsTotalAmount(
+                  group.map((t) => t.originAmountDetails),
+                  this.getMultiplierThresholds().currency
+                )
+              ).transactionAmount
+            : undefined,
+      })
+    )
   }
 }
 

@@ -94,6 +94,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
           filters: this.filters,
           action: this.action,
         },
+        { ruleInstance: this.ruleInstance },
         this.dynamoDb
       )
       const countResult = await highTrafficCountRule.computeRule()

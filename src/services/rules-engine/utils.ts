@@ -22,6 +22,13 @@ export function getSenderKeys(
   )
 }
 
+export function getSenderKeyId(
+  tenantId: string,
+  transaction: Transaction
+): string | undefined {
+  return getSenderKeys(tenantId, transaction)?.PartitionKeyID
+}
+
 export function getUserSenderKeys(
   tenantId: string,
   transaction: Transaction,
@@ -79,6 +86,13 @@ export function getReceiverKeys(
     transactionType,
     transaction.timestamp
   )
+}
+
+export function getReceiverKeyId(
+  tenantId: string,
+  transaction: Transaction
+): string | undefined {
+  return getReceiverKeys(tenantId, transaction)?.PartitionKeyID
 }
 
 export function getUserReceiverKeys(

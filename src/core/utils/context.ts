@@ -97,5 +97,25 @@ export function getContext(): Context | undefined {
 }
 
 export function hasFeature(feature: Feature): boolean {
-  return getContext()?.features?.includes(feature) || false
+  return (
+    getContext()?.features?.includes(feature) ||
+    getTestEnabledFeatures()?.includes(feature) ||
+    false
+  )
+}
+
+function getTestEnabledFeatures(): Feature[] | undefined {
+  return process.env.ENV === 'local'
+    ? process.env.TEST_ENABLED_FEATURES?.split(',')
+        .filter((feature) =>
+          feature.startsWith(process.env.JEST_WORKER_ID as string)
+        )
+        .map(
+          (feature) =>
+            feature.replace(
+              new RegExp(`^${process.env.JEST_WORKER_ID}`),
+              ''
+            ) as Feature
+        )
+    : undefined
 }

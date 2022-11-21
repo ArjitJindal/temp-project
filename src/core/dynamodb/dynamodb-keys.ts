@@ -21,6 +21,7 @@ import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
+const RULE_INSTANCE_PREFIX = 'rule:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName =
@@ -241,6 +242,27 @@ export const DynamoDbKeys = {
     timeLabel?: string
   ) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time`,
+    SortKeyID: timeLabel,
+  }),
+  RULE_USER_TIME_AGGREGATION_MARKER: (
+    tenantId: string,
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    version: string,
+    transactionId: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#aggregation#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${direction}#${version}#marker`,
+    SortKeyID: transactionId,
+  }),
+  RULE_USER_TIME_AGGREGATION: (
+    tenantId: string,
+    userKeyId: string,
+    ruleInstanceId: string,
+    direction: 'origin' | 'destination',
+    version: string,
+    timeLabel?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userKeyId}#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${direction}#${version}`,
     SortKeyID: timeLabel,
   }),
   // Attributes: refer to User / Business

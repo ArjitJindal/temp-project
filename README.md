@@ -104,7 +104,7 @@ _NOTE_: If it's your first time deploying to your own dev stack. Please follow t
 
 1. Run `aws configure sso`
 2. SSO start URL [None]: `https://d-9a6713bec9.awsapps.com/start#/`
-3. SSO Region [None]: leave it empty
+3. SSO Region [None]: us-east-2
 4. Select account: `DevsAtFlagright`
 5. Select role: `AWSAdministratorAccess`
 6. Press enter till the end

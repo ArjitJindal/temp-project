@@ -98,10 +98,10 @@ export default class TransactionAverageAmountExceededRule extends TransactionAve
     return 'AMOUNT'
   }
 
-  protected getMultiplierThresholds(): { [currency: string]: number } {
+  protected getMultiplierThresholds(): { currency: string; value: number } {
     return {
-      [this.parameters.multiplierThreshold.currency]:
-        this.parameters.multiplierThreshold.value,
+      currency: this.parameters.multiplierThreshold.currency,
+      value: this.parameters.multiplierThreshold.value,
     }
   }
 }

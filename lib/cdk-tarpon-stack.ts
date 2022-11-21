@@ -196,7 +196,8 @@ export class CdkTarponStack extends cdk.Stack {
      */
     const tarponDynamoDbTable = this.createDynamodbTable(
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      tarponStream
+      tarponStream,
+      true
     )
     const tarponRuleDynamoDbTable = this.createDynamodbTable(
       StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
@@ -206,7 +207,9 @@ export class CdkTarponStack extends cdk.Stack {
       hammerheadStream
     )
     const transientDynamoDbTable = this.createDynamodbTable(
-      StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME
+      StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
+      undefined,
+      true
     )
 
     /**
@@ -1157,7 +1160,11 @@ export class CdkTarponStack extends cdk.Stack {
     )
   }
 
-  private createDynamodbTable(tableName: string, kinesisStream?: IStream) {
+  private createDynamodbTable(
+    tableName: string,
+    kinesisStream?: IStream,
+    enableTimeToLive = false
+  ) {
     const isDevUserStack = process.env.ENV === 'dev:user'
     if (isDevUserStack) {
       return Table.fromTableName(this, tableName, tableName)
@@ -1174,6 +1181,7 @@ export class CdkTarponStack extends cdk.Stack {
         this.config.stage === 'dev'
           ? RemovalPolicy.DESTROY
           : RemovalPolicy.RETAIN,
+      timeToLiveAttribute: enableTimeToLive ? 'ttl' : undefined,
     })
     return table
   }

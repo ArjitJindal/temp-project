@@ -1,5 +1,5 @@
 import { TimeWindow } from './rule-parameter-schemas'
-import { Dayjs, duration } from '@/utils/dayjs'
+import dayjs, { Dayjs, duration } from '@/utils/dayjs'
 
 export type TimeWindowGranularity =
   | 'second'
@@ -38,4 +38,14 @@ export function subtractTime(timeStamp: Dayjs, timeWindow: TimeWindow): number {
       .valueOf()
   }
   return afterTimestamp
+}
+
+export function getTimestampRange(
+  timestamp: number,
+  timeWindow: TimeWindow
+): { afterTimestamp: number; beforeTimestamp: number } {
+  return {
+    afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
+    beforeTimestamp: timestamp,
+  }
 }
