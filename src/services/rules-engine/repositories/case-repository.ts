@@ -605,12 +605,14 @@ export class CaseRepository {
   public async getCaseById(
     caseId: string,
     params: {
+      includeTransactions?: boolean
       includeTransactionEvents?: boolean
       includeTransactionUsers?: boolean
     } = {}
   ): Promise<Case | null> {
     const { data } = await this.getCases({
       filterId: `^${caseId}$`,
+      includeTransactions: params.includeTransactions ?? false,
       includeTransactionEvents: params.includeTransactionEvents ?? false,
       includeTransactionUsers: params.includeTransactionUsers ?? false,
       limit: 1,
@@ -638,8 +640,8 @@ export class CaseRepository {
     if (caseItem == null) {
       throw new NotFound(`Case not found: ${caseId}`)
     }
-    const caseTransactions = caseItem.caseTransactions
-    if (caseTransactions == null) {
+    const caseTransactionsIds = caseItem.caseTransactionsIds
+    if (caseTransactionsIds == null) {
       return {
         total: 0,
         data: [],
@@ -648,9 +650,7 @@ export class CaseRepository {
 
     // TODO: Don't use transactionsRepo.getTransactions and handle params.includeUsers here
     return await transactionsRepo.getTransactions({
-      filterIdList: caseTransactions.map(
-        (transaction) => transaction.transactionId as string
-      ),
+      filterIdList: caseTransactionsIds,
       afterTimestamp: 0,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
       limit: params.limit,
