@@ -27,6 +27,7 @@ const FEATURES: Feature[] = [
   'HELP_CENTER',
   'SANCTIONS',
   'DASHBOARD_BLOCK_USER',
+  'RULES_ENGINE_RULE_BASED_AGGREGATION',
 ];
 
 export default function SuperAdminPanel() {
