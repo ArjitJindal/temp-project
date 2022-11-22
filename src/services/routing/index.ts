@@ -22,6 +22,7 @@ import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
 import AuditLogPage from '@/pages/auditlog';
+import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 
 export function useRoutes(): RouteItem[] {
   const isRiskLevelsEnabled = useFeature('PULSE');
@@ -34,6 +35,8 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
   const [lastCasesActiveTab] = useLocalStorageState('cases-active-tab', 'transaction');
+  const user = useAuth0User();
+  const isAtLeastAdminUser = isAtLeastAdmin(user);
 
   return useMemo((): RouteItem[] => {
     const routes: (RouteItem | boolean)[] = [
@@ -282,13 +285,14 @@ export function useRoutes(): RouteItem[] {
             ]
           : [],
       },
-      isAuditLogEnabled && {
-        path: '/auditlog',
-        icon: 'ContainerOutlined',
-        name: 'auditlog',
-        position: 'bottom',
-        component: AuditLogPage,
-      },
+      isAtLeastAdminUser &&
+        isAuditLogEnabled && {
+          path: '/auditlog',
+          icon: 'ContainerOutlined',
+          name: 'auditlog',
+          position: 'bottom',
+          component: AuditLogPage,
+        },
       {
         path: '/settings',
         icon: 'SettingOutlined',
@@ -327,5 +331,6 @@ export function useRoutes(): RouteItem[] {
     isAuditLogEnabled,
     lastActiveSanctionsTab,
     lastCasesActiveTab,
+    isAtLeastAdminUser,
   ]);
 }
