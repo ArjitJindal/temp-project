@@ -1,30 +1,92 @@
-import React, { useRef, useState } from 'react';
-import { Typography } from 'antd';
-import { TableItem, TableSearchParams } from './types';
-import { useTableData } from './helpers';
-import { QueryResult } from '@/utils/queries/types';
-import { AuditLogListResponse } from '@/apis';
-import { TableColumn } from '@/components/ui/Table/types';
-import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { AllParams, TableActionType } from '@/components/ui/Table';
+import { useCallback, useRef, useState } from 'react';
+import moment, { Moment } from 'moment';
+import { Typography, DatePicker } from 'antd';
+import { RangeValue } from 'rc-picker/lib/interface';
+import { TableSearchParams } from './types';
+import { useApi } from '@/api';
+import { useAnalytics } from '@/utils/segment/context';
+import { measure } from '@/utils/time-utils';
+import { parseQueryString } from '@/utils/routing';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import { queryAdapter } from '@/pages/case-management/helpers';
+import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+
+import { TableColumn, TableData } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import { RequestTable } from '@/components/RequestTable';
+import { AuditLog } from '@/apis';
 
-interface Props {
-  params: AllParams<TableSearchParams>;
-  queryResult: QueryResult<AuditLogListResponse>;
-}
+export type AuditLogItem = AuditLog & {
+  index: number;
+  rowKey: string;
+};
 
-export default function AuditLogs(props: Props) {
-  const { queryResult, params } = props;
+export default function AuditLogTable() {
+  const api = useApi();
+  const analytics = useAnalytics();
 
-  const tableQueryResult = useTableData(queryResult);
+  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    ...parsedParams,
+  });
+
+  useDeepEqualEffect(() => {
+    setParams((prevState: AllParams<TableSearchParams>) => ({
+      ...prevState,
+      ...parsedParams,
+      page: parsedParams.page ?? 1,
+      sort: parsedParams.sort ?? [],
+    }));
+  }, [parsedParams]);
+
+  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
+    moment().subtract(1, 'day'),
+    moment(),
+  ]);
+
+  const results = useCallback(async (): Promise<TableData<AuditLog>> => {
+    const { sort, page, filterTypes } = params;
+    let startTimestamp = moment().subtract(1, 'day').valueOf();
+    let endTimestamp = Date.now();
+    const [sortField, sortOrder] = sort[0] ?? [];
+    const [start, end] = dateRange ?? [];
+    if (start != null && end != null) {
+      startTimestamp = start.startOf('day').valueOf();
+      endTimestamp = end.endOf('day').valueOf();
+    }
+    const [response, time] = await measure(() =>
+      api.getAuditlog({
+        limit: DEFAULT_PAGE_SIZE!,
+        skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
+        afterTimestamp: startTimestamp,
+        beforeTimestamp: endTimestamp,
+        filterTypes: filterTypes,
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+      }),
+    );
+    analytics.event({
+      title: 'Table Loaded',
+      time,
+    });
+    return {
+      success: true,
+      total: response.data.length,
+      items: response.data,
+    };
+  }, [analytics, api, dateRange, params]);
+
+  // const tableQueryResult = useTableData(results);
 
   const actionRef = useRef<TableActionType>(null);
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
   // todo: i18n
-  const columns: TableColumn<TableItem>[] = [
+  const columns: TableColumn<AuditLog>[] = [
     {
       title: 'Audit Log ID',
       dataIndex: 'auditlogId',
@@ -80,17 +142,16 @@ export default function AuditLogs(props: Props) {
       },
     },
   ];
+
   return (
-    <QueryResultsTable<TableItem>
-      showResultsInfo
-      queryResults={tableQueryResult}
-      params={params}
+    <RequestTable<AuditLog>
+      request={results}
       form={{
         labelWrap: true,
       }}
+      toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
       bordered
       search={false}
-      isEvenRow={(item) => item.index % 2 === 0}
       actionRef={actionRef}
       rowKey="caseId"
       scroll={{ x: 1300 }}
