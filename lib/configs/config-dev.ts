@@ -44,6 +44,7 @@ export const config: Config = {
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
     },
+    LAMBDA_VPC_ENABLED: true,
   },
   application: {
     AUTH0_DOMAIN: 'dev-flagright.eu.auth0.com',

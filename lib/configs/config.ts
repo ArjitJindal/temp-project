@@ -62,6 +62,7 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
+    LAMBDA_VPC_ENABLED?: boolean
   }
   application: {
     AUTH0_DOMAIN: string

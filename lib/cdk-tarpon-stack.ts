@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   ArnPrincipal,
@@ -212,6 +213,13 @@ export class CdkTarponStack extends cdk.Stack {
       true
     )
 
+    /*
+     * MongoDB Atlas DB
+     * VPC configuration: https://www.mongodb.com/docs/atlas/security-vpc-peering/
+     */
+
+    const { vpc, vpcCidr, securityGroup } = this.createVpc()
+
     /**
      * S3 Buckets
      * NOTE: Bucket name needs to be unique across accounts. We append account ID to the
@@ -305,10 +313,11 @@ export class CdkTarponStack extends cdk.Stack {
      * Lambda Functions
      */
 
-    const atlasFunctionProps = {
-      // TODO: Re-enable VPC https://flagright.atlassian.net/browse/FDT-190
-      // securityGroups: [atlasSg],
-      // vpc: atlasVpc,
+    const atlasFunctionProps: Partial<FunctionProps> = {
+      securityGroups: config.resource.LAMBDA_VPC_ENABLED
+        ? [securityGroup]
+        : undefined,
+      vpc: config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
       environment: {
         SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
@@ -999,29 +1008,23 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * Outputs
      */
-    new CfnOutput(
-      this,
-      'API Gateway endpoint URL for Prod stage - Public API',
-      {
-        value: publicApi.urlForPath('/'),
-      }
-    )
-    new CfnOutput(
-      this,
-      'API Gateway endpoint URL for Prod stage - Console API',
-      {
-        value: consoleApi.urlForPath('/'),
-      }
-    )
-    new CfnOutput(this, 'Transaction Function Name', {
-      value: transactionAlias.functionName,
+    new CfnOutput(this, 'API Gateway endpoint URL - Public API', {
+      value: publicApi.urlForPath('/'),
     })
-    new CfnOutput(this, 'User Function Name', {
-      value: userAlias.functionName,
+    new CfnOutput(this, 'API Gateway endpoint URL - Public Management API', {
+      value: publicConsoleApi.urlForPath('/'),
     })
-    new CfnOutput(this, 'Transaction Table', {
-      value: tarponDynamoDbTable.tableName,
+    new CfnOutput(this, 'API Gateway endpoint URL - Console API', {
+      value: consoleApi.urlForPath('/'),
     })
+    if (this.config.stage !== 'local') {
+      new CfnOutput(this, 'Lambda VPC ID', {
+        value: vpc.vpcId,
+      })
+      new CfnOutput(this, 'Lambda VPC CIDR', {
+        value: vpcCidr,
+      })
+    }
   }
 
   // IMPORTANT: We should use the returned `alias` for granting further roles.
@@ -1308,6 +1311,64 @@ export class CdkTarponStack extends cdk.Stack {
     return {
       api: restApi,
       logGroup: apiLogGroup,
+    }
+  }
+
+  private createVpc() {
+    if (this.config.stage === 'local') {
+      return {
+        vpc: null,
+        vpcCidr: null,
+        securityGroup: null,
+      } as any
+    }
+
+    const isDevUserStack = process.env.ENV === 'dev:user'
+    const vpcCidr = '10.0.0.0/21'
+    const vpc = isDevUserStack
+      ? ec2.Vpc.fromLookup(this, 'vpc', { vpcId: 'vpc-0c40f136d207221de' })
+      : new ec2.Vpc(this, 'vpc', {
+          cidr: vpcCidr,
+          subnetConfiguration: [
+            {
+              subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+              cidrMask: 24,
+              name: 'PrivateSubnet1',
+            },
+            {
+              subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+              cidrMask: 24,
+              name: 'PrivateSubnet2',
+            },
+            {
+              subnetType: ec2.SubnetType.PUBLIC,
+              cidrMask: 28,
+              name: 'PublicSubnet1',
+            },
+          ],
+        })
+
+    const securityGroup = isDevUserStack
+      ? ec2.SecurityGroup.fromLookupByName(
+          this,
+          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+          vpc
+        )
+      : new ec2.SecurityGroup(
+          this,
+          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+          {
+            vpc,
+            securityGroupName: StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+          }
+        )
+    securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidr), ec2.Port.tcp(27017))
+
+    return {
+      vpc,
+      vpcCidr,
+      securityGroup,
     }
   }
 }
