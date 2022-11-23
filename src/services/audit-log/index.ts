@@ -13,20 +13,22 @@ export async function publishAuditLog(
   auditlog: AuditLog
 ): Promise<void> {
   try {
-    const auditLogRecord: AuditLogRecord = {
-      tenantId,
-      payload: {
-        user: getContext()?.user as Account,
-        timestamp: Date.now(),
-        ...auditlog,
-      },
+    if (getContext()?.user?.role !== 'root') {
+      const auditLogRecord: AuditLogRecord = {
+        tenantId,
+        payload: {
+          user: getContext()?.user as Account,
+          timestamp: Date.now(),
+          ...auditlog,
+        },
+      }
+      await snsClient.send(
+        new PublishCommand({
+          TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,
+          Message: JSON.stringify(auditLogRecord),
+        })
+      )
     }
-    await snsClient.send(
-      new PublishCommand({
-        TopicArn: process.env.AUDITLOG_TOPIC_ARN as string,
-        Message: JSON.stringify(auditLogRecord),
-      })
-    )
   } catch (e) {
     Sentry.captureException(e)
     logger.error('Failed to publish audit log', e)
