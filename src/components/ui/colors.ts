@@ -21,6 +21,11 @@ interface MainPallete {
   yellow: ColorSet;
   skyBlue: ColorSet;
   limeGreen: ColorSet;
+  lightGreen: ColorSet;
+  green: ColorSet;
+  lightYellow: ColorSet;
+  lightOrange: ColorSet;
+  lightRed: ColorSet;
 }
 
 const MAIN_PALLETE: MainPallete = {
@@ -36,13 +41,19 @@ const MAIN_PALLETE: MainPallete = {
   skyBlue: { base: '#78cbeb', tint: '#e6f8ff', shade: '#267999' }, // Graphs,Primary
   limeGreen: { base: '#bff35a', tint: '#f4fce3', shade: '#86a745' }, // Graphs,Primary
   lightBlue: { base: '#1890ff', tint: '#e6f7ff', shade: '#096dd9' }, // Graphs,Primary
+  lightGreen: { base: '#D1E277', tint: '#F1F6D6', shade: '#000000' }, // Graphs,Primary
+  green: { base: '#AAD246', tint: '#E6F2C8', shade: '#000000' }, // Graphs,Primary
+  lightYellow: { base: '#EED23F', tint: '#FAF2C5', shade: '#000000' }, // Graphs,Primary
+  lightOrange: { base: '#E47E30', tint: '#F7D8C1', shade: '#000000' }, // Graphs,Primary
+  lightRed: { base: '#E93134', tint: '#F8C1C2', shade: '#000000' }, // Graphs,Primary
 };
 
 const SEMANTIC_COLORS = {
   infoColor: MAIN_PALLETE.skyBlue,
-  successColor: MAIN_PALLETE.leafGreen,
-  warningColor: MAIN_PALLETE.orange,
-  errorColor: MAIN_PALLETE.red,
+  successColor: MAIN_PALLETE.green,
+  warningColor: MAIN_PALLETE.lightYellow,
+  errorColor: MAIN_PALLETE.lightOrange,
+  alertColor: MAIN_PALLETE.lightRed,
 };
 
 const COLORS = {

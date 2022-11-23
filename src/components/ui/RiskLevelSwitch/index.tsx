@@ -52,7 +52,7 @@ export default function RiskSwitch(props: Props): JSX.Element {
                 ? {
                     borderWidth: 1,
                     background: RISK_LEVEL_COLORS[level].light,
-                    color: RISK_LEVEL_COLORS[level].primary,
+                    color: RISK_LEVEL_COLORS[level].text,
                     borderColor: RISK_LEVEL_COLORS[level].primary,
                   }
                 : {}

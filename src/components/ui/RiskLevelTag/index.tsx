@@ -9,7 +9,7 @@ interface Props {
 export default function RiskLevelTag(props: Props): JSX.Element {
   const color = RISK_LEVEL_COLORS[props.level];
   return (
-    <Tag style={{ background: color.light, borderColor: color.primary, color: color.primary }}>
+    <Tag style={{ background: color.light, borderColor: color.primary, color: color.text }}>
       {RISK_LEVEL_LABELS[props.level]}
     </Tag>
   );
