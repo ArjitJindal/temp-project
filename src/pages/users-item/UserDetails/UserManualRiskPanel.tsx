@@ -67,8 +67,13 @@ export default function UserManualRiskPanel(props: Props) {
         },
       })
       .then((response) => {
-        message.success('User risk level locked successfully!');
-        setSyncState(success(response));
+        if (isLocked) {
+          message.success('User risk level unlocked successfully!');
+          setSyncState(success(response));
+        } else {
+          message.success('User risk level locked successfully!');
+          setSyncState(success(response));
+        }
       })
       .catch((e) => {
         console.error(e);
@@ -115,7 +120,9 @@ export default function UserManualRiskPanel(props: Props) {
             ? 'Click here to unlock the assigned risk level. This lets the system automatically update the user risk level again'
             : 'Click here to lock user risk level. This prevents the system from changing the user risk level automatically.'
         }
+        placement="bottomLeft"
       >
+        <br />
         <Button onClick={handleLockingAndUnlocking}>{isLocked ? 'Unlock' : 'Lock'}</Button>
       </Tooltip>
     </Form.Item>
