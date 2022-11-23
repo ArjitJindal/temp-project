@@ -6,7 +6,7 @@ import { TsconfigPathsPlugin } from 'tsconfig-paths-webpack-plugin'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const CopyPlugin = require('copy-webpack-plugin')
 
-const isDevMode = process.env.ENV === 'local'
+const isDevMode = process.env.ENV === 'local' || process.env.ENV === 'dev:user'
 
 const lambdaEntries = fs
   .readdirSync('./src/lambdas')
