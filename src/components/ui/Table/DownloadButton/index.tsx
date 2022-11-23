@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import _ from 'lodash';
 import { message, Popover, Radio, Select } from 'antd';
+import moment from 'moment';
 import s from './styles.module.less';
 import DownloadFillIcon from '@/components/ui/icons/Remix/system/download-fill.react.svg';
 import Button from '@/components/ui/Button';
@@ -12,8 +13,11 @@ import * as Form from '@/components/ui/Form';
 import { getErrorMessage } from '@/utils/lang';
 import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
 import { PaginatedQueryParams } from '@/utils/queries/hooks';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 const MAXIMUM_EXPORT_ITEMS = 10000;
+const convertToDateString = (createdTimestamp: number) =>
+  moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
 
 type Props<T extends object> = {
   currentPage: number;
@@ -85,6 +89,9 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
                 data = (exportData as (entity: T) => unknown)(row);
               } else if (typeof exportData === 'string') {
                 data = _.get(row, exportData);
+              }
+              if (exportData === 'createdTimestamp') {
+                data = convertToDateString(parseInt(data as string));
               }
             }
             return csvValue(data);
