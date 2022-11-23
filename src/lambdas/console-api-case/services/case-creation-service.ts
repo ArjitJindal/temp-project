@@ -13,6 +13,7 @@ import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
+import { logger } from '@/core/logger'
 
 export class CaseCreationService {
   caseRepository: CaseRepository
@@ -64,6 +65,10 @@ export class CaseCreationService {
     transaction: TransactionWithRulesResult
   ): Promise<CaseCaseUsers> {
     const { destinationUserId, originUserId } = transaction
+    logger.info(`Fetching case users by ids`, {
+      destinationUserId,
+      originUserId,
+    })
     return {
       origin: (await this.getUser(originUserId)) ?? undefined,
       destination: (await this.getUser(destinationUserId)) ?? undefined,
@@ -110,6 +115,11 @@ export class CaseCreationService {
     } else if (caseUsers.destination?.userId != null) {
       hitDirections = ['DESTINATION']
     }
+    logger.info(`Hit directions to create or update user cases`, {
+      hitDirections,
+      originUserId: caseUsers.origin?.userId ?? null,
+      destinationUserId: caseUsers.destination?.userId ?? null,
+    })
 
     const result: Case[] = []
     for (const hitDirection of hitDirections) {
@@ -122,11 +132,18 @@ export class CaseCreationService {
         const existedCase = cases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
+        logger.info(`Existed case for user`, {
+          existedCaseId: existedCase?.caseId ?? null,
+          existedCaseTransactionsIdsLength: (
+            existedCase?.caseTransactionsIds || []
+          ).length,
+        })
         if (
           existedCase &&
           (existedCase.caseTransactionsIds || []).length <
             MAX_TRANSACTION_IN_A_CASE
         ) {
+          logger.info('Update existed case with transaction')
           result.push({
             ...existedCase,
             latestTransactionArrivalTimestamp:
@@ -141,6 +158,7 @@ export class CaseCreationService {
             ],
           })
         } else {
+          logger.info('Create a new user case for a transaction')
           result.push({
             ...this.getNewUserCase(hitDirection, caseUsers),
             createdTimestamp: params.createdTimestamp,
@@ -158,6 +176,9 @@ export class CaseCreationService {
   async handleTransaction(
     transaction: TransactionWithRulesResult
   ): Promise<Case[]> {
+    logger.info(`Handling transaction for case creation`, {
+      transactionId: transaction.transactionId,
+    })
     const result: Case[] = []
 
     const caseUsers: CaseCaseUsers = await this.getCaseUsers(transaction)
@@ -188,6 +209,9 @@ export class CaseCreationService {
 
     // Handle user cases
     if (updateUserCase) {
+      logger.info(`Updating user cases`, {
+        transactionId: transaction.transactionId,
+      })
       const hitDirections = new Set<RuleHitDirection>()
       for (const hitRule of transaction.hitRules) {
         const ruleInstance = ruleInstances.find(
@@ -241,12 +265,20 @@ export class CaseCreationService {
 
     // Handle transaction cases
     if (updateTransactionCase) {
+      logger.info(`Updating transaction cases`, {
+        transactionId: transaction.transactionId,
+        originUserId: caseUsers.origin?.userId ?? null,
+        desinationUserId: caseUsers.destination?.userId ?? null,
+      })
       if (caseUsers.origin != null || caseUsers.destination != null) {
         const existingTransactionCases =
           await this.caseRepository.getCasesByTransactionId(
             transaction.transactionId as string,
             'TRANSACTION'
           )
+        logger.info(`Updating transaction cases`, {
+          transactionId: transaction.transactionId,
+        })
         const existingCase = existingTransactionCases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
@@ -274,12 +306,19 @@ export class CaseCreationService {
           existingCase.caseTransactions = [transaction]
           result.push(existingCase)
         }
+      } else {
+        logger.info(
+          `Both users are not defined, do not update transaction cases`
+        )
       }
     }
 
     const savedCases = await Promise.all(
       result.map((caseItem) => this.caseRepository.addCaseMongo(caseItem))
     )
+    logger.info(`Updated/created cases count`, {
+      count: savedCases.length,
+    })
     if (savedCases.length > 1) {
       return await Promise.all(
         savedCases.map((nextCase) => {
