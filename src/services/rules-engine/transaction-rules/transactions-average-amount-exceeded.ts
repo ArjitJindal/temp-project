@@ -55,7 +55,7 @@ export default class TransactionAverageAmountExceededRule extends TransactionAve
             type: 'object',
             title: 'Average amount threshold (period 1)',
             description:
-              "Rule doesn't trigger if average transactions amount in period1 in less than 'Min' or more than 'Max'",
+              "Rule doesn't trigger if average transactions amount in period1 in less than 'Min' or more than 'Max' (All the transactions in other currencies are converted to the above currency before calculating the average)",
             properties: {
               min: {
                 type: 'number',
