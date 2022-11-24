@@ -3005,11 +3005,6 @@ components:
           description: Authentication of Card
         paymentChannel:
           type: string
-          enum:
-            - GOOGLE_PAY
-            - APPLE_PAY
-            - ATM
-            - SAMSUNG_PAY
         cardType:
           type: string
           enum:

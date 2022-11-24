@@ -6,16 +6,13 @@ import {
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
-import {
-  CardDetails,
-  CardDetailsPaymentChannelEnum,
-} from '@/@types/openapi-public/CardDetails'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
 export type TransactionAmountRuleParameters = {
   transactionAmountThreshold: {
     [currency: string]: number
   }
-  paymentChannel?: CardDetailsPaymentChannelEnum
+  paymentChannel?: string
 }
 
 export default class TransactionAmountRule extends TransactionRule<TransactionAmountRuleParameters> {

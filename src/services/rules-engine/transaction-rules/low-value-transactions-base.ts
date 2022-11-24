@@ -11,10 +11,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
-import {
-  CardDetails,
-  CardDetailsPaymentChannelEnum,
-} from '@/@types/openapi-public/CardDetails'
+import { CardDetails } from '@/@types/openapi-public/CardDetails'
 export type LowValueTransactionsRuleParameters = {
   lowTransactionValues: {
     [currency: string]: {
@@ -23,7 +20,7 @@ export type LowValueTransactionsRuleParameters = {
     }
   }
   lowTransactionCount: number
-  paymentChannel?: CardDetailsPaymentChannelEnum
+  paymentChannel?: string
 }
 
 export default class LowValueTransactionsRule extends TransactionRule<
