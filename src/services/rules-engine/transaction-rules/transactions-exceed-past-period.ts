@@ -179,6 +179,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           transactionTypes: this.filters.transactionTypes,
           transactionState: this.filters.transactionState,
           paymentMethod: this.filters.paymentMethod,
+          countries: this.filters.transactionCountries,
         },
         ['timestamp']
       ),
@@ -192,6 +193,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           transactionTypes: this.filters.transactionTypes,
           transactionState: this.filters.transactionState,
           paymentMethod: this.filters.paymentMethod,
+          countries: this.filters.transactionCountries,
         },
         ['timestamp']
       ),

@@ -180,11 +180,13 @@ export default class TransactionsVelocityRule extends TransactionRule<
       transactionState: this.filters.transactionState,
       transactionTypes: this.filters.transactionTypes,
       originPaymentMethod: this.filters.paymentMethod,
+      originCountries: this.filters.transactionCountries,
     }
     const destinationFilterOptions: TransactionsFilterOptions = {
       transactionState: this.filters.transactionState,
       transactionTypes: this.filters.transactionTypes,
       destinationPaymentMethod: this.filters.paymentMethod,
+      destinationCountries: this.filters.transactionCountries,
     }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'

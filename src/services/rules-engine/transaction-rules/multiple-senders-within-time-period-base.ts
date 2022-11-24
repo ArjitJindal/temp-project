@@ -67,6 +67,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             transactionState: this.filters.transactionState,
             transactionTypes: this.filters.transactionTypes,
             destinationPaymentMethod: this.filters.paymentMethod,
+            destinationCountries: this.filters.transactionCountries,
           },
           ['senderKeyId', 'originUserId']
         )
@@ -85,6 +86,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
             transactionState: this.filters.transactionState,
             transactionTypes: this.filters.transactionTypes,
             destinationPaymentMethod: this.filters.paymentMethod,
+            destinationCountries: this.filters.transactionCountries,
           },
           ['senderKeyId', 'originUserId']
         )

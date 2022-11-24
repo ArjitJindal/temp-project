@@ -74,6 +74,7 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
           transactionTypes: transactionTypes,
           transactionState: this.filters.transactionState,
           originPaymentMethod: this.filters.paymentMethod,
+          originCountries: this.filters.transactionCountries,
         },
         ['timestamp']
       ),
@@ -84,6 +85,7 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
           transactionTypes: otherTransactionTypes,
           transactionState: this.filters.transactionState,
           originPaymentMethod: this.filters.paymentMethod,
+          originCountries: this.filters.transactionCountries,
         },
         ['timestamp']
       ),

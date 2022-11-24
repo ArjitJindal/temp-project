@@ -2,6 +2,7 @@ import { TimeWindowGranularity } from './time-utils'
 import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { PAYMENT_METHODS } from '@/@types/tranasction/payment-type'
 import { USER_TYPES } from '@/@types/user/user-type'
+import { COUNTRY_CODES } from '@/utils/countries'
 
 type SchemaOptions = {
   title?: string
@@ -65,7 +66,8 @@ export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>
     type: 'array',
     title: options?.title || 'Countries (ISO 3166-1 alpha-2)',
     description: options?.description,
-    items: { type: 'string' },
+    items: { type: 'string', enum: COUNTRY_CODES },
+    uniqueItems: true,
   } as const)
 
 export const COUNTRIES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>

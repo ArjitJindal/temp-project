@@ -97,6 +97,7 @@ export default class LowValueTransactionsRule extends TransactionRule<
                 transactionState: this.filters.transactionState,
                 transactionTypes: this.filters.transactionTypes,
                 destinationPaymentMethod: this.filters.paymentMethod,
+                destinationCountries: this.filters.transactionCountries,
               },
               ['originAmountDetails', 'destinationAmountDetails']
             )
@@ -107,6 +108,7 @@ export default class LowValueTransactionsRule extends TransactionRule<
                 transactionState: this.filters.transactionState,
                 transactionTypes: this.filters.transactionTypes,
                 originPaymentMethod: this.filters.paymentMethod,
+                originCountries: this.filters.transactionCountries,
               },
               ['originAmountDetails', 'destinationAmountDetails']
             ))) as Transaction[]

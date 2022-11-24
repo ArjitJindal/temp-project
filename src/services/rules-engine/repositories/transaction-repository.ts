@@ -68,6 +68,8 @@ export type TransactionsFilterOptions = {
   receiverKeyId?: string
   originPaymentMethod?: PaymentMethod
   destinationPaymentMethod?: PaymentMethod
+  originCountries?: string[]
+  destinationCountries?: string[]
 }
 
 export function getNewTransactionID(transaction: Transaction) {
@@ -1257,6 +1259,18 @@ export class TransactionRepository {
     filterOptions: TransactionsFilterOptions = {},
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Partial<AWS.DynamoDB.DocumentClient.QueryInput> {
+    const originCountriesParams = filterOptions.originCountries?.map(
+      (country, index) => [`:originCountry${index}`, country]
+    )
+    const originCountriesKeys = originCountriesParams?.map(
+      (params) => params[0]
+    )
+    const destinationCountriesParams = filterOptions.destinationCountries?.map(
+      (country, index) => [`:destinationCountry${index}`, country]
+    )
+    const destinationCountriesKeys = destinationCountriesParams?.map(
+      (params) => params[0]
+    )
     const filters = [
       filterOptions.transactionState && 'transactionState = :transactionState',
       filterOptions.receiverKeyId && 'receiverKeyId = :receiverKeyId',
@@ -1265,6 +1279,12 @@ export class TransactionRepository {
         '#originPaymentDetails.#method = :originPaymentMethod',
       filterOptions.destinationPaymentMethod &&
         '#destinationPaymentDetails.#method = :destinationPaymentMethod',
+      originCountriesKeys &&
+        `#originAmountDetails.#country IN (${originCountriesKeys.join(',')})`,
+      destinationCountriesKeys &&
+        `#destinationAmountDetails.#country IN (${destinationCountriesKeys.join(
+          ','
+        )})`,
     ].filter(Boolean)
 
     if (_.isEmpty(filters) && _.isEmpty(attributesToFetch)) {
@@ -1290,6 +1310,19 @@ export class TransactionRepository {
             _.isNil
           )
         : undefined,
+      filterOptions.originCountries || filterOptions.destinationCountries
+        ? _.omitBy(
+            {
+              '#originAmountDetails':
+                filterOptions.originCountries && 'originAmountDetails',
+              '#destinationAmountDetails':
+                filterOptions.destinationCountries &&
+                'destinationAmountDetails',
+              '#country': 'country',
+            },
+            _.isNil
+          )
+        : undefined,
       attributesToFetch &&
         Object.fromEntries(attributesToFetch.map((name) => [`#${name}`, name]))
     )
@@ -1307,6 +1340,8 @@ export class TransactionRepository {
             ':receiverKeyId': filterOptions.receiverKeyId,
             ':originPaymentMethod': filterOptions.originPaymentMethod,
             ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
+            ...Object.fromEntries(originCountriesParams || []),
+            ...Object.fromEntries(destinationCountriesParams || []),
           },
       ProjectionExpression: _.isEmpty(attributesToFetch)
         ? undefined

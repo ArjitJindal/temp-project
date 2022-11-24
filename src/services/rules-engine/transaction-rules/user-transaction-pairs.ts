@@ -87,6 +87,7 @@ export default class UserTransactionPairsRule extends TransactionRule<
           transactionTypes: this.filters.transactionTypes,
           transactionState: this.filters.transactionState,
           originPaymentMethod: this.filters.paymentMethod,
+          originCountries: this.filters.transactionCountries,
         },
         ['receiverKeyId']
       )

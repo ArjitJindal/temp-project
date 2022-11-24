@@ -87,6 +87,7 @@ export default class TransactionsPatternVelocityBaseRule<
         transactionState: this.filters.transactionState,
         transactionTypes: this.filters.transactionTypes,
         paymentMethod: this.filters.paymentMethod,
+        countries: this.filters.transactionCountries,
       },
       this.getNeededTransactionFields()
     )

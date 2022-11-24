@@ -306,3 +306,5 @@ export function expandCountryGroup(countryCodes: string[]) {
     (countryCode) => COUNTRY_GROUPS[countryCode] || countryCode
   )
 }
+
+export const COUNTRY_CODES = Object.keys(COUNTRIES)

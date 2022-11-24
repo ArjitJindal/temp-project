@@ -94,6 +94,7 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<
           transactionState: this.filters.transactionState,
           originPaymentMethod: this.filters.paymentMethod,
           transactionTypes: this.filters.transactionTypes,
+          originCountries: this.filters.transactionCountries,
           receiverKeyId: getReceiverKeys(this.tenantId, transaction)
             ?.PartitionKeyID,
         }

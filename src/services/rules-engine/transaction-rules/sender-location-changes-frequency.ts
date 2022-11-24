@@ -64,6 +64,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
           transactionState: this.filters.transactionState,
           transactionTypes: this.filters.transactionTypes,
           originPaymentMethod: this.filters.paymentMethod,
+          originCountries: this.filters.transactionCountries,
         },
         ['deviceData']
       )) as Transaction[]

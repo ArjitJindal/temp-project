@@ -176,6 +176,7 @@ export default class TransactionsPatternPercentageBaseRule<
         transactionState: this.filters.transactionState,
         transactionTypes: this.filters.transactionTypes,
         paymentMethod: this.filters.paymentMethod,
+        countries: this.filters.transactionCountries,
       },
       ['timestamp', ...this.getNeededTransactionFields()]
     )

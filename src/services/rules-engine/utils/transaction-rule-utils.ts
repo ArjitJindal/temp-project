@@ -137,6 +137,7 @@ async function getTransactions(
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
+    countries?: string[]
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
@@ -151,6 +152,7 @@ async function getTransactions(
     transactionTypes,
     paymentMethod,
     matchPaymentMethodDetails,
+    countries,
   } = options
   const [sendingTransactions, receivingTransactions] = await Promise.all([
     checkType === 'sending' || checkType === 'all'
@@ -165,6 +167,7 @@ async function getTransactions(
             transactionState,
             transactionTypes,
             originPaymentMethod: paymentMethod,
+            originCountries: countries,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -182,6 +185,7 @@ async function getTransactions(
             transactionState,
             transactionTypes,
             destinationPaymentMethod: paymentMethod,
+            destinationCountries: countries,
           },
           attributesToFetch,
           matchPaymentMethodDetails
@@ -268,6 +272,7 @@ export async function getTransactionUserPastTransactions(
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
+    countries?: string[]
   },
   attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
 ): Promise<{
@@ -284,6 +289,7 @@ export async function getTransactionUserPastTransactions(
     transactionTypes,
     paymentMethod,
     matchPaymentMethodDetails,
+    countries,
   } = options
   const { afterTimestamp, beforeTimestamp } = getTimestampRange(
     transaction.timestamp!,
@@ -303,6 +309,7 @@ export async function getTransactionUserPastTransactions(
             transactionTypes,
             paymentMethod,
             matchPaymentMethodDetails,
+            countries,
           },
           attributesToFetch
         )
@@ -324,6 +331,7 @@ export async function getTransactionUserPastTransactions(
             transactionTypes,
             paymentMethod,
             matchPaymentMethodDetails,
+            countries,
           },
           attributesToFetch
         )
@@ -353,6 +361,7 @@ export async function getTransactionUserPastTransactionsCount(
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
+    country?: string[]
   }
 ): Promise<{
   senderSendingTransactionsCount: number | null

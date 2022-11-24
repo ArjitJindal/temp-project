@@ -93,6 +93,7 @@ export default class TransactionsVolumeRule extends TransactionRule<
         transactionTypes: this.filters.transactionTypes,
         paymentMethod: this.filters.paymentMethod,
         matchPaymentMethodDetails,
+        countries: this.filters.transactionCountries,
       },
       [
         'originUserId',

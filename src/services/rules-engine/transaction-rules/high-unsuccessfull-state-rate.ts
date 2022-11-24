@@ -91,6 +91,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
         transactionTypes: this.filters.transactionTypes,
         transactionState: this.parameters.transactionState,
         paymentMethod: this.filters.paymentMethod,
+        country: this.filters.transactionCountries,
       }
     )
 

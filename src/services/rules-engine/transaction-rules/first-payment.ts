@@ -1,8 +1,9 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import { TransactionFilters } from '../transaction-filters'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
 
 export type FirstPaymentRuleParameter = {
@@ -11,7 +12,10 @@ export type FirstPaymentRuleParameter = {
   }
 }
 
-export default class FirstPaymentRule extends TransactionRule<FirstPaymentRuleParameter> {
+export default class FirstPaymentRule extends TransactionRule<
+  FirstPaymentRuleParameter,
+  TransactionFilters
+> {
   public static getSchema(): JSONSchemaType<FirstPaymentRuleParameter> {
     return {
       type: 'object',
@@ -40,7 +44,9 @@ export default class FirstPaymentRule extends TransactionRule<FirstPaymentRulePa
       this.transaction.originUserId &&
       !(await transactionRepository.hasAnySendingTransaction(
         this.transaction.originUserId,
-        {}
+        {
+          originCountries: this.filters.transactionCountries,
+        }
       ))
     if (thresholdHit && isFirstPayment) {
       return {

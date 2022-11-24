@@ -156,6 +156,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
         receiverKeyId: getReceiverKeys(this.tenantId, transaction)
           ?.PartitionKeyID,
         originPaymentMethod: this.filters.paymentMethod,
+        originCountries: this.filters.transactionCountries,
       },
       ['originAmountDetails']
     )
