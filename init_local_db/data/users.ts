@@ -60,6 +60,9 @@ const businessUsers: InternalBusinessUser[] = [
     type: 'BUSINESS',
     userId: 'businessUser_1',
     legalEntity: {
+      contactDetails: {
+        emailIds: ['short@email.com', 'thisemailshouldbequitelong@email.com'],
+      },
       companyGeneralDetails: {
         legalName: 'Some company',
       },
