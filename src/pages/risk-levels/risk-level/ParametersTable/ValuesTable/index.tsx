@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
-import {
-  Entity,
-  ParameterName,
-  ParameterValues,
-  RiskLevelTableItem,
-  RiskValueContent,
-} from '../types';
+import { ParameterName, ParameterValues, RiskLevelTableItem, RiskValueContent } from '../types';
 import { INPUT_RENDERERS, NEW_VALUE_VALIDATIONS, VALUE_RENDERERS } from '../consts';
 import style from './style.module.less';
 import { RiskLevel } from '@/apis';
@@ -18,12 +12,12 @@ import { isEqual } from '@/utils/lang';
 interface Props {
   item: RiskLevelTableItem;
   currentValuesRes: AsyncResource<ParameterValues>;
-  onSave: (parameter: ParameterName, newValues: ParameterValues, entity: Entity) => void;
+  onSave: (parameter: ParameterName, newValues: ParameterValues) => void;
 }
 
 export default function ValuesTable(props: Props) {
   const { currentValuesRes, item, onSave } = props;
-  const { parameter, dataType, entity } = item;
+  const { parameter, dataType } = item;
 
   const lastValues = useLastSuccessValue(currentValuesRes, []);
   const [values, setValues] = useState(lastValues);
@@ -59,7 +53,7 @@ export default function ValuesTable(props: Props) {
   };
 
   const handleSave = () => {
-    onSave(parameter, values, entity);
+    onSave(parameter, values);
   };
 
   const handleCancel = () => {

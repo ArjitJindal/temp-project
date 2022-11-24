@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Button, Tag } from 'antd';
 import {
-  Entity,
   ParameterName,
   ParameterSettings,
   ParameterValues,
@@ -18,12 +17,12 @@ import { DATA_TYPE_TO_VALUE_TYPE } from '@/pages/risk-levels/risk-level/Paramete
 
 interface Props {
   parameters: RiskLevelTable;
-  parameterSettings?: {
+  parameterSettings: {
     [key in ParameterName]?: AsyncResource<ParameterSettings>;
   };
-  onRefresh: (parameter: ParameterName, entity: Entity) => void;
-  onSaveValues: (parameter: ParameterName, newValues: ParameterValues, entityType: Entity) => void;
-  onActivate: (parameter: ParameterName, isActive: boolean, entityType: Entity) => void;
+  onRefresh: (parameter: ParameterName) => void;
+  onSaveValues: (parameter: ParameterName, newValues: ParameterValues) => void;
+  onActivate: (parameter: ParameterName, isActive: boolean) => void;
 }
 
 export default function ParametersTable(props: Props) {
@@ -31,7 +30,7 @@ export default function ParametersTable(props: Props) {
 
   useEffect(() => {
     for (const parameter of parameters) {
-      onRefresh(parameter.parameter, parameter.entity);
+      onRefresh(parameter.parameter);
     }
   }, [onRefresh, parameters]);
 
@@ -69,9 +68,7 @@ export default function ParametersTable(props: Props) {
           {
             title: 'Status',
             render: (_, item) => {
-              const parameterRes =
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                init<ParameterSettings>();
+              const parameterRes = parameterSettings[item.parameter] ?? init<ParameterSettings>();
               const isActiveRes = map(parameterRes, (x) => x.isActive);
               const isActive = getOr(isActiveRes, false);
               return (
@@ -85,9 +82,7 @@ export default function ParametersTable(props: Props) {
           {
             title: 'Actions',
             render: (_, item) => {
-              const parameterRes =
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                init<ParameterSettings>();
+              const parameterRes = parameterSettings[item.parameter] ?? init<ParameterSettings>();
               const isActiveRes = map(parameterRes, (x) => x.isActive);
               const isActive = getOr(isActiveRes, false);
               return (
@@ -96,7 +91,7 @@ export default function ParametersTable(props: Props) {
                   size="small"
                   type="ghost"
                   onClick={() => {
-                    onActivate(item.parameter, !isActive, item.entity);
+                    onActivate(item.parameter, !isActive);
                   }}
                 >
                   {isActive ? 'Deactivate' : 'Activate'}
@@ -113,8 +108,7 @@ export default function ParametersTable(props: Props) {
             <ValuesTable
               item={item}
               currentValuesRes={map(
-                (parameterSettings && parameterSettings[item.parameter]) ??
-                  init<ParameterSettings>(),
+                parameterSettings[item.parameter] ?? init<ParameterSettings>(),
                 (x) => x.values,
               )}
               onSave={onSaveValues}

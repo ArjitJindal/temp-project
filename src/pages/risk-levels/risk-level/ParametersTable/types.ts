@@ -2,6 +2,7 @@ import {
   ParameterAttributeRiskValuesMatchTypeEnum,
   ParameterAttributeRiskValuesParameterEnum,
   ParameterAttributeRiskValuesParameterTypeEnum,
+  ParameterAttributeRiskValuesRiskEntityTypeEnum,
   ParameterAttributeRiskValuesRiskScoreTypeEnum,
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
   RiskParameterLevelKeyValue,
@@ -10,7 +11,6 @@ import {
   RiskParameterValueMultiple,
   RiskParameterValueRange,
 } from '@/apis';
-import { RiskEntityType } from '@/apis/models/RiskEntityType';
 
 export type RiskValueContent = RiskParameterValue['content'];
 export type RiskValueType = RiskValueContent['kind'];
@@ -44,7 +44,6 @@ export function riskValueMultiple(values: RiskParameterValueLiteral[]): RiskPara
 }
 
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
-export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
 export type ParameterSettings = {
   isActive: boolean;
@@ -55,7 +54,7 @@ export interface RiskLevelTableItem {
   parameter: ParameterName;
   title: string;
   description: string;
-  entity: RiskEntityType;
+  entity: ParameterAttributeRiskValuesRiskEntityTypeEnum;
   isDerived: boolean;
   dataType: DataType;
   riskScoreType: ParameterAttributeRiskValuesRiskScoreTypeEnum;
