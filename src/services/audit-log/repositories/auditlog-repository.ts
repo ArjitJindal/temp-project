@@ -51,6 +51,7 @@ export class AuditLogRepository {
         $gte: params.afterTimestamp || 0,
         $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       },
+      'user.role': { $ne: 'root' },
     })
 
     if (params.filterTypes != null) {
