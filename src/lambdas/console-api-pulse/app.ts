@@ -7,14 +7,14 @@ import { StackConstants } from '@cdk/constants'
 import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
+
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
-import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
@@ -108,17 +108,11 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       const parameter = (event.queryStringParameters || {})
         .parameter as ParameterAttributeRiskValuesParameterEnum
 
-      const entityType = (event.queryStringParameters || {})
-        .entityType as RiskEntityType
-
       if (parameter == null) {
-        throw new BadRequest(`"parameter" is a required query parameter`)
-      }
-      if (entityType == null) {
-        throw new BadRequest(`"entity type" is a required query parameter`)
+        throw new BadRequest(`"parameter" is a requred query parameter`)
       }
 
-      return await riskRepository.getParameterRiskItem(parameter, entityType)
+      return await riskRepository.getParameterRiskItem(parameter)
     }
     throw new BadRequest('Unhandled request')
   }

@@ -2,12 +2,10 @@ import _ from 'lodash'
 import { migrateAllTenants } from './tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 export type ParameterNewFieldRequest = {
   parameterName: string
   newField: Record<string, unknown>
-  entityType: RiskEntityType
 }
 
 export async function addNewPulseRiskParameterField(
@@ -27,12 +25,9 @@ async function addNewPulseRiskParameterFieldPrivate(
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
 
   const parameters = (await riskRepository.getParameterRiskItems()) ?? []
-  const { newField, parameterName, entityType } = parameterNewFieldRequest
+  const { newField, parameterName } = parameterNewFieldRequest
   for (const parameterAttributeDetails of parameters) {
-    if (
-      parameterName === parameterAttributeDetails.parameter &&
-      entityType === parameterAttributeDetails.riskEntityType
-    ) {
+    if (parameterName === parameterAttributeDetails.parameter) {
       await riskRepository.createOrUpdateParameterRiskItem({
         ...parameterAttributeDetails,
         ...newField,
