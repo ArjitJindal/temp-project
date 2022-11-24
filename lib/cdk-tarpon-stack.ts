@@ -314,10 +314,8 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     const atlasFunctionProps: Partial<FunctionProps> = {
-      securityGroups: config.resource.LAMBDA_VPC_ENABLED
-        ? [securityGroup]
-        : undefined,
-      vpc: config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
+      securityGroups: this.shouldUseVpc() ? [securityGroup] : undefined,
+      vpc: this.shouldUseVpc() ? vpc : undefined,
       environment: {
         SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
@@ -1017,7 +1015,7 @@ export class CdkTarponStack extends cdk.Stack {
     new CfnOutput(this, 'API Gateway endpoint URL - Console API', {
       value: consoleApi.urlForPath('/'),
     })
-    if (this.config.stage !== 'local') {
+    if (this.shouldUseVpc()) {
       new CfnOutput(this, 'Lambda VPC ID', {
         value: vpc.vpcId,
       })
@@ -1314,8 +1312,16 @@ export class CdkTarponStack extends cdk.Stack {
     }
   }
 
+  private shouldUseVpc() {
+    return (
+      this.config.resource.LAMBDA_VPC_ENABLED &&
+      this.config.stage !== 'local' &&
+      process.env.ENV !== 'dev:user'
+    )
+  }
+
   private createVpc() {
-    if (this.config.stage === 'local') {
+    if (!this.shouldUseVpc()) {
       return {
         vpc: null,
         vpcCidr: null,
@@ -1323,46 +1329,36 @@ export class CdkTarponStack extends cdk.Stack {
       } as any
     }
 
-    const isDevUserStack = process.env.ENV === 'dev:user'
     const vpcCidr = '10.0.0.0/21'
-    const vpc = isDevUserStack
-      ? ec2.Vpc.fromLookup(this, 'vpc', { vpcId: 'vpc-0c40f136d207221de' })
-      : new ec2.Vpc(this, 'vpc', {
-          cidr: vpcCidr,
-          subnetConfiguration: [
-            {
-              subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-              cidrMask: 24,
-              name: 'PrivateSubnet1',
-            },
-            {
-              subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-              cidrMask: 24,
-              name: 'PrivateSubnet2',
-            },
-            {
-              subnetType: ec2.SubnetType.PUBLIC,
-              cidrMask: 28,
-              name: 'PublicSubnet1',
-            },
-          ],
-        })
+    const vpc = new ec2.Vpc(this, 'vpc', {
+      cidr: vpcCidr,
+      subnetConfiguration: [
+        {
+          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          cidrMask: 24,
+          name: 'PrivateSubnet1',
+        },
+        {
+          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          cidrMask: 24,
+          name: 'PrivateSubnet2',
+        },
+        {
+          subnetType: ec2.SubnetType.PUBLIC,
+          cidrMask: 28,
+          name: 'PublicSubnet1',
+        },
+      ],
+    })
 
-    const securityGroup = isDevUserStack
-      ? ec2.SecurityGroup.fromLookupByName(
-          this,
-          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-          vpc
-        )
-      : new ec2.SecurityGroup(
-          this,
-          StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-          {
-            vpc,
-            securityGroupName: StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-          }
-        )
+    const securityGroup = new ec2.SecurityGroup(
+      this,
+      StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+      {
+        vpc,
+        securityGroupName: StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
+      }
+    )
     securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidr), ec2.Port.tcp(27017))
 
     return {
