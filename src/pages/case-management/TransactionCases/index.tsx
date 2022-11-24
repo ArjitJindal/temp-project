@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
+import moment from 'moment';
 import TransactionStateButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { AddToSlackButton } from '../components/AddToSlackButton';
@@ -37,6 +38,7 @@ import { TableItem } from '@/pages/case-management/TransactionCases/types';
 import TransactionSearchButton from '@/pages/transactions/components/TransactionSerachButton';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -125,7 +127,8 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
-        exportData: 'createdTimestamp',
+        exportData: (entity) =>
+          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         onCell: onCaseCell,
         sorter: true,
         width: 150,
@@ -217,7 +220,8 @@ export default function TransactionCases(props: Props) {
         ellipsis: true,
         valueType: 'dateTimeRange',
         onCell: onTransactionCell,
-        exportData: 'createdTimestamp',
+        exportData: (entity) =>
+          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         render: (_, entity) => {
           return <TimestampDisplay timestamp={entity.createdTimestamp} />;
         },

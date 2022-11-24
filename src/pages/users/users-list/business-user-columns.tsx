@@ -116,7 +116,8 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       width: 150,
       sorter: true,
       dataIndex: 'createdTimestamp',
-      exportData: 'createdTimestamp',
+      exportData: (entity) =>
+        moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
       valueType: 'dateTimeRange',
       render: (_, user) => {
         return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);

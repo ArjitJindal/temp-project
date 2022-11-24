@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
+import moment from 'moment';
 import TransactionStateSearchButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
@@ -31,6 +32,7 @@ import UserLink from '@/components/UserLink';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -108,7 +110,8 @@ export default function UserCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
-        exportData: 'createdTimestamp',
+        exportData: (entity) =>
+          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         sorter: true,
         width: 150,
         render: (_, entity) => {

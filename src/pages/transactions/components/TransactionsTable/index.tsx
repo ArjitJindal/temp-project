@@ -89,7 +89,7 @@ export default function TransactionsTable(props: Props) {
         width: 180,
         ellipsis: true,
         dataIndex: 'timestamp',
-        exportData: 'timestamp',
+        exportData: (entity) => moment(entity.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         valueType: 'dateTimeRange',
         sorter: !disableSorting,
         render: (_, transaction) => {

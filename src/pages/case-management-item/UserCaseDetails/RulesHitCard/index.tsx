@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import moment from 'moment';
 import { ExpandTabRef } from '../../UserCaseDetails';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
@@ -19,6 +20,7 @@ import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export function expandedRowRender(transaction: CaseTransaction) {
   return (
@@ -108,7 +110,8 @@ export default function RulesHitCard(props: Props) {
               width: 130,
               ellipsis: true,
               dataIndex: 'timestamp',
-              exportData: 'timestamp',
+              exportData: (entity) =>
+                moment(entity.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
               valueType: 'dateTimeRange',
               render: (_, entity) => {
                 return <TimestampDisplay timestamp={entity?.timestamp} />;
