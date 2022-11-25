@@ -21,6 +21,7 @@ import {
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
+  RiskParameterValueTimeRange,
 } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
@@ -48,6 +49,8 @@ type RiskValueContentByType<T extends RiskValueType> = T extends 'LITERAL'
   ? RiskParameterValueRange
   : T extends 'MULTIPLE'
   ? RiskParameterValueMultiple
+  : T extends 'TIME_RANGE'
+  ? RiskParameterValueTimeRange
   : never;
 
 export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {

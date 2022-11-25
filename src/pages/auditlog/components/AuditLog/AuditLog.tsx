@@ -1,21 +1,25 @@
 import { useCallback, useRef, useState } from 'react';
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 import { Typography, DatePicker } from 'antd';
-import { RangeValue } from 'rc-picker/lib/interface';
+import _ from 'lodash';
+import { useNavigate } from 'react-router';
+import EntityFilterButton from '../EntityFilterButton';
 import { TableSearchParams } from './types';
+import { useTableData } from './helpers';
 import { useApi } from '@/api';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
-import { parseQueryString } from '@/utils/routing';
-import { useDeepEqualEffect } from '@/utils/hooks';
-import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
-
-import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import { RequestTable } from '@/components/RequestTable';
-import { AuditLog } from '@/apis';
+import { AuditLog, AuditLogListResponse } from '@/apis';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { useQuery } from '@/utils/queries/hooks';
+import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { queryAdapter } from '@/pages/case-management/helpers';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import { makeUrl, parseQueryString } from '@/utils/routing';
 
 export type AuditLogItem = AuditLog & {
   index: number;
@@ -42,27 +46,15 @@ export default function AuditLogTable() {
     }));
   }, [parsedParams]);
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
-    moment().subtract(1, 'day'),
-    moment(),
-  ]);
-
-  const results = useCallback(async (): Promise<TableData<AuditLog>> => {
-    const { sort, page, filterTypes } = params;
-    let startTimestamp = moment().subtract(1, 'day').valueOf();
-    let endTimestamp = Date.now();
+  const queryResults = useQuery<AuditLogListResponse>(AUDIT_LOGS_LIST({ ...params }), async () => {
+    const { sort, page, timestamp, filterTypes } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
-    const [start, end] = dateRange ?? [];
-    if (start != null && end != null) {
-      startTimestamp = start.startOf('day').valueOf();
-      endTimestamp = end.endOf('day').valueOf();
-    }
     const [response, time] = await measure(() =>
       api.getAuditlog({
         limit: DEFAULT_PAGE_SIZE!,
         skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
-        afterTimestamp: startTimestamp,
-        beforeTimestamp: endTimestamp,
+        afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
+        beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Number.MAX_SAFE_INTEGER,
         filterTypes: filterTypes,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
@@ -72,14 +64,11 @@ export default function AuditLogTable() {
       title: 'Table Loaded',
       time,
     });
-    return {
-      success: true,
-      total: response.data.length,
-      items: response.data,
-    };
-  }, [analytics, api, dateRange, params]);
+    return response;
+  });
 
-  // const tableQueryResult = useTableData(results);
+  const tableQueryResult = useTableData(queryResults);
+  const navigate = useNavigate();
 
   const actionRef = useRef<TableActionType>(null);
 
@@ -109,21 +98,25 @@ export default function AuditLogTable() {
           </>
         );
       },
+      hideInSearch: true,
     },
     {
       title: 'Event',
       dataIndex: 'action',
       width: 150,
+      hideInSearch: true,
     },
     {
       title: 'Before',
       width: 150,
       dataIndex: 'oldImage',
+      hideInSearch: true,
     },
     {
       title: 'After',
       width: 150,
       dataIndex: 'newImage',
+      hideInSearch: true,
     },
     {
       title: 'Action Taken By',
@@ -132,6 +125,7 @@ export default function AuditLogTable() {
       render: (_, entity) => {
         return entity.user?.email;
       },
+      hideInSearch: true,
     },
     {
       title: 'Time of Action',
@@ -140,18 +134,82 @@ export default function AuditLogTable() {
       render: (_, entity) => {
         return <TimestampDisplay timestamp={entity.timestamp} />;
       },
+      hideInSearch: true,
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'timestamp',
+      width: 150,
+      valueType: 'dateRange',
+      hideInTable: true,
     },
   ];
 
+  const pushParamsToNavigation = useCallback(
+    (params: TableSearchParams) => {
+      navigate(makeUrl('/auditlog', {}, queryAdapter.serializer(params)), {
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+
+  const handleChangeParams = (params: AllParams<TableSearchParams>) => {
+    pushParamsToNavigation({
+      ...params,
+      page: params.page,
+      sort: params.sort,
+      filterTypes: params.filterTypes,
+      timestamp: params.timestamp,
+    });
+  };
+
   return (
-    <RequestTable<AuditLog>
-      request={results}
+    <QueryResultsTable<AuditLog, TableSearchParams>
+      queryResults={tableQueryResult}
+      params={params}
+      showResultsInfo
+      onChangeParams={handleChangeParams}
+      actionsHeader={[
+        ({ params, setParams }) => {
+          console.log('params', params);
+          return (
+            <>
+              <EntityFilterButton
+                initialState={params.filterTypes ?? []}
+                onConfirm={(value) => {
+                  setParams((prevState) => ({
+                    ...prevState,
+                    filterTypes: value,
+                  }));
+                }}
+              />
+              <DatePicker.RangePicker
+                value={[
+                  params.timestamp ? moment(params.timestamp[0]) : moment().subtract(1, 'days'),
+                  params.timestamp ? moment(params.timestamp[1]) : moment(),
+                ]}
+                onChange={(value) => {
+                  _.debounce(() => {
+                    setParams((prevState) => ({
+                      ...prevState,
+                      timestamp:
+                        value && value[0] && value[1]
+                          ? [`${value[0].valueOf()}`, `${value[1].valueOf()}`]
+                          : [`${moment().subtract(1, 'days').valueOf()}`, `${moment().valueOf()}`],
+                    }));
+                  }, 200)();
+                }}
+              />
+            </>
+          );
+        },
+      ]}
       form={{
         labelWrap: true,
       }}
-      toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-      bordered
       search={false}
+      bordered
       actionRef={actionRef}
       rowKey="caseId"
       scroll={{ x: 1300 }}

@@ -38,6 +38,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus,
       transactionId: params.transactionId,
+      filterTypes: params.filterTypes?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -72,8 +73,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         }) ?? [],
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
-      caseStatus: raw.caseStatus === 'CLOSED' ? 'CLOSED' : 'OPEN',
+      caseStatus:
+        raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
       transactionId: raw.transactionId,
+      filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
     };
   },
 };

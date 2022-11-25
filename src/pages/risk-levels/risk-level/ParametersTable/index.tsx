@@ -60,6 +60,8 @@ export default function ParametersTable(props: Props) {
                   return <Tag color="blue">{type}</Tag>;
                 case 'MULTIPLE':
                   return <Tag color="cyan">{type}</Tag>;
+                case 'TIME_RANGE':
+                  return <Tag color="blue">{type}</Tag>;
               }
               return neverReturn(type, <Tag>{type}</Tag>);
             },

@@ -1,4 +1,4 @@
-import { RuleAction, TransactionState } from '@/apis';
+import { AuditLogType, RuleAction, TransactionState } from '@/apis';
 import { SortOrder } from '@/components/ui/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
@@ -22,4 +22,5 @@ export type TableSearchParams = Partial<{
   tagValue: string;
   caseStatus: 'OPEN' | 'CLOSED';
   transactionId: string;
+  filterTypes: AuditLogType[];
 }>;

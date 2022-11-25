@@ -17,6 +17,7 @@ import { getErrorMessage, isEqual } from '@/utils/lang';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { TableColumn, TableData, TableDataItem, TableRow } from '@/components/ui/Table/types';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { AuditLogType } from '@/apis';
 
 export type RequestFunctionType<T extends object, Params extends object = ParamsType> = (
   params: Params & {
@@ -43,6 +44,7 @@ type ParamsState<Params extends object> = {
   params: Params;
   sort: Record<string, SortOrder>;
   userId?: string;
+  filterTypes?: AuditLogType[];
 };
 
 type PickedUpProps<T extends object, Params, ValueType> = Pick<
