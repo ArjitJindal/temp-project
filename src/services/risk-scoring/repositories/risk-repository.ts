@@ -7,7 +7,7 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { ArsItem, DrsItem, KrsItem } from '../types'
-import { getRiskLevelFromScore, getRiskScoreFromLevel } from '../utils'
+import { getRiskLevelFromScore } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -23,7 +23,6 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -200,7 +199,7 @@ export class RiskRepository {
     return score
   }
 
-  async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
+  async getRiskClassification(): Promise<Array<any>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -221,9 +220,9 @@ export class RiskRepository {
     }
   }
 
-  async createOrUpdateRiskClassificationConfig(
+  async createOrUpdateRiskClassification(
     riskClassificationValues: any
-  ): Promise<RiskClassificationConfig> {
+  ): Promise<any> {
     const now = Date.now()
     const newRiskClassificationValues: any = {
       classificationValues: riskClassificationValues,
@@ -263,7 +262,7 @@ export class RiskRepository {
         return manualDRSItem
       }
       const drsScore = await this.getDrsScore(userId)
-      const riskClassificationValues = await this.getRiskClassificationValues()
+      const riskClassificationValues = await this.getRiskClassification()
       const drsRiskLevel = getRiskLevelFromScore(
         riskClassificationValues,
         drsScore
@@ -285,13 +284,10 @@ export class RiskRepository {
     isUpdatable?: boolean
   ) {
     const now = Date.now()
-    const riskClassificationValues = await this.getRiskClassificationValues()
-
     const newDRSRiskItem: any = {
       riskLevel: riskLevel,
       isManualOverride: true,
       isUpdatable: isUpdatable ?? true,
-      riskScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
       createdAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {

@@ -1,7 +1,6 @@
-import { Db, MongoClient, WithId } from 'mongodb'
+import { Db, MongoClient } from 'mongodb'
 import _ from 'lodash'
 import { getAffectedInterval, getTimeLabels } from '../utils'
-import { DashboardStatsDRSDistributionData } from './types'
 import dayjs from '@/utils/dayjs'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
@@ -9,8 +8,6 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_HOURLY,
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
-  DRS_SCORES_DISTRIBUTION_STATS_COLLECTION,
-  DRS_SCORES_COLLECTION,
   DAY_DATE_FORMAT_JS,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
@@ -25,9 +22,6 @@ import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -229,50 +223,6 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  private async recalculateDRSDistributionStats(db: Db) {
-    const drsScoresCollection = db.collection<TransactionCaseManagement>(
-      DRS_SCORES_COLLECTION(this.tenantId)
-    )
-    const aggregationCollection = DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(
-      this.tenantId
-    )
-    const dynamoDb = getDynamoDbClient()
-
-    const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
-    const riskClassificationValues =
-      await riskRepository.getRiskClassificationValues()
-    const riskIntervalBoundries = riskClassificationValues.map(
-      (classificationValue: RiskClassificationScore) =>
-        classificationValue.lowerBoundRiskScore
-    )
-    riskIntervalBoundries.push(
-      riskClassificationValues[riskClassificationValues.length - 1]
-        .upperBoundRiskScore
-    )
-
-    await drsScoresCollection
-      .aggregate([
-        {
-          $bucket: {
-            groupBy: '$drsScore',
-            boundaries: riskIntervalBoundries,
-            default: 100,
-            output: {
-              count: { $sum: 1 },
-            },
-          },
-        },
-        {
-          $merge: {
-            into: aggregationCollection,
-            whenMatched: 'merge',
-            whenNotMatched: 'insert',
-          },
-        },
-      ])
-      .next()
-  }
-
   public async recalculateTransactionsVolumeStats(db: Db, timestamp?: number) {
     const transactionsCollection = db.collection<TransactionCaseManagement>(
       TRANSACTIONS_COLLECTION(this.tenantId)
@@ -460,7 +410,7 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  public async refreshTransactionStats(timestamp?: number) {
+  public async refreshStats(timestamp?: number) {
     const db = this.mongoDb.db()
 
     await Promise.all([
@@ -469,11 +419,6 @@ export class DashboardStatsRepository {
       this.recalculateHitsByUser(db, 'ORIGIN', timestamp),
       this.recalculateHitsByUser(db, 'DESTINATION', timestamp),
     ])
-  }
-
-  public async refreshUserStats() {
-    const db = this.mongoDb.db()
-    await this.recalculateDRSDistributionStats(db)
   }
 
   public async getTransactionCountStats(
@@ -628,54 +573,6 @@ export class DashboardStatsRepository {
       rulesHit: x.rulesHit,
     }))
   }
-  private createDistributionItems(
-    riskClassificationValues: RiskClassificationScore[],
-    buckets: WithId<DashboardStatsTransactionsCountData>[]
-  ) {
-    let total = 0
-    buckets.map((bucket: any) => {
-      total += bucket.count
-    })
-    const result: any = []
-    buckets.map((bucket: any) => {
-      riskClassificationValues.map(
-        (classificationValue: RiskClassificationScore) => {
-          if (bucket._id === classificationValue.lowerBoundRiskScore) {
-            result.push({
-              riskLevel: classificationValue.riskLevel,
-              count: bucket.count,
-              percentage: ((100 * bucket.count) / total).toFixed(2),
-              riskScoreRange: `${classificationValue.lowerBoundRiskScore} - ${classificationValue.upperBoundRiskScore}`,
-            })
-          }
-        }
-      )
-    })
-    return result
-  }
-
-  public async getDRSDistributionStats(): Promise<any> {
-    const db = this.mongoDb.db()
-
-    const collection = db.collection<DashboardStatsTransactionsCountData>(
-      DRS_SCORES_DISTRIBUTION_STATS_COLLECTION(this.tenantId)
-    )
-
-    const dynamoDb = getDynamoDbClient()
-
-    const riskRepository = new RiskRepository(this.tenantId, { dynamoDb })
-    const riskClassificationValues =
-      await riskRepository.getRiskClassificationValues()
-
-    const result = await collection.find({}).toArray()
-
-    const distributionItems = this.createDistributionItems(
-      riskClassificationValues,
-      result
-    )
-
-    return distributionItems
-  }
 
   public async getRuleHitCountStats(
     tenantId: string,
@@ -683,7 +580,7 @@ export class DashboardStatsRepository {
     endTimestamp: number
   ): Promise<DashboardStatsRulesCountData[]> {
     const db = this.mongoDb.db()
-    const collection = db.collection<DashboardStatsDRSDistributionData>(
+    const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
     )
 

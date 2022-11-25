@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 
@@ -35,20 +34,4 @@ export const getRiskLevelFromScore = (
 
 export const getAgeFromTimestamp = (timestamp: number) => {
   return dayjs().diff(dayjs(timestamp), 'year')
-}
-
-export const getRiskScoreFromLevel = (
-  riskClassificationValues: Array<any>,
-  riskLevel: RiskLevel
-): number => {
-  let calculatedRiskScore = 75
-  riskClassificationValues.forEach((value) => {
-    if (riskLevel == value.riskLevel) {
-      calculatedRiskScore = _.mean([
-        value.upperBoundRiskScore,
-        value.lowerBoundRiskScore,
-      ])
-    }
-  })
-  return calculatedRiskScore
 }

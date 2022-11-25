@@ -82,7 +82,7 @@ async function transactionHandler(
     logger.info(`Calculation of ARS & DRS Completed`)
   }
 
-  await dashboardStatsRepository.refreshTransactionStats(transaction.timestamp)
+  await dashboardStatsRepository.refreshStats(transaction.timestamp)
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
   if (!currentStatus && newStatus !== 'ALLOW' && cases.length > 0) {
@@ -121,9 +121,7 @@ async function userHandler(
   const mongoDb = await getMongoDbClient()
   updateLogMetadata({ userId: user.userId })
   logger.info(`Processing User`)
-  const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-    mongoDb,
-  })
+
   const db = mongoDb.db()
   const userCollection = db.collection<Business | User>(
     USERS_COLLECTION(tenantId)
@@ -131,13 +129,7 @@ async function userHandler(
   await userCollection.replaceOne({ userId: user.userId }, user, {
     upsert: true,
   })
-  logger.info(
-    `Has krs feat: ${await tenantHasFeature(tenantId, 'PULSE_KRS_CALCULATION')}`
-  )
-  if (await tenantHasFeature(tenantId, 'PULSE_KRS_CALCULATION')) {
-    logger.info(`Refreshing DRS User distribution stats`)
-    await dashboardStatsRepository.refreshUserStats()
-  }
+
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
   })

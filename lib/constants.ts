@@ -100,9 +100,8 @@ export const StackConstants = {
   CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiTransactionsViewFunction'
   ),
-  CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiDashboardStatsFunction'
-  ),
+  CONSOLE_API_DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME:
+    getResourceNameForTarpon('ConsoleApiDashboardStatsTransactionsFunction'),
   TRANSACTION_COMMENTS_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionsCommentsFunction'
   ),

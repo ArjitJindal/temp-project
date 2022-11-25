@@ -35,7 +35,7 @@ describe('Verify hits-per-user statistics', () => {
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     })
-    await statsRepository.refreshTransactionStats(timestamp)
+    await statsRepository.refreshStats(timestamp)
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -82,7 +82,7 @@ describe('Verify hits-per-user statistics', () => {
       originUserId: originUserId,
       destinationUserId: destinationUserId,
     })
-    await statsRepository.refreshTransactionStats(timestamp)
+    await statsRepository.refreshStats(timestamp)
     {
       const stats = await statsRepository.getHitsByUserStats(
         dayjs('2022-01-30T00:00:00.000Z').valueOf(),
@@ -130,7 +130,7 @@ describe('Verify hits-per-user statistics', () => {
         originUserId: originUserId,
         destinationUserId: destinationUserId,
       })
-      await statsRepository.refreshTransactionStats(timestamp)
+      await statsRepository.refreshStats(timestamp)
     }
     {
       const stats = await statsRepository.getHitsByUserStats(
@@ -181,7 +181,7 @@ describe('Verify hits-per-user statistics', () => {
         originUserId: originUserId,
         destinationUserId: destinationUserId,
       })
-      await statsRepository.refreshTransactionStats(timestamp)
+      await statsRepository.refreshStats(timestamp)
     }
     {
       const stats = await statsRepository.getHitsByUserStats(
