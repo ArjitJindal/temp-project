@@ -18,7 +18,7 @@ import {
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
 import { getRuleActionColor, getRuleActionTitle } from '../../../../utils/rules';
-import { header } from './dashboardutils';
+import header from './dashboardutils';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import { useApi } from '@/api';

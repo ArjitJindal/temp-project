@@ -6,7 +6,7 @@ import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import RulesHitBreakdown from '../RulesHitBreakdownChart';
-import { header } from '../dashboardutils';
+import header from '../dashboardutils';
 import style from '../../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';

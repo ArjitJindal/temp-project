@@ -15,7 +15,7 @@
     "synth:pipeline": "cdk synth phytoplankton-pipeline",
     "deploy:dev": "ENV=dev cdk deploy dev-phytoplankton",
     "deploy:dev:user": "ENV=dev:user cdk deploy dev-phytoplankton-$GITHUB_USER-$S_NO --require-approval never",
-    "deploy:dev:clean": "npm run clear && yarn && npm run build:dev && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
+    "deploy:dev:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && npm run build:dev && npm run synth:dev && npm run deploy:dev -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:dev:user:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626 && npm run build:dev && npm run synth:dev:user && npm run deploy:dev:user -- --profile=AWSAdministratorAccess-911899431626",
     "deploy:sandbox": "ENV=sandbox cdk deploy sandbox-phytoplankton",
     "deploy:sandbox:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825 && npm run build:sandbox && npm run synth:sandbox && npm run deploy:sandbox -- --profile=AWSAdministratorAccess-293986822825",
