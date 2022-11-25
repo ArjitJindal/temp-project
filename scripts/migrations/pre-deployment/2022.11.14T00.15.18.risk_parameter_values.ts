@@ -26,6 +26,7 @@ const PARAMS_NEW_TYPE: {
   'userDetails.dateOfBirth': 'RANGE',
   'legalEntity.companyRegistrationDetails.dateOfRegistration': 'RANGE',
   createdTimestamp: 'RANGE',
+  timestamp: 'TIME_RANGE',
 }
 
 async function migrateTenant(tenant: Tenant) {

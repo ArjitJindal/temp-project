@@ -226,6 +226,19 @@ export const matchParameterValue = (
       return true
     }
   }
+  if (parameterValueContent.kind === 'TIME_RANGE') {
+    // America/Adak (GMT-10:00) Time Zone Example
+    const utcOffset = parameterValueContent.timezone.split(' ')[0]
+    const timestamp = valueToMatch as number
+    const locationTimeHours = dayjs(timestamp).tz(utcOffset).hour()
+    if (
+      locationTimeHours >= parameterValueContent.startHour &&
+      locationTimeHours < parameterValueContent.endHour
+    ) {
+      return true
+    }
+  }
+
   return false
 }
 

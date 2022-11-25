@@ -3128,6 +3128,7 @@ components:
             - $ref: '#/components/schemas/RiskParameterValueLiteral'
             - $ref: '#/components/schemas/RiskParameterValueRange'
             - $ref: '#/components/schemas/RiskParameterValueMultiple'
+            - $ref: '#/components/schemas/RiskParameterValueTimeRange'
       required:
         - content
     RiskParameterValueLiteral:
@@ -3172,6 +3173,24 @@ components:
       required:
         - kind
         - values
+    RiskParameterValueTimeRange:
+      title: RiskParameterValueTimeRange
+      properties:
+        kind:
+          type: string
+          enum:
+            - TIME_RANGE
+        startHour:
+          type: number
+        endHour:
+          type: number
+        timezone:
+          type: string
+      required:
+        - kind
+        - startHour
+        - endHour
+        - timezone
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object
@@ -3203,6 +3222,7 @@ components:
             - userDetails.dateOfBirth
             - legalEntity.companyRegistrationDetails.dateOfRegistration
             - createdTimestamp
+            - timestamp
         isActive:
           type: boolean
         isDerived:
