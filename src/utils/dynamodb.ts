@@ -149,7 +149,9 @@ export function getDynamoDbRawClient(
         }
       : credentials,
     region: isLocal ? 'local' : process.env.AWS_REGION,
-    endpoint: isLocal ? 'http://localhost:8000' : undefined,
+    endpoint: isLocal
+      ? process.env.DYNAMODB_URI || 'http://localhost:8000'
+      : undefined,
   })
   return rawClient
 }

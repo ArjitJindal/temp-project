@@ -32,14 +32,14 @@ jobs:
       - name: Setup DynamoDB localy
         uses: rrainn/dynamodb-action@v2.0.1
         with:
-          port: 8000
+          port: 7999
           cors: '*'
       - name: Start MongoDB localy
         uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4.0
           mongodb-port: 27018
-      - run: npm run test:silent -- --ci
+      - run: npm run test:ci
   # If we'll have more than one job in the future and we require all jobs to pass before we can
   # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
   # Otherwise we'll need to manually add any new jobs to be required for the branch protection settings in the GitHub repo.

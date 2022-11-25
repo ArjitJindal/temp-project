@@ -1,4 +1,9 @@
+import { exec, execSync } from 'child_process'
 import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
+
+process.env.ENV = 'local'
+process.env.DYNAMODB_URI = 'http://localhost:7999'
+process.env.RETRY_KINESIS_STREAM_NAME = 'mock-retry-stream'
 
 jest.mock('@cdk/constants', () => ({
   StackConstants: {
@@ -9,5 +14,25 @@ jest.mock('@cdk/constants', () => ({
   },
 }))
 
-process.env.ENV = 'local'
-process.env.RETRY_KINESIS_STREAM_NAME = 'mock-retry-stream'
+module.exports = async function () {
+  if (process.env.EXEC_SOURCE !== 'CI') {
+    const localDynamoDbTestPsOutput = execSync(
+      'docker ps -f name=local-dynamodb-test',
+      {
+        encoding: 'utf8',
+        stdio: [],
+      }
+    )
+    if (!localDynamoDbTestPsOutput.includes('local-dynamodb-test')) {
+      try {
+        execSync('docker rm local-dynamodb-test', { stdio: [] })
+      } catch (e) {
+        //ignore
+      }
+      exec(
+        'docker run --name local-dynamodb-test -p 7999:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -inMemory -sharedDb'
+      )
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    }
+  }
+}
