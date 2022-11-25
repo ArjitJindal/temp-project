@@ -323,6 +323,7 @@ export default function Table<
           onChangeParams({
             ...DEFAULT_PARAMS_STATE,
             ...(filters as unknown as Params),
+            ...params,
             page: 1,
             sort: sort,
           });

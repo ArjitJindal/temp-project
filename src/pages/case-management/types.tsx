@@ -7,6 +7,7 @@ export type TableSearchParams = Partial<{
   page: number;
   sort: [string, SortOrder][];
   timestamp: string[];
+  createdTimestamp: string[];
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
   originCurrenciesFilter: Array<string>;
@@ -22,5 +23,10 @@ export type TableSearchParams = Partial<{
   tagValue: string;
   caseStatus: 'OPEN' | 'CLOSED';
   transactionId: string;
+  transactionTimestamp: string[];
+  amountGreaterThanFilter: number;
+  amountLessThanFilter: number;
+  originCountryFilter: string;
+  destinationCountryFilter: string;
   filterTypes: AuditLogType[];
 }>;

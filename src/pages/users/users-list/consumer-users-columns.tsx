@@ -129,9 +129,9 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       width: 150,
       sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',
+      valueType: 'dateRange',
       exportData: (entity) =>
         moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
-      valueType: 'dateTimeRange',
       render: (_, user) => {
         return convertToDateString(user.createdTimestamp);
       },

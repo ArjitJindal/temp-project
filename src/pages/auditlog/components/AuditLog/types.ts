@@ -5,7 +5,7 @@ export type TableSearchParams = Partial<{
   caseId: string;
   page: number;
   sort: [string, SortOrder][];
-  timestamp: string[];
+  createdTimestamp: string[];
   filterTypes: AuditLogType[];
 }>;
 

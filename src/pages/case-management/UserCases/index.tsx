@@ -110,6 +110,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
+        valueType: 'dateRange',
         exportData: (entity) =>
           moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         sorter: true,
@@ -133,6 +134,7 @@ export default function UserCases(props: Props) {
         exportData: (entity): string => getUserName(entity.user),
         width: 150,
         sorter: true,
+        hideInSearch: true,
         dataIndex: '_userName',
         render: (_, entity) => {
           const userName = getUserName(entity.user);
@@ -143,7 +145,9 @@ export default function UserCases(props: Props) {
         title: 'Transactions Hit',
         exportData: (entity): number => entity.caseTransactionsIds?.length ?? 0,
         width: 150,
-        sorter: (a, b) => a.caseTransactionsIds!.length - b.caseTransactionsIds!.length,
+        sorter: true,
+        hideInSearch: true,
+        dataIndex: '_transactionsHit',
         render: (_, entity) => {
           return <>{entity.caseTransactionsIds?.length ?? 0}</>;
         },
@@ -224,6 +228,7 @@ export default function UserCases(props: Props) {
       {
         title: 'Case Status',
         exportData: 'caseStatus',
+        hideInSearch: true,
         width: 150,
         render: (_, entity) => {
           return entity.caseStatus && <CaseStatusTag caseStatus={entity.caseStatus} />;

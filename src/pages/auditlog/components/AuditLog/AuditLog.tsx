@@ -47,14 +47,16 @@ export default function AuditLogTable() {
   }, [parsedParams]);
 
   const queryResults = useQuery<AuditLogListResponse>(AUDIT_LOGS_LIST({ ...params }), async () => {
-    const { sort, page, timestamp, filterTypes } = params;
+    const { sort, page, createdTimestamp, filterTypes } = params;
     const [sortField, sortOrder] = sort[0] ?? [];
     const [response, time] = await measure(() =>
       api.getAuditlog({
         limit: DEFAULT_PAGE_SIZE!,
         skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
-        afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-        beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Number.MAX_SAFE_INTEGER,
+        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp
+          ? moment(createdTimestamp[1]).valueOf()
+          : Number.MAX_SAFE_INTEGER,
         filterTypes: filterTypes,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
@@ -138,7 +140,7 @@ export default function AuditLogTable() {
     },
     {
       title: 'Created At',
-      dataIndex: 'timestamp',
+      dataIndex: 'createdTimestamp',
       width: 150,
       valueType: 'dateRange',
       hideInTable: true,
@@ -160,7 +162,7 @@ export default function AuditLogTable() {
       page: params.page,
       sort: params.sort,
       filterTypes: params.filterTypes,
-      timestamp: params.timestamp,
+      createdTimestamp: params.createdTimestamp,
     });
   };
 
@@ -186,8 +188,10 @@ export default function AuditLogTable() {
               />
               <DatePicker.RangePicker
                 value={[
-                  params.timestamp ? moment(params.timestamp[0]) : moment().subtract(1, 'days'),
-                  params.timestamp ? moment(params.timestamp[1]) : moment(),
+                  params.createdTimestamp
+                    ? moment(params.createdTimestamp[0])
+                    : moment().subtract(1, 'days'),
+                  params.createdTimestamp ? moment(params.createdTimestamp[1]) : moment(),
                 ]}
                 onChange={(value) => {
                   _.debounce(() => {

@@ -11,6 +11,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
     return {
       page: params.page ?? 1,
       timestamp: params.timestamp?.map((x) => moment(x).valueOf()).join(','),
+      createdTimestamp: params.createdTimestamp?.map((x) => moment(x).valueOf()).join(','),
+      transactionTimestamp: params.transactionTimestamp?.map((x) => moment(x).valueOf()).join(','),
       caseId: params.caseId,
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
@@ -38,6 +40,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus,
       transactionId: params.transactionId,
+      amountGreaterThanFilter: params.amountGreaterThanFilter,
+      amountLessThanFilter: params.amountLessThanFilter,
+      originCountryFilter: params.originCountryFilter,
+      destinationCountryFilter: params.destinationCountryFilter,
       filterTypes: params.filterTypes?.join(','),
     };
   },
@@ -46,6 +52,12 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       page: parseInt(raw.page ?? '') || 1,
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => moment(parseInt(x)).format())
+        : undefined,
+      createdTimestamp: raw.createdTimestamp
+        ? raw.createdTimestamp.split(',').map((x) => moment(parseInt(x)).format())
+        : undefined,
+      transactionTimestamp: raw.transactionTimestamp
+        ? raw.transactionTimestamp.split(',').map((x) => moment(parseInt(x)).format())
         : undefined,
       caseId: raw.caseId,
       rulesHitFilter: raw.rulesHitFilter?.split(','),
@@ -76,6 +88,14 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       caseStatus:
         raw.caseStatus === 'CLOSED' ? 'CLOSED' : raw.caseStatus === 'OPEN' ? 'OPEN' : undefined,
       transactionId: raw.transactionId,
+      amountGreaterThanFilter: raw.amountGreaterThanFilter
+        ? parseInt(raw.amountGreaterThanFilter)
+        : undefined,
+      amountLessThanFilter: raw.amountLessThanFilter
+        ? parseInt(raw.amountLessThanFilter)
+        : undefined,
+      originCountryFilter: raw.originCountryFilter,
+      destinationCountryFilter: raw.destinationCountryFilter,
       filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
     };
   },

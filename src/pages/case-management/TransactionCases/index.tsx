@@ -38,6 +38,7 @@ import { TableItem } from '@/pages/case-management/TransactionCases/types';
 import TransactionSearchButton from '@/pages/transactions/components/TransactionSerachButton';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
+import COUNTRIES from '@/utils/countries';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export type CaseManagementItem = Case & {
@@ -127,6 +128,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
+        valueType: 'dateRange',
         exportData: (entity) =>
           moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         onCell: onCaseCell,
@@ -143,6 +145,7 @@ export default function TransactionCases(props: Props) {
         width: 130,
         copyable: true,
         ellipsis: true,
+        hideInSearch: true,
         onCell: onTransactionCell,
         render: (dom, entity) => {
           return (
@@ -219,11 +222,12 @@ export default function TransactionCases(props: Props) {
         width: 130,
         ellipsis: true,
         valueType: 'dateTimeRange',
+        dataIndex: 'transactionTimestamp',
         onCell: onTransactionCell,
         exportData: (entity) =>
           moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
         render: (_, entity) => {
-          return <TimestampDisplay timestamp={entity.createdTimestamp} />;
+          return <TimestampDisplay timestamp={entity.transaction?.timestamp} />;
         },
       },
       {
@@ -467,6 +471,7 @@ export default function TransactionCases(props: Props) {
       {
         title: 'Case Status',
         exportData: 'caseStatus',
+        hideInSearch: true,
         onCell: onCaseCell,
         width: 150,
         render: (_, entity) => {
@@ -537,6 +542,7 @@ export default function TransactionCases(props: Props) {
         hideInTable: true,
         width: 120,
         valueType: 'select',
+        dataIndex: 'originCurrenciesFilter',
         fieldProps: {
           options: CURRENCIES_SELECT_OPTIONS,
           allowClear: true,
@@ -548,6 +554,7 @@ export default function TransactionCases(props: Props) {
         hideInTable: true,
         width: 120,
         valueType: 'select',
+        dataIndex: 'destinationCurrenciesFilter',
         fieldProps: {
           options: CURRENCIES_SELECT_OPTIONS,
           allowClear: true,
@@ -559,6 +566,7 @@ export default function TransactionCases(props: Props) {
         hideInTable: true,
         width: 120,
         valueType: 'select',
+        dataIndex: 'originMethodFilter',
         fieldProps: {
           options: paymentMethod,
           allowClear: true,
@@ -569,9 +577,54 @@ export default function TransactionCases(props: Props) {
         hideInTable: true,
         width: 120,
         valueType: 'select',
+        dataIndex: 'destinationMethodFilter',
         fieldProps: {
           options: paymentMethod,
           allowClear: true,
+        },
+      },
+      {
+        title: 'Amount Greater Than',
+        hideInTable: true,
+        width: 120,
+        valueType: 'text',
+        dataIndex: 'amountGreaterThanFilter',
+      },
+      {
+        title: 'Amount Less Than',
+        hideInTable: true,
+        width: 120,
+        valueType: 'text',
+        dataIndex: 'amountLessThanFilter',
+      },
+      {
+        title: 'Origin Country',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        dataIndex: 'originCountryFilter',
+        fieldProps: {
+          options: Object.keys(COUNTRIES).map((country) => ({
+            label: COUNTRIES[country],
+            value: country,
+          })),
+          allowClear: true,
+          showSearch: true,
+        },
+      },
+      {
+        title: 'Destination Country',
+        hideInTable: true,
+        width: 120,
+        valueType: 'select',
+        dataIndex: 'destinationCountryFilter',
+        fieldProps: {
+          options: Object.keys(COUNTRIES).map((country) => ({
+            label: COUNTRIES[country],
+            value: country,
+          })),
+          allowClear: true,
+          showSearch: true,
         },
       },
     ];

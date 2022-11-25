@@ -92,7 +92,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       const {
         sort,
         page,
-        timestamp,
+        createdTimestamp,
         caseId,
         rulesHitFilter,
         rulesExecutedFilter,
@@ -109,14 +109,31 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         tagValue,
         caseStatus,
         transactionId,
+        transactionTimestamp,
+        amountGreaterThanFilter,
+        amountLessThanFilter,
+        originCountryFilter,
+        destinationCountryFilter,
       } = params;
+
       const [sortField, sortOrder] = sort[0] ?? [];
       const [response, time] = await measure(() =>
         api.getCaseList({
           limit: DEFAULT_PAGE_SIZE!,
           skip: ((_page ?? page)! - 1) * DEFAULT_PAGE_SIZE!,
-          afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-          beforeTimestamp: Number.MAX_SAFE_INTEGER,
+          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp
+            ? moment(createdTimestamp[1]).valueOf()
+            : Number.MAX_SAFE_INTEGER,
+          ...(transactionTimestamp &&
+            transactionTimestamp.length && {
+              afterTransactionTimestamp: transactionTimestamp
+                ? moment(transactionTimestamp[0]).valueOf()
+                : 0,
+              beforeTransactionTimestamp: transactionTimestamp
+                ? moment(transactionTimestamp[1]).valueOf()
+                : Number.MAX_SAFE_INTEGER,
+            }),
           filterId: caseId,
           filterRulesHit: rulesHitFilter,
           filterRulesExecuted: rulesExecutedFilter,
@@ -140,6 +157,10 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           filterTransactionTagValue: tagValue,
           filterCaseType: caseType,
           filterTransactionId: transactionId,
+          filterOriginCountry: originCountryFilter,
+          filterDestinationCountry: destinationCountryFilter,
+          filterTransactionAmoutAbove: amountGreaterThanFilter,
+          filterTransactionAmoutBelow: amountLessThanFilter,
         }),
       );
       analytics.event({
