@@ -33,10 +33,11 @@ export function expandedRowRender(transaction: CaseTransaction) {
 interface Props {
   caseItem: Case;
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState: (key: string, value: boolean) => void;
 }
 
 export default function RulesHitCard(props: Props) {
-  const { caseItem } = props;
+  const { caseItem, updateCollapseState } = props;
 
   const api = useApi();
   const caseId = caseItem.caseId as string;
@@ -60,12 +61,9 @@ export default function RulesHitCard(props: Props) {
 
   return (
     <Card.Root
-      header={{
-        title: 'Rules Hits',
-        collapsable: true,
-        collapsedByDefault: true,
-      }}
+      header={{ title: 'Rules Hits', collapsable: true, collapsedByDefault: true }}
       ref={props.reference}
+      onCollapseChange={(isCollapsed) => updateCollapseState('rulesHits', isCollapsed)}
     >
       <Card.Section>
         <QueryResultsTable<CaseTransaction, CommonParams>

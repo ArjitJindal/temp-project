@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import PersonsTable from './PersonsTable';
 import UserDetails from './UserDetails';
 import ExpectedTransactionLimits from './TransactionLimits';
@@ -17,52 +16,58 @@ interface Props {
   shareHoldersRef?: React.Ref<ExpandTabRef>;
   dierctorsRef?: React.Ref<ExpandTabRef>;
   documentsRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function BusinessUserDetails(props: Props) {
-  const { user, isEmbedded, collapsedByDefault } = props;
+  const { user, isEmbedded, collapsedByDefault, updateCollapseState } = props;
   const api = useApi();
 
-  useEffect(() => {
-    console.log(collapsedByDefault);
-  }, [collapsedByDefault]);
   return (
     <>
       <Card.Root
-        header={{
-          title: 'User Details',
-          collapsedByDefault,
-        }}
+        header={{ title: 'User Details', collapsedByDefault: collapsedByDefault ?? true }}
         ref={props.userDetailsRef}
+        onCollapseChange={(isCollapsed) => {
+          if (updateCollapseState) {
+            updateCollapseState('userDetails', isCollapsed);
+          }
+        }}
       >
         <UserDetails user={user} />
       </Card.Root>
       <Card.Root
-        header={{
-          title: 'Expected Transaction Limits',
-          collapsedByDefault,
-        }}
+        header={{ title: 'Expected Transaction Limits', collapsedByDefault }}
         ref={props.expectedTransactionsRef}
+        onCollapseChange={(isCollapsed) => {
+          if (updateCollapseState) {
+            updateCollapseState('expectedTransactions', isCollapsed);
+          }
+        }}
       >
         <ExpectedTransactionLimits user={user} />
       </Card.Root>
       <Card.Root
-        header={{
-          title: 'Shareholders',
-          collapsedByDefault,
-        }}
+        header={{ title: 'Shareholders', collapsedByDefault }}
         ref={props.shareHoldersRef}
+        onCollapseChange={(isCollapsed) => {
+          if (updateCollapseState) {
+            updateCollapseState('shareHolders', isCollapsed);
+          }
+        }}
       >
         {user.shareHolders && user.shareHolders.length > 0 && (
           <PersonsTable persons={user.shareHolders} />
         )}
       </Card.Root>
       <Card.Root
-        header={{
-          title: 'Directors',
-          collapsedByDefault,
-        }}
+        header={{ title: 'Directors', collapsedByDefault }}
         ref={props.dierctorsRef}
+        onCollapseChange={(isCollapsed) => {
+          if (updateCollapseState) {
+            updateCollapseState('directors', isCollapsed);
+          }
+        }}
       >
         {user.directors && user.directors.length > 0 && <PersonsTable persons={user.directors} />}
       </Card.Root>
@@ -83,6 +88,7 @@ export default function BusinessUserDetails(props: Props) {
           });
         }}
         documentsRef={props.documentsRef}
+        updateCollapseState={updateCollapseState}
       />
     </>
   );

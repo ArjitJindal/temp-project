@@ -26,10 +26,11 @@ export const FIXED_API_PARAMS = {
 interface Props {
   userId: string;
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function InsightsCard(props: Props) {
-  const { userId } = props;
+  const { userId, updateCollapseState } = props;
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
     displayBy: 'COUNT',
@@ -41,11 +42,13 @@ export default function InsightsCard(props: Props) {
 
   return (
     <Card.Root
-      header={{
-        title: 'Transaction Insights',
-        collapsedByDefault: true,
-      }}
+      header={{ title: 'Transaction Insights', collapsedByDefault: true }}
       ref={props.reference}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState('insights', isCollapsed);
+        }
+      }}
     >
       <Card.Section className={s.root}>
         <TransactionsSelector

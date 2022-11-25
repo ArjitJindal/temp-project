@@ -15,15 +15,16 @@ import { ExpandTabsRef } from '@/pages/case-management-item';
 interface Props {
   caseItem: Case;
   onCaseUpdate: (caseItem: Case) => void;
+  updateCollapseState: (key: string, value: boolean) => void;
   onReload: () => void;
 }
 
 export interface ExpandTabRef {
-  expand: () => void;
+  expand: (shouldExpand?: boolean) => void;
 }
 
 function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
-  const { caseItem, onCaseUpdate } = props;
+  const { caseItem, onCaseUpdate, updateCollapseState } = props;
   const api = useApi();
 
   const caseId = caseItem.caseId as string;
@@ -44,13 +45,13 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
   const commentsCardRef = useRef<ExpandTabRef>(null);
 
   useImperativeHandle(ref, () => ({
-    expand: () => {
-      transactionDetailsCardRef.current?.expand();
-      rulesHitCardRef.current?.expand();
-      transactionEventsCardRef.current?.expand();
-      originUserDetailsCardRef.current?.expand();
-      destinationUserDetailsCardRef.current?.expand();
-      commentsCardRef.current?.expand();
+    expand: (shouldExpand) => {
+      transactionDetailsCardRef.current?.expand(shouldExpand);
+      rulesHitCardRef.current?.expand(shouldExpand);
+      transactionEventsCardRef.current?.expand(shouldExpand);
+      originUserDetailsCardRef.current?.expand(shouldExpand);
+      destinationUserDetailsCardRef.current?.expand(shouldExpand);
+      commentsCardRef.current?.expand(shouldExpand);
     },
   }));
 
@@ -86,21 +87,31 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
             <TransactionDetailsCard
               transaction={transaction}
               reference={transactionDetailsCardRef}
+              updateCollapseState={updateCollapseState}
             />
-            <RulesHitCard rulesHit={transaction.hitRules} reference={rulesHitCardRef} />
+            <RulesHitCard
+              rulesHit={transaction.hitRules}
+              reference={rulesHitCardRef}
+              updateCollapseState={updateCollapseState}
+            />
             <TransactionEventsCard
               events={transaction.events ?? []}
               reference={transactionEventsCardRef}
+              updateCollapseState={updateCollapseState}
             />
             <UserDetailsCard
               title="Origin (Sender) User Details"
               user={transaction.originUser}
               reference={originUserDetailsCardRef}
+              updateCollapseState={updateCollapseState}
+              collapseKey="originUserDetails"
             />
             <UserDetailsCard
               title="Destination (Receiver) User Details"
               user={transaction.destinationUser}
               reference={destinationUserDetailsCardRef}
+              updateCollapseState={updateCollapseState}
+              collapseKey="destinationUserDetails"
             />
             <CommentsCard
               caseId={caseItem.caseId}
@@ -110,6 +121,7 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
                 onCaseUpdate({ ...caseItem, comments: newComments });
               }}
               reference={commentsCardRef}
+              updateCollapseState={updateCollapseState}
               onReload={props.onReload}
             />
           </>

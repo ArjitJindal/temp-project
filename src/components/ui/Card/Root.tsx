@@ -4,20 +4,22 @@ import s from './index.module.less';
 import Column from './Column';
 import Header, { HeaderSettings } from './Header';
 import { useLocalStorageState } from './helpers';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 interface Props {
   disabled?: boolean;
   className?: string;
   header?: HeaderSettings;
   children: React.ReactNode;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
 interface ExpandCardRef {
-  expand: () => void;
+  expand: (shouldExpand?: boolean) => void;
 }
 
 const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
-  const { disabled, className, header, children } = props;
+  const { disabled, className, header, children, onCollapseChange } = props;
   const { collapsable = true, collapsableKey, collapsedByDefault = false } = header ?? {};
 
   const [isCollapsed, setCollapsed] = useLocalStorageState(
@@ -26,8 +28,16 @@ const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
   );
 
   useImperativeHandle(ref, () => ({
-    expand: () => setCollapsed(false),
+    expand: (shouldExpand) => {
+      setCollapsed(!shouldExpand);
+    },
   }));
+
+  useDeepEqualEffect(() => {
+    if (onCollapseChange) {
+      onCollapseChange(isCollapsed);
+    }
+  }, [isCollapsed]);
 
   return (
     <div className={cn(s.root, className, disabled && s.disabled)}>

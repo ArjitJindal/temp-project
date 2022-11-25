@@ -9,18 +9,16 @@ import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 interface Props {
   rulesHit: HitRulesResult[];
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState: (key: string, value: boolean) => void;
 }
 
 export default function RulesHitCard(props: Props) {
-  const { rulesHit } = props;
+  const { rulesHit, updateCollapseState } = props;
   return (
     <Card.Root
-      header={{
-        title: 'Rules Hits',
-        collapsable: true,
-        collapsedByDefault: true,
-      }}
+      header={{ title: 'Rules Hits', collapsable: true, collapsedByDefault: true }}
       ref={props.reference}
+      onCollapseChange={(isCollapsed) => updateCollapseState('rulesHit', isCollapsed)}
     >
       <Card.Section>
         <Table

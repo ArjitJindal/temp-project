@@ -12,16 +12,20 @@ interface Props {
   user: InternalConsumerUser;
   collapsedByDefault?: boolean;
   userDetailsRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function UserDetails(props: Props) {
-  const { user } = props;
+  const { user, updateCollapseState } = props;
   return (
     <Card.Root
-      header={{
-        title: 'User Details',
-      }}
+      header={{ title: 'User Details', collapsedByDefault: props?.collapsedByDefault ?? true }}
       ref={props.userDetailsRef}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState('userDetails', isCollapsed);
+        }
+      }}
     >
       <Card.Row className={s.container}>
         <Card.Column className={s.all}>

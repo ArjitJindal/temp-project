@@ -335,18 +335,21 @@ interface Props {
   userId: string | undefined;
   collapsedByDefault?: boolean;
   userTransactionHistoryRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function UserTransactionHistoryTable(props: Props) {
-  const { userId, collapsedByDefault } = props;
+  const { userId, collapsedByDefault, userTransactionHistoryRef, updateCollapseState } = props;
   return (
     <Card.Root
       disabled={userId == null}
-      header={{
-        title: 'Transaction History',
-        collapsedByDefault,
+      header={{ title: 'Transaction History', collapsedByDefault: collapsedByDefault ?? true }}
+      ref={userTransactionHistoryRef}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState('userTransactionHistory', isCollapsed);
+        }
       }}
-      ref={props.userTransactionHistoryRef}
     >
       {userId && <Content userId={userId} />}
     </Card.Root>

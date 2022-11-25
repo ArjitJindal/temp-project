@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
@@ -18,7 +18,7 @@ import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
 import Button from '@/components/ui/Button';
 
 export interface ExpandTabsRef {
-  expand: () => void;
+  expand: (shouldExpand?: boolean) => void;
 }
 
 function CaseManagementItemPage() {
@@ -46,6 +46,21 @@ function CaseManagementItemPage() {
 
   const transactionRef = useRef<ExpandTabsRef>(null);
   const userRef = useRef<ExpandTabsRef>(null);
+  const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
+
+  const isAllCollapsed = useMemo(() => {
+    return _.every(collapseState, (value) => value);
+  }, [collapseState]);
+
+  const updateCollapseState = useCallback(
+    (key: string, value: boolean) => {
+      setCollapseState((prevState) => ({
+        ...prevState,
+        [key]: value,
+      }));
+    },
+    [setCollapseState],
+  );
 
   return (
     <PageWrapper
@@ -65,8 +80,8 @@ function CaseManagementItemPage() {
                 type={'text'}
                 onClick={
                   caseItem.caseType === 'TRANSACTION'
-                    ? () => transactionRef.current?.expand()
-                    : () => userRef.current?.expand()
+                    ? () => transactionRef.current?.expand(isAllCollapsed)
+                    : () => userRef.current?.expand(isAllCollapsed)
                 }
                 analyticsName={'case-management-item-expand-button'}
                 style={{
@@ -76,7 +91,7 @@ function CaseManagementItemPage() {
                   borderColor: '#1890ff',
                 }}
               >
-                Expand All
+                {isAllCollapsed ? 'Expand all' : 'Collapse all'}
               </Button>
               <Card.Section>
                 {caseItem.caseType === 'TRANSACTION' && (
@@ -85,6 +100,7 @@ function CaseManagementItemPage() {
                     onCaseUpdate={handleCaseUpdate}
                     ref={transactionRef}
                     onReload={onReload}
+                    updateCollapseState={updateCollapseState}
                   />
                 )}
 
@@ -93,6 +109,7 @@ function CaseManagementItemPage() {
                     caseItem={caseItem}
                     onCaseUpdate={handleCaseUpdate}
                     ref={userRef}
+                    updateCollapseState={updateCollapseState}
                     onReload={onReload}
                   />
                 )}

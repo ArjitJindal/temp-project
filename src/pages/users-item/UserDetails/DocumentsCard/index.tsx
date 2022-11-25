@@ -10,19 +10,29 @@ interface Props {
   onFileUploaded: (file: FileInfo) => Promise<void>;
   onFileRemoved: (s3Key: string) => Promise<void>;
   documentsRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function DocumentsCard(props: Props) {
-  const { user, isEmbedded, collapsedByDefault, onFileUploaded, onFileRemoved } = props;
+  const {
+    user,
+    isEmbedded,
+    collapsedByDefault = false,
+    onFileUploaded,
+    onFileRemoved,
+    updateCollapseState,
+  } = props;
   const files = user.files || [];
   return (
     <Card.Root
       disabled={isEmbedded && files.length === 0}
-      header={{
-        title: 'Documents',
-        collapsedByDefault,
-      }}
+      header={{ title: 'Documents', collapsedByDefault }}
       ref={props.documentsRef}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState('documents', isCollapsed);
+        }
+      }}
     >
       <Card.Section>
         <UploadFilesList

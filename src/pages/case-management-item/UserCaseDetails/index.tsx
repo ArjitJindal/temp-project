@@ -10,11 +10,12 @@ import { ExpandTabsRef } from '@/pages/case-management-item';
 interface Props {
   caseItem: Case;
   onCaseUpdate: (caseItem: Case) => void;
+  updateCollapseState: (key: string, value: boolean) => void;
   onReload: () => void;
 }
 
 export interface ExpandTabRef {
-  expand: () => void;
+  expand: (shouldExpand?: boolean) => void;
 }
 
 function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
@@ -22,26 +23,16 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
 
   const userDetailsRef = useRef<ExpandTabRef>(null);
-  const expectedTransactionsRef = useRef<ExpandTabRef>(null);
-  const shareHoldersRef = useRef<ExpandTabRef>(null);
-  const dierctorsRef = useRef<ExpandTabRef>(null);
-  const documentsRef = useRef<ExpandTabRef>(null);
-  const legalDocumentsRef = useRef<ExpandTabRef>(null);
   const rulesHitRef = useRef<ExpandTabRef>(null);
   const insightsRef = useRef<ExpandTabRef>(null);
   const commentsRef = useRef<ExpandTabRef>(null);
 
   useImperativeHandle(ref, () => ({
-    expand: () => {
-      userDetailsRef.current?.expand();
-      expectedTransactionsRef.current?.expand();
-      shareHoldersRef.current?.expand();
-      dierctorsRef.current?.expand();
-      documentsRef.current?.expand();
-      legalDocumentsRef.current?.expand();
-      rulesHitRef.current?.expand();
-      insightsRef.current?.expand();
-      commentsRef.current?.expand();
+    expand: (shouldExpand) => {
+      userDetailsRef.current?.expand(shouldExpand);
+      rulesHitRef.current?.expand(shouldExpand);
+      insightsRef.current?.expand(shouldExpand);
+      commentsRef.current?.expand(shouldExpand);
     },
   }));
 
@@ -55,9 +46,20 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
         hideHistory={true}
         hideInsights={true}
         ref={userDetailsRef}
+        updateCollapseState={props.updateCollapseState}
       />
-      <RulesHitCard caseItem={caseItem} reference={rulesHitRef} />
-      {user?.userId && <InsightsCard userId={user.userId} reference={insightsRef} />}
+      <RulesHitCard
+        caseItem={caseItem}
+        reference={rulesHitRef}
+        updateCollapseState={props.updateCollapseState}
+      />
+      {user?.userId && (
+        <InsightsCard
+          userId={user.userId}
+          reference={insightsRef}
+          updateCollapseState={props.updateCollapseState}
+        />
+      )}
       <CommentsCard
         caseId={caseItem.caseId}
         comments={caseItem.comments ?? []}
@@ -65,6 +67,7 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
           onCaseUpdate({ ...caseItem, comments: newComments });
         }}
         reference={commentsRef}
+        updateCollapseState={props.updateCollapseState}
         caseStatus={caseItem.caseStatus}
         onReload={props.onReload}
       />

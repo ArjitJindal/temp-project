@@ -12,6 +12,7 @@ interface Props {
   userDetailsRef?: React.Ref<ExpandTabRef>;
   legalDocumentsRef?: React.Ref<ExpandTabRef>;
   documentsRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function ConsumerUserDetails(props: Props) {
@@ -24,11 +25,13 @@ export default function ConsumerUserDetails(props: Props) {
         user={user}
         collapsedByDefault={collapsedByDefault}
         userDetailsRef={props.userDetailsRef}
+        updateCollapseState={props.updateCollapseState}
       />
       <LegalDocumentsTable
         person={user}
         collapsedByDefault={collapsedByDefault}
         legalDocumentsRef={props.legalDocumentsRef}
+        updateCollapseState={props.updateCollapseState}
       />
       <DocumentsCard
         user={user}
@@ -47,6 +50,7 @@ export default function ConsumerUserDetails(props: Props) {
             fileId: fileS3Key,
           });
         }}
+        updateCollapseState={props.updateCollapseState}
       />
     </>
   );

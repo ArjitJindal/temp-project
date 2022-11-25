@@ -7,16 +7,16 @@ import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetail
 interface Props {
   transaction: CaseTransaction;
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState: (key: string, value: boolean) => void;
 }
 
 const TransactionDetailsCard = (props: Props) => {
-  const { transaction, reference } = props;
+  const { transaction, reference, updateCollapseState } = props;
   return (
     <Card.Root
-      header={{
-        title: 'Transaction Details',
-      }}
+      header={{ title: 'Transaction Details' }}
       ref={reference}
+      onCollapseChange={(isCollapsed) => updateCollapseState('transactionDetails', isCollapsed)}
     >
       <Card.Section direction="horizontal" align="start">
         <TransactionInfoCard transaction={transaction} />

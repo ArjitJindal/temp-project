@@ -9,19 +9,23 @@ interface Props {
   title: string;
   user: InternalConsumerUser | InternalBusinessUser | MissingUser | undefined;
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
+  collapseKey: string;
 }
 
 export default function UserDetailsCard(props: Props) {
-  const { title, user } = props;
+  const { title, user, updateCollapseState } = props;
+
   return (
     <Card.Root
       disabled={user == null || !('type' in user)}
-      header={{
-        title,
-        collapsable: true,
-        collapsedByDefault: true,
-      }}
+      header={{ title, collapsable: true, collapsedByDefault: true }}
       ref={props.reference}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState(props.collapseKey, isCollapsed);
+        }
+      }}
     >
       <Card.Section>
         <UserIdNameCard user={user} showRiskLevel={true} />

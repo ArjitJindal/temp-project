@@ -15,12 +15,13 @@ interface Props {
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
   reference?: React.Ref<ExpandTabRef>;
+  updateCollapseState: (key: string, value: boolean) => void;
   caseStatus?: CaseStatus;
   onReload: () => void;
 }
 
 export default function CommentsCard(props: Props) {
-  const { comments, caseId, onCommentsUpdate, caseStatus } = props;
+  const { comments, caseId, onCommentsUpdate, caseStatus, updateCollapseState } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
@@ -54,9 +55,10 @@ export default function CommentsCard(props: Props) {
         header={{
           title: `Comments (${comments.length})`,
           collapsable: true,
-          collapsedByDefault: false,
+          collapsedByDefault: true,
         }}
         ref={props.reference}
+        onCollapseChange={(isCollapsed) => updateCollapseState('comments', isCollapsed)}
       >
         <Card.Section>
           {comments.length > 0 && (

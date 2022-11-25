@@ -13,6 +13,7 @@ interface Props {
   collapsedByDefault?: boolean;
   hideHistory?: boolean;
   hideInsights?: boolean;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
@@ -28,15 +29,15 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
   const insightsRef = React.useRef<ExpandTabRef>(null);
 
   useImperativeHandle(ref, () => ({
-    expand: () => {
-      userDetailsRef.current?.expand();
-      expectedTransactionsRef.current?.expand();
-      shareHoldersRef.current?.expand();
-      dierctorsRef.current?.expand();
-      documentsRef.current?.expand();
-      legalDocumentsRef.current?.expand();
-      userTransactionHistoryRef.current?.expand();
-      insightsRef.current?.expand();
+    expand: (shouldExpand) => {
+      userDetailsRef.current?.expand(shouldExpand);
+      expectedTransactionsRef.current?.expand(shouldExpand);
+      shareHoldersRef.current?.expand(shouldExpand);
+      dierctorsRef.current?.expand(shouldExpand);
+      documentsRef.current?.expand(shouldExpand);
+      legalDocumentsRef.current?.expand(shouldExpand);
+      userTransactionHistoryRef.current?.expand(shouldExpand);
+      insightsRef.current?.expand(shouldExpand);
     },
   }));
 
@@ -55,6 +56,7 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
           shareHoldersRef={shareHoldersRef}
           dierctorsRef={dierctorsRef}
           documentsRef={documentsRef}
+          updateCollapseState={props.updateCollapseState}
         />
       )}
       {user?.type === 'CONSUMER' && (
@@ -65,6 +67,7 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
           userDetailsRef={userDetailsRef}
           legalDocumentsRef={legalDocumentsRef}
           documentsRef={documentsRef}
+          updateCollapseState={props.updateCollapseState}
         />
       )}
       {!hideHistory && (
@@ -72,9 +75,16 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
           userId={user.userId}
           collapsedByDefault={true}
           userTransactionHistoryRef={userTransactionHistoryRef}
+          updateCollapseState={props.updateCollapseState}
         />
       )}
-      {!hideInsights && <InsightsCard userId={user.userId} reference={insightsRef} />}
+      {!hideInsights && (
+        <InsightsCard
+          userId={user.userId}
+          reference={insightsRef}
+          updateCollapseState={props.updateCollapseState}
+        />
+      )}
     </>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import _ from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { ExpandTabRef } from '../case-management-item/UserCaseDetails';
 import UserDetails from './UserDetails';
@@ -62,7 +63,22 @@ export default function UserItem() {
 
   const userRef = React.useRef<ExpandTabRef>(null);
 
-  // todo: make a proper routing
+  const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
+
+  const isAllCollapsed = useMemo(() => {
+    return _.every(collapseState, (value) => value);
+  }, [collapseState]);
+
+  const updateCollapseState = useCallback(
+    (key: string, value: boolean) => {
+      setCollapseState((prevState) => ({
+        ...prevState,
+        [key]: value,
+      }));
+    },
+    [setCollapseState],
+  );
+
   return (
     <PageWrapper
       backButton={{
@@ -81,7 +97,7 @@ export default function UserItem() {
               </Card.Section>
               <Button
                 type={'text'}
-                onClick={() => userRef.current?.expand()}
+                onClick={() => userRef.current?.expand(isAllCollapsed)}
                 analyticsName={'case-management-item-expand-button'}
                 style={{
                   width: 'max-content',
@@ -90,10 +106,15 @@ export default function UserItem() {
                   borderColor: COLORS.lightBlue.base,
                 }}
               >
-                Expand All
+                {isAllCollapsed ? 'Expand all' : 'Collapse all'}
               </Button>
               <Card.Section>
-                <UserDetails user={user} ref={userRef} collapsedByDefault={true} />
+                <UserDetails
+                  user={user}
+                  ref={userRef}
+                  collapsedByDefault={true}
+                  updateCollapseState={updateCollapseState}
+                />
               </Card.Section>
             </>
           )}

@@ -14,16 +14,20 @@ interface Props {
   person: InternalConsumerUser;
   collapsedByDefault?: boolean;
   legalDocumentsRef?: React.Ref<ExpandTabRef>;
+  updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export function LegalDocumentsTable(prop: Props) {
-  const { person } = prop;
+  const { person, updateCollapseState, collapsedByDefault } = prop;
   return (
     <Card.Root
-      header={{
-        title: 'Legal Documents',
-      }}
+      header={{ title: 'Legal Documents', collapsedByDefault: collapsedByDefault || false }}
       ref={prop.legalDocumentsRef}
+      onCollapseChange={(isCollapsed) => {
+        if (updateCollapseState) {
+          updateCollapseState('legalDocuments', isCollapsed);
+        }
+      }}
     >
       <div className={s.expandedRow}>
         <Table<LegalDocument & { i: number }>
