@@ -128,7 +128,11 @@ export class CaseCreationService {
           ? caseUsers.origin?.userId
           : caseUsers.destination?.userId
       if (userId != null) {
-        const cases = await this.caseRepository.getCasesByUserId(userId, 'USER')
+        const cases = await this.caseRepository.getCasesByUserId(userId, {
+          filterOutCaseStatus: 'CLOSED',
+          filterCaseType: 'USER',
+          filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
+        })
         const existedCase = cases.find(
           ({ caseStatus }) => caseStatus !== 'CLOSED'
         )
@@ -138,11 +142,7 @@ export class CaseCreationService {
             existedCase?.caseTransactionsIds || []
           ).length,
         })
-        if (
-          existedCase &&
-          (existedCase.caseTransactionsIds || []).length <
-            MAX_TRANSACTION_IN_A_CASE
-        ) {
+        if (existedCase) {
           logger.info('Update existed case with transaction')
           result.push({
             ...existedCase,

@@ -273,6 +273,51 @@ describe('User cases', () => {
       expect(cases.length).toEqual(0)
     })
   })
+
+  describe('Run #7', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID)
+
+    test('Make sure to select next open and not over fulled case', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+      async function addTransaction(counter: number) {
+        const transaction = getTestTransaction({
+          transactionId: `transaction_${counter}`,
+          originUserId: TEST_USER_1.userId,
+          destinationUserId: undefined,
+        })
+        const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+          transaction,
+        ])
+        expect(results.length).not.toEqual(0)
+        const [result] = results
+        const cases = await caseCreationService.handleTransaction({
+          ...transaction,
+          ...result,
+        })
+        return expectUserCase(cases)
+      }
+
+      const case1 = await addTransaction(0)
+      case1.caseTransactionsIds = [...new Array(999)].map(
+        (_, counter) => `fake_transaction_${counter}`
+      )
+      await caseCreationService.caseRepository.addCaseMongo(case1)
+
+      // Goes to the same case, making transaction number 1000
+      const _case1 = await addTransaction(1)
+      expect(_case1.caseId).toEqual(case1.caseId)
+
+      // New case should be created
+      const case2 = await addTransaction(1)
+      expect(case2.caseId).not.toEqual(case1.caseId)
+
+      // Next transaction goes to the second case
+      const _case2 = await addTransaction(2)
+      expect(_case2.caseId).toEqual(case2.caseId)
+      expect(_case2.caseTransactionsIds).toHaveLength(2)
+    })
+  })
 })
 
 describe('Transaction cases', () => {

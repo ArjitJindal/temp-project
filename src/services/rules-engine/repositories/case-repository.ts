@@ -675,13 +675,40 @@ export class CaseRepository {
 
   public async getCasesByUserId(
     userId: string,
-    caseType: CaseType,
-    directions?: ('ORIGIN' | 'DESTINATION')[]
+    params: {
+      directions?: ('ORIGIN' | 'DESTINATION')[]
+      filterCaseType: CaseType
+      filterMaxTransactions?: number
+      filterOutCaseStatus?: CaseStatus
+    }
   ): Promise<Case[]> {
     const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const directionFilters = []
+    const filters: Filter<Case>[] = []
+
+    if (params.filterCaseType) {
+      filters.push({
+        caseType: params.filterCaseType,
+      })
+    }
+
+    if (params.filterOutCaseStatus != null) {
+      filters.push({
+        caseStatus: { $ne: params.filterOutCaseStatus },
+      })
+    }
+
+    if (params.filterMaxTransactions != null) {
+      filters.push({
+        [`caseTransactionsIds.${params.filterMaxTransactions - 1}`]: {
+          $exists: false,
+        },
+      })
+    }
+
+    const directionFilters: Filter<Case>[] = []
+    const { directions } = params
     if (directions == null || directions.includes('ORIGIN')) {
       directionFilters.push({
         'caseUsers.origin.userId': userId,
@@ -692,17 +719,15 @@ export class CaseRepository {
         'caseUsers.destination.userId': userId,
       })
     }
+    if (directionFilters.length > 0) {
+      filters.push({
+        $or: directionFilters,
+      })
+    }
 
     return await casesCollection
       .find({
-        $and: [
-          {
-            caseType,
-          },
-          {
-            $or: directionFilters,
-          },
-        ],
+        $and: filters,
       })
       .toArray()
   }
