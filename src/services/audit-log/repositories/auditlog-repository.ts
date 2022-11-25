@@ -54,12 +54,10 @@ export class AuditLogRepository {
       'user.role': { $ne: 'root' },
     })
 
-    if (params.filterTypes != null) {
+    if (params.filterTypes?.length) {
       conditions.push({
-        $elemMatch: {
-          type: {
-            $in: params.filterTypes,
-          },
+        type: {
+          $in: params.filterTypes,
         },
       })
       requiresTransactions = true

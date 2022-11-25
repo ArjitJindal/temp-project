@@ -1768,7 +1768,7 @@ paths:
         - schema:
             type: array
             items:
-              type: string
+              $ref: '#/components/schemas/AuditLogType'
           in: query
           name: filterTypes
       description: ''
@@ -3865,6 +3865,15 @@ components:
             type: string
       required:
         - businessIndustry
+    AuditLogType:
+      title: AuditLogType
+      type: string
+      enum:
+        - RULE
+        - ACCOUNT
+        - CASE
+        - USER
+        - PULSE
     AuditLog:
       title: AuditLog
       x-stoplight:
@@ -3874,13 +3883,7 @@ components:
         auditlogId:
           type: string
         type:
-          type: string
-          enum:
-            - RULE
-            - ACCOUNT
-            - CASE
-            - USER
-            - PULSE
+          $ref: '#/components/schemas/AuditLogType'
         subtype:
           type: string
           enum:
