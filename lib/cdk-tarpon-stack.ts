@@ -1322,7 +1322,7 @@ export class CdkTarponStack extends cdk.Stack {
   }
 
   private createVpc() {
-    if (!this.shouldUseVpc()) {
+    if (this.config.stage === 'local' || process.env.ENV === 'dev:user') {
       return {
         vpc: null,
         vpcCidr: null,
