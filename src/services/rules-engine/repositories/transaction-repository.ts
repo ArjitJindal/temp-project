@@ -149,7 +149,9 @@ export class TransactionRepository {
       })
     }
     if (params.filterId != null) {
-      conditions.push({ transactionId: { $regex: params.filterId } })
+      conditions.push({
+        transactionId: { $regex: params.filterId, $options: 'i' },
+      })
     }
     if (params.transactionType != null) {
       conditions.push({ type: { $regex: params.transactionType } })

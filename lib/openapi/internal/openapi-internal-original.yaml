@@ -1973,6 +1973,14 @@ paths:
           in: query
           name: beforeTimestamp
         - schema:
+            type: number
+          in: query
+          name: afterTransactionTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTransactionTimestamp
+        - schema:
             type: string
           in: query
           name: filterId
@@ -2088,6 +2096,22 @@ paths:
             type: string
           in: query
           name: filterTransactionId
+        - schema:
+            type: number
+          in: query
+          name: filterTransactionAmoutAbove
+        - schema:
+            type: number
+          in: query
+          name: filterTransactionAmoutBelow
+        - schema:
+            type: string
+          in: query
+          name: filterOriginCountry
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationCountry
     post:
       summary: Cases - Update
       operationId: post-cases

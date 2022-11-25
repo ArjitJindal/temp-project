@@ -103,12 +103,27 @@ export class CaseRepository {
       },
     })
 
+    if (
+      params.beforeTransactionTimestamp != null &&
+      params.afterTransactionTimestamp != null
+    ) {
+      conditions.push({
+        'caseTransactions.timestamp': {
+          $lte: params.beforeTransactionTimestamp,
+          $gte: params.afterTransactionTimestamp,
+        },
+      })
+    }
+
     if (params.filterId != null) {
-      conditions.push({ caseId: { $regex: params.filterId } })
+      conditions.push({ caseId: { $regex: params.filterId, $options: 'i' } })
     }
     if (params.transactionType != null) {
       conditions.push({
-        'caseTransactions.type': { $regex: params.transactionType },
+        'caseTransactions.type': {
+          $regex: params.transactionType,
+          $options: 'i',
+        },
       })
     }
     if (params.filterOutStatus != null) {
@@ -212,6 +227,57 @@ export class CaseRepository {
         },
       })
     }
+
+    if (params.filterTransactionAmoutAbove != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseTransactions.originAmountDetails.transactionAmount': {
+              $gte: params.filterTransactionAmoutAbove,
+            },
+          },
+          {
+            'caseTransactions.destinationAmountDetails.transactionAmount': {
+              $gte: params.filterTransactionAmoutAbove,
+            },
+          },
+        ],
+      })
+    }
+
+    if (params.filterTransactionAmoutBelow != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseTransactions.originAmountDetails.transactionAmount': {
+              $lte: params.filterTransactionAmoutBelow,
+            },
+          },
+          {
+            'caseTransactions.destinationAmountDetails.transactionAmount': {
+              $lte: params.filterTransactionAmoutBelow,
+            },
+          },
+        ],
+      })
+    }
+
+    if (params.filterOriginCountry != null) {
+      conditions.push({
+        'caseTransactions.originAmountDetails.country': {
+          $eq: params.filterOriginCountry,
+        },
+      })
+    }
+
+    if (params.filterDestinationCountry != null) {
+      conditions.push({
+        'caseTransactions.destinationAmountDetails.country': {
+          $eq: params.filterDestinationCountry,
+        },
+      })
+    }
+
     if (params.filterCaseType != null) {
       conditions.push({
         caseType: {
@@ -274,7 +340,7 @@ export class CaseRepository {
       params?.filterCaseType === 'TRANSACTION' &&
       (params.sortField === '_originUserName' ||
         params.sortField === '_destinationUserName')
-
+    const sortCaseTransactionsHit = params.sortField === '_transactionsHit'
     if (params?.includeTransactionUsers || sortTransactionCaseUserName) {
       // NOTE: we don't store originUser/destinationUser in caseTransactions. Sorting by
       // user name will not be performant
@@ -422,6 +488,18 @@ export class CaseRepository {
                   '$caseTransactionCompanyName',
                   '$caseTransactionUserName',
                 ],
+              },
+            },
+          },
+        ]
+      )
+    } else if (sortCaseTransactionsHit) {
+      preLimitPipeline.push(
+        ...[
+          {
+            $set: {
+              _transactionsHit: {
+                $size: '$caseTransactionsIds',
               },
             },
           },

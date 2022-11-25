@@ -73,6 +73,12 @@ export const casesHandler = lambdaApi()(
         includeTransactions,
         includeTransactionUsers,
         includeTransactionEvents,
+        beforeTransactionTimestamp,
+        afterTransactionTimestamp,
+        filterTransactionAmoutBelow,
+        filterTransactionAmoutAbove,
+        filterOriginCountry,
+        filterDestinationCountry,
       } = event.queryStringParameters as any
       const params: DefaultApiGetCaseListRequest = {
         limit: parseInt(limit),
@@ -113,6 +119,20 @@ export const casesHandler = lambdaApi()(
         includeTransactions: includeTransactions === 'true',
         includeTransactionUsers: includeTransactionUsers === 'true',
         includeTransactionEvents: includeTransactionEvents === 'true',
+        beforeTransactionTimestamp: beforeTransactionTimestamp
+          ? parseInt(beforeTransactionTimestamp)
+          : undefined,
+        afterTransactionTimestamp: afterTransactionTimestamp
+          ? parseInt(afterTransactionTimestamp)
+          : undefined,
+        filterTransactionAmoutBelow: filterTransactionAmoutBelow
+          ? parseInt(filterTransactionAmoutBelow)
+          : undefined,
+        filterTransactionAmoutAbove: filterTransactionAmoutAbove
+          ? parseInt(filterTransactionAmoutAbove)
+          : undefined,
+        filterOriginCountry,
+        filterDestinationCountry,
       }
       return caseService.getCases(params)
     } else if (

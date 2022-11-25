@@ -207,6 +207,21 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({
       'caseTransactions.originPaymentDetails.method': 1,
     })
+    await casesCollection.createIndex({
+      'caseTransactions.timestamp': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.originAmountDetails.transactionAmount': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.destinationAmountDetails.transactionAmount': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.originAmountDetails.country': 1,
+    })
+    await casesCollection.createIndex({
+      'caseTransactions.destinationAmountDetails.country': 1,
+    })
 
     try {
       await db.createCollection(AUDITLOG_COLLECTION(tenantId))

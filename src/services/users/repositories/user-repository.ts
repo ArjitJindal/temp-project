@@ -151,12 +151,15 @@ export class UserRepository {
 
     if (params.filterId != null) {
       filterConditions.push({
-        userId: { $regex: params.filterId },
+        userId: { $regex: params.filterId, $options: 'i' },
       })
     }
     if (params.filterBusinessIndustry != null) {
       filterIndustryConditions.push({
-        businessIndustry: { $regex: params.filterBusinessIndustry },
+        businessIndustry: {
+          $regex: params.filterBusinessIndustry,
+          $options: 'i',
+        },
       })
     }
     if (params.filterName != null) {
