@@ -2,7 +2,9 @@ import { Col, Row } from 'antd';
 import TransactionsChartCard from './components/TransactionsChartCard';
 import RuleHitCard from './components/RulesHitCard';
 import TopUsersHitCard from './components/TopUsersHitCard';
+import DRSDistributionCard from './components/DRSDistributionCard';
 import PageWrapper from '@/components/PageWrapper';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 function Analysis() {
   return (
@@ -17,6 +19,11 @@ function Analysis() {
         <Col span={24}>
           <RuleHitCard />
         </Col>
+        <Feature name="PULSE_KRS_CALCULATION">
+          <Col span={24}>
+            <DRSDistributionCard />
+          </Col>
+        </Feature>
       </Row>
     </PageWrapper>
   );

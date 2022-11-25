@@ -1,6 +1,6 @@
 import { Card, Tabs } from 'antd';
 import styles from '../style.module.less';
-import header from './dashboardutils';
+import { header } from './dashboardutils';
 import HitsPerUserCard from './HitsPerUserCard';
 
 const TopUsersHitCard = () => {
