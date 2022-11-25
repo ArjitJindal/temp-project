@@ -83,6 +83,9 @@ const RulesHitBreakdownChart = ({
             statistic={
               {
                 title: { content: 'Total Hits' },
+                formatter: (_: any, data: string | any[]) => {
+                  return data?.length?.toLocaleString();
+                },
               } as PieConfig['statistic']
             }
           />

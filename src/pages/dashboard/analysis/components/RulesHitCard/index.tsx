@@ -71,7 +71,7 @@ export default function RuleHitCard() {
               },
             )}
           >
-            {entity.hitCount}
+            {entity.hitCount?.toLocaleString()}
           </Link>
         );
       },

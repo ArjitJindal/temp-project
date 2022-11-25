@@ -310,6 +310,9 @@ const TransactionsChartCard = () => {
                       }}
                       yAxis={{
                         title: null,
+                        label: {
+                          formatter: (value) => value.toLocaleString(),
+                        },
                       }}
                       meta={{
                         y: {

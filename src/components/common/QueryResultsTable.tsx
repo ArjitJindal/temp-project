@@ -39,8 +39,8 @@ export default function QueryResultsTable<
         showResultsInfo &&
         isSuccess(queryResults.data) && (
           <div className={s.count}>
-            Displaying {queryResults.data.value.items.length} of {queryResults.data.value.total}{' '}
-            results
+            Displaying {queryResults.data.value.items.length?.toLocaleString()} of{' '}
+            {queryResults.data.value.total?.toLocaleString()} results
           </div>
         )
       }
