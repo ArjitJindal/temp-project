@@ -557,7 +557,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(
       {
-        name: StackConstants.CONSOLE_API_DASHBOARD_STATS_TRANSACTIONS_FUNCTION_NAME,
+        name: StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
         provisionedConcurrency:
           config.resource.DASHBOARD_LAMBDA.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.DASHBOARD_LAMBDA.MEMORY_SIZE,
@@ -565,6 +565,7 @@ export class CdkTarponStack extends cdk.Stack {
       atlasFunctionProps
     )
     this.grantMongoDbAccess(dashboardStatsAlias)
+    hammerheadDynamoDbTable.grantReadData(dashboardStatsAlias)
 
     /* User */
     const { alias: userAlias } = this.createFunction({
