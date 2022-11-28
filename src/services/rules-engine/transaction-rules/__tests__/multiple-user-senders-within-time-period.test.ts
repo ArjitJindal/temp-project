@@ -58,7 +58,7 @@ describe('Core logic', () => {
       [
         null,
         null,
-        'More than 2 users transacting with a single counterparty over a set period of 30 days',
+        'More than 2 users transacting with a single counterparty over a set period of 30 days.',
       ]
     )
   })

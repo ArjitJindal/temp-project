@@ -38,7 +38,7 @@ describe('R-24 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-24').descriptionTemplate,
     },
-    ['Keyword “keyword1” in reference is blacklisted']
+    ['Keyword “keyword1” in reference is blacklisted.']
   )
 })
 

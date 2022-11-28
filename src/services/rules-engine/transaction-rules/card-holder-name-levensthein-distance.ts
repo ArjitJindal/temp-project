@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
 import { getConsumerName } from '../utils/user-rule-utils'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
@@ -46,23 +47,22 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
       true
     )
 
+    const hitResult: RuleHitResult = []
     if (
       originCardName &&
       originUserName &&
       levenshtein.get(originUserName, originCardName) >
         (allowedDistancePercentage / 100) * originUserName.length
     ) {
-      const vars = super.getTransactionVars('origin')
-
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
-          ...vars,
+          ...super.getTransactionVars('origin'),
           cardFingerprint: (
             this.transaction.originPaymentDetails as CardDetails
           )?.cardFingerprint,
         },
-      }
+      })
     }
     if (
       destinationCardName &&
@@ -70,17 +70,16 @@ export default class CardHolderNameRule extends TransactionRule<CardHolderNameRu
       levenshtein.get(destinatinoUserName, destinationCardName) >
         (allowedDistancePercentage / 100) * destinatinoUserName.length
     ) {
-      const vars = super.getTransactionVars('destination')
-
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: {
-          ...vars,
+          ...super.getTransactionVars('destination'),
           cardFingerprint: (
             this.transaction.destinationPaymentDetails as CardDetails
           )?.cardFingerprint,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

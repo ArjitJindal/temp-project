@@ -7,26 +7,15 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { subtractTime } from '../utils/time-utils'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import dayjs from '@/utils/dayjs'
-import {
-  TransactionRule,
-  TransactionVars,
-} from '@/services/rules-engine/transaction-rules/rule'
+import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 
 export type HighTrafficBetweenSamePartiesParameters = {
   timeWindow: TimeWindow
   transactionsLimit: number
-}
-
-type HighTrafficBetweenSamePartiesRuleResult = {
-  action: RuleAction
-  vars: TransactionVars<HighTrafficBetweenSamePartiesParameters> & {
-    count: number
-    delta: number
-  }
 }
 
 export default class HighTrafficBetweenSameParties extends TransactionRule<
@@ -46,23 +35,30 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<
     }
   }
 
-  public async computeRule(): Promise<
-    HighTrafficBetweenSamePartiesRuleResult | undefined
-  > {
+  public async computeRule() {
     const { transactionsLimit } = this.parameters
     const { count } = await this.computeResults()
 
+    const hitResult: RuleHitResult = []
     if (count > transactionsLimit) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           count,
           delta: count - this.parameters.transactionsLimit,
         },
-      }
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('destination'),
+          count,
+          delta: count - this.parameters.transactionsLimit,
+        },
+      })
     }
-    return undefined
+    return hitResult
   }
 
   private async computeResults() {

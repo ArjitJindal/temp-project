@@ -64,7 +64,7 @@ describe('Core logic', () => {
       [
         null,
         null,
-        'Sender made 3 transactions from 3 locations in more than 1 day(s)',
+        'Sender made 3 transactions from 3 locations in more than 1 day(s).',
       ]
     )
   })

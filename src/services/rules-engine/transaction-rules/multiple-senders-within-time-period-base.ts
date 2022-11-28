@@ -5,6 +5,7 @@ import {
 } from '../repositories/transaction-repository'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { subtractTime } from '@/services/rules-engine/utils/time-utils'
@@ -100,8 +101,18 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
         )
         .map((transaction) => transaction.senderKeyId)
     )
+
+    const hitResult: RuleHitResult = []
     if (uniqueSenders.size + 1 > sendersCount) {
-      return { action: this.action, ...super.getTransactionVars(null) }
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
     }
+    return hitResult
   }
 }

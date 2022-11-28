@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
@@ -33,11 +34,13 @@ export default class CardIssuedCountryRule extends TransactionRule<CardIssuedCou
     const { cardIssuedCountry } = this.transaction
       .originPaymentDetails as CardDetails
 
+    const hitResult: RuleHitResult = []
     if (!cardIssuedCountry || !allowedCountries.includes(cardIssuedCountry)) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: super.getTransactionVars('origin'),
-      }
+      })
     }
+    return hitResult
   }
 }

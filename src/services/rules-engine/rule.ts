@@ -1,12 +1,9 @@
-import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Vars } from '@/services/rules-engine/utils/format-description'
 
-export type RuleResult = {
-  action: RuleAction
-  vars?: Vars
-  hitDirections?: RuleHitDirection[]
-}
+export type RuleHitResult = Array<{
+  direction: 'ORIGIN' | 'DESTINATION'
+  vars: Vars
+}>
 
 export type RuleFilter = () => Promise<boolean> | boolean
 
@@ -15,7 +12,7 @@ export abstract class Rule {
     throw new Error('Not implemented')
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule(): Promise<RuleHitResult | undefined> {
     throw new Error('Not implemented')
   }
 }

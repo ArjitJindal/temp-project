@@ -76,7 +76,7 @@ describe('R-129 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-129').descriptionTemplate,
     },
-    [null, 'Sender’s payment details are in blacklisted payment details']
+    [null, 'Sender’s payment details are in blacklisted payment details.']
   )
 })
 

@@ -14,6 +14,7 @@ import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { MissingRuleParameter } from './errors'
 import dayjs from '@/utils/dayjs'
@@ -131,33 +132,28 @@ export default class TransactionsVelocityRule extends TransactionRule<
         receiverTransactionsCountPromise,
       ])
 
-    if (
-      senderTransactionsCount + 1 > transactionsLimit ||
-      receiverTransactionsCount + 1 > transactionsLimit
-    ) {
-      let transactionsDif = null
-      if (senderTransactionsCount + 1 > transactionsLimit) {
-        transactionsDif = senderTransactionsCount - transactionsLimit + 1
-      }
-      if (receiverTransactionsCount + 1 > transactionsLimit) {
-        transactionsDif = receiverTransactionsCount - transactionsLimit + 1
-      }
-
-      let direction: 'origin' | 'destination' | null = null
-      if (senderTransactionsCount + 1 > transactionsLimit) {
-        direction = 'origin'
-      } else if (receiverTransactionsCount + 1 > transactionsLimit) {
-        direction = 'destination'
-      }
-
-      return {
-        action: this.action,
+    const hitResult: RuleHitResult = []
+    if (senderTransactionsCount + 1 > transactionsLimit) {
+      const transactionsDif = senderTransactionsCount - transactionsLimit + 1
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
-          ...super.getTransactionVars(direction),
+          ...super.getTransactionVars('origin'),
           transactionsDif: transactionsDif,
         },
-      }
+      })
     }
+    if (receiverTransactionsCount + 1 > transactionsLimit) {
+      const transactionsDif = receiverTransactionsCount - transactionsLimit + 1
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('destination'),
+          transactionsDif: transactionsDif,
+        },
+      })
+    }
+    return hitResult
   }
 
   private async getTransactionsCount(

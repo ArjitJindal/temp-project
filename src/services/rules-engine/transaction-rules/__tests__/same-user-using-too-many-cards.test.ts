@@ -53,7 +53,7 @@ describe('R-54 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-54').descriptionTemplate,
     },
-    [null, 'Sender used 2 unique cards above the limit of 1']
+    [null, 'Sender used 2 unique cards above the limit of 1.']
   )
 })
 

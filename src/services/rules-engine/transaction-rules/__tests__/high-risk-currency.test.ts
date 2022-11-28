@@ -58,7 +58,7 @@ describe('Core logic', () => {
         descriptionTemplate:
           getTransactionRuleByRuleId('R-6').descriptionTemplate,
       },
-      ['Sender’s currency (EUR) is a High Risk']
+      ['Sender’s currency (EUR) is a High Risk.']
     )
 
     testRuleDescriptionFormatting(
@@ -70,7 +70,7 @@ describe('Core logic', () => {
           destinationUserId: '4-2',
           originAmountDetails: {
             transactionAmount: 800,
-            transactionCurrency: 'EUR',
+            transactionCurrency: 'TWD',
           },
           destinationAmountDetails: {
             transactionAmount: 68351.34,
@@ -82,7 +82,7 @@ describe('Core logic', () => {
         descriptionTemplate:
           getTransactionRuleByRuleId('R-6').descriptionTemplate,
       },
-      ['Receiver’s currency (INR) is a High Risk']
+      ['Receiver’s currency (INR) is a High Risk.']
     )
   })
 

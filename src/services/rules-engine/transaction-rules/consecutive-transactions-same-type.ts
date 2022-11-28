@@ -6,6 +6,7 @@ import {
   TRANSACTION_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
@@ -111,18 +112,21 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
       filteredTargetTransactions
     )?.timestamp
     const lastTransactionTimestamp = lastOtherTransaction?.timestamp
+
+    const hitResult: RuleHitResult = []
     if (
       filteredTargetTransactions.length + 1 > targetTransactionsThreshold &&
       (!lastTransactionTimestamp ||
         (lastTargetTransactionTimestamp &&
           lastTransactionTimestamp < lastTargetTransactionTimestamp))
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
         },
-      }
+      })
     }
+    return hitResult
   }
 }

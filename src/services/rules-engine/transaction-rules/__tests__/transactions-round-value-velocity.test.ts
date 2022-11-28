@@ -83,8 +83,8 @@ describe('R-130 description formatting', () => {
     },
     [
       null,
-      'Sender is sending 1 or more transactions as round values ending in 00.00 (hundreds without cents) within time 1 day',
-      'Receiver is receiving 1 or more transactions as round values ending in 00.00 (hundreds without cents) within time 1 day',
+      'Sender is sending 1 or more transactions as round values ending in 00.00 (hundreds without cents) within time 1 day.',
+      'Receiver is receiving 1 or more transactions as round values ending in 00.00 (hundreds without cents) within time 1 day.',
     ]
   )
 })

@@ -58,7 +58,7 @@ describe('R-52 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-52').descriptionTemplate,
     },
-    [null, null, 'Same ip address (1.1.1.1) used by 2 unique users']
+    [null, null, 'Same ip address (1.1.1.1) used by 2 unique users.']
   )
 })
 

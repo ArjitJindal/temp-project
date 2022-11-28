@@ -17,6 +17,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
 import { getTimestampRange } from '../utils/time-utils'
+import { RuleHitResult } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { logger } from '@/core/logger'
@@ -91,6 +92,7 @@ export default class TransactionsPatternPercentageBaseRule<
     }
 
     let missingAggregation = false
+    const hitResult: RuleHitResult = []
     for (const direction of directions) {
       const userAggregationData =
         await this.getRuleAggregations<AggregationData>(
@@ -112,12 +114,12 @@ export default class TransactionsPatternPercentageBaseRule<
         allTransactionsCount > initialTransactions &&
         userMatchPercentage > patternPercentageLimit
       ) {
-        return {
-          action: this.action,
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
           vars: {
             ...super.getTransactionVars(direction),
           },
-        }
+        })
       }
     }
 
@@ -126,6 +128,8 @@ export default class TransactionsPatternPercentageBaseRule<
         originMatchPattern,
         destinationMatchPattern
       )
+    } else {
+      return hitResult
     }
   }
 
@@ -235,16 +239,15 @@ export default class TransactionsPatternPercentageBaseRule<
         : Promise.resolve(),
     ])
 
+    const hitResult: RuleHitResult = []
     if (
       senderTransactions.length + 1 > initialTransactions &&
       senderMatchPercentage > patternPercentageLimit
     ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('origin'),
-        },
-      }
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
     }
 
     if (
@@ -252,13 +255,12 @@ export default class TransactionsPatternPercentageBaseRule<
       receiverTransactions.length + 1 > initialTransactions &&
       receiverMatchPercentage > patternPercentageLimit
     ) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars('destination'),
-        },
-      }
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
     }
+    return hitResult
   }
 
   private async getTimeAggregatedResult(

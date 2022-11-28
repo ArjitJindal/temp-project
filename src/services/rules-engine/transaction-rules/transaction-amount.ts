@@ -5,6 +5,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -43,16 +44,25 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         min: threshold,
       }))
     )
+    const hitResult: RuleHitResult = []
     if (thresholdHit != null) {
-      return {
-        action: this.action,
-        hitDirections: ['ORIGIN' as const, 'DESTINATION' as const],
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           limit: thresholdHit.min?.toFixed(2),
           currency: thresholdHit.currency,
         },
-      }
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('origin'),
+          limit: thresholdHit.min?.toFixed(2),
+          currency: thresholdHit.currency,
+        },
+      })
     }
+    return hitResult
   }
 }

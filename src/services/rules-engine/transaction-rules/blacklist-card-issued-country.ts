@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { expandCountryGroup } from '@/utils/countries'
@@ -31,23 +32,25 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
     const { cardIssuedCountry: destinationCardIssuedCountry } = (this
       .transaction.destinationPaymentDetails || {}) as CardDetails
 
+    const hitResult: RuleHitResult = []
     if (
       originCardIssuedCountry &&
       blacklistedCountries.includes(originCardIssuedCountry)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: super.getTransactionVars('origin'),
-      }
+      })
     }
     if (
       destinationCardIssuedCountry &&
       blacklistedCountries.includes(destinationCardIssuedCountry)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: super.getTransactionVars('destination'),
-      }
+      })
     }
+    return hitResult
   }
 }

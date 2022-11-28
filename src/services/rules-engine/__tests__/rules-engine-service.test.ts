@@ -54,7 +54,7 @@ describe('Verify Transaction', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: true,
             ruleHitMeta: {
@@ -68,7 +68,7 @@ describe('Verify Transaction', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -106,7 +106,7 @@ describe('Verify Transaction', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: false,
           },
@@ -137,7 +137,7 @@ describe('Verify Transaction', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: false,
           },
@@ -301,7 +301,7 @@ describe('Verify Transaction Event', () => {
               ruleId: 'R-1',
               ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
-              ruleDescription: 'test rule description',
+              ruleDescription: 'test rule description.',
               ruleAction: 'BLOCK',
               ruleHit: true,
               ruleHitMeta: {
@@ -315,7 +315,7 @@ describe('Verify Transaction Event', () => {
               ruleId: 'R-1',
               ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
               ruleName: 'test rule name',
-              ruleDescription: 'test rule description',
+              ruleDescription: 'test rule description.',
               ruleAction: 'BLOCK',
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
@@ -338,7 +338,7 @@ describe('Verify Transaction Event', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHit: true,
             ruleHitMeta: {
@@ -352,7 +352,7 @@ describe('Verify Transaction Event', () => {
             ruleId: 'R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
-            ruleDescription: 'test rule description',
+            ruleDescription: 'test rule description.',
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],

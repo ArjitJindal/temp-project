@@ -14,7 +14,6 @@ import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_FILTERS } from './user-filters'
 import { TRANSACTION_FILTERS } from './transaction-filters'
-import { PartyVars } from './transaction-rules/rule'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { UserEventRepository } from './repositories/user-event-repository'
@@ -373,7 +372,7 @@ export class RulesEngineService {
             senderUser: data.senderUser,
             receiverUser: data.receiverUser,
           },
-          { parameters, filters: ruleInstance.filters, action },
+          { parameters, filters: ruleInstance.filters },
           { ruleInstance },
           this.dynamoDb
         )
@@ -414,7 +413,7 @@ export class RulesEngineService {
           runSegment?.close()
         }
 
-        const ruleHit = !_.isNil(ruleResult)
+        const ruleHit = (ruleResult && ruleResult.length > 0) ?? false
 
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric
@@ -432,31 +431,26 @@ export class RulesEngineService {
 
         logger.info(`Completed rule`)
 
-        let ruleHitDirections: RuleHitDirection[] = []
-        if (ruleResult?.hitDirections) {
-          ruleHitDirections = ruleResult?.hitDirections
-        } else if (ruleResult?.vars?.['hitParty'] != null) {
-          // trying to derive hit direction from vars. Not ideal solution,
-          // we should move to proper returning hitDirections field
-          const vars: PartyVars = ruleResult.vars.hitParty as PartyVars
-          ruleHitDirections = [
-            vars.type === 'origin' ? 'ORIGIN' : 'DESTINATION',
-          ]
-        } else {
-          ruleHitDirections = ['ORIGIN', 'DESTINATION']
-        }
+        const ruleHitDirections: RuleHitDirection[] =
+          ruleResult?.map((result) => result.direction) || []
+        const ruleDescriptions = (
+          ruleHit
+            ? await Promise.all(
+                ruleResult!.map((result) =>
+                  generateRuleDescription(rule, parameters as Vars, result.vars)
+                )
+              )
+            : [rule.description]
+        ).map((description) =>
+          _.last(description) !== '.' ? `${description}.` : description
+        )
+        const ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
 
         return {
           ruleId: ruleInstance.ruleId,
           ruleInstanceId: ruleInstance.id,
           ruleName: ruleInstance.ruleNameAlias || rule.name,
-          ruleDescription: ruleResult
-            ? await generateRuleDescription(
-                rule,
-                parameters as Vars,
-                ruleResult?.vars
-              )
-            : rule.description,
+          ruleDescription,
           ruleAction: action,
           ruleHit,
           ruleHitMeta: ruleHit

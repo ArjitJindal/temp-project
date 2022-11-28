@@ -9,6 +9,7 @@ import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -110,20 +111,28 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
         volumeThreshold = null
       }
 
-      let direction: 'origin' | 'destination' | null = null
+      const hitResult: RuleHitResult = []
       if (results?.isSenderHit) {
-        direction = 'origin'
-      } else if (results?.isReceiverHit) {
-        direction = 'destination'
+        hitResult.push({
+          direction: 'ORIGIN',
+          vars: {
+            ...super.getTransactionVars('origin'),
+            volumeDelta,
+            volumeThreshold,
+          },
+        })
       }
-
-      const vars = {
-        ...super.getTransactionVars(direction),
-        volumeDelta,
-        volumeThreshold,
+      if (results?.isReceiverHit) {
+        hitResult.push({
+          direction: 'DESTINATION',
+          vars: {
+            ...super.getTransactionVars('destination'),
+            volumeDelta,
+            volumeThreshold,
+          },
+        })
       }
-
-      return { action: this.action, vars }
+      return hitResult
     }
   }
 

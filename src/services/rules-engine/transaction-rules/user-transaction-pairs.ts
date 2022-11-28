@@ -2,6 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 
@@ -57,9 +58,18 @@ export default class UserTransactionPairsRule extends TransactionRule<
     const { userPairsThreshold } = this.parameters
     const sendingTransactions = await this.getSenderSendingTransactions()
 
+    const hitResult: RuleHitResult = []
     if (sendingTransactions.length > userPairsThreshold) {
-      return { action: this.action }
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: {},
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {},
+      })
     }
+    return hitResult
   }
 
   protected async getSenderSendingTransactions() {

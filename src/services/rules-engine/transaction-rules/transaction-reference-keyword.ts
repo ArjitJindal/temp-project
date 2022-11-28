@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import * as levenshtein from 'fast-levenshtein'
+import { RuleHitResult } from '../rule'
 import { LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
@@ -35,8 +36,9 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
       .trim()
       .split(/\s+/)
     const referenceWordsSet = new Set(referenceWords)
+    let hitWord = undefined
     if (allowedDistance != undefined) {
-      const hitWord = referenceWords.find((refrenceWord) => {
+      hitWord = referenceWords.find((refrenceWord) => {
         return keywords.find((keyword) => {
           return (
             levenshtein.get(refrenceWord, keyword.toLowerCase()) <=
@@ -44,21 +46,28 @@ export default class TransactionReferenceKeywordRule extends TransactionRule<Tra
           )
         })
       })
-      if (hitWord) {
-        return { action: this.action }
-      }
     }
-    const keyword = keywords.find((keyword) =>
-      referenceWordsSet.has(keyword.toLowerCase())
-    )
-    if (keyword) {
-      return {
-        action: this.action,
+    hitWord =
+      hitWord ??
+      keywords.find((keyword) => referenceWordsSet.has(keyword.toLowerCase()))
+
+    const hitResult: RuleHitResult = []
+    if (hitWord) {
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
-          ...super.getTransactionVars(null),
-          keyword,
+          ...super.getTransactionVars('origin'),
+          keyword: hitWord,
         },
-      }
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('destination'),
+          keyword: hitWord,
+        },
+      })
     }
+    return hitResult
   }
 }

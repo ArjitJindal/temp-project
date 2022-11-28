@@ -68,7 +68,7 @@ describe('R-7 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-7').descriptionTemplate,
     },
-    [null, 'Receiver sent 1 transactions just under the flagging limit']
+    [null, 'Receiver sent 1 transactions just under the flagging limit.']
   )
 })
 

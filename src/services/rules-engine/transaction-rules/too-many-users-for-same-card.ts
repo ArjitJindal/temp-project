@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getSenderKeys } from '../utils'
+import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -72,9 +73,10 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
         .concat(this.transaction.originUserId)
         .filter(Boolean)
     ).size
+    const hitResult: RuleHitResult = []
     if (uniqueUserCount > uniqueUsersCountThreshold) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           cardFingerprint: (
@@ -82,7 +84,8 @@ export default class TooManyUsersForSameCardRule extends TransactionRule<TooMany
           ).cardFingerprint,
           uniqueUserCount,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

@@ -74,7 +74,7 @@ describe('R-4 description formatting', () => {
     [
       null,
       null,
-      'User tried to send money in EUR more than 2 times. User has not sent any money in EUR prior',
+      'User tried to send money in EUR more than 2 times. User has not sent any money in EUR prior.',
     ]
   )
 
@@ -126,7 +126,7 @@ describe('R-4 description formatting', () => {
     [
       null,
       null,
-      'User tried to receive money in EUR more than 2 times. User has not received any money in EUR prior',
+      'User tried to receive money in EUR more than 2 times. User has not received any money in EUR prior.',
     ]
   )
 })

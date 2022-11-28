@@ -69,7 +69,7 @@ describe('Description formatting', () => {
           getTransactionRuleByRuleId('R-125').descriptionTemplate,
       },
       [
-        'Sender has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total.',
+        'Sender has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total. Receiver has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total.',
       ]
     )
   })

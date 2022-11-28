@@ -141,7 +141,7 @@ describe('Public API - Verify a transaction', () => {
           ruleId: 'R-1',
           ruleInstanceId: expect.any(String),
           ruleName: 'test rule name',
-          ruleDescription: 'test rule description',
+          ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHit: true,
           ruleHitMeta: {
@@ -155,7 +155,7 @@ describe('Public API - Verify a transaction', () => {
           ruleId: 'R-1',
           ruleInstanceId: expect.any(String),
           ruleName: 'test rule name',
-          ruleDescription: 'test rule description',
+          ruleDescription: 'test rule description.',
           ruleAction: 'FLAG',
           ruleHitMeta: {
             hitDirections: ['ORIGIN', 'DESTINATION'],

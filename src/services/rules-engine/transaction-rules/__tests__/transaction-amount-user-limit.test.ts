@@ -55,7 +55,7 @@ describe('R-99 description formatting', () => {
         getTransactionRuleByRuleId('R-99').descriptionTemplate,
     },
     [
-      'Sender sent a transaction amount of 10000.00 EUR more than the limit of 1000.00 EUR',
+      'Sender sent a transaction amount of 10000.00 EUR more than the limit of 1000.00 EUR.',
     ]
   )
 })

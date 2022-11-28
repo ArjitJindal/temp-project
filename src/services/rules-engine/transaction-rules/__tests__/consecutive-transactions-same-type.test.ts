@@ -75,8 +75,8 @@ describe('Core logic', () => {
       [
         null,
         null,
-        'Sender made 2 or more crypto transactions without any fiat transactions',
-        'Sender made 2 or more crypto transactions without any fiat transactions',
+        'Sender made 2 or more crypto transactions without any fiat transactions.',
+        'Sender made 2 or more crypto transactions without any fiat transactions.',
       ]
     )
   })

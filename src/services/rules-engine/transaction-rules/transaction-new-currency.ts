@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { AggregationRepository } from '../repositories/aggregation-repository'
+import { RuleHitResult } from '../rule'
 import { INITIAL_TRANSACTIONS_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
@@ -59,15 +60,20 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
       receiverTransactionCurrencies &&
       senderCurrency &&
       !receiverTransactionCurrencies.receivingCurrencies.has(senderCurrency)
-    if (isSenderHit || isDestinationHit) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars(
-            isDestinationHit ? 'destination' : 'origin'
-          ),
-        },
-      }
+
+    const hitResult: RuleHitResult = []
+    if (isSenderHit) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
     }
+    if (isDestinationHit) {
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
+    }
+    return hitResult
   }
 }

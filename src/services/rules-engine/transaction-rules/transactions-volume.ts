@@ -15,6 +15,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
@@ -221,13 +222,6 @@ export default class TransactionsVolumeRule extends TransactionRule<
   public async computeRule() {
     const { isSenderHit, isReceiverHit, amount } = await this.computeHits()
     if (isSenderHit || isReceiverHit) {
-      let direction: 'origin' | 'destination' | null = null
-      if (isSenderHit) {
-        direction = 'origin'
-      } else if (isReceiverHit) {
-        direction = 'destination'
-      }
-
       const { transactionVolumeThreshold } = this.parameters
       let volumeDelta
       let volumeThreshold
@@ -251,14 +245,28 @@ export default class TransactionsVolumeRule extends TransactionRule<
         volumeThreshold = null
       }
 
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars(direction),
-          volumeDelta,
-          volumeThreshold,
-        },
+      const hitResult: RuleHitResult = []
+      if (isSenderHit) {
+        hitResult.push({
+          direction: 'ORIGIN',
+          vars: {
+            ...super.getTransactionVars('origin'),
+            volumeDelta,
+            volumeThreshold,
+          },
+        })
       }
+      if (isReceiverHit) {
+        hitResult.push({
+          direction: 'DESTINATION',
+          vars: {
+            ...super.getTransactionVars('destination'),
+            volumeDelta,
+            volumeThreshold,
+          },
+        })
+      }
+      return hitResult
     }
   }
 }

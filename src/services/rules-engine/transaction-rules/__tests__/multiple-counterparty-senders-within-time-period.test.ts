@@ -78,7 +78,7 @@ describe('R-10 description formatting', () => {
     [
       null,
       null,
-      'More than 2 counterparties transacting with a single user over a set period of 30 days',
+      'More than 2 counterparties transacting with a single user over a set period of 30 days.',
     ]
   )
 })

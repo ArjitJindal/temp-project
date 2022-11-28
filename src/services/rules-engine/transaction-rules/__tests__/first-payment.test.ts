@@ -35,7 +35,7 @@ describe('R-1 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-1').descriptionTemplate,
     },
-    ['Sender’s first transaction']
+    ['Sender’s first transaction.']
   )
 })
 

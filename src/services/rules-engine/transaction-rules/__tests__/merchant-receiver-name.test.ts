@@ -42,7 +42,7 @@ describe('R-13 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-13').descriptionTemplate,
     },
-    ['Mobikwik is blacklisted']
+    ['Mobikwik is blacklisted.']
   )
 })
 

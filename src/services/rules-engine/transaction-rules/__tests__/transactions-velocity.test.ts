@@ -69,8 +69,8 @@ describe('Description formatting', () => {
       [
         null,
         null,
-        'Sender made 1 more transaction(s) above the limit of 2 in 5 seconds',
-        'Sender made 2 more transaction(s) above the limit of 2 in 5 seconds',
+        'Sender made 1 more transaction(s) above the limit of 2 in 5 seconds.',
+        'Sender made 2 more transaction(s) above the limit of 2 in 5 seconds.',
       ]
     )
   })

@@ -13,6 +13,7 @@ import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
@@ -92,6 +93,7 @@ export default class TransactionsPatternVelocityBaseRule<
       this.getNeededTransactionFields()
     )
 
+    const hitResult: RuleHitResult = []
     if (originMatchPattern) {
       const senderMatchedTransactions = [
         ...senderSendingTransactions
@@ -112,12 +114,11 @@ export default class TransactionsPatternVelocityBaseRule<
           (!initialTransactions || group.length > initialTransactions!) &&
           group.length > transactionsLimit
         ) {
-          return {
-            action: this.action,
-            vars: {
-              ...super.getTransactionVars('origin'),
-            },
-          }
+          hitResult.push({
+            direction: 'ORIGIN',
+            vars: super.getTransactionVars('origin'),
+          })
+          break
         }
       }
     }
@@ -142,15 +143,15 @@ export default class TransactionsPatternVelocityBaseRule<
           (!initialTransactions || group.length > initialTransactions!) &&
           group.length > transactionsLimit
         ) {
-          return {
-            action: this.action,
-            vars: {
-              ...super.getTransactionVars('destination'),
-            },
-          }
+          hitResult.push({
+            direction: 'DESTINATION',
+            vars: super.getTransactionVars('destination'),
+          })
+          break
         }
       }
     }
+    return hitResult
   }
   protected groupTransactions(
     transactions: AuxiliaryIndexTransaction[]

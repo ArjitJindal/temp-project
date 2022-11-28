@@ -68,7 +68,7 @@ describe('R-123 description formatting', () => {
     [
       null,
       null,
-      'Sender is sending funds from more than 2 unique country within 5 seconds',
+      'Sender is sending funds from more than 2 unique country within 5 seconds.',
     ]
   )
 })

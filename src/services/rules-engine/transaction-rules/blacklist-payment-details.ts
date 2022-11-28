@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import _ from 'lodash'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardExpiry } from '@/@types/openapi-public/CardExpiry'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -81,24 +82,26 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
   }
 
   public async computeRule() {
+    const hitResult: RuleHitResult = []
     if (
       this.transaction.originPaymentDetails &&
       this.isPaymentBlacklisted(this.transaction.originPaymentDetails)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: super.getTransactionVars('origin'),
-      }
+      })
     }
     if (
       this.transaction.destinationPaymentDetails &&
       this.isPaymentBlacklisted(this.transaction.destinationPaymentDetails)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: super.getTransactionVars('destination'),
-      }
+      })
     }
+    return hitResult
   }
 
   private isPaymentBlacklisted(paymentDetails: PaymentDetails) {

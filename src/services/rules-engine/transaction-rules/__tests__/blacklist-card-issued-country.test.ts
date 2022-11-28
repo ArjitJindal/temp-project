@@ -35,13 +35,14 @@ describe('R-22 description formatting', () => {
           method: 'CARD',
           cardIssuedCountry: 'DE',
         },
+        destinationPaymentDetails: undefined,
       }),
     ],
     {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-22').descriptionTemplate,
     },
-    ['Sender’s card is issued from Germany, a blacklisted country']
+    ['Sender’s card is issued from Germany, a blacklisted country.']
   )
 })
 

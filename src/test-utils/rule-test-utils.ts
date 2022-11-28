@@ -189,7 +189,7 @@ export function createTransactionRuleTestCase(
   })
 }
 
-const DEFAULT_DESCRIPTION = 'test rule description'
+const DEFAULT_DESCRIPTION = 'test rule description.'
 
 export function testRuleDescriptionFormatting(
   testName: string,

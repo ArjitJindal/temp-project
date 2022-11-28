@@ -5,9 +5,9 @@ import {
   TIME_WINDOW_SCHEMA,
   TimeWindow,
 } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { RuleResult } from '@/services/rules-engine/rule'
 import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 
 export type SamePaymentDetailsParameters = {
@@ -37,7 +37,7 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
     }
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule() {
     this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -62,27 +62,27 @@ export default class SamePaymentDetailsRule extends TransactionRule<SamePaymentD
       }
     )
 
-    const action = this.action
+    const hitResult: RuleHitResult = []
     const senderTotal = (senderSending ?? 0) + (senderReceiving ?? 0) + 1
     if (senderTotal >= threshold) {
-      return {
-        action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           numberOfUses: senderTotal,
         },
-      }
+      })
     }
     const receiverTotal = (receiverReceiving ?? 0) + (receiverSending ?? 0) + 1
     if (receiverTotal >= threshold) {
-      return {
-        action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: {
           ...super.getTransactionVars('destination'),
           numberOfUses: receiverTotal,
         },
-      }
+      })
     }
-    return undefined
+    return hitResult
   }
 }

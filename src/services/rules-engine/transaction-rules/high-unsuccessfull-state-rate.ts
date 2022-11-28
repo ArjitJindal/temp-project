@@ -7,9 +7,9 @@ import {
   CHECK_RECEIVER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
-import { RuleResult } from '@/services/rules-engine/rule'
 import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
@@ -56,7 +56,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
     }
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule() {
     this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
@@ -110,6 +110,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
       (receiverSendingFilteredCount ?? 0) +
       1
 
+    const hitResult: RuleHitResult = []
     if (
       this.parameters.checkSender !== 'none' &&
       senderFullCount >= this.parameters.minimumTransactions
@@ -117,12 +118,10 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
       const rate = (senderFilteredCount / senderFullCount) * 100
 
       if (rate > this.parameters.threshold) {
-        return {
-          action: this.action,
-          vars: {
-            ...super.getTransactionVars('origin'),
-          },
-        }
+        hitResult.push({
+          direction: 'ORIGIN',
+          vars: super.getTransactionVars('origin'),
+        })
       }
     }
     if (
@@ -131,15 +130,13 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
     ) {
       const rate = (receiverFilteredCount / receiverFullCount) * 100
       if (rate > this.parameters.threshold) {
-        return {
-          action: this.action,
-          vars: {
-            ...super.getTransactionVars('destination'),
-          },
-        }
+        hitResult.push({
+          direction: 'DESTINATION',
+          vars: super.getTransactionVars('destination'),
+        })
       }
     }
 
-    return undefined
+    return hitResult
   }
 }

@@ -79,7 +79,7 @@ ruleAggregationTest(() => {
         null,
         null,
         null,
-        'Sender sending transaction(s) in 5 hours is more than 2 times in 10 hours',
+        'Sender sending transaction(s) in 5 hours is more than 2 times in 10 hours.',
       ]
     )
   })

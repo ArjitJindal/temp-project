@@ -98,10 +98,10 @@ describe('Sender/Receiver Parameters', () => {
       [
         null,
         null,
-        'Sender is spending 99.00 EUR above their expected amount of 201.00 EUR',
-        'Sender is spending 199.00 EUR above their expected amount of 201.00 EUR',
-        'Sender is spending 299.00 EUR above their expected amount of 201.00 EUR',
-        'Receiver is receiving 299.00 EUR above their expected amount of 201.00 EUR',
+        'Sender is spending 99.00 EUR above their expected amount of 201.00 EUR. Receiver is receiving 99.00 EUR above their expected amount of 201.00 EUR.',
+        'Sender is spending 199.00 EUR above their expected amount of 201.00 EUR.',
+        'Sender is spending 299.00 EUR above their expected amount of 201.00 EUR. Receiver is receiving 299.00 EUR above their expected amount of 201.00 EUR.',
+        'Receiver is receiving 299.00 EUR above their expected amount of 201.00 EUR.',
       ]
     )
   })

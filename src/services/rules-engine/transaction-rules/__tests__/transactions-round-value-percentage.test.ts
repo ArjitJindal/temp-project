@@ -76,8 +76,8 @@ ruleAggregationTest(() => {
       },
       [
         null,
-        "Sender is sending funds with more than 50% of transactions as round values ending in 00.00 (hundreds without cents) within time 1 day. Rule should hit after the user has initiaited 1 transactions (doesn't have to be successful)",
-        "Receiver is receiving funds with more than 50% of transactions as round values ending in 00.00 (hundreds without cents) within time 1 day. Rule should hit after the user has initiaited 1 transactions (doesn't have to be successful)",
+        "Sender is sending funds with more than 50% of transactions as round values ending in 00.00 (hundreds without cents) within time 1 day. Rule should hit after the user has initiaited 1 transactions (doesn't have to be successful). Receiver is receiving funds with more than 50% of transactions as round values ending in 00.00 (hundreds without cents) within time 1 day. Rule should hit after the user has initiaited 1 transactions (doesn't have to be successful).",
+        "Receiver is receiving funds with more than 50% of transactions as round values ending in 00.00 (hundreds without cents) within time 1 day. Rule should hit after the user has initiaited 1 transactions (doesn't have to be successful).",
       ]
     )
   })

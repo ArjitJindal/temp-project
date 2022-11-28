@@ -16,6 +16,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
 import { getTimestampRange } from '../utils/time-utils'
+import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionAggregationRule } from './aggregation-rule'
 
@@ -106,6 +107,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     }
 
     let missingAggregation = false
+    const hitResult: RuleHitResult = []
     for (const direction of directions) {
       const userAggregationDataPeriod1 =
         await this.getRuleAggregations<AggregationData>(
@@ -137,17 +139,19 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         hasMinTransactionsInTimeWindow1 &&
         transactionsCountP1 > multiplierThreshold * transactionsCountP2
       ) {
-        return {
-          action: this.action,
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
           vars: {
             ...super.getTransactionVars(direction),
           },
-        }
+        })
       }
     }
 
     if (missingAggregation) {
       return this.computeRuleExpensive()
+    } else {
+      return hitResult
     }
   }
 
@@ -237,6 +241,7 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
     const receiverTransactionsCount1 = receiverTransactionssPeriod1.length + 1
     const receiverTransactionsCount2 = receiverTransactionsPeriod2.length + 1
 
+    const hitResult: RuleHitResult = []
     if (
       checkSender !== 'none' &&
       (!minTransactionsInTimeWindow1 ||
@@ -246,12 +251,12 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         multiplierThreshold *
           (senderTransactionsCount2 - senderTransactionsCount1)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
         },
-      }
+      })
     }
     if (
       checkReceiver !== 'none' &&
@@ -262,13 +267,14 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         multiplierThreshold *
           (receiverTransactionsCount2 - receiverTransactionsCount1)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: {
           ...super.getTransactionVars('destination'),
         },
-      }
+      })
     }
+    return hitResult
   }
 
   private async getTimeAggregatedResult(

@@ -121,7 +121,7 @@ describe('R-126 description formatting', () => {
       null,
       null,
       null,
-      'Transaction volume 50.00 EUR above their expected amount of 250.00 EUR between two users in 1 day',
+      'Transaction volume 50.00 EUR above their expected amount of 250.00 EUR between two users in 1 day.',
     ]
   )
 })

@@ -69,7 +69,7 @@ describe('R-77 description formatting', () => {
     [
       null,
       null,
-      'Sender performed more than 2 transactions with sending country which is high risk in 5 seconds',
+      'Sender performed more than 2 transactions with sending country which is high risk in 5 seconds.',
     ]
   )
 })

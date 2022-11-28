@@ -4,6 +4,7 @@ import {
   INITIAL_TRANSACTIONS_SCHEMA,
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 
@@ -80,17 +81,20 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
       return
     }
     const { hitReceiver, hitSender } = await this.computeHits()
-    if (hitReceiver || hitSender) {
-      let direction: 'origin' | 'destination' | null = null
-      if (hitSender) {
-        direction = 'origin'
-      } else if (hitReceiver) {
-        direction = 'destination'
-      }
-      return {
-        action: this.action,
-        vars: super.getTransactionVars(direction),
-      }
+
+    const hitResult: RuleHitResult = []
+    if (hitSender) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
     }
+    if (hitReceiver) {
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
+    }
+    return hitResult
   }
 }

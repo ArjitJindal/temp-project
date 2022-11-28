@@ -55,8 +55,8 @@ describe('R-114 description formatting', () => {
     },
     [
       null,
-      'Sender’s card country Taiwan is not whitelisted',
-      'Sender’s card country Russian Federation is not whitelisted',
+      'Sender’s card country Taiwan is not whitelisted.',
+      'Sender’s card country Russian Federation is not whitelisted.',
     ]
   )
 })

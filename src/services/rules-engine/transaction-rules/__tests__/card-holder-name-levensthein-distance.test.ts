@@ -84,8 +84,8 @@ describe('R-118 description formatting', () => {
         getTransactionRuleByRuleId('R-118').descriptionTemplate,
     },
     [
-      'Sender’s name does not match name on sender’s card (**1111)',
-      'Sender’s name does not match name on sender’s card (**2222)',
+      'Sender’s name does not match name on sender’s card (**1111).',
+      'Sender’s name does not match name on sender’s card (**2222).',
     ]
   )
 })

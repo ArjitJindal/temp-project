@@ -113,7 +113,7 @@ describe('User cases', () => {
   describe('Run #3', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setup(TEST_TENANT_ID, {
-      hitDirections: [],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
     })
     test('Both users, no prior cases', async () => {
       const caseCreationService = await getService(TEST_TENANT_ID)
@@ -316,6 +316,68 @@ describe('User cases', () => {
       const _case2 = await addTransaction(2)
       expect(_case2.caseId).toEqual(case2.caseId)
       expect(_case2.caseTransactionsIds).toHaveLength(2)
+    })
+  })
+
+  describe('Run #8', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['ORIGIN'],
+    })
+    test('Both users exist, but only create the case for the hit direction - origin', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: TEST_USER_2.userId,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(1)
+      const userCase = expectUserCase(cases, {
+        originUserId: TEST_USER_1.userId,
+      })
+      expect(userCase.relatedCases).toBeUndefined()
+    })
+  })
+
+  describe('Run #9', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['DESTINATION'],
+    })
+    test('Both users exist, but only create the case for the hit direction - destination', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: TEST_USER_2.userId,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(1)
+      const userCase = expectUserCase(cases, {
+        destinationUserId: TEST_USER_2.userId,
+      })
+      expect(userCase.relatedCases).toBeUndefined()
     })
   })
 })

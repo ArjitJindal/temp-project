@@ -1,5 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
+import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -68,14 +69,17 @@ export default class SameUserUsingTooManyCardsRule extends TransactionRule<SameU
             .cardFingerprint
         )
     ).size
+
+    const hitResult: RuleHitResult = []
     if (uniqueCardsCount > uniqueCardsCountThreshold) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           uniqueCardsCount,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

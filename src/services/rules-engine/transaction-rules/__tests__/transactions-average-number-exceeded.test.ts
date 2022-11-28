@@ -71,7 +71,7 @@ ruleAggregationTest(() => {
             getTransactionRuleByRuleId('R-121').descriptionTemplate,
         },
         [
-          'Sender made more than 2.00 times avg. number of transactions in last 1 day than avg. number of transactions in last 2 days',
+          'Sender made more than 2.00 times avg. number of transactions in last 1 day than avg. number of transactions in last 2 days. Receiver made more than 2.00 times avg. number of transactions in last 1 day than avg. number of transactions in last 2 days.',
         ]
       )
     })

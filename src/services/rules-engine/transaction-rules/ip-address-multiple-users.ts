@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getSenderKeys } from '../utils'
+import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -63,15 +64,17 @@ export default class IpAddressMultipleUsersRule extends TransactionRule<IpAddres
         .concat(senderKeyId)
     )
 
+    const hitResult: RuleHitResult = []
     if (uniqueUsers.size > uniqueUsersCountThreshold) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
-          ...super.getTransactionVars(null),
+          ...super.getTransactionVars('origin'),
           ipAddress: this.transaction.deviceData?.ipAddress,
           uniqueUsersCount: uniqueUsers.size,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

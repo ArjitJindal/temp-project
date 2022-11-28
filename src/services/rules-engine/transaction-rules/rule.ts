@@ -2,17 +2,11 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Rule } from '../rule'
 import { Vars } from '../utils/format-description'
 import { Business } from '@/@types/openapi-public/Business'
-import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { formatCountry } from '@/utils/countries'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-
-export type RuleResult = {
-  action: RuleAction
-}
-
 export interface PartyVars {
   type?: 'origin' | 'destination'
   user?: User | Business
@@ -45,7 +39,6 @@ export class TransactionRule<P, T extends object = object> extends Rule {
   receiverUser?: User | Business
   parameters: P
   filters: T
-  action: RuleAction
   ruleInstance: RuleInstance
   dynamoDb: DynamoDBDocumentClient
 
@@ -59,7 +52,6 @@ export class TransactionRule<P, T extends object = object> extends Rule {
     params: {
       parameters: P
       filters: T
-      action: RuleAction
     },
     context: {
       ruleInstance: RuleInstance
@@ -73,7 +65,6 @@ export class TransactionRule<P, T extends object = object> extends Rule {
     this.receiverUser = data.receiverUser
     this.parameters = params.parameters
     this.filters = params.filters || {}
-    this.action = params.action
     this.ruleInstance = context.ruleInstance
     this.dynamoDb = dynamoDb
   }

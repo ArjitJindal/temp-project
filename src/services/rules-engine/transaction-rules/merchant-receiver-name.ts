@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 
@@ -30,6 +31,8 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
     const receiverName = (
       this.transaction.destinationPaymentDetails as WalletDetails
     ).name
+
+    const hitResult: RuleHitResult = []
     if (
       receiverName &&
       merchantNames.findIndex((element) => {
@@ -38,13 +41,14 @@ export default class MerchantReceiverNameRule extends TransactionRule<MerchantRe
         }
       }) !== -1
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'DESTINATION',
         vars: {
           ...super.getTransactionVars('destination'),
           receiverName,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

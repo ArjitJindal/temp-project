@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
 
@@ -50,6 +51,8 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
           ['timestamp']
         )
       )[0]
+
+    const hitResult: RuleHitResult = []
     if (lastSendingTransaction) {
       if (
         dayjs(this.transaction.timestamp).diff(
@@ -57,8 +60,9 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
           'day'
         ) > dormancyPeriodDays
       ) {
-        return { action: this.action }
+        hitResult.push({ direction: 'ORIGIN', vars: {} })
       }
     }
+    return hitResult
   }
 }

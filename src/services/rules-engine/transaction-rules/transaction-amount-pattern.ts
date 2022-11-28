@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 
 export type TransactionMatchesPatternRuleParameters = {
@@ -43,13 +44,16 @@ export default class TransactionMatchesPatternRule extends TransactionRule<Trans
     const matchPattern = patterns.find((patterns) =>
       originTransactionAmountString.endsWith(patterns)
     )
-    if (matchPattern != null)
-      return {
-        action: this.action,
+    const hitResult: RuleHitResult = []
+    if (matchPattern != null) {
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           matchPattern,
         },
-      }
+      })
+    }
+    return hitResult
   }
 }

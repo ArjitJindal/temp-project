@@ -79,7 +79,7 @@ describe('R-88 description formatting', () => {
         getTransactionRuleByRuleId('R-88').descriptionTemplate,
     },
     [
-      'Sender’s ip-bases country (Germany) is not country of origin (India) or country of nationality (Türkiye)',
+      'Sender’s ip-bases country (Germany) is not country of origin (India) or country of nationality (Türkiye).',
     ]
   )
 })

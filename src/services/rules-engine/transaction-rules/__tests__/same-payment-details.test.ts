@@ -276,7 +276,7 @@ describe('Description formatting', () => {
       },
       [
         null,
-        'Same payment details is used for 2 transactions within 1 day, which is more or equal than threshold of 2',
+        'Same payment details is used for 2 transactions within 1 day, which is more or equal than threshold of 2.',
       ]
     )
   })

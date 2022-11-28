@@ -70,7 +70,7 @@ describe('R-119 description formatting', () => {
     },
     [
       null,
-      '1 transactions above the limit of 1 between same Sender and Receiver in 1 day',
+      '1 transactions above the limit of 1 between same Sender and Receiver in 1 day.',
     ]
   )
 })

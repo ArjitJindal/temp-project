@@ -42,7 +42,7 @@ describe('R-117 description formatting', () => {
         getTransactionRuleByRuleId('R-117').descriptionTemplate,
     },
     [
-      'Transaction amount of 10123.00 EUR matches a blacklisted pattern ending with 123',
+      'Transaction amount of 10123.00 EUR matches a blacklisted pattern ending with 123.',
     ]
   )
 })

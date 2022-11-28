@@ -6,6 +6,7 @@ import {
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -130,9 +131,12 @@ export default class LowValueTransactionsRule extends TransactionRule<
           )
         }
       )
+
+      const hitResult: RuleHitResult = []
       if (areAllTransactionsLowValue) {
-        return {
-          action: this.action,
+        hitResult.push({
+          direction:
+            this.getDirection() === 'sending' ? 'ORIGIN' : 'DESTINATION',
           vars: {
             ...super.getTransactionVars(
               this.getDirection() === 'sending' ? 'origin' : 'destination'
@@ -140,8 +144,9 @@ export default class LowValueTransactionsRule extends TransactionRule<
             transactionCountDelta:
               lowTransactionCount - transactions.length + 1,
           },
-        }
+        })
       }
+      return hitResult
     }
   }
 }

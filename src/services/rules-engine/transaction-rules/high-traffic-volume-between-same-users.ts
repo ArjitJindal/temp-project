@@ -12,10 +12,10 @@ import {
   TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
 import dayjs from '@/utils/dayjs'
-import { RuleResult } from '@/services/rules-engine/rule'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
 import { getReceiverKeys } from '@/services/rules-engine/utils'
@@ -49,7 +49,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
     }
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule() {
     const { transactionVolumeThreshold, transactionsLimit } = this.parameters
     const { transactions } = await this.computeResults()
 
@@ -95,15 +95,15 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
             transactionsLimit: number
           },
           filters: this.filters,
-          action: this.action,
         },
         { ruleInstance: this.ruleInstance },
         this.dynamoDb
       )
       const countResult = await highTrafficCountRule.computeRule()
-      countHit = Boolean(countResult)
+      countHit = Boolean(countResult && countResult.length > 0)
     }
 
+    const hitResult: RuleHitResult = []
     if (
       (await isTransactionAmountAboveThreshold(
         transactionAmounts,
@@ -111,17 +111,26 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
       )) &&
       countHit
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           transactions,
           volumeDelta,
           volumeThreshold,
         },
-      }
+      })
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('destination'),
+          transactions,
+          volumeDelta,
+          volumeThreshold,
+        },
+      })
     }
-    return undefined
+    return hitResult
   }
 
   private async computeResults() {

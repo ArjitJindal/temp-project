@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { RuleHitResult } from '../rule'
 import { CURRENRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
@@ -31,13 +32,20 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
     const receiverHit =
       receivingCurrency &&
       this.parameters.highRiskCurrencies.includes(receivingCurrency)
-    if (senderHit || receiverHit) {
-      return {
-        action: this.action,
-        vars: {
-          ...super.getTransactionVars(receiverHit ? 'destination' : 'origin'),
-        },
-      }
+
+    const hitResult: RuleHitResult = []
+    if (senderHit) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
     }
+    if (receiverHit) {
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
+    }
+    return hitResult
   }
 }

@@ -62,7 +62,7 @@ describe('R-5 description formatting', () => {
     },
     [
       null,
-      'User made a transaction from an account which was dormant for 365 days',
+      'User made a transaction from an account which was dormant for 365 days.',
     ]
   )
 })

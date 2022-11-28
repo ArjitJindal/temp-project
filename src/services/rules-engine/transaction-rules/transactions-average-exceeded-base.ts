@@ -22,7 +22,7 @@ import {
   toGranularity,
 } from '@/services/rules-engine/utils/time-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { RuleResult } from '@/services/rules-engine/rule'
+import { RuleHitResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
@@ -220,7 +220,7 @@ export default class TransactionAverageExceededBaseRule<
     return result
   }
 
-  public async computeRule(): Promise<RuleResult | undefined> {
+  public async computeRule() {
     const {
       checkSender,
       checkReceiver,
@@ -238,6 +238,8 @@ export default class TransactionAverageExceededBaseRule<
       directions.push('destination')
     }
     let missingAggregation = false
+
+    const hitResult: RuleHitResult = []
     for (const direction of directions) {
       const {
         afterTimestamp: afterTimestampP1,
@@ -311,19 +313,21 @@ export default class TransactionAverageExceededBaseRule<
           user: direction,
           currency,
         }
-        return {
-          action: this.action,
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
           vars,
-        }
+        })
       }
     }
 
     if (missingAggregation) {
       return this.computeRuleExpensive()
+    } else {
+      return hitResult
     }
   }
 
-  public async computeRuleExpensive(): Promise<RuleResult | undefined> {
+  public async computeRuleExpensive() {
     logger.info('Running expensive path...')
 
     this.transactionRepository = new TransactionRepository(this.tenantId, {
@@ -418,6 +422,7 @@ export default class TransactionAverageExceededBaseRule<
     ])
 
     const { currency, value: maxMultiplier } = this.getMultiplierThresholds()
+    const hitResult: RuleHitResult = []
     for (const userParty of toCheck) {
       const period1AmountDetails =
         userParty === 'origin' ? senderAmountDetailsP1 : receiverAmountDetailsP1
@@ -443,14 +448,14 @@ export default class TransactionAverageExceededBaseRule<
           user: userParty,
           currency,
         }
-        return {
-          action: this.action,
+        hitResult.push({
+          direction: userParty === 'origin' ? 'ORIGIN' : 'DESTINATION',
           vars,
-        }
+        })
       }
     }
 
-    return undefined
+    return hitResult
   }
 
   private getPeriod1Transactions(

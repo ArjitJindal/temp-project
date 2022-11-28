@@ -4,6 +4,7 @@ import { isConsumerUser } from '../utils/user-rule-utils'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { User } from '@/@types/openapi-public/User'
 
@@ -64,19 +65,21 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       }))
     )
 
+    const hitResult: RuleHitResult = []
     if (
       !expectedCountries.includes(ipCountry) &&
       (!this.transaction.originAmountDetails ||
         !transactionAmountThreshold ||
         thresholdHit)
     ) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           ipCountry,
         },
-      }
+      })
     }
+    return hitResult
   }
 }

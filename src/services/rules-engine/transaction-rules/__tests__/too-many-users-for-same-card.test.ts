@@ -53,7 +53,7 @@ describe('R-53 description formatting', () => {
       descriptionTemplate:
         getTransactionRuleByRuleId('R-53').descriptionTemplate,
     },
-    [null, 'Same card (123) used by 2 unique users']
+    [null, 'Same card (123) used by 2 unique users.']
   )
 })
 

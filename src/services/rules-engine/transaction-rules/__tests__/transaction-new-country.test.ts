@@ -122,10 +122,10 @@ describe('R-3 description formatting', () => {
     [
       null,
       null,
-      `User tried to send money from Germany more than 2 times. User has not sent any money from Germany prior`,
+      `User tried to send money from Germany more than 2 times. User has not sent any money from Germany prior.`,
       null,
       null,
-      `User tried to receive money to India more than 2 times. User has not received any money to India prior`,
+      `User tried to receive money to India more than 2 times. User has not received any money to India prior.`,
     ]
   )
 })

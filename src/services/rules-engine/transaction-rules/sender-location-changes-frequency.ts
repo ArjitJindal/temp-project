@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { TransactionFilters } from '../transaction-filters'
+import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -83,15 +84,17 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
         .map((ipInfo) => ipInfo?.city || ipInfo?.region || ipInfo?.country)
         .filter(Boolean)
     )
+    const hitResult: RuleHitResult = []
     if (uniqueCities.size > uniqueCitiesCountThreshold) {
-      return {
-        action: this.action,
+      hitResult.push({
+        direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
           transactionsCount: transactionsWithIpAddress.length,
           locationsCount: uniqueCities.size,
         },
-      }
+      })
     }
+    return hitResult
   }
 }
