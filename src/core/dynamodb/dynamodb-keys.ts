@@ -311,7 +311,7 @@ export const DynamoDbKeys = {
     SortKeyID: version,
   }),
   DRS_RISK_DETAILS: (tenantId: string, userId: string, version?: string) => ({
-    PartitionKeyID: `${tenantId}#userId#${userId}#drs-value`,
+    PartitionKeyID: `${tenantId}#userId#${userId}${DRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
   PARAMETER_RISK_SCORES_DETAILS: (
@@ -323,11 +323,11 @@ export const DynamoDbKeys = {
     SortKeyID: `${entityType}#${parameter}`,
   }),
   KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
-    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#krs-value`,
+    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${KRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
   DRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
-    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#drs-value`,
+    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${DRS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
   ARS_VALUE_ITEM: (
@@ -335,7 +335,7 @@ export const DynamoDbKeys = {
     transactionId: string,
     version: string
   ) => ({
-    PartitionKeyID: `${tenantId}#${TRANSACTION_ID_PREFIX}${transactionId}#krs-value`,
+    PartitionKeyID: `${tenantId}#${TRANSACTION_ID_PREFIX}${transactionId}${ARS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
 }

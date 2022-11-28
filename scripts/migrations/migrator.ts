@@ -7,11 +7,16 @@ import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
-const MIGRATION_TEMPLATE = `export const up = async () => {
-  // Put your migration code here
+const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
+import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+
+async function migrateTenant(tenant: Tenant) {}
+
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {
-  // Put your migration code for rolling back here. If not applicable, skip it.
+  // skip
 }
 `
 
