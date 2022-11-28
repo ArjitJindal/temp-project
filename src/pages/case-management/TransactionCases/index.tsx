@@ -490,7 +490,7 @@ export default function TransactionCases(props: Props) {
             entity?.caseId && (
               <CasesStatusChangeForm
                 caseIds={[entity.caseId]}
-                newCaseStatus={params.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
+                newCaseStatus={entity.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
                 onSaved={reloadTable}
               />
             )
