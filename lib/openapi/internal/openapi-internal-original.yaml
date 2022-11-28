@@ -1815,6 +1815,11 @@ paths:
           in: query
           name: parameter
           description: Parameter you want to filter on
+        - schema:
+            $ref: '#/components/schemas/RiskEntityType'
+          in: query
+          name: entityType
+          description: Entity type you want to filter on
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect
@@ -3252,11 +3257,7 @@ components:
         isDerived:
           type: boolean
         riskEntityType:
-          type: string
-          enum:
-            - CONSUMER_USER
-            - TRANSACTION
-            - BUSINESS
+          $ref: '#/components/schemas/RiskEntityType'
         riskLevelAssignmentValues:
           type: array
           items:
@@ -3880,6 +3881,13 @@ components:
       required:
         - transactionState
         - tagsKey
+    RiskEntityType:
+      type: string
+      title: Risk entity type
+      enum:
+        - CONSUMER_USER
+        - TRANSACTION
+        - BUSINESS
     UsersUniquesResponse:
       type: object
       properties:

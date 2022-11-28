@@ -23,6 +23,7 @@ import {
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
 } from '@/utils/mongoDBUtils'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -307,11 +308,13 @@ export class RiskRepository {
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
+        ...parameterRiskLevels,
         ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
           this.tenantId,
-          parameterRiskLevels.parameter
-        ), // Version it later
-        ...parameterRiskLevels,
+
+          parameterRiskLevels.parameter,
+          parameterRiskLevels.riskEntityType
+        ),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
@@ -319,13 +322,19 @@ export class RiskRepository {
   }
 
   async getParameterRiskItem(
-    parameter: ParameterAttributeRiskValuesParameterEnum
+    parameter: ParameterAttributeRiskValuesParameterEnum,
+    entityType: RiskEntityType
   ) {
     const keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'
+    const { PartitionKeyID, SortKeyID } =
+      DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
+        this.tenantId,
+        parameter,
+        entityType
+      )
     const expressionAttributeVals = {
-      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(this.tenantId)
-        .PartitionKeyID,
-      ':sk': parameter,
+      ':pk': PartitionKeyID,
+      ':sk': SortKeyID,
     }
 
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
@@ -362,7 +371,9 @@ export class RiskRepository {
     try {
       const result = await paginateQuery(this.dynamoDb, queryInput)
       return result.Items && result.Items.length > 0
-        ? (result.Items as ParameterAttributeRiskValues[])
+        ? (result.Items.map((item) =>
+            _.omit(item, ['PartitionKeyID', 'SortKeyID'])
+          ) as ParameterAttributeRiskValues[])
         : null
     } catch (e) {
       logger.error(e)

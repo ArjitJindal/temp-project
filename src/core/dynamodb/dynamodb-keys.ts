@@ -17,6 +17,7 @@ import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAc
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
 import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -313,9 +314,13 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#userId#${userId}#drs-value`,
     SortKeyID: version,
   }),
-  PARAMETER_RISK_SCORES_DETAILS: (tenantId: string, parameter?: string) => ({
+  PARAMETER_RISK_SCORES_DETAILS: (
+    tenantId: string,
+    parameter?: string,
+    entityType?: RiskEntityType
+  ) => ({
     PartitionKeyID: `${tenantId}#provided-parameter-risk-values`,
-    SortKeyID: parameter,
+    SortKeyID: `${entityType}#${parameter}`,
   }),
   KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}#krs-value`,
