@@ -2,7 +2,7 @@ import {
   ParameterAttributeRiskValuesMatchTypeEnum,
   ParameterAttributeRiskValuesParameterEnum,
   ParameterAttributeRiskValuesParameterTypeEnum,
-  ParameterAttributeRiskValuesRiskEntityTypeEnum,
+  RiskEntityType,
   ParameterAttributeRiskValuesRiskScoreTypeEnum,
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
   RiskParameterLevelKeyValue,
@@ -54,7 +54,7 @@ export interface RiskLevelTableItem {
   parameter: ParameterName;
   title: string;
   description: string;
-  entity: ParameterAttributeRiskValuesRiskEntityTypeEnum;
+  entity: RiskEntityType;
   isDerived: boolean;
   dataType: DataType;
   riskScoreType: ParameterAttributeRiskValuesRiskScoreTypeEnum;
