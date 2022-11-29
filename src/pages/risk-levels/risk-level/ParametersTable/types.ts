@@ -44,6 +44,7 @@ export function riskValueMultiple(values: RiskParameterValueLiteral[]): RiskPara
 }
 
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
+export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
 export type ParameterSettings = {
   isActive: boolean;
