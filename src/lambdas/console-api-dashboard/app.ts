@@ -45,7 +45,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshStats()
+        await dashboardStatsRepository.refreshTransactionStats()
       }
 
       const data = await dashboardStatsRepository.getTransactionCountStats(
@@ -85,7 +85,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshStats()
+        await dashboardStatsRepository.refreshTransactionStats()
       }
 
       return {
@@ -109,7 +109,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshStats()
+        await dashboardStatsRepository.refreshTransactionStats()
       }
 
       const endTimestampNumber = endTimestamp
@@ -131,6 +131,24 @@ export const dashboardStatsHandler = lambdaApi()(
           startTimestampNumber,
           endTimestampNumber
         ),
+      }
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/dashboard_stats/drs-distribution')
+    ) {
+      const client = await getMongoDbClient()
+      const { principalId: tenantId } = event.requestContext.authorizer
+
+      const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+        mongoDb: client,
+      })
+      if (process.env.ENV === 'local') {
+        await dashboardStatsRepository.refreshTransactionStats()
+      }
+
+      const data = await dashboardStatsRepository.getDRSDistributionStats()
+      return {
+        data,
       }
     }
     throw new BadRequest('Unsupported path')

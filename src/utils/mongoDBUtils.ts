@@ -136,6 +136,10 @@ export const DRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-dynamic-risk-values`
 }
 
+export const DRS_SCORES_DISTRIBUTION_STATS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-drs-scores-distribution`
+}
+
 export const IMPORT_COLLECTION = (tenantId: string) => {
   return `${tenantId}-import`
 }

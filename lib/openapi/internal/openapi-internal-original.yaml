@@ -1354,6 +1354,22 @@ paths:
           in: query
           name: endTimestamp
     parameters: []
+  /dashboard_stats/drs-distribution:
+    get:
+      summary: DashboardStats - DRS Distribution
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStatsDRSDistribution'
+              examples: {}
+      operationId: get-dashboard-stats-drs-distribution
+      description: ''
+      parameters: []
+    parameters: []
   /dashboard_stats/hits_per_user:
     get:
       summary: DashboardStats - Hits per user
@@ -2754,6 +2770,31 @@ components:
               - hitCount
       required:
         - data
+    DashboardStatsDRSDistribution:
+      type: object
+      x-examples: {}
+      title: DashboardStatsDRSDistribution
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              riskLevel:
+                $ref: '#/components/schemas/RiskLevel'
+              percentage:
+                type: string
+              count:
+                type: number
+              riskScoreRange:
+                type: string
+            required:
+              - riskLevel
+              - count
+        total:
+          type: number
+      required:
+        - data
     CaseTransaction:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionWithRulesResult
@@ -3115,6 +3156,26 @@ components:
         - MEDIUM
         - LOW
         - VERY_LOW
+    RiskClassificationConfig:
+      type: object
+      title: RiskClassificationConfig
+      x-stoplight:
+        id: lrybcomxmbf4h
+      enum:
+        - VERY_HIGH
+        - HIGH
+        - MEDIUM
+        - LOW
+        - VERY_LOW
+      properties:
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+        classificationValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       x-stoplight:

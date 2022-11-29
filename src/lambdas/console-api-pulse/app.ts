@@ -34,7 +34,7 @@ export const riskClassificationHandler = lambdaApi({
       event.resource === '/pulse/risk-classification'
     ) {
       try {
-        return riskRepository.getRiskClassification()
+        return riskRepository.getRiskClassificationValues()
       } catch (e) {
         logger.error(e)
         return e
@@ -48,9 +48,10 @@ export const riskClassificationHandler = lambdaApi({
         event.body
       ) as RiskClassificationScore[]
       validateClassificationRequest(classificationValues)
-      const result = await riskRepository.createOrUpdateRiskClassification(
-        classificationValues
-      )
+      const result =
+        await riskRepository.createOrUpdateRiskClassificationConfig(
+          classificationValues
+        )
       return result.classificationValues
     }
     throw new BadRequest('Unhandled request')

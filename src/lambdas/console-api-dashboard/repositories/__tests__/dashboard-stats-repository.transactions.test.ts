@@ -29,7 +29,7 @@ describe('Verify transactions counting statistics', () => {
       hitRules: [],
       executedRules: [],
     })
-    await statsRepository.refreshStats(timestamp)
+    await statsRepository.refreshTransactionStats(timestamp)
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T00:00:00.000Z').valueOf(),
       dayjs('2022-01-30T18:00:00.000Z').valueOf(),
@@ -74,7 +74,7 @@ describe('Verify transactions counting statistics', () => {
       hitRules: [hitRule('FLAG')],
       executedRules: [hitRule('FLAG')],
     })
-    await statsRepository.refreshStats(timestamp)
+    await statsRepository.refreshTransactionStats(timestamp)
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T00:00:00.000Z').valueOf(),
       dayjs('2022-01-30T18:00:00.000Z').valueOf(),
@@ -112,7 +112,7 @@ describe('Verify transactions counting statistics', () => {
       hitRules: hitRules,
       executedRules: hitRules,
     })
-    await statsRepository.refreshStats(timestamp)
+    await statsRepository.refreshTransactionStats(timestamp)
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T00:00:00.000Z').valueOf(),
       dayjs('2022-01-30T18:00:00.000Z').valueOf(),
@@ -143,7 +143,7 @@ describe('Verify transactions counting statistics', () => {
       hitRules: [],
       executedRules: [notHitRule(), notHitRule(), notHitRule()],
     })
-    await statsRepository.refreshStats(timestamp)
+    await statsRepository.refreshTransactionStats(timestamp)
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T00:00:00.000Z').valueOf(),
       dayjs('2022-01-30T18:00:00.000Z').valueOf(),
@@ -174,7 +174,7 @@ describe('Verify transactions counting statistics', () => {
         hitRules: [],
         executedRules: [],
       })
-      await statsRepository.refreshStats(timestamp)
+      await statsRepository.refreshTransactionStats(timestamp)
     }
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T01:00:00.000Z').valueOf(),
@@ -222,7 +222,7 @@ describe('Verify transactions counting statistics', () => {
         hitRules: [hitRule('SUSPEND')],
         executedRules: [],
       })
-      await statsRepository.refreshStats(timestamp)
+      await statsRepository.refreshTransactionStats(timestamp)
     }
     const stats = await statsRepository.getTransactionCountStats(
       dayjs('2022-01-30T01:00:00.000Z').valueOf(),
@@ -269,7 +269,7 @@ describe('Verify transactions counting statistics', () => {
         hitRules: [hitRule('BLOCK')],
         executedRules: [hitRule('BLOCK')],
       })
-      await statsRepository.refreshStats(timestamp)
+      await statsRepository.refreshTransactionStats(timestamp)
     }
 
     const hourlyStats = await statsRepository.getTransactionCountStats(

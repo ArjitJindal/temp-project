@@ -5,6 +5,7 @@ import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
   getAgeFromTimestamp,
+  getRiskScoreFromLevel,
   riskLevelPrecendence,
 } from './utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -34,7 +35,8 @@ export const updateInitialRiskScores = async (
 ): Promise<any> => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
-  const riskClassificationValues = await riskRepository.getRiskClassification()
+  const riskClassificationValues =
+    await riskRepository.getRiskClassificationValues()
   const riskScoresList: number[] = []
   parameterRiskScores
     ?.filter(
@@ -54,7 +56,9 @@ export const updateInitialRiskScores = async (
             user,
             parameterAttributeDetails.riskLevelAssignmentValues
           )
-          riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+          riskScoresList.push(
+            getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+          )
         }
       } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
         const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
@@ -62,13 +66,17 @@ export const updateInitialRiskScores = async (
           user,
           parameterAttributeDetails.riskLevelAssignmentValues
         )
-        riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+        riskScoresList.push(
+          getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+        )
       } else if (parameterAttributeDetails.parameterType == 'ITERABLE') {
         const riskLevel: RiskLevel = getIterableAttributeRiskLevel(
           parameterAttributeDetails,
           user
         )
-        riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+        riskScoresList.push(
+          getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+        )
       }
     })
 
@@ -95,7 +103,8 @@ export const updateDynamicRiskScores = async (
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
-  const riskClassificationValues = await riskRepository.getRiskClassification()
+  const riskClassificationValues =
+    await riskRepository.getRiskClassificationValues()
   const riskScoresList: number[] = []
 
   const relevantParameters =
@@ -121,7 +130,7 @@ export const updateDynamicRiskScores = async (
                 parameterAttributeDetails.riskLevelAssignmentValues
               )
               riskScoresList.push(
-                getRiskScore(riskClassificationValues, riskLevel)
+                getRiskScoreFromLevel(riskClassificationValues, riskLevel)
               )
             })
           }
@@ -133,7 +142,9 @@ export const updateDynamicRiskScores = async (
         transaction,
         parameterAttributeDetails.riskLevelAssignmentValues
       )
-      riskScoresList.push(getRiskScore(riskClassificationValues, riskLevel))
+      riskScoresList.push(
+        getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+      )
     }
   }
   const arsScore = riskScoresList.length
@@ -329,20 +340,4 @@ const getAgeDerivedRiskLevel = (
     }
   }
   return DEFAULT_RISK_LEVEL
-}
-
-const getRiskScore = (
-  riskClassificationValues: Array<any>,
-  riskLevel: RiskLevel
-): number => {
-  let calculatedRiskScore = 75
-  riskClassificationValues.forEach((value) => {
-    if (riskLevel == value.riskLevel) {
-      calculatedRiskScore = _.mean([
-        value.upperBoundRiskScore,
-        value.lowerBoundRiskScore,
-      ])
-    }
-  })
-  return calculatedRiskScore
 }
