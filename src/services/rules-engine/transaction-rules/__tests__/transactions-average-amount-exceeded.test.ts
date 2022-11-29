@@ -214,8 +214,8 @@ ruleAggregationTest(() => {
             rollingBasis: true,
           },
           period2: {
-            granularity: 'hour',
-            units: 48,
+            granularity: 'day',
+            units: 2,
             rollingBasis: true,
           },
           excludePeriod1: true,
@@ -367,7 +367,15 @@ ruleAggregationTest(() => {
             transactionId: '333',
             originUserId: 'Nick',
             destinationUserId: 'Mike',
-            originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+            destinationAmountDetails: undefined,
+            timestamp: now.subtract(1, 'second').valueOf(),
+          }),
+          getTestTransaction({
+            transactionId: '333',
+            originUserId: 'Nick',
+            destinationUserId: 'Mike',
+            originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: undefined,
             timestamp: now.valueOf(),
           }),
@@ -378,7 +386,7 @@ ruleAggregationTest(() => {
             max: 250,
           },
         },
-        expectedHits: [false, false, false],
+        expectedHits: [false, false, false, false],
       },
     ])('', ({ name, transactions, expectedHits, ruleParams }) => {
       const TEST_TENANT_ID = getTestTenantId()

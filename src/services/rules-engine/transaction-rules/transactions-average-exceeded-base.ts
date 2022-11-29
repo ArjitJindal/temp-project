@@ -2,8 +2,9 @@ import _ from 'lodash'
 import {
   CHECK_RECEIVER_SCHEMA,
   CHECK_SENDER_SCHEMA,
-  TIME_WINDOW_SCHEMA,
+  DAY_WINDOW_SCHEMA,
   TimeWindow,
+  DayWindow,
 } from '../utils/rule-parameter-schemas'
 import { TransactionFilters } from '../transaction-filters'
 import {
@@ -17,10 +18,7 @@ import {
   AuxiliaryIndexTransaction,
   TransactionRepository,
 } from '@/services/rules-engine/repositories/transaction-repository'
-import {
-  getTimestampRange,
-  toGranularity,
-} from '@/services/rules-engine/utils/time-utils'
+import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { RuleHitResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
@@ -37,8 +35,8 @@ type AggregationData = {
 }
 
 export type TransactionsAverageExceededParameters = {
-  period1: TimeWindow
-  period2: TimeWindow
+  period1: DayWindow
+  period2: DayWindow
   excludePeriod1?: boolean
   checkSender: 'sending' | 'all' | 'none'
   checkReceiver: 'receiving' | 'all' | 'none'
@@ -69,10 +67,10 @@ export default class TransactionAverageExceededBaseRule<
     return {
       type: 'object',
       properties: {
-        period1: TIME_WINDOW_SCHEMA({
+        period1: DAY_WINDOW_SCHEMA({
           title: 'period1 (Current period)',
         }),
-        period2: TIME_WINDOW_SCHEMA({
+        period2: DAY_WINDOW_SCHEMA({
           title: 'period2 (Reference period, should be larger than period1)',
         }),
         excludePeriod1: {
@@ -164,22 +162,22 @@ export default class TransactionAverageExceededBaseRule<
       min: period2TransactionsNumberMin,
       max: period2TransactionsNumberMax,
     } = transactionsNumberThreshold2 ?? {}
-    const period1TransactionsCount = period1AmountDetails.length
-    const period2TransactionsCount = period2AmountDetails.length
+    const transactionsCountPeriod1 = period1AmountDetails.length
+    const transactionsCountPeriod2 = period2AmountDetails.length
 
     if (
       (period1TransactionsNumberMin &&
-        period1TransactionsCount < period1TransactionsNumberMin) ||
+        transactionsCountPeriod1 < period1TransactionsNumberMin) ||
       (period1TransactionsNumberMax &&
-        period1TransactionsCount > period1TransactionsNumberMax)
+        transactionsCountPeriod1 > period1TransactionsNumberMax)
     ) {
       return
     }
     if (
       (period2TransactionsNumberMin &&
-        period2TransactionsCount < period2TransactionsNumberMin) ||
+        transactionsCountPeriod2 < period2TransactionsNumberMin) ||
       (period2TransactionsNumberMax &&
-        period2TransactionsCount > period2TransactionsNumberMax)
+        transactionsCountPeriod2 > period2TransactionsNumberMax)
     ) {
       return
     }
@@ -196,25 +194,41 @@ export default class TransactionAverageExceededBaseRule<
 
       const { units1, units2 } = this.getPeriodUnits()
 
-      result = await Promise.all([
-        avgTransactionAmount(amountDetails1, currency, units1),
-        avgTransactionAmount(amountDetails2, currency, units2),
-      ])
+      const totalAmountPeriod1 = await getTransactionsTotalAmount(
+        amountDetails1,
+        currency
+      )
+      const totalAmountPeriod2 = await getTransactionsTotalAmount(
+        amountDetails2,
+        currency
+      )
+
+      if (
+        (avgMin != null && totalAmountPeriod1.transactionAmount < avgMin) ||
+        (avgMax != null && totalAmountPeriod2.transactionAmount > avgMax)
+      ) {
+        return
+      }
+
+      result = [
+        totalAmountPeriod1.transactionAmount / units1,
+        totalAmountPeriod2.transactionAmount / units2,
+      ]
     } else if (avgMethod === 'NUMBER') {
       const { units1, units2 } = this.getPeriodUnits()
       result = [
-        period1TransactionsCount / units1,
-        period2TransactionsCount / units2,
+        transactionsCountPeriod1 / units1,
+        transactionsCountPeriod2 / units2,
       ]
+
+      if (
+        (avgMin != null && result[0] < avgMin) ||
+        (avgMax != null && result[0] > avgMax)
+      ) {
+        return
+      }
     } else {
       throw neverThrow(avgMethod, `Method not supported: ${avgMethod}`)
-    }
-
-    if (
-      (avgMin != null && result[0] < avgMin) ||
-      (avgMax != null && result[0] > avgMax)
-    ) {
-      return
     }
 
     return result
@@ -267,15 +281,20 @@ export default class TransactionAverageExceededBaseRule<
       }
       const avgMethod = this.getAvgMethod()
       const { units1, units2 } = this.getPeriodUnits()
+      const transactionsCountPeriod1 =
+        _.sumBy(userAggregationDataP1, (data) => data.count!) + 1
+      const transactionsCountPeriod2 =
+        _.sumBy(userAggregationDataP2, (data) => data.count!) +
+        (excludePeriod1 ? 0 : 1)
       let avg1 = 0
       let avg2 = 0
+      let isWithinAvgThresholds = true
+
       if (avgMethod === 'NUMBER') {
-        avg1 =
-          (_.sumBy(userAggregationDataP1, (data) => data.count!) + 1) / units1
-        avg2 =
-          (_.sumBy(userAggregationDataP2, (data) => data.count!) +
-            (excludePeriod1 ? 0 : 1)) /
-          units2
+        avg1 = transactionsCountPeriod1 / units1
+        avg2 = transactionsCountPeriod2 / units2
+        isWithinAvgThresholds =
+          (!avgMin || avg1 >= avgMin) && (!avgMax || avg1 <= avgMax)
       } else if (avgMethod === 'AMOUNT') {
         const amountDetails =
           direction === 'origin'
@@ -289,21 +308,24 @@ export default class TransactionAverageExceededBaseRule<
               )
             ).transactionAmount
           : 0
-        avg1 =
-          (_.sumBy(userAggregationDataP1, (data) => data.amount!) +
-            currentAmount) /
-          units1
-        avg2 =
-          (_.sumBy(userAggregationDataP2, (data) => data.amount!) +
-            (excludePeriod1 ? 0 : currentAmount)) /
-          units2
+        const transactionsAmountPeriod1 =
+          _.sumBy(userAggregationDataP1, (data) => data.amount!) + currentAmount
+        const transactionsAmountPeriod2 =
+          _.sumBy(userAggregationDataP2, (data) => data.amount!) +
+          (excludePeriod1 ? 0 : currentAmount)
+
+        avg1 = transactionsAmountPeriod1 / units1
+        avg2 = transactionsAmountPeriod2 / units2
+        const transactionsAmountAveragePeriod1 =
+          transactionsAmountPeriod1 / transactionsCountPeriod1
+        isWithinAvgThresholds =
+          (!avgMin || transactionsAmountAveragePeriod1 >= avgMin) &&
+          (!avgMax || transactionsAmountAveragePeriod1 <= avgMax)
       }
 
       const multiplier = avg1 / avg2
       const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
       const result = multiplierToPercents(multiplier) > maxMultiplier
-      const isWithinAvgThresholds =
-        (!avgMin || avg1 >= avgMin) && (!avgMax || avg1 <= avgMax)
       if (result && isWithinAvgThresholds) {
         const vars = {
           ...super.getTransactionVars(direction),
@@ -505,7 +527,7 @@ export default class TransactionAverageExceededBaseRule<
     const { period1, period2, excludePeriod1 } = this.parameters
     const units1 = period1.units
     const units2 = excludePeriod1
-      ? toGranularity(period2, period1.granularity).units - period1.units
+      ? period2.units - period1.units
       : period2.units
     return {
       units1,
@@ -581,23 +603,4 @@ export default class TransactionAverageExceededBaseRule<
       })
     )
   }
-}
-
-async function avgTransactionAmount(
-  details: TransactionAmountDetails[],
-  currency: CurrencyCode,
-  units: number
-): Promise<number> {
-  if (details.length === 0) {
-    return 0
-  }
-
-  const normalizedAmounts = await Promise.all(
-    details.map((amountDetails) =>
-      getTargetCurrencyAmount(amountDetails, currency)
-    )
-  )
-
-  const sum = normalizedAmounts.reduce((acc, x) => acc + x.transactionAmount, 0)
-  return sum / units
 }

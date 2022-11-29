@@ -15,6 +15,12 @@ export type TimeWindow = {
   rollingBasis?: boolean
 }
 
+export type DayWindow = {
+  units: number
+  granularity: 'day'
+  rollingBasis?: boolean
+}
+
 export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
@@ -32,6 +38,29 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
         title: 'Rolling basis',
         description:
           'When rolling basis is disabled, system starts the time period at 00:00 for day, week, month time granularities',
+        nullable: true,
+      },
+    },
+    required: ['units', 'granularity'],
+  } as const)
+
+export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    title: options?.title || 'Time Window (Day)',
+    description: options?.description,
+    properties: {
+      units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
+      granularity: {
+        type: 'string',
+        title: 'Time granularity',
+        enum: ['day'],
+      },
+      rollingBasis: {
+        type: 'boolean',
+        title: 'Rolling basis',
+        description:
+          'When rolling basis is disabled, system starts the time period at 00:00.',
         nullable: true,
       },
     },
