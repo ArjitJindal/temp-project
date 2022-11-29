@@ -24,7 +24,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 1rem;
+  padding: 0.1875rem;
   background-color: white;
   gap: 1rem;
 }
@@ -36,6 +36,11 @@
 }
 
 .commentBody {
-  padding: 1rem;
+  padding: 0.1875rem;
   background-color: @fr-colors-purpleGrayTint !important;
+  :global {
+    .ant-comment-inner {
+      padding-bottom: 0 !important;
+    }
+  }
 }
