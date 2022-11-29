@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: http://localhost:3000
+  - url: 'http://localhost:3000'
 paths:
   /apikey:
     parameters: []
@@ -2378,24 +2378,28 @@ components:
           type: string
         parametersSchema:
           type: object
-        descriptionTemplate:
-          type: string
         defaultParameters:
           type: object
-        defaultRiskLevelParameters:
-          $ref: '#/components/schemas/RiskLevelRuleParameters'
         defaultAction:
           $ref: '#/components/schemas/RuleAction'
-        defaultRiskLevelActions:
-          $ref: '#/components/schemas/RiskLevelRuleActions'
-        defaultFilters:
-          type: object
         ruleImplementationName:
           type: string
         labels:
           type: array
           items:
             type: string
+        defaultCasePriority:
+          $ref: '#/components/schemas/CasePriority'
+        defaultCaseCreationType:
+          $ref: '#/components/schemas/CaseType'
+        descriptionTemplate:
+          type: string
+        defaultRiskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRuleParameters'
+        defaultRiskLevelActions:
+          $ref: '#/components/schemas/RiskLevelRuleActions'
+        defaultFilters:
+          type: object
         createdAt:
           type: number
         updatedAt:
@@ -2404,10 +2408,8 @@ components:
           type: array
           items:
             type: string
-        defaultCaseCreationType:
-          $ref: '#/components/schemas/CaseType'
-        defaultCasePriority:
-          $ref: '#/components/schemas/CasePriority'
+        defaultFalsePositiveCheckEnabled:
+          type: boolean
       required:
         - id
         - type
@@ -2418,31 +2420,35 @@ components:
         - defaultAction
         - ruleImplementationName
         - labels
-        - defaultCaseCreationType
         - defaultCasePriority
+        - defaultCaseCreationType
     RuleInstance:
       title: RuleInstance
       type: object
       properties:
         id:
           type: string
+        ruleId:
+          type: string
+        casePriority:
+          $ref: '#/components/schemas/CasePriority'
+        parameters:
+          type: object
+        action:
+          $ref: '#/components/schemas/RuleAction'
+        caseCreationType:
+          $ref: '#/components/schemas/CaseType'
         type:
           type: string
           enum:
             - TRANSACTION
             - USER
-        ruleId:
-          type: string
         ruleNameAlias:
           type: string
         filters:
           type: object
-        parameters:
-          type: object
         riskLevelParameters:
           $ref: '#/components/schemas/RiskLevelRuleParameters'
-        action:
-          $ref: '#/components/schemas/RuleAction'
         riskLevelActions:
           $ref: '#/components/schemas/RiskLevelRuleActions'
         status:
@@ -2458,16 +2464,14 @@ components:
           type: number
         hitCount:
           type: number
-        caseCreationType:
-          $ref: '#/components/schemas/CaseType'
-        casePriority:
-          $ref: '#/components/schemas/CasePriority'
+        falsePositiveCheckEnabled:
+          type: boolean
       required:
         - ruleId
+        - casePriority
         - parameters
         - action
         - caseCreationType
-        - casePriority
     RuleAction:
       type: string
       title: RuleAction
@@ -2732,7 +2736,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: 2020-01-04
+            - _id: '2020-01-04'
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -3374,6 +3378,7 @@ components:
         - GOOGLE_SSO
         - SANCTIONS
         - RULES_ENGINE_RULE_BASED_AGGREGATION
+        - FALSE_POSITIVE_CHECK
       description: ''
     AccountRole:
       type: string
@@ -3553,6 +3558,8 @@ components:
           type: array
           items:
             type: string
+        falsePositiveDetails:
+          $ref: '#/components/schemas/FalsePositiveDetails'
     CasesListResponse:
       title: CasesListResponse
       type: object
@@ -4015,6 +4022,20 @@ components:
       required:
         - type
         - action
+    FalsePositiveDetails:
+      title: FalsePositiveDetails
+      x-stoplight:
+        id: hw5fqqlmg9fci
+      type: object
+      properties:
+        isFalsePositive:
+          type: boolean
+        confidence:
+          type: number
+          description: Value between 0-1
+      required:
+        - isFalsePositive
+        - confidence
   securitySchemes:
     Authorization:
       type: http

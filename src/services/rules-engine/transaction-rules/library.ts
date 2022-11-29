@@ -77,6 +77,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: ['AML', 'Fraud'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
+        defaultFalsePositiveCheckEnabled: true,
       }
     },
     () => {
@@ -468,6 +469,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: ['AML'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
+        defaultFalsePositiveCheckEnabled: true,
       }
     },
     () => {
@@ -529,6 +531,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: ['AML', 'Fraud'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
+        defaultFalsePositiveCheckEnabled: true,
       }
     },
     () => {
@@ -732,6 +735,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: ['Fraud'],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
+        defaultFalsePositiveCheckEnabled: true,
       }
     },
     () => {
@@ -758,6 +762,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: [],
         defaultCasePriority: 'P1',
         defaultCaseCreationType: 'TRANSACTION',
+        defaultFalsePositiveCheckEnabled: true,
       }
     },
     () => {

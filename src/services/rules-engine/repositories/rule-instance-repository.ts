@@ -39,6 +39,7 @@ function toRuleInstance(item: any): RuleInstance {
     hitCount: item.hitCount,
     casePriority: item.casePriority,
     caseCreationType: item.caseCreationType,
+    falsePositiveCheckEnabled: item.falsePositiveCheckEnabled,
   }
 }
 
