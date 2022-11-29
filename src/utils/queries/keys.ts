@@ -42,6 +42,7 @@ export const TRANSACTIONS_STATS = (
   type: 'by-type' | 'by-date',
   searchParams: AnyParameters,
 ): QueryKey => ['transactions', 'stats', type, searchParams];
+export const USERS_STATS = (): QueryKey => ['users', 'stats'];
 export const TRANSACTIONS_UNIQUES = (): QueryKey => ['transactions', 'uniques'];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',

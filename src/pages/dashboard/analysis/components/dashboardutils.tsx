@@ -1,6 +1,6 @@
 import style from '../style.module.less';
 
-function header(input: string): React.ReactNode {
+export function header(input: string): React.ReactNode {
   return (
     <div>
       <span className={style.header}>{input}</span>
@@ -8,4 +8,10 @@ function header(input: string): React.ReactNode {
   );
 }
 
-export default header;
+export function smallHeader(input: string): React.ReactNode {
+  return (
+    <div>
+      <span className={style.smallheader}>{input}</span>
+    </div>
+  );
+}
