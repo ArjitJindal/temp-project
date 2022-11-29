@@ -1,4 +1,4 @@
-import UserAgeRuleFilter from '../user-age'
+import { UserAgeRuleFilter } from '../user-age'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

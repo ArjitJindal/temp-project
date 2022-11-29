@@ -9,7 +9,7 @@ export type TransactionStateRuleFilterParameter = {
   transactionState?: TransactionState
 }
 
-export default class TransactionStateRuleFilter extends TransactionRuleFilter<TransactionStateRuleFilterParameter> {
+export class TransactionStateRuleFilter extends TransactionRuleFilter<TransactionStateRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<TransactionStateRuleFilterParameter> {
     return {
       type: 'object',

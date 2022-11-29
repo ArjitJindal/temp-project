@@ -1,4 +1,4 @@
-import TransactionTypeRuleFilter from '../transaction-type'
+import { TransactionTypeRuleFilter } from '../transaction-type'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'

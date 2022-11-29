@@ -92,7 +92,7 @@ describe('Verify Transaction', () => {
     ])
     setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
-    test('rule is not rune', async () => {
+    test('rule is not run', async () => {
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
       const transaction = getTestTransaction({
         transactionId: 'dummy',
@@ -163,6 +163,57 @@ describe('Verify Transaction', () => {
       const result1 = await rulesEngine.verifyTransaction(transaction)
       const result2 = await rulesEngine.verifyTransaction(transaction)
       expect(result1.executedRules).toEqual(result2.executedRules)
+    })
+  })
+
+  describe('Verify Transaction with user direction filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'R-1',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        filters: { checkDirection: 'DESTINATION' },
+      },
+    ])
+
+    test('only destination user is hit', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const transaction = getTestTransaction({
+        transactionId: 'dummy',
+        originUserId: '1',
+      })
+      const result = await rulesEngine.verifyTransaction(transaction)
+      expect(result).toEqual({
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            ruleHitMeta: {
+              hitDirections: ['DESTINATION'],
+              caseCreationType: 'TRANSACTION',
+            },
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: 'test rule description.',
+            ruleAction: 'FLAG',
+            ruleHitMeta: {
+              hitDirections: ['DESTINATION'],
+              caseCreationType: 'TRANSACTION',
+            },
+          },
+        ],
+      } as TransactionMonitoringResult)
     })
   })
 })

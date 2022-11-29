@@ -10,7 +10,7 @@ export type UserCountryOfRegistrationRuleFilterParameter = {
   userRegistrationCountries?: string[]
 }
 
-export default class UserCountryOfRegistrationRuleFilter extends UserRuleFilter<UserCountryOfRegistrationRuleFilterParameter> {
+export class UserCountryOfRegistrationRuleFilter extends UserRuleFilter<UserCountryOfRegistrationRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<UserCountryOfRegistrationRuleFilterParameter> {
     return {
       type: 'object',

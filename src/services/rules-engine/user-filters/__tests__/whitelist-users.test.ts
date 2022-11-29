@@ -1,4 +1,4 @@
-import WhitelistUsersRuleFilter from '../whitelist-users'
+import { WhitelistUsersRuleFilter } from '../whitelist-users'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

@@ -1,4 +1,4 @@
-import TransactionTimeWindowRuleFilter from '../transaction-time-window'
+import { TransactionTimeWindowRuleFilter } from '../transaction-time-window'
 import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'

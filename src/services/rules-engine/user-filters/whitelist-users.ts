@@ -12,7 +12,7 @@ export type WhitelistUsersRuleFilterParameter = {
   }
 }
 
-export default class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleFilterParameter> {
+export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<WhitelistUsersRuleFilterParameter> {
     return {
       type: 'object',

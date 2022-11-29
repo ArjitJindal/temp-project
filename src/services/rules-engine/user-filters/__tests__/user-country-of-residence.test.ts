@@ -1,4 +1,4 @@
-import UserCountryOfResidenceRuleFilter from '../user-country-of-residence'
+import { UserCountryOfResidenceRuleFilter } from '../user-country-of-residence'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestUser, getTestBusiness } from '@/test-utils/user-test-utils'

@@ -8,7 +8,7 @@ export type CountryRuleFilterParameter = {
   transactionCountries?: string[]
 }
 
-export default class CountryRuleFilter extends TransactionRuleFilter<CountryRuleFilterParameter> {
+export class CountryRuleFilter extends TransactionRuleFilter<CountryRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<CountryRuleFilterParameter> {
     return {
       type: 'object',

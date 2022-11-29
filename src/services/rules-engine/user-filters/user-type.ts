@@ -10,7 +10,7 @@ export type UserTypeRuleFilterParameter = {
   userType?: UserType
 }
 
-export default class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParameter> {
+export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<UserTypeRuleFilterParameter> {
     return {
       type: 'object',

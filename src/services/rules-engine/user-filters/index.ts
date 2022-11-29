@@ -1,19 +1,24 @@
 import { UserRuleFilter } from './filter'
-import UserCreationAgeRuleFilter, {
+import {
+  UserCreationAgeRuleFilter,
   UserCreationAgeRuleFilterParameter,
 } from './user-creation-age'
-import UserAgeRuleFilter, { UserAgeRuleFilterParameter } from './user-age'
-import UserCountryOfResidenceRuleFilter, {
+import { UserAgeRuleFilter, UserAgeRuleFilterParameter } from './user-age'
+import {
+  UserCountryOfResidenceRuleFilter,
   UserCountryOfResidenceRuleFilterParameter,
 } from './user-country-of-residence'
-import UserTypeRuleFilter, { UserTypeRuleFilterParameter } from './user-type'
-import WhitelistUsersRuleFilter, {
+import { UserTypeRuleFilter, UserTypeRuleFilterParameter } from './user-type'
+import {
+  WhitelistUsersRuleFilter,
   WhitelistUsersRuleFilterParameter,
 } from './whitelist-users'
-import UserCountryOfNationalityRuleFilter, {
+import {
+  UserCountryOfNationalityRuleFilter,
   UserCountryOfNationalityRuleFilterParameter,
 } from './user-country-of-nationality'
-import UserCountryOfRegistrationRuleFilter, {
+import {
+  UserCountryOfRegistrationRuleFilter,
   UserCountryOfRegistrationRuleFilterParameter,
 } from './user-country-of-registration'
 

@@ -1,4 +1,4 @@
-import CountryRuleFilter from '../transaction-country'
+import { CountryRuleFilter } from '../transaction-country'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'

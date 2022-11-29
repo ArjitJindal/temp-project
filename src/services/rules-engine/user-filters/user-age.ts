@@ -20,7 +20,7 @@ export type UserAgeRuleFilterParameter = {
   }
 }
 
-export default class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter> {
+export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<UserAgeRuleFilterParameter> {
     return {
       type: 'object',

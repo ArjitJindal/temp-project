@@ -11,7 +11,7 @@ export type TransactionTimeWindowRuleFilterParameter = {
   }
 }
 
-export default class TransactionTimeWindowRuleFilter extends TransactionRuleFilter<TransactionTimeWindowRuleFilterParameter> {
+export class TransactionTimeWindowRuleFilter extends TransactionRuleFilter<TransactionTimeWindowRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<TransactionTimeWindowRuleFilterParameter> {
     return {
       type: 'object',

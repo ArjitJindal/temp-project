@@ -1,4 +1,4 @@
-import UserTypeRuleFilter from '../user-type'
+import { UserTypeRuleFilter } from '../user-type'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestUser } from '@/test-utils/user-test-utils'

@@ -1,32 +1,43 @@
 import { TransactionRuleFilter } from './filter'
-import PaymentMethodRuleFilter, {
+import {
+  PaymentMethodRuleFilter,
   PaymentMethodRuleFilterParameter,
 } from './payment-method'
-import TransactionTypeRuleFilter, {
+import {
+  TransactionTypeRuleFilter,
   TransactionTypeRuleFilterParameter,
 } from './transaction-type'
-import TransactionStateRuleFilter, {
+import {
+  TransactionStateRuleFilter,
   TransactionStateRuleFilterParameter,
 } from './transaction-state'
-import CountryRuleFilter, {
+import {
+  CountryRuleFilter,
   CountryRuleFilterParameter,
 } from './transaction-country'
+import {
+  CheckDirectionRuleFilter,
+  CheckDirectionRuleFilterParameter,
+} from './check-direction'
 
 export type TransactionFilterKeys =
   | keyof PaymentMethodRuleFilterParameter
   | keyof TransactionTypeRuleFilterParameter
   | keyof TransactionStateRuleFilterParameter
   | keyof CountryRuleFilterParameter
+  | keyof CheckDirectionRuleFilterParameter
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
   TransactionStateRuleFilterParameter &
-  CountryRuleFilterParameter
+  CountryRuleFilterParameter &
+  CheckDirectionRuleFilterParameter
 
 const _TRANSACTION_FILTERS = new Map<TransactionFilterKeys, any>([
   ['paymentMethod', PaymentMethodRuleFilter],
   ['transactionTypes', TransactionTypeRuleFilter],
   ['transactionState', TransactionStateRuleFilter],
   ['transactionCountries', CountryRuleFilter],
+  ['checkDirection', CheckDirectionRuleFilter],
 ])
 
 export const TRANSACTION_FILTERS = Object.fromEntries(_TRANSACTION_FILTERS) as {

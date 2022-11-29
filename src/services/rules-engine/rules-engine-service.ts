@@ -12,12 +12,13 @@ import { TransactionEventRepository } from './repositories/transaction-event-rep
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
-import { USER_FILTERS } from './user-filters'
-import { TRANSACTION_FILTERS } from './transaction-filters'
+import { UserFilters, USER_FILTERS } from './user-filters'
+import { TransactionFilters, TRANSACTION_FILTERS } from './transaction-filters'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
+import { RuleHitResult } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -365,6 +366,9 @@ export class RulesEngineService {
             `${ruleImplementationName} rule implementation not found!`
           )
         }
+        const ruleFilters = ruleInstance.filters as TransactionFilters &
+          UserFilters
+
         const ruleClassInstance = new RuleClass(
           this.tenantId,
           {
@@ -372,24 +376,21 @@ export class RulesEngineService {
             senderUser: data.senderUser,
             receiverUser: data.receiverUser,
           },
-          { parameters, filters: ruleInstance.filters },
+          { parameters, filters: ruleFilters },
           { ruleInstance },
           this.dynamoDb
         )
 
         const segmentNamespace = `Rules Engine - ${ruleInstance.ruleId} (${ruleInstance.id})`
         let filterSegment = undefined
-        if (!_.isEmpty(ruleInstance.filters)) {
+        if (!_.isEmpty(ruleFilters)) {
           filterSegment = await addNewSubsegment(
             segmentNamespace,
             'Rule Filtering'
           )
         }
-        const shouldCompute = await this.computeRuleFilters(
-          ruleInstance.filters,
-          data
-        )
-        if (!_.isEmpty(ruleInstance.filters)) {
+        const shouldCompute = await this.computeRuleFilters(ruleFilters, data)
+        if (!_.isEmpty(ruleFilters)) {
           filterSegment?.close()
         }
 
@@ -403,6 +404,9 @@ export class RulesEngineService {
         const ruleResult = shouldCompute
           ? await ruleClassInstance.computeRule()
           : null
+        const filteredRuleResult =
+          ruleResult && this.getFilteredRuleResult(ruleResult, ruleFilters)
+
         if (shouldCompute) {
           if (ruleClassInstance instanceof TransactionAggregationRule) {
             await Promise.all([
@@ -413,7 +417,8 @@ export class RulesEngineService {
           runSegment?.close()
         }
 
-        const ruleHit = (ruleResult && ruleResult.length > 0) ?? false
+        const ruleHit =
+          (filteredRuleResult && filteredRuleResult.length > 0) ?? false
 
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric
@@ -432,11 +437,11 @@ export class RulesEngineService {
         logger.info(`Completed rule`)
 
         const ruleHitDirections: RuleHitDirection[] =
-          ruleResult?.map((result) => result.direction) || []
+          filteredRuleResult?.map((result) => result.direction) || []
         const ruleDescriptions = (
           ruleHit
             ? await Promise.all(
-                ruleResult!.map((result) =>
+                filteredRuleResult!.map((result) =>
                   generateRuleDescription(rule, parameters as Vars, result.vars)
                 )
               )
@@ -509,6 +514,18 @@ export class RulesEngineService {
       }
     }
     return true
+  }
+
+  private getFilteredRuleResult(
+    ruleResult: RuleHitResult,
+    ruleFilters: TransactionFilters & UserFilters = {}
+  ): RuleHitResult {
+    if (ruleFilters.checkDirection) {
+      return ruleResult.filter(
+        (hitResult) => hitResult.direction === ruleFilters.checkDirection
+      )
+    }
+    return ruleResult
   }
 
   private async getUserRiskLevel(

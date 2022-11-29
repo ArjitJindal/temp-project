@@ -9,7 +9,7 @@ export type PaymentMethodRuleFilterParameter = {
   paymentMethod?: PaymentMethods
 }
 
-export default class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethodRuleFilterParameter> {
+export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethodRuleFilterParameter> {
   public static getSchema(): JSONSchemaType<PaymentMethodRuleFilterParameter> {
     return {
       type: 'object',
