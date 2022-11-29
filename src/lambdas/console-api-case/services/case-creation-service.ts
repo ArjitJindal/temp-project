@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -11,6 +12,7 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
+import { CASE_PRIORITY } from '@/@types/case/case-priority'
 import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 import { logger } from '@/core/logger'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -168,6 +170,10 @@ export class CaseCreationService {
               ...(existedCase.caseTransactions ?? []),
               filteredTransaction,
             ],
+            priority: _.min([
+              existedCase.priority ?? _.last(CASE_PRIORITY),
+              params.priority,
+            ]) as CasePriority,
           })
         } else {
           logger.info('Create a new user case for a transaction')
@@ -178,6 +184,7 @@ export class CaseCreationService {
               params.latestTransactionArrivalTimestamp,
             caseTransactionsIds: [filteredTransaction.transactionId as string],
             caseTransactions: [filteredTransaction],
+            priority: params.priority,
           })
         }
       }
