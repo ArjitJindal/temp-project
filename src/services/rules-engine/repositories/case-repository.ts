@@ -309,6 +309,24 @@ export class CaseRepository {
         },
       })
     }
+    if (params.filterBusinessIndustries != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseUsers.origin.legalEntity.companyGeneralDetails.businessIndustry':
+              {
+                $in: params.filterBusinessIndustries,
+              },
+          },
+          {
+            'caseUsers.destination.legalEntity.companyGeneralDetails.businessIndustry':
+              {
+                $in: params.filterBusinessIndustries,
+              },
+          },
+        ],
+      })
+    }
     return {
       filter: { $and: conditions },
     }

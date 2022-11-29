@@ -49,7 +49,7 @@ export const businessUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
-        filterBusinessIndustry,
+        filterBusinessIndustries,
       } = event.queryStringParameters as any
       return userService.getBusinessUsers({
         limit: parseInt(limit),
@@ -59,7 +59,9 @@ export const businessUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
-        filterBusinessIndustry,
+        filterBusinessIndustries: filterBusinessIndustries
+          ? filterBusinessIndustries.split(',')
+          : undefined,
       })
     } else if (
       event.httpMethod === 'GET' &&
@@ -108,6 +110,11 @@ export const businessUsersViewHandler = lambdaApi()(
         event.pathParameters.fileId
       )
       return 'OK'
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.path.endsWith('/business/users/uniques')
+    ) {
+      return await userService.getUniques()
     }
   }
 )

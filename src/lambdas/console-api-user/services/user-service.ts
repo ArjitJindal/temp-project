@@ -17,6 +17,7 @@ import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
 
 export class UserService {
   userRepository: UserRepository
@@ -188,5 +189,8 @@ export class UserService {
       Key: file.s3Key,
       Expires: 3600,
     })
+  }
+  public async getUniques(): Promise<UsersUniquesResponse> {
+    return this.userRepository.getUniques()
   }
 }

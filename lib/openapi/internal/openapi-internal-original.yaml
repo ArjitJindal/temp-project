@@ -1210,26 +1210,16 @@ paths:
           in: query
           name: filterName
         - schema:
-            type: string
-          in: query
-          name: filterBusinessIndustry
-        - schema:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterBusinessIndustries
     parameters: []
-  /business/users/uniques:
-    get:
-      summary: User - Unique values for different fields
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UsersUniquesResponse'
-      operationId: get-users-uniques
   '/business/users/{userId}':
     get:
       summary: Business Users - Item - Get
@@ -1298,6 +1288,18 @@ paths:
       responses:
         '200':
           description: OK
+  /business/users/uniques:
+    get:
+      summary: User - Unique values for different fields
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersUniquesResponse'
+      operationId: get-users-uniques
   /dashboard_stats/transactions:
     get:
       summary: DashboardStats - Transactions
@@ -2025,6 +2027,12 @@ paths:
               type: string
           in: query
           name: filterDestinationCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterBusinessIndustries
         - schema:
             type: string
           in: query

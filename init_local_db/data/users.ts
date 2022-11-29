@@ -65,6 +65,7 @@ const businessUsers: InternalBusinessUser[] = [
       },
       companyGeneralDetails: {
         legalName: 'Some company',
+        businessIndustry: ['Online Gambling'],
       },
     },
     createdTimestamp: Date.now(),
@@ -132,6 +133,7 @@ const businessUsers: InternalBusinessUser[] = [
     legalEntity: {
       companyGeneralDetails: {
         legalName: 'Some company',
+        businessIndustry: ['Alcohol'],
       },
     },
     createdTimestamp: generateRandomTimestamp(),

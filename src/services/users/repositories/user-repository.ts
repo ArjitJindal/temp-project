@@ -18,8 +18,8 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
-import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -130,7 +130,7 @@ export class UserRepository {
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
-      filterBusinessIndustry?: string
+      filterBusinessIndustries?: string
     },
     userType?: UserType
   ): Promise<{
@@ -147,18 +147,16 @@ export class UserRepository {
     const filterConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = []
-    const filterIndustryConditions: Filter<InternalBusinessUser>[] = []
 
     if (params.filterId != null) {
       filterConditions.push({
         userId: { $regex: params.filterId, $options: 'i' },
       })
     }
-    if (params.filterBusinessIndustry != null) {
-      filterIndustryConditions.push({
-        businessIndustry: {
-          $regex: params.filterBusinessIndustry,
-          $options: 'i',
+    if (params.filterBusinessIndustries != null) {
+      filterConditions.push({
+        'legalEntity.companyGeneralDetails.businessIndustry': {
+          $in: params.filterBusinessIndustries,
         },
       })
     }
@@ -399,7 +397,6 @@ export class UserRepository {
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
-
   public async getUniques(): Promise<UsersUniquesResponse> {
     const db = this.mongoDb.db()
     const name = USERS_COLLECTION(this.tenantId)
