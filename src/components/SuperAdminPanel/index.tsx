@@ -1,18 +1,9 @@
-import { Alert, Form, message, Modal, Select } from 'antd';
-import { useEffect, useState } from 'react';
+import { Form, message, Modal, Select } from 'antd';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
-import {
-  AsyncResource,
-  failed,
-  init,
-  isFailed,
-  isSuccess,
-  loading,
-  match,
-  success,
-} from '@/utils/asyncResource';
-import { Feature, Tenant } from '@/apis';
+import { Feature } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -35,29 +26,15 @@ export default function SuperAdminPanel() {
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const user = useAuth0User();
-
-  const [tenantsRes, setTenantsRes] = useState<AsyncResource<Tenant[]>>(init());
-
   const api = useApi();
-  useEffect(() => {
-    async function fetch() {
-      setTenantsRes(loading());
-      try {
-        const tenants = await api.getTenantsList();
-        setTenantsRes(success(tenants));
-      } catch (e) {
-        setTenantsRes(failed(e instanceof Error ? e.message : 'Unknown error'));
-      }
-    }
-    fetch().catch((e) => {
-      console.log('e', e);
-    });
-  }, [api]);
-
-  const [changeTenantRes, setChangeTenantRes] = useState<AsyncResource<void>>(init());
+  const queryResult = useQuery(['tenants'], () => api.getTenantsList());
+  const tenantOptions =
+    queryResult.data?.map((tenant) => ({
+      value: tenant.id,
+      label: tenant.name,
+    })) || [];
 
   const handleChangeTenant = async (newTenantId: string) => {
-    setChangeTenantRes(loading());
     const hideMessage = message.loading('Changing Tenant...', 10000);
     try {
       await api.accountsChangeTenant({
@@ -66,10 +43,9 @@ export default function SuperAdminPanel() {
           newTenantId,
         },
       });
-      setChangeTenantRes(success(undefined));
       window.location.reload();
     } catch (e) {
-      setChangeTenantRes(failed(e instanceof Error ? e.message : 'Unknown error'));
+      message.error('Failed to switch tenant');
     } finally {
       hideMessage();
     }
@@ -94,17 +70,6 @@ export default function SuperAdminPanel() {
     setIsModalVisible(false);
   };
 
-  const tenantOptions = match(tenantsRes, {
-    init: () => [],
-    success: (value) =>
-      value.map(({ id, name }) => ({
-        value: id,
-        label: name,
-      })),
-    loading: () => [{ value: '', label: `Loading...` }],
-    failed: (message) => [{ value: '', label: `Unable to load tenant list: ${message}` }],
-  });
-
   return (
     <>
       <Button type="default" size="small" onClick={showModal}>
@@ -126,10 +91,14 @@ export default function SuperAdminPanel() {
         >
           <Form.Item label="Tenant">
             <Select
-              disabled={!isSuccess(tenantsRes)}
+              disabled={tenantOptions.length === 0}
               options={tenantOptions}
               onChange={handleChangeTenant}
               value={user.tenantId}
+              filterOption={(input, option) =>
+                (option?.label.toLowerCase() ?? '').includes(input.toLowerCase().trim()) ||
+                (option?.value.toLowerCase() ?? '').includes(input.toLowerCase().trim())
+              }
               showSearch={true}
             />
             <b>{`${user.tenantId}`}</b>
@@ -144,7 +113,6 @@ export default function SuperAdminPanel() {
               value={features || initialFeatures}
             />
           </Form.Item>
-          {isFailed(changeTenantRes) && <Alert message={changeTenantRes.message} type="error" />}
         </Form>
       </Modal>
     </>
