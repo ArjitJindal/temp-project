@@ -1,8 +1,9 @@
 import ProDescriptions from '@ant-design/pro-descriptions';
-import { Input, message, Radio, Row, Space } from 'antd';
+import { Checkbox, Input, message, Radio, Row, Space } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
 import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '../../utils';
+import { ruleIdsWithAllowedFalsePositiveCheck } from '../../create-rule/components/RuleConfigurationsEditor/consts';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
@@ -28,6 +29,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
 }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
+  const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
+
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -61,18 +64,23 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   );
   const [caseCreationType, setCaseCreationType] = useState(ruleInstance.caseCreationType);
   const [casePriority, setCasePriority] = useState(ruleInstance.casePriority);
+  const [falsePositiveCheckEnabled, setFalsePositiveCheckEnabled] = useState<boolean>(
+    ruleInstance.falsePositiveCheckEnabled ?? false,
+  );
   const handleCancelEditing = useCallback(() => {
     setEditing(false);
     setParameters(ruleInstance.parameters);
     setRuleAction(ruleInstance.action);
     setCaseCreationType(ruleInstance.caseCreationType);
     setCasePriority(ruleInstance.casePriority);
+    setFalsePositiveCheckEnabled(ruleInstance.falsePositiveCheckEnabled ?? false);
     console.log('done cancel');
   }, [
     ruleInstance.action,
     ruleInstance.parameters,
     ruleInstance.caseCreationType,
     ruleInstance.casePriority,
+    ruleInstance.falsePositiveCheckEnabled,
   ]);
   const handleParametersChange = useCallback((newParameters: object) => {
     setParameters(newParameters);
@@ -106,6 +114,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         riskLevelActions,
         caseCreationType,
         casePriority,
+        falsePositiveCheckEnabled,
       });
       message.success(`Successfully updated rule ${rule.id}`);
       setEditing(false);
@@ -128,6 +137,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     riskLevelActions,
     caseCreationType,
     casePriority,
+    falsePositiveCheckEnabled,
   ]);
   const handleDeleteRuleInstance = useCallback(async () => {
     setDeleting(true);
@@ -221,7 +231,19 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             value={casePriority}
           ></Radio.Group>
         </ProDescriptions.Item>
-
+        {isFalsePositiveCheckEnabled && ruleIdsWithAllowedFalsePositiveCheck.includes(rule.id) && (
+          <ProDescriptions.Item label={<b>False Positive Check</b>}>
+            <Checkbox
+              name="falsePositiveCheckEnabled"
+              disabled={!editing || saving}
+              onChange={() => {
+                console.log(`FP: ${falsePositiveCheckEnabled}`);
+                setFalsePositiveCheckEnabled(!falsePositiveCheckEnabled);
+              }}
+              checked={falsePositiveCheckEnabled}
+            ></Checkbox>
+          </ProDescriptions.Item>
+        )}
         <ProDescriptions.Item label={<b>Filters:</b>} valueType="text">
           <RuleFiltersEditor
             filters={filters}

@@ -19,6 +19,7 @@ const FEATURES: Feature[] = [
   'SANCTIONS',
   'DASHBOARD_BLOCK_USER',
   'RULES_ENGINE_RULE_BASED_AGGREGATION',
+  'FALSE_POSITIVE_CHECK',
 ];
 
 export default function SuperAdminPanel() {

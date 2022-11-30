@@ -1,8 +1,9 @@
-import { Descriptions, Divider, Input, message, Radio, Row, Space } from 'antd';
+import { Checkbox, Descriptions, Divider, Input, message, Radio, Row, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { AjvError } from '@rjsf/core';
 import styles from './style.module.less';
+import { ruleIdsWithAllowedFalsePositiveCheck } from './consts';
 import { CasePriority, CaseType, Rule } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
@@ -24,7 +25,11 @@ interface Props {
 export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActivated }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
+  const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
   const [ruleNameAlias, setRuleNameAlias] = useState<string>();
+  const [falsePositiveCheckEnabled, setFalsePositiveCheckEnabled] = useState<boolean>(
+    rule.defaultFalsePositiveCheckEnabled ?? false,
+  );
   const [ruleAction, setRuleAction] = useState<RuleAction>(rule.defaultAction);
   const [riskLevelRuleActions, setRiskLevelRuleActions] = useState(
     isPulseEnabled
@@ -84,6 +89,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
       riskLevelParameters: RiskLevelRuleParameters | undefined,
       casePriority: CasePriority,
       caseCreationType: CaseType,
+      falsePositiveCheckEnabled: boolean | undefined,
     ) => {
       try {
         setActivating(true);
@@ -98,6 +104,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
             riskLevelActions,
             casePriority,
             caseCreationType,
+            falsePositiveCheckEnabled,
           },
         });
         onActivated();
@@ -144,6 +151,15 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
               value={casePriority}
             ></Radio.Group>
           </Descriptions.Item>
+          {isFalsePositiveCheckEnabled && ruleIdsWithAllowedFalsePositiveCheck.includes(rule.id) && (
+            <Descriptions.Item label="Enable False Positive Check">
+              <Checkbox
+                name="falsePositiveCheckEnabled"
+                onChange={() => setFalsePositiveCheckEnabled(!falsePositiveCheckEnabled)}
+                checked={falsePositiveCheckEnabled}
+              ></Checkbox>
+            </Descriptions.Item>
+          )}
         </Descriptions>
       </Row>
       <Divider>Rule Filters</Divider>
@@ -188,6 +204,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
                 riskLevelParameters,
                 casePriority,
                 caseCreationType,
+                falsePositiveCheckEnabled,
               )
             }
             disabled={validationErrors.length > 0}
