@@ -5,8 +5,7 @@
  */
 
 import { PaymentMethodRuleFilterParameter } from '../transaction-filters/payment-method'
-import { TransactionFilters } from '../transaction-filters'
-import { UserFilters } from '../user-filters'
+import { TransactionFilters, UserFilters } from '../filters'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'

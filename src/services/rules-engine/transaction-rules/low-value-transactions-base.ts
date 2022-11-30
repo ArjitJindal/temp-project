@@ -4,8 +4,9 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import {
   TRANSACTION_AMOUNT_RANGE_SCHEMA,
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
+  TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -14,12 +15,7 @@ import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { everyAsync } from '@/core/utils/array'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 export type LowValueTransactionsRuleParameters = {
-  lowTransactionValues: {
-    [currency: string]: {
-      max: number
-      min: number
-    }
-  }
+  lowTransactionValues: TransactionAmountRange
   lowTransactionCount: number
   paymentChannel?: string
 }

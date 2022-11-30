@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'

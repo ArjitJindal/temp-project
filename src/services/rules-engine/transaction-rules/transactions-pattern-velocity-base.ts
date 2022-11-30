@@ -12,7 +12,7 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'

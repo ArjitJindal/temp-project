@@ -265,6 +265,13 @@ export const CHECK_RECEIVER_OPTIONAL_SCHEMA = () =>
     nullable: true,
   } as const)
 
+export type TransactionAmountRange = {
+  [currency: string]: {
+    max?: number
+    min?: number
+  }
+}
+
 export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
@@ -273,12 +280,19 @@ export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
     additionalProperties: {
       type: 'object',
       properties: {
-        max: { type: 'integer' },
-        min: { type: 'integer' },
+        max: { type: 'integer', nullable: true },
+        min: { type: 'integer', nullable: true },
       },
-      required: ['max', 'min'],
     },
     required: [],
+  } as const)
+
+export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...TRANSACTION_AMOUNT_RANGE_SCHEMA(options),
+    nullable: true,
   } as const)
 
 export const INITIAL_TRANSACTIONS_SCHEMA = () =>

@@ -4,6 +4,8 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { logger } from '@/core/logger'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
+const MAX_CURRENCY_API_RETRY = 3
+
 // todo: make a proper enum type
 export type Currency = string
 
@@ -21,23 +23,30 @@ const cachedData: {
 export async function getCurrencyExchangeRate(
   sourceCurrency: Currency,
   targetCurrency: Currency
-) {
-  const sourceCurr = sourceCurrency.toLowerCase()
-  const targetCurr = targetCurrency.toLowerCase()
-  if (cachedData?.[sourceCurr]?.[targetCurr]) {
-    return cachedData[sourceCurr][targetCurr]
+): Promise<number> {
+  for (let i = 1; i <= MAX_CURRENCY_API_RETRY; i++) {
+    const sourceCurr = sourceCurrency.toLowerCase()
+    const targetCurr = targetCurrency.toLowerCase()
+    if (cachedData?.[sourceCurr]?.[targetCurr]) {
+      return cachedData[sourceCurr][targetCurr]
+    }
+    const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${sourceCurr}/${targetCurr}.min.json`
+    try {
+      const rate = (
+        (await (await fetch(apiUri)).json()) as { [key: string]: number }
+      )[targetCurr]
+      _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
+      return rate
+    } catch (e) {
+      logger.error('Failed to fetch the exchange rate!')
+      if (i === MAX_CURRENCY_API_RETRY) {
+        throw e
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, i * 500))
+      }
+    }
   }
-  const apiUri = `https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/${sourceCurr}/${targetCurr}.min.json`
-  try {
-    const rate = (
-      (await (await fetch(apiUri)).json()) as { [key: string]: number }
-    )[targetCurr]
-    _.set(cachedData, `${sourceCurr}.${targetCurr}`, rate)
-    return rate
-  } catch (e) {
-    logger.error('Failed to fetch the exchange rate!')
-    throw e
-  }
+  throw new Error('Not handled')
 }
 
 export async function getTargetCurrencyAmount(

@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import {
   TransactionsFilterOptions,
   TransactionRepository,

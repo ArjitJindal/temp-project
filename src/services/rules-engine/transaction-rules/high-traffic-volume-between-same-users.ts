@@ -11,7 +11,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 

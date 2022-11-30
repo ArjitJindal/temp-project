@@ -12,13 +12,17 @@ import { TransactionEventRepository } from './repositories/transaction-event-rep
 import { RuleRepository } from './repositories/rule-repository'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
-import { UserFilters, USER_FILTERS } from './user-filters'
-import { TransactionFilters, TRANSACTION_FILTERS } from './transaction-filters'
 import { generateRuleDescription, Vars } from './utils/format-description'
 import { Aggregators } from './aggregator'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { TransactionAggregationRule } from './transaction-rules/aggregation-rule'
 import { RuleHitResult } from './rule'
+import {
+  TransactionFilters,
+  TRANSACTION_FILTERS,
+  UserFilters,
+  USER_FILTERS,
+} from './filters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'

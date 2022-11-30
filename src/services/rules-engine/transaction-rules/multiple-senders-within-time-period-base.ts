@@ -4,7 +4,7 @@ import {
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'

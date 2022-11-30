@@ -5,7 +5,7 @@ import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   TRANSACTION_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'

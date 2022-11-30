@@ -14,7 +14,7 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'

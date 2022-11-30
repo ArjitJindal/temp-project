@@ -6,7 +6,7 @@ import {
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { subtractTime } from '../utils/time-utils'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import dayjs from '@/utils/dayjs'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'

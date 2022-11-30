@@ -15,7 +15,7 @@ import {
   CHECK_SENDER_OPTIONAL_SCHEMA,
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'

@@ -10,8 +10,10 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
-import { USER_FILTERS } from '@/services/rules-engine/user-filters'
-import { TRANSACTION_FILTERS } from '@/services/rules-engine/transaction-filters'
+import {
+  TRANSACTION_FILTERS,
+  USER_FILTERS,
+} from '@/services/rules-engine/filters'
 
 export const ruleHandler = lambdaApi()(
   async (

@@ -14,7 +14,7 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'

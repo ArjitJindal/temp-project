@@ -6,7 +6,7 @@ import {
   TimeWindow,
   DayWindow,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactions,

@@ -6,7 +6,7 @@ import {
   CHECK_SENDER_SCHEMA,
   CHECK_RECEIVER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../transaction-filters'
+import { TransactionFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'

@@ -6,8 +6,10 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { UserFilters } from '@/services/rules-engine/user-filters'
-import { TransactionFilters } from '@/services/rules-engine/transaction-filters'
+import {
+  TransactionFilters,
+  UserFilters,
+} from '@/services/rules-engine/filters'
 
 function isRule(rule: Rule | RuleInstance) {
   return !!(rule as Rule).defaultParameters
