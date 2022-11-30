@@ -4,7 +4,7 @@ import { ExpandTabRef } from '../../UserCaseDetails';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
 import * as Card from '@/components/ui/Card';
-import { CommonParams } from '@/components/ui/Table';
+import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { Case, CaseTransaction } from '@/apis';
 import { transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -19,7 +19,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export function expandedRowRender(transaction: CaseTransaction) {
@@ -42,11 +41,7 @@ export default function RulesHitCard(props: Props) {
   const api = useApi();
   const caseId = caseItem.caseId as string;
 
-  const [params, setParams] = useState<CommonParams>({
-    page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-    sort: [],
-  });
+  const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
   const queryResult = useQuery(CASES_ITEM_TRANSACTIONS(caseId, params), async () => {
     const response = await api.getCaseTransactions({
       caseId,

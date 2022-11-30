@@ -1,15 +1,13 @@
 import { Tabs } from 'antd';
-import { useLocalStorageState } from 'ahooks';
-import { useCallback, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
-import type { TableListPagination } from './data.d';
+import { useLocalStorageState } from 'ahooks';
 import styles from './UsersList.module.less';
 import UserRiskTag from './UserRiskTag';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
-import { RequestTable } from '@/components/RequestTable';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser, InternalUser } from '@/apis';
@@ -22,41 +20,46 @@ import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
 import { TableColumn } from '@/components/ui/Table/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { USERS } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { TableSearchParams } from '@/pages/case-management/types';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 const BusinessUsersTab = () => {
   const api = useApi();
 
   const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
 
+  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+
   const analytics = useAnalytics();
-  const request = useCallback(
-    async (params) => {
-      const { pageSize, current, userId, createdTimestamp } = params;
-      const [response, time] = await measure(() =>
-        api.getBusinessUsersList({
-          limit: pageSize!,
-          skip: (current! - 1) * pageSize!,
-          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
-          filterId: userId,
-        }),
-      );
-      analytics.event({
-        title: 'Table Loaded',
-        time,
-      });
-      return {
-        items: response.data,
-        success: true,
-        total: response.total,
-      };
-    },
-    [analytics, api],
-  );
+  const bussinessResult = usePaginatedQuery(USERS('bussiness', params), async ({ page: _page }) => {
+    const { createdTimestamp, userId, page } = params;
+
+    const [response, time] = await measure(() =>
+      api.getBusinessUsersList({
+        limit: DEFAULT_PAGE_SIZE,
+        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
+        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        filterId: userId,
+      }),
+    );
+    analytics.event({
+      title: 'Table Loaded',
+      time,
+    });
+    return {
+      items: response.data,
+      total: response.total,
+    };
+  });
 
   return (
     <>
-      <RequestTable<InternalBusinessUser, TableListPagination>
+      <QueryResultsTable<InternalBusinessUser, TableSearchParams>
         form={{
           labelWrap: true,
         }}
@@ -84,8 +87,10 @@ const BusinessUsersTab = () => {
         ]}
         className={styles.table}
         scroll={{ x: 1300 }}
-        request={request}
+        params={params}
+        onChangeParams={setParams}
         columns={columns}
+        queryResults={bussinessResult}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list-table',
@@ -115,34 +120,35 @@ const ConsumerUsersTab = () => {
   }
 
   const analytics = useAnalytics();
-  const request = useCallback(
-    async (params) => {
-      const { pageSize, current, userId, createdTimestamp } = params;
-      const [response, time] = await measure(() =>
-        api.getConsumerUsersList({
-          limit: pageSize!,
-          skip: (current! - 1) * pageSize!,
-          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
-          filterId: userId,
-        }),
-      );
-      analytics.event({
-        title: 'Table Loaded',
-        time,
-      });
-      return {
-        items: response.data,
-        success: true,
-        total: response.total,
-      };
-    },
-    [analytics, api],
-  );
+
+  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const consumerResults = usePaginatedQuery(USERS('consumer', params), async ({ page: _page }) => {
+    const { userId, createdTimestamp, page } = params;
+
+    const [response, time] = await measure(() =>
+      api.getConsumerUsersList({
+        limit: DEFAULT_PAGE_SIZE,
+        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
+        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        filterId: userId,
+      }),
+    );
+
+    analytics.event({
+      title: 'Table Loaded',
+      time,
+    });
+
+    return {
+      items: response.data,
+      total: response.total,
+    };
+  });
 
   return (
     <>
-      <RequestTable<InternalConsumerUser, TableListPagination>
+      <QueryResultsTable<InternalConsumerUser, AllParams<TableSearchParams>>
         form={{
           labelWrap: true,
         }}
@@ -150,6 +156,8 @@ const ConsumerUsersTab = () => {
         search={{
           labelWidth: 120,
         }}
+        params={params}
+        onChangeParams={setParams}
         actionsHeader={[
           ({ params, setParams }) => {
             return (
@@ -170,8 +178,8 @@ const ConsumerUsersTab = () => {
         ]}
         className={styles.table}
         scroll={{ x: 500 }}
-        request={request}
         columns={columns}
+        queryResults={consumerResults}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',
@@ -185,34 +193,32 @@ const AllUsersTab = () => {
   const api = useApi();
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
   const analytics = useAnalytics();
-  const request = useCallback(
-    async (params) => {
-      const { pageSize, current, userId, createdTimestamp } = params;
-      const [response, time] = await measure(() =>
-        api.getAllUsersList({
-          limit: pageSize!,
-          skip: (current! - 1) * pageSize!,
-          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
-          filterId: userId,
-        }),
-      );
-      analytics.event({
-        title: 'Table Loaded',
-        time,
-      });
-      return {
-        items: response.data,
-        success: true,
-        total: response.total,
-      };
-    },
-    [analytics, api],
-  );
+  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+
+  const allUsersResult = usePaginatedQuery(USERS('all', { ...params }), async ({ page: _page }) => {
+    const { userId, createdTimestamp, page } = params;
+    const [response, time] = await measure(() =>
+      api.getAllUsersList({
+        limit: DEFAULT_PAGE_SIZE,
+        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
+        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        filterId: userId,
+      }),
+    );
+    analytics.event({
+      title: 'Table Loaded',
+      time,
+    });
+    return {
+      items: response.data,
+      total: response.total,
+    };
+  });
 
   return (
     <>
-      <RequestTable<InternalUser, TableListPagination>
+      <QueryResultsTable<InternalUser, TableSearchParams>
         form={{
           labelWrap: true,
         }}
@@ -240,8 +246,10 @@ const AllUsersTab = () => {
         ]}
         className={styles.table}
         scroll={{ x: 500 }}
-        request={request}
         columns={columns}
+        queryResults={allUsersResult}
+        params={params}
+        onChangeParams={setParams}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',

@@ -1,17 +1,22 @@
 import { Drawer, message, Popover, Progress, Switch, Tooltip } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
+import moment from 'moment';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
-import { Rule, RuleInstance } from '@/apis';
+import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
+import { useRules } from '@/utils/rules';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
@@ -21,7 +26,7 @@ const MyRule = () => {
   );
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
-  const [rules, setRules] = useState<{ [key: string]: Rule }>({});
+  const { rules } = useRules();
   const handleRuleInstanceUpdate = useCallback(
     async (newRuleInstance: RuleInstance) => {
       const ruleInstanceId = newRuleInstance.id as string;
@@ -78,6 +83,7 @@ const MyRule = () => {
         title: 'Rule ID',
         width: 50,
         sorter: (a, b) => parseInt(a.ruleId.split('-')[1]) - parseInt(b.ruleId.split('-')[1]),
+        exportData: (row) => row.ruleId,
         render: (_, entity) => {
           return (
             <a
@@ -95,11 +101,12 @@ const MyRule = () => {
         title: 'Rule Name',
         width: 150,
         sorter: (a, b) => rules[a.ruleId].name.localeCompare(rules[b.ruleId].name),
+        exportData: (row) => rules[row.ruleId].name,
         render: (_, entity) => {
           const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
           return (
-            <Popover content={rules[ruleInstance.ruleId].description}>
-              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId].name}
+            <Popover content={rules[ruleInstance.ruleId]?.description}>
+              {ruleInstance.ruleNameAlias || rules[ruleInstance.ruleId]?.name}
             </Popover>
           );
         },
@@ -110,6 +117,12 @@ const MyRule = () => {
         sorter: (a, b) =>
           (a.hitCount && a.runCount ? a.hitCount / a.runCount : 0) -
           (b.hitCount && b.runCount ? b.hitCount / b.runCount : 0),
+        exportData: (row) => {
+          if (row.hitCount && row.runCount) {
+            return `${(row.hitCount / row.runCount) * 100}%`;
+          }
+          return '0%';
+        },
         render: (_, ruleInstance) => {
           return (
             <Tooltip title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}>
@@ -143,9 +156,12 @@ const MyRule = () => {
           ) : (
             <RuleParametersTable
               parameters={ruleInstance.parameters}
-              schema={rules[ruleInstance.ruleId].parametersSchema}
+              schema={rules[ruleInstance.ruleId]?.parametersSchema}
             />
           );
+        },
+        exportData: (row) => {
+          return JSON.stringify(row.parameters);
         },
       },
       ...caseCreationHeaders,
@@ -162,6 +178,7 @@ const MyRule = () => {
             </span>
           );
         },
+        exportData: (row) => row.action,
       },
       {
         title: 'Created At',
@@ -171,6 +188,7 @@ const MyRule = () => {
         defaultSortOrder: 'descend',
         dataIndex: 'createdAt',
         valueType: 'dateTime',
+        exportData: (row) => moment(row.createdAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
       },
       {
         title: 'Activated',
@@ -187,18 +205,18 @@ const MyRule = () => {
             />
           );
         },
+        exportData: (row) => row.status === 'ACTIVE',
       },
     ];
   }, [handleActivationChange, rules, updatedRuleInstances, isPulseEnabled]);
-  const request = useCallback(async () => {
-    const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances({})]);
-    setRules(_.keyBy(rules, 'id'));
+
+  const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
+    const ruleInstances = await api.getRuleInstances();
     return {
       items: ruleInstances,
-      success: true,
       total: ruleInstances.length,
     };
-  }, [api]);
+  });
   const i18n = useI18n();
   // todo: i18n
   return (
@@ -206,12 +224,12 @@ const MyRule = () => {
       title={i18n('menu.rules.my-rules')}
       description="List of all your rules. Activate/deactivate them in one click"
     >
-      <RequestTable<RuleInstance>
+      <QueryResultsTable<RuleInstance>
         form={{
           labelWrap: true,
         }}
         columns={columns}
-        request={request}
+        queryResults={rulesResult}
         pagination={false}
         search={false}
         scroll={{ x: 1000 }}
@@ -231,7 +249,7 @@ const MyRule = () => {
         }}
         closable={false}
       >
-        {currentRow?.id && (
+        {Object.keys(rules).length && currentRow?.id && (
           <RuleInstanceDetails
             rule={rules[currentRow.ruleId]}
             ruleParametersSchema={rules[currentRow.ruleId].parametersSchema}

@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tag } from 'antd';
 import { files } from './service';
-import type { TableListItem, TableListPagination } from './data';
+import type { TableListItem } from './data';
 import { FileImportButton } from '@/components/file-import/FileImportButton';
 import PageWrapper from '@/components/PageWrapper';
-import { RequestTable } from '@/components/RequestTable';
 import { useI18n } from '@/locales';
 import { TableColumn } from '@/components/ui/Table/types';
+import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { USER_FILES } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -65,21 +68,34 @@ const TableList: React.FC = () => {
   ];
 
   const i18n = useI18n();
+
+  const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+
+  const filesResult = useQuery(USER_FILES(params), async () => {
+    const result = await files({
+      current: params.page,
+      pageSize: params.pageSize,
+    });
+    return result;
+  });
+
   return (
     <PageWrapper title={i18n('menu.import.import-users')}>
-      <RequestTable<TableListItem, TableListPagination>
+      <QueryResultsTable<TableListItem, CommonParams>
         form={{
           labelWrap: true,
         }}
         headerTitle="Files"
         rowKey="id"
         search={false}
-        request={files}
         columns={columns}
+        params={params}
+        onChangeParams={setParams}
         columnsState={{
           persistenceType: 'localStorage',
           persistenceKey: 'users-files-list',
         }}
+        queryResults={filesResult}
         toolBarRender={() => [
           <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
           <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,

@@ -1,8 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Input, message } from 'antd';
 import s from './index.module.less';
-import { RequestTable } from '@/components/RequestTable';
-import { TableActionType } from '@/components/ui/Table';
+import { CommonParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
@@ -10,6 +9,9 @@ import { getErrorMessage } from '@/utils/lang';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
 import { User } from '@/pages/transactions/components/UserSearchPopup/types';
 import { getUserName } from '@/utils/api/users';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 
 interface UserData {
   userId: string | null;
@@ -143,42 +145,39 @@ function UserListTable(props: Props) {
         setEditDeleteLoading(false);
       });
   };
+  const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
-  const request = useCallback(
-    async (params) => {
-      const response = await api.getListItems({
-        listType,
-        listId,
-        page: params.current,
-      });
-      const data: TableItem[] = [
-        ...response.map(
-          ({ key, metadata }): TableItem => ({
-            type: 'EXISTED',
-            userId: key,
-            userFullName: metadata?.userFullName ?? '',
-            reason: metadata?.reason ?? '',
-          }),
-        ),
-        {
-          type: 'NEW',
-          userId: '',
-          userFullName: '',
-          reason: '',
-        },
-      ];
-      return {
-        items: data,
-        success: true,
-        total: size + 1,
-      };
-    },
-    [api, listId, listType, size],
-  );
+  const listResult = usePaginatedQuery(LISTS_ITEM_TYPE(listId, listType), async ({ page }) => {
+    const response = await api.getListItems({
+      listType,
+      listId,
+      page,
+    });
+    const data: TableItem[] = [
+      ...response.map(
+        ({ key, metadata }): TableItem => ({
+          type: 'EXISTED',
+          userId: key,
+          userFullName: metadata?.userFullName ?? '',
+          reason: metadata?.reason ?? '',
+        }),
+      ),
+      {
+        type: 'NEW',
+        userId: '',
+        userFullName: '',
+        reason: '',
+      },
+    ];
+    return {
+      items: data,
+      total: size + 1,
+    };
+  });
 
   return (
     <div className={s.root}>
-      <RequestTable<TableItem>
+      <QueryResultsTable<TableItem, CommonParams>
         rowKey="userId"
         actionRef={tableRef}
         options={{
@@ -208,6 +207,7 @@ function UserListTable(props: Props) {
               }
               return {};
             },
+            exportData: (entity) => entity.userId,
           },
           {
             title: 'User name',
@@ -220,6 +220,7 @@ function UserListTable(props: Props) {
               }
               return {};
             },
+            exportData: (entity) => entity.userFullName,
           },
           {
             title: 'Reason for adding to list',
@@ -254,6 +255,7 @@ function UserListTable(props: Props) {
               }
               return entity.reason;
             },
+            exportData: (entity) => entity.reason,
           },
           {
             title: 'Actions',
@@ -326,7 +328,9 @@ function UserListTable(props: Props) {
             },
           },
         ]}
-        request={request}
+        params={params}
+        onChangeParams={setParams}
+        queryResults={listResult}
       />
     </div>
   );

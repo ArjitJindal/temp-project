@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { Card, Col, DatePicker, Row } from 'antd';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
@@ -10,12 +10,14 @@ import { header } from '../dashboardutils';
 import style from '../../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
-import { RequestTable } from '@/components/RequestTable';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
-import { TableColumn, TableData } from '@/components/ui/Table/types';
-import { RuleInstanceMap, RulesMap } from '@/utils/rules';
+import { TableColumn } from '@/components/ui/Table/types';
+import { useRules } from '@/utils/rules';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { HITS_PER_USER_STATS } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -24,10 +26,7 @@ export default function RuleHitCard() {
     moment().subtract(1, 'week'),
     moment(),
   ]);
-  const [rules, setRules] = useState<RulesMap>({});
-  const [ruleInstances, setRuleInstances] = useState<RuleInstanceMap>({});
-  const [loading, setLoading] = useState<boolean>(true);
-  const [rulesHitData, setRulesHitData] = useState<DashboardStatsRulesCountData[] | []>([]);
+  const { rules, ruleInstances } = useRules();
 
   const columns: TableColumn<DashboardStatsRulesCountData>[] = [
     {
@@ -36,6 +35,9 @@ export default function RuleHitCard() {
         return <div>{getRuleInstanceDisplayId(stat.ruleId, stat.ruleInstanceId)}</div>;
       },
       width: 50,
+      exportData: (stat) => {
+        return getRuleInstanceDisplayId(stat.ruleId, stat.ruleInstanceId);
+      },
     },
     {
       title: 'Rule Name',
@@ -47,6 +49,9 @@ export default function RuleHitCard() {
         );
       },
       width: 150,
+      exportData: (stat) => {
+        return getRuleInstanceDisplay(stat.ruleId, stat.ruleInstanceId, rules, ruleInstances);
+      },
     },
     {
       title: 'Hit Count',
@@ -75,6 +80,9 @@ export default function RuleHitCard() {
           </Link>
         );
       },
+      exportData: (entity) => {
+        return entity.hitCount;
+      },
     },
     {
       title: 'Actions',
@@ -99,10 +107,7 @@ export default function RuleHitCard() {
     },
   ];
 
-  const request = useCallback(async (): Promise<TableData<DashboardStatsRulesCountData>> => {
-    const [rules, ruleInstances] = await Promise.all([api.getRules({}), api.getRuleInstances()]);
-    setRules(_.keyBy(rules, 'id'));
-    setRuleInstances(_.keyBy(ruleInstances, 'id'));
+  const rulesHitResult = usePaginatedQuery(HITS_PER_USER_STATS(dateRange), async () => {
     let startTimestamp = moment().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 
@@ -111,26 +116,22 @@ export default function RuleHitCard() {
       startTimestamp = start.startOf('day').valueOf();
       endTimestamp = end.endOf('day').valueOf();
     }
-    const [result] = await Promise.all([
-      api.getDashboardStatsRuleHit({
-        startTimestamp,
-        endTimestamp,
-      }),
-    ]);
-    setRulesHitData(result.data);
-    setLoading(false);
+    const result = await api.getDashboardStatsRuleHit({
+      startTimestamp,
+      endTimestamp,
+    });
+
     return {
-      success: true,
       total: result.data.length,
       items: result.data,
     };
-  }, [api, dateRange]);
+  });
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
         <Col span={12}>
-          <RequestTable<DashboardStatsRulesCountData>
+          <QueryResultsTable<DashboardStatsRulesCountData>
             form={{
               labelWrap: true,
             }}
@@ -142,7 +143,7 @@ export default function RuleHitCard() {
             toolBarRender={() => [
               <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />,
             ]}
-            request={request}
+            queryResults={rulesHitResult}
             defaultSize={'small'}
             pagination={false}
             options={{
@@ -150,12 +151,13 @@ export default function RuleHitCard() {
               setting: false,
               reload: true,
             }}
+            rowKey="ruleId"
           />
         </Col>
         <Col span={12}>
           <RulesHitBreakdown
-            loading={loading}
-            data={rulesHitData}
+            loading={rulesHitResult.data.kind === 'LOADING'}
+            data={rulesHitResult.data.kind === 'SUCCESS' ? rulesHitResult.data?.value.items : []}
             ruleInstances={ruleInstances}
             rules={rules}
           />{' '}

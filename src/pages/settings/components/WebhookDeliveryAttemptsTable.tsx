@@ -1,13 +1,17 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
+import moment from 'moment';
 import { WebhookDeliveryAttempt } from '@/apis';
-import { RequestTable } from '@/components/RequestTable';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import { TableColumn } from '@/components/ui/Table/types';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { WEBHOOKS } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 interface Props {
   webhookId: string;
@@ -19,14 +23,13 @@ const QUERY_LIMIT = 100;
 export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => {
   const api = useApi();
   const [selectedWebhookDelivery, setSelectedWebhookDelivery] = useState<WebhookDeliveryAttempt>();
-  const request = useCallback(async () => {
+  const webhookResults = usePaginatedQuery(WEBHOOKS(webhookId), async () => {
     const attempts = await api.getWebhooksWebhookIdDeliveries({ webhookId, limit: QUERY_LIMIT });
     return {
-      success: true,
       total: attempts.length,
       items: attempts,
     };
-  }, [api, webhookId]);
+  });
   const columns: TableColumn<WebhookDeliveryAttempt>[] = [
     {
       title: 'Status',
@@ -38,11 +41,13 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         ) : (
           <CloseCircleOutlined style={{ color: Colors.errorColor.base }} />
         ),
+      exportData: (entity) => (entity.success ? 'Success' : 'Failed'),
     },
     {
       title: 'Event',
       width: 100,
       render: (_, entity) => <Tag color={'cyan'}>{entity.event}</Tag>,
+      exportData: (entity) => entity.event,
     },
     {
       title: 'Event ID',
@@ -50,26 +55,32 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       render: (_, entity) => (
         <a onClick={() => setSelectedWebhookDelivery(entity)}>{entity.deliveryTaskId}</a>
       ),
+      exportData: (entity) => entity.deliveryTaskId,
     },
     {
       title: 'Event Created',
       width: 100,
       render: (_, entity) => <TimestampDisplay timestamp={entity.eventCreatedAt} />,
+      exportData: (entity) =>
+        moment(entity.eventCreatedAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
     },
     {
       title: 'Delivered At',
       width: 100,
       render: (_, entity) => <TimestampDisplay timestamp={entity.requestStartedAt} />,
+      exportData: (entity) =>
+        moment(entity.requestStartedAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
     },
   ];
   return (
     <>
-      <RequestTable<WebhookDeliveryAttempt>
+      <QueryResultsTable<WebhookDeliveryAttempt>
         headerTitle={`last ${QUERY_LIMIT} attempts`}
         columns={columns}
-        request={request}
+        queryResults={webhookResults}
         search={false}
         pagination={false}
+        rowKey="deliveryTaskId"
       />
       <Modal
         visible={Boolean(selectedWebhookDelivery)}

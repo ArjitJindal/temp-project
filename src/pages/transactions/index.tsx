@@ -10,22 +10,18 @@ import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TransactionStateButton from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
+import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 
 const TableList = () => {
   const api = useApi();
   const analytics = useAnalytics();
   const i18n = useI18n();
 
-  const [params, setParams] = useState<TransactionsTableParams>({
-    page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-    sort: [],
-  });
+  const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
   const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async ({ page: _page }) => {
     const {
       pageSize,

@@ -12,7 +12,6 @@ export async function files(
   const result = await request<{
     data: TableListItem[];
     total?: number;
-    success?: boolean;
   }>('/api/files', {
     method: 'GET',
     params: {
@@ -23,6 +22,5 @@ export async function files(
   return {
     items: result.data,
     total: result.total,
-    success: result.success,
   };
 }

@@ -1,3 +1,5 @@
+import { Moment } from 'moment';
+import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { CaseType, ListType } from '@/apis';
 
@@ -19,6 +21,12 @@ export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParamet
 ];
 export const LISTS_OF_TYPE = (type: ListType): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id: string): QueryKey => ['lists', 'item', id];
+export const LISTS_ITEM_TYPE = (id: string, type: ListType): QueryKey => [
+  'lists',
+  'item',
+  id,
+  type,
+];
 export const LISTS = (): QueryKey => ['lists'];
 export const USERS_ITEM_TRANSACTIONS_HISTORY = (
   userId: string,
@@ -58,3 +66,23 @@ export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
+export const HITS_PER_USER = (dateRange: RangeValue<Moment>, direction?: string): QueryKey => [
+  'hits-per-user',
+  dateRange,
+  direction,
+];
+export const HITS_PER_USER_STATS = (dateRange: RangeValue<Moment>): QueryKey => [
+  'hits-per-user-stats',
+  dateRange,
+];
+export const TRANSACTION_FILES = (params?: AnyParameters): QueryKey => [
+  'transaction-files',
+  params,
+];
+export const USER_FILES = (params?: AnyParameters): QueryKey => ['user-files', params];
+export const RULES_AND_RULE_INSTANCES = (): QueryKey => ['rules-and-rule-instances'];
+export const GET_RULES = (): QueryKey => ['get-rules'];
+export const GET_RULE_INSTANCES = (): QueryKey => ['get-rule-instances'];
+export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id];
+export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
+export const USERS = (type: string, params?: AnyParameters): QueryKey => ['users', type, params];

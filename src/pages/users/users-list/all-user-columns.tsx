@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
+import moment from 'moment';
 import s from './styles.module.less';
 import UserRiskTag from './UserRiskTag';
 import { InternalUser } from '@/apis';
@@ -9,6 +10,7 @@ import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import UserStateTag from '@/components/ui/UserStateTag';
 import { getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
+import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export function getAllUserColumns(): TableColumn<InternalUser>[] {
   return [
@@ -17,6 +19,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       dataIndex: 'userId',
       tip: 'Unique identification of user.',
       width: 180,
+      exportData: 'userId',
       render: (dom, entity) => {
         return (
           <Link
@@ -34,6 +37,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       dataIndex: 'userName',
       width: 180,
       hideInSearch: true,
+      exportData: (entity) => getUserName(entity),
       render: (dom, entity) => {
         return (
           <Link
@@ -51,6 +55,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       dataIndex: 'type',
       tip: 'Type of user.',
       hideInSearch: true,
+      exportData: 'type',
       render: (dom, user) => {
         if (!user) {
           return '-';
@@ -65,6 +70,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
     {
       title: 'Risk Level',
       dataIndex: 'riskLevel',
+      exportData: 'riskLevel',
       hideInSearch: true,
       tip: 'Risk level of user.',
       width: 180,
@@ -75,6 +81,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
     {
       title: 'KYC Status',
       dataIndex: 'kycStatus',
+      exportData: (entity) => entity.kycStatusDetails?.status,
       hideInSearch: true,
       tip: 'KYC status of user.',
       width: 180,
@@ -93,6 +100,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
         const userState = entity.userStateDetails?.state;
         return userState && <UserStateTag userState={userState} />;
       },
+      exportData: (entity) => entity.userStateDetails?.state,
     },
     {
       title: 'Created On',
@@ -101,6 +109,8 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       tip: 'Date and time when user was created.',
       sorter: true,
       width: 180,
+      exportData: (entity) =>
+        moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
       render: (dom, entity) => {
         return <TimestampDisplay timestamp={entity.createdTimestamp} />;
       },

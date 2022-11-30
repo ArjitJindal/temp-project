@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ActionType } from '@ant-design/pro-table';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import { Card, DatePicker } from 'antd';
@@ -9,11 +9,13 @@ import style from '../../style.module.less';
 import s from './styles.module.less';
 import { TableItem } from './types';
 import { useApi } from '@/api';
-import { RequestTable } from '@/components/RequestTable';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
-import { TableColumn, TableData } from '@/components/ui/Table/types';
+import { TableColumn } from '@/components/ui/Table/types';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { HITS_PER_USER } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -46,12 +48,19 @@ export default function HitsPerUserCard(props: Props) {
         }
         return <UserLink user={user}>{userId}</UserLink>;
       },
+      exportData: (entity) => {
+        return entity?.userId;
+      },
     },
     {
       title: 'User Name',
       dataIndex: 'user',
       width: 150,
       render: (_, { user }) => getUserName(user),
+      exportData: (entity) => {
+        const { user } = entity;
+        return getUserName(user);
+      },
     },
     {
       title: 'Transactions hit',
@@ -63,6 +72,9 @@ export default function HitsPerUserCard(props: Props) {
           return dom;
         }
         return `${entity.transactionsHit} transactions`;
+      },
+      exportData: (entity) => {
+        return entity?.transactionsHit;
       },
     },
     {
@@ -79,10 +91,17 @@ export default function HitsPerUserCard(props: Props) {
           </div>
         );
       },
+      exportData: (entity) => {
+        const { user } = entity;
+        if (!user) {
+          return '-';
+        }
+        return user.type;
+      },
     },
   ];
 
-  const request = useCallback(async (): Promise<TableData<TableItem>> => {
+  const hitsPerUserResult = usePaginatedQuery(HITS_PER_USER(dateRange, direction), async () => {
     let startTimestamp = moment().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 
@@ -98,15 +117,14 @@ export default function HitsPerUserCard(props: Props) {
     });
 
     return {
-      success: true,
       total: result.data.length,
       items: result.data,
     };
-  }, [api, dateRange, direction]);
+  });
 
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
-      <RequestTable<TableItem>
+      <QueryResultsTable<TableItem>
         form={{
           labelWrap: true,
         }}
@@ -116,7 +134,7 @@ export default function HitsPerUserCard(props: Props) {
         search={false}
         columns={columns}
         toolBarRender={() => [<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
-        request={request}
+        queryResults={hitsPerUserResult}
         pagination={false}
         options={{
           density: false,

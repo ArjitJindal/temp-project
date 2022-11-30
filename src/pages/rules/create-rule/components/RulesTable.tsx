@@ -1,13 +1,15 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import style from '../style.module.less';
 import { RuleParametersTable } from './RuleParametersTable';
 import { Rule } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
-import { RequestTable } from '@/components/RequestTable';
 import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { TableColumn } from '@/components/ui/Table/types';
 import { RecommendedTag } from '@/components/ui/RecommendedTag';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { GET_RULES } from '@/utils/queries/keys';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -57,6 +59,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
             </>
           );
         },
+        exportData: (row) => row.id,
       },
       {
         title: 'Rule Name',
@@ -66,11 +69,13 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         render: (_, entity) => {
           return entity.name;
         },
+        exportData: (row) => row.name,
       },
       {
         title: 'Rule Description',
         width: 500,
         dataIndex: 'description',
+        exportData: (row) => row.description,
       },
       ...caseCreationHeaders,
       {
@@ -79,6 +84,9 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         render: (_, rule) => (
           <RuleParametersTable parameters={rule.defaultParameters} schema={rule.parametersSchema} />
         ),
+        exportData: (row) => {
+          return JSON.stringify(row.defaultParameters);
+        },
       },
       {
         title: 'Default Action',
@@ -91,6 +99,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
             </span>
           );
         },
+        exportData: (row) => row.defaultAction,
       },
       {
         width: 140,
@@ -115,17 +124,15 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
     ];
   }, [onSelectRule]);
 
-  const request = useCallback(async () => {
-    const rules = await api.getRules({});
+  const rulesResult = usePaginatedQuery(GET_RULES(), async () => {
+    const rules = await api.getRules();
     return {
       items: rules,
-      success: true,
       total: rules.length,
     };
-  }, [api]);
-
+  });
   return (
-    <RequestTable<Rule>
+    <QueryResultsTable<Rule>
       form={{
         labelWrap: true,
       }}
@@ -135,7 +142,7 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
       pagination={false}
       rowKey="id"
       search={false}
-      request={request}
+      queryResults={rulesResult}
       columns={columns}
     />
   );

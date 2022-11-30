@@ -1,15 +1,17 @@
 import { Drawer, message, Switch, Tag } from 'antd';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { WebhookDetails } from './WebhookDetails';
-import { RequestTable } from '@/components/RequestTable';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors from '@/components/ui/colors';
 import Button from '@/components/ui/Button';
 import { TableActionType } from '@/components/ui/Table';
 import { TableColumn } from '@/components/ui/Table/types';
+import { WEBHOOKS_LIST } from '@/utils/queries/keys';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
 
 export const WebhookSettings: React.FC = () => {
   const api = useApi();
@@ -80,6 +82,7 @@ export const WebhookSettings: React.FC = () => {
           </Link>
         );
       },
+      exportData: (row) => row.webhookUrl,
     },
     {
       title: 'Events',
@@ -96,6 +99,7 @@ export const WebhookSettings: React.FC = () => {
           </>
         );
       },
+      exportData: (row) => row.events.join(', '),
     },
     {
       title: 'Activated',
@@ -110,23 +114,24 @@ export const WebhookSettings: React.FC = () => {
           />
         );
       },
+      exportData: (row) => row.enabled,
     },
   ];
   const handleCreateWebhook = useCallback(() => {
     setSelectedWebhook({ webhookUrl: '', events: [], enabled: true });
-  }, [setSelectedWebhook]);
-  const request = useCallback(async () => {
+  }, []);
+
+  const webhooksListResult = usePaginatedQuery(WEBHOOKS_LIST(), async () => {
     const webhooks = await api.getWebhooks(100);
     return {
       items: webhooks,
-      success: true,
       total: webhooks.length,
     };
-  }, [api]);
+  });
 
   return (
     <>
-      <RequestTable<WebhookConfiguration>
+      <QueryResultsTable<WebhookConfiguration>
         actionRef={actionRef}
         disableStripedColoring={true}
         rowKey="action"
@@ -134,7 +139,7 @@ export const WebhookSettings: React.FC = () => {
         search={false}
         columns={columns}
         pagination={false}
-        request={request}
+        queryResults={webhooksListResult}
         toolBarRender={() => [
           <Button type="primary" onClick={handleCreateWebhook}>
             <PlusOutlined />

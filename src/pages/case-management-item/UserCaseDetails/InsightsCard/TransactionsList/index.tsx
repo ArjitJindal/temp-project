@@ -5,7 +5,7 @@ import TransactionsTable from '@/pages/transactions/components/TransactionsTable
 import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { CommonParams } from '@/components/ui/Table';
+import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { map } from '@/utils/queries/types';
@@ -18,11 +18,7 @@ interface Props {
 export default function TransactionsList(props: Props) {
   const { userId, selectorParams } = props;
   // todo: reset table params when selector params changed
-  const [tableParams, setTableParams] = useState<CommonParams>({
-    page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-    sort: [],
-  });
+  const [tableParams, setTableParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
   useDeepEqualEffect(() => {
     let pageSize = DEFAULT_PAGE_SIZE;
