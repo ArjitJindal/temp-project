@@ -10,6 +10,7 @@ import {
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
+  RiskParameterValueTimeRange,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -43,6 +44,18 @@ export function riskValueMultiple(values: RiskParameterValueLiteral[]): RiskPara
   };
 }
 
+export function riskValueTimeRange(
+  startHour: number,
+  endHour: number,
+  timezone: string,
+): RiskParameterValueTimeRange {
+  return {
+    kind: 'TIME_RANGE',
+    startHour,
+    endHour,
+    timezone,
+  };
+}
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
 export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
@@ -72,4 +85,5 @@ export type DataType =
   | 'PAYMENT_METHOD'
   | 'CONSUMER_USER_TYPE'
   | 'BUSINESS_USER_TYPE'
-  | 'TRANSACTION_TYPES';
+  | 'TRANSACTION_TYPES'
+  | 'TIME_RANGE';

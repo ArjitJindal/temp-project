@@ -1,5 +1,7 @@
 import React from 'react';
 import { Input, Select } from 'antd';
+import moment from 'moment-timezone';
+import _ from 'lodash';
 import {
   DataType,
   ParameterName,
@@ -8,6 +10,7 @@ import {
   riskValueLiteral,
   riskValueMultiple,
   riskValueRange,
+  riskValueTimeRange,
   RiskValueType,
 } from '@/pages/risk-levels/risk-level/ParametersTable/types';
 import COUNTRIES from '@/utils/countries';
@@ -62,6 +65,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   CONSUMER_USER_TYPE: 'MULTIPLE',
   BUSINESS_USER_TYPE: 'MULTIPLE',
   TRANSACTION_TYPES: 'MULTIPLE',
+  TIME_RANGE: 'TIME_RANGE',
 };
 
 // todo: i18n
@@ -111,6 +115,27 @@ export const USER_RISK_PARAMETERS: RiskLevelTable = [
     matchType: 'DIRECT',
   },
 ];
+
+const timeIn24HourFormat = (hour: number | undefined) => {
+  if (!hour) {
+    return '00:00';
+  }
+  return `${hour < 10 ? `0${hour}` : hour}:00`;
+};
+
+const timeValues = Array.from({ length: 25 }, (_, i) => ({
+  value: i,
+  label: timeIn24HourFormat(i),
+}));
+
+const timeZonesData = moment.tz.names().map((name) => ({
+  value: name,
+  label: name,
+}));
+
+const currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const timeZonesDataMap = _.keyBy(timeZonesData, 'value');
 
 export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
   {
@@ -283,6 +308,17 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     matchType: 'DIRECT',
   },
+  {
+    parameter: 'timestamp',
+    title: 'Transaction Time',
+    description: 'Risk value based on time of transaction',
+    entity: 'TRANSACTION',
+    dataType: 'TIME_RANGE',
+    riskScoreType: 'ARS',
+    isDerived: false,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -390,6 +426,52 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       </>
     );
   }) as InputRenderer<'RANGE'>,
+  TIME_RANGE: (({ disabled, value, onChange }) => {
+    return (
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          <div>Start Time</div>
+          <Select
+            disabled={disabled}
+            onChange={(val) =>
+              onChange(
+                riskValueTimeRange(val, value?.endHour ?? 0, value?.timezone ?? currentTimeZone),
+              )
+            }
+            options={timeValues}
+            value={value?.startHour ?? 0}
+            showSearch
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          <div>End Time</div>
+          <Select
+            disabled={disabled}
+            onChange={(val) =>
+              onChange(
+                riskValueTimeRange(value?.startHour ?? 0, val, value?.timezone ?? currentTimeZone),
+              )
+            }
+            options={timeValues}
+            value={value?.endHour ?? 0}
+            showSearch
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          <div>Timezone</div>
+          <Select
+            disabled={disabled}
+            onChange={(val) =>
+              onChange(riskValueTimeRange(value?.startHour ?? 0, value?.endHour ?? 0, val))
+            }
+            options={timeZonesData}
+            value={value?.timezone ?? currentTimeZone}
+            showSearch
+          />
+        </div>
+      </div>
+    );
+  }) as InputRenderer<'TIME_RANGE'>,
 };
 
 const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
@@ -498,6 +580,19 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
+  TIME_RANGE: (({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return (
+      <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
+        <p>
+          {timeIn24HourFormat(value?.startHour)} - {timeIn24HourFormat(value?.endHour)}{' '}
+          {`(${timeZonesDataMap[value?.timezone]?.label})`}
+        </p>
+      </div>
+    );
+  }) as ValueRenderer<'TIME_RANGE'>,
 };
 
 type Validation<T extends RiskValueType> = (params: {
@@ -512,7 +607,8 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
     if (
       newParameterName === 'userDetails.dateOfBirth' ||
       newParameterName === 'legalEntity.companyRegistrationDetails.dateOfRegistration' ||
-      newParameterName === 'createdTimestamp'
+      newParameterName === 'createdTimestamp' ||
+      newParameterName === 'timestamp'
     ) {
       if (newValue.kind === 'RANGE') {
         const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
@@ -525,6 +621,38 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
         });
         if (hasOverlaps) {
           return 'Age ranges should not overlap';
+        }
+      } else if (newValue.kind === 'TIME_RANGE') {
+        const { startHour: x1, endHour: x2, timezone } = newValue;
+        if (x1 == null || x2 == null || timezone == null || timezone === '') {
+          return 'Start time, end time and timezone are required';
+        }
+        if (x1 >= x2) {
+          return 'Start time should be before end time';
+        }
+        // do not allow different timezones
+        const hasDifferentTimezone = previousValues.some(({ parameterValue }) => {
+          if (parameterValue.content.kind !== 'TIME_RANGE') {
+            return false;
+          }
+          return parameterValue.content.timezone !== timezone;
+        });
+        if (hasDifferentTimezone) {
+          return 'You can only set values in one timezone';
+        }
+        // do not allow overlapping
+        const hasOverlaps = previousValues.some(({ parameterValue }) => {
+          if (parameterValue.content.kind !== 'TIME_RANGE') {
+            return false;
+          }
+          const { startHour: y1, endHour: y2 } = parameterValue.content;
+          if (y1 == null || y2 == null) {
+            return false;
+          }
+          return x1 < y2 && y1 < x2;
+        });
+        if (hasOverlaps) {
+          return 'Time ranges should not overlap';
         }
       }
     }

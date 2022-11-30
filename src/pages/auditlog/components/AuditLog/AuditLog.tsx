@@ -197,7 +197,7 @@ export default function AuditLogTable() {
                   _.debounce(() => {
                     setParams((prevState) => ({
                       ...prevState,
-                      timestamp:
+                      createdTimestamp:
                         value && value[0] && value[1]
                           ? [`${value[0].valueOf()}`, `${value[1].valueOf()}`]
                           : [`${moment().subtract(1, 'days').valueOf()}`, `${moment().valueOf()}`],

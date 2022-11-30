@@ -95,6 +95,7 @@
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.11",
     "moment": "^2.25.3",
+    "moment-timezone": "^0.5.39",
     "nanoid": "^4.0.0",
     "numeral": "^2.0.6",
     "pluralize": "^8.0.0",
