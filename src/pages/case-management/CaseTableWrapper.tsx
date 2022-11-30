@@ -69,9 +69,9 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
     ...parsedParams,
   });
 
-  const handleChangeParams = (params: AllParams<TableSearchParams>) => {
+  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
     pushParamsToNavigation({
-      ...params,
+      ...newParams,
       page: params.page,
       sort: params.sort,
     });
@@ -114,6 +114,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         amountLessThanFilter,
         originCountryFilter,
         destinationCountryFilter,
+        businessIndustryFilter,
       } = params;
 
       const [sortField, sortOrder] = sort[0] ?? [];
@@ -161,6 +162,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           filterDestinationCountry: destinationCountryFilter,
           filterTransactionAmoutAbove: amountGreaterThanFilter,
           filterTransactionAmoutBelow: amountLessThanFilter,
+          filterBusinessIndustries: businessIndustryFilter,
         }),
       );
       analytics.event({

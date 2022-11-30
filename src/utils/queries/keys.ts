@@ -44,6 +44,7 @@ export const TRANSACTIONS_STATS = (
 ): QueryKey => ['transactions', 'stats', type, searchParams];
 export const USERS_STATS = (): QueryKey => ['users', 'stats'];
 export const TRANSACTIONS_UNIQUES = (): QueryKey => ['transactions', 'uniques'];
+export const BUSINESS_USERS_UNIQUES = (): QueryKey => ['users', 'uniques'];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',
   'search',

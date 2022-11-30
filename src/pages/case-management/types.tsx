@@ -28,5 +28,6 @@ export type TableSearchParams = Partial<{
   amountLessThanFilter: number;
   originCountryFilter: string;
   destinationCountryFilter: string;
+  businessIndustryFilter: string[];
   filterTypes: AuditLogType[];
 }>;

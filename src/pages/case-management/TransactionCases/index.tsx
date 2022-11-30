@@ -39,6 +39,7 @@ import TransactionSearchButton from '@/pages/transactions/components/Transaction
 import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
 import COUNTRIES from '@/utils/countries';
+import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export type CaseManagementItem = Case & {
@@ -762,6 +763,15 @@ export default function TransactionCases(props: Props) {
                 setParams((state) => ({
                   ...state,
                   transactionId: transactionId ?? undefined,
+                }));
+              }}
+            />
+            <BusinessIndustryButton
+              businessIndustry={params.businessIndustryFilter ?? []}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  businessIndustryFilter: value ?? undefined,
                 }));
               }}
             />

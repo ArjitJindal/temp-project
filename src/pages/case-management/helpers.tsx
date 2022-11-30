@@ -45,6 +45,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       originCountryFilter: params.originCountryFilter,
       destinationCountryFilter: params.destinationCountryFilter,
       filterTypes: params.filterTypes?.join(','),
+      businessIndustryFilter: params.businessIndustryFilter?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -97,6 +98,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       originCountryFilter: raw.originCountryFilter,
       destinationCountryFilter: raw.destinationCountryFilter,
       filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
+      businessIndustryFilter: raw.businessIndustryFilter?.split(','),
     };
   },
 };

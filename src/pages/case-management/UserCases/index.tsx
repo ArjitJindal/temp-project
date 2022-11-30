@@ -33,6 +33,7 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -372,6 +373,15 @@ export default function UserCases(props: Props) {
                   ...state,
                   tagKey: value.key ?? undefined,
                   tagValue: value.value ?? undefined,
+                }));
+              }}
+            />
+            <BusinessIndustryButton
+              businessIndustry={params.businessIndustryFilter ?? []}
+              onConfirm={(value) => {
+                setParams((state) => ({
+                  ...state,
+                  businessIndustryFilter: value ?? undefined,
                 }));
               }}
             />
