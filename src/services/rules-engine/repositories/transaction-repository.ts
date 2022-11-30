@@ -484,10 +484,10 @@ export class TransactionRepository {
 
   private sanitizeTransactionInPlace(transaction: Transaction) {
     const COUNTRY_FIELD_PATHS = [
-      'transaction.originPaymentDetails.cardIssuedCountry',
-      'transaction.destinationPaymentDetails.cardIssuedCountry',
-      'transaction.originAmountDetails.country',
-      'transaction.destinationAmountDetails.country',
+      'originPaymentDetails.cardIssuedCountry',
+      'destinationPaymentDetails.cardIssuedCountry',
+      'originAmountDetails.country',
+      'destinationAmountDetails.country',
     ]
     COUNTRY_FIELD_PATHS.forEach((path) => {
       if (_.get(transaction, path) === 'N/A') {
