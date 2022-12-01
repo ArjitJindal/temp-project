@@ -4,6 +4,7 @@ import { Typography, DatePicker } from 'antd';
 import _ from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
 import EntityFilterButton from '../EntityFilterButton';
+import AuditLogModal from '../AuditLogModal';
 import { TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import { useApi } from '@/api';
@@ -100,12 +101,24 @@ export default function AuditLogTable() {
       width: 150,
       dataIndex: 'oldImage',
       hideInSearch: true,
+      render: (_, entity) => {
+        if (!entity?.oldImage || !Object.keys(entity?.oldImage).length) {
+          return <Typography.Text type={'secondary'}>-</Typography.Text>;
+        }
+        return <AuditLogModal data={entity} />;
+      },
     },
     {
       title: 'After',
       width: 150,
       dataIndex: 'newImage',
       hideInSearch: true,
+      render: (_, entity) => {
+        if (!entity?.newImage || !Object.keys(entity?.newImage).length) {
+          return <Typography.Text type={'secondary'}>-</Typography.Text>;
+        }
+        return <AuditLogModal data={entity} />;
+      },
     },
     {
       title: 'Action Taken By',
