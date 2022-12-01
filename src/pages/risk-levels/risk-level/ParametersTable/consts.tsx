@@ -31,6 +31,10 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
 import { humanizeCamelCase } from '@/utils/tags';
+import { useApi } from '@/api';
+import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
+import { map } from '@/utils/asyncResource';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -65,6 +69,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   CONSUMER_USER_TYPE: 'MULTIPLE',
   BUSINESS_USER_TYPE: 'MULTIPLE',
   TRANSACTION_TYPES: 'MULTIPLE',
+  BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
 };
 
@@ -189,7 +194,7 @@ export const BUSINESS_RISK_PARAMETERS: RiskLevelTable = [
     title: 'Business Industry',
     description: 'Risk value based on the industry in which the business operates',
     entity: 'BUSINESS',
-    dataType: 'STRING',
+    dataType: 'BUSINESS_INDUSTRY',
     riskScoreType: 'KRS',
     isDerived: false,
     parameterType: 'ITERABLE',
@@ -379,6 +384,23 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       />
     );
   }) as InputRenderer<'MULTIPLE'>,
+  BUSINESS_INDUSTRY: ((props) => {
+    const api = useApi();
+    const result = useQuery(BUSINESS_USERS_UNIQUES(), () => api.getUsersUniques());
+    const businessIndustryRes = map(result.data, ({ businessIndustry }) => businessIndustry);
+    console.log(`BI Res: ${JSON.stringify(businessIndustryRes['value'])}`);
+    return (
+      businessIndustryRes['value'] && (
+        <MultipleSelect
+          options={businessIndustryRes['value'].map((entry: string) => ({
+            value: entry,
+            label: entry,
+          }))}
+          {...props}
+        />
+      )
+    );
+  }) as InputRenderer<'MULTIPLE'>,
   CURRENCY: ((props) => {
     return <MultipleSelect options={CURRENCIES_SELECT_OPTIONS} {...props} />;
   }) as InputRenderer<'MULTIPLE'>,
@@ -561,6 +583,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </>
     );
   }) as ValueRenderer<'MULTIPLE'>,
+  BUSINESS_INDUSTRY: DEFAULT_STRING_RENDERER,
   TRANSACTION_TYPES: (({ value }) => {
     if (value == null) {
       return null;

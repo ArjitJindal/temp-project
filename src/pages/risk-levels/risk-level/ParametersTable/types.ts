@@ -86,4 +86,5 @@ export type DataType =
   | 'CONSUMER_USER_TYPE'
   | 'BUSINESS_USER_TYPE'
   | 'TRANSACTION_TYPES'
-  | 'TIME_RANGE';
+  | 'TIME_RANGE'
+  | 'BUSINESS_INDUSTRY';
