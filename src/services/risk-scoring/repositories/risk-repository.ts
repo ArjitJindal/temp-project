@@ -467,7 +467,13 @@ export class RiskRepository {
     const drsValuesCollection = db.collection<DrsItem & { version: string }>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
-    return await drsValuesCollection.findOne({ userId })
+    const result = await drsValuesCollection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .toArray()
+
+    return result && result.length > 0 ? result[0] : null
   }
 }
 
