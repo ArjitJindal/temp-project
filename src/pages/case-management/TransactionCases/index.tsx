@@ -4,7 +4,6 @@ import { ProFormInstance } from '@ant-design/pro-form';
 import moment from 'moment';
 import TransactionStateButton from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
-import { AddToSlackButton } from '../components/AddToSlackButton';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
@@ -12,7 +11,6 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { Case, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import UserLink from '@/components/UserLink';
@@ -796,11 +794,6 @@ export default function TransactionCases(props: Props) {
         labelWidth: 120,
       }}
       scroll={{ x: 1300 }}
-      toolBarRender={() => [
-        <Feature name="SLACK_ALERTS">
-          <AddToSlackButton />
-        </Feature>,
-      ]}
       columns={columns}
       columnsState={{
         persistenceType: 'localStorage',

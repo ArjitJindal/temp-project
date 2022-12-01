@@ -7,7 +7,6 @@ import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { QueryResult } from '@/utils/queries/types';
 import { Case, CaseUpdateRequest } from '@/apis';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
@@ -18,7 +17,6 @@ import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
-import { AddToSlackButton } from '@/pages/case-management/components/AddToSlackButton';
 import { useTableData } from '@/pages/case-management/UserCases/helpers';
 import { TableItem } from '@/pages/case-management/UserCases/types';
 import { getUserLink, getUserName } from '@/utils/api/users';
@@ -406,11 +404,6 @@ export default function UserCases(props: Props) {
         labelWidth: 120,
       }}
       scroll={{ x: 1300 }}
-      toolBarRender={() => [
-        <Feature name="SLACK_ALERTS">
-          <AddToSlackButton />
-        </Feature>,
-      ]}
       columns={columns}
       columnsState={{
         persistenceType: 'localStorage',
