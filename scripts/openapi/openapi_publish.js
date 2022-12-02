@@ -1,99 +1,9 @@
 #!/usr/bin/env node
-const os = require('os')
-const fs = require('fs-extra')
-const path = require('path')
-const yaml = require('yaml')
 const { execSync: exec } = require('child_process')
 require('dotenv').config()
 
-const {
-  PROJECT_DIR,
-  parse,
-  stringify,
-  localizeRefs,
-} = require('./openapi_helpers.js')
-
-async function prepareSchemas(OUTPUT_DIR) {
-  try {
-    const internalDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'internal')
-    const publicDir = path.resolve(PROJECT_DIR, 'lib', 'openapi', 'public')
-    const publicManagementDir = path.resolve(
-      PROJECT_DIR,
-      'lib',
-      'openapi',
-      'public-management'
-    )
-
-    const internalDirOutput = path.resolve(OUTPUT_DIR, 'internal')
-    const publicDirOutput = path.resolve(OUTPUT_DIR, 'public')
-    const publicManagementDirOutput = path.resolve(
-      OUTPUT_DIR,
-      'public-management'
-    )
-
-    await fs.ensureDir(internalDirOutput)
-    await fs.ensureDir(publicDirOutput)
-    await fs.ensureDir(publicManagementDirOutput)
-
-    const publicSchemaFile = path.resolve(
-      publicDir,
-      'openapi-public-original.yaml'
-    )
-    const publicSchemaText = (await fs.readFile(publicSchemaFile)).toString()
-    const publicSchemaYaml = parse(publicSchemaText)
-
-    const internalSchemaFile = path.resolve(
-      internalDir,
-      'openapi-internal-original.yaml'
-    )
-    const internalSchemaText = (
-      await fs.readFile(internalSchemaFile)
-    ).toString()
-    {
-      /*
-        todo: this is just a temporal solution, we need a proper way to
-        dereference refs to public schema and only copy referenced models
-       */
-
-      // Replace all refs to public schema to internal
-      let internalSchemaYaml = parse(internalSchemaText)
-      internalSchemaYaml = await localizeRefs(internalSchemaYaml)
-
-      // Merge all models from public schema to internal schema
-      // todo: check for override
-      internalSchemaYaml.components.schemas = {
-        ...internalSchemaYaml.components.schemas,
-        ...publicSchemaYaml.components.schemas,
-      }
-      await fs.copy(internalDir, internalDirOutput)
-      await fs.writeFile(
-        path.resolve(internalDirOutput, 'openapi-internal-original.yaml'),
-        stringify(internalSchemaYaml)
-      )
-    }
-    {
-      await fs.copy(publicDir, publicDirOutput)
-      await fs.writeFile(
-        path.resolve(publicDirOutput, 'openapi-public-original.yaml'),
-        await stringify(publicSchemaYaml)
-      )
-    }
-    {
-      await fs.copy(publicManagementDir, publicManagementDirOutput)
-    }
-  } catch (err) {
-    console.error(err)
-  }
-}
-
 async function main() {
-  const OUTPUT_DIR = await fs.mkdtemp(
-    path.resolve(os.tmpdir(), 'tarpon-openapi-publish')
-  )
-  await fs.emptyDir(OUTPUT_DIR)
-
-  await prepareSchemas(OUTPUT_DIR)
-
+  const OUTPUT_DIR = './dist/openapi'
   let {
     BRANCH_NAME,
     CONFIRM_PUSH_MAIN,
@@ -113,7 +23,7 @@ async function main() {
     process.exit(1)
   }
 
-  console.log('BRANCH_NAME', BRANCH_NAME)
+  console.log('BRANCH_NAME:', BRANCH_NAME)
   if (BRANCH_NAME === 'main' && CONFIRM_PUSH_MAIN !== 'true') {
     console.error(
       'ERROR: To push to main branch, please, also provide CONFIRM_PUSH_MAIN=true environment variable'
@@ -149,9 +59,7 @@ async function main() {
   exec(
     `./node_modules/.bin/stoplight push --ci-token ${INTERNAL_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/internal --branch ${BRANCH_NAME}`
   )
-
-  await fs.remove(OUTPUT_DIR)
-  console.log('Done!')
+  console.log('Publish completed.')
 }
 
 main().catch((e) => {
