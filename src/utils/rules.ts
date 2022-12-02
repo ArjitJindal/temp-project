@@ -44,10 +44,6 @@ export function isTransactionState(value: unknown): value is TransactionState {
   return neverReturn(asState, false);
 }
 
-export function getRuleActionTitle(ruleAction: RuleAction | string): string {
-  return _.capitalize(ruleAction);
-}
-
 export function getRuleActionColor(ruleAction: RuleAction): string {
   if (ruleAction === 'ALLOW') {
     return COLORS.brandBlue.base;

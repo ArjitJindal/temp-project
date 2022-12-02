@@ -11,7 +11,7 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import TransactionStateButton from '@/pages/transactions/components/TransactionStateButton';
+import { TransactionStateButton } from '@/pages/transactions/components/TransactionStateButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
@@ -92,7 +92,7 @@ const TableList = () => {
                 }}
               />
               <TransactionStateButton
-                transactionState={params.transactionState ?? []}
+                transactionStates={params.transactionState ?? []}
                 onConfirm={(value) => {
                   setParams((state) => ({
                     ...state,

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Popover } from 'antd';
 import UserProfileIcon from './user_profile.react.svg';
 import s from './style.module.less';
 import PopupContent from './PopupContent';
 import ActionButton from '@/components/ui/Table/ActionButton';
 import { RuleAction } from '@/apis';
-import { getRuleActionTitle } from '@/utils/rules';
+import {
+  getRiskActionLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   status: RuleAction | undefined;
@@ -15,6 +18,7 @@ interface Props {
 export default function StatusSearchButton(props: Props) {
   const { status, onConfirm } = props;
   const [visible, setVisible] = useState(false);
+  const settings = useSettings();
   return (
     <Popover
       overlayClassName={s.popover}
@@ -42,7 +46,7 @@ export default function StatusSearchButton(props: Props) {
           onConfirm(undefined);
         }}
       >
-        {status !== undefined ? getRuleActionTitle(status) : 'Rule action'}
+        {getRiskActionLabel(status, settings) ?? 'Rule action'}
       </ActionButton>
     </Popover>
   );

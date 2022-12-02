@@ -11,8 +11,7 @@ import PauseCircleLineIcon from '@/components/ui/icons/Remix/media/pause-circle-
 import ExchangeDollarLineIcon from '@/components/ui/icons/Remix/finance/exchange-dollar-line.react.svg';
 import CheckDoubleLineIcon from '@/components/ui/icons/Remix/system/check-double-line.react.svg';
 import CloseCircleLineIcon from '@/components/ui/icons/Remix/system/close-circle-line.react.svg';
-import { humanizeCamelCase } from '@/utils/tags';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useTransactionStateLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   transactionState: ApiTransactionState | undefined;
@@ -20,43 +19,18 @@ interface Props {
 }
 
 export default function TransactionStateTag(props: Props) {
-  const settings = useSettings();
   const { transactionState, titleClassName } = props;
+  const transactionStateLabel = useTransactionStateLabel(transactionState);
   if (!transactionState) {
     return <span className={titleClassName}>-</span>;
   }
-  const title: string = getTransactionStateTitle(transactionState);
   const icon: React.ReactNode = getTransactionStateIcon(transactionState);
-  const alias = settings.transactionStateAlias?.find(
-    (item) => item.state === transactionState,
-  )?.alias;
   return (
     <div className={s.root}>
       <div className={cn(s.icon, s[`transactionState-${transactionState}`])}>{icon}</div>
-      <span className={titleClassName}>{alias || title}</span>
+      <span className={titleClassName}>{transactionStateLabel}</span>
     </div>
   );
-}
-
-export function getTransactionStateTitle(transactionState: ApiTransactionState) {
-  if (transactionState === 'CREATED') {
-    return 'Created';
-  } else if (transactionState === 'PROCESSING') {
-    return 'Processing';
-  } else if (transactionState === 'SENT') {
-    return 'Sent';
-  } else if (transactionState === 'EXPIRED') {
-    return 'Expired';
-  } else if (transactionState === 'DECLINED') {
-    return 'Declined';
-  } else if (transactionState === 'SUSPENDED') {
-    return 'Suspended';
-  } else if (transactionState === 'REFUNDED') {
-    return 'Refunded';
-  } else if (transactionState === 'SUCCESSFUL') {
-    return 'Successful';
-  }
-  return neverReturn(transactionState, humanizeCamelCase(transactionState));
 }
 
 export function getTransactionStateIcon(transactionState: ApiTransactionState): React.ReactNode {

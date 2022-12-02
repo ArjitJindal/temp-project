@@ -30,7 +30,7 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
-import { humanizeCamelCase } from '@/utils/tags';
+import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
 import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
@@ -424,7 +424,7 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   TRANSACTION_TYPES: ((props) => {
     return (
       <MultipleSelect
-        options={TRANSACTION_TYPES.map((type) => ({ value: type, label: humanizeCamelCase(type) }))}
+        options={TRANSACTION_TYPES.map((type) => ({ value: type, label: capitalizeWords(type) }))}
         {...props}
       />
     );

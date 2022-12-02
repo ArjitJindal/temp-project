@@ -5,9 +5,13 @@ import s from './styles.module.less';
 import { P } from '@/components/ui/Typography';
 import { Currency } from '@/utils/currencies';
 import { ColorIndicator } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/Legend';
-import { getRuleActionColor, getRuleActionTitle } from '@/utils/rules';
+import { getRuleActionColor } from '@/utils/rules';
 import { RuleAction } from '@/apis';
 import Money from '@/components/ui/Money';
+import {
+  getRiskActionLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   series: Series;
@@ -19,6 +23,7 @@ interface Props {
 
 export default function Popover(props: Props) {
   const { isVisible, series, dataItem, children, currency } = props;
+  const settings = useSettings();
   const content = (
     <div className={s.root}>
       <P className={s.title} variant="sml" bold>
@@ -29,7 +34,7 @@ export default function Popover(props: Props) {
           <IndicatorRow
             key={ruleAction}
             color={getRuleActionColor(ruleAction as RuleAction)}
-            title={getRuleActionTitle(ruleAction)}
+            title={getRiskActionLabel(ruleAction as RuleAction, settings) || 'Unknown'}
             value={value}
             currency={currency}
           />

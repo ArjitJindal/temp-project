@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
 import moment from 'moment';
-import TransactionStateSearchButton from '../../transactions/components/TransactionStateButton';
+import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { QueryResult } from '@/utils/queries/types';
@@ -352,8 +352,8 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
-            <TransactionStateSearchButton
-              transactionState={params.transactionState ?? []}
+            <TransactionStateButton
+              transactionStates={params.transactionState ?? []}
               onConfirm={(value) => {
                 setParams((state) => ({
                   ...state,

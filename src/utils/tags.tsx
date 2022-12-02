@@ -57,12 +57,6 @@ export const transactionType: { value: string; label: any }[] = [
   },
 ];
 
-/*
-  Turns "SOME_CONSTANT" to "Some Constant"
- */
-export function humanizeCamelCase(text: string): string {
-  return text
-    .split('_')
-    .map((part) => _.capitalize(part))
-    .join(' ');
+export function capitalizeWords(text: string): string {
+  return _.startCase(_.toLower(text));
 }

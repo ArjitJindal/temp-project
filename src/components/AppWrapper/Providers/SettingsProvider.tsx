@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
+import _ from 'lodash';
 import { useApi } from '@/api';
-import { Feature as FeatureName, TenantSettings } from '@/apis';
+import { Feature as FeatureName, RuleAction, TenantSettings, TransactionState } from '@/apis';
 
 interface ContextValue {
   features: FeatureName[];
@@ -65,4 +66,40 @@ export function Feature(props: {
 }) {
   const isEnabled = useFeature(props.name);
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
+}
+
+export function getRiskActionLabel(
+  ruleAction: RuleAction | undefined,
+  settings: TenantSettings,
+): string | undefined {
+  if (!ruleAction) {
+    return;
+  }
+  const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
+  return alias || _.capitalize(ruleAction);
+}
+
+export function useRiskActionLabel(ruleAction: RuleAction | undefined): string | undefined {
+  const settings = useSettings();
+  return getRiskActionLabel(ruleAction, settings);
+}
+
+export function getTransactionStateLabel(
+  transactionState: TransactionState | undefined,
+  settings: TenantSettings,
+): string | undefined {
+  if (!transactionState) {
+    return;
+  }
+  const alias = settings.transactionStateAlias?.find(
+    (item) => item.state === transactionState,
+  )?.alias;
+  return alias || _.capitalize(transactionState);
+}
+
+export function useTransactionStateLabel(
+  transactionState: TransactionState | undefined,
+): string | undefined {
+  const settings = useSettings();
+  return getTransactionStateLabel(transactionState, settings);
 }

@@ -10,7 +10,7 @@ import {
   WalletPaymentMethod,
 } from '@/apis';
 import { neverReturn } from '@/utils/lang';
-import { humanizeCamelCase } from '@/utils/tags';
+import { capitalizeWords } from '@/utils/tags';
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -72,6 +72,6 @@ export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
   } else if (paymentMethod === 'CHECK') {
     return 'Check';
   } else {
-    return neverReturn(paymentMethod, humanizeCamelCase(paymentMethod));
+    return neverReturn(paymentMethod, capitalizeWords(paymentMethod));
   }
 }

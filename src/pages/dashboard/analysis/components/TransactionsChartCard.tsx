@@ -17,7 +17,7 @@ import {
 } from 'react-device-detect';
 import styles from '../style.module.less';
 import { momentCalc } from '../utils/utils';
-import { getRuleActionColor, getRuleActionTitle } from '../../../../utils/rules';
+import { getRuleActionColor } from '../../../../utils/rules';
 import { header } from './dashboardutils';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
@@ -32,7 +32,7 @@ import {
   success,
 } from '@/utils/asyncResource';
 import { DashboardStatsTransactionsCountData } from '@/apis';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRiskActionLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type StatsKey = keyof DashboardStatsTransactionsCountData;
 const TOTAL_TRANSACTIONS_KEY: StatsKey = 'totalTransactions';
@@ -44,21 +44,14 @@ export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 const { TabPane } = Tabs;
 
 const TransactionsChartCard = () => {
-  const settings = useSettings();
   const analytics = useAnalytics();
   const user = useAuth0User();
   type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
   const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
-  const suspendAlias = getRuleActionTitle(
-    settings.ruleActionAliases?.find((item) => item.action === 'SUSPEND')?.alias || 'SUSPEND',
-  );
-  const blockAlias = getRuleActionTitle(
-    settings.ruleActionAliases?.find((item) => item.action === 'BLOCK')?.alias || 'BLOCK',
-  );
-  const flagAlias = getRuleActionTitle(
-    settings.ruleActionAliases?.find((item) => item.action === 'FLAG')?.alias || 'FLAG',
-  );
+  const suspendAlias = useRiskActionLabel('SUSPEND');
+  const blockAlias = useRiskActionLabel('BLOCK');
+  const flagAlias = useRiskActionLabel('FLAG');
   const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
     moment().subtract(1, 'year'),
     moment(),

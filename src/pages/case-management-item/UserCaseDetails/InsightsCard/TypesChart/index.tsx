@@ -9,7 +9,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { humanizeCamelCase } from '@/utils/tags';
+import { capitalizeWords } from '@/utils/tags';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
 import { Currency } from '@/utils/currencies';
 
@@ -33,7 +33,7 @@ export default function AmountsChart(props: Props) {
           category:
             x.transactionType == null
               ? '(unknown)'
-              : humanizeCamelCase(x.transactionType as TransactionType),
+              : capitalizeWords(x.transactionType as TransactionType),
           value: currency === null ? x.count : x.sum ?? 0,
           color: getTransactionTypeColor(x.transactionType as TransactionType),
         }));

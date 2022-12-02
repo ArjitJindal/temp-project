@@ -7,7 +7,7 @@ import COLORS from '@/components/ui/colors';
 import { QueryResult } from '@/utils/queries/types';
 import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
-import { humanizeCamelCase } from '@/utils/tags';
+import { capitalizeWords } from '@/utils/tags';
 import { Currency } from '@/utils/currencies';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
 
@@ -47,7 +47,7 @@ export default function AmountsChart(props: Props) {
                 data={response.map((x) => ({
                   title:
                     x.transactionType != null
-                      ? humanizeCamelCase(x.transactionType as TransactionType)
+                      ? capitalizeWords(x.transactionType as TransactionType)
                       : '(unknown)',
                   maximum: x.max,
                   minimum: x.min,

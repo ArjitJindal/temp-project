@@ -1,7 +1,7 @@
 import { Tag } from 'antd';
 import React from 'react';
-import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
-import { getRuleActionTitle, getRuleActionColor } from '../../utils/rules';
+import { useRiskActionLabel } from '../AppWrapper/Providers/SettingsProvider';
+import { getRuleActionColor } from '../../utils/rules';
 import { RuleAction } from '@/apis';
 
 interface Props {
@@ -9,11 +9,10 @@ interface Props {
 }
 
 export const RuleActionTag: React.FC<Props> = ({ ruleAction }) => {
-  const settings = useSettings();
-  const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
+  const ruleActionLabel = useRiskActionLabel(ruleAction);
   return (
     <span>
-      <Tag color={getRuleActionColor(ruleAction)}>{getRuleActionTitle(alias || ruleAction)}</Tag>
+      <Tag color={getRuleActionColor(ruleAction)}>{ruleActionLabel}</Tag>
     </span>
   );
 };
