@@ -109,8 +109,8 @@ async function handleCssModules(args, cssResult) {
 
     return {
       css,
-      classMap
-    }
+      classMap,
+    };
   } catch (e) {
     console.error(e);
     process.exit(1);
@@ -128,8 +128,8 @@ module.exports = (options = {}, loaderOptions = {}) => {
           path: args.pluginData.path,
           namespace: 'css-modules',
           pluginData: args.pluginData,
-        }
-      })
+        };
+      });
 
       build.onLoad({ filter: /.*/, namespace: 'css-modules' }, async (args) => {
         const cacheKey = args.path;
@@ -138,7 +138,7 @@ module.exports = (options = {}, loaderOptions = {}) => {
           return cached;
         }
 
-        const content = args.pluginData.contents
+        const content = args.pluginData.contents;
         const { css, classMap } = await handleCssModules(args, content);
 
         const newPath = args.path.replace(MODULES_EXTENSION, '.css');
@@ -153,7 +153,7 @@ module.exports = (options = {}, loaderOptions = {}) => {
             import "virtual:${newPath}";
             const result = ${JSON.stringify(classMap)};
             export default result;
-          `
+          `,
         };
       });
     },

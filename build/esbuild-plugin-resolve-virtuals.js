@@ -13,8 +13,8 @@ module.exports = (options = {}, loaderOptions = {}) => {
       const tmpDirPath = tmp.dirSync().name;
 
       build.onResolve({ filter: /^virtual:.*/ }, async (args) => {
-        const { pluginData, resolveDir } = args
-        const { contents } = pluginData
+        const { pluginData, resolveDir } = args;
+        const { contents } = pluginData;
         const relativeFilePath = path.relative(resolveDir, pluginData.path);
         const tmpFilePath = path.resolve(tmpDirPath, relativeFilePath);
         await fs.ensureDir(path.dirname(tmpFilePath));
@@ -22,7 +22,7 @@ module.exports = (options = {}, loaderOptions = {}) => {
 
         return {
           path: tmpFilePath,
-        }
+        };
       });
     },
   };

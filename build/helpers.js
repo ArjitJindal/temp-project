@@ -19,4 +19,4 @@ function notify(message, ...args) {
   });
 }
 
-module.exports = { notify, log, error }
+module.exports = { notify, log, error };

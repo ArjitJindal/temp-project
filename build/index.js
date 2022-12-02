@@ -1,6 +1,14 @@
 /* eslint-disable */
 const path = require('path');
-const { log, error, readConfig, prepare, buildStatic, buildHtml, buildCode } = require('./build-tasks.js');
+const {
+  log,
+  error,
+  readConfig,
+  prepare,
+  buildStatic,
+  buildHtml,
+  buildCode,
+} = require('./build-tasks.js');
 const express = require('express');
 const fallback = require('express-history-api-fallback');
 const fs = require('fs-extra');

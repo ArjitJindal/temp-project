@@ -26,7 +26,8 @@ module.exports = (options = {}, loaderOptions = {}) => {
           path.relative(process.cwd(), args.resolveDir),
           args.path,
         );
-        const isExternal = args.path.startsWith('~') || absoluteFilePath.indexOf('node_modules') !== -1;
+        const isExternal =
+          args.path.startsWith('~') || absoluteFilePath.indexOf('node_modules') !== -1;
         const dir = path.dirname(absoluteFilePath);
 
         const opts = {
@@ -36,25 +37,25 @@ module.exports = (options = {}, loaderOptions = {}) => {
           paths: [...(options.paths || []), dir],
         };
 
-        let css
+        let css;
         const cached = cache.get(absoluteFilePath);
         if (isExternal && cached) {
-          css = cached
+          css = cached;
         } else {
           const content = await fs.readFile(absoluteFilePath, 'utf-8');
           try {
             const lessResult = await less.render(content, opts);
-            css = lessResult.css
-            cache.set(absoluteFilePath, css)
+            css = lessResult.css;
+            cache.set(absoluteFilePath, css);
           } catch (e) {
             return {
               errors: [convertLessError(e)],
-            }
+            };
           }
         }
 
         const relativeFilePath = path.relative(rootDir, absoluteFilePath);
-        const newRelativeFilePath = relativeFilePath.replace(/\.less$/, '.css')
+        const newRelativeFilePath = relativeFilePath.replace(/\.less$/, '.css');
 
         return {
           path: newRelativeFilePath,
@@ -70,7 +71,7 @@ module.exports = (options = {}, loaderOptions = {}) => {
         };
       });
 
-      build.onLoad({filter: /.*/, namespace: 'less-loader'}, async (args) => {
+      build.onLoad({ filter: /.*/, namespace: 'less-loader' }, async (args) => {
         return {
           resolveDir: rootDir,
           pluginData: {
@@ -80,9 +81,9 @@ module.exports = (options = {}, loaderOptions = {}) => {
           contents: `
             import _default from "virtual:${args.path}"
             export default _default
-          `
-        }
-      })
+          `,
+        };
+      });
     },
   };
 };

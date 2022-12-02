@@ -9,21 +9,24 @@ const svgrPlugin = require('./esbuild-plugin-svgr.js');
 const cssModulesPlugin = require('./esbuild-plugin-css-modules.js');
 const resolveVirtuals = require('./esbuild-plugin-resolve-virtuals.js');
 const { log, error, notify } = require('./helpers.js');
-const parse = require("json-templates");
+const parse = require('json-templates');
 
 async function prepare(env) {
   await fs.rm(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER), { recursive: true, force: true });
-  await fs.rm(path.resolve(env.PROJECT_DIR, "esbuild.json"), { recursive: true, force: true });
+  await fs.rm(path.resolve(env.PROJECT_DIR, 'esbuild.json'), { recursive: true, force: true });
   await fs.mkdir(path.resolve(env.PROJECT_DIR, env.OUTPUT_FOLDER));
 }
 
 async function readConfig(env) {
-  if(env.ENV === "dev" && process.env.GITHUB_USER) {
-    const stringConfig = await fs.readFile(path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}-user.json`), {encoding: 'utf-8'});
+  if (env.ENV === 'dev' && process.env.GITHUB_USER) {
+    const stringConfig = await fs.readFile(
+      path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}-user.json`),
+      { encoding: 'utf-8' },
+    );
     const template = parse(stringConfig);
     const githubUser = process.env.GITHUB_USER.toLowerCase();
     const serialNumber = process.env.S_NO || '1';
-    return JSON.parse(template({githubUser, serialNumber}));
+    return JSON.parse(template({ githubUser, serialNumber }));
   }
   return await fs.readJson(path.resolve(env.PROJECT_DIR, `config/config.${env.ENV}.json`));
 }
@@ -49,14 +52,18 @@ async function buildStatic(env) {
 function getGitHeadHash() {
   try {
     const result = execSync('git rev-parse HEAD', { stdio: 'pipe' });
-    return result.toString()
+    return result.toString();
   } catch (e) {
-    console.error(`Unable to get Git hash for last commit, trying to use CODEBUILD_RESOLVED_SOURCE_VERSION env variable. Fail reason: "${e.message}"`)
+    console.error(
+      `Unable to get Git hash for last commit, trying to use CODEBUILD_RESOLVED_SOURCE_VERSION env variable. Fail reason: "${e.message}"`,
+    );
     if (process.env.CODEBUILD_RESOLVED_SOURCE_VERSION) {
-      return process.env.CODEBUILD_RESOLVED_SOURCE_VERSION
+      return process.env.CODEBUILD_RESOLVED_SOURCE_VERSION;
     }
-    console.error(`Unable to get CODEBUILD_RESOLVED_SOURCE_VERSION (it's empty) use 'latest' instead`)
-    return 'latest'
+    console.error(
+      `Unable to get CODEBUILD_RESOLVED_SOURCE_VERSION (it's empty) use 'latest' instead`,
+    );
+    return 'latest';
   }
 }
 

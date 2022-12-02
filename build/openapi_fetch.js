@@ -3,20 +3,41 @@
 const https = require('https'); // or 'https' for https:// URLs
 const fs = require('fs-extra');
 const path = require('path');
-require('dotenv').config()
+const { sys } = require('typescript');
+require('dotenv').config();
 
-const OUTPUT_DIR = path.resolve(__dirname, '..', 'config');
+const OUTPUT_FILE_PATH = path.resolve(__dirname, '..', 'config', 'openapi.yaml');
+const LOCAL_OPENAPI_PATH = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'tarpon',
+  'dist',
+  'openapi',
+  'internal',
+  'openapi-internal-original.yaml',
+);
 
-const BRANCH = process.env.STOPLIGHT_BRANCH ? process.env.STOPLIGHT_BRANCH.replace(/\//g, '-') : 'main';
+const BRANCH = (process.env.STOPLIGHT_BRANCH ?? process.env.BRANCH ?? 'main').replace(/\//g, '-');
 const ACCOUNT = process.env.STOPLIGHT_ACCOUNT || `flagright-internal`;
 const PROJECT = process.env.STOPLIGHT_PROJECT || `flagright-internal-api`;
 const FILE_NAME = process.env.STOPLIGHT_FILE_NAME || `openapi-internal-original.yaml`;
 
-console.log(`BRANCH: ${BRANCH}`)
-console.log(`ACCOUNT: ${ACCOUNT}`)
-console.log(`PROJECT: ${PROJECT}`)
-
 async function main() {
+  if (process.env.ENV === 'local') {
+    if (!fs.existsSync(LOCAL_OPENAPI_PATH)) {
+      console.error(
+        `${LOCAL_OPENAPI_PATH} doesn't exist. Run "npm run openapi:build" in tarpon first.`,
+      );
+      sys.exit(1);
+    }
+    fs.copyFileSync(LOCAL_OPENAPI_PATH, OUTPUT_FILE_PATH);
+    return;
+  }
+
+  console.log(`BRANCH: ${BRANCH}`);
+  console.log(`ACCOUNT: ${ACCOUNT}`);
+  console.log(`PROJECT: ${PROJECT}`);
 
   const schema = await fetchSchema({
     branch: BRANCH,
@@ -24,13 +45,13 @@ async function main() {
     stoplightProject: PROJECT,
     stoplightFileName: FILE_NAME,
   });
-  await fs.writeFile(path.resolve(OUTPUT_DIR, 'openapi.yaml'), schema);
+  await fs.writeFile(OUTPUT_FILE_PATH, schema);
   console.log('Download finished');
 }
 
 main().catch((e) => {
   console.error(e);
-  process.exit(1)
+  process.exit(1);
 });
 
 async function download(url, queryParams) {
