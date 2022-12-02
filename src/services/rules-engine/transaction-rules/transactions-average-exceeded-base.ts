@@ -327,6 +327,18 @@ export default class TransactionAverageExceededBaseRule<
       const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
       const result = multiplierToPercents(multiplier) > maxMultiplier
       if (result && isWithinAvgThresholds) {
+        let falsePositiveDetails
+        if (
+          this.ruleInstance.falsePositiveCheckEnabled &&
+          this.ruleInstance.caseCreationType === 'TRANSACTION'
+        ) {
+          if ((multiplier - maxMultiplier) / multiplier < 0.05) {
+            falsePositiveDetails = {
+              isFalsePositive: true,
+              confidenceScore: _.random(60, 80),
+            }
+          }
+        }
         const vars = {
           ...super.getTransactionVars(direction),
           period1,
@@ -338,6 +350,7 @@ export default class TransactionAverageExceededBaseRule<
         hitResult.push({
           direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
           vars,
+          falsePositiveDetails: falsePositiveDetails,
         })
       }
     }

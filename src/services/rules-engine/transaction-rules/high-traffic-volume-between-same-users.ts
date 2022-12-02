@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import * as _ from 'lodash'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
@@ -104,13 +105,29 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
     }
 
     const hitResult: RuleHitResult = []
+    const transactionAmountHit = await isTransactionAmountAboveThreshold(
+      transactionAmounts,
+      transactionVolumeThreshold
+    )
+    let falsePositiveDetails
     if (
-      (await isTransactionAmountAboveThreshold(
-        transactionAmounts,
-        transactionVolumeThreshold
-      )) &&
-      countHit
+      this.ruleInstance.falsePositiveCheckEnabled &&
+      this.ruleInstance.caseCreationType === 'TRANSACTION'
     ) {
+      if (
+        volumeDelta != null &&
+        transactionAmounts != null &&
+        volumeDelta.transactionAmount / transactionAmounts.transactionAmount <
+          0.05
+      ) {
+        falsePositiveDetails = {
+          isFalsePositive: true,
+          confidenceScore: _.random(60, 80),
+        }
+      }
+    }
+
+    if (transactionAmountHit.isHit && countHit) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: {
@@ -119,6 +136,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
           volumeDelta,
           volumeThreshold,
         },
+        falsePositiveDetails,
       })
       hitResult.push({
         direction: 'DESTINATION',
@@ -128,6 +146,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
           volumeDelta,
           volumeThreshold,
         },
+        falsePositiveDetails: falsePositiveDetails,
       })
     }
     return hitResult

@@ -1734,7 +1734,7 @@ components:
             hitRules:
               type: array
               items:
-                $ref: '#/components/schemas/HitRulesResult'
+                $ref: '#/components/schemas/HitRulesDetails'
           required:
             - executedRules
             - hitRules
@@ -2017,7 +2017,7 @@ components:
           type: array
           description: Unique transaction identifier
           items:
-            $ref: '#/components/schemas/HitRulesResult'
+            $ref: '#/components/schemas/HitRulesDetails'
       required:
         - executedRules
         - hitRules
@@ -2061,8 +2061,8 @@ components:
         - ruleDescription
         - ruleAction
         - ruleHit
-    HitRulesResult:
-      title: HitRulesResult
+    HitRulesDetails:
+      title: HitRulesDetails
       type: object
       example:
         ruleId: R-1a
@@ -3401,6 +3401,7 @@ components:
     RuleHitMeta:
       type: object
       description: Details of rule execution, for internal purposes only
+      title: ''
       properties:
         hitDirections:
           type: array
@@ -3408,6 +3409,8 @@ components:
             $ref: '#/components/schemas/RuleHitDirection'
         caseCreationType:
           $ref: '#/components/schemas/CaseCreationType'
+        falsePositiveDetails:
+          $ref: '#/components/schemas/FalsePositiveDetails'
     RuleHitDirection:
       type: string
       title: RuleHitDirection
@@ -4645,6 +4648,19 @@ components:
           $ref: '#/components/schemas/TransactionAmountLimit'
         averageTransactionAmountLimit:
           $ref: '#/components/schemas/TransactionAmountLimit'
+    FalsePositiveDetails:
+      title: FalsePositiveDetails
+      x-stoplight:
+        id: swgf3yejk9wep
+      type: object
+      properties:
+        isFalsePositive:
+          type: boolean
+        confidenceScore:
+          type: number
+      required:
+        - isFalsePositive
+        - confidenceScore
   securitySchemes:
     x-api-key:
       name: x-api-key

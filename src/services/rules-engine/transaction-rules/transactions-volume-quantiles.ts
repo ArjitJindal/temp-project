@@ -248,28 +248,31 @@ export default class TransactionsVolumeQuantilesRule extends TransactionRule<Tra
     if (
       checkSender === 'sending' &&
       (await isTransactionAmountAboveThreshold(senderSendingAmount, threshold))
+        .isHit
     ) {
       isSenderHit = true
       amount = senderSendingAmount
     } else if (
       checkSender === 'all' &&
-      (await isTransactionAmountAboveThreshold(senderSum, threshold))
+      (await isTransactionAmountAboveThreshold(senderSum, threshold)).isHit
     ) {
       isSenderHit = true
       amount = senderSum
     }
     if (
       checkReceiver === 'receiving' &&
-      (await isTransactionAmountAboveThreshold(
-        receiverReceivingAmount,
-        threshold
-      ))
+      (
+        await isTransactionAmountAboveThreshold(
+          receiverReceivingAmount,
+          threshold
+        )
+      ).isHit
     ) {
       isReceiverHit = true
       amount = receiverReceivingAmount
     } else if (
       checkReceiver === 'all' &&
-      (await isTransactionAmountAboveThreshold(receiverSum, threshold))
+      (await isTransactionAmountAboveThreshold(receiverSum, threshold)).isHit
     ) {
       isReceiverHit = true
       amount = receiverSum

@@ -22,14 +22,14 @@ export async function isTransactionAmountAboveThreshold(
   thresholds: {
     [currency: string]: number
   }
-): Promise<boolean> {
+): Promise<{ thresholdHit: ThresholdHit | null; isHit: boolean }> {
   const result = await checkTransactionAmountBetweenThreshold(
     transactionAmountDefails,
     _.mapValues(thresholds, (threshold) => ({
       min: threshold,
     }))
   )
-  return result != null
+  return { thresholdHit: result, isHit: result != null }
 }
 
 export async function isTransactionAmountBelowThreshold(

@@ -3,7 +3,7 @@ info:
   title: Tarpon Console API
   version: '1.0'
 servers:
-  - url: 'http://localhost:3000'
+  - url: http://localhost:3000
 paths:
   /apikey:
     parameters: []
@@ -2736,7 +2736,7 @@ components:
       x-examples:
         example-1:
           data:
-            - _id: '2020-01-04'
+            - _id: 2020-01-04
               totalTransactions: 2344
               flaggedTransactions: 121
               stoppedTransactions: 33
@@ -3563,7 +3563,7 @@ components:
           items:
             type: string
         falsePositiveDetails:
-          $ref: '#/components/schemas/FalsePositiveDetails'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/FalsePositiveDetails
     CasesListResponse:
       title: CasesListResponse
       type: object
@@ -4026,20 +4026,6 @@ components:
       required:
         - type
         - action
-    FalsePositiveDetails:
-      title: FalsePositiveDetails
-      x-stoplight:
-        id: hw5fqqlmg9fci
-      type: object
-      properties:
-        isFalsePositive:
-          type: boolean
-        confidence:
-          type: number
-          description: Value between 0-1
-      required:
-        - isFalsePositive
-        - confidence
   securitySchemes:
     Authorization:
       type: http

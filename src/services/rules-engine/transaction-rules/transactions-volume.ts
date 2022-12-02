@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import * as _ from 'lodash'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
@@ -177,40 +178,48 @@ export default class TransactionsVolumeRule extends TransactionRule<
     if (
       !skipCheckSender &&
       checkSender === 'sending' &&
-      (await isTransactionAmountAboveThreshold(
-        senderSendingAmount,
-        transactionVolumeThreshold
-      ))
+      (
+        await isTransactionAmountAboveThreshold(
+          senderSendingAmount,
+          transactionVolumeThreshold
+        )
+      ).isHit
     ) {
       isSenderHit = true
       amount = senderSendingAmount
     } else if (
       !skipCheckSender &&
       checkSender === 'all' &&
-      (await isTransactionAmountAboveThreshold(
-        senderSum,
-        transactionVolumeThreshold
-      ))
+      (
+        await isTransactionAmountAboveThreshold(
+          senderSum,
+          transactionVolumeThreshold
+        )
+      ).isHit
     ) {
       isSenderHit = true
       amount = senderSum
     } else if (
       !skipCheckReceiver &&
       checkReceiver === 'receiving' &&
-      (await isTransactionAmountAboveThreshold(
-        receiverReceivingAmount,
-        transactionVolumeThreshold
-      ))
+      (
+        await isTransactionAmountAboveThreshold(
+          receiverReceivingAmount,
+          transactionVolumeThreshold
+        )
+      ).isHit
     ) {
       isReceiverHit = true
       amount = receiverReceivingAmount
     } else if (
       !skipCheckReceiver &&
       checkReceiver === 'all' &&
-      (await isTransactionAmountAboveThreshold(
-        receiverSum,
-        transactionVolumeThreshold
-      ))
+      (
+        await isTransactionAmountAboveThreshold(
+          receiverSum,
+          transactionVolumeThreshold
+        )
+      ).isHit
     ) {
       isReceiverHit = true
       amount = receiverSum
@@ -245,6 +254,23 @@ export default class TransactionsVolumeRule extends TransactionRule<
         volumeThreshold = null
       }
 
+      let falsePositiveDetails
+      if (
+        this.ruleInstance.falsePositiveCheckEnabled &&
+        this.ruleInstance.caseCreationType === 'TRANSACTION'
+      ) {
+        if (
+          volumeDelta != null &&
+          amount != null &&
+          volumeDelta.transactionAmount / amount.transactionAmount < 0.05
+        ) {
+          falsePositiveDetails = {
+            isFalsePositive: true,
+            confidenceScore: _.random(60, 80),
+          }
+        }
+      }
+
       const hitResult: RuleHitResult = []
       if (isSenderHit) {
         hitResult.push({
@@ -254,6 +280,7 @@ export default class TransactionsVolumeRule extends TransactionRule<
             volumeDelta,
             volumeThreshold,
           },
+          falsePositiveDetails: falsePositiveDetails,
         })
       }
       if (isReceiverHit) {
@@ -264,6 +291,7 @@ export default class TransactionsVolumeRule extends TransactionRule<
             volumeDelta,
             volumeThreshold,
           },
+          falsePositiveDetails: falsePositiveDetails,
         })
       }
       return hitResult

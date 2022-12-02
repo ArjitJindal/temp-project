@@ -276,6 +276,25 @@ export class CaseCreationService {
         originUserId: transactionUsers.ORIGIN?.userId ?? null,
         desinationUserId: transactionUsers.DESTINATION?.userId ?? null,
       })
+      // Check if case is possible false positive
+      let isFalsePositive = true
+      let overallConfidenceScore = 0
+      for (const hitRule of transaction.hitRules) {
+        if (
+          !hitRule.ruleHitMeta ||
+          !hitRule.ruleHitMeta.falsePositiveDetails ||
+          !hitRule.ruleHitMeta.falsePositiveDetails?.isFalsePositive
+        ) {
+          isFalsePositive = false
+          break
+        }
+        overallConfidenceScore +=
+          hitRule.ruleHitMeta.falsePositiveDetails.confidenceScore
+      }
+      overallConfidenceScore = parseFloat(
+        (overallConfidenceScore / transaction.hitRules.length).toFixed(2)
+      )
+
       // NOTE: We only create a case for a known user
       if (
         transactionUsers.ORIGIN != null ||
@@ -306,6 +325,12 @@ export class CaseCreationService {
             caseTransactions: [transaction],
             caseUsers,
             priority: casePriority,
+            falsePositiveDetails: isFalsePositive
+              ? {
+                  isFalsePositive: isFalsePositive,
+                  confidenceScore: overallConfidenceScore,
+                }
+              : undefined,
           }
           result.push(caseEntity)
         }

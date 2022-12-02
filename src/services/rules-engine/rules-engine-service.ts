@@ -27,7 +27,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
+import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -53,8 +53,8 @@ import { addNewSubsegment } from '@/core/xray'
 const RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD = 3000
 
 const ruleAscendingComparator = (
-  rule1: HitRulesResult,
-  rule2: HitRulesResult
+  rule1: HitRulesDetails,
+  rule2: HitRulesDetails
 ) => (rule1.ruleId > rule2.ruleId ? 1 : -1)
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
@@ -255,7 +255,7 @@ export class RulesEngineService {
 
   private async verifyTransactionIdempotent(transaction: Transaction): Promise<{
     executedRules: ExecutedRulesResult[]
-    hitRules: HitRulesResult[]
+    hitRules: HitRulesDetails[]
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -324,7 +324,7 @@ export class RulesEngineService {
         ruleAction: result.ruleAction,
         ruleHitMeta: result.ruleHitMeta,
       }))
-      .sort(ruleAscendingComparator) as HitRulesResult[]
+      .sort(ruleAscendingComparator) as HitRulesDetails[]
 
     return {
       executedRules,
@@ -442,6 +442,15 @@ export class RulesEngineService {
 
         const ruleHitDirections: RuleHitDirection[] =
           filteredRuleResult?.map((result) => result.direction) || []
+
+        const falsePositiveDetails = filteredRuleResult?.map((result) => {
+          if (
+            result.falsePositiveDetails &&
+            result.falsePositiveDetails.isFalsePositive
+          ) {
+            return result.falsePositiveDetails
+          }
+        })
         const ruleDescriptions = (
           ruleHit
             ? await Promise.all(
@@ -466,6 +475,9 @@ export class RulesEngineService {
             ? {
                 hitDirections: ruleHitDirections,
                 caseCreationType: ruleInstance.caseCreationType,
+                falsePositiveDetails: falsePositiveDetails?.length
+                  ? falsePositiveDetails[0]
+                  : {},
               }
             : undefined,
         }

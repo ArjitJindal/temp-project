@@ -44,8 +44,28 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
         min: threshold,
       }))
     )
+
     const hitResult: RuleHitResult = []
     if (thresholdHit != null) {
+      let falsePositiveDetails
+      if (
+        this.ruleInstance.falsePositiveCheckEnabled &&
+        this.ruleInstance.caseCreationType === 'TRANSACTION'
+      ) {
+        if (
+          this.transaction.originAmountDetails &&
+          thresholdHit.min &&
+          (this.transaction.originAmountDetails.transactionAmount -
+            thresholdHit.min) /
+            this.transaction.originAmountDetails.transactionAmount <
+            0.05
+        ) {
+          falsePositiveDetails = {
+            isFalsePositive: true,
+            confidenceScore: _.random(60, 80),
+          }
+        }
+      }
       hitResult.push({
         direction: 'ORIGIN',
         vars: {
@@ -53,6 +73,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
           limit: thresholdHit.min?.toFixed(2),
           currency: thresholdHit.currency,
         },
+        falsePositiveDetails: falsePositiveDetails,
       })
       hitResult.push({
         direction: 'DESTINATION',
@@ -61,6 +82,7 @@ export default class TransactionAmountRule extends TransactionRule<TransactionAm
           limit: thresholdHit.min?.toFixed(2),
           currency: thresholdHit.currency,
         },
+        falsePositiveDetails: falsePositiveDetails,
       })
     }
     return hitResult

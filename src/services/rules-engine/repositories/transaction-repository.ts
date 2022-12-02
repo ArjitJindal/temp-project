@@ -40,7 +40,7 @@ import { TransactionStatusChange } from '@/@types/openapi-internal/TransactionSt
 import { paginateQuery } from '@/utils/dynamodb'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
+import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 import { RULE_ACTIONS } from '@/@types/rule/rule-actions'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
@@ -500,7 +500,7 @@ export class TransactionRepository {
     transaction: Transaction,
     rulesResult: {
       executedRules?: ExecutedRulesResult[]
-      hitRules?: HitRulesResult[]
+      hitRules?: HitRulesDetails[]
     } = {}
   ): Promise<Transaction> {
     this.sanitizeTransactionInPlace(transaction)

@@ -9,7 +9,7 @@ import {
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { HitRulesResult } from '@/@types/openapi-public/HitRulesResult'
+import { HitRulesDetails } from '@/@types/openapi-public/HitRulesDetails'
 
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -32,7 +32,7 @@ export class TransactionEventRepository {
     transactionEvent: TransactionEvent,
     rulesResult: {
       executedRules?: ExecutedRulesResult[]
-      hitRules?: HitRulesResult[]
+      hitRules?: HitRulesDetails[]
     } = {}
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()
