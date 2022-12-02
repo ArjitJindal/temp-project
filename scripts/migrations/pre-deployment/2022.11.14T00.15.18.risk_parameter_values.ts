@@ -7,7 +7,7 @@ import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-inte
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 
 const PARAMS_NEW_TYPE: {
-  [key in ParameterAttributeRiskValuesParameterEnum]: RiskParameterValue['content']['kind']
+  [key in ParameterAttributeRiskValuesParameterEnum]?: RiskParameterValue['content']['kind']
 } = {
   'userDetails.countryOfResidence': 'MULTIPLE',
   'userDetails.countryOfNationality': 'MULTIPLE',

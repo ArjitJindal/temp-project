@@ -106,6 +106,7 @@ export const updateDynamicRiskScores = async (
   const riskClassificationValues =
     await riskRepository.getRiskClassificationValues()
   const riskScoresList: number[] = []
+  const users = await getUsersFromTransaction(transaction, userRepository)
 
   const relevantParameters =
     parameterRiskScores?.filter(
@@ -115,36 +116,57 @@ export const updateDynamicRiskScores = async (
     ) ?? []
 
   for (const parameterAttributeDetails of relevantParameters) {
-    if (parameterAttributeDetails.isDerived) {
-      if (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER') {
-        if (parameterAttributeDetails.parameter === 'createdTimestamp') {
-          const users = await getUsersFromTransaction(
-            transaction,
-            userRepository
-          )
-          if (users.length) {
-            users.map((user) => {
-              const riskLevel = getAgeDerivedRiskLevel(
-                parameterAttributeDetails.parameter,
-                user,
-                parameterAttributeDetails.riskLevelAssignmentValues
-              )
-              riskScoresList.push(
-                getRiskScoreFromLevel(riskClassificationValues, riskLevel)
-              )
-            })
-          }
+    if (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER') {
+      if (parameterAttributeDetails.parameter === 'createdTimestamp') {
+        if (users.length) {
+          users.map((user) => {
+            const riskLevel = getAgeDerivedRiskLevel(
+              parameterAttributeDetails.parameter,
+              user,
+              parameterAttributeDetails.riskLevelAssignmentValues
+            )
+            riskScoresList.push(
+              getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+            )
+          })
         }
       }
     } else if (parameterAttributeDetails.riskEntityType === 'TRANSACTION') {
-      const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
-        parameterAttributeDetails.parameter,
-        transaction,
-        parameterAttributeDetails.riskLevelAssignmentValues
-      )
-      riskScoresList.push(
-        getRiskScoreFromLevel(riskClassificationValues, riskLevel)
-      )
+      if (parameterAttributeDetails.isDerived) {
+        if (
+          (parameterAttributeDetails.parameter ===
+            'domesticOrForeignOriginCountry' ||
+            parameterAttributeDetails.parameter ===
+              'domesticOrForeignDestinationCountry') &&
+          users.length
+        ) {
+          const direction =
+            parameterAttributeDetails.parameter ===
+            'domesticOrForeignOriginCountry'
+              ? 'origin'
+              : 'destination'
+          users.map((user) => {
+            const riskLevel: RiskLevel = getCountryDerivedRiskLevel(
+              transaction,
+              user,
+              direction,
+              parameterAttributeDetails.riskLevelAssignmentValues
+            )
+            riskScoresList.push(
+              getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+            )
+          })
+        }
+      } else {
+        const riskLevel: RiskLevel = getSchemaAttributeRiskLevel(
+          parameterAttributeDetails.parameter,
+          transaction,
+          parameterAttributeDetails.riskLevelAssignmentValues
+        )
+        riskScoresList.push(
+          getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+        )
+      }
     }
   }
   const arsScore = riskScoresList.length
@@ -335,6 +357,36 @@ const getAgeDerivedRiskLevel = (
     const age = getAgeFromTimestamp(dayjs(endValue).valueOf())
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
       if (matchParameterValue(age, parameterValue)) {
+        return riskLevel
+      }
+    }
+  }
+  return DEFAULT_RISK_LEVEL
+}
+
+const getCountryDerivedRiskLevel = (
+  transaction: Transaction,
+  user: User | Business,
+  direction: 'origin' | 'destination',
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
+) => {
+  const country =
+    direction === 'origin'
+      ? _.get(transaction, 'originAmountDetails.country')
+      : _.get(transaction, 'destinationAmountDetails.country')
+
+  const userCountry =
+    _.get(user, 'userDetails.countryOfResidence') ??
+    _.get(user, 'legalEntity.companyRegistrationDetails.registrationCountry')
+  for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
+    if (country && userCountry) {
+      const riskValue = country === userCountry ? 'DOMESTIC' : 'FOREIGN'
+      if (matchParameterValue(riskValue, parameterValue)) {
+        return riskLevel
+      }
+    } else {
+      const riskValue = 'FOREIGN'
+      if (matchParameterValue(riskValue, parameterValue)) {
         return riskLevel
       }
     }
