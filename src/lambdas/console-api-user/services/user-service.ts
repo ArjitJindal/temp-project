@@ -2,6 +2,8 @@ import * as createError from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { NotFound } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import _ from 'lodash'
+import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
@@ -18,6 +20,7 @@ import { UserEventRepository } from '@/services/rules-engine/repositories/user-e
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
+import { Business } from '@/@types/openapi-public/Business'
 
 export class UserService {
   userRepository: UserRepository
@@ -119,7 +122,17 @@ export class UserService {
     if (!user) {
       throw new NotFound('User not found')
     }
-    await this.userRepository.saveConsumerUser({ ...user, ...updateRequest })
+    const updatedUser: User = {
+      ..._.merge(user, updateRequest),
+      transactionLimits: updateRequest.transactionLimits
+        ? {
+            ...user.transactionLimits,
+            paymentMethodLimits:
+              updateRequest.transactionLimits.paymentMethodLimits,
+          }
+        : undefined,
+    }
+    await this.userRepository.saveConsumerUser(updatedUser)
     await this.userEventRepository.saveUserEvent(
       {
         timestamp: Date.now(),
@@ -140,8 +153,17 @@ export class UserService {
     if (!user) {
       throw new NotFound('User not found')
     }
-
-    await this.userRepository.saveBusinessUser({ ...user, ...updateRequest })
+    const updatedUser: Business = {
+      ..._.merge(user, updateRequest),
+      transactionLimits: updateRequest.transactionLimits
+        ? {
+            ...user.transactionLimits,
+            paymentMethodLimits:
+              updateRequest.transactionLimits.paymentMethodLimits,
+          }
+        : undefined,
+    }
+    await this.userRepository.saveBusinessUser(updatedUser)
     // TODO: FDT-45236. Save business user event
     await this.userEventRepository.saveUserEvent(
       {

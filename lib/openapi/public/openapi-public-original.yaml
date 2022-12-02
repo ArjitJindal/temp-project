@@ -3312,6 +3312,43 @@ components:
           maximumYearlyTransactionLimit:
             amountValue: 800
             amountCurrency: GBP
+          paymentMethodLimits:
+            CARD:
+              transactionCountLimit:
+                day: 100
+                month: 100
+              transactionAmountLimit:
+                day:
+                  amountValue: 100
+                  amountCurrency: GBP
+                month:
+                  amountValue: 1000
+                  amountCurrency: GBP
+              averageTransactionAmountLimit:
+                day:
+                  amountValue: 100
+                  amountCurrency: GBP
+                month:
+                  amountValue: 1000
+                  amountCurrency: GBP
+            IBAN:
+              transactionCountLimit:
+                day: 50
+                month: 500
+              transactionAmountLimit:
+                day:
+                  amountValue: 500
+                  amountCurrency: EUR
+                month:
+                  amountValue: 5000
+                  amountCurrency: EUR
+              averageTransactionAmountLimit:
+                day:
+                  amountValue: 500
+                  amountCurrency: EUR
+                month:
+                  amountValue: 5000
+                  amountCurrency: EUR
       description: Model for transaction limits for a given user
       properties:
         maximumDailyTransactionLimit:
@@ -3326,6 +3363,27 @@ components:
           $ref: '#/components/schemas/Amount'
         maximumYearlyTransactionLimit:
           $ref: '#/components/schemas/Amount'
+        paymentMethodLimits:
+          type: object
+          properties:
+            ACH:
+              $ref: '#/components/schemas/TransactionLimit'
+            CARD:
+              $ref: '#/components/schemas/TransactionLimit'
+            IBAN:
+              $ref: '#/components/schemas/TransactionLimit'
+            UPI:
+              $ref: '#/components/schemas/TransactionLimit'
+            GENERIC_BANK_ACCOUNT:
+              $ref: '#/components/schemas/TransactionLimit'
+            MPESA:
+              $ref: '#/components/schemas/TransactionLimit'
+            SWIFT:
+              $ref: '#/components/schemas/TransactionLimit'
+            WALLET:
+              $ref: '#/components/schemas/TransactionLimit'
+            CHECK:
+              $ref: '#/components/schemas/TransactionLimit'
     RuleAction:
       type: string
       title: RuleAction
@@ -4551,6 +4609,42 @@ components:
           description: Merchant Description
       required:
         - code
+    TransactionCountLimit:
+      title: TransactionCountLimit
+      type: object
+      properties:
+        day:
+          type: number
+        week:
+          type: number
+        month:
+          type: number
+        year:
+          type: number
+    TransactionAmountLimit:
+      title: TransactionAmountLimit
+      type: object
+      properties:
+        day:
+          $ref: '#/components/schemas/Amount'
+        week:
+          $ref: '#/components/schemas/Amount'
+        month:
+          $ref: '#/components/schemas/Amount'
+        year:
+          $ref: '#/components/schemas/Amount'
+    TransactionLimit:
+      title: TransactionLimit
+      x-stoplight:
+        id: uu3baej63ppba
+      type: object
+      properties:
+        transactionCountLimit:
+          $ref: '#/components/schemas/TransactionCountLimit'
+        transactionAmountLimit:
+          $ref: '#/components/schemas/TransactionAmountLimit'
+        averageTransactionAmountLimit:
+          $ref: '#/components/schemas/TransactionAmountLimit'
   securitySchemes:
     x-api-key:
       name: x-api-key

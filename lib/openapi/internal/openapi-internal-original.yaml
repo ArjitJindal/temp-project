@@ -2996,6 +2996,8 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
         kycStatusDetails:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+        transactionLimits:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
     FileImport:
       title: FileImport
       type: object
