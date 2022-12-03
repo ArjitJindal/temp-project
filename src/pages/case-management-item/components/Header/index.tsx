@@ -92,7 +92,11 @@ export default function Header(props: Props) {
           {showCloseButton && (
             <CasesStatusChangeForm
               caseIds={[caseId as string]}
-              newCaseStatus={caseItem.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}
+              newCaseStatus={
+                caseItem.caseStatus === 'OPEN' || caseItem.caseStatus === 'REOPENED'
+                  ? 'CLOSED'
+                  : 'REOPENED'
+              }
               onSaved={() => {
                 onReload();
               }}

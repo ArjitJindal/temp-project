@@ -2,12 +2,12 @@ import React from 'react';
 import { ExpandTabRef } from '../../UserCaseDetails';
 import * as Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
-import { HitRulesResult } from '@/apis';
+import { HitRulesDetails } from '@/apis';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 interface Props {
-  rulesHit: HitRulesResult[];
+  rulesHit: HitRulesDetails[];
   reference?: React.Ref<ExpandTabRef>;
   updateCollapseState: (key: string, value: boolean) => void;
 }

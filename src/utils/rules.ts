@@ -4,7 +4,7 @@ import { useQuery } from './queries/hooks';
 import { RULES, RULE_INSTANCES } from './queries/keys';
 import {
   CaseCreationType,
-  HitRulesResult,
+  HitRulesDetails,
   Rule,
   RuleAction,
   RuleInstance,
@@ -89,9 +89,9 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
 }
 
 export function filterRulesHitByCaseCreationType(
-  rules: HitRulesResult[],
+  rules: HitRulesDetails[],
   caseCreationType: CaseCreationType,
-): HitRulesResult[] {
+): HitRulesDetails[] {
   return rules.filter(
     (rule) =>
       !rule?.ruleHitMeta?.caseCreationType ||
