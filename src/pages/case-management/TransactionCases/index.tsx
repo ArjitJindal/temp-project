@@ -114,9 +114,16 @@ export default function TransactionCases(props: Props) {
               </Id>
               <br />
               {entity.priority && <p>Priority: {entity.priority}</p>}
-              {entity.falsePositiveDetails && entity.falsePositiveDetails.isFalsePositive && (
-                <FalsePositiveTag confidence={entity.falsePositiveDetails.confidenceScore} />
-              )}
+              {entity.falsePositiveDetails &&
+                entity.caseId &&
+                entity.falsePositiveDetails.isFalsePositive && (
+                  <FalsePositiveTag
+                    caseIds={[entity.caseId]}
+                    onSaved={reloadTable}
+                    newCaseStatus={entity.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
+                    confidence={entity.falsePositiveDetails.confidenceScore}
+                  />
+                )}
             </>
           );
         },

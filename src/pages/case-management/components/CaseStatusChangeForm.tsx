@@ -15,11 +15,11 @@ interface CasesProps {
   rounded?: boolean;
 }
 
-interface RemoveAllFilesRef {
+export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
 }
 
-const caseStatusToOperationName = (caseStatus: CaseStatus) => {
+export const caseStatusToOperationName = (caseStatus: CaseStatus) => {
   if (caseStatus === 'REOPENED') {
     return 'Re-Open';
   } else if (caseStatus === 'CLOSED') {
@@ -28,10 +28,10 @@ const caseStatusToOperationName = (caseStatus: CaseStatus) => {
 };
 
 // todo: i18n
-const OTHER_REASON = 'Other';
-const COMMON_REASONS = [OTHER_REASON];
+export const OTHER_REASON = 'Other';
+export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
-const CLOSING_REASONS = [
+export const CLOSING_REASONS = [
   'False positive',
   'Investigation completed',
   'Documents collected',
@@ -44,7 +44,7 @@ const CLOSING_REASONS = [
   'Escalated',
 ];
 
-interface FormValues {
+export interface FormValues {
   reasons: CaseClosingReasons[];
   reasonOther: string | null;
 }

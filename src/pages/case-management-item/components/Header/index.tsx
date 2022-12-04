@@ -74,8 +74,16 @@ export default function Header(props: Props) {
         idTitle={'Case ID'}
         tag={
           caseItem.falsePositiveDetails &&
+          caseItem.caseId &&
           caseItem.falsePositiveDetails.isFalsePositive && (
-            <FalsePositiveTag confidence={caseItem.falsePositiveDetails.confidenceScore} />
+            <FalsePositiveTag
+              caseIds={[caseItem.caseId]}
+              onSaved={() => {
+                onReload();
+              }}
+              newCaseStatus={caseItem.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
+              confidence={caseItem.falsePositiveDetails.confidenceScore}
+            />
           )
         }
         id={caseItem.caseId}
