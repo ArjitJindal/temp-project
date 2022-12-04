@@ -63,7 +63,7 @@ export default function UserManualRiskPanel(props: Props) {
             map(syncState, ({ riskLevel }) => riskLevel ?? undefined),
             undefined,
           ),
-          isUpdatable: !isLocked,
+          isUpdatable: isLocked,
         },
       })
       .then((response) => {
