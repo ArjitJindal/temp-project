@@ -6,6 +6,7 @@ import { TransactionStateButton } from '../../transactions/components/Transactio
 import { TableSearchParams } from '../types';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
+import { FalsePositiveTag } from '../components/FalsePositiveTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -92,7 +93,7 @@ export default function TransactionCases(props: Props) {
         ),
         dataIndex: 'priority',
         exportData: 'caseId',
-        width: 130,
+        width: 180,
         hideInSearch: true,
         copyable: true,
         ellipsis: true,
@@ -113,6 +114,9 @@ export default function TransactionCases(props: Props) {
               </Id>
               <br />
               {entity.priority && <p>Priority: {entity.priority}</p>}
+              {entity.falsePositiveDetails && entity.falsePositiveDetails.isFalsePositive && (
+                <FalsePositiveTag confidence={entity.falsePositiveDetails.confidenceScore} />
+              )}
             </>
           );
         },

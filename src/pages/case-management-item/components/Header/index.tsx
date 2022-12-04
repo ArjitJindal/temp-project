@@ -14,6 +14,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { CasesStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
 import CaseTypeTag from '@/components/ui/CaseTypeTag';
+import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
 
 interface Props {
   caseItem: Case;
@@ -69,7 +70,16 @@ export default function Header(props: Props) {
   const statusChanges = caseItem.statusChanges ?? [];
   return (
     <>
-      <EntityHeader idTitle={'Case ID'} id={caseItem.caseId}>
+      <EntityHeader
+        idTitle={'Case ID'}
+        tag={
+          caseItem.falsePositiveDetails &&
+          caseItem.falsePositiveDetails.isFalsePositive && (
+            <FalsePositiveTag confidence={caseItem.falsePositiveDetails.confidenceScore} />
+          )
+        }
+        id={caseItem.caseId}
+      >
         <div className={s.items}>
           <Form.Layout.Label icon={<UserShared2LineIcon />} title={'Assigned to'}>
             <AssigneesDropdown

@@ -12,3 +12,24 @@
 .otherLabel {
   color: @fr-colors-purpleGray;
 }
+
+.icon {
+  display: flex;
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.falsePositiveTag {
+  color: #fff;
+  display: flex;
+  :global {
+    .ant-tag {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-radius: 8px;
+    }
+  }
+}
