@@ -1,41 +1,40 @@
 // todo: move this tags to common UI package
 import _ from 'lodash';
-import { PaymentMethod } from './payments';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { getPaymentMethodTitle, PaymentMethod } from './payments';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
-export const paymethodOptions: { value: PaymentMethod; label: any }[] = [
+export const paymethodOptions: { value: PaymentMethod; label: string }[] = [
   {
     value: 'CARD',
-    label: <PaymentMethodTag paymentMethod="CARD" />,
+    label: getPaymentMethodTitle('CARD'),
   },
   {
     value: 'GENERIC_BANK_ACCOUNT',
-    label: <PaymentMethodTag paymentMethod="GENERIC_BANK_ACCOUNT" />,
+    label: getPaymentMethodTitle('GENERIC_BANK_ACCOUNT'),
   },
   {
     value: 'UPI',
-    label: <PaymentMethodTag paymentMethod="UPI" />,
+    label: getPaymentMethodTitle('UPI'),
   },
   {
     value: 'IBAN',
-    label: <PaymentMethodTag paymentMethod="IBAN" />,
+    label: getPaymentMethodTitle('IBAN'),
   },
   {
     value: 'WALLET',
-    label: <PaymentMethodTag paymentMethod="WALLET" />,
+    label: getPaymentMethodTitle('WALLET'),
   },
   {
     value: 'ACH',
-    label: <PaymentMethodTag paymentMethod="ACH" />,
+    label: getPaymentMethodTitle('ACH'),
   },
   {
     value: 'SWIFT',
-    label: <PaymentMethodTag paymentMethod="SWIFT" />,
+    label: getPaymentMethodTitle('SWIFT'),
   },
   {
     value: 'MPESA',
-    label: <PaymentMethodTag paymentMethod="MPESA" />,
+    label: getPaymentMethodTitle('MPESA'),
   },
 ];
 

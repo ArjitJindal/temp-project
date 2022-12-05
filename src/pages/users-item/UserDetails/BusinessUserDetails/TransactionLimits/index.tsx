@@ -164,7 +164,7 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                 .filter((option) => !existingPaymentMethods?.includes(option.value))
                 .map((option) => (
                   <Select.Option key={option.value} value={option.value}>
-                    {option.label}
+                    <PaymentMethodTag paymentMethod={option.value} />
                   </Select.Option>
                 ))}
             </Select>
