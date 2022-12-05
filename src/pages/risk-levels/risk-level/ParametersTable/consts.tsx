@@ -388,7 +388,6 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     const api = useApi();
     const result = useQuery(BUSINESS_USERS_UNIQUES(), () => api.getUsersUniques());
     const businessIndustryRes = map(result.data, ({ businessIndustry }) => businessIndustry);
-    console.log(`BI Res: ${JSON.stringify(businessIndustryRes['value'])}`);
     return (
       businessIndustryRes['value'] && (
         <MultipleSelect
@@ -583,7 +582,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </>
     );
   }) as ValueRenderer<'MULTIPLE'>,
-  BUSINESS_INDUSTRY: DEFAULT_STRING_RENDERER,
+  BUSINESS_INDUSTRY: DEFAULT_MULTIPLE_RENDERER,
   TRANSACTION_TYPES: (({ value }) => {
     if (value == null) {
       return null;
