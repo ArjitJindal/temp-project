@@ -5,7 +5,6 @@ import { RangeValue } from 'rc-picker/lib/interface';
 import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
-import RulesHitBreakdown from '../RulesHitBreakdownChart';
 import { header } from '../dashboardutils';
 import style from '../../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
@@ -130,7 +129,7 @@ export default function RuleHitCard() {
   return (
     <Card bordered={false} bodyStyle={{ padding: 0 }}>
       <Row>
-        <Col span={12}>
+        <Col span={24}>
           <QueryResultsTable<DashboardStatsRulesCountData>
             form={{
               labelWrap: true,
@@ -153,14 +152,6 @@ export default function RuleHitCard() {
             }}
             rowKey="ruleId"
           />
-        </Col>
-        <Col span={12}>
-          <RulesHitBreakdown
-            loading={rulesHitResult.data.kind === 'LOADING'}
-            data={rulesHitResult.data.kind === 'SUCCESS' ? rulesHitResult.data?.value.items : []}
-            ruleInstances={ruleInstances}
-            rules={rules}
-          />{' '}
         </Col>
       </Row>
     </Card>
