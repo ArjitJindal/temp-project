@@ -6,6 +6,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { RULE_FILTERS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
+import { removeNil } from '@/utils/json';
 
 function getFixedSchema(schema: object) {
   return _.cloneDeepWith(schema, (value) => {
@@ -21,17 +22,6 @@ function getFixedSchema(schema: object) {
       };
     }
   });
-}
-
-function removeNil(formData: object) {
-  return JSON.parse(
-    JSON.stringify(formData, (k, v) => {
-      if (v === null) {
-        return undefined;
-      }
-      return v;
-    }),
-  );
 }
 
 interface Props {

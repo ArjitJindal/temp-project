@@ -16,7 +16,7 @@ import { useAuth0User, useUsers } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import UserLink from '@/components/UserLink';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { paymentMethod, transactionType } from '@/utils/tags';
+import { paymethodOptions, transactionType } from '@/utils/tags';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { TableColumn, TableRow } from '@/components/ui/Table/types';
@@ -582,7 +582,7 @@ export default function TransactionCases(props: Props) {
         valueType: 'select',
         dataIndex: 'originMethodFilter',
         fieldProps: {
-          options: paymentMethod,
+          options: paymethodOptions,
           allowClear: true,
         },
       },
@@ -593,7 +593,7 @@ export default function TransactionCases(props: Props) {
         valueType: 'select',
         dataIndex: 'destinationMethodFilter',
         fieldProps: {
-          options: paymentMethod,
+          options: paymethodOptions,
           allowClear: true,
         },
       },

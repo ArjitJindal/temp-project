@@ -4,7 +4,7 @@ import moment from 'moment/moment';
 import { TransactionCaseManagement, TransactionState, TransactionType } from '@/apis';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
-import { paymentMethod, transactionType } from '@/utils/tags';
+import { paymethodOptions, transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
@@ -277,7 +277,7 @@ export default function TransactionsTable(props: Props) {
         dataIndex: 'originMethodFilter',
         valueType: 'select',
         fieldProps: {
-          options: paymentMethod,
+          options: paymethodOptions,
           allowClear: true,
         },
       },
@@ -288,7 +288,7 @@ export default function TransactionsTable(props: Props) {
         dataIndex: 'destinationMethodFilter',
         valueType: 'select',
         fieldProps: {
-          options: paymentMethod,
+          options: paymethodOptions,
           allowClear: true,
         },
       },

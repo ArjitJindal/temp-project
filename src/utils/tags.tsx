@@ -1,9 +1,10 @@
 // todo: move this tags to common UI package
 import _ from 'lodash';
+import { PaymentMethod } from './payments';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 
-export const paymentMethod: { value: string; label: any }[] = [
+export const paymethodOptions: { value: PaymentMethod; label: any }[] = [
   {
     value: 'CARD',
     label: <PaymentMethodTag paymentMethod="CARD" />,

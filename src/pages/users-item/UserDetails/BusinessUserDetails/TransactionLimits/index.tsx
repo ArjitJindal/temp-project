@@ -1,92 +1,483 @@
-import s from './index.module.less';
+import { Drawer, Input, message, Row, Select, Space, Typography } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import ProDescriptions from '@ant-design/pro-descriptions';
+import _ from 'lodash';
+import { removeNil } from '@/utils/json';
 import * as Card from '@/components/ui/Card';
-import { InternalBusinessUser } from '@/apis';
-import Calander2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
-import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
+import {
+  CurrencyCode,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  UserUpdateRequest,
+} from '@/apis';
+import Label from '@/components/ui/Form/Layout/Label';
 import Money from '@/components/ui/Money';
+import Table from '@/components/ui/Table';
+import { TransactionLimit } from '@/apis/models/TransactionLimit';
+import { PaymentMethod } from '@/utils/payments';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { paymethodOptions } from '@/utils/tags';
+import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
+import { TransactionLimitsPaymentMethodLimits } from '@/apis/models/TransactionLimitsPaymentMethodLimits';
+import Button from '@/components/ui/Button';
+import { TransactionCountLimit } from '@/apis/models/TransactionCountLimit';
+import { TransactionAmountLimit } from '@/apis/models/TransactionAmountLimit';
+import { useApi } from '@/api';
+import COLORS from '@/components/ui/colors';
 
+const timeFrames = ['day', 'week', 'month', 'year'];
+
+type EditMode = 'NONE' | 'EDIT' | 'ADD';
 interface Props {
-  user: InternalBusinessUser;
+  user: InternalBusinessUser | InternalConsumerUser;
 }
+
+interface TableItem {
+  paymentMethod: PaymentMethod;
+  transactionLimit: TransactionLimit;
+}
+
+interface PaymentMethodLimitsEditorProps {
+  editMode: EditMode;
+  selectedPaymentMethod?: PaymentMethod;
+  existingPaymentMethods?: PaymentMethod[];
+  transactionLimit?: TransactionLimit;
+  onSave: (paymentMethod: PaymentMethod, transactionLimit: TransactionLimit) => void;
+  onClose: () => void;
+}
+
+function getCurrency(transactionLimit: TransactionLimit) {
+  let currency: CurrencyCode | undefined = undefined;
+  JSON.stringify(transactionLimit, (k, v) => {
+    if (k === 'amountCurrency') {
+      currency = v;
+    }
+    return v;
+  });
+  return currency;
+}
+
+function updateCurrency(
+  amountLimit: TransactionAmountLimit,
+  currency: CurrencyCode,
+): TransactionAmountLimit {
+  return JSON.parse(
+    JSON.stringify(amountLimit, (k, v) => {
+      if (k === 'amountCurrency') {
+        return currency;
+      }
+      return v;
+    }),
+  );
+}
+
+const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
+  editMode,
+  selectedPaymentMethod,
+  existingPaymentMethods,
+  transactionLimit,
+  onSave,
+  onClose,
+}) => {
+  const [updatedPaymentMethod, setUpdatedPaymentMethod] = useState<PaymentMethod | undefined>();
+  const [updatedCurrency, setUpdatedCurrency] = useState<CurrencyCode | undefined>();
+  const [updatedTransactionCountLimit, setUpdatedTransactionCountLimit] =
+    useState<TransactionCountLimit>({});
+  const [updatedTransactionAmountLimit, setUpdatedTransactionAmountLimit] =
+    useState<TransactionAmountLimit>({});
+  const [updatedAverageTransactionAmountLimit, setUpdatedAverageTransactionAmountLimit] =
+    useState<TransactionAmountLimit>({});
+  const paymentMethod = useMemo(
+    () => updatedPaymentMethod || selectedPaymentMethod,
+    [selectedPaymentMethod, updatedPaymentMethod],
+  );
+  const currency = useMemo(
+    () => updatedCurrency ?? (transactionLimit && getCurrency(transactionLimit)),
+    [updatedCurrency, transactionLimit],
+  );
+  const transactionCountLimit = useMemo(
+    () => _.merge(transactionLimit?.transactionCountLimit, updatedTransactionCountLimit),
+    [transactionLimit?.transactionCountLimit, updatedTransactionCountLimit],
+  );
+  const transactionAmountLimit = useMemo(
+    () => _.merge(transactionLimit?.transactionAmountLimit, updatedTransactionAmountLimit),
+    [transactionLimit?.transactionAmountLimit, updatedTransactionAmountLimit],
+  );
+  const averageTransactionAmountLimit = useMemo(
+    () =>
+      _.merge(
+        transactionLimit?.averageTransactionAmountLimit,
+        updatedAverageTransactionAmountLimit,
+      ),
+    [transactionLimit?.averageTransactionAmountLimit, updatedAverageTransactionAmountLimit],
+  );
+  const handleSave = useCallback(async () => {
+    onSave(paymentMethod!, {
+      transactionCountLimit,
+      transactionAmountLimit: updateCurrency(transactionAmountLimit, currency!),
+      averageTransactionAmountLimit: updateCurrency(averageTransactionAmountLimit, currency!),
+    });
+  }, [
+    averageTransactionAmountLimit,
+    currency,
+    onSave,
+    paymentMethod,
+    transactionAmountLimit,
+    transactionCountLimit,
+  ]);
+  useEffect(() => {
+    if (editMode === 'NONE') {
+      setUpdatedCurrency(undefined);
+      setUpdatedPaymentMethod(undefined);
+      setUpdatedTransactionCountLimit({});
+      setUpdatedTransactionAmountLimit({});
+      setUpdatedAverageTransactionAmountLimit({});
+    }
+  }, [editMode]);
+
+  return (
+    <Drawer
+      title={<b>Expected transaction limits</b>}
+      width={500}
+      visible={editMode !== 'NONE'}
+      onClose={onClose}
+      extra={
+        <Space>
+          <Button type="primary" disabled={!paymentMethod} onClick={handleSave}>
+            {editMode === 'EDIT' ? 'Save limit' : 'Add limit'}
+          </Button>
+        </Space>
+      }
+    >
+      {editMode !== 'NONE' ? (
+        <ProDescriptions column={1} colon={false} layout="vertical">
+          <ProDescriptions.Item key="payment-method" label="Payment method" valueType="text">
+            <Select<PaymentMethod>
+              style={{ width: '100%' }}
+              value={paymentMethod}
+              disabled={editMode === 'EDIT'}
+              onChange={(value) => setUpdatedPaymentMethod(value)}
+              showSearch={true}
+            >
+              {paymethodOptions
+                .filter((option) => !existingPaymentMethods?.includes(option.value))
+                .map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+            </Select>
+          </ProDescriptions.Item>
+          <ProDescriptions.Item key="currency" label="Currency" valueType="text">
+            <Select<CurrencyCode>
+              style={{ width: '100%' }}
+              value={currency}
+              onChange={(value) => setUpdatedCurrency(value)}
+              options={CURRENCIES_SELECT_OPTIONS}
+              showSearch
+            />
+          </ProDescriptions.Item>
+          {timeFrames.map((timeFrame) => (
+            <ProDescriptions.Item
+              key={`count-${timeFrame}`}
+              label={`Max transaction count / ${timeFrame}`}
+              valueType="text"
+            >
+              <Input
+                type="number"
+                min={0}
+                allowClear={true}
+                value={transactionCountLimit[timeFrame]}
+                onChange={(event) =>
+                  setUpdatedTransactionCountLimit((prev) => ({
+                    ...prev,
+                    [timeFrame]: event.target.value ? Number(event.target.value) : null,
+                  }))
+                }
+              />
+            </ProDescriptions.Item>
+          ))}
+          {timeFrames.map((timeFrame) => (
+            <ProDescriptions.Item
+              key={`amount-${timeFrame}`}
+              label={`Max transaction amount / ${timeFrame}`}
+              valueType="text"
+            >
+              <Input
+                type="number"
+                min={0}
+                allowClear={true}
+                value={transactionAmountLimit[timeFrame]?.amountValue}
+                disabled={!currency}
+                onChange={(event) => {
+                  setUpdatedTransactionAmountLimit((prev) => ({
+                    ...prev,
+                    [timeFrame]: event.target.value
+                      ? {
+                          amountCurrency: currency!,
+                          amountValue: Number(event.target.value),
+                        }
+                      : null,
+                  }));
+                }}
+              />
+            </ProDescriptions.Item>
+          ))}
+          {timeFrames.map((timeFrame) => (
+            <ProDescriptions.Item
+              key={`avg-amount-${timeFrame}`}
+              label={`Avg transaction amount / ${timeFrame}`}
+              valueType="text"
+            >
+              <Input
+                type="number"
+                min={0}
+                allowClear={true}
+                value={averageTransactionAmountLimit[timeFrame]?.amountValue}
+                disabled={!currency}
+                onChange={(event) => {
+                  setUpdatedAverageTransactionAmountLimit((prev) => ({
+                    ...prev,
+                    [timeFrame]: event.target.value
+                      ? {
+                          amountCurrency: currency!,
+                          amountValue: Number(event.target.value),
+                        }
+                      : null,
+                  }));
+                }}
+              />
+            </ProDescriptions.Item>
+          ))}
+        </ProDescriptions>
+      ) : null}
+    </Drawer>
+  );
+};
+
+interface PaymentMethodLimitsTableProps {
+  user: InternalBusinessUser | InternalConsumerUser;
+  editMode: EditMode;
+  onEditModeChange: (editMode: EditMode) => void;
+}
+
+const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
+  user,
+  editMode,
+  onEditModeChange,
+}) => {
+  const api = useApi();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>();
+  const [paymentMethodLimits, setPaymentMethodLimits] =
+    useState<TransactionLimitsPaymentMethodLimits>(
+      user.transactionLimits?.paymentMethodLimits ?? {},
+    );
+  const handleSavePaymentMethodLimits = useCallback(
+    async (
+      paymentMethod: PaymentMethod,
+      newPaymentMethodTransactionLimit: TransactionLimit | null,
+    ) => {
+      const hideMessage = message.loading(`Saving...`, 0);
+      try {
+        const params: { userId: string; UserUpdateRequest: UserUpdateRequest } = {
+          userId: user.userId,
+          UserUpdateRequest: {
+            transactionLimits: {
+              paymentMethodLimits: removeNil({
+                ...paymentMethodLimits,
+                [paymentMethod]: newPaymentMethodTransactionLimit,
+              }),
+            },
+          },
+        };
+        await (user.type === 'CONSUMER'
+          ? api.postConsumerUsersUserId(params)
+          : api.postBusinessUsersUserId(params));
+
+        message.success('Saved');
+        setPaymentMethodLimits({
+          ...paymentMethodLimits,
+          [paymentMethod]: newPaymentMethodTransactionLimit,
+        });
+        onEditModeChange('NONE');
+      } catch (e) {
+        message.error('Failed to save');
+      } finally {
+        hideMessage();
+      }
+    },
+    [api, onEditModeChange, paymentMethodLimits, user.type, user.userId],
+  );
+
+  const tableItems = Object.entries(paymentMethodLimits)
+    .filter((entry) => entry[1])
+    .map((entry) => ({
+      paymentMethod: entry[0] as PaymentMethod,
+      transactionLimit: entry[1],
+    }));
+  return (
+    <>
+      <Table<TableItem>
+        rowKey="paymentMethod"
+        pagination={false}
+        data={{
+          items: tableItems,
+        }}
+        search={false}
+        options={{
+          reload: false,
+          setting: false,
+          density: false,
+        }}
+        columns={[
+          {
+            title: 'Payment method',
+            render: (_, row) => {
+              return <PaymentMethodTag paymentMethod={row.paymentMethod} />;
+            },
+          },
+          {
+            title: 'Max transaction count',
+            render: (_, row) => {
+              return (
+                <Space direction="vertical">
+                  {Object.entries(row.transactionLimit.transactionCountLimit || {})
+                    .filter((entry) => entry[1])
+                    .map((entry) => `${entry[1]} / ${entry[0]}`)}
+                </Space>
+              );
+            },
+          },
+          {
+            title: 'Max transaction amount',
+            render: (_, row) => {
+              return (
+                <Space direction="vertical">
+                  {Object.entries(row.transactionLimit.transactionAmountLimit || {})
+                    .filter((entry) => entry[1])
+                    .map((entry) => (
+                      <Space>
+                        <Money amount={entry[1]} /> / {entry[0]}
+                      </Space>
+                    ))}
+                </Space>
+              );
+            },
+          },
+          {
+            title: 'Avg transaction amount',
+            render: (_, row) => {
+              return (
+                <Space direction="vertical">
+                  {Object.entries(row.transactionLimit.averageTransactionAmountLimit || {})
+                    .filter((entry) => entry[1])
+                    .map((entry) => (
+                      <Space>
+                        <Money amount={entry[1]} /> / {entry[0]}
+                      </Space>
+                    ))}
+                </Space>
+              );
+            },
+          },
+          {
+            title: 'Actions',
+            render: (_, row) => {
+              return (
+                <Space>
+                  <EditOutlined
+                    onClick={() => {
+                      onEditModeChange('EDIT');
+                      setSelectedPaymentMethod(row.paymentMethod);
+                    }}
+                  />
+                  <DeleteOutlined
+                    onClick={async () => {
+                      await handleSavePaymentMethodLimits(row.paymentMethod, null);
+                    }}
+                  />
+                </Space>
+              );
+            },
+          },
+        ]}
+      />
+
+      <PaymentMethodLimitsEditor
+        editMode={editMode}
+        selectedPaymentMethod={selectedPaymentMethod}
+        existingPaymentMethods={
+          Object.entries(paymentMethodLimits)
+            .filter((entry) => entry[1])
+            .map((entry) => entry[0]) as PaymentMethod[]
+        }
+        transactionLimit={selectedPaymentMethod && paymentMethodLimits[selectedPaymentMethod]}
+        onSave={handleSavePaymentMethodLimits}
+        onClose={() => {
+          onEditModeChange('NONE');
+          setSelectedPaymentMethod(undefined);
+        }}
+      />
+    </>
+  );
+};
 
 export default function ExpectedTransactionLimits(props: Props) {
   const { user } = props;
+  const [editMode, setEditMode] = useState<EditMode>('NONE');
   return (
     <>
-      <Card.Row className={s.all}>
-        <Card.Column className={s.outer}>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <div>
-                  <Calander2LineIcon className={s.icon} />
-                </div>
-                <div>Period</div>
-              </div>
-            }
-          </Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <div>
-                  <TransactionIcon className={s.icon} />
-                </div>
-                <div>Transaction Limit</div>
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-        <Card.Column className={s.limit}>
-          <Card.Row className={s.row}>{<div className={s.inner}>{'Daily'}</div>}</Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <Money amount={user.transactionLimits?.maximumDailyTransactionLimit} />
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-        <Card.Column className={s.limit}>
-          <Card.Row className={s.row}>{<div className={s.inner}>{'Weekly'}</div>}</Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <Money amount={user.transactionLimits?.maximumWeeklyTransactionLimit} />
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-        <Card.Column className={s.limit}>
-          <Card.Row className={s.row}>{<div className={s.inner}>{'Monthly'}</div>}</Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <Money amount={user.transactionLimits?.maximumMonthlyTransactionLimit} />
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-        <Card.Column className={s.limit}>
-          <Card.Row className={s.row}>{<div className={s.inner}>{'Quarterly'}</div>}</Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <Money amount={user.transactionLimits?.maximumQuarterlyTransactionLimit} />
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-        <Card.Column className={s.limit}>
-          <Card.Row className={s.row}>{<div className={s.inner}>{'Yearly'}</div>}</Card.Row>
-          <Card.Row className={s.row}>
-            {
-              <div className={s.inner}>
-                <Money amount={user.transactionLimits?.maximumYearlyTransactionLimit} />
-              </div>
-            }
-          </Card.Row>
-        </Card.Column>
-      </Card.Row>
+      <Card.Section>
+        {/* <Card.Row> */}
+        <Typography.Title level={4}>On all transactions</Typography.Title>
+        <Card.Row border={false}>
+          <Card.Column>
+            <Label title={'Daily'}>
+              <Money amount={user.transactionLimits?.maximumDailyTransactionLimit} />
+            </Label>
+          </Card.Column>
+          <Card.Column>
+            <Label title={'Weekly'}>
+              <Money amount={user.transactionLimits?.maximumWeeklyTransactionLimit} />
+            </Label>
+          </Card.Column>
+          <Card.Column>
+            <Label title={'Monthly'}>
+              <Money amount={user.transactionLimits?.maximumMonthlyTransactionLimit} />
+            </Label>
+          </Card.Column>
+          <Card.Column>
+            <Label title={'Quarterly'}>
+              <Money amount={user.transactionLimits?.maximumQuarterlyTransactionLimit} />
+            </Label>
+          </Card.Column>
+          <Card.Column>
+            <Label title={'Yearly'}>
+              <Money amount={user.transactionLimits?.maximumYearlyTransactionLimit} />
+            </Label>
+          </Card.Column>
+        </Card.Row>
+        {/* </Card.Row> */}
+      </Card.Section>
+      <Card.Section>
+        <Typography.Title level={4}>
+          <Row align="middle">
+            On payment method
+            <Button
+              type="text"
+              icon={<PlusOutlined />}
+              style={{
+                color: COLORS.brandBlue.base,
+              }}
+              onClick={() => setEditMode('ADD')}
+            >
+              Add
+            </Button>
+          </Row>
+        </Typography.Title>
+        <PaymentMethodLimitsTable user={user} editMode={editMode} onEditModeChange={setEditMode} />
+      </Card.Section>
     </>
   );
 }

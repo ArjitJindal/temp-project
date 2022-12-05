@@ -35,6 +35,7 @@ export default function PopupContent(props: Props) {
       <div className={s.root}>
         <Form.Layout.Label title="Tag key">
           <Select<string>
+            style={{ width: '100%' }}
             showSearch={true}
             allowClear={true}
             className={s.select}

@@ -24,11 +24,11 @@ export const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
   if (paymentMethod === 'IBAN') {
     tagColor = 'green';
   } else if (paymentMethod === 'ACH') {
-    tagColor = 'green';
+    tagColor = 'cyan';
   } else if (paymentMethod === 'SWIFT') {
-    tagColor = 'green';
+    tagColor = 'gold';
   } else if (paymentMethod === 'GENERIC_BANK_ACCOUNT') {
-    tagColor = 'green';
+    tagColor = 'pink';
   } else if (paymentMethod === 'WALLET') {
     tagColor = 'purple';
     paymentIcon = <WalletOutlined />;
