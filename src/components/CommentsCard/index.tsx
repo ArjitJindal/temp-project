@@ -11,27 +11,32 @@ import { getErrorMessage } from '@/utils/lang';
 import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetails';
 
 interface Props {
-  caseId: string | undefined;
+  id?: string;
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
   reference?: React.Ref<ExpandTabRef>;
-  updateCollapseState: (key: string, value: boolean) => void;
+  updateCollapseState?: (key: string, value: boolean) => void;
   caseStatus?: CaseStatus;
   onReload: () => void;
+  commentType: 'CASE' | 'USER';
 }
 
 export default function CommentsCard(props: Props) {
-  const { comments, caseId, onCommentsUpdate, caseStatus, updateCollapseState } = props;
+  const { comments, id, onCommentsUpdate, caseStatus, updateCollapseState, commentType } = props;
   const user = useAuth0User();
   const currentUserId = user.userId ?? undefined;
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const api = useApi();
 
   const handleDeleteComment = useCallback(
-    async (caseId: string, commentId: string) => {
+    async (commentId: string, id: string, commentType: string) => {
       try {
         setDeletingCommentIds((prevIds) => [...prevIds, commentId]);
-        await api.deleteCasesCaseIdCommentsCommentId({ caseId, commentId });
+        if (commentType === 'CASE') {
+          await api.deleteCasesCaseIdCommentsCommentId({ caseId: id, commentId });
+        } else {
+          await api.deleteUsersUserIdCommentsCommentId({ userId: id, commentId });
+        }
         setDeletingCommentIds((prevIds) => prevIds.filter((prevId) => prevId !== commentId));
         onCommentsUpdate(comments.filter((comment) => comment.id !== commentId));
         message.success('Comment deleted');
@@ -58,7 +63,9 @@ export default function CommentsCard(props: Props) {
           collapsedByDefault: true,
         }}
         ref={props.reference}
-        onCollapseChange={(isCollapsed) => updateCollapseState('comments', isCollapsed)}
+        onCollapseChange={(isCollapsed) =>
+          updateCollapseState && updateCollapseState('comments', isCollapsed)
+        }
       >
         <Card.Section>
           {comments.length > 0 && (
@@ -71,8 +78,8 @@ export default function CommentsCard(props: Props) {
                   currentUserId={currentUserId}
                   deletingCommentIds={deletingCommentIds}
                   onDelete={() => {
-                    if (comment.id != null && caseId != null) {
-                      handleDeleteComment(caseId, comment.id);
+                    if (comment.id != null && id != null) {
+                      handleDeleteComment(comment.id, id, commentType);
                     }
                   }}
                 />
@@ -81,14 +88,15 @@ export default function CommentsCard(props: Props) {
           )}
         </Card.Section>
       </Card.Root>
-      {caseId &&
+      {id &&
         ReactDOM.createPortal(
           <FixedCommentEditor
-            caseId={caseId}
+            id={id}
             user={user}
             handleCommentAdded={handleCommentAdded}
             caseStatus={caseStatus}
             onReload={props.onReload}
+            commentType={commentType}
           />,
           document.getElementById('page-wrapper-root') as HTMLElement,
         )}

@@ -10,12 +10,13 @@ import { Comment as TransactionComment, FileInfo } from '@/apis';
 import { FilesList } from '@/components/files/FilesList';
 
 interface Props {
-  caseId: string;
+  id: string;
   onCommentAdded: (comment: TransactionComment) => void;
   showFileList?: boolean;
+  commentType: 'CASE' | 'USER';
 }
 
-function CommentEditor({ caseId, onCommentAdded, showFileList = false }: Props) {
+function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }: Props) {
   const api = useApi();
   const [commentValue, setCommentValue] = useState('');
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -28,13 +29,19 @@ function CommentEditor({ caseId, onCommentAdded, showFileList = false }: Props) 
   const submitComment = useCallback(async () => {
     setLoading(true);
     try {
-      const comment = await api.postCaseComments({
-        caseId,
-        Comment: {
-          body: commentValue,
-          files,
-        },
-      });
+      let comment;
+      const commentData = { Comment: { body: commentValue, files } };
+      if (commentType === 'CASE') {
+        comment = await api.postCaseComments({
+          caseId: id,
+          ...commentData,
+        });
+      } else {
+        comment = await api.postUserComments({
+          userId: id,
+          ...commentData,
+        });
+      }
       onCommentAdded(comment);
       setCommentValue('');
       setFiles([]);
@@ -43,7 +50,7 @@ function CommentEditor({ caseId, onCommentAdded, showFileList = false }: Props) 
     } finally {
       setLoading(false);
     }
-  }, [api, commentValue, files, onCommentAdded, caseId]);
+  }, [commentType, onCommentAdded, api, id, commentValue, files]);
 
   return (
     <div className={s.commentEditor}>

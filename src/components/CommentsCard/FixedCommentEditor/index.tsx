@@ -7,15 +7,16 @@ import { CaseStatus, Comment as TransactionComment } from '@/apis';
 import { CasesStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
 
 interface Props {
-  caseId: string;
+  id: string;
   user: FlagrightAuth0User;
   handleCommentAdded: (newComment: TransactionComment) => void;
   caseStatus?: CaseStatus;
   onReload: () => void;
+  commentType: 'CASE' | 'USER';
 }
 
 const FixedCommentEditor = (props: Props) => {
-  const { caseId, user, handleCommentAdded, caseStatus } = props;
+  const { user, handleCommentAdded, caseStatus, id, commentType } = props;
 
   return (
     <div className={cn(s.comment)}>
@@ -23,19 +24,28 @@ const FixedCommentEditor = (props: Props) => {
         <div className={s.commentTitleParent}>
           <h3 className={cn(s.commentTitle)}>Add a comment</h3>
         </div>
-        <CasesStatusChangeForm
-          caseIds={[caseId]}
-          onSaved={props.onReload}
-          newCaseStatus={caseStatus === 'OPEN' || caseStatus === 'REOPENED' ? 'CLOSED' : 'REOPENED'}
-          isBlue={true}
-          rounded={true}
-        />
+        {commentType === 'CASE' && (
+          <CasesStatusChangeForm
+            caseIds={[id]}
+            onSaved={props.onReload}
+            newCaseStatus={
+              caseStatus === 'OPEN' || caseStatus === 'REOPENED' ? 'CLOSED' : 'REOPENED'
+            }
+            isBlue={true}
+            rounded={true}
+          />
+        )}
       </div>
       <AntComment
         className={s.commentBody}
         avatar={<Avatar src={user?.picture} />}
         content={
-          <CommentEditor caseId={caseId} onCommentAdded={handleCommentAdded} showFileList={true} />
+          <CommentEditor
+            id={id}
+            onCommentAdded={handleCommentAdded}
+            showFileList={true}
+            commentType={commentType}
+          />
         }
       />
     </div>

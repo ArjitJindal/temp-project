@@ -11,6 +11,7 @@ interface Props {
   reference?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
   collapseKey: string;
+  onReload: () => void;
 }
 
 export default function UserDetailsCard(props: Props) {
@@ -31,7 +32,12 @@ export default function UserDetailsCard(props: Props) {
         <UserIdNameCard user={user} showRiskLevel={true} />
       </Card.Section>
       <Card.Section>
-        <UserDetails user={user} isEmbedded={true} collapsedByDefault={true} />
+        <UserDetails
+          user={user}
+          isEmbedded={true}
+          collapsedByDefault={true}
+          onReload={props.onReload}
+        />
       </Card.Section>
     </Card.Root>
   );

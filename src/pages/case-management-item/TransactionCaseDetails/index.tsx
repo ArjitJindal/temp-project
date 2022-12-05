@@ -4,7 +4,7 @@ import TransactionDetailsCard from '@/pages/case-management-item/TransactionCase
 import RulesHitCard from '@/pages/case-management-item/TransactionCaseDetails/RulesHitCard';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 import UserDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/UserDetailsCard';
-import CommentsCard from '@/pages/case-management-item/components/CommentsCard';
+import CommentsCard from '@/components/CommentsCard';
 import { Case } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
@@ -105,6 +105,7 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
               reference={originUserDetailsCardRef}
               updateCollapseState={updateCollapseState}
               collapseKey="originUserDetails"
+              onReload={props.onReload}
             />
             <UserDetailsCard
               title="Destination (Receiver) User Details"
@@ -112,9 +113,10 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
               reference={destinationUserDetailsCardRef}
               updateCollapseState={updateCollapseState}
               collapseKey="destinationUserDetails"
+              onReload={props.onReload}
             />
             <CommentsCard
-              caseId={caseItem.caseId}
+              id={caseItem.caseId}
               caseStatus={caseItem.caseStatus}
               comments={caseItem.comments ?? []}
               onCommentsUpdate={(newComments) => {
@@ -123,6 +125,7 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
               reference={commentsCardRef}
               updateCollapseState={updateCollapseState}
               onReload={props.onReload}
+              commentType={'CASE'}
             />
           </>
         );

@@ -6,6 +6,7 @@ import { Small } from '@/components/ui/Typography';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 import InsightsCard from '@/pages/case-management-item/UserCaseDetails/InsightsCard';
+import CommentsCard from '@/components/CommentsCard';
 
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
@@ -14,10 +15,19 @@ interface Props {
   hideHistory?: boolean;
   hideInsights?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
+  onUserUpdate?: (userItem: InternalBusinessUser | InternalConsumerUser) => void;
+  onReload: () => void;
+  showCommentEditor?: boolean;
 }
 
 function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
-  const { user, isEmbedded, hideHistory = false, hideInsights = false } = props;
+  const {
+    user,
+    hideHistory = false,
+    hideInsights = false,
+    showCommentEditor = true,
+    onUserUpdate,
+  } = props;
 
   const userDetailsRef = React.useRef<ExpandTabRef>(null);
   const expectedTransactionsRef = React.useRef<ExpandTabRef>(null);
@@ -49,7 +59,6 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
       {user?.type === 'BUSINESS' && (
         <BusinessUserDetails
           user={user}
-          isEmbedded={isEmbedded}
           collapsedByDefault={true}
           userDetailsRef={userDetailsRef}
           expectedTransactionsRef={expectedTransactionsRef}
@@ -62,7 +71,6 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
       {user?.type === 'CONSUMER' && (
         <ConsumerUserDetails
           user={user}
-          isEmbedded={isEmbedded}
           collapsedByDefault={true}
           userDetailsRef={userDetailsRef}
           legalDocumentsRef={legalDocumentsRef}
@@ -83,6 +91,18 @@ function UserDetails(props: Props, ref: React.Ref<ExpandTabRef>) {
           userId={user.userId}
           reference={insightsRef}
           updateCollapseState={props.updateCollapseState}
+        />
+      )}
+      {showCommentEditor && (
+        <CommentsCard
+          id={user.userId}
+          comments={user.comments ?? []}
+          onCommentsUpdate={(newComments) => {
+            onUserUpdate && onUserUpdate({ ...user, comments: newComments });
+          }}
+          updateCollapseState={props.updateCollapseState}
+          onReload={props.onReload}
+          commentType={'USER'}
         />
       )}
     </>

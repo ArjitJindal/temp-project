@@ -1,5 +1,5 @@
 import React, { forwardRef, Ref, useImperativeHandle, useRef } from 'react';
-import CommentsCard from '../components/CommentsCard';
+import CommentsCard from '../../../components/CommentsCard';
 import RulesHitCard from './RulesHitCard';
 import InsightsCard from './InsightsCard';
 import { Case } from '@/apis';
@@ -47,6 +47,8 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
         hideInsights={true}
         ref={userDetailsRef}
         updateCollapseState={props.updateCollapseState}
+        onReload={props.onReload}
+        showCommentEditor={false}
       />
       <RulesHitCard
         caseItem={caseItem}
@@ -61,7 +63,7 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
         />
       )}
       <CommentsCard
-        caseId={caseItem.caseId}
+        id={caseItem.caseId}
         comments={caseItem.comments ?? []}
         onCommentsUpdate={(newComments) => {
           onCaseUpdate({ ...caseItem, comments: newComments });
@@ -70,6 +72,7 @@ function UserCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
         updateCollapseState={props.updateCollapseState}
         caseStatus={caseItem.caseStatus}
         onReload={props.onReload}
+        commentType={'CASE'}
       />
     </>
   );

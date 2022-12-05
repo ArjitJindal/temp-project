@@ -23,43 +23,54 @@ export default function UserItem() {
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
   const api = useApi();
+  const handleReload = useCallback(
+    (list: string | undefined, id: string | undefined) => {
+      if (id == null || id === 'all') {
+        setCurrentItem(init());
+        return function () {};
+      }
+      setCurrentItem(loading());
+      let isCanceled = false;
+      const request =
+        list === 'consumer'
+          ? api.getConsumerUsersItem({
+              userId: id,
+            })
+          : api.getBusinessUsersItem({ userId: id });
+      request
+        .then((user) => {
+          if (isCanceled) {
+            return;
+          }
+          setCurrentItem(success(user));
+        })
+        .catch((e) => {
+          if (isCanceled) {
+            return;
+          }
+          // todo: i18n
+          let message = 'Unknown error';
+          if (e instanceof ApiException && e.code === 404) {
+            message = `Unable to find user by id "${id}"`;
+          } else if (e instanceof Error && e.message) {
+            message = e.message;
+          }
+          setCurrentItem(failed(message));
+        });
+      return () => {
+        isCanceled = true;
+      };
+    },
+    [api],
+  );
+
   useEffect(() => {
-    if (id == null || id === 'all') {
-      setCurrentItem(init());
-      return function () {};
-    }
-    setCurrentItem(loading());
-    let isCanceled = false;
-    const request =
-      list === 'consumer'
-        ? api.getConsumerUsersItem({
-            userId: id,
-          })
-        : api.getBusinessUsersItem({ userId: id });
-    request
-      .then((user) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(user));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find user by id "${id}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [list, id, api]);
+    return handleReload(list, id);
+  }, [list, id, handleReload]);
+
+  const onReload = useCallback(() => {
+    handleReload(list, id);
+  }, [list, id, handleReload]);
 
   const userRef = React.useRef<ExpandTabRef>(null);
 
@@ -78,6 +89,10 @@ export default function UserItem() {
     },
     [setCollapseState],
   );
+
+  const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
+    setCurrentItem(success(userItem));
+  };
 
   return (
     <PageWrapper
@@ -114,6 +129,8 @@ export default function UserItem() {
                   ref={userRef}
                   collapsedByDefault={true}
                   updateCollapseState={updateCollapseState}
+                  onUserUpdate={handleUserUpdate}
+                  onReload={onReload}
                 />
               </Card.Section>
             </>
