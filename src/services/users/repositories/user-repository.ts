@@ -1,6 +1,7 @@
 import { Filter, MongoClient } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { AttributeMap, ItemList } from 'aws-sdk/clients/dynamodb'
+import { v4 as uuidv4 } from 'uuid'
 import {
   BatchGetCommand,
   DeleteCommand,
@@ -9,6 +10,7 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
+import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -409,5 +411,54 @@ export class UserRepository {
     return {
       businessIndustry: await distinctBusinessIndustryPromise,
     }
+  }
+  public async saveUserComment(
+    userId: string,
+    comment: Comment
+  ): Promise<Comment> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const commentToSave: Comment = {
+      ...comment,
+      id: uuidv4(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+    await collection.updateOne(
+      {
+        userId,
+      },
+      {
+        $push: { comments: commentToSave },
+      }
+    )
+    return commentToSave
+  }
+
+  public async getUserById(userId: string): Promise<InternalUser | null> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    return collection.findOne<InternalUser>({
+      userId,
+    })
+  }
+
+  public async deleteUserComment(userId: string, commentId: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne(
+      {
+        userId,
+      },
+      {
+        $pull: { comments: { id: commentId } },
+      }
+    )
   }
 }

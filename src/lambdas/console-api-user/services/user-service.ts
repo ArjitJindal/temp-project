@@ -20,6 +20,7 @@ import { UserEventRepository } from '@/services/rules-engine/repositories/user-e
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
+import { Comment } from '@/@types/openapi-internal/Comment'
 import { Business } from '@/@types/openapi-public/Business'
 
 export class UserService {
@@ -105,13 +106,14 @@ export class UserService {
   private getAugmentedUser<
     T extends InternalConsumerUser | InternalBusinessUser
   >(user: InternalConsumerUser | InternalBusinessUser) {
-    return {
-      ...user,
-      files: user.files?.map((file) => ({
+    const commentsWithUrl = user.comments?.map((comment) => ({
+      ...comment,
+      files: comment.files?.map((file) => ({
         ...file,
         downloadLink: this.getDownloadLink(file),
       })),
-    } as T
+    }))
+    return { ...user, comments: commentsWithUrl } as T
   }
 
   public async updateConsumerUser(
@@ -214,5 +216,50 @@ export class UserService {
   }
   public async getUniques(): Promise<UsersUniquesResponse> {
     return this.userRepository.getUniques()
+  }
+  public async saveUserComment(userId: string, comment: Comment) {
+    for (const file of comment.files || []) {
+      await this.s3
+        .copyObject({
+          CopySource: `${this.tmpBucketName}/${file.s3Key}`,
+          Bucket: this.documentBucketName,
+          Key: file.s3Key,
+        })
+        .promise()
+    }
+    const files = (comment.files || []).map((file) => ({
+      ...file,
+      bucket: this.documentBucketName,
+    }))
+    const savedComment = await this.userRepository.saveUserComment(userId, {
+      ...comment,
+      files,
+    })
+    return {
+      ...savedComment,
+      files: savedComment.files?.map((file) => ({
+        ...file,
+        downloadLink: this.getDownloadLink(file),
+      })),
+    }
+  }
+  public async deleteUserComment(userId: string, commentId: string) {
+    const user = await this.userRepository.getUserById(userId)
+    if (!user) {
+      throw new createError.NotFound(`User ${userId} not found`)
+    }
+
+    const comment = user?.comments?.find((comment) => comment.id === commentId)
+    if (!comment) {
+      throw new createError.NotFound(`Comment ${commentId} not found`)
+    }
+
+    if (comment.files && comment.files.length > 0) {
+      await this.s3.deleteObjects({
+        Bucket: this.documentBucketName,
+        Delete: { Objects: comment.files.map((file) => ({ Key: file.s3Key })) },
+      })
+    }
+    await this.userRepository.deleteUserComment(userId, commentId)
   }
 }

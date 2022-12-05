@@ -1099,6 +1099,46 @@ paths:
           in: query
           name: filterOperator
     parameters: []
+  '/users/{userId}/comments':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    post:
+      summary: Create a User Comment
+      operationId: post-user-comments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
+  '/users/{userId}/comments/{commentId}':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: commentId
+        in: path
+        required: true
+    delete:
+      summary: Delete a User Comment
+      operationId: delete-users-userId-comments-commentId
+      responses:
+        '200':
+          description: OK
   '/consumer/users/{userId}':
     get:
       summary: Consumer Users - Item - GET
@@ -2834,10 +2874,10 @@ components:
               enum:
                 - CONSUMER
               type: string
-            files:
+            comments:
               type: array
               items:
-                $ref: '#/components/schemas/FileInfo'
+                $ref: '#/components/schemas/Comment'
           required:
             - type
     InternalBusinessUser:
@@ -2849,10 +2889,10 @@ components:
               enum:
                 - BUSINESS
               type: string
-            files:
+            comments:
               type: array
               items:
-                $ref: '#/components/schemas/FileInfo'
+                $ref: '#/components/schemas/Comment'
           required:
             - type
     InternalUser:

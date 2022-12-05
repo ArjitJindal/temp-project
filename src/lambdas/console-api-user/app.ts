@@ -12,6 +12,7 @@ import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { Comment } from '@/@types/openapi-internal/Comment'
 
 export type UserViewConfig = {
   TMP_BUCKET: string
@@ -122,10 +123,10 @@ export const businessUsersViewHandler = lambdaApi()(
 export const consumerUsersViewHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
+    const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
     const client = await getMongoDbClient()
@@ -178,6 +179,27 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
       })
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/users/{userId}/comments' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const comment = JSON.parse(event.body) as Comment
+      const savedComment: Comment = await userService.saveUserComment(
+        event.pathParameters.userId,
+        { ...comment, userId }
+      )
+      return savedComment
+    } else if (
+      event.httpMethod === 'DELETE' &&
+      event.pathParameters?.userId &&
+      event.pathParameters?.commentId
+    ) {
+      return userService.deleteUserComment(
+        event.pathParameters.userId,
+        event.pathParameters.commentId
+      )
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/consumer/users/{userId}' &&

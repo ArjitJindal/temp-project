@@ -110,6 +110,10 @@ export const ConsoleApiPathToLambda: any = {
   '/cases/{caseId}/comments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/comments/{commentId}':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/users/{userId}/comments':
+    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/users/{userId}/comments/{commentId}':
+    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/sanctions/search': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
 }
