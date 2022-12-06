@@ -14,6 +14,7 @@ import {
   TRANSACTION_FILTERS,
   USER_FILTERS,
 } from '@/services/rules-engine/filters'
+import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -86,18 +87,33 @@ export const ruleInstanceHandler = lambdaApi()(
     })
     const ruleService = new RuleService(ruleRepository, ruleInstanceRepository)
     const ruleInstanceId = event.pathParameters?.ruleInstanceId
-
+    const rulesAuditLogService = new RuleAuditLogService(tenantId)
     if (event.httpMethod === 'PUT' && ruleInstanceId) {
       if (!event.body) {
         throw new Error('missing payload!')
       }
-      await ruleService.createOrUpdateRuleInstance({
+      const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
+        ruleInstanceId
+      )
+      const newRuleInstance = await ruleService.createOrUpdateRuleInstance({
         id: ruleInstanceId,
         ...JSON.parse(event.body),
       })
+      await rulesAuditLogService.handleAuditLogForRuleInstanceUpdated(
+        oldRuleInstance,
+        newRuleInstance
+      )
       return 'OK'
     } else if (event.httpMethod === 'DELETE' && ruleInstanceId) {
-      await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
+      const oldRuleInstance = await ruleInstanceRepository.getRuleInstanceById(
+        ruleInstanceId
+      )
+      if (oldRuleInstance != null) {
+        await ruleInstanceRepository.deleteRuleInstance(ruleInstanceId)
+        await rulesAuditLogService.handleAuditLogForRuleInstanceDeleted(
+          oldRuleInstance
+        )
+      }
       return 'OK'
     } else if (
       event.httpMethod === 'POST' &&
@@ -106,6 +122,9 @@ export const ruleInstanceHandler = lambdaApi()(
     ) {
       const newRuleInstance = await ruleService.createOrUpdateRuleInstance(
         JSON.parse(event.body)
+      )
+      await rulesAuditLogService.handleAuditLogForRuleInstanceCreated(
+        newRuleInstance
       )
       return newRuleInstance
     } else if (
