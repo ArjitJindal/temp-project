@@ -23,6 +23,8 @@ const RenderModalData = (data: any) => {
     }
   } else if (typeof data === 'object') {
     return <pre>{JSON.stringify(data, null, 2)}</pre>;
+  } else if (typeof data === 'boolean') {
+    return <p>{data ? 'True' : 'False'}</p>;
   } else {
     return <p>{data}</p>;
   }
