@@ -115,6 +115,7 @@
     "@ant-design/pro-cli": "^2.0.2",
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@openapitools/openapi-generator-cli": "^2.5.1",
+    "@sentry/esbuild-plugin": "^0.2.3",
     "@svgr/core": "^6.3.1",
     "@tsconfig/node14": "^1.0.1",
     "@types/auth0": "^2.34.17",

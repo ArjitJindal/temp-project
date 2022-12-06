@@ -1,6 +1,7 @@
 /* eslint-disable */
 const fs = require('fs-extra');
 const esbuild = require('esbuild');
+const sentryEsbuildPlugin = require('@sentry/esbuild-plugin').default;
 const path = require('path');
 const { execSync } = require('child_process');
 const LessImportResolvePlugin = require('./less-import-resolve-plugin.js');
@@ -77,6 +78,11 @@ async function buildCode(env, options) {
   ];
   const devMode = config.mode === 'development';
   const envName = config.envName ?? 'unknown_env';
+  const releaseSuffix =
+    process.env.ENV === 'dev' || process.env.ENV === 'sandbox'
+      ? 'latest-version'
+      : getGitHeadHash();
+  const release = `phytoplankton#${releaseSuffix}`;
   return await esbuild.build({
     entryPoints: [path.join(SRC_FOLDER, entry)],
     bundle: true,
@@ -85,7 +91,7 @@ async function buildCode(env, options) {
       '.svg': 'file',
     },
     define: {
-      'process.env.GIT_HEAD_SHA': JSON.stringify(getGitHeadHash()),
+      'process.env.RELEASE': JSON.stringify(release),
       'process.env.NODE_ENV': JSON.stringify(devMode ? 'development' : 'production'),
       'process.env.ENV_NAME': JSON.stringify(envName),
       'process.env.__IS_SERVER': false,
@@ -108,6 +114,18 @@ async function buildCode(env, options) {
       cssModulesPlugin(),
       svgrPlugin(),
       resolveVirtuals(),
+
+      ...(devMode || !process.env.SENTRY_UPLOAD
+        ? []
+        : [
+            // let sentry plugin be the last one
+            sentryEsbuildPlugin({
+              org: 'flagright-data-technologies-in',
+              project: 'phytoplankton-console',
+              release,
+              include: './dist',
+            }),
+          ]),
     ],
     outfile: path.join(PROJECT_DIR, OUTPUT_FOLDER, outFile),
     mainFields: ['module', 'browser', 'main'],
@@ -117,7 +135,7 @@ async function buildCode(env, options) {
     publicPath: '/',
     minify: !devMode,
     metafile: !devMode,
-    sourcemap: devMode,
+    sourcemap: devMode || 'external',
     treeShaking: !devMode,
     watch: watch
       ? {

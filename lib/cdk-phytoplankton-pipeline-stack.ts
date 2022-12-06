@@ -53,7 +53,7 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
             },
             build: {
               commands: [
-                `npm run build:${env}`,
+                `SENTRY_UPLOAD=true npm run build:${env}`,
                 `npm run synth:${env}`,
                 `npm run deploy:${env} -- --require-approval=never`,
               ],
@@ -61,6 +61,12 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           },
           cache: {
             paths: ['node_modules/**/*'],
+          },
+          env: {
+            'secrets-manager': {
+              SENTRY_AUTH_TOKEN:
+                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:sentryCreds-WEnffs:authToken',
+            },
           },
         }),
         environment: {

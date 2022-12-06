@@ -12,9 +12,7 @@ import './global.less';
 
 Sentry.init({
   dsn: SENTRY_DSN,
-  release: `phytoplankton-console#${
-    process.env.ENV_NAME === 'local' ? 'local' : process.env.GIT_HEAD_SHA
-  }`,
+  release: process.env.RELEASE,
   integrations: [new BrowserTracing()],
   tracesSampleRate: 0.05,
   environment: process.env.ENV_NAME,

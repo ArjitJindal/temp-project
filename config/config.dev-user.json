@@ -1,5 +1,5 @@
 {
-  "mode": "development",
+  "mode": "production",
   "envName": "dev",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
