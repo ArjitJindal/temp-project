@@ -146,6 +146,58 @@ export class CaseRepository {
         'caseTransactions.status': { $in: params.filterStatus },
       })
     }
+
+    if (params.filterUserKYCStatus != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseUsers.origin.kycStatusDetails.status': {
+              $in: params.filterUserKYCStatus,
+            },
+          },
+          {
+            'caseUsers.destination.kycStatusDetails.status': {
+              $in: params.filterUserKYCStatus,
+            },
+          },
+        ],
+      })
+    }
+
+    if (params.filterUserState != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseUsers.origin.userStateDetails.state': {
+              $in: params.filterUserState,
+            },
+          },
+          {
+            'caseUsers.destination.userStateDetails.state': {
+              $in: params.filterUserState,
+            },
+          },
+        ],
+      })
+    }
+
+    if (params.filterRiskLevel != null) {
+      conditions.push({
+        $or: [
+          {
+            'caseUsers.origin.riskLevel': {
+              $in: params.filterRiskLevel,
+            },
+          },
+          {
+            'caseUsers.destination.riskLevel': {
+              $in: params.filterRiskLevel,
+            },
+          },
+        ],
+      })
+    }
+
     if (params.filterCaseStatus != null) {
       conditions.push({ caseStatus: { $eq: params.filterCaseStatus } })
     }

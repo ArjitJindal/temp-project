@@ -80,6 +80,9 @@ export const casesHandler = lambdaApi()(
         filterOriginCountry,
         filterDestinationCountry,
         filterBusinessIndustries,
+        filterUserKYCStatus,
+        filterUserState,
+        filterRiskLevel,
       } = event.queryStringParameters as any
       const params: DefaultApiGetCaseListRequest = {
         limit: parseInt(limit),
@@ -136,6 +139,15 @@ export const casesHandler = lambdaApi()(
         filterDestinationCountry,
         filterBusinessIndustries: filterBusinessIndustries
           ? filterBusinessIndustries.split(',')
+          : undefined,
+        filterUserKYCStatus: filterUserKYCStatus
+          ? filterUserKYCStatus.split(',')
+          : undefined,
+        filterUserState: filterUserState
+          ? filterUserState.split(',')
+          : undefined,
+        filterRiskLevel: filterRiskLevel
+          ? filterRiskLevel.split(',')
           : undefined,
       }
       return caseService.getCases(params)

@@ -2165,6 +2165,24 @@ paths:
             type: string
           in: query
           name: filterDestinationCountry
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+          in: query
+          name: filterUserKYCStatus
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+          in: query
+          name: filterUserState
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+          in: query
+          name: filterRiskLevel
     post:
       summary: Cases - Update
       operationId: post-cases
