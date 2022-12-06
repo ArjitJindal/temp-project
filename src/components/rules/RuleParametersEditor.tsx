@@ -9,7 +9,11 @@ import styles from './RuleParametersEditor.module.less';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RULE_ACTION_OPTIONS } from '@/pages/rules/utils';
 import { RiskLevelRuleActions, RuleAction } from '@/apis';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getRiskLevelLabel,
+  useFeature,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const RISK_LEVELS: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
 
@@ -100,12 +104,13 @@ export const RuleParametersEditor: React.FC<Props> = ({
   );
 
   const uiSchema = parametersSchema['ui:schema'];
+  const settings = useSettings();
   return (
     <div className={styles.RuleParametersEditor}>
       {isPulseEnabled ? (
         <Tabs activeKey={activeTab} type="line" onChange={handleChangeActiveRiskLevel}>
           {RISK_LEVELS.map((riskLevel) => (
-            <Tabs.TabPane tab={riskLevelToLabel(riskLevel)} key={riskLevel}>
+            <Tabs.TabPane tab={getRiskLevelLabel(riskLevel, settings)} key={riskLevel}>
               <JsonSchemaForm
                 schema={getFixedSchema(parametersSchema)}
                 formData={riskLevelParameters?.[riskLevel] || {}}

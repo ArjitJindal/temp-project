@@ -9,7 +9,6 @@ import { TableColumn } from '@/components/ui/Table/types';
 
 interface TableItem {
   state: TransactionState;
-  description: string;
   stateAlias: string | undefined;
 }
 
@@ -65,42 +64,34 @@ export const TransactionStateSettings: React.FC = () => {
     () => [
       {
         state: 'CREATED',
-        description: '-',
         stateAlias: stateToAlias.get('CREATED'),
       },
       {
         state: 'PROCESSING',
-        description: '-',
         stateAlias: stateToAlias.get('PROCESSING'),
       },
       {
         state: 'SENT',
-        description: '-',
         stateAlias: stateToAlias.get('SENT'),
       },
       {
         state: 'EXPIRED',
-        description: '-',
         stateAlias: stateToAlias.get('EXPIRED'),
       },
       {
         state: 'SUSPENDED',
-        description: '-',
         stateAlias: stateToAlias.get('SUSPENDED'),
       },
       {
         state: 'REFUNDED',
-        description: '-',
         stateAlias: stateToAlias.get('REFUNDED'),
       },
       {
         state: 'DECLINED',
-        description: '-',
         stateAlias: stateToAlias.get('DECLINED'),
       },
       {
         state: 'SUCCESSFUL',
-        description: '-',
         stateAlias: stateToAlias.get('SUCCESSFUL'),
       },
     ],
@@ -112,11 +103,6 @@ export const TransactionStateSettings: React.FC = () => {
       title: <Typography.Text strong>State</Typography.Text>,
       width: '100px',
       dataIndex: 'state',
-    },
-    {
-      title: <Typography.Text strong>Description</Typography.Text>,
-      width: '250px',
-      dataIndex: 'description',
     },
     {
       title: (

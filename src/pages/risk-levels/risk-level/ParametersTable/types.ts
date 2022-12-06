@@ -10,6 +10,7 @@ import {
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
+  RiskLevel,
   RiskParameterValueTimeRange,
 } from '@/apis';
 
@@ -75,6 +76,7 @@ export interface RiskLevelTableItem {
   parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
   matchType: ParameterAttributeRiskValuesMatchTypeEnum;
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
+  risklevel?: RiskLevel;
 }
 export type RiskLevelTable = RiskLevelTableItem[];
 export type DataType =

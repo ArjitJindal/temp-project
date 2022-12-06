@@ -2,7 +2,14 @@ import React, { useContext, useEffect, useState } from 'react';
 import { PageLoading } from '@ant-design/pro-layout';
 import _ from 'lodash';
 import { useApi } from '@/api';
-import { Feature as FeatureName, RuleAction, TenantSettings, TransactionState } from '@/apis';
+import {
+  Feature as FeatureName,
+  RuleAction,
+  TenantSettings,
+  TransactionState,
+  RiskLevel,
+} from '@/apis';
+import { capitalizeWords } from '@/utils/tags';
 
 interface ContextValue {
   features: FeatureName[];
@@ -76,12 +83,27 @@ export function getRiskActionLabel(
     return;
   }
   const alias = settings.ruleActionAliases?.find((item) => item.action === ruleAction)?.alias;
-  return alias || _.capitalize(ruleAction);
+  return alias || capitalizeWords(ruleAction);
 }
 
 export function useRiskActionLabel(ruleAction: RuleAction | undefined): string | undefined {
   const settings = useSettings();
   return getRiskActionLabel(ruleAction, settings);
+}
+export function getRiskLevelLabel(
+  riskLevel: RiskLevel | undefined,
+  settings: TenantSettings,
+): string | undefined {
+  if (!riskLevel) {
+    return;
+  }
+  const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
+  return alias || capitalizeWords(riskLevel);
+}
+
+export function useRiskLevelLabel(riskLevel: RiskLevel | undefined): string | undefined {
+  const settings = useSettings();
+  return getRiskLevelLabel(riskLevel, settings);
 }
 
 export function getTransactionStateLabel(
@@ -94,7 +116,7 @@ export function getTransactionStateLabel(
   const alias = settings.transactionStateAlias?.find(
     (item) => item.state === transactionState,
   )?.alias;
-  return alias || _.capitalize(transactionState);
+  return alias || capitalizeWords(transactionState);
 }
 
 export function useTransactionStateLabel(

@@ -2,6 +2,7 @@ import { AddToSlackButton } from '../case-management/components/AddToSlackButton
 import { RuleActionSettings } from './components/RuleActionSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
+import { RiskLevelSettings } from './components/RiskLevelSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
@@ -19,6 +20,10 @@ export default function SettingsPage() {
         {
           name: 'Transaction states',
           content: <TransactionStateSettings />,
+        },
+        {
+          name: 'Risk levels',
+          content: <RiskLevelSettings />,
         },
       ],
     },

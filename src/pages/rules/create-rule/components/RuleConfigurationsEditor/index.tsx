@@ -1,6 +1,5 @@
 import { Checkbox, Descriptions, Divider, Input, message, Radio, Row, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
-
 import { AjvError } from '@rjsf/core';
 import styles from './style.module.less';
 import { ruleIdsWithAllowedFalsePositiveCheck } from './consts';

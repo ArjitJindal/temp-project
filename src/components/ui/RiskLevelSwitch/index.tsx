@@ -2,23 +2,7 @@ import { Radio } from 'antd';
 import cn from 'clsx';
 import s from './styles.module.less';
 import { RISK_LEVEL_COLORS, RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
-import { neverReturn } from '@/utils/lang';
-
-export function getLabel(risk: RiskLevel) {
-  switch (risk) {
-    case 'VERY_LOW':
-      return 'Very low';
-    case 'LOW':
-      return 'Low';
-    case 'MEDIUM':
-      return 'Medium';
-    case 'HIGH':
-      return 'High';
-    case 'VERY_HIGH':
-      return 'Very high';
-  }
-  return neverReturn(risk, 'Low');
-}
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   disabled?: boolean;
@@ -28,6 +12,7 @@ interface Props {
 
 export default function RiskSwitch(props: Props): JSX.Element {
   const { disabled, current, onChange } = props;
+  const settings = useSettings();
   return (
     <Radio.Group
       className={cn(s.root)}
@@ -58,7 +43,7 @@ export default function RiskSwitch(props: Props): JSX.Element {
                 : {}
             }
           >
-            {getLabel(level)}
+            {getRiskLevelLabel(level, settings)}
           </Radio.Button>
         );
       })}
