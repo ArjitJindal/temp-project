@@ -29,6 +29,10 @@ const GENERATED_DIRS = [
   'src/@types/openapi-public-management',
 ]
 
+function getReleaseVersion(version: string) {
+  return `tarpon#${version}`
+}
+
 export type CdkTarponPipelineStackProps = cdk.StackProps
 export class CdkTarponPipelineStack extends cdk.Stack {
   constructor(
@@ -58,7 +62,9 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         commands: [
           production
             ? undefined
-            : './node_modules/.bin/sentry-cli releases files latest-version delete --all',
+            : `./node_modules/.bin/sentry-cli releases files ${getReleaseVersion(
+                'latest-version'
+              )} delete --all`,
           `./node_modules/.bin/sentry-cli releases set-commits $RELEASE_VERSION --commit flagright/tarpon@$RELEASE_COMMIT`,
           `./node_modules/.bin/sentry-cli releases files $RELEASE_VERSION upload-sourcemaps --ext js --ext map --ignore-file .sentryignore dist`,
           `./node_modules/.bin/sentry-cli releases finalize $RELEASE_VERSION`,
@@ -76,9 +82,9 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         actionEnv: {
           RELEASE_VERSION: {
             type: BuildEnvironmentVariableType.PLAINTEXT,
-            value: production
-              ? '#{SourceVariables.CommitId}'
-              : 'latest-version',
+            value: getReleaseVersion(
+              production ? '#{SourceVariables.CommitId}' : 'latest-version'
+            ),
           },
           RELEASE_COMMIT: {
             type: BuildEnvironmentVariableType.PLAINTEXT,
