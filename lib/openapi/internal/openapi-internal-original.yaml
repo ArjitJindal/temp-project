@@ -2542,6 +2542,17 @@ components:
       required:
         - state
         - alias
+    RiskLevelAlias:
+      type: object
+      title: RiskLevelAlias
+      properties:
+        level:
+          $ref: '#/components/schemas/RiskLevel'
+        alias:
+          type: string
+      required:
+        - level
+        - alias
     CaseType:
       type: string
       title: CaseType
@@ -3154,6 +3165,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TransactionStateAlias'
+        riskLevelAlias:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskLevelAlias'
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
