@@ -19,7 +19,7 @@ const GITHUB_USERS = [
   'chialunwu',
   'crooked',
   'koluch',
-  'madhugnadig',
+  'nadig',
 ]
 
 const app = new cdk.App()
