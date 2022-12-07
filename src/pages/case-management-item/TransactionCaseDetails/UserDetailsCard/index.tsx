@@ -37,6 +37,7 @@ export default function UserDetailsCard(props: Props) {
           isEmbedded={true}
           collapsedByDefault={true}
           onReload={props.onReload}
+          showCommentEditor={false}
         />
       </Card.Section>
     </Card.Root>
