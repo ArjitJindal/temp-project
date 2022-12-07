@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
 import moment from 'moment';
+import _ from 'lodash';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
@@ -19,7 +20,7 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
 import { useTableData } from '@/pages/case-management/UserCases/helpers';
 import { TableItem } from '@/pages/case-management/UserCases/types';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink, getUserName, KYC_STATUSES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -32,6 +33,8 @@ import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReas
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
+import { RISK_LEVELS } from '@/utils/risk-levels';
+import { USER_STATES } from '@/utils/api/users';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -166,6 +169,16 @@ export default function UserCases(props: Props) {
           const userState = entity.user?.userStateDetails?.state;
           return userState && <UserStateTag userState={userState} />;
         },
+        fieldProps: {
+          options: USER_STATES.map((state) => ({
+            label: _.startCase(state),
+            value: state,
+          })),
+          allowClear: true,
+          mode: 'multiple',
+        },
+        valueType: 'select',
+        dataIndex: 'userStates',
       },
       {
         title: 'KYC Status',
@@ -175,6 +188,16 @@ export default function UserCases(props: Props) {
           const kycStatusDetails = entity.user?.kycStatusDetails;
           return kycStatusDetails && <UserKycStatusTag kycStatusDetails={kycStatusDetails} />;
         },
+        fieldProps: {
+          options: KYC_STATUSES.map((status) => ({
+            label: _.startCase(status),
+            value: status,
+          })),
+          allowClear: true,
+          mode: 'multiple',
+        },
+        valueType: 'select',
+        dataIndex: 'kycStatuses',
       },
       {
         title: 'User Risk Level',
@@ -184,6 +207,16 @@ export default function UserCases(props: Props) {
           const riskLevel = entity.user?.riskLevel;
           return riskLevel && <RiskLevelTag level={riskLevel} />;
         },
+        fieldProps: {
+          options: RISK_LEVELS.map((level) => ({
+            label: level,
+            value: level,
+          })).reverse(),
+          allowClear: true,
+          mode: 'multiple',
+        },
+        valueType: 'select',
+        dataIndex: 'riskLevels',
       },
       {
         title: 'Rules Hit',

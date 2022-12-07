@@ -115,6 +115,9 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         originCountryFilter,
         destinationCountryFilter,
         businessIndustryFilter,
+        kycStatuses,
+        riskLevels,
+        userStates,
       } = params;
 
       const [sortField, sortOrder] = sort[0] ?? [];
@@ -163,6 +166,9 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
           filterTransactionAmoutAbove: amountGreaterThanFilter,
           filterTransactionAmoutBelow: amountLessThanFilter,
           filterBusinessIndustries: businessIndustryFilter,
+          filterUserKYCStatus: kycStatuses,
+          filterRiskLevel: riskLevels,
+          filterUserState: userStates,
         }),
       );
       analytics.event({

@@ -46,6 +46,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationCountryFilter: params.destinationCountryFilter,
       filterTypes: params.filterTypes?.join(','),
       businessIndustryFilter: params.businessIndustryFilter?.join(','),
+      kycStatuses: params.kycStatuses?.join(','),
+      userStates: params.userStates?.join(','),
+      riskLevels: params.riskLevels?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -99,6 +102,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       destinationCountryFilter: raw.destinationCountryFilter,
       filterTypes: raw.filterTypes?.split(',') as unknown as TableSearchParams['filterTypes'],
       businessIndustryFilter: raw.businessIndustryFilter?.split(','),
+      kycStatuses: raw.kycStatuses?.split(',') as unknown as TableSearchParams['kycStatuses'],
+      userStates: raw.userStates?.split(',') as unknown as TableSearchParams['userStates'],
+      riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
     };
   },
 };

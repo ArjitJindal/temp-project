@@ -1,4 +1,11 @@
-import { AuditLogType, RuleAction, TransactionState } from '@/apis';
+import {
+  AuditLogType,
+  KYCStatus,
+  RiskLevel,
+  RuleAction,
+  TransactionState,
+  UserState,
+} from '@/apis';
 import { SortOrder } from '@/components/ui/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
@@ -30,4 +37,7 @@ export type TableSearchParams = Partial<{
   destinationCountryFilter: string;
   businessIndustryFilter: string[];
   filterTypes: AuditLogType[];
+  kycStatuses: KYCStatus[];
+  userStates: UserState[];
+  riskLevels: RiskLevel[];
 }>;
