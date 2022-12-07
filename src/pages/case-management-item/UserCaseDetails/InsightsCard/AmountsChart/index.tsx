@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import _ from 'lodash';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Chart from './Chart';
@@ -10,6 +11,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { capitalizeWords } from '@/utils/tags';
 import { Currency } from '@/utils/currencies';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import Money from '@/components/ui/Money';
 
 const CHART_COLORS = {
   maximum: COLORS.purpleGray.tint,
@@ -43,6 +45,22 @@ export default function AmountsChart(props: Props) {
           }
           return (
             <>
+              <div className={s.amountCard}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div>
+                    <b>Cumulative transaction amount</b>
+                  </div>
+                  <div>
+                    <Money value={_.sumBy(response, (x) => x?.sum ?? 0)} currency={currency} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div>
+                    <b>Total no. of Transactions</b>
+                  </div>
+                  <div>{_.sumBy(response, (x) => x.count)}</div>
+                </div>
+              </div>
               <Chart
                 data={response.map((x) => ({
                   title:
