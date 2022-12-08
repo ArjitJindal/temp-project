@@ -38,6 +38,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
   const { caseIds, onSaved, newCaseStatus, confidence } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
+  const [defaultReasons, setDefaultReasons] = useState<string[]>([]);
   const [isSaving, setSaving] = useState(false);
   const [form] = Form.useForm<FormValues>();
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
@@ -107,6 +108,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
             onClick={() => {
               if (newCaseStatus === 'CLOSED') {
                 setModalVisible(true);
+                setDefaultReasons(['False Positive']);
               } else {
                 setAwaitingConfirmation(true);
               }
@@ -116,6 +118,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
                 <BrainIcon />
               </span>
             }
+            className={style.tagOnHover}
           >
             {confidence}% False Positive
           </Tag>
@@ -146,7 +149,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
           layout="vertical"
           name="form_in_modal"
           initialValues={{
-            reasons: [],
+            reasons: defaultReasons,
             reasonOther: null,
           }}
         >
