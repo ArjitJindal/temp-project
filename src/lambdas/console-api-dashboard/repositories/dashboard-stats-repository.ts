@@ -17,6 +17,7 @@ import {
   MONTH_DATE_FORMAT_JS,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  CASES_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
@@ -29,6 +30,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { logger } from '@/core/logger'
+import { Case } from '@/@types/openapi-internal/Case'
 
 export type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY'
 const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' }
@@ -41,6 +43,70 @@ const TRANSACTION_STATE_KEY_TO_RULE_ACTION: Map<
   ['stoppedTransactions', 'BLOCK'],
   ['suspendedTransactions', 'SUSPEND'],
 ])
+
+const CASE_GROUP_KEYS = {
+  openTransactionCaseIds: {
+    $addToSet: {
+      $cond: {
+        if: {
+          $and: [
+            { $ne: ['$caseStatus', 'CLOSED'] },
+            { $eq: ['$caseType', 'TRANSACTION'] },
+          ],
+        },
+        then: '$caseId',
+        else: '$$REMOVE',
+      },
+    },
+  },
+  openUserCaseIds: {
+    $addToSet: {
+      $cond: {
+        if: {
+          $and: [
+            { $ne: ['$caseStatus', 'CLOSED'] },
+            { $eq: ['$caseType', 'USER'] },
+          ],
+        },
+        then: '$caseId',
+        else: '$$REMOVE',
+      },
+    },
+  },
+  transactionCaseIds: {
+    $addToSet: {
+      $cond: {
+        if: { $eq: ['$caseType', 'TRANSACTION'] },
+        then: '$caseId',
+        else: '$$REMOVE',
+      },
+    },
+  },
+  userCaseIds: {
+    $addToSet: {
+      $cond: {
+        if: { $eq: ['$caseType', 'USER'] },
+        then: '$caseId',
+        else: '$$REMOVE',
+      },
+    },
+  },
+}
+
+const CASE_PROJECT_KEYS = {
+  openTransactionCasesCount: {
+    $size: { $ifNull: ['$openTransactionCaseIds', []] },
+  },
+  openUserCasesCount: {
+    $size: { $ifNull: ['$openUserCaseIds', []] },
+  },
+  transactionCasesCount: {
+    $size: { $ifNull: ['$transactionCaseIds', []] },
+  },
+  userCasesCount: {
+    $size: { $ifNull: ['$userCaseIds', []] },
+  },
+}
 
 export class DashboardStatsRepository {
   mongoDb: MongoClient
@@ -61,15 +127,13 @@ export class DashboardStatsRepository {
     direction: 'ORIGIN' | 'DESTINATION',
     timestamp?: number
   ) {
-    const transactionsCollection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const userFieldName =
-      direction === 'DESTINATION' ? 'destinationUserId' : 'originUserId'
-
+      direction === 'DESTINATION'
+        ? 'caseTransactions.destinationUserId'
+        : 'caseTransactions.originUserId'
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
-
     await db.collection(aggregationCollection).createIndex(
       {
         direction: 1,
@@ -85,85 +149,76 @@ export class DashboardStatsRepository {
     if (timestamp) {
       const { start, end } = getAffectedInterval(timestamp, 'HOUR')
       timestampMatch = {
-        timestamp: {
+        'caseTransactions.timestamp': {
           $gte: start,
           $lt: end,
         },
       }
     }
-    await transactionsCollection
-      .aggregate([
-        {
-          $match: {
-            ...timestampMatch,
-            [userFieldName]: { $exists: true },
-          },
+    const pipeline = [
+      {
+        $match: {
+          ...timestampMatch,
+          [userFieldName]: { $exists: true },
         },
-        {
-          $project: {
-            [userFieldName]: true,
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $match: {
+          [userFieldName]: { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
             date: {
               $dateToString: {
                 format: HOUR_DATE_FORMAT,
-                date: { $toDate: { $toLong: '$timestamp' } },
-              },
-            },
-            rulesHit: {
-              $filter: {
-                input: '$executedRules',
-                as: 'rule',
-                cond: { $eq: ['$$rule.ruleHit', true] },
-              },
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              date: '$date',
-              userId: `$${userFieldName}`,
-            },
-            rulesHit: { $sum: { $size: '$rulesHit' } },
-            transactionsHit: {
-              $sum: {
-                $switch: {
-                  branches: [
-                    {
-                      case: { $gt: [{ $size: '$rulesHit' }, 0] },
-                      then: 1,
-                    },
-                  ],
-                  default: 0,
+                date: {
+                  $toDate: {
+                    $toLong: '$caseTransactions.timestamp',
+                  },
                 },
               },
             },
+            userId: `$${userFieldName}`,
           },
-        },
-        {
-          $project: {
-            _id: false,
-            date: '$_id.date',
-            userId: '$_id.userId',
-            direction: direction,
-            rulesHit: '$rulesHit',
-            transactionsHit: '$transactionsHit',
+          rulesHit: { $sum: { $size: '$caseTransactions.hitRules' } },
+          transactionsHit: {
+            $sum: 1,
           },
+          ...CASE_GROUP_KEYS,
         },
-        {
-          $merge: {
-            into: aggregationCollection,
-            on: ['direction', 'date', 'userId'],
-            whenMatched: 'merge',
-          },
+      },
+      {
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          userId: '$_id.userId',
+          direction,
+          rulesHit: '$rulesHit',
+          transactionsHit: '$transactionsHit',
+          ...CASE_PROJECT_KEYS,
         },
-      ])
-      .next()
+      },
+      {
+        $merge: {
+          into: aggregationCollection,
+          on: ['direction', 'date', 'userId'],
+          whenMatched: 'merge',
+        },
+      },
+    ]
+    await casesCollection.aggregate(pipeline).next()
   }
 
   private async recalculateRuleHitStats(db: Db, timestamp?: number) {
-    const transactionsCollection = db.collection<TransactionCaseManagement>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
       this.tenantId
     )
@@ -171,63 +226,70 @@ export class DashboardStatsRepository {
     if (timestamp) {
       const { start, end } = getAffectedInterval(timestamp, 'HOUR')
       timestampMatch = {
-        timestamp: {
+        'caseTransactions.timestamp': {
           $gte: start,
           $lt: end,
         },
       }
     }
-    await transactionsCollection
-      .aggregate([
-        { $match: { ...timestampMatch } },
-        {
-          $unwind: {
-            path: '$hitRules',
-            preserveNullAndEmptyArrays: false,
-          },
+    const pipeline = [
+      { $match: { ...timestampMatch } },
+      {
+        $unwind: {
+          path: '$caseTransactions',
+          preserveNullAndEmptyArrays: false,
         },
-        {
-          $group: {
-            _id: {
-              time: {
-                $dateToString: {
-                  format: HOUR_DATE_FORMAT,
-                  date: {
-                    $toDate: {
-                      $toLong: '$timestamp',
-                    },
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions.hitRules',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            time: {
+              $dateToString: {
+                format: HOUR_DATE_FORMAT,
+                date: {
+                  $toDate: {
+                    $toLong: '$caseTransactions.timestamp',
                   },
                 },
               },
-              ruleId: '$hitRules.ruleId',
-              ruleInstanceId: '$hitRules.ruleInstanceId',
             },
-            hitCount: {
-              $sum: 1,
+            ruleId: '$caseTransactions.hitRules.ruleId',
+            ruleInstanceId: '$caseTransactions.hitRules.ruleInstanceId',
+          },
+          hitCount: {
+            $sum: 1,
+          },
+          ...CASE_GROUP_KEYS,
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.time',
+          rulesStats: {
+            $push: {
+              ruleId: '$_id.ruleId',
+              ruleInstanceId: '$_id.ruleInstanceId',
+              hitCount: '$hitCount',
+              ...CASE_PROJECT_KEYS,
             },
           },
         },
-        {
-          $group: {
-            _id: '$_id.time',
-            rulesStats: {
-              $push: {
-                ruleId: '$_id.ruleId',
-                ruleInstanceId: '$_id.ruleInstanceId',
-                hitCount: '$hitCount',
-              },
-            },
-          },
+      },
+      {
+        $merge: {
+          into: aggregationCollection,
+          whenMatched: 'merge',
+          whenNotMatched: 'insert',
         },
-        {
-          $merge: {
-            into: aggregationCollection,
-            whenMatched: 'merge',
-            whenNotMatched: 'insert',
-          },
-        },
-      ])
-      .next()
+      },
+    ]
+    await casesCollection.aggregate(pipeline).next()
   }
 
   private sanitizeBucketBoundry(riskIntervalBoundries: Array<number>) {
@@ -581,6 +643,10 @@ export class DashboardStatsRepository {
       user: InternalConsumerUser | InternalBusinessUser | null
       transactionsHit: number
       rulesHit: number
+      transactionCasesCount: number
+      userCasesCount: number
+      openTransactionCasesCount: number
+      openUserCasesCount: number
     }[]
   > {
     const db = this.mongoDb.db()
@@ -597,6 +663,10 @@ export class DashboardStatsRepository {
         transactionsHit: number
         rulesHit: number
         user: InternalConsumerUser | InternalBusinessUser | null
+        transactionCasesCount: number
+        userCasesCount: number
+        openTransactionCasesCount: number
+        openUserCasesCount: number
       }>([
         {
           $match: {
@@ -612,6 +682,10 @@ export class DashboardStatsRepository {
             _id: `$userId`,
             transactionsHit: { $sum: '$transactionsHit' },
             rulesHit: { $sum: '$rulesHit' },
+            transactionCasesCount: { $sum: '$transactionCasesCount' },
+            userCasesCount: { $sum: '$userCasesCount' },
+            openTransactionCasesCount: { $sum: '$openTransactionCasesCount' },
+            openUserCasesCount: { $sum: '$openUserCasesCount' },
           },
         },
         {
@@ -648,6 +722,10 @@ export class DashboardStatsRepository {
       user: x.user ?? null,
       transactionsHit: x.transactionsHit,
       rulesHit: x.rulesHit,
+      transactionCasesCount: x.transactionCasesCount,
+      userCasesCount: x.userCasesCount,
+      openTransactionCasesCount: x.openTransactionCasesCount,
+      openUserCasesCount: x.openUserCasesCount,
     }))
   }
   private createDistributionItems(
@@ -700,13 +778,12 @@ export class DashboardStatsRepository {
   }
 
   public async getRuleHitCountStats(
-    tenantId: string,
     startTimestamp: number,
     endTimestamp: number
   ): Promise<DashboardStatsRulesCountData[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<DashboardStatsDRSDistributionData>(
-      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
+      DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(this.tenantId)
     )
 
     const endDate = dayjs(endTimestamp)
@@ -718,6 +795,10 @@ export class DashboardStatsRepository {
       .aggregate<{
         _id: { ruleId: string; ruleInstanceId: string }
         hitCount: number
+        transactionCasesCount: number
+        userCasesCount: number
+        openTransactionCasesCount: number
+        openUserCasesCount: number
       }>([
         {
           $match: {
@@ -735,6 +816,14 @@ export class DashboardStatsRepository {
               ruleInstanceId: '$rulesStats.ruleInstanceId',
             },
             hitCount: { $sum: '$rulesStats.hitCount' },
+            transactionCasesCount: {
+              $sum: '$rulesStats.transactionCasesCount',
+            },
+            userCasesCount: { $sum: '$rulesStats.userCasesCount' },
+            openTransactionCasesCount: {
+              $sum: '$rulesStats.openTransactionCasesCount',
+            },
+            openUserCasesCount: { $sum: '$rulesStats.openUserCasesCount' },
           },
         },
         { $sort: { hitCount: -1 } },
@@ -745,6 +834,10 @@ export class DashboardStatsRepository {
       ruleId: x._id.ruleId,
       ruleInstanceId: x._id.ruleInstanceId,
       hitCount: x.hitCount,
+      transactionCasesCount: x.transactionCasesCount,
+      userCasesCount: x.userCasesCount,
+      openTransactionCasesCount: x.openTransactionCasesCount,
+      openUserCasesCount: x.openUserCasesCount,
     }))
   }
 }

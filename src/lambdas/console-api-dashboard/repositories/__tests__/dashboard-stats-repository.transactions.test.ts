@@ -22,7 +22,7 @@ describe('Verify transactions counting statistics', () => {
     const d = dayjs('2022-01-30T12:00:00.000Z')
     const timestamp = d.valueOf()
 
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
@@ -53,21 +53,21 @@ describe('Verify transactions counting statistics', () => {
     const d = dayjs('2022-01-30T12:00:00.000Z')
     const timestamp = d.valueOf()
 
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
       hitRules: [hitRule('BLOCK')],
       executedRules: [hitRule('BLOCK')],
     })
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
       hitRules: [hitRule('SUSPEND')],
       executedRules: [hitRule('SUSPEND')],
     })
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
@@ -105,7 +105,7 @@ describe('Verify transactions counting statistics', () => {
       hitRule('ALLOW'),
     ]
 
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
@@ -136,7 +136,7 @@ describe('Verify transactions counting statistics', () => {
     const d = dayjs('2022-01-30T12:00:00.000Z')
     const timestamp = d.valueOf()
 
-    await transactionRepository.addCaseToMongo({
+    await transactionRepository.addTransactionToMongo({
       ...getTestTransaction({
         timestamp: timestamp,
       }),
@@ -167,7 +167,7 @@ describe('Verify transactions counting statistics', () => {
     const initialTimestamp = d.valueOf()
     for (let i = 0; i < 3; i += 1) {
       const timestamp = initialTimestamp + i * 3600 * 1000
-      await transactionRepository.addCaseToMongo({
+      await transactionRepository.addTransactionToMongo({
         ...getTestTransaction({
           timestamp,
         }),
@@ -215,7 +215,7 @@ describe('Verify transactions counting statistics', () => {
 
     for (let i = 0; i < 3; i += 1) {
       const timestamp = initialTimestamp + i * 3600 * 1000
-      await transactionRepository.addCaseToMongo({
+      await transactionRepository.addTransactionToMongo({
         ...getTestTransaction({
           timestamp,
         }),
@@ -262,7 +262,7 @@ describe('Verify transactions counting statistics', () => {
     const initialTimestamp = dayjs('2022-01-30T01:00:00.000Z').valueOf()
     for (let i = 0; i < 3; i += 1) {
       const timestamp = initialTimestamp + i * 3600 * 1000
-      await transactionRepository.addCaseToMongo({
+      await transactionRepository.addTransactionToMongo({
         ...getTestTransaction({
           timestamp,
         }),

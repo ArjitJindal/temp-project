@@ -127,7 +127,6 @@ export const dashboardStatsHandler = lambdaApi()(
 
       return {
         data: await dashboardStatsRepository.getRuleHitCountStats(
-          tenantId,
           startTimestampNumber,
           endTimestampNumber
         ),

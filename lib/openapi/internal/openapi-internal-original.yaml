@@ -2846,6 +2846,14 @@ components:
                 type: string
               hitCount:
                 type: number
+              transactionCasesCount:
+                type: number
+              userCasesCount:
+                type: number
+              openTransactionCasesCount:
+                type: number
+              openUserCasesCount:
+                type: number
             required:
               - ruleId
               - hitCount
@@ -2947,6 +2955,14 @@ components:
                   - $ref: '#/components/schemas/InternalConsumerUser'
                   - $ref: '#/components/schemas/InternalBusinessUser'
               rulesHit:
+                type: number
+              transactionCasesCount:
+                type: number
+              userCasesCount:
+                type: number
+              openTransactionCasesCount:
+                type: number
+              openUserCasesCount:
                 type: number
             required:
               - originUserId

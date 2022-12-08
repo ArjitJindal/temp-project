@@ -71,7 +71,9 @@ async function transactionHandler(
       (await transactionsRepo.getTransactionCaseManagementById(transactionId))
         ?.status ?? null
   }
-  const transactionInMongo = await transactionsRepo.addCaseToMongo(transaction)
+  const transactionInMongo = await transactionsRepo.addTransactionToMongo(
+    transaction
+  )
   const newStatus = transactionInMongo.status
   logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)

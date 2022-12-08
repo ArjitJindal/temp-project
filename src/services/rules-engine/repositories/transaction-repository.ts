@@ -110,7 +110,7 @@ export class TransactionRepository {
 
   /* MongoDB operations */
 
-  async addCaseToMongo(
+  async addTransactionToMongo(
     transaction: TransactionWithRulesResult
   ): Promise<TransactionCaseManagement> {
     const db = this.mongoDb.db()

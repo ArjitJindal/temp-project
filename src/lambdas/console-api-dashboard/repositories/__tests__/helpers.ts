@@ -4,6 +4,7 @@ import { TransactionRepository } from '@/services/rules-engine/repositories/tran
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 
 export function hitRule(ruleAction: RuleAction = 'BLOCK'): ExecutedRulesResult {
   return {
@@ -35,6 +36,13 @@ export async function getTransactionsRepo(tenantId: string) {
   return new TransactionRepository(tenantId, {
     mongoDb,
     dynamoDb,
+  })
+}
+
+export async function getCaseRepo(tenantId: string) {
+  const mongoDb = await getMongoDbClient()
+  return new CaseRepository(tenantId, {
+    mongoDb,
   })
 }
 
