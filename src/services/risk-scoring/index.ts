@@ -135,14 +135,20 @@ export const updateDynamicRiskScores = async (
       if (parameterAttributeDetails.isDerived) {
         if (
           (parameterAttributeDetails.parameter ===
-            'domesticOrForeignOriginCountry' ||
+            'domesticOrForeignOriginCountryConsumer' ||
             parameterAttributeDetails.parameter ===
-              'domesticOrForeignDestinationCountry') &&
+              'domesticOrForeignDestinationCountryConsumer' ||
+            parameterAttributeDetails.parameter ===
+              'domesticOrForeignOriginCountryBusiness' ||
+            parameterAttributeDetails.parameter ===
+              'domesticOrForeignDestinationCountryBusiness') &&
           users.length
         ) {
           const direction =
             parameterAttributeDetails.parameter ===
-            'domesticOrForeignOriginCountry'
+              'domesticOrForeignOriginCountryConsumer' ||
+            parameterAttributeDetails.parameter ===
+              'domesticOrForeignOriginCountryBusiness'
               ? 'origin'
               : 'destination'
           users.map((user) => {

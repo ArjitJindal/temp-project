@@ -3424,8 +3424,10 @@ components:
             - legalEntity.companyRegistrationDetails.dateOfRegistration
             - createdTimestamp
             - timestamp
-            - domesticOrForeignOriginCountry
-            - domesticOrForeignDestinationCountry
+            - domesticOrForeignOriginCountryConsumer
+            - domesticOrForeignDestinationCountryConsumer
+            - domesticOrForeignOriginCountryBusiness
+            - domesticOrForeignDestinationCountryBusiness
         isActive:
           type: boolean
         isDerived:
