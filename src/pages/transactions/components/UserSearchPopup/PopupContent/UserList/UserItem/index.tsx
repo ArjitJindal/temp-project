@@ -1,6 +1,7 @@
 import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
+import pluralize from 'pluralize';
 import { User } from '../../../types';
 import s from './style.module.less';
 import { getUserName } from '@/utils/api/users';
@@ -31,6 +32,7 @@ export default function UserItem(props: Props) {
         description={<span className={s.id}>{user.userId}</span>}
       />
       {user.riskLevel && <RiskLevelTag level={user.riskLevel} />}
+      <div className={cn(s.casesCount)}>{pluralize('case', user.casesCount, true)}</div>
     </List.Item>
   );
 }

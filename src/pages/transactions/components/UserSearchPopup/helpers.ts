@@ -43,28 +43,19 @@ export function useUsers(search: string): QueryResult<UsersResponse> {
       };
     }
 
-    const [consumerUsers, businessUsers] = await Promise.all([
-      api.getConsumerUsersList({
-        limit: 10,
-        skip: 0,
-        beforeTimestamp: Date.now(),
-        filterId: search,
-        filterName: search,
-        filterOperator: 'OR',
-      }),
-      api.getBusinessUsersList({
-        limit: 10,
-        skip: 0,
-        beforeTimestamp: Date.now(),
-        filterId: search,
-        filterName: search,
-        filterOperator: 'OR',
-      }),
-    ]);
+    const users = await api.getAllUsersList({
+      limit: 20,
+      skip: 0,
+      beforeTimestamp: Date.now(),
+      filterId: search,
+      filterName: search,
+      filterOperator: 'OR',
+      includeCasesCount: true,
+    });
 
     return {
-      total: consumerUsers.total + businessUsers.total,
-      users: [...consumerUsers.data, ...businessUsers.data],
+      total: users.total,
+      users: users.data,
     };
   });
 }
