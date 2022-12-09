@@ -126,7 +126,7 @@ export const consumerUsersViewHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
     const s3 = getS3Client(event)
     const client = await getMongoDbClient()
@@ -160,37 +160,6 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
       })
-    } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
-      const {
-        limit,
-        skip,
-        afterTimestamp,
-        beforeTimestamp,
-        filterId,
-        filterName,
-        filterOperator,
-      } = event.queryStringParameters as any
-      return userService.getUsers({
-        limit: parseInt(limit),
-        skip: parseInt(skip),
-        afterTimestamp: parseInt(afterTimestamp) || undefined,
-        beforeTimestamp: parseInt(beforeTimestamp),
-        filterId,
-        filterName,
-        filterOperator,
-      })
-    } else if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/users/{userId}/comments' &&
-      event.pathParameters?.userId &&
-      event.body
-    ) {
-      const comment = JSON.parse(event.body) as Comment
-      const savedComment: Comment = await userService.saveUserComment(
-        event.pathParameters.userId,
-        { ...comment, userId }
-      )
-      return savedComment
     } else if (
       event.httpMethod === 'DELETE' &&
       event.pathParameters?.userId &&
@@ -248,5 +217,74 @@ export const consumerUsersViewHandler = lambdaApi()(
       )
       return 'OK'
     }
+  }
+)
+
+export const allUsersViewHandler = lambdaApi()(
+  async (
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+    >
+  ) => {
+    const { principalId: tenantId, userId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
+    const s3 = getS3Client(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const userService = new UserService(
+      tenantId,
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
+    if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterName,
+        filterOperator,
+        includeCasesCount,
+      } = event.queryStringParameters as any
+      return userService.getUsers({
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterName,
+        filterOperator,
+        includeCasesCount: includeCasesCount === 'true',
+      })
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/users/{userId}/comments' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const comment = JSON.parse(event.body) as Comment
+      const savedComment: Comment = await userService.saveUserComment(
+        event.pathParameters.userId,
+        { ...comment, userId }
+      )
+      return savedComment
+    } else if (
+      event.resource === '/users/{userId}/comments/{commentId}' &&
+      event.httpMethod === 'DELETE' &&
+      event.pathParameters?.userId &&
+      event.pathParameters?.commentId
+    ) {
+      return userService.deleteUserComment(
+        event.pathParameters.userId,
+        event.pathParameters.commentId
+      )
+    }
+    throw new Error('Unhandled request')
   }
 )

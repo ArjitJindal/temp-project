@@ -1098,6 +1098,10 @@ paths:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
+        - schema:
+            type: boolean
+          in: query
+          name: includeCasesCount
     parameters: []
   '/users/{userId}/comments':
     parameters:
@@ -2915,6 +2919,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            casesCount:
+              type: number
           required:
             - type
     InternalBusinessUser:
@@ -2930,6 +2936,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            casesCount:
+              type: number
           required:
             - type
     InternalUser:

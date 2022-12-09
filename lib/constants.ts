@@ -112,6 +112,9 @@ export const StackConstants = {
   CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiConsumersUsersViewFunction'
   ),
+  CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiAllUsersViewFunction'
+  ),
   CONSOLE_API_FILE_IMPORT_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiFileImportFunction'
   ),

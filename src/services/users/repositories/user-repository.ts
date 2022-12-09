@@ -14,7 +14,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { USERS_COLLECTION } from '@/utils/mongoDBUtils'
+import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -79,6 +79,7 @@ export class UserRepository {
     filterId?: string
     filterName?: string
     filterOperator?: FilterOperator
+    includeCasesCount?: boolean
   }): Promise<{
     total: number
     data: Array<InternalUser>
@@ -133,6 +134,7 @@ export class UserRepository {
       filterName?: string
       filterOperator?: FilterOperator
       filterBusinessIndustries?: string
+      includeCasesCount?: boolean
     },
     userType?: UserType
   ): Promise<{
@@ -228,11 +230,72 @@ export class UserRepository {
       $and: queryConditions,
     }
 
+    const casesCountPipeline = [
+      {
+        $lookup: {
+          from: CASES_COLLECTION(this.tenantId),
+          let: {
+            userId: '$userId',
+          },
+          pipeline: [
+            {
+              $match: {
+                caseType: 'USER',
+                caseStatus: {
+                  $ne: 'CLOSED',
+                },
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  $ifNull: [
+                    '$caseUsers.origin.userId',
+                    '$caseUsers.destination.userId',
+                  ],
+                },
+                count: {
+                  $count: {},
+                },
+              },
+            },
+            {
+              $match: {
+                $expr: {
+                  $eq: ['$_id', '$$userId'],
+                },
+              },
+            },
+          ],
+          as: 'casesCount',
+        },
+      },
+      {
+        $set: {
+          casesCount: {
+            $ifNull: [
+              {
+                $getField: {
+                  field: 'count',
+                  input: {
+                    $first: '$casesCount',
+                  },
+                },
+              },
+              0,
+            ],
+          },
+        },
+      },
+    ]
+
     const users = await collection
-      .find(query)
-      .sort({ createdTimestamp: -1 })
-      .limit(params.limit)
-      .skip(params.skip)
+      .aggregate<InternalBusinessUser | InternalConsumerUser>([
+        { $match: query },
+        { $limit: params.limit },
+        { $sort: { createdTimestamp: -1 } },
+        ...(params.includeCasesCount ? casesCountPipeline : []),
+      ])
       .toArray()
     const total = await collection.count(query)
     return { total, data: users }

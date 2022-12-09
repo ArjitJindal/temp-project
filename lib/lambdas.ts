@@ -74,6 +74,10 @@ export const LAMBDAS: {
     codePath: 'console-api-user',
     handlerName: 'consumerUsersViewHandler',
   },
+  [StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME]: {
+    codePath: 'console-api-user',
+    handlerName: 'allUsersViewHandler',
+  },
   [StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME]: {
     codePath: 'console-api-dashboard',
     handlerName: 'dashboardStatsHandler',

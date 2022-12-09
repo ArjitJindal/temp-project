@@ -70,7 +70,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
-  '/users': StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/dashboard_stats/transactions':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/drs-distribution':
@@ -111,9 +111,9 @@ export const ConsoleApiPathToLambda: any = {
   '/cases/{caseId}/comments/{commentId}':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/users/{userId}/comments':
-    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/comments/{commentId}':
-    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/sanctions/search': StackConstants.SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}': StackConstants.SANCTIONS_FUNCTION_NAME,
 }

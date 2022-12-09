@@ -554,6 +554,27 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.grantMongoDbAccess(consumerUsersViewAlias)
 
+    /* All users view */
+    const { alias: allUsersViewAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+        provisionedConcurrency:
+          config.resource.USERS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          ...({
+            TMP_BUCKET: tmpBucketName,
+            DOCUMENT_BUCKET: documentBucketName,
+          } as UserViewConfig),
+        },
+      }
+    )
+    this.grantMongoDbAccess(allUsersViewAlias)
+
     /* dashboard stats */
     const { alias: dashboardStatsAlias } = this.createFunction(
       {
