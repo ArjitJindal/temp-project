@@ -380,6 +380,38 @@ describe('User cases', () => {
       expect(userCase.relatedCases).toBeUndefined()
     })
   })
+
+  describe('Run #10', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setup(TEST_TENANT_ID, {
+      hitDirections: ['DESTINATION'],
+      rulesCount: 2,
+    })
+    test('For multiple rules hit only one case should be created', async () => {
+      const caseCreationService = await getService(TEST_TENANT_ID)
+
+      const transaction = getTestTransaction({
+        originUserId: TEST_USER_1.userId,
+        destinationUserId: TEST_USER_2.userId,
+      })
+
+      const results = await bulkVerifyTransactions(TEST_TENANT_ID, [
+        transaction,
+      ])
+      expect(results.length).not.toEqual(0)
+      const [result] = results
+
+      const cases = await caseCreationService.handleTransaction({
+        ...transaction,
+        ...result,
+      })
+      expect(cases.length).toEqual(1)
+      const userCase = expectUserCase(cases, {
+        destinationUserId: TEST_USER_2.userId,
+      })
+      expect(userCase.relatedCases).toBeUndefined()
+    })
+  })
 })
 
 describe('Transaction cases', () => {
@@ -451,18 +483,21 @@ function setup(
   parameters: {
     hitDirections?: RuleHitDirection[]
     defaultCaseCreationType?: CaseType
+    rulesCount?: number
   } = {}
 ) {
-  setUpRulesHooks(tenantId, [
-    {
-      type: 'TRANSACTION',
-      ruleImplementationName: 'tests/test-always-hit-rule',
-      defaultCaseCreationType: parameters.defaultCaseCreationType ?? 'USER',
-      parameters: {
-        hitDirections: parameters.hitDirections,
+  for (let i = 0; i < (parameters.rulesCount ?? 1); i += 1) {
+    setUpRulesHooks(tenantId, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'tests/test-always-hit-rule',
+        defaultCaseCreationType: parameters.defaultCaseCreationType ?? 'USER',
+        parameters: {
+          hitDirections: parameters.hitDirections,
+        },
       },
-    },
-  ])
+    ])
+  }
   setUpConsumerUsersHooks(tenantId, [TEST_USER_1, TEST_USER_2])
 }
 

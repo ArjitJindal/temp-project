@@ -236,6 +236,8 @@ export class CaseCreationService {
         direction: RuleHitDirection
       }> = []
 
+      // Collect all hit directions from rule hits
+      const hitDirections: Set<RuleHitDirection> = new Set()
       for (const hitRule of transaction.hitRules) {
         const ruleInstance = ruleInstances.find(
           (x) => x.id === hitRule.ruleInstanceId
@@ -246,16 +248,22 @@ export class CaseCreationService {
           hitRule.ruleHitMeta?.hitDirections != null
         ) {
           for (const ruleHitDirection of hitRule.ruleHitMeta.hitDirections) {
-            // NOTE: We only create a case for a known user
-            if (transactionUsers[ruleHitDirection]) {
-              hitUsers.push({
-                user: transactionUsers[ruleHitDirection]!,
-                direction: ruleHitDirection,
-              })
-            }
+            hitDirections.add(ruleHitDirection)
           }
         }
       }
+
+      // Create a hit user for every hit direction
+      for (const ruleHitDirection of hitDirections) {
+        const hitDirectionUser = transactionUsers[ruleHitDirection]
+        if (hitDirectionUser) {
+          hitUsers.push({
+            user: hitDirectionUser,
+            direction: ruleHitDirection,
+          })
+        }
+      }
+
       const userCases = await this.getOrCreateUserCases(
         hitUsers,
         {
