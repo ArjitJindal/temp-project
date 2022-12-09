@@ -657,6 +657,32 @@ export class DashboardStatsRepository {
     const startDate = dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
     const endDate = dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)
 
+    const condition = {
+      $match: {
+        ...(direction ? { direction } : {}),
+        date: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      },
+    }
+
+    const totalTransactions = await collection
+      .aggregate<{
+        _id: null
+        totalTransactions: number
+      }>([
+        condition,
+        {
+          $group: {
+            _id: null,
+            totalTransactions: { $sum: '$transactionsHit' },
+          },
+        },
+      ])
+      .next()
+      .then((result) => result?.totalTransactions ?? 0)
+
     const result = await collection
       .aggregate<{
         _id: string
@@ -668,15 +694,7 @@ export class DashboardStatsRepository {
         openTransactionCasesCount: number
         openUserCasesCount: number
       }>([
-        {
-          $match: {
-            ...(direction ? { direction } : {}),
-            date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          },
-        },
+        condition,
         {
           $group: {
             _id: `$userId`,
@@ -726,6 +744,10 @@ export class DashboardStatsRepository {
       userCasesCount: x.userCasesCount,
       openTransactionCasesCount: x.openTransactionCasesCount,
       openUserCasesCount: x.openUserCasesCount,
+      percentageTransactionsHit: _.round(
+        (x.transactionsHit / totalTransactions) * 100,
+        2
+      ),
     }))
   }
   private createDistributionItems(

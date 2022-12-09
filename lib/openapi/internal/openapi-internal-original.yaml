@@ -2972,9 +2972,12 @@ components:
                 type: number
               openUserCasesCount:
                 type: number
+              percentageTransactionsHit:
+                type: number
             required:
               - originUserId
               - transactionsHit
+              - percentageTransactionsHit
       required:
         - data
     Comment:
