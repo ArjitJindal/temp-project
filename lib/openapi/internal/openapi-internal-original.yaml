@@ -1833,6 +1833,10 @@ paths:
               $ref: '#/components/schemas/AuditLogType'
           in: query
           name: filterTypes
+        - schema:
+            type: string
+          in: query
+          name: filterActionTakenBy
       description: ''
   /pulse/risk-parameter:
     parameters: []

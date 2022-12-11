@@ -63,6 +63,11 @@ export class AuditLogRepository {
       requiresTransactions = true
     }
 
+    if (params.filterActionTakenBy != null) {
+      conditions.push({
+        'user.email': { $eq: params.filterActionTakenBy },
+      })
+    }
     return {
       filter: { $and: conditions },
       requiresTransactions,
