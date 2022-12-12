@@ -50,8 +50,6 @@ import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
 
-const RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD = 3000
-
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
@@ -430,13 +428,6 @@ export class RulesEngineService {
           RULE_EXECUTION_TIME_MS_METRIC,
           ruleExecutionTimeMs
         )
-        if (ruleExecutionTimeMs > RULE_EXECUTION_TIME_MS_ALERT_THRESHOLD) {
-          const timeoutMessage = `Rule ${ruleInstance.ruleId} (${ruleInstance.id}) runs for too long`
-          logger.warn(`${timeoutMessage} - ${ruleExecutionTimeMs / 1000} s`)
-          Sentry.captureMessage(timeoutMessage, {
-            extra: { ruleExecutionTimeMs },
-          })
-        }
 
         logger.info(`Completed rule`)
 
