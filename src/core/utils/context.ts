@@ -106,16 +106,6 @@ export function hasFeature(feature: Feature): boolean {
 
 function getTestEnabledFeatures(): Feature[] | undefined {
   return process.env.ENV === 'local'
-    ? process.env.TEST_ENABLED_FEATURES?.split(',')
-        .filter((feature) =>
-          feature.startsWith(process.env.JEST_WORKER_ID as string)
-        )
-        .map(
-          (feature) =>
-            feature.replace(
-              new RegExp(`^${process.env.JEST_WORKER_ID}`),
-              ''
-            ) as Feature
-        )
+    ? (process.env.TEST_ENABLED_FEATURES?.split(',') as Feature[])
     : undefined
 }

@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import { withFeatureHook } from './feature-test-utils'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Rule } from '@/@types/openapi-internal/Rule'
@@ -15,7 +16,6 @@ import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CasePriority } from '@/@types/openapi-internal/CasePriority'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { Feature } from '@/@types/openapi-internal/Feature'
 
 export async function createRule(
   testTenantId: string,
@@ -240,17 +240,11 @@ export interface UserRuleTestCase {
 
 // For making sure a rule works the same w/ or w/o RULES_ENGINE_RULE_BASED_AGGREGATION feature flag
 export function ruleAggregationTest(jestCallback: () => void) {
-  const feature: Feature = 'RULES_ENGINE_RULE_BASED_AGGREGATION'
   describe('With Rule Aggregation', () => {
-    beforeAll(() => {
-      process.env.TEST_ENABLED_FEATURES = `${process.env.JEST_WORKER_ID}${feature}`
-    })
+    withFeatureHook(['RULES_ENGINE_RULE_BASED_AGGREGATION'])
     jestCallback()
   })
   describe('Without Rule Aggregation', () => {
-    beforeAll(() => {
-      process.env.TEST_ENABLED_FEATURES = ''
-    })
     jestCallback()
   })
 }
