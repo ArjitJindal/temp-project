@@ -335,6 +335,9 @@ export class DashboardStatsRepository {
     const sanitizedBounries = this.sanitizeBucketBoundry(riskIntervalBoundries)
     await drsScoresCollection
       .aggregate([
+        { $sort: { createdAt: -1, userId: 1 } },
+        { $group: { _id: '$userId', drsScore: { $first: '$$ROOT' } } },
+        { $replaceRoot: { newRoot: '$drsScore' } },
         {
           $bucket: {
             groupBy: '$drsScore',
@@ -354,6 +357,7 @@ export class DashboardStatsRepository {
         },
       ])
       .next()
+
     logger.info(`Aggregation done`)
   }
 
