@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { UserRepository } from '../users/repositories/user-repository'
+import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -8,7 +9,11 @@ import {
   getRiskScoreFromLevel,
   riskLevelPrecendence,
 } from './utils'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesParameterEnum,
+  ParameterAttributeRiskValuesTargetIterableParameterEnum,
+} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -17,6 +22,14 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
+
+const DOMESTIC_FOREIGN_PARAMETERS: ParameterAttributeRiskValuesParameterEnum[] =
+  [
+    'domesticOrForeignOriginCountryConsumer',
+    'domesticOrForeignOriginCountryBusiness',
+    'domesticOrForeignDestinationCountryConsumer',
+    'domesticOrForeignDestinationCountryBusiness',
+  ]
 
 const getDefaultRiskValue = (riskClassificationValues: Array<any>) => {
   let riskScore = 75 // Make this configurable
@@ -119,7 +132,7 @@ export const updateDynamicRiskScores = async (
     if (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER') {
       if (parameterAttributeDetails.parameter === 'createdTimestamp') {
         if (users.length) {
-          users.map((user) => {
+          users.forEach((user) => {
             const riskLevel = getAgeDerivedRiskLevel(
               parameterAttributeDetails.parameter,
               user,
@@ -134,33 +147,22 @@ export const updateDynamicRiskScores = async (
     } else if (parameterAttributeDetails.riskEntityType === 'TRANSACTION') {
       if (parameterAttributeDetails.isDerived) {
         if (
-          (parameterAttributeDetails.parameter ===
-            'domesticOrForeignOriginCountryConsumer' ||
-            parameterAttributeDetails.parameter ===
-              'domesticOrForeignDestinationCountryConsumer' ||
-            parameterAttributeDetails.parameter ===
-              'domesticOrForeignOriginCountryBusiness' ||
-            parameterAttributeDetails.parameter ===
-              'domesticOrForeignDestinationCountryBusiness') &&
-          users.length
+          DOMESTIC_FOREIGN_PARAMETERS.includes(
+            parameterAttributeDetails.parameter
+          )
         ) {
-          const direction =
-            parameterAttributeDetails.parameter ===
-              'domesticOrForeignOriginCountryConsumer' ||
-            parameterAttributeDetails.parameter ===
-              'domesticOrForeignOriginCountryBusiness'
-              ? 'origin'
-              : 'destination'
-          users.map((user) => {
-            const riskLevel: RiskLevel = getCountryDerivedRiskLevel(
+          users.forEach((user) => {
+            const riskLevel: RiskLevel | undefined = getCountryDerivedRiskLevel(
               transaction,
               user,
-              direction,
+              parameterAttributeDetails.parameter,
               parameterAttributeDetails.riskLevelAssignmentValues
             )
-            riskScoresList.push(
-              getRiskScoreFromLevel(riskClassificationValues, riskLevel)
-            )
+            if (riskLevel) {
+              riskScoresList.push(
+                getRiskScoreFromLevel(riskClassificationValues, riskLevel)
+              )
+            }
           })
         }
       } else {
@@ -282,7 +284,9 @@ export const matchParameterValue = (
 }
 
 const getSchemaAttributeRiskLevel = (
-  paramName: string,
+  paramName:
+    | ParameterAttributeRiskValuesParameterEnum
+    | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
 ): RiskLevel => {
@@ -354,7 +358,7 @@ const getIterableAttributeRiskLevel = (
 }
 
 const getAgeDerivedRiskLevel = (
-  paramName: string,
+  paramName: ParameterAttributeRiskValuesParameterEnum,
   entity: User | Business,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
 ) => {
@@ -373,28 +377,37 @@ const getAgeDerivedRiskLevel = (
 const getCountryDerivedRiskLevel = (
   transaction: Transaction,
   user: User | Business,
-  direction: 'origin' | 'destination',
+  paramName: ParameterAttributeRiskValuesParameterEnum,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
 ) => {
-  const country =
-    direction === 'origin'
+  const transactionCountry =
+    paramName === 'domesticOrForeignOriginCountryBusiness' ||
+    paramName === 'domesticOrForeignOriginCountryConsumer'
       ? _.get(transaction, 'originAmountDetails.country')
       : _.get(transaction, 'destinationAmountDetails.country')
+  const isConsumer = isConsumerUser(user)
+  const userMatchParam =
+    (isConsumer &&
+      (paramName === 'domesticOrForeignOriginCountryConsumer' ||
+        paramName === 'domesticOrForeignDestinationCountryConsumer')) ||
+    (!isConsumer &&
+      (paramName === 'domesticOrForeignOriginCountryBusiness' ||
+        paramName === 'domesticOrForeignDestinationCountryBusiness'))
+  if (!userMatchParam) {
+    return
+  }
 
-  const userCountry =
-    _.get(user, 'userDetails.countryOfResidence') ??
-    _.get(user, 'legalEntity.companyRegistrationDetails.registrationCountry')
+  const userCountry = isConsumer
+    ? _.get(user, 'userDetails.countryOfResidence')
+    : _.get(user, 'legalEntity.companyRegistrationDetails.registrationCountry')
   for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
-    if (country && userCountry) {
-      const riskValue = country === userCountry ? 'DOMESTIC' : 'FOREIGN'
-      if (matchParameterValue(riskValue, parameterValue)) {
-        return riskLevel
-      }
-    } else {
-      const riskValue = 'FOREIGN'
-      if (matchParameterValue(riskValue, parameterValue)) {
-        return riskLevel
-      }
+    // If any of transaction/user country is missing, default to FOREIGN
+    const riskValue =
+      transactionCountry && userCountry && transactionCountry === userCountry
+        ? 'DOMESTIC'
+        : 'FOREIGN'
+    if (matchParameterValue(riskValue, parameterValue)) {
+      return riskLevel
     }
   }
   return DEFAULT_RISK_LEVEL
