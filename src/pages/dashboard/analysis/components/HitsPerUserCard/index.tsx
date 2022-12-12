@@ -67,11 +67,7 @@ export default function HitsPerUserCard(props: Props) {
       dataIndex: 'transactionsHit',
       width: 100,
       render: (dom, entity) => {
-        const { user } = entity;
-        if (user == null) {
-          return dom;
-        }
-        return `${entity.transactionsHit} transactions`;
+        return `${entity.transactionsHit} transactions (${entity.percentageTransactionsHit}%)`;
       },
       exportData: (entity) => {
         return entity?.transactionsHit;
