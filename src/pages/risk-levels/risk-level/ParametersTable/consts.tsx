@@ -30,6 +30,8 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
+import { RESIDENCE_TYPES } from '@/utils/residence-types';
+
 import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
 import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
@@ -69,6 +71,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   CONSUMER_USER_TYPE: 'MULTIPLE',
   BUSINESS_USER_TYPE: 'MULTIPLE',
   TRANSACTION_TYPES: 'MULTIPLE',
+  RESIDENCE_TYPES: 'MULTIPLE',
   BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
 };
@@ -314,6 +317,54 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     matchType: 'DIRECT',
   },
   {
+    parameter: 'domesticOrForeignOriginCountryConsumer',
+    title: 'Foreign Origin Country (Consumer)',
+    description:
+      'Risk value based on whether the user country of residence is same as transaction origin country',
+    entity: 'TRANSACTION',
+    dataType: 'RESIDENCE_TYPES',
+    riskScoreType: 'ARS',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'domesticOrForeignDestinationCountryConsumer',
+    title: 'Foreign Destination Country (Consumer)',
+    description:
+      'Risk value based on whether the user country of residence is same as transaction destination country',
+    entity: 'TRANSACTION',
+    dataType: 'RESIDENCE_TYPES',
+    riskScoreType: 'ARS',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'domesticOrForeignOriginCountryBusiness',
+    title: 'Foreign Origin Country (Business)',
+    description:
+      'Risk value based on whether the user country of registration is same as transaction origin country',
+    entity: 'TRANSACTION',
+    dataType: 'RESIDENCE_TYPES',
+    riskScoreType: 'ARS',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
+    parameter: 'domesticOrForeignDestinationCountryBusiness',
+    title: 'Foreign Destination Country (Business)',
+    description:
+      'Risk value based on whether the user country of registration is same as transaction destination country',
+    entity: 'TRANSACTION',
+    dataType: 'RESIDENCE_TYPES',
+    riskScoreType: 'ARS',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    matchType: 'DIRECT',
+  },
+  {
     parameter: 'timestamp',
     title: 'Transaction Time',
     description: 'Risk value based on time of transaction',
@@ -424,6 +475,14 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     return (
       <MultipleSelect
         options={TRANSACTION_TYPES.map((type) => ({ value: type, label: capitalizeWords(type) }))}
+        {...props}
+      />
+    );
+  }) as InputRenderer<'MULTIPLE'>,
+  RESIDENCE_TYPES: ((props) => {
+    return (
+      <MultipleSelect
+        options={RESIDENCE_TYPES.map((type) => ({ value: type, label: capitalizeWords(type) }))}
         {...props}
       />
     );
@@ -595,6 +654,19 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
             return <span key={itemValue}>{itemValue}</span>;
           }
           return <TransactionTypeTag key={itemValue} transactionType={itemValue} />;
+        })}
+      </>
+    );
+  }) as ValueRenderer<'MULTIPLE'>,
+  RESIDENCE_TYPES: (({ value }) => {
+    if (value == null) {
+      return null;
+    }
+    return (
+      <>
+        {value.values.map((item) => {
+          const itemValue = `${item.content}`;
+          return itemValue;
         })}
       </>
     );
