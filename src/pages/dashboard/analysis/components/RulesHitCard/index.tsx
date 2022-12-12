@@ -10,7 +10,6 @@ import style from '../../style.module.less';
 import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
 import { makeUrl } from '@/utils/routing';
-import Button from '@/components/ui/Button';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
 import { TableColumn } from '@/components/ui/Table/types';
 import { useRules } from '@/utils/rules';
@@ -53,54 +52,47 @@ export default function RuleHitCard() {
       },
     },
     {
-      title: 'Hit Count',
+      title: 'Rules Hit',
       dataIndex: 'hitCount',
       width: 50,
       render: (_, entity) => {
-        let startTimestamp;
-        let endTimestamp;
-        const [start, end] = dateRange ?? [];
-        if (start != null && end != null) {
-          startTimestamp = start.startOf('day').valueOf();
-          endTimestamp = end.endOf('day').valueOf();
-        }
-        return (
-          <Link
-            to={makeUrl(
-              '/case-management',
-              {},
-              {
-                rulesHitFilter: rules[entity.ruleId].id,
-                timestamp: `${startTimestamp},${endTimestamp}`,
-              },
-            )}
-          >
-            {entity.hitCount?.toLocaleString()}
-          </Link>
-        );
+        return <>{entity.hitCount?.toLocaleString()}</>;
       },
       exportData: (entity) => {
         return entity.hitCount;
       },
     },
     {
-      title: 'Actions',
-      width: 50,
-      render: (_, stat) => {
+      title: 'Open Cases',
+      width: 100,
+      render: (dom, entity) => {
         return (
-          <Link
-            to={makeUrl(
-              '/case-management/transaction',
-              {},
-              {
-                rulesHitFilter: rules[stat.ruleId].id,
-              },
-            )}
-          >
-            <Button analyticsName="View user cases" size="small" type="ghost">
-              View Cases
-            </Button>
-          </Link>
+          <>
+            <div>
+              <Link
+                to={makeUrl(
+                  '/case-management/transaction',
+                  {},
+                  {
+                    rulesHitFilter: entity.ruleInstanceId,
+                  },
+                )}
+              >
+                {entity.openTransactionCasesCount} Transaction Cases
+              </Link>
+            </div>
+            <Link
+              to={makeUrl(
+                '/case-management/user',
+                {},
+                {
+                  rulesHitFilter: entity.ruleInstanceId,
+                },
+              )}
+            >
+              {entity.openUserCasesCount} User Cases
+            </Link>
+          </>
         );
       },
     },

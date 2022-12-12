@@ -5,6 +5,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import moment, { Moment } from 'moment';
 import { Card, DatePicker } from 'antd';
 import _ from 'lodash';
+import { Link } from 'react-router-dom';
 import style from '../../style.module.less';
 import s from './styles.module.less';
 import { TableItem } from './types';
@@ -16,6 +17,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { makeUrl } from '@/utils/routing';
 
 interface Props {
   direction?: 'ORIGIN' | 'DESTINATION';
@@ -93,6 +95,42 @@ export default function HitsPerUserCard(props: Props) {
           return '-';
         }
         return user.type;
+      },
+    },
+    {
+      title: 'Open Cases',
+      width: 100,
+      render: (dom, entity) => {
+        return (
+          <>
+            <div>
+              <Link
+                to={makeUrl(
+                  '/case-management/transaction',
+                  {},
+                  {
+                    userId: entity.userId,
+                    userFilterMode: direction ? direction : 'ALL',
+                  },
+                )}
+              >
+                {entity.openTransactionCasesCount} Transaction Cases
+              </Link>
+            </div>
+            <Link
+              to={makeUrl(
+                '/case-management/user',
+                {},
+                {
+                  userId: entity.userId,
+                  userFilterMode: direction ? direction : 'ALL',
+                },
+              )}
+            >
+              {entity.openUserCasesCount} User Cases
+            </Link>
+          </>
+        );
       },
     },
   ];
