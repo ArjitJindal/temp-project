@@ -195,6 +195,20 @@ export class DashboardStatsRepository {
           ...CASE_GROUP_KEYS,
         },
       },
+      // NOTE: We only aggregate the stats for known users
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId),
+          localField: '_id.userId',
+          foreignField: 'userId',
+          as: '_user',
+        },
+      },
+      {
+        $match: {
+          _user: { $gt: { $size: 0 } },
+        },
+      },
       {
         $project: {
           _id: false,

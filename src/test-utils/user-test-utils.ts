@@ -63,13 +63,21 @@ export function getTestUser(user: Partial<User> = {}): User {
   }
 }
 
+export async function createConsumerUsers(testTenantId: string, users: User[]) {
+  for (const user of users) {
+    await createConsumerUser(testTenantId, user)
+  }
+}
+
 export async function createConsumerUser(testTenantId: string, user: User) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const createdUser = await userRepository.saveConsumerUser(user)
+  await userRepository.saveUserMongo(createdUser)
   return async () => {
     await userRepository.deleteUser(createdUser.userId)
+    await userRepository.deleteUserMongo(createdUser.userId)
   }
 }
 

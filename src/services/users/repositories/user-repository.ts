@@ -524,13 +524,33 @@ export class UserRepository {
     return newUser
   }
 
-  async deleteUser(userId: string): Promise<void> {
+  public async saveUserMongo(user: User | Business): Promise<User | Business> {
+    const db = this.mongoDb.db()
+    const userCollection = db.collection<Business | User>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    await userCollection.replaceOne({ userId: user.userId }, user, {
+      upsert: true,
+    })
+    return user
+  }
+
+  public async deleteUser(userId: string): Promise<void> {
     const deleteItemInput: AWS.DynamoDB.DocumentClient.DeleteItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
   }
+
+  public async deleteUserMongo(userId: string): Promise<void> {
+    const db = this.mongoDb.db()
+    const userCollection = db.collection<Business | User>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    await userCollection.deleteOne({ userId })
+  }
+
   public async getUniques(): Promise<UsersUniquesResponse> {
     const db = this.mongoDb.db()
     const name = USERS_COLLECTION(this.tenantId)

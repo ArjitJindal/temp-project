@@ -5,12 +5,17 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
 describe('Verify hits-per-user statistics', () => {
   test('Single transaction with single hit', async () => {
     const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
@@ -25,8 +30,8 @@ describe('Verify hits-per-user statistics', () => {
       }),
       hitRules: hitRules,
       executedRules: hitRules,
-      originUserId: originUserId,
-      destinationUserId: destinationUserId,
+      originUserId,
+      destinationUserId,
     }
 
     await caseRepository.addCaseMongo({
@@ -75,6 +80,10 @@ describe('Verify hits-per-user statistics', () => {
   })
   test('Single transaction with uneven executed and hit rules', async () => {
     const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
@@ -140,6 +149,10 @@ describe('Verify hits-per-user statistics', () => {
   })
   test('Multiple transaction with hits should sum up', async () => {
     const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
@@ -209,6 +222,10 @@ describe('Verify hits-per-user statistics', () => {
   })
   test('Large amount of transactions', async () => {
     const TENANT_ID = getTestTenantId()
+    await createConsumerUsers(TENANT_ID, [
+      getTestUser({ userId: 'test-user-id' }),
+      getTestUser({ userId: 'test-user-id-2' }),
+    ])
     const caseRepository = await getCaseRepo(TENANT_ID)
     const statsRepository = await getStatsRepo(TENANT_ID)
 
@@ -274,6 +291,51 @@ describe('Verify hits-per-user statistics', () => {
           openUserCasesCount: 0,
         }),
       ])
+    }
+  })
+
+  test('Transactions with unknown origin/destination user should not e aggregated', async () => {
+    const TENANT_ID = getTestTenantId()
+    const caseRepository = await getCaseRepo(TENANT_ID)
+    const statsRepository = await getStatsRepo(TENANT_ID)
+
+    const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
+
+    const originUserId = 'unknown-user-1'
+    const destinationUserId = 'unknown-user-2'
+    const hitRules = [hitRule()]
+    const transaction = {
+      ...getTestTransaction({
+        timestamp,
+      }),
+      hitRules: hitRules,
+      executedRules: hitRules,
+      originUserId,
+      destinationUserId,
+    }
+
+    await caseRepository.addCaseMongo({
+      caseId: 'C-1',
+      caseType: 'TRANSACTION',
+      caseTransactions: [transaction],
+      caseTransactionsIds: [transaction.transactionId],
+    })
+    await statsRepository.refreshTransactionStats(timestamp)
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+        dayjs('2022-01-31T00:00:00.000Z').valueOf(),
+        'ORIGIN'
+      )
+      expect(stats).toEqual([])
+    }
+    {
+      const stats = await statsRepository.getHitsByUserStats(
+        dayjs('2022-01-30T00:00:00.000Z').valueOf(),
+        dayjs('2022-01-31T00:00:00.000Z').valueOf(),
+        'DESTINATION'
+      )
+      expect(stats).toEqual([])
     }
   })
 })

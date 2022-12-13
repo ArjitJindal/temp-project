@@ -4,7 +4,6 @@ import { CaseCreationService } from '../console-api-case/services/case-creation-
 import {
   getMongoDbClient,
   USER_EVENTS_COLLECTION,
-  USERS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -126,13 +125,9 @@ async function userHandler(
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb,
   })
-  const db = mongoDb.db()
-  const userCollection = db.collection<Business | User>(
-    USERS_COLLECTION(tenantId)
-  )
-  await userCollection.replaceOne({ userId: user.userId }, user, {
-    upsert: true,
-  })
+  const usersRepo = new UserRepository(tenantId, { mongoDb })
+  await usersRepo.saveUserMongo(user)
+
   if (await tenantHasFeature(tenantId, 'PULSE_KRS_CALCULATION')) {
     logger.info(`Refreshing DRS User distribution stats`)
     await dashboardStatsRepository.refreshUserStats()
