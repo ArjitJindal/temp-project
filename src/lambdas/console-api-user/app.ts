@@ -51,6 +51,7 @@ export const businessUsersViewHandler = lambdaApi()(
         filterName,
         filterOperator,
         filterBusinessIndustries,
+        filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getBusinessUsers({
         limit: parseInt(limit),
@@ -62,6 +63,9 @@ export const businessUsersViewHandler = lambdaApi()(
         filterOperator,
         filterBusinessIndustries: filterBusinessIndustries
           ? filterBusinessIndustries.split(',')
+          : undefined,
+        filterRiskLevel: filterRiskLevel
+          ? filterRiskLevel.split(',')
           : undefined,
       })
     } else if (
@@ -150,6 +154,7 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getConsumerUsers({
         limit: parseInt(limit),
@@ -159,7 +164,45 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterId,
         filterName,
         filterOperator,
+        filterRiskLevel: filterRiskLevel
+          ? filterRiskLevel.split(',')
+          : undefined,
       })
+    } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
+      const {
+        limit,
+        skip,
+        afterTimestamp,
+        beforeTimestamp,
+        filterId,
+        filterName,
+        filterOperator,
+        filterRiskLevel,
+      } = event.queryStringParameters as any
+      return userService.getUsers({
+        limit: parseInt(limit),
+        skip: parseInt(skip),
+        afterTimestamp: parseInt(afterTimestamp) || undefined,
+        beforeTimestamp: parseInt(beforeTimestamp),
+        filterId,
+        filterName,
+        filterOperator,
+        filterRiskLevel: filterRiskLevel
+          ? filterRiskLevel.split(',')
+          : undefined,
+      })
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/users/{userId}/comments' &&
+      event.pathParameters?.userId &&
+      event.body
+    ) {
+      const comment = JSON.parse(event.body) as Comment
+      const savedComment: Comment = await userService.saveUserComment(
+        event.pathParameters.userId,
+        comment
+      )
+      return savedComment
     } else if (
       event.httpMethod === 'DELETE' &&
       event.pathParameters?.userId &&

@@ -1051,6 +1051,12 @@ paths:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
     parameters: []
   /users:
     get:
@@ -1098,6 +1104,12 @@ paths:
             $ref: '#/components/schemas/FilterOperator'
           in: query
           name: filterOperator
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
         - schema:
             type: boolean
           in: query
@@ -1263,6 +1275,12 @@ paths:
               type: string
           in: query
           name: filterBusinessIndustries
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
     parameters: []
   '/business/users/{userId}':
     get:
@@ -1553,7 +1571,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
+                $ref: '#/components/schemas/DrsScore'
         '403':
           description: Not enough privileges
   '/accounts/{accountId}':
@@ -1690,7 +1708,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
+                $ref: '#/components/schemas/DrsScore'
         '403':
           description: Not enough privileges
       parameters:
@@ -1709,7 +1727,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManualRiskAssignmentUserState'
+                $ref: '#/components/schemas/DrsScore'
         '403':
           description: Not enough privileges
       parameters:
@@ -2351,19 +2369,6 @@ paths:
       operationId: get-sanctions-search-$-searchId
 components:
   schemas:
-    ManualRiskAssignmentUserState:
-      title: ManualRiskAssignmentUserState
-      type: object
-      properties:
-        isManualOverride:
-          type: boolean
-        isUpdatable:
-          type: boolean
-        riskLevel:
-          $ref: '#/components/schemas/RiskLevel'
-      required:
-        - isManualOverride
-        - isUpdatable
     KrsScore:
       title: KrsScore
       type: object
@@ -2411,11 +2416,18 @@ components:
           type: number
         userId:
           type: string
-        riskLevel:
+        transactionId:
+          type: string
+        derivedRiskLevel:
           $ref: '#/components/schemas/RiskLevel'
+        manualRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        isUpdatable:
+          type: boolean
       required:
         - createdAt
         - drsScore
+        - isUpdatable
     Rule:
       title: Rule
       type: object
@@ -2923,6 +2935,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            drsScore:
+              $ref: '#/components/schemas/DrsScore'
             casesCount:
               type: number
           required:
@@ -2940,6 +2954,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            drsScore:
+              $ref: '#/components/schemas/DrsScore'
             casesCount:
               type: number
           required:

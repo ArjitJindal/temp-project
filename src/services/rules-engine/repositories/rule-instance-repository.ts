@@ -7,7 +7,6 @@ import {
   PutCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { DEFAULT_DRS_RISK_ITEM } from '../../risk-scoring/repositories/risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   RuleInstance,
@@ -15,7 +14,7 @@ import {
 } from '@/@types/openapi-internal/RuleInstance'
 import { RuleTypeEnum } from '@/@types/openapi-internal/Rule'
 import { paginateQuery } from '@/utils/dynamodb'
-import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
+import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 
 const nanoId = customAlphabet('1234567890abcdef', 8)
 
@@ -27,7 +26,7 @@ function toRuleInstance(item: any): RuleInstance {
     ruleNameAlias: item.ruleNameAlias,
     filters: item.filters,
     parameters: item.riskLevelParameters
-      ? item.riskLevelParameters[DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel]
+      ? item.riskLevelParameters[DEFAULT_RISK_LEVEL]
       : item.parameters,
     riskLevelParameters: item.riskLevelParameters,
     action: item.action,

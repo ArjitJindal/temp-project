@@ -100,6 +100,7 @@ export const updateInitialRiskScores = async (
     : getDefaultRiskValue(riskClassificationValues)
 
   logger.info(`KRS Score: ${krsScore}`)
+
   await riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
   await riskRepository.createOrUpdateDrsScore(
     user.userId,
@@ -218,8 +219,12 @@ const calculateAndUpdateDRS = async (
   if (krsScore == null) {
     return
   }
+  const drsObject = await riskRepository.getDrsScore(userId)
+  const currentDrsValue = drsObject?.drsScore ?? krsScore
 
-  const currentDrsValue = (await riskRepository.getDrsScore(userId)) ?? krsScore
+  if (!drsObject?.isUpdatable) {
+    return
+  }
 
   const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
   await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)

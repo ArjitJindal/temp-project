@@ -104,7 +104,7 @@ export function hasFeature(feature: Feature): boolean {
   )
 }
 
-function getTestEnabledFeatures(): Feature[] | undefined {
+export function getTestEnabledFeatures(): Feature[] | undefined {
   return process.env.ENV === 'local'
     ? (process.env.TEST_ENABLED_FEATURES?.split(',') as Feature[])
     : undefined

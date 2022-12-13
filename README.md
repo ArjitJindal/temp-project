@@ -139,8 +139,8 @@ A new migration file will be created in `scripts/migrations/post-deployment`
 ### Run migrations locally
 
 ```bash
-ENV=local npm run migration:pre:up
-ENV=local npm run migration:post:up
+ENV=local NODE_ENV=development npm run migration:pre:up
+ENV=local NODE_ENV=development npm run migration:post:up
 ```
 
 ### Run migrations in Dev/Sandbox/Prod manually

@@ -22,6 +22,14 @@ import { UserType } from '@/@types/user/user-type'
 import { FilterOperator } from '@/@types/openapi-internal/FilterOperator'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { UsersUniquesResponse } from '@/@types/openapi-internal/UsersUniquesResponse'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { hasFeature } from '@/core/utils/context'
+import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreBoundsFromLevel,
+} from '@/services/risk-scoring/utils'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -49,6 +57,7 @@ export class UserRepository {
     filterName?: string
     filterOperator?: FilterOperator
     filterBusinessIndustry?: string
+    filterRiskLevel?: RiskLevel[]
   }): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
       total: number
@@ -64,6 +73,7 @@ export class UserRepository {
     filterId?: string
     filterName?: string
     filterOperator?: FilterOperator
+    filterRiskLevel?: RiskLevel[]
   }): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
     return (await this.getMongoUsers(params, 'CONSUMER')) as {
       total: number
@@ -79,6 +89,7 @@ export class UserRepository {
     filterId?: string
     filterName?: string
     filterOperator?: FilterOperator
+    filterRiskLevel?: RiskLevel[]
     includeCasesCount?: boolean
   }): Promise<{
     total: number
@@ -134,6 +145,7 @@ export class UserRepository {
       filterName?: string
       filterOperator?: FilterOperator
       filterBusinessIndustries?: string
+      filterRiskLevel?: RiskLevel[]
       includeCasesCount?: boolean
     },
     userType?: UserType
@@ -152,6 +164,8 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
+    const isPulseEnabled = hasFeature('PULSE')
+
     if (params.filterId != null) {
       filterConditions.push({
         userId: { $regex: params.filterId, $options: 'i' },
@@ -164,6 +178,7 @@ export class UserRepository {
         },
       })
     }
+
     if (params.filterName != null) {
       const filterNameConditions: Filter<
         InternalBusinessUser | InternalConsumerUser
@@ -202,6 +217,14 @@ export class UserRepository {
       filterConditions.push({ $and: filterNameConditions })
     }
 
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const riskClassificationValues = isPulseEnabled
+      ? await riskRepository.getRiskClassificationValues()
+      : []
+
     const queryConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = [
@@ -211,6 +234,29 @@ export class UserRepository {
           $lte: params.beforeTimestamp,
         },
         ...(userType ? { type: userType } : {}),
+        ...(params.filterRiskLevel?.length &&
+          isPulseEnabled && {
+            $or: [
+              {
+                'drsScore.manualRiskLevel': { $in: params.filterRiskLevel },
+              },
+              {
+                $or: params.filterRiskLevel.map((riskLevel) => {
+                  const { lowerBoundRiskScore, upperBoundRiskScore } =
+                    getRiskScoreBoundsFromLevel(
+                      riskClassificationValues,
+                      riskLevel
+                    )
+                  return {
+                    'drsScore.drsScore': {
+                      $gte: lowerBoundRiskScore,
+                      $lt: upperBoundRiskScore,
+                    },
+                  }
+                }),
+              },
+            ],
+          }),
       },
     ]
 
@@ -289,14 +335,37 @@ export class UserRepository {
       },
     ]
 
-    const users = await collection
+    let users = await collection
       .aggregate<InternalBusinessUser | InternalConsumerUser>([
-        { $match: query },
-        { $limit: params.limit },
+        {
+          $match: query,
+        },
         { $sort: { createdTimestamp: -1 } },
+        { $skip: params.skip },
+        { $limit: params.limit },
         ...(params.includeCasesCount ? casesCountPipeline : []),
       ])
       .toArray()
+
+    if (isPulseEnabled) {
+      users = users.map((user) => {
+        const drsScore = user?.drsScore
+        if (drsScore != null) {
+          const derivedRiskLevel = drsScore?.manualRiskLevel
+            ? undefined
+            : getRiskLevelFromScore(
+                riskClassificationValues,
+                drsScore?.drsScore
+              )
+          const newDrsScore: DrsScore = {
+            ...drsScore,
+            derivedRiskLevel,
+          }
+          return { ...user, drsScore: newDrsScore }
+        }
+        return user
+      })
+    }
     const total = await collection.count(query)
     return { total, data: users }
   }

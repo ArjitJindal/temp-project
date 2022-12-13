@@ -6,7 +6,6 @@ import {
   GetCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { ArsItem, DrsItem, KrsItem } from '../types'
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -16,7 +15,7 @@ import {
   ParameterAttributeRiskValues,
   ParameterAttributeRiskValuesParameterEnum,
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
-import { ManualRiskAssignmentUserState } from '@/@types/openapi-internal/ManualRiskAssignmentUserState'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { logger } from '@/core/logger'
 import {
   ARS_SCORES_COLLECTION,
@@ -25,6 +24,8 @@ import {
 } from '@/utils/mongoDBUtils'
 import { RiskClassificationConfig } from '@/@types/openapi-internal/RiskClassificationConfig'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
 const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -53,12 +54,6 @@ const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
     upperBoundRiskScore: 100,
   },
 ]
-
-export const DEFAULT_DRS_RISK_ITEM: ManualRiskAssignmentUserState = {
-  riskLevel: 'HIGH',
-  isManualOverride: false,
-  isUpdatable: true,
-}
 
 export class RiskRepository {
   tenantId: string
@@ -152,34 +147,35 @@ export class RiskRepository {
     return score
   }
 
-  async getDrsScore(userId: string): Promise<number | null> {
-    const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-      Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
-    }
-    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+  async getDrsScore(userId: string): Promise<DrsScore | null> {
+    try {
+      const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
+      }
+      const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 
-    if (!result.Item) {
+      if (!result.Item) {
+        return null
+      }
+
+      return result.Item as DrsScore
+    } catch (error) {
+      logger.error('Error getting drs score', error)
       return null
     }
-
-    const drsScoreItem = {
-      ...result.Item,
-    }
-    delete drsScoreItem.PartitionKeyID
-    delete drsScoreItem.SortKeyID
-    return drsScoreItem.drsScore
   }
 
   async createOrUpdateDrsScore(
     userId: string,
-    score: number,
+    drsScore: number,
     transactionId: string
-  ): Promise<any> {
-    const newDrsScoreItem: any = {
-      drsScore: score,
-      transactionId: transactionId,
+  ): Promise<number> {
+    const newDrsScoreItem: DrsScore = {
+      drsScore,
+      transactionId,
       createdAt: Date.now(),
+      isUpdatable: true,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -198,7 +194,7 @@ export class RiskRepository {
       await handleLocalChangeCapture(primaryKey)
     }
 
-    return score
+    return drsScore
   }
 
   async getRiskClassificationValues(): Promise<Array<RiskClassificationScore>> {
@@ -242,41 +238,20 @@ export class RiskRepository {
     return newRiskClassificationValues
   }
 
-  async getDRSRiskItem(
-    userId: string
-  ): Promise<ManualRiskAssignmentUserState | null> {
-    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-      KeyConditionExpression: 'PartitionKeyID = :pk',
-
-      ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId)
-          .PartitionKeyID,
-      },
-    }
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-      const manualDRSItem =
-        result.Items && result.Items.length > 0
-          ? (result.Items[0] as ManualRiskAssignmentUserState)
-          : DEFAULT_DRS_RISK_ITEM
-      if (!manualDRSItem.isUpdatable) {
-        return manualDRSItem
-      }
-      const drsScore = await this.getDrsScore(userId)
-      const riskClassificationValues = await this.getRiskClassificationValues()
-      const drsRiskLevel = getRiskLevelFromScore(
-        riskClassificationValues,
-        drsScore
-      )
-      return {
-        isManualOverride: manualDRSItem.isManualOverride,
-        isUpdatable: manualDRSItem.isUpdatable,
-        riskLevel: drsRiskLevel,
-      }
-    } catch (e) {
-      logger.error(e)
+  async getDRSRiskItem(userId: string): Promise<DrsScore | null> {
+    const drsScore = await this.getDrsScore(userId)
+    if (!drsScore) {
       return null
+    }
+
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    const derivedRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      drsScore.drsScore
+    )
+    return {
+      ...drsScore,
+      derivedRiskLevel,
     }
   }
 
@@ -288,22 +263,30 @@ export class RiskRepository {
     const now = Date.now()
     const riskClassificationValues = await this.getRiskClassificationValues()
 
-    const newDRSRiskItem: any = {
-      riskLevel: riskLevel,
-      isManualOverride: true,
-      isUpdatable: isUpdatable ?? true,
-      riskScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+    const newDrsRiskValue: DrsScore = {
+      manualRiskLevel: isUpdatable ? undefined : riskLevel,
       createdAt: now,
+      isUpdatable: isUpdatable ?? true,
+      drsScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+      userId,
+      transactionId: 'MANUAL_UPDATE',
     }
+    const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...DynamoDbKeys.DRS_RISK_DETAILS(this.tenantId, userId, 'LATEST'), // Version it later
-        ...newDRSRiskItem,
+        ...primaryKey,
+        ...newDrsRiskValue,
       },
     }
+
     await this.dynamoDb.send(new PutCommand(putItemInput))
-    return newDRSRiskItem
+
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(primaryKey)
+    }
+
+    return newDrsRiskValue
   }
 
   async createOrUpdateParameterRiskItem(
@@ -387,84 +370,70 @@ export class RiskRepository {
 
   /* MongoDB operations */
 
-  async addKrsValueToMongo(krsItem: KrsItem): Promise<KrsItem> {
+  async addKrsValueToMongo(krsScore: KrsScore): Promise<KrsScore> {
     const db = this.mongoDb.db()
-    const krsValuesCollection = db.collection<KrsItem & { version: string }>(
+    const krsValuesCollection = db.collection<KrsScore>(
       KRS_SCORES_COLLECTION(this.tenantId)
     )
 
-    const structuredItem = { ...krsItem, version: krsItem.SortKeyID }
-
     await krsValuesCollection.replaceOne(
-      { userId: krsItem.userId },
-      structuredItem,
+      { userId: krsScore.userId },
+      krsScore,
       {
         upsert: true,
       }
     )
-    return krsItem
+    return krsScore
   }
 
-  async getKrsValueFromMongo(
-    userId: string
-  ): Promise<(KrsItem & { version: string }) | null> {
+  async getKrsValueFromMongo(userId: string): Promise<KrsScore | null> {
     const db = this.mongoDb.db()
-    const krsValuesCollection = db.collection<KrsItem & { version: string }>(
+    const krsValuesCollection = db.collection<KrsScore>(
       KRS_SCORES_COLLECTION(this.tenantId)
     )
     return await krsValuesCollection.findOne({ userId })
   }
 
-  async addArsValueToMongo(arsItem: ArsItem): Promise<ArsItem> {
+  async addArsValueToMongo(arsScore: ArsScore): Promise<ArsScore> {
     const db = this.mongoDb.db()
-    const arsValuesCollection = db.collection<ArsItem & { version: string }>(
+    const arsValuesCollection = db.collection<ArsScore>(
       ARS_SCORES_COLLECTION(this.tenantId)
     )
 
-    const structuredItem = { ...arsItem, version: arsItem.SortKeyID }
-
     await arsValuesCollection.replaceOne(
-      { transactionId: arsItem.transactionId },
-      structuredItem,
+      { transactionId: arsScore.transactionId },
+      arsScore,
       {
         upsert: true,
       }
     )
-    return arsItem
+    return arsScore
   }
 
-  async getArsValueFromMongo(
-    transactionId: string
-  ): Promise<(ArsItem & { version: string }) | null> {
+  async getArsValueFromMongo(transactionId: string): Promise<ArsScore | null> {
     const db = this.mongoDb.db()
-    const arsValuesCollection = db.collection<ArsItem & { version: string }>(
+    const arsValuesCollection = db.collection<ArsScore>(
       ARS_SCORES_COLLECTION(this.tenantId)
     )
     return await arsValuesCollection.findOne({ transactionId })
   }
-  async addDrsValueToMongo(drsItem: DrsItem): Promise<DrsItem> {
+  async addDrsValueToMongo(drsScore: DrsScore): Promise<DrsScore> {
     const db = this.mongoDb.db()
-    const drsValuesCollection = db.collection<DrsItem & { version: string }>(
+    const drsValuesCollection = db.collection<DrsScore>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
 
-    const structuredItem = { ...drsItem, version: drsItem.SortKeyID }
-
     await drsValuesCollection.replaceOne(
-      { userId: drsItem.userId, transactionId: drsItem.transactionId },
-      structuredItem,
-      {
-        upsert: true,
-      }
+      { userId: drsScore.userId, transactionId: drsScore.transactionId },
+      drsScore,
+      { upsert: true }
     )
-    return drsItem
+    return drsScore
   }
 
-  async getDrsValueFromMongo(
-    userId: string
-  ): Promise<(DrsItem & { version: string }) | null> {
+  async getDrsValueFromMongo(userId: string): Promise<DrsScore | null> {
     const db = this.mongoDb.db()
-    const drsValuesCollection = db.collection<DrsItem & { version: string }>(
+    const drsValuesCollection = db.collection<DrsScore>(
       DRS_SCORES_COLLECTION(this.tenantId)
     )
     const result = await drsValuesCollection

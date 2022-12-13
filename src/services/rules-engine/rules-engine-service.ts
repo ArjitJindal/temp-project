@@ -2,11 +2,9 @@ import * as Sentry from '@sentry/serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import _ from 'lodash'
-import {
-  DEFAULT_DRS_RISK_ITEM,
-  RiskRepository,
-} from '../risk-scoring/repositories/risk-repository'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
+import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { TransactionRepository } from './repositories/transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -542,7 +540,7 @@ export class RulesEngineService {
       return undefined
     }
     const riskItem = await this.riskRepository.getDRSRiskItem(user?.userId)
-    return riskItem?.riskLevel
+    return riskItem?.manualRiskLevel ?? riskItem?.derivedRiskLevel
   }
 
   private getUserSpecificParameters(
@@ -553,8 +551,7 @@ export class RulesEngineService {
     action: RuleAction
   } {
     if (hasFeature('PULSE') && ruleInstance.riskLevelParameters) {
-      const riskLevel =
-        userRiskLevel || (DEFAULT_DRS_RISK_ITEM.riskLevel as RiskLevel)
+      const riskLevel = userRiskLevel || DEFAULT_RISK_LEVEL
       return {
         parameters: ruleInstance.riskLevelParameters[riskLevel],
         action: ruleInstance.riskLevelActions?.[riskLevel] as RuleAction,

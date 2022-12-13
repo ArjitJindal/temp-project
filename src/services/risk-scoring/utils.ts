@@ -52,3 +52,18 @@ export const getRiskScoreFromLevel = (
   })
   return calculatedRiskScore
 }
+
+export const getRiskScoreBoundsFromLevel = (
+  riskClassificationValues: Array<any>,
+  riskLevel: RiskLevel
+): { lowerBoundRiskScore: number; upperBoundRiskScore: number } => {
+  let lowerBoundRiskScore = 0
+  let upperBoundRiskScore = 0
+  riskClassificationValues.forEach((value) => {
+    if (riskLevel == value.riskLevel) {
+      lowerBoundRiskScore = value.lowerBoundRiskScore
+      upperBoundRiskScore = value.upperBoundRiskScore
+    }
+  })
+  return { lowerBoundRiskScore, upperBoundRiskScore }
+}

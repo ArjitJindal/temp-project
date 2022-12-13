@@ -22,9 +22,23 @@ import {
   getTestUserEvent,
 } from '@/test-utils/user-event-test-utils'
 import { userHandler } from '@/lambdas/public-api-user-management/app'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { testRiskItem } from '@/test-utils/risk-item-utils'
+import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { Feature } from '@/@types/openapi-internal/Feature'
+import { updateInitialRiskScores } from '@/services/risk-scoring'
+
+const features: Feature[] = [
+  'PULSE',
+  'PULSE_KRS_CALCULATION',
+  'PULSE_ARS_CALCULATION',
+]
+
+withFeatureHook(features)
 
 dynamoDbSetupHook()
-
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
@@ -396,5 +410,94 @@ describe('Public API - Create a Business User Event', () => {
       ...user,
       tags: [{ key: 'key', value: 'value' }],
     })
+  })
+})
+
+describe('Risk Scoring Tests', () => {
+  beforeAll(() => {
+    process.env.NODE_ENV = 'development'
+    process.env.ENV = 'local'
+  })
+  const TEST_TENANT_ID = getTestTenantId()
+  const dynamoDb = getDynamoDbClient()
+  const riskRepository = new RiskRepository(TEST_TENANT_ID, { dynamoDb })
+  const testUser1 = getTestUser({ userId: 'userId1' })
+  const testUser2 = getTestUser({ userId: 'userId2' })
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
+  it('check on isUpdatable is true risk score changes', async () => {
+    await riskRepository.createOrUpdateParameterRiskItem(testRiskItem)
+    await updateInitialRiskScores(TEST_TENANT_ID, dynamoDb, testUser1)
+    const riskScore = await riskRepository.getParameterRiskItem(
+      'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
+      'TRANSACTION'
+    )
+
+    expect(riskScore).toEqual(testRiskItem)
+    const allRiskScores = await riskRepository.getParameterRiskItems()
+
+    expect(allRiskScores).toEqual([expect.objectContaining(testRiskItem)])
+
+    const testTransaction1 = getTestTransaction({
+      originUserId: testUser1.userId,
+      destinationUserId: testUser2.userId,
+      originAmountDetails: {
+        country: 'IN',
+        transactionAmount: 10000000,
+        transactionCurrency: 'INR',
+      },
+    })
+
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', testTransaction1),
+      null as any,
+      null as any
+    )
+
+    const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
+
+    expect(getRiskScore).toEqual(
+      expect.objectContaining({
+        isUpdatable: true,
+        drsScore: 76.66666666666667,
+        userId: testUser1.userId,
+        transactionId: testTransaction1.transactionId,
+      })
+    )
+  })
+  it("shouldn't update the risk score on isUpdatable is false", async () => {
+    await riskRepository.createOrUpdateParameterRiskItem(testRiskItem)
+    const testTransaction1 = getTestTransaction({
+      originUserId: testUser1.userId,
+      destinationUserId: testUser2.userId,
+      originAmountDetails: {
+        country: 'IN',
+        transactionAmount: 10000000,
+        transactionCurrency: 'INR',
+      },
+    })
+
+    await riskRepository.createOrUpdateManualDRSRiskItem(
+      testUser1.userId,
+      'MEDIUM',
+      false
+    )
+
+    const oldScore = await riskRepository.getDrsScore(testUser1.userId)
+
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', testTransaction1),
+      null as any,
+      null as any
+    )
+
+    const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
+
+    expect(getRiskScore).toEqual(
+      expect.objectContaining({
+        isUpdatable: false,
+        drsScore: oldScore?.drsScore,
+        userId: testUser1.userId,
+      })
+    )
   })
 })
