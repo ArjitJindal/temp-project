@@ -122,14 +122,19 @@ export const transactionHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const transactionId = event.pathParameters?.transactionId
+    const pathTransactionId = event.pathParameters?.transactionId
 
     if (event.httpMethod === 'POST' && event.body) {
       const validationSegment = await addNewSubsegment('API', 'Validation')
       const validationParams = event.queryStringParameters
       const transaction = JSON.parse(event.body)
-      updateLogMetadata({ transactionId: getNewTransactionID(transaction) })
+      const transactionId = getNewTransactionID(transaction)
+
+      validationSegment?.addAnnotation('tenantId', tenantId)
+      validationSegment?.addAnnotation('transactionId', transactionId)
+      updateLogMetadata({ transactionId })
       logger.info(`Processing transaction`) // Need to log to show on the logs
+
       if (
         transaction.relatedTransactionIds &&
         transaction.relatedTransactionIds.length
@@ -162,15 +167,15 @@ export const transactionHandler = lambdaApi()(
       const result = await rulesEngine.verifyTransaction(transaction)
       logger.info(`Completed processing transaction`)
       return result
-    } else if (event.httpMethod === 'GET' && transactionId) {
+    } else if (event.httpMethod === 'GET' && pathTransactionId) {
       const transactionRepository = new TransactionRepository(tenantId, {
         dynamoDb,
       })
       const result = await transactionRepository.getTransactionById(
-        transactionId
+        pathTransactionId
       )
       if (!result) {
-        throw new NotFound(`Transaction ${transactionId} not found`)
+        throw new NotFound(`Transaction ${pathTransactionId} not found`)
       }
       return result
     }
