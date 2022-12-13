@@ -1,7 +1,7 @@
 import { RiskLevel as ApiRiskLevel } from '@/apis';
 import COLORS from '@/components/ui/colors';
 
-export const RISK_LEVELS = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'] as const;
+export const RISK_LEVELS: ApiRiskLevel[] = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
 
 export type RiskLevel = ApiRiskLevel;
 

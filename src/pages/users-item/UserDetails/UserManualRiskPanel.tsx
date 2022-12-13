@@ -2,7 +2,6 @@ import { Form, message, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { useApi } from '@/api';
-import { ManualRiskAssignmentUserState } from '@/apis';
 import { RiskLevel } from '@/utils/risk-levels';
 import {
   AsyncResource,
@@ -16,6 +15,7 @@ import {
   success,
 } from '@/utils/asyncResource';
 import Button from '@/components/ui/Button';
+import { DrsScore } from '@/apis';
 
 interface Props {
   userId: string;
@@ -25,7 +25,7 @@ export default function UserManualRiskPanel(props: Props) {
   const { userId } = props;
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
-  const [syncState, setSyncState] = useState<AsyncResource<ManualRiskAssignmentUserState>>(init());
+  const [syncState, setSyncState] = useState<AsyncResource<DrsScore>>(init());
   useEffect(() => {
     let isCanceled = false;
     setSyncState(loading());
@@ -60,7 +60,10 @@ export default function UserManualRiskPanel(props: Props) {
         userId: userId,
         ManualRiskAssignmentPayload: {
           riskLevel: getOr(
-            map(syncState, ({ riskLevel }) => riskLevel ?? undefined),
+            map(
+              syncState,
+              ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel || derivedRiskLevel,
+            ),
             undefined,
           ),
           isUpdatable: isLocked,
@@ -109,7 +112,10 @@ export default function UserManualRiskPanel(props: Props) {
       <RiskLevelSwitch
         disabled={isLoading(syncState) || isFailed(syncState)}
         current={getOr(
-          map(syncState, ({ riskLevel }) => riskLevel ?? null),
+          map(
+            syncState,
+            ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel || derivedRiskLevel || null,
+          ),
           null,
         )}
         onChange={handleChangeRiskLevel}

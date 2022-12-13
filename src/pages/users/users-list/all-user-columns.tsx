@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import _ from 'lodash';
 import moment from 'moment';
 import s from './styles.module.less';
-import UserRiskTag from './UserRiskTag';
 import { InternalUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -67,17 +66,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
         );
       },
     },
-    {
-      title: 'Risk Level',
-      dataIndex: 'riskLevel',
-      exportData: 'riskLevel',
-      hideInSearch: true,
-      tip: 'Risk level of user.',
-      width: 180,
-      render: (dom, entity) => {
-        return <UserRiskTag userId={entity.userId} />;
-      },
-    },
+
     {
       title: 'KYC Status',
       dataIndex: 'kycStatus',

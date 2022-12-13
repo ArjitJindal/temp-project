@@ -4,10 +4,11 @@ import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import styles from './UsersList.module.less';
-import UserRiskTag from './UserRiskTag';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
+import { RiskLevelButton } from './RiskLevelFilterButton';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser, InternalUser } from '@/apis';
@@ -29,14 +30,37 @@ import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 const BusinessUsersTab = () => {
   const api = useApi();
-
+  const isPulseEnabled = useFeature('PULSE');
   const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
+  {
+    if (isPulseEnabled) {
+      columns.push({
+        title: 'Risk Level',
+        dataIndex: 'labels',
+        exportData: (entity) => {
+          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
+        },
+        tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
+        search: false,
+        render: (dom, entity) => {
+          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
+            return (
+              <RiskLevelTag
+                level={entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel}
+              />
+            );
+          }
+          return '-';
+        },
+      });
+    }
+  }
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const analytics = useAnalytics();
   const bussinessResult = usePaginatedQuery(USERS('bussiness', params), async ({ page: _page }) => {
-    const { createdTimestamp, userId, page } = params;
+    const { createdTimestamp, userId, page, riskLevels } = params;
 
     const [response, time] = await measure(() =>
       api.getBusinessUsersList({
@@ -45,6 +69,7 @@ const BusinessUsersTab = () => {
         afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
+        filterRiskLevel: riskLevels,
       }),
     );
     analytics.event({
@@ -70,18 +95,29 @@ const BusinessUsersTab = () => {
         actionsHeader={[
           ({ params, setParams }) => {
             return (
-              <UserSearchButton
-                initialMode={'ALL'}
-                userId={params.userId ?? null}
-                showOriginAndDestination={false}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
-                  }));
-                }}
-              />
+              <>
+                <UserSearchButton
+                  initialMode={'ALL'}
+                  userId={params.userId ?? null}
+                  showOriginAndDestination={false}
+                  onConfirm={(userId, mode) => {
+                    setParams((state) => ({
+                      ...state,
+                      userId: userId ?? undefined,
+                      userFilterMode: mode ?? undefined,
+                    }));
+                  }}
+                />
+                <RiskLevelButton
+                  riskLevels={params.riskLevels ?? []}
+                  onConfirm={(riskLevels) => {
+                    setParams((state) => ({
+                      ...state,
+                      riskLevels: riskLevels ?? undefined,
+                    }));
+                  }}
+                />
+              </>
             );
           },
         ]}
@@ -109,11 +145,20 @@ const ConsumerUsersTab = () => {
       columns.push({
         title: 'Risk Level',
         dataIndex: 'labels',
-        exportData: () => 'N/A',
+        exportData: (entity) => {
+          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
+        },
         tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
         search: false,
         render: (dom, entity) => {
-          return <UserRiskTag userId={entity.userId} />;
+          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
+            return (
+              <RiskLevelTag
+                level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
+              />
+            );
+          }
+          return '-';
         },
       });
     }
@@ -123,7 +168,7 @@ const ConsumerUsersTab = () => {
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const consumerResults = usePaginatedQuery(USERS('consumer', params), async ({ page: _page }) => {
-    const { userId, createdTimestamp, page } = params;
+    const { userId, createdTimestamp, page, riskLevels } = params;
 
     const [response, time] = await measure(() =>
       api.getConsumerUsersList({
@@ -132,6 +177,7 @@ const ConsumerUsersTab = () => {
         afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
+        filterRiskLevel: riskLevels,
       }),
     );
 
@@ -161,18 +207,29 @@ const ConsumerUsersTab = () => {
         actionsHeader={[
           ({ params, setParams }) => {
             return (
-              <UserSearchButton
-                initialMode={'ALL'}
-                userId={params.userId ?? null}
-                showOriginAndDestination={false}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
-                  }));
-                }}
-              />
+              <>
+                <UserSearchButton
+                  initialMode={'ALL'}
+                  userId={params.userId ?? null}
+                  showOriginAndDestination={false}
+                  onConfirm={(userId, mode) => {
+                    setParams((state) => ({
+                      ...state,
+                      userId: userId ?? undefined,
+                      userFilterMode: mode ?? undefined,
+                    }));
+                  }}
+                />
+                <RiskLevelButton
+                  riskLevels={params.riskLevels ?? []}
+                  onConfirm={(riskLevels) => {
+                    setParams((state) => ({
+                      ...state,
+                      riskLevels: riskLevels ?? undefined,
+                    }));
+                  }}
+                />
+              </>
             );
           },
         ]}
@@ -192,11 +249,36 @@ const ConsumerUsersTab = () => {
 const AllUsersTab = () => {
   const api = useApi();
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
+  const isPulseEnabled = useFeature('PULSE');
+  {
+    if (isPulseEnabled) {
+      columns.push({
+        title: 'Risk Level',
+        exportData: (entity) => {
+          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
+        },
+        hideInSearch: true,
+        tip: 'Risk level of user.',
+        width: 180,
+        render: (dom, entity) => {
+          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
+            return (
+              <RiskLevelTag
+                level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
+              />
+            );
+          }
+          return '-';
+        },
+      });
+    }
+  }
+
   const analytics = useAnalytics();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const allUsersResult = usePaginatedQuery(USERS('all', { ...params }), async ({ page: _page }) => {
-    const { userId, createdTimestamp, page } = params;
+    const { userId, createdTimestamp, page, riskLevels } = params;
     const [response, time] = await measure(() =>
       api.getAllUsersList({
         limit: DEFAULT_PAGE_SIZE,
@@ -204,6 +286,7 @@ const AllUsersTab = () => {
         afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
+        filterRiskLevel: riskLevels,
       }),
     );
     analytics.event({
@@ -218,7 +301,7 @@ const AllUsersTab = () => {
 
   return (
     <>
-      <QueryResultsTable<InternalUser, TableSearchParams>
+      <QueryResultsTable<InternalUser, AllParams<TableSearchParams>>
         form={{
           labelWrap: true,
         }}
@@ -229,18 +312,29 @@ const AllUsersTab = () => {
         actionsHeader={[
           ({ params, setParams }) => {
             return (
-              <UserSearchButton
-                initialMode={'ALL'}
-                userId={params.userId ?? null}
-                showOriginAndDestination={false}
-                onConfirm={(userId, mode) => {
-                  setParams((state) => ({
-                    ...state,
-                    userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
-                  }));
-                }}
-              />
+              <>
+                <UserSearchButton
+                  initialMode={'ALL'}
+                  userId={params.userId ?? null}
+                  showOriginAndDestination={false}
+                  onConfirm={(userId, mode) => {
+                    setParams((state) => ({
+                      ...state,
+                      userId: userId ?? undefined,
+                      userFilterMode: mode ?? undefined,
+                    }));
+                  }}
+                />
+                <RiskLevelButton
+                  riskLevels={params.riskLevels ?? []}
+                  onConfirm={(riskLevels) => {
+                    setParams((state) => ({
+                      ...state,
+                      riskLevels: riskLevels ?? undefined,
+                    }));
+                  }}
+                />
+              </>
             );
           },
         ]}

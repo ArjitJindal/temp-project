@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { useApi } from '@/api';
-import { ManualRiskAssignmentUserState } from '@/apis';
+import { DrsScore } from '@/apis';
 import { AsyncResource, failed, getOr, init, loading, map, success } from '@/utils/asyncResource';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 export default function UserRiskTag(props: Props) {
   const { userId } = props;
   const api = useApi();
-  const [syncState, setSyncState] = useState<AsyncResource<ManualRiskAssignmentUserState>>(init());
+  const [syncState, setSyncState] = useState<AsyncResource<DrsScore>>(init());
   useEffect(() => {
     let isCanceled = false;
     setSyncState(loading());
@@ -36,7 +36,7 @@ export default function UserRiskTag(props: Props) {
   }, [userId, api]);
 
   const level = getOr(
-    map(syncState, ({ riskLevel }) => riskLevel ?? null),
+    map(syncState, ({ manualRiskLevel, derivedRiskLevel }) => manualRiskLevel ?? derivedRiskLevel),
     null,
   );
 
