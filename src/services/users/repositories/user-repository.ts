@@ -379,6 +379,9 @@ export class UserRepository {
   }
 
   public async getUsers(userIds: string[]): Promise<(User | Business)[]> {
+    if (userIds.length === 0) {
+      return []
+    }
     const batchGetItemInput: AWS.DynamoDB.DocumentClient.BatchGetItemInput = {
       RequestItems: {
         [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
