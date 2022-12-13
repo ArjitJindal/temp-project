@@ -29,6 +29,7 @@ jobs:
       - run: npm run synth:local
       - run: npm run tsc
       - run: npm run lint
+      - run: npm run format:check
       - name: Setup DynamoDB localy
         uses: rrainn/dynamodb-action@v2.0.1
         with:

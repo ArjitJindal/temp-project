@@ -2,9 +2,17 @@ openapi: 3.0.0
 info:
   title: Flagright Management API
   version: '1.0'
-  description: 'Flagright is a fully-managed, API-first compliance-as-a-service solution. This API provides for programmatic access to the Flagright no-code back office portal. The Flagright Management API is organized around REST. Our API has predictable resource-oriented URLs, accepts JSON-encoded request bodies, returns JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs.  API keys are used to authenticate the requests. Your API keys carry many privileges, so be sure to keep them secure! Do not share your secret API keys in publicly accessible areas such as GitHub, client-side code, and so forth.'
+  description: Flagright is a fully-managed, API-first compliance-as-a-service
+    solution. This API provides for programmatic access to the Flagright no-code
+    back office portal. The Flagright Management API is organized around REST.
+    Our API has predictable resource-oriented URLs, accepts JSON-encoded request
+    bodies, returns JSON-encoded responses, and uses standard HTTP response
+    codes, authentication, and verbs.  API keys are used to authenticate the
+    requests. Your API keys carry many privileges, so be sure to keep them
+    secure! Do not share your secret API keys in publicly accessible areas such
+    as GitHub, client-side code, and so forth.
 servers:
-  - url: 'https://sandbox.api.flagright.com/management'
+  - url: https://sandbox.api.flagright.com/management
 paths:
   /rules:
     get:
@@ -47,22 +55,30 @@ paths:
                       defaultCaseCreationType: USER
                       defaultCasePriority: P1
       operationId: get-rules
-      description: |-
+      description: >-
         ### Rules List
+
 
         `GET /rules` endpoint returns a lot of all rule templates supported by flagright. You can use [GET /rules/{ruleId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/a29012dabded6-rule-get) endpoint to fetch the details of any particular rule. 
 
+
         Each rule is identified by the unique `id` which is of the form `R-{X}` where `X` is an integer. 
+
 
         Rules have a `parametersSchema` which is a [JSON Schema](https://json-schema.org/) that contains the schema of the parameters supported by the rule. When you create a [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f112abcc9788b-rule-instance-create), you need to provide the values in accordance with the `parametersSchema`. 
 
+
         All the rules come with default values for all required attributes. 
+
 
         Rules come with default `name`, `description`. Each rule may take multiple rule parameters, by default they have a `defaultParameters` attribute that contains all the required fields. For use cases where the rule parameters are forked based on customer dynamic risk score, `defaultRiskLevelParameters` are set. 
 
+
         Rules also come with a `defaultAction` and `defaultRiskLevelActions` for rule actions for the rule. 
 
+
         All of the above should be configured at the [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f227b99b51274-rule-instance) level when creating a rule instance. Rules are read only and provided by flagright. You can only manipulate rules instances, not rule templates themselves. 
+
 
         If you need an update to a rule or a new rule, you can always contact the Flagright team.
       parameters: []
@@ -92,8 +108,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-      description: |-
+      description: >-
         ### Retrieve a Rule 
+
 
         `GET /rules/{ruleId}` endpoint returns a rule template supported by flagright.
   /rule-instances:
@@ -135,19 +152,27 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstanceUpdatable'
-      description: |-
+      description: >-
         ### Create Rule Instance
+
 
         `POST /rule-instances` endpoint is used to create a new rule instance. A rule instance can be thought of as a live entity, that runs checks for for transactions. Rule instances use `Rule` templates as the blueprint. 
 
+
         Every rule instance has an associated `ruleId` of the rule from which it is derived. The details of the rule and the required parameters is found by `GET /rules` endpoint. 
+
 
         Once a rule instance is created, flagright generates an ID for the rule instance and also stores related metadata like:
 
+
         - `id` - unique identifier for the rule instance
+
         - `runCount` - how many times the rule instance was run
+
         - `hitCount` - how many times a rule was hit
+
         - `createdAt` & `updatedAt` - timestamps
+
 
         They are generated and maintained by the flagright system and are not updatable by the API.
     get:
@@ -164,8 +189,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RuleInstance'
-      description: |-
+      description: >-
         ### Retrieve Rule Instances
+
 
         `GET /rule-instances` endpoint returns a list of all rule instances created by your account on flagright.
   '/rule-instances/{ruleInstanceId}':
@@ -189,7 +215,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-      description: 'You can *permanently* delete a rule instance using the `DELETE /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a rule instance, you can update the status on the rule instance using the [POST /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update) endpoint'
+      description:
+        You can *permanently* delete a rule instance using the `DELETE
+        /rule-instances/{ruleInstanceId}` endpoint. If you want to deactive a
+        rule instance, you can update the status on the rule instance using the
+        [POST
+        /rule-instances/{ruleInstanceId}](https://flagright-console.stoplight.io/docs/flagright-management-api-1/b6dd1fca0dcfc-rule-instance-update)
+        endpoint
     post:
       security:
         - x-api-key: []
@@ -219,8 +251,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RuleInstanceUpdatable'
-      description: |
+      description: >
         ### Update Rule Instance
+
 
         Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
 components:
@@ -294,7 +327,10 @@ components:
         - SUSPEND
       x-examples:
         example-1: SUSPEND
-      description: Model for rule action if a rule is hit. This is returned in the API response and can be configured on Console by operational accounts like a Compliance Analyst
+      description:
+        Model for rule action if a rule is hit. This is returned in the API
+        response and can be configured on Console by operational accounts like a
+        Compliance Analyst
     RuleActionAlias:
       type: object
       title: RuleActionAlias

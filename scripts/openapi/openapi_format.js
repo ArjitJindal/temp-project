@@ -22,6 +22,15 @@ async function main() {
         'openapi-public-original.yaml'
       )
     )
+    await reformatFile(
+      path.resolve(
+        PROJECT_DIR,
+        'lib',
+        'openapi',
+        'public-management',
+        'openapi-public-management-original.yaml'
+      )
+    )
   } catch (err) {
     console.error(err)
   }

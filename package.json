@@ -48,14 +48,16 @@
     "test:silent": "npm run test -- --silent",
     "test:ci": "EXEC_SOURCE=CI npm run test -- --silent --ci",
     "test:watch": "npm run test -- --watch",
-    "format": "prettier --write .",
+    "format": "prettier --write . && npm run openapi:format",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "tsc": "tsc --noEmit",
     "lint:fix": "eslint --fix .",
     "lint-staged": "lint-staged",
     "generate-local-data": "ts-node ./init_local_db/all.ts",
     "openapi:build": "scripts/openapi/openapi_generate_sdk.ts",
-    "openapi:prepare": "scripts/openapi/openapi_format.js && scripts/openapi/openapi_prepare.js",
+    "openapi:format": "scripts/openapi/openapi_format.js && prettier --write lib/openapi/**/*.yaml",
+    "openapi:prepare": "npm run openapi:format && scripts/openapi/openapi_prepare.js",
     "openapi:publish": "npm run openapi:prepare && scripts/openapi/openapi_publish.js",
     "openapi:augment": "lib/openapi/openapi-public-augmentor.ts && lib/openapi/openapi-public-management-augmentor.ts && lib/openapi/openapi-internal-augmentor.ts",
     "start-local-api": "ENV=local ts-node-dev $([ \"$TRANSPILE_ONLY\" = \"true\" ] && echo '--transpile-only') -r tsconfig-paths/register local-api-server.ts",
@@ -203,7 +205,10 @@
       "prettier --write",
       "eslint --fix"
     ],
-    "!(**/*.{js,ts})": [
+    "**/*.yaml": [
+      "npm run openapi:format"
+    ],
+    "!(**/*.{js,ts,yaml})": [
       "prettier --write"
     ]
   }
