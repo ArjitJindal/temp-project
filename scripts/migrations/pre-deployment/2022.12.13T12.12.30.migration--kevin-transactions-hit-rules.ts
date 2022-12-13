@@ -1,0 +1,57 @@
+import { MigrationFn } from 'umzug'
+import { StackConstants } from '@cdk/constants'
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
+import { getConfig } from '../utils/config'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
+import { AccountsConfig } from '@/lambdas/console-api-account/app'
+import {
+  Tenant,
+  AccountsService,
+} from '@/lambdas/console-api-account/services/accounts-service'
+import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+
+async function migrateTenant(tenant: Tenant | null) {
+  if (!tenant) {
+    console.info(`Tenant not found`)
+    return
+  }
+  console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
+  const dynamodb = await getDynamoDbClient()
+  const mongodb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
+  const transactionCollection = mongodb
+    .db()
+    .collection<TransactionCaseManagement>(TRANSACTIONS_COLLECTION(tenant.id))
+  let migratedCount = 0
+  for await (const transaction of transactionCollection.find({
+    'hitRules.1': { $exists: 1 },
+  })) {
+    await dynamodb.send(
+      new UpdateCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.TRANSACTION(tenant.id, transaction.transactionId),
+        UpdateExpression: `SET hitRules = :hitRules`,
+        ExpressionAttributeValues: {
+          ':hitRules': [],
+        },
+      })
+    )
+    console.info(`Migrated transaction ${transaction.transactionId}`)
+    migratedCount += 1
+  }
+  console.info(`Migrated ${migratedCount} transactions`)
+}
+
+export const up: MigrationFn = async () => {
+  const config = getConfig()
+  const accountsService = new AccountsService(
+    config.application as AccountsConfig
+  )
+  const kevinTenant = await accountsService.getTenantById('QEO03JYKBT')
+  await migrateTenant(kevinTenant)
+}
+
+export const down: MigrationFn = async () => {
+  // skip
+}
