@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
-import moment from 'moment';
 import _ from 'lodash';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { Case, CaseUpdateRequest } from '@/apis';
 import { useAuth0User, useUsers } from '@/utils/user-utils';
@@ -20,7 +20,7 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import CaseStatusButtons from '@/pages/transactions/components/CaseStatusButtons';
 import { useTableData } from '@/pages/case-management/UserCases/helpers';
 import { TableItem } from '@/pages/case-management/UserCases/types';
-import { getUserLink, getUserName, KYC_STATUSES } from '@/utils/api/users';
+import { getUserLink, getUserName, KYC_STATUSES, USER_STATES } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -31,10 +31,8 @@ import UserLink from '@/components/UserLink';
 import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
 import { RISK_LEVELS } from '@/utils/risk-levels';
-import { USER_STATES } from '@/utils/api/users';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -113,8 +111,7 @@ export default function UserCases(props: Props) {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
         valueType: 'dateRange',
-        exportData: (entity) =>
-          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+        exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
         sorter: true,
         width: 150,
         render: (_, entity) => {

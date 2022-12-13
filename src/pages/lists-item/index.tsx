@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
-import moment from 'moment';
 import s from './index.module.less';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
@@ -16,7 +16,6 @@ import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import UserListTable from '@/pages/lists-item/UserListTable';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export default function CreatedLists() {
   const { type: listType, id: listId } = useParams<'id' | 'type'>();
@@ -72,9 +71,7 @@ export default function CreatedLists() {
                         {listHeader.metadata?.description}
                       </Form.Layout.Label>
                       <Form.Layout.Label icon={<TimeLineIcon />} title="Created on">
-                        {moment(listHeader.createdTimestamp).format(
-                          DEFAULT_DATE_TIME_DISPLAY_FORMAT,
-                        )}
+                        {dayjs(listHeader.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
                       </Form.Layout.Label>
                     </div>
                   </Card.Section>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tag } from 'antd';
-import moment from 'moment';
 import s from './index.module.less';
+import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
 import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-line.react.svg';
@@ -13,7 +13,6 @@ import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg'
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
-import { DEFAULT_DATE_DISPLAY_FORMAT } from '@/utils/dates';
 
 interface Props {
   user: InternalBusinessUser;
@@ -59,8 +58,8 @@ export function RegistrationDetails(prop: Props) {
           </Card.Column>
           <Card.Column className={s.all}>
             {user.legalEntity.companyRegistrationDetails?.dateOfRegistration
-              ? moment(user.legalEntity.companyRegistrationDetails?.dateOfRegistration).format(
-                  DEFAULT_DATE_DISPLAY_FORMAT,
+              ? dayjs(user.legalEntity.companyRegistrationDetails?.dateOfRegistration).format(
+                  DEFAULT_DATE_FORMAT,
                 )
               : '-'}
           </Card.Column>

@@ -1,7 +1,6 @@
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 import React from 'react';
-import { DEFAULT_DATE_DISPLAY_FORMAT, DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { dayjs, DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
 import { getFullName } from '@/utils/api/users';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -9,7 +8,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 import KeyValueTag from '@/components/ui/KeyValueTag';
 
 const convertToDateString = (createdTimestamp: number) =>
-  moment(createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+  dayjs(createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT);
 
 export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
   return [
@@ -49,7 +48,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       hideInSearch: true,
       render: (dom, entity) => {
         return entity.userDetails?.dateOfBirth
-          ? moment(entity.userDetails?.dateOfBirth).format(DEFAULT_DATE_DISPLAY_FORMAT)
+          ? dayjs(entity.userDetails?.dateOfBirth).format(DEFAULT_DATE_FORMAT)
           : '';
       },
       valueType: 'textarea',
@@ -130,8 +129,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       sorter: (a, b) => a.createdTimestamp - b.createdTimestamp,
       dataIndex: 'createdTimestamp',
       valueType: 'dateRange',
-      exportData: (entity) =>
-        moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+      exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
       render: (_, user) => {
         return convertToDateString(user.createdTimestamp);
       },

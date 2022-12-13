@@ -1,7 +1,7 @@
 import React from 'react';
-import moment from 'moment';
 import { Tag } from 'antd';
 import s from './index.module.less';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import TimerLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
 import User3Line from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
@@ -12,7 +12,6 @@ import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-l
 import GovernmentLineIcon from '@/components/ui/icons/Remix/buildings/government-line.react.svg';
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import * as Form from '@/components/ui/Form';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 
 interface Props {
@@ -60,7 +59,7 @@ export default function UsersInfoCard(props: Props) {
         </div>
       </Form.Layout.Label>
       <Form.Layout.Label icon={<TimerLineIcon />} title={'Created on'}>
-        {moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}
+        {dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT)}
       </Form.Layout.Label>
       <Form.Layout.Label icon={<DeleteBackLineIcon />} title={'Tags'}>
         <div>

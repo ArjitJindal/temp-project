@@ -1,7 +1,7 @@
 import React from 'react';
-import moment from 'moment';
 import ActionRiskDisplay from '../ActionRiskDisplay';
 import s from './index.module.less';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import * as Card from '@/components/ui/Card';
 import { CaseTransaction } from '@/apis';
 import FingerprintLineIcon from '@/components/ui/icons/Remix/device/fingerprint-line.react.svg';
@@ -15,7 +15,6 @@ import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
 import * as Form from '@/components/ui/Form';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
@@ -34,7 +33,7 @@ export default function TransactionInfoCard(props: Props) {
             {transaction.transactionId}
           </Id>
           <Form.Layout.Label icon={<TimerLineIcon />} title={'Transaction Time'} />
-          <div>{moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}</div>
+          <div>{dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}</div>
           <Form.Layout.Label icon={<PulseLineIcon />} title={'Rule action'} />
           {'-'}
           <Form.Layout.Label icon={<TransactionIcon />} title={'Transaction Type'} />

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import moment from 'moment';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
@@ -20,7 +20,6 @@ import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import Money from '@/components/ui/Money';
 import { Currency } from '@/utils/currencies';
 import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export type DataItem = {
   index: number;
@@ -173,8 +172,7 @@ export function Content(props: { userId: string }) {
             {
               title: 'Transaction Time',
               dataIndex: 'timestamp',
-              exportData: (entity) =>
-                moment(entity.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+              exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
               hideInSearch: true,
               valueType: 'dateTime',
               key: 'transactionTime',

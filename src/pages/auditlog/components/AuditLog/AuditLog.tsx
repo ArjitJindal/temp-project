@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
-import moment, { Moment } from 'moment';
-import { Typography, DatePicker } from 'antd';
+import { Typography } from 'antd';
 import _ from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
 import EntityFilterButton from '../EntityFilterButton';
 import AuditLogModal from '../AuditLogModal';
 import { TableSearchParams } from './types';
 import { useTableData } from './helpers';
+import DatePicker from '@/components/ui/DatePicker';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
@@ -59,9 +60,9 @@ export default function AuditLogTable() {
 
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
-    moment().subtract(1, 'day'),
-    moment(),
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'day'),
+    dayjs(),
   ]);
 
   // todo: i18n

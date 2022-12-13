@@ -2,13 +2,14 @@
 import { ActionType } from '@ant-design/pro-table';
 import React, { useEffect, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import moment, { Moment } from 'moment';
-import { Card, DatePicker } from 'antd';
+import { Card } from 'antd';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import style from '../../style.module.less';
 import s from './styles.module.less';
 import { TableItem } from './types';
+import DatePicker from '@/components/ui/DatePicker';
+import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
 import UserLink from '@/components/UserLink';
@@ -27,9 +28,9 @@ export default function HitsPerUserCard(props: Props) {
   const { direction } = props;
   const api = useApi();
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
-    moment().subtract(1, 'week'),
-    moment(),
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'week'),
+    dayjs(),
   ]);
 
   const actionRef = useRef<ActionType>();
@@ -136,7 +137,7 @@ export default function HitsPerUserCard(props: Props) {
   ];
 
   const hitsPerUserResult = usePaginatedQuery(HITS_PER_USER(dateRange, direction), async () => {
-    let startTimestamp = moment().subtract(1, 'day').valueOf();
+    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 
     const [start, end] = dateRange ?? [];

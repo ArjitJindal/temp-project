@@ -1,6 +1,5 @@
 import { Tabs } from 'antd';
 import { useEffect, useState } from 'react';
-import moment from 'moment';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import styles from './UsersList.module.less';
@@ -8,6 +7,7 @@ import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
 import { RiskLevelButton } from './RiskLevelFilterButton';
+import { dayjs } from '@/utils/dayjs';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -66,8 +66,8 @@ const BusinessUsersTab = () => {
       api.getBusinessUsersList({
         limit: DEFAULT_PAGE_SIZE,
         skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
-        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
         filterRiskLevel: riskLevels,
       }),
@@ -174,8 +174,8 @@ const ConsumerUsersTab = () => {
       api.getConsumerUsersList({
         limit: DEFAULT_PAGE_SIZE,
         skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
-        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
         filterRiskLevel: riskLevels,
       }),
@@ -283,8 +283,8 @@ const AllUsersTab = () => {
       api.getAllUsersList({
         limit: DEFAULT_PAGE_SIZE,
         skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
-        afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? moment(createdTimestamp[1]).valueOf() : Date.now(),
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
         filterRiskLevel: riskLevels,
       }),

@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { message } from 'antd';
-import moment from 'moment';
 import { useNavigate } from 'react-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TableSearchParams } from './types';
+import { dayjs } from '@/utils/dayjs';
 import {
   Case,
   CaseTransaction,
@@ -125,17 +125,17 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
         api.getCaseList({
           limit: DEFAULT_PAGE_SIZE!,
           skip: ((_page ?? page)! - 1) * DEFAULT_PAGE_SIZE!,
-          afterTimestamp: createdTimestamp ? moment(createdTimestamp[0]).valueOf() : 0,
+          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
           beforeTimestamp: createdTimestamp
-            ? moment(createdTimestamp[1]).valueOf()
+            ? dayjs(createdTimestamp[1]).valueOf()
             : Number.MAX_SAFE_INTEGER,
           ...(transactionTimestamp &&
             transactionTimestamp.length && {
               afterTransactionTimestamp: transactionTimestamp
-                ? moment(transactionTimestamp[0]).valueOf()
+                ? dayjs(transactionTimestamp[0]).valueOf()
                 : 0,
               beforeTransactionTimestamp: transactionTimestamp
-                ? moment(transactionTimestamp[1]).valueOf()
+                ? dayjs(transactionTimestamp[1]).valueOf()
                 : Number.MAX_SAFE_INTEGER,
             }),
           filterId: caseId,

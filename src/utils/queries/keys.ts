@@ -1,6 +1,6 @@
-import { Moment } from 'moment';
 import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
+import { Dayjs } from '@/utils/dayjs';
 import { CaseType, ListType } from '@/apis';
 
 type AnyParameters = unknown;
@@ -66,12 +66,12 @@ export const SANCTIONS_SEARCH_HISTORY = (searchId?: string): QueryKey => [
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
-export const HITS_PER_USER = (dateRange: RangeValue<Moment>, direction?: string): QueryKey => [
+export const HITS_PER_USER = (dateRange: RangeValue<Dayjs>, direction?: string): QueryKey => [
   'hits-per-user',
   dateRange,
   direction,
 ];
-export const HITS_PER_USER_STATS = (dateRange: RangeValue<Moment>): QueryKey => [
+export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];

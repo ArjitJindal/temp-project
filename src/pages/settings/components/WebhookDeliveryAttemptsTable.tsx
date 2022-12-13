@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Modal, Tag } from 'antd';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import moment from 'moment';
 import { WebhookDeliveryAttempt } from '@/apis';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { useApi } from '@/api';
@@ -11,7 +10,7 @@ import { TableColumn } from '@/components/ui/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { WEBHOOKS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 interface Props {
   webhookId: string;
@@ -61,15 +60,13 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       title: 'Event Created',
       width: 100,
       render: (_, entity) => <TimestampDisplay timestamp={entity.eventCreatedAt} />,
-      exportData: (entity) =>
-        moment(entity.eventCreatedAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+      exportData: (entity) => dayjs(entity.eventCreatedAt).format(DEFAULT_DATE_TIME_FORMAT),
     },
     {
       title: 'Delivered At',
       width: 100,
       render: (_, entity) => <TimestampDisplay timestamp={entity.requestStartedAt} />,
-      exportData: (entity) =>
-        moment(entity.requestStartedAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+      exportData: (entity) => dayjs(entity.requestStartedAt).format(DEFAULT_DATE_TIME_FORMAT),
     },
   ];
   return (

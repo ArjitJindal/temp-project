@@ -1,6 +1,5 @@
 import React from 'react';
 import { Input, Select } from 'antd';
-import moment from 'moment-timezone';
 import _ from 'lodash';
 import {
   DataType,
@@ -37,6 +36,7 @@ import { useApi } from '@/api';
 import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/asyncResource';
+import { timezones } from '@/utils/timezones';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -136,7 +136,7 @@ const timeValues = Array.from({ length: 25 }, (_, i) => ({
   label: timeIn24HourFormat(i),
 }));
 
-const timeZonesData = moment.tz.names().map((name) => ({
+const timeZonesData = timezones.map((name) => ({
   value: name,
   label: name,
 }));

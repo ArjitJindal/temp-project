@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import _ from 'lodash';
-import moment from 'moment';
 import s from './styles.module.less';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -9,7 +9,6 @@ import UserKycStatusTag from '@/components/ui/UserKycStatusTag';
 import UserStateTag from '@/components/ui/UserStateTag';
 import { getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export function getAllUserColumns(): TableColumn<InternalUser>[] {
   return [
@@ -98,8 +97,7 @@ export function getAllUserColumns(): TableColumn<InternalUser>[] {
       tip: 'Date and time when user was created.',
       sorter: true,
       width: 180,
-      exportData: (entity) =>
-        moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+      exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
       render: (dom, entity) => {
         return <TimestampDisplay timestamp={entity.createdTimestamp} />;
       },

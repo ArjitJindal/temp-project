@@ -1,10 +1,10 @@
 import { Drawer, message, Popover, Progress, Switch, Tooltip } from 'antd';
 import { useCallback, useMemo, useState } from 'react';
 import _ from 'lodash';
-import moment from 'moment';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
@@ -16,7 +16,6 @@ import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
@@ -188,7 +187,7 @@ const MyRule = () => {
         defaultSortOrder: 'descend',
         dataIndex: 'createdAt',
         valueType: 'dateTime',
-        exportData: (row) => moment(row.createdAt).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+        exportData: (row) => dayjs(row.createdAt).format(DEFAULT_DATE_TIME_FORMAT),
       },
       {
         title: 'Activated',

@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, Col, DatePicker, Row } from 'antd';
+import { Card, Col, Row } from 'antd';
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/lib/interface';
-import moment, { Moment } from 'moment';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import { header } from '../dashboardutils';
 import style from '../../style.module.less';
+import DatePicker from '@/components/ui/DatePicker';
+import { Dayjs, dayjs } from '@/utils/dayjs';
 import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
 import { makeUrl } from '@/utils/routing';
@@ -20,9 +21,9 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 export default function RuleHitCard() {
   const api = useApi();
 
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
-    moment().subtract(1, 'week'),
-    moment(),
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'week'),
+    dayjs(),
   ]);
   const { rules, ruleInstances } = useRules();
 
@@ -99,7 +100,7 @@ export default function RuleHitCard() {
   ];
 
   const rulesHitResult = usePaginatedQuery(HITS_PER_USER_STATS(dateRange), async () => {
-    let startTimestamp = moment().subtract(1, 'day').valueOf();
+    let startTimestamp = dayjs().subtract(1, 'day').valueOf();
     let endTimestamp = Date.now();
 
     const [start, end] = dateRange ?? [];

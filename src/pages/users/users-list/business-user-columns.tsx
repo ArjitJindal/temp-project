@@ -1,7 +1,6 @@
-import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { Tag } from 'antd';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/ui/Table/types';
 import Money from '@/components/ui/Money';
@@ -117,11 +116,8 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
       sorter: true,
       dataIndex: 'createdTimestamp',
       valueType: 'dateRange',
-      exportData: (entity) =>
-        moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
-      render: (_, user) => {
-        return moment(user.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
-      },
+      exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
+      render: (_, user) => dayjs(user.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
     },
   ];
 }

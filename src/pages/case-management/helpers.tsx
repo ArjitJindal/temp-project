@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { dayjs } from '@/utils/dayjs';
 import '../../components/ui/colors';
 
 import { Adapter } from '@/utils/routing';
@@ -10,9 +10,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
     return {
       page: params.page ?? 1,
-      timestamp: params.timestamp?.map((x) => moment(x).valueOf()).join(','),
-      createdTimestamp: params.createdTimestamp?.map((x) => moment(x).valueOf()).join(','),
-      transactionTimestamp: params.transactionTimestamp?.map((x) => moment(x).valueOf()).join(','),
+      timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      transactionTimestamp: params.transactionTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       caseId: params.caseId,
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
@@ -55,13 +55,13 @@ export const queryAdapter: Adapter<TableSearchParams> = {
     return {
       page: parseInt(raw.page ?? '') || 1,
       timestamp: raw.timestamp
-        ? raw.timestamp.split(',').map((x) => moment(parseInt(x)).format())
+        ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       createdTimestamp: raw.createdTimestamp
-        ? raw.createdTimestamp.split(',').map((x) => moment(parseInt(x)).format())
+        ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       transactionTimestamp: raw.transactionTimestamp
-        ? raw.transactionTimestamp.split(',').map((x) => moment(parseInt(x)).format())
+        ? raw.transactionTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       caseId: raw.caseId,
       rulesHitFilter: raw.rulesHitFilter?.split(','),

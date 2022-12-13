@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { message, Tooltip } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import moment from 'moment';
+import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { ApiException } from '@/apis';
@@ -35,8 +35,8 @@ export default function ExportButton(props: Props) {
             const { downloadUrl } = await api.getTransactionsListExport({
               limit: EXPORT_ENTRIES_LIMIT,
               skip: 0,
-              afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-              beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+              afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+              beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
               filterId: caseId,
               filterRulesHit: rulesHitFilter,
               filterRulesExecuted: rulesExecutedFilter,

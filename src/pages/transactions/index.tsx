@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import moment from 'moment';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import { measure } from '@/utils/time-utils';
@@ -15,6 +14,7 @@ import { TransactionStateButton } from '@/pages/transactions/components/Transact
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { dayjs } from '@/utils/dayjs';
 
 const TableList = () => {
   const api = useApi();
@@ -44,8 +44,8 @@ const TableList = () => {
       api.getTransactionsList({
         limit: pageSize,
         skip: ((_page ?? page) - 1) * pageSize,
-        afterTimestamp: timestamp ? moment(timestamp[0]).valueOf() : 0,
-        beforeTimestamp: timestamp ? moment(timestamp[1]).valueOf() : Date.now(),
+        afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+        beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
         filterId: transactionId,
         filterUserId: userFilterMode === 'ALL' ? userId : undefined,
         filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,

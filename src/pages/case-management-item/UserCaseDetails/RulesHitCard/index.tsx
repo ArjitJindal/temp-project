@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import moment from 'moment';
 import { ExpandTabRef } from '../../UserCaseDetails';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import * as Card from '@/components/ui/Card';
 import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { Case, CaseTransaction } from '@/apis';
@@ -19,7 +19,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export function expandedRowRender(transaction: CaseTransaction) {
   return (
@@ -103,8 +102,7 @@ export default function RulesHitCard(props: Props) {
               width: 130,
               ellipsis: true,
               dataIndex: 'timestamp',
-              exportData: (entity) =>
-                moment(entity.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+              exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
               valueType: 'dateTimeRange',
               render: (_, entity) => {
                 return <TimestampDisplay timestamp={entity?.timestamp} />;

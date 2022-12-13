@@ -1,12 +1,11 @@
 import React from 'react';
-import moment from 'moment';
 import s from './index.module.less';
 import DocumentDetails from './DocumentDetails';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser, LegalDocument } from '@/apis';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Table from '@/components/ui/Table';
 import * as Card from '@/components/ui/Card';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import KeyValueTag from '@/components/ui/KeyValueTag';
 import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
@@ -58,7 +57,7 @@ export function LegalDocumentsTable(prop: Props) {
               render: (_, document) => {
                 {
                   return document.documentIssuedDate
-                    ? moment(document.documentIssuedDate).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)
+                    ? dayjs(document.documentIssuedDate).format(DEFAULT_DATE_TIME_FORMAT)
                     : -'-';
                 }
               },
@@ -68,9 +67,7 @@ export function LegalDocumentsTable(prop: Props) {
               render: (_, document) => {
                 {
                   return document.documentExpirationDate
-                    ? moment(document.documentExpirationDate).format(
-                        DEFAULT_DATE_TIME_DISPLAY_FORMAT,
-                      )
+                    ? dayjs(document.documentExpirationDate).format(DEFAULT_DATE_TIME_FORMAT)
                     : '-';
                 }
               },

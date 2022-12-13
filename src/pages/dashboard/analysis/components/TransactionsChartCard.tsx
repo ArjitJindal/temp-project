@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Card, DatePicker, Empty, Spin, Tabs } from 'antd';
-import moment, { Moment } from 'moment';
+import { Card, Empty, Spin, Tabs } from 'antd';
 import { Column } from '@ant-design/plots';
 import { useEffect, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
@@ -16,9 +15,10 @@ import {
   osName,
 } from 'react-device-detect';
 import styles from '../style.module.less';
-import { momentCalc } from '../utils/utils';
 import { getRuleActionColor } from '../../../../utils/rules';
 import { header } from './dashboardutils';
+import DatePicker from '@/components/ui/DatePicker';
+import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import { useAuth0User } from '@/utils/user-utils';
 import { useAnalytics } from '@/utils/segment/context';
 import { useApi } from '@/api';
@@ -52,9 +52,9 @@ const TransactionsChartCard = () => {
   const suspendAlias = useRiskActionLabel('SUSPEND');
   const blockAlias = useRiskActionLabel('BLOCK');
   const flagAlias = useRiskActionLabel('FLAG');
-  const [dateRange, setDateRange] = useState<RangeValue<Moment>>([
-    moment().subtract(1, 'year'),
-    moment(),
+  const [dateRange, setDateRange] = useState<RangeValue<Dayjs>>([
+    dayjs().subtract(1, 'year'),
+    dayjs(),
   ]);
   const [granularity, setGranularity] = useState<GranularityValuesType>(
     granularityValues.MONTH as GranularityValuesType,
@@ -70,13 +70,24 @@ const TransactionsChartCard = () => {
   };
   const formatDate = (type: string): string => {
     if (type.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      type = moment(type, 'YYYY-MM-DD').format('MM/DD');
+      type = dayjs(type, YEAR_MONTH_DATE_FORMAT).format('MM/DD');
     } else if (type.match(/^\d{4}-\d{2}$/)) {
-      type = moment(type, 'YYYY-MM').format('YYYY/MM');
+      type = dayjs(type, 'YYYY-MM').format('YYYY/MM');
     } else if (type.match(/^\d{4}-\d{2}-\d{2}T\d{2}$/)) {
-      type = moment(type, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
+      type = dayjs(type, 'YYYY-MM-DDTHH').format('MM/DD HH:mm');
     }
     return type;
+  };
+
+  const dayCalc = (val: string) => {
+    if (val === 'YEAR') {
+      return dayjs().subtract(1, 'year');
+    } else if (val === 'MONTH') {
+      return dayjs().subtract(1, 'month');
+    } else if (val === 'WEEK') {
+      return dayjs().subtract(1, 'week');
+    }
+    return dayjs().subtract(1, 'day');
   };
 
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
@@ -89,7 +100,7 @@ const TransactionsChartCard = () => {
     async function fetch() {
       setTransactionsCountData((state) => loading(getOr(state, null)));
       try {
-        let startTimestamp = moment().subtract(1, 'year').valueOf();
+        let startTimestamp = dayjs().subtract(1, 'year').valueOf();
         let endTimestamp = Date.now();
 
         const [start, end] = dateRange ?? [];
@@ -206,7 +217,7 @@ const TransactionsChartCard = () => {
                 className={type === timeWindowType ? styles.currentDate : ''}
                 onClick={() => {
                   setTimeWindowType(type);
-                  setDateRange([momentCalc(type), moment()]);
+                  setDateRange([dayCalc(type), dayjs()]);
                   setGranularity(calcGranularity(type));
                 }}
               >

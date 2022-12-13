@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Divider } from 'antd';
 import { ProFormInstance } from '@ant-design/pro-form';
-import moment from 'moment';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
@@ -39,7 +39,6 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
 import COUNTRIES from '@/utils/countries';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -139,8 +138,7 @@ export default function TransactionCases(props: Props) {
         title: 'Created on',
         dataIndex: 'createdTimestamp',
         valueType: 'dateRange',
-        exportData: (entity) =>
-          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+        exportData: (entity) => dayjs(entity.createdTimestamp).format(DEFAULT_DATE_TIME_FORMAT),
         onCell: onCaseCell,
         sorter: true,
         width: 150,
@@ -235,7 +233,7 @@ export default function TransactionCases(props: Props) {
         dataIndex: 'transactionTimestamp',
         onCell: onTransactionCell,
         exportData: (entity) =>
-          moment(entity.createdTimestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+          dayjs(entity.transaction?.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
         render: (_, entity) => {
           return <TimestampDisplay timestamp={entity.transaction?.timestamp} />;
         },

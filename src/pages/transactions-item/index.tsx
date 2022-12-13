@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
-import moment from 'moment';
 import ActionRiskDisplay from '../case-management-item/TransactionCaseDetails/TransactionDetailsCard/ActionRiskDisplay';
 import SenderReceiverDetails from './SenderReceiverDetails';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { makeUrl } from '@/utils/routing';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -17,7 +17,6 @@ import RestartLineIcon from '@/components/ui/icons/Remix/device/restart-line.rea
 import FileLineIcon from '@/components/ui/icons/Remix/document/file-3-line.react.svg';
 import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
 import TransactionIcon from '@/components/ui/icons/transaction.react.svg';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import TransactionState from '@/components/ui/TransactionStateTag';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -85,7 +84,7 @@ export default function TransactionsItem() {
               <Card.Section direction="horizontal" spacing="double">
                 <EntityHeader id={transaction.transactionId} idTitle="Transaction ID">
                   <Form.Layout.Label icon={<TimerLineIcon />} title="Transaction Time">
-                    {moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT)}
+                    {dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}
                   </Form.Layout.Label>
                   <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction State">
                     <TransactionState transactionState={transaction.transactionState} />

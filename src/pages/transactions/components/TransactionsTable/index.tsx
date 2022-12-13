@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import moment from 'moment/moment';
 import { TransactionCaseManagement, TransactionState, TransactionType } from '@/apis';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
 import { paymethodOptions, transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
-import { DEFAULT_DATE_TIME_DISPLAY_FORMAT } from '@/utils/dates';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -18,6 +16,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { ActionRenderer, AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -89,11 +88,11 @@ export default function TransactionsTable(props: Props) {
         width: 180,
         ellipsis: true,
         dataIndex: 'timestamp',
-        exportData: (entity) => moment(entity.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT),
+        exportData: (entity) => dayjs(entity.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
         valueType: 'dateTimeRange',
         sorter: !disableSorting,
         render: (_, transaction) => {
-          return moment(transaction.timestamp).format(DEFAULT_DATE_TIME_DISPLAY_FORMAT);
+          return dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT);
         },
       },
       {
