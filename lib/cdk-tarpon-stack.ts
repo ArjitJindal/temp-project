@@ -1205,6 +1205,7 @@ export class CdkTarponStack extends cdk.Stack {
       writeCapacity: this.config.resource.DYNAMODB.WRITE_CAPACITY,
       billingMode: this.config.resource.DYNAMODB.BILLING_MODE,
       kinesisStream,
+      pointInTimeRecovery: true,
       removalPolicy:
         this.config.stage === 'dev'
           ? RemovalPolicy.DESTROY
