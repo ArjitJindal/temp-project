@@ -198,6 +198,7 @@ export class CdkTarponStack extends cdk.Stack {
     const tarponDynamoDbTable = this.createDynamodbTable(
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       tarponStream,
+      true,
       true
     )
     const tarponRuleDynamoDbTable = this.createDynamodbTable(
@@ -1189,7 +1190,8 @@ export class CdkTarponStack extends cdk.Stack {
   private createDynamodbTable(
     tableName: string,
     kinesisStream?: IStream,
-    enableTimeToLive = false
+    enableTimeToLive = false,
+    contributorInsightsEnabled = false
   ) {
     const isDevUserStack = process.env.ENV === 'dev:user'
     if (isDevUserStack) {
@@ -1208,6 +1210,7 @@ export class CdkTarponStack extends cdk.Stack {
           ? RemovalPolicy.DESTROY
           : RemovalPolicy.RETAIN,
       timeToLiveAttribute: enableTimeToLive ? 'ttl' : undefined,
+      contributorInsightsEnabled,
     })
     return table
   }
