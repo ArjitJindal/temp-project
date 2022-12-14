@@ -22,11 +22,6 @@ import { LAMBDAS } from './lambdas'
 
 const allLambdas = Object.keys(LAMBDAS)
 
-const TIME_SENSITIVE_LAMBDAS = [
-  StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
-  StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
-]
-
 const KINESIS_CONSUMER_LAMBDAS = [
   StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
   StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
@@ -90,15 +85,13 @@ export class CdkTarponAlarmsStack extends cdk.Stack {
 
     createTarponOverallLambdaAlarm(this, this.betterUptimeCloudWatchTopic)
 
-    for (const lambdaName of TIME_SENSITIVE_LAMBDAS) {
+    for (const lambdaName of allLambdas) {
       createLambdaDurationAlarm(
         this,
         this.betterUptimeCloudWatchTopic,
-        lambdaName
+        lambdaName,
+        LAMBDAS[lambdaName].expectedMaxDurationSeconds
       )
-    }
-
-    for (const lambdaName of allLambdas) {
       createLambdaErrorPercentageAlarm(
         this,
         this.betterUptimeCloudWatchTopic,

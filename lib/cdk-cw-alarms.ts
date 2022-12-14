@@ -319,14 +319,14 @@ export const createLambdaDurationAlarm = (
   context: Construct,
   betterUptimeTopic: Topic,
   lambdaName: string,
-  durationThreshold?: number
+  durationThresholdSeconds: number
 ) => {
   if (isDevUserStack) {
     return null
   }
   return new Alarm(context, `${lambdaName}Duration`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: durationThreshold ? durationThreshold : 10000,
+    threshold: durationThresholdSeconds * 1000,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}Duration`,
