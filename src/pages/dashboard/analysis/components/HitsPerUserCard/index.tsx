@@ -102,6 +102,13 @@ export default function HitsPerUserCard(props: Props) {
       title: 'Open Cases',
       width: 100,
       render: (dom, entity) => {
+        let startTimestamp;
+        let endTimestamp;
+        const [start, end] = dateRange ?? [];
+        if (start != null && end != null) {
+          startTimestamp = start.startOf('day').valueOf();
+          endTimestamp = end.endOf('day').valueOf();
+        }
         return (
           <>
             <div>
@@ -112,6 +119,7 @@ export default function HitsPerUserCard(props: Props) {
                   {
                     userId: entity.userId,
                     userFilterMode: direction ? direction : 'ALL',
+                    createdTimestamp: `${startTimestamp},${endTimestamp}`,
                   },
                 )}
               >
@@ -125,6 +133,7 @@ export default function HitsPerUserCard(props: Props) {
                 {
                   userId: entity.userId,
                   userFilterMode: direction ? direction : 'ALL',
+                  createdTimestamp: `${startTimestamp},${endTimestamp}`,
                 },
               )}
             >
