@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from 'antd';
 import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
+import { Link } from 'react-router-dom';
 import styles from './style.module.less';
 
 const { Divider } = ProCard;
@@ -10,6 +11,40 @@ const RiskAlgorithmTable: React.FC = () => {
   return (
     <>
       <Card bordered={false}>
+        <div>
+          <h2>System behavior</h2>
+          <ul>
+            <li>
+              <h3>How is the score calculated when there is no data?</h3>
+              <p>
+                When there is no data avaliable for a risk factor, Flagright system defaults to very
+                high risk. For example, for a user for whom there's no data on country of
+                nationality, Flagright systems assume the risk level of very high risk for that
+                parameter.
+              </p>
+            </li>
+            <li>
+              <h3>How the Risk Level is converted to Risk Score?</h3>
+              <p>
+                Risk levels are quantified into risk scores by taking the average of the lower and
+                upper bound score of risk levels configured in{' '}
+                <Link to={`/risk-levels/configure`}>risk levels section </Link>. For example, if the
+                risk score range for medium risk level is 60 - 80, medium risk level will have a
+                corresponding score of 70 ((60 + 80) /2).
+              </p>
+            </li>
+            <li>
+              <h3>How the Risk Score is converted to Risk Level?</h3>
+              <p>
+                A risk score is converted to Risk Level using the{' '}
+                <Link to={`/risk-levels/configure`}>risk levels </Link> configured. For example, if
+                the risk score range for Medium risk level is 60 - 80, a risk score of 65 would be
+                considered as medium risk level.
+              </p>
+            </li>
+          </ul>
+          <h2>Score calculation</h2>
+        </div>
         <ProCard
           title={
             <>
