@@ -87,6 +87,7 @@ export class RuleRepository {
         defaultAction: item.defaultAction,
         ruleImplementationName: item.ruleImplementationName,
         labels: item.labels,
+        defaultNature: item.defaultNature,
         tenantIds:
           this.tenantId === FLAGRIGHT_TENANT_ID ? item.tenantIds : undefined,
         defaultCasePriority: item.defaultCasePriority,

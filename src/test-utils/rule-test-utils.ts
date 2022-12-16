@@ -41,6 +41,7 @@ export async function createRule(
     labels: [],
     defaultCaseCreationType: 'TRANSACTION',
     defaultCasePriority: 'P1',
+    defaultNature: 'AML',
     ...rule,
   })
   const createdRuleInstance =
@@ -54,6 +55,7 @@ export async function createRule(
       status: 'ACTIVE',
       caseCreationType: createdRule.defaultCaseCreationType as CaseType,
       casePriority: createdRule.defaultCasePriority as CasePriority,
+      nature: createdRule.defaultNature,
       ...ruleInstance,
     })
 

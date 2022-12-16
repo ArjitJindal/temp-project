@@ -51,6 +51,7 @@ describe('Public Management API - Rule', () => {
       caseCreationType: 'USER',
       casePriority: 'P1',
       type: 'TRANSACTION',
+      nature: 'AML',
     })
   })
 
@@ -85,9 +86,10 @@ describe('Public Management API - Rule', () => {
           },
           defaultParameters: {},
           defaultAction: 'FLAG',
-          labels: ['AML'],
+          labels: [],
           defaultCaseCreationType: 'TRANSACTION',
           defaultCasePriority: 'P1',
+          defaultNature: 'AML',
         },
         {
           id: 'R-2',
@@ -119,9 +121,10 @@ describe('Public Management API - Rule', () => {
             },
           },
           defaultAction: 'SUSPEND',
-          labels: ['AML', 'Fraud'],
+          labels: [],
           defaultCaseCreationType: 'TRANSACTION',
           defaultCasePriority: 'P1',
+          defaultNature: 'AML',
         },
       ]),
     })
@@ -161,9 +164,10 @@ describe('Public Management API - Rule', () => {
         },
         defaultParameters: {},
         defaultAction: 'FLAG',
-        labels: ['AML'],
+        labels: [],
         defaultCaseCreationType: 'TRANSACTION',
         defaultCasePriority: 'P1',
+        defaultNature: 'AML',
       }),
     })
   })
@@ -206,6 +210,7 @@ describe('Public Management API - Rule', () => {
       hitCount: 0,
       casePriority: 'P1',
       caseCreationType: 'USER',
+      nature: 'AML',
     })
   })
 
@@ -259,6 +264,7 @@ describe('Public Management API - Rule', () => {
         status: 'ACTIVE',
         casePriority: 'P1',
         caseCreationType: 'USER',
+        nature: 'AML',
       }),
       null as any,
       null as any
@@ -318,6 +324,7 @@ describe('Public Management API - Rule', () => {
       updatedAt: expect.any(Number),
       runCount: 0,
       hitCount: 0,
+      nature: 'AML',
     })
     const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
       TEST_RULE_INSTANCE_ID

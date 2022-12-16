@@ -357,6 +357,12 @@ components:
         - P2
         - P3
         - P4
+    RuleNature:
+      type: string
+      title: RuleNature
+      enum:
+        - AML
+        - FRAUD
     RiskLevelRuleActions:
       title: RiskLevelRuleActions
       x-stoplight:
@@ -445,6 +451,8 @@ components:
           $ref: '#/components/schemas/CaseType'
         defaultCasePriority:
           $ref: '#/components/schemas/CasePriority'
+        defaultNature:
+          $ref: '#/components/schemas/RuleNature'
       required:
         - id
         - type
@@ -455,6 +463,7 @@ components:
         - labels
         - defaultCaseCreationType
         - defaultCasePriority
+        - defaultNature
     ErrorMessage:
       title: ErrorMessage
       x-stoplight:

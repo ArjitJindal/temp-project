@@ -2466,6 +2466,8 @@ components:
           type: array
           items:
             type: string
+        defaultNature:
+          $ref: '#/components/schemas/RuleNature'
         defaultCasePriority:
           $ref: '#/components/schemas/CasePriority'
         defaultCaseCreationType:
@@ -2498,6 +2500,7 @@ components:
         - defaultAction
         - ruleImplementationName
         - labels
+        - defaultNature
         - defaultCasePriority
         - defaultCaseCreationType
     RuleInstance:
@@ -2529,6 +2532,8 @@ components:
           $ref: '#/components/schemas/RiskLevelRuleParameters'
         riskLevelActions:
           $ref: '#/components/schemas/RiskLevelRuleActions'
+        nature:
+          $ref: '#/components/schemas/RuleNature'
         status:
           type: string
           enum:
@@ -2550,6 +2555,7 @@ components:
         - parameters
         - action
         - caseCreationType
+        - nature
     RuleAction:
       type: string
       title: RuleAction
@@ -4090,6 +4096,12 @@ components:
         - CONSUMER_USER
         - TRANSACTION
         - BUSINESS
+    RuleNature:
+      type: string
+      title: Rule nature type
+      enum:
+        - AML
+        - FRAUD
     UsersUniquesResponse:
       type: object
       properties:
