@@ -21,7 +21,8 @@ async function migrateTenant(tenant: Tenant) {
     const rule = getTransactionRuleByRuleId(ruleInstance.ruleId)
 
     if (!rule) {
-      throw new Error(`Rule not found - ${ruleInstance.ruleId}`)
+      console.warn(`Rule not found - ${ruleInstance.ruleId}. Skip.`)
+      continue
     }
     const { defaultNature: ruleNature } = rule
     if (!ruleNature) {
