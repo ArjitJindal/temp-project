@@ -9,20 +9,24 @@ import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
 export class CaseService {
   caseRepository: CaseRepository
+  dashboardStatsRepository: DashboardStatsRepository
   s3: AWS.S3
   documentBucketName: string
   tmpBucketName: string
 
   constructor(
     caseRepository: CaseRepository,
+    dashboardStatsRepository: DashboardStatsRepository,
     s3: AWS.S3,
     tmpBucketName: string,
     documentBucketName: string
   ) {
     this.caseRepository = caseRepository
+    this.dashboardStatsRepository = dashboardStatsRepository
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
@@ -65,6 +69,12 @@ export class CaseService {
             body: `Case Status Changed to ${updateRequest.caseStatus}`,
             files: updateRequest.files,
           })
+        )
+      )
+      const cases = await this.caseRepository.getCasesByIds(caseIds)
+      await Promise.all(
+        cases.map((c) =>
+          this.dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
         )
       )
     }

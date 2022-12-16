@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
+import { DashboardStatsRepository } from '../console-api-dashboard/repositories/dashboard-stats-repository'
 import { CaseService } from './services/case-service'
 import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -34,8 +35,12 @@ export const casesHandler = lambdaApi()(
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: client,
     })
+    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+      mongoDb: client,
+    })
     const caseService = new CaseService(
       caseRepository,
+      dashboardStatsRepository,
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET

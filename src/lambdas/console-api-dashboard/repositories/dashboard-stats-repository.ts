@@ -122,16 +122,16 @@ export class DashboardStatsRepository {
     this.tenantId = tenantId
   }
 
-  private async recalculateHitsByUser(
-    db: Db,
+  public async recalculateHitsByUser(
     direction: 'ORIGIN' | 'DESTINATION',
     timestamp?: number
   ) {
+    const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const userFieldName =
-      direction === 'DESTINATION'
-        ? 'caseTransactions.destinationUserId'
-        : 'caseTransactions.originUserId'
+      direction === 'ORIGIN'
+        ? 'caseUsers.origin.userId'
+        : 'caseUsers.destination.userId'
     const aggregationCollection =
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(this.tenantId)
     await db.collection(aggregationCollection).createIndex(
@@ -149,7 +149,7 @@ export class DashboardStatsRepository {
     if (timestamp) {
       const { start, end } = getAffectedInterval(timestamp, 'HOUR')
       timestampMatch = {
-        'caseTransactions.timestamp': {
+        createdTimestamp: {
           $gte: start,
           $lt: end,
         },
@@ -159,6 +159,7 @@ export class DashboardStatsRepository {
       {
         $match: {
           ...timestampMatch,
+          // NOTE: We only aggregate the stats for known users
           [userFieldName]: { $exists: true },
         },
       },
@@ -169,11 +170,6 @@ export class DashboardStatsRepository {
         },
       },
       {
-        $match: {
-          [userFieldName]: { $exists: true },
-        },
-      },
-      {
         $group: {
           _id: {
             date: {
@@ -181,7 +177,7 @@ export class DashboardStatsRepository {
                 format: HOUR_DATE_FORMAT,
                 date: {
                   $toDate: {
-                    $toLong: '$caseTransactions.timestamp',
+                    $toLong: '$createdTimestamp',
                   },
                 },
               },
@@ -193,20 +189,6 @@ export class DashboardStatsRepository {
             $sum: 1,
           },
           ...CASE_GROUP_KEYS,
-        },
-      },
-      // NOTE: We only aggregate the stats for known users
-      {
-        $lookup: {
-          from: USERS_COLLECTION(this.tenantId),
-          localField: '_id.userId',
-          foreignField: 'userId',
-          as: '_user',
-        },
-      },
-      {
-        $match: {
-          _user: { $gt: { $size: 0 } },
         },
       },
       {
@@ -231,7 +213,8 @@ export class DashboardStatsRepository {
     await casesCollection.aggregate(pipeline).next()
   }
 
-  private async recalculateRuleHitStats(db: Db, timestamp?: number) {
+  public async recalculateRuleHitStats(timestamp?: number) {
+    const db = this.mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const aggregationCollection = DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(
       this.tenantId
@@ -240,7 +223,7 @@ export class DashboardStatsRepository {
     if (timestamp) {
       const { start, end } = getAffectedInterval(timestamp, 'HOUR')
       timestampMatch = {
-        'caseTransactions.timestamp': {
+        createdTimestamp: {
           $gte: start,
           $lt: end,
         },
@@ -268,7 +251,7 @@ export class DashboardStatsRepository {
                 format: HOUR_DATE_FORMAT,
                 date: {
                   $toDate: {
-                    $toLong: '$caseTransactions.timestamp',
+                    $toLong: '$createdTimestamp',
                   },
                 },
               },
@@ -562,14 +545,23 @@ export class DashboardStatsRepository {
       .next()
   }
 
-  public async refreshTransactionStats(timestamp?: number) {
+  public async refreshAllStats() {
+    await Promise.all([this.refreshTransactionStats(), this.refreshCaseStats()])
+  }
+
+  public async refreshTransactionStats(transactionTimestamp?: number) {
     const db = this.mongoDb.db()
 
     await Promise.all([
-      this.recalculateTransactionsVolumeStats(db, timestamp),
-      this.recalculateRuleHitStats(db, timestamp),
-      this.recalculateHitsByUser(db, 'ORIGIN', timestamp),
-      this.recalculateHitsByUser(db, 'DESTINATION', timestamp),
+      this.recalculateTransactionsVolumeStats(db, transactionTimestamp),
+    ])
+  }
+
+  public async refreshCaseStats(caseTimestamp?: number) {
+    await Promise.all([
+      this.recalculateRuleHitStats(caseTimestamp),
+      this.recalculateHitsByUser('ORIGIN', caseTimestamp),
+      this.recalculateHitsByUser('DESTINATION', caseTimestamp),
     ])
   }
 

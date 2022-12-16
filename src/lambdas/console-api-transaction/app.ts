@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { InternalServerError, BadRequest, NotFound } from 'http-errors'
 import { CaseService } from '../console-api-case/services/case-service'
+import { DashboardStatsRepository } from '../console-api-dashboard/repositories/dashboard-stats-repository'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -96,8 +97,12 @@ export const transactionsViewHandler = lambdaApi()(
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: client,
     })
+    const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
+      mongoDb: client,
+    })
     const caseService = new CaseService(
       caseRepository,
+      dashboardStatsRepository,
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET

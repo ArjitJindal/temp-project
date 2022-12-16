@@ -912,4 +912,14 @@ export class CaseRepository {
       })
       .toArray()
   }
+
+  public async getCasesByIds(caseIds: string[]): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return await casesCollection
+      .find({
+        caseId: { $in: caseIds },
+      })
+      .toArray()
+  }
 }

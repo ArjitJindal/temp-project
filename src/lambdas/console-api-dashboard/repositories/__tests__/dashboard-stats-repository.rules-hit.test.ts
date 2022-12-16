@@ -17,37 +17,48 @@ describe.each([{ caseType: 'TRANSACTION' }, { caseType: 'USER' }])(
       const caseRepository = await getCaseRepo(TENANT_ID)
       const statsRepository = await getStatsRepo(TENANT_ID)
 
-      const timestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
-
       const originUserId = 'test-user-id'
       const destinationUserId = 'test-user-id-2'
       const hitRules = [hitRule()]
-      const transaction = {
-        ...getTestTransaction({
-          timestamp,
-        }),
-        hitRules: hitRules,
-        executedRules: hitRules,
-        originUserId: originUserId,
-        destinationUserId: destinationUserId,
-      }
+      const transactions = [
+        {
+          ...getTestTransaction({
+            timestamp: dayjs('2022-01-30T12:00:00.000Z').valueOf(),
+          }),
+          hitRules: hitRules,
+          executedRules: hitRules,
+          originUserId: originUserId,
+          destinationUserId: destinationUserId,
+        },
+        {
+          ...getTestTransaction({
+            timestamp: dayjs('2022-01-30T18:00:00.000Z').valueOf(),
+          }),
+          hitRules: hitRules,
+          executedRules: hitRules,
+          originUserId: originUserId,
+          destinationUserId: destinationUserId,
+        },
+      ]
 
+      const createdTimestamp = dayjs('2022-01-30T12:00:00.000Z').valueOf()
       await caseRepository.addCaseMongo({
         caseId: 'C-1',
+        createdTimestamp,
         caseType: caseType as CaseType,
-        caseTransactions: [transaction],
-        caseTransactionsIds: [transaction.transactionId],
+        caseTransactions: transactions,
+        caseTransactionsIds: transactions.map((t) => t.transactionId),
       })
-      await statsRepository.refreshTransactionStats(timestamp)
+      await statsRepository.recalculateRuleHitStats(createdTimestamp)
       const stats = await statsRepository.getRuleHitCountStats(
-        dayjs('2022-01-30T00:00:00.000Z').valueOf(),
-        dayjs('2022-01-31T00:00:00.000Z').valueOf()
+        dayjs('2022-01-30T11:00:00.000Z').valueOf(),
+        dayjs('2022-01-30T13:00:00.000Z').valueOf()
       )
       expect(stats).toEqual([
         {
           ruleId: 'R-1',
           ruleInstanceId: '1',
-          hitCount: 1,
+          hitCount: 2,
           transactionCasesCount: caseType === 'TRANSACTION' ? 1 : 0,
           userCasesCount: caseType === 'USER' ? 1 : 0,
           openTransactionCasesCount: caseType === 'TRANSACTION' ? 1 : 0,
@@ -79,23 +90,26 @@ test(`Multiple cases`, async () => {
 
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
+    createdTimestamp: timestamp,
     caseType: 'TRANSACTION',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
+    createdTimestamp: timestamp,
     caseType: 'TRANSACTION',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
+    createdTimestamp: timestamp,
     caseType: 'USER',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
-  await statsRepository.refreshTransactionStats(timestamp)
+  await statsRepository.recalculateRuleHitStats(timestamp)
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()
@@ -134,6 +148,7 @@ test(`Multiple cases - opened and closed`, async () => {
 
   await caseRepository.addCaseMongo({
     caseId: 'C-1',
+    createdTimestamp: timestamp,
     caseType: 'TRANSACTION',
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
@@ -141,6 +156,7 @@ test(`Multiple cases - opened and closed`, async () => {
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-2',
+    createdTimestamp: timestamp,
     caseType: 'TRANSACTION',
     caseStatus: 'CLOSED',
     caseTransactions: [transaction],
@@ -148,6 +164,7 @@ test(`Multiple cases - opened and closed`, async () => {
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-3',
+    createdTimestamp: timestamp,
     caseType: 'USER',
     caseStatus: 'OPEN',
     caseTransactions: [transaction],
@@ -155,12 +172,13 @@ test(`Multiple cases - opened and closed`, async () => {
   })
   await caseRepository.addCaseMongo({
     caseId: 'C-4',
+    createdTimestamp: timestamp,
     caseType: 'USER',
     caseStatus: 'REOPENED',
     caseTransactions: [transaction],
     caseTransactionsIds: [transaction.transactionId],
   })
-  await statsRepository.refreshTransactionStats(timestamp)
+  await statsRepository.recalculateRuleHitStats(timestamp)
   const stats = await statsRepository.getRuleHitCountStats(
     dayjs('2022-01-30T00:00:00.000Z').valueOf(),
     dayjs('2022-01-31T00:00:00.000Z').valueOf()

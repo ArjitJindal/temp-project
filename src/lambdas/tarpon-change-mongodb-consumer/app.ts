@@ -83,7 +83,13 @@ async function transactionHandler(
     logger.info(`Calculation of ARS & DRS Completed`)
   }
 
-  await dashboardStatsRepository.refreshTransactionStats(transaction.timestamp)
+  // Update dashboard stats
+  await Promise.all([
+    dashboardStatsRepository.refreshTransactionStats(transaction.timestamp),
+    ...cases.map((c) =>
+      dashboardStatsRepository.refreshCaseStats(c.createdTimestamp)
+    ),
+  ])
 
   // New case slack alert: We only create alert for new transactions. Skip for existing transactions.
   if (!currentStatus && newStatus !== 'ALLOW' && cases.length > 0) {

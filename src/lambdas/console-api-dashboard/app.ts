@@ -45,7 +45,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshTransactionStats()
+        await dashboardStatsRepository.refreshAllStats()
       }
 
       const data = await dashboardStatsRepository.getTransactionCountStats(
@@ -85,7 +85,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshTransactionStats()
+        await dashboardStatsRepository.refreshAllStats()
       }
 
       return {
@@ -109,7 +109,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshTransactionStats()
+        await dashboardStatsRepository.refreshAllStats()
       }
 
       const endTimestampNumber = endTimestamp
@@ -142,7 +142,7 @@ export const dashboardStatsHandler = lambdaApi()(
         mongoDb: client,
       })
       if (process.env.ENV === 'local') {
-        await dashboardStatsRepository.refreshTransactionStats()
+        await dashboardStatsRepository.refreshAllStats()
       }
 
       const data = await dashboardStatsRepository.getDRSDistributionStats()
