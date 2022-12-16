@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, Col, Row } from 'antd';
 import _ from 'lodash';
 import { Column } from '@ant-design/charts';
@@ -11,10 +11,16 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import {
+  getRiskLevelFromAlias,
+  getRiskLevelLabel,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
+import { map } from '@/utils/asyncResource';
 
 export default function DRSDistributionCard() {
   const api = useApi();
-
+  const settings = useSettings();
   const queryResult = useQuery(USERS_STATS(), async () => {
     const response = await api.getDashboardStatsDrsDistribution();
     return {
@@ -23,17 +29,33 @@ export default function DRSDistributionCard() {
     };
   });
 
+  const graphData = useMemo(() => {
+    return map(queryResult.data, (data) => {
+      return {
+        total: data.total,
+        items: data.items.map((item) => {
+          return {
+            type: getRiskLevelLabel(item.riskLevel, settings),
+            count: item.count,
+            riskLevel: item.riskLevel,
+            riskScoreRange: item.riskScoreRange,
+            percentage: item.percentage,
+          };
+        }),
+      };
+    });
+  }, [queryResult.data, settings]);
+
   return (
     <div>
-      <AsyncResourceRenderer resource={queryResult.data}>
+      <AsyncResourceRenderer resource={graphData}>
         {(response) => {
           if (response.total === 0) {
             return <NoData />;
           }
-
           const config = {
             data: response.items,
-            xField: 'riskLevel',
+            xField: 'type',
             yField: 'count',
             columnWidthRatio: 1,
             xAxis: {
@@ -43,7 +65,7 @@ export default function DRSDistributionCard() {
               },
             },
             color: (data: any) => {
-              return RISK_LEVEL_COLORS[data.riskLevel].primary;
+              return RISK_LEVEL_COLORS[getRiskLevelFromAlias(data.type, settings)].primary;
             },
             interactions: [
               {
