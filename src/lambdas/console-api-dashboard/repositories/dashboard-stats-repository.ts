@@ -184,7 +184,9 @@ export class DashboardStatsRepository {
             },
             userId: `$${userFieldName}`,
           },
-          rulesHit: { $sum: { $size: '$caseTransactions.hitRules' } },
+          rulesHit: {
+            $sum: { $size: { $ifNull: ['$caseTransactions.hitRules', []] } },
+          },
           transactionsHit: {
             $sum: 1,
           },
