@@ -160,7 +160,7 @@ export class DashboardStatsRepository {
         $match: {
           ...timestampMatch,
           // NOTE: We only aggregate the stats for known users
-          [userFieldName]: { $exists: true },
+          [userFieldName]: { $ne: null },
         },
       },
       {
