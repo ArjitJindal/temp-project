@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
 import { StackConstants } from '@cdk/constants'
+import { PulseAuditLogService } from './services/pulse-audit-log'
 import { logger } from '@/core/logger'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
@@ -14,7 +15,10 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { PostPulseRiskParameters } from '@/@types/openapi-internal/PostPulseRiskParameters'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesParameterEnum,
+} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['PULSE'],
@@ -28,6 +32,7 @@ export const riskClassificationHandler = lambdaApi({
 
     const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+    const auditLogService = new PulseAuditLogService(tenantId)
 
     if (
       event.httpMethod === 'GET' &&
@@ -48,11 +53,21 @@ export const riskClassificationHandler = lambdaApi({
         event.body
       ) as RiskClassificationScore[]
       validateClassificationRequest(classificationValues)
+
+      const oldClassificationValues =
+        await riskRepository.getRiskClassificationValues()
+
       const result =
         await riskRepository.createOrUpdateRiskClassificationConfig(
           classificationValues
         )
-      return result.classificationValues
+      const newClassificationValues = result.classificationValues
+
+      await auditLogService.handleAuditLogForRiskClassificationsUpdated(
+        oldClassificationValues as unknown as RiskClassificationScore[],
+        newClassificationValues
+      )
+      return newClassificationValues
     }
     throw new BadRequest('Unhandled request')
   }
@@ -83,7 +98,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     logger.info('tenantId', tenantId)
-
+    const auditLogService = new PulseAuditLogService(tenantId)
     const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
     if (
@@ -99,9 +114,23 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return await riskRepository.createOrUpdateParameterRiskItem(
-        parameterRiskLevels.parameterAttributeRiskValues
+      const oldParameterRiskItemValue =
+        await riskRepository.getParameterRiskItem(
+          parameterRiskLevels.parameterAttributeRiskValues.parameter,
+          parameterRiskLevels.parameterAttributeRiskValues.riskEntityType
+        )
+
+      const newParameterRiskItemValue =
+        await riskRepository.createOrUpdateParameterRiskItem(
+          parameterRiskLevels.parameterAttributeRiskValues
+        )
+
+      await auditLogService.handleParameterRiskItemUpdate(
+        oldParameterRiskItemValue as unknown as ParameterAttributeRiskValues,
+        newParameterRiskItemValue
       )
+
+      return newParameterRiskItemValue
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/pulse/risk-parameter'
@@ -135,7 +164,7 @@ export const manualRiskAssignmentHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const { userId } = event.queryStringParameters as any
-
+    const auditLogService = new PulseAuditLogService(tenantId)
     // todo: need to assert that user has this feature enabled
     const dynamoDb = getDynamoDbClientByEvent(event)
     const riskRepository = new RiskRepository(tenantId, { dynamoDb })
@@ -152,11 +181,23 @@ export const manualRiskAssignmentHandler = lambdaApi({
       } catch (e) {
         throw new BadRequest('Invalid Request')
       }
-      return riskRepository.createOrUpdateManualDRSRiskItem(
-        userId,
-        body.riskLevel,
-        body.isUpdatable
+
+      const oldDrsRiskItem = await riskRepository.getDRSRiskItem(userId)
+
+      const newDrsRiskItem =
+        await riskRepository.createOrUpdateManualDRSRiskItem(
+          userId,
+          body.riskLevel,
+          body.isUpdatable
+        )
+
+      await auditLogService.handleDrsUpdate(
+        oldDrsRiskItem,
+        newDrsRiskItem,
+        'MANUAL'
       )
+
+      return newDrsRiskItem
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/pulse/risk-assignment'

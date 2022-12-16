@@ -22,6 +22,7 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
+import { PulseAuditLogService } from '@/lambdas/console-api-pulse/services/pulse-audit-log'
 
 const DOMESTIC_FOREIGN_PARAMETERS: ParameterAttributeRiskValuesParameterEnum[] =
   [
@@ -219,15 +220,21 @@ const calculateAndUpdateDRS = async (
   if (krsScore == null) {
     return
   }
+
   const drsObject = await riskRepository.getDrsScore(userId)
   const currentDrsValue = drsObject?.drsScore ?? krsScore
 
   if (!drsObject?.isUpdatable) {
     return
   }
-
+  const auditLogService = new PulseAuditLogService(riskRepository.tenantId)
   const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
   await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)
+  const newDrsObject = await riskRepository.getDrsScore(userId)
+
+  if (newDrsObject == null) {
+    await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
+  }
 }
 
 const getUsersFromTransaction = async (

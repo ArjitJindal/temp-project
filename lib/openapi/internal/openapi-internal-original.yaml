@@ -4123,6 +4123,9 @@ components:
           enum:
             - COMMENT
             - DOCUMENT
+            - RISK_CLASSIFICATION
+            - DRS_RISK_LEVEL
+            - PARAMETER_RISK_ITEM
         action:
           type: string
           enum:
