@@ -2,7 +2,11 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { Checkbox, Input, message, Radio, Row, Space } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
-import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '../../utils';
+import {
+  RULE_CASE_CREATION_TYPE_OPTIONS,
+  RULE_CASE_PRIORITY,
+  RULE_NATURE_OPTIONS,
+} from '../../utils';
 import { ruleIdsWithAllowedFalsePositiveCheck } from '../../create-rule/components/RuleConfigurationsEditor/consts';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
@@ -64,6 +68,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   );
   const [caseCreationType, setCaseCreationType] = useState(ruleInstance.caseCreationType);
   const [casePriority, setCasePriority] = useState(ruleInstance.casePriority);
+  const [nature, setNature] = useState(ruleInstance.nature);
   const [falsePositiveCheckEnabled, setFalsePositiveCheckEnabled] = useState<boolean>(
     ruleInstance.falsePositiveCheckEnabled ?? false,
   );
@@ -74,6 +79,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     setCaseCreationType(ruleInstance.caseCreationType);
     setCasePriority(ruleInstance.casePriority);
     setFalsePositiveCheckEnabled(ruleInstance.falsePositiveCheckEnabled ?? false);
+    setNature(ruleInstance.nature);
     console.log('done cancel');
   }, [
     ruleInstance.action,
@@ -81,6 +87,7 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     ruleInstance.caseCreationType,
     ruleInstance.casePriority,
     ruleInstance.falsePositiveCheckEnabled,
+    ruleInstance.nature,
   ]);
   const handleParametersChange = useCallback((newParameters: object) => {
     setParameters(newParameters);
@@ -219,6 +226,16 @@ export const RuleInstanceDetails: React.FC<Props> = ({
             optionType="button"
             disabled={!editing || saving}
             value={caseCreationType}
+          ></Radio.Group>
+        </ProDescriptions.Item>
+        <ProDescriptions.Item label={<b>Nature</b>}>
+          <Radio.Group
+            name="ruleNature"
+            options={RULE_NATURE_OPTIONS}
+            onChange={(event) => setNature(event.target.value)}
+            optionType="button"
+            disabled={!editing || saving}
+            value={nature}
           ></Radio.Group>
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Case Priority</b>}>

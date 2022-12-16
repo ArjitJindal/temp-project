@@ -42,6 +42,11 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         width: 100,
         dataIndex: 'defaultCasePriority',
       },
+      {
+        title: 'Rule Nature',
+        width: 100,
+        dataIndex: 'defaultCaseNature',
+      },
     ];
     return [
       {

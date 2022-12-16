@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { AjvError } from '@rjsf/core';
 import styles from './style.module.less';
 import { ruleIdsWithAllowedFalsePositiveCheck } from './consts';
-import { CasePriority, CaseType, Rule } from '@/apis';
+import { CasePriority, CaseType, Rule, RuleNature } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
@@ -12,7 +12,11 @@ import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { RULE_CASE_CREATION_TYPE_OPTIONS, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
+import {
+  RULE_CASE_CREATION_TYPE_OPTIONS,
+  RULE_CASE_PRIORITY,
+  RULE_NATURE_OPTIONS,
+} from '@/pages/rules/utils';
 import { RuleFiltersEditor } from '@/components/rules/RuleFiltersEditor';
 
 interface Props {
@@ -42,6 +46,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
       : undefined,
   );
   const [caseCreationType, setCaseCreationType] = useState(rule.defaultCaseCreationType);
+  const [nature, setNature] = useState(rule.defaultNature);
   const [casePriority, setCasePriority] = useState(rule.defaultCasePriority);
   const [parameters, setParameters] = useState(rule.defaultParameters);
   const [filters, setFilters] = useState({});
@@ -89,6 +94,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
       casePriority: CasePriority,
       caseCreationType: CaseType,
       falsePositiveCheckEnabled: boolean | undefined,
+      nature: RuleNature,
     ) => {
       try {
         setActivating(true);
@@ -103,6 +109,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
             riskLevelActions,
             casePriority,
             caseCreationType,
+            nature,
             falsePositiveCheckEnabled,
           },
         });
@@ -148,6 +155,15 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
               onChange={(event) => setCasePriority(event.target.value)}
               optionType="button"
               value={casePriority}
+            ></Radio.Group>
+          </Descriptions.Item>
+          <Descriptions.Item label="Nature">
+            <Radio.Group
+              name="nature"
+              options={RULE_NATURE_OPTIONS}
+              onChange={(event) => setNature(event.target.value)}
+              optionType="button"
+              value={nature}
             ></Radio.Group>
           </Descriptions.Item>
           {isFalsePositiveCheckEnabled && ruleIdsWithAllowedFalsePositiveCheck.includes(rule.id) && (
@@ -204,6 +220,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
                 casePriority,
                 caseCreationType,
                 falsePositiveCheckEnabled,
+                nature,
               )
             }
             disabled={validationErrors.length > 0}

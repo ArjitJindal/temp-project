@@ -76,6 +76,11 @@ const MyRule = () => {
         width: 50,
         dataIndex: 'casePriority',
       },
+      {
+        title: 'Rule Nature',
+        width: 50,
+        dataIndex: 'nature',
+      },
     ];
     return [
       {
