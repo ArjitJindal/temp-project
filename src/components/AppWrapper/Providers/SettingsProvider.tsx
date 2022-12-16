@@ -90,18 +90,21 @@ export function useRiskActionLabel(ruleAction: RuleAction | undefined): string |
   const settings = useSettings();
   return getRiskActionLabel(ruleAction, settings);
 }
-export function getRiskLevelLabel(
-  riskLevel: RiskLevel | undefined,
-  settings: TenantSettings,
-): string | undefined {
-  if (!riskLevel) {
-    return;
-  }
+export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
   const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
   return alias || capitalizeWords(riskLevel);
 }
 
-export function useRiskLevelLabel(riskLevel: RiskLevel | undefined): string | undefined {
+export function getRiskLevelFromAlias(riskLevelAlias: string, settings: TenantSettings): string {
+  const riskLevel =
+    settings.riskLevelAlias?.find(
+      (item) =>
+        _.toLower(item.alias).replace('_', ' ') === _.toLower(riskLevelAlias).replace('_', ' '),
+    )?.level || riskLevelAlias;
+  return riskLevel;
+}
+
+export function useRiskLevelLabel(riskLevel: RiskLevel): string | undefined {
   const settings = useSettings();
   return getRiskLevelLabel(riskLevel, settings);
 }

@@ -22,12 +22,14 @@ export const RiskLevelSettings: React.FC = () => {
   );
   const [commitedLevelToAlias, setCommitedLevelToAlias] = useState<
     Map<RiskLevel | undefined, string>
-  >(new Map());
+  >(new Map([...levelToAlias]));
   const savedLevelToAlias = useMemo(
     () => new Map([...levelToAlias, ...commitedLevelToAlias]),
     [levelToAlias, commitedLevelToAlias],
   );
-  const [newLevelToAlias, setNewLevelToAlias] = useState<Map<RiskLevel, string>>(new Map());
+  const [newLevelToAlias, setNewLevelToAlias] = useState<Map<RiskLevel | undefined, string>>(
+    new Map([...levelToAlias]),
+  );
   const handleUpdateAlias = useCallback(
     (level: RiskLevel, newAlias: string) => {
       setNewLevelToAlias(new Map(newLevelToAlias).set(level, newAlias.trim()));

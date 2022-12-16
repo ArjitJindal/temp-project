@@ -4,9 +4,10 @@ import cn from 'clsx';
 import _ from 'lodash';
 import s from './style.module.less';
 import { RiskLevel } from '@/apis';
-import { RISK_LEVELS, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS } from '@/utils/risk-levels';
+import { RISK_LEVELS, RISK_LEVEL_COLORS } from '@/utils/risk-levels';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import COLORS from '@/components/ui/colors';
+import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   value: RiskLevel[];
@@ -15,6 +16,7 @@ interface Props {
 
 export default function PopupContent(props: Props) {
   const { value, onConfirm } = props;
+  const settings = useSettings();
 
   return (
     <div className={s.root}>
@@ -41,7 +43,7 @@ export default function PopupContent(props: Props) {
                     style={{ backgroundColor: RISK_LEVEL_COLORS[item].primary }}
                   />
                   <div className={s.riskLabel}>
-                    <div>{RISK_LEVEL_LABELS[item]}</div>
+                    <div>{getRiskLevelLabel(item, settings)} Risk</div>
                   </div>
                 </div>
                 <div className={s.checkContainer}>
