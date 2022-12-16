@@ -70,11 +70,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
   });
 
   const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
-    pushParamsToNavigation({
-      ...newParams,
-      page: params.page,
-      sort: params.sort,
-    });
+    pushParamsToNavigation(newParams);
   };
 
   useDeepEqualEffect(() => {

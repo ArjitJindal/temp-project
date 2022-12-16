@@ -43,7 +43,7 @@
     "precommit": "lint-staged",
     "prettier": "prettier -c --write .",
     "start:local": "cross-env ENV=local WATCH=true node build",
-    "start:dev": "cross-env ENV=dev WATCH=true node build",
+    "start:dev": "cross-env MODE=development ENV=dev WATCH=true node build",
     "pretest": "node ./tests/beforeTest",
     "test:cypress": "node ./tests/run-tests.js",
     "test:unit": "jest src",

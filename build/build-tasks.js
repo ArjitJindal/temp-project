@@ -76,7 +76,7 @@ async function buildCode(env, options) {
       nodeModules: PROJECT_DIR + '/node_modules/',
     }),
   ];
-  const devMode = config.mode === 'development';
+  const devMode = (process.env.MODE ?? config.mode) === 'development';
   const envName = config.envName ?? 'unknown_env';
   const releaseSuffix =
     process.env.ENV === 'dev' || process.env.ENV === 'sandbox'
