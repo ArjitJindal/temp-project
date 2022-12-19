@@ -66,7 +66,9 @@ export class CaseService {
         caseIds.map((caseId) =>
           this.saveCaseComment(caseId, {
             userId,
-            body: `Case Status Changed to ${updateRequest.caseStatus}`,
+            body:
+              `Case Status Changed to ${updateRequest.caseStatus}` +
+              (updateRequest.comment ? `. ${updateRequest.comment}` : ''),
             files: updateRequest.files,
           })
         )

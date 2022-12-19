@@ -3755,6 +3755,8 @@ components:
           $ref: '#/components/schemas/CasePriority'
         otherReason:
           type: string
+        comment:
+          type: string
         files:
           type: array
           items:
