@@ -284,7 +284,6 @@ export class DashboardStatsRepository {
         $merge: {
           into: aggregationCollection,
           whenMatched: 'merge',
-          whenNotMatched: 'insert',
         },
       },
     ]
@@ -351,7 +350,6 @@ export class DashboardStatsRepository {
           $merge: {
             into: aggregationCollection,
             whenMatched: 'merge',
-            whenNotMatched: 'insert',
           },
         },
       ])
@@ -524,7 +522,7 @@ export class DashboardStatsRepository {
               granularity === 'DAY'
                 ? aggregatedDailyCollectionName
                 : aggregatedMonthlyCollectionName,
-            whenMatched: 'replace',
+            whenMatched: 'merge',
           },
         },
       ]
@@ -548,7 +546,11 @@ export class DashboardStatsRepository {
   }
 
   public async refreshAllStats() {
-    await Promise.all([this.refreshTransactionStats(), this.refreshCaseStats()])
+    await Promise.all([
+      this.refreshTransactionStats(),
+      this.refreshCaseStats(),
+      this.refreshUserStats(),
+    ])
   }
 
   public async refreshTransactionStats(transactionTimestamp?: number) {

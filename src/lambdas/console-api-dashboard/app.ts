@@ -8,8 +8,24 @@ import {
   GranularityValuesType,
 } from './repositories/dashboard-stats-repository'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { JWTAuthorizerResult } from '@/@types/jwt'
+import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+
+function shouldRefreshAll(
+  event: APIGatewayProxyWithLambdaAuthorizerEvent<
+    APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+  >
+): boolean {
+  const { role, verifiedEmail } = event.requestContext.authorizer
+  if (process.env.ENV === 'local') {
+    return true
+  }
+  if (event.queryStringParameters?.forceRefresh) {
+    assertRole({ role, verifiedEmail }, 'root')
+    return true
+  }
+  return false
+}
 
 export const dashboardStatsHandler = lambdaApi()(
   async (
@@ -44,7 +60,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV === 'local') {
+      if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
 
@@ -84,7 +100,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV === 'local') {
+      if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
 
@@ -108,7 +124,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV === 'local') {
+      if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
 
@@ -141,7 +157,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
         mongoDb: client,
       })
-      if (process.env.ENV === 'local') {
+      if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAllStats()
       }
 
