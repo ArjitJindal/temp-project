@@ -43,11 +43,11 @@ let tenantId
 let timestamp
 
 for (let i = 0; i < process.argv.length; i++) {
-  if (process.argv[i] === '--tenant-id') {
-    tenantId = process.argv[i + 1].split('=')[1]
+  if (process.argv[i].startsWith('--tenant-id')) {
+    tenantId = process.argv[i].split('=')[1]
   }
-  if (process.argv[i] === '--timestamp') {
-    timestamp = process.argv[i + 1].split('=')[1]
+  if (process.argv[i].startsWith('--timestamp')) {
+    timestamp = process.argv[i].split('=')[1]
   }
 }
 
