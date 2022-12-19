@@ -48,8 +48,8 @@ export const casesHandler = lambdaApi()(
     const caseAuditLogService = new CaseAuditLogService(caseService, tenantId)
     if (event.httpMethod === 'GET' && event.resource === '/cases') {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -90,8 +90,8 @@ export const casesHandler = lambdaApi()(
         filterRiskLevel,
       } = event.queryStringParameters as any
       const params: DefaultApiGetCaseListRequest = {
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -209,12 +209,13 @@ export const casesHandler = lambdaApi()(
       event.resource === '/cases/{caseId}/transactions' &&
       event.pathParameters?.caseId
     ) {
-      const { limit, skip, includeUsers } = event.queryStringParameters as any
+      const { page, pageSize, includeUsers } =
+        event.queryStringParameters as any
       return await caseService.getCaseTransactions(
         event.pathParameters.caseId,
         {
-          limit: parseInt(limit) || 20,
-          skip: parseInt(skip) || 0,
+          page,
+          pageSize,
           includeUsers: includeUsers === 'true',
         }
       )

@@ -28,6 +28,8 @@ import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Tag } from '@/@types/openapi-public/Tag'
 import {
+  paginateFindOptions,
+  paginatePipeline,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
@@ -50,6 +52,7 @@ import dayjs, { duration } from '@/utils/dayjs'
 import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesResponse } from '@/@types/openapi-internal/TransactionsUniquesResponse'
+import { OptionalPagination } from '@/utils/pagination'
 
 type QueryCountResult = { count: number; scannedCount: number }
 type TimeRange = {
@@ -134,7 +137,7 @@ export class TransactionRepository {
   }
 
   public getTransactionsMongoQuery(
-    params: DefaultApiGetTransactionsListRequest
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Filter<TransactionCaseManagement> {
     const conditions: Filter<TransactionCaseManagement>[] = []
     conditions.push({
@@ -265,7 +268,7 @@ export class TransactionRepository {
   }
 
   public getTransactionsCursor(
-    params: DefaultApiGetTransactionsListRequest
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): AggregationCursor<TransactionCaseManagement> {
     const query = this.getTransactionsMongoQuery(params)
     return this.getDenormalizedTransactions(query, params)
@@ -273,7 +276,7 @@ export class TransactionRepository {
 
   private getDenormalizedTransactions(
     query: Filter<TransactionCaseManagement>,
-    params: DefaultApiGetTransactionsListRequest
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ) {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -296,12 +299,7 @@ export class TransactionRepository {
         { $sort: { Hit: sortOrder } }
       )
     }
-    if (params?.skip) {
-      pipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      pipeline.push({ $limit: params.limit })
-    }
+    pipeline.push(...paginatePipeline(params))
     if (params?.includeUsers) {
       pipeline.push(
         ...[
@@ -361,7 +359,7 @@ export class TransactionRepository {
   }
 
   public async getTransactionsCount(
-    params: DefaultApiGetTransactionsListRequest
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<TransactionCaseManagement>(
@@ -372,7 +370,7 @@ export class TransactionRepository {
   }
 
   public async getTransactions(
-    params: DefaultApiGetTransactionsListRequest
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<{ total: number; data: TransactionCaseManagement[] }> {
     const cursor = await this.getTransactionsCursor(params)
     const total = await this.getTransactionsCount(params)
@@ -420,8 +418,6 @@ export class TransactionRepository {
       {
         includeUsers: true,
         includeEvents: true,
-        limit: 1,
-        skip: 0,
         beforeTimestamp: Date.now(),
       }
     ).next()
@@ -1391,9 +1387,8 @@ export class TransactionRepository {
     } = {}
 
     const cursor = await collection.find(query, {
-      skip: params.skip,
-      limit: params.limit,
       sort: { [sortField]: sortOrder },
+      ...paginateFindOptions(params),
     })
     for await (const next of cursor) {
       const transactionType = next.type ?? 'null'
@@ -1450,16 +1445,7 @@ export class TransactionRepository {
     const minMaxPipeline: Document[] = []
     minMaxPipeline.push({ $match: query })
     minMaxPipeline.push({ $sort: { [sortField]: sortOrder } })
-    if (params.skip) {
-      minMaxPipeline.push({
-        $skip: params.skip,
-      })
-    }
-    if (params.limit) {
-      minMaxPipeline.push({
-        $limit: params.limit,
-      })
-    }
+    minMaxPipeline.push(...paginatePipeline(params))
     minMaxPipeline.push({
       $group: {
         _id: '_id',
@@ -1511,9 +1497,8 @@ export class TransactionRepository {
     }))
 
     const transactionsCursor = collection.find(query, {
-      skip: params.skip,
-      limit: params.limit,
       sort: { [sortField]: sortOrder },
+      ...paginateFindOptions(params),
     })
     for await (const transaction of transactionsCursor) {
       if (transaction.timestamp) {

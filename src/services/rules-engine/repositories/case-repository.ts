@@ -11,6 +11,7 @@ import { NotFound } from 'http-errors'
 import {
   CASES_COLLECTION,
   COUNTER_COLLECTION,
+  paginatePipeline,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
@@ -29,6 +30,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { PaginationParams, OptionalPagination } from '@/utils/pagination'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -92,7 +94,9 @@ export class CaseRepository {
     }
   }
 
-  private getCasesMongoQuery(params: DefaultApiGetCaseListRequest): {
+  private getCasesMongoQuery(
+    params: OptionalPagination<DefaultApiGetCaseListRequest>
+  ): {
     filter: Filter<Case>
   } {
     const conditions: Filter<Case>[] = []
@@ -384,7 +388,9 @@ export class CaseRepository {
     }
   }
 
-  public getCasesMongoPipeline(params: DefaultApiGetCaseListRequest): {
+  public getCasesMongoPipeline(
+    params: OptionalPagination<DefaultApiGetCaseListRequest>
+  ): {
     // Pipeline stages to be run before `limit`
     preLimitPipeline: Document[]
     // Pipeline stages to be run after `limit` - for augmentation-purpose only. The fields
@@ -577,7 +583,7 @@ export class CaseRepository {
       )
     }
 
-    preLimitPipeline.push({ $sort: { [sortField]: sortOrder } })
+    preLimitPipeline.push({ $sort: { [sortField]: sortOrder, _id: 1 } })
     preLimitPipeline.push({
       $project: {
         _originUserName: false,
@@ -643,16 +649,11 @@ export class CaseRepository {
   }
 
   public getCasesCursor(
-    params: DefaultApiGetCaseListRequest
+    params: OptionalPagination<DefaultApiGetCaseListRequest>
   ): AggregationCursor<Case> {
     const { preLimitPipeline, postLimitPipeline } =
       this.getCasesMongoPipeline(params)
-    if (params?.skip) {
-      preLimitPipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      preLimitPipeline.push({ $limit: params.limit })
-    }
+    preLimitPipeline.push(...paginatePipeline(params))
     return this.getDenormalizedCases(preLimitPipeline.concat(postLimitPipeline))
   }
 
@@ -763,8 +764,8 @@ export class CaseRepository {
       includeTransactions: params.includeTransactions ?? false,
       includeTransactionEvents: params.includeTransactionEvents ?? false,
       includeTransactionUsers: params.includeTransactionUsers ?? false,
-      limit: 1,
-      skip: 0,
+      page: 1,
+      pageSize: 1,
     })
     if (data.length === 0) {
       return null
@@ -774,9 +775,7 @@ export class CaseRepository {
 
   public async getCaseTransactions(
     caseId: string,
-    params: {
-      limit: number
-      skip: number
+    params: PaginationParams & {
       includeUsers?: boolean
     }
   ): Promise<CaseTransactionsListResponse> {
@@ -801,8 +800,8 @@ export class CaseRepository {
       filterIdList: caseTransactionsIds,
       afterTimestamp: 0,
       beforeTimestamp: Number.MAX_SAFE_INTEGER,
-      limit: params.limit,
-      skip: params.skip,
+      page: params.page,
+      pageSize: params.pageSize,
       includeUsers: params.includeUsers,
     })
   }

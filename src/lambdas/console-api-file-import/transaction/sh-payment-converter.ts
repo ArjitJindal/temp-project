@@ -37,8 +37,7 @@ export class ShPaymentTransactionConverter
       mongoDb: connections.mongoDb,
     })
     const allBusinessUsers = await userRepository.getMongoBusinessUsers({
-      limit: Infinity,
-      skip: 0,
+      pageSize: 'DISABLED',
       beforeTimestamp: Infinity,
     })
     allBusinessUsers.data.forEach((user) => {

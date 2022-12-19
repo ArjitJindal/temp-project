@@ -43,8 +43,8 @@ export const businessUsersViewHandler = lambdaApi()(
 
     if (event.httpMethod === 'GET' && event.path.endsWith('/business/users')) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -54,8 +54,8 @@ export const businessUsersViewHandler = lambdaApi()(
         filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getBusinessUsers({
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -147,8 +147,8 @@ export const consumerUsersViewHandler = lambdaApi()(
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/consumer/users')) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -157,8 +157,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getConsumerUsers({
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -170,8 +170,8 @@ export const consumerUsersViewHandler = lambdaApi()(
       })
     } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -180,8 +180,8 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterRiskLevel,
       } = event.queryStringParameters as any
       return userService.getUsers({
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -286,8 +286,8 @@ export const allUsersViewHandler = lambdaApi()(
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -296,8 +296,8 @@ export const allUsersViewHandler = lambdaApi()(
         includeCasesCount,
       } = event.queryStringParameters as any
       return userService.getUsers({
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,

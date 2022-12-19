@@ -109,8 +109,8 @@ export const transactionsViewHandler = lambdaApi()(
     )
     if (event.httpMethod === 'GET' && event.path.endsWith('/transactions')) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -137,8 +137,8 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagValue,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -178,8 +178,8 @@ export const transactionsViewHandler = lambdaApi()(
       event.path.endsWith('/transactions/stats/by-types')
     ) {
       const {
-        limit,
-        skip,
+        page,
+        pageSize,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -208,8 +208,8 @@ export const transactionsViewHandler = lambdaApi()(
       } = event.queryStringParameters as any
 
       const params: DefaultApiGetTransactionsListRequest = {
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        page,
+        pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -254,8 +254,8 @@ export const transactionsViewHandler = lambdaApi()(
       event.path.endsWith('/transactions/stats/by-time')
     ) {
       const {
-        limit,
-        skip,
+        pageSize,
+        page,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -284,8 +284,8 @@ export const transactionsViewHandler = lambdaApi()(
       } = event.queryStringParameters as any
 
       const params: DefaultApiGetTransactionsListRequest = {
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        pageSize,
+        page,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,
@@ -335,8 +335,8 @@ export const transactionsViewHandler = lambdaApi()(
         TMP_BUCKET
       )
       const {
-        limit,
-        skip,
+        pageSize,
+        page,
         afterTimestamp,
         beforeTimestamp,
         filterId,
@@ -351,8 +351,8 @@ export const transactionsViewHandler = lambdaApi()(
         sortOrder,
       } = event.queryStringParameters as any
       const params: DefaultApiGetTransactionsListRequest = {
-        limit: parseInt(limit),
-        skip: parseInt(skip),
+        pageSize: pageSize,
+        page: page,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
         beforeTimestamp: parseInt(beforeTimestamp),
         filterId,

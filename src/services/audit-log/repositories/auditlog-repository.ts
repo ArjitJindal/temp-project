@@ -2,7 +2,7 @@ import { MongoClient, Document, AggregationCursor, Filter } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { AUDITLOG_COLLECTION } from '@/utils/mongoDBUtils'
+import { AUDITLOG_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 
 export class AuditLogRepository {
@@ -93,12 +93,7 @@ export class AuditLogRepository {
     params: DefaultApiGetAuditlogRequest
   ): AggregationCursor<AuditLog> {
     const pipeline = this.getAuditLogMongoPipeline(params)
-    if (params?.skip) {
-      pipeline.push({ $skip: params.skip })
-    }
-    if (params?.limit) {
-      pipeline.push({ $limit: params.limit })
-    }
+    pipeline.push(...paginatePipeline(params))
     return this.getDenormalizedAuditLog(pipeline)
   }
 

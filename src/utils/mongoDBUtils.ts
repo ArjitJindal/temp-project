@@ -1,6 +1,13 @@
-import { MongoClient } from 'mongodb'
+import { Document, FindCursor, FindOptions, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
+import {
+  DEFAULT_PAGE_SIZE,
+  getPageSizeNumber,
+  MAX_PAGE_SIZE,
+  OptionalPaginationParams,
+  PageSize,
+} from '@/utils/pagination'
 
 interface DBCredentials {
   username: string
@@ -173,3 +180,83 @@ export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
 export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
 export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
 export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
+
+/*
+  Pagination
+ */
+export function getSkipAndLimit<Params extends OptionalPaginationParams>(
+  params: Params
+): {
+  limit: number
+  skip: number
+} {
+  let pageSize: PageSize | 'DISABLED' = DEFAULT_PAGE_SIZE
+  let page = 1
+
+  if ('pageSize' in params) {
+    const pageSizeParam = params['pageSize']
+    if (typeof pageSizeParam === 'number') {
+      pageSize = pageSizeParam
+    } else if (typeof pageSizeParam === 'string') {
+      pageSize =
+        pageSizeParam === 'DISABLED'
+          ? 'DISABLED'
+          : Math.max(
+              1,
+              Math.min(
+                parseInt(pageSizeParam) || DEFAULT_PAGE_SIZE,
+                MAX_PAGE_SIZE
+              )
+            )
+    }
+  }
+  if (typeof params['page'] === 'number') {
+    page = Math.max(1, params['page'])
+  } else if (typeof params['page'] === 'string') {
+    page = Math.max(1, parseInt(params['page']) || 1)
+  }
+
+  const pageSizeAsNumber = getPageSizeNumber(pageSize)
+
+  return {
+    limit: pageSizeAsNumber,
+    skip: (page - 1) * pageSizeAsNumber,
+  }
+}
+
+export function paginateFindOptions<Params extends OptionalPaginationParams>(
+  params: Params
+): FindOptions {
+  if (params.pageSize === 'DISABLED') {
+    return {}
+  }
+  const { skip, limit } = getSkipAndLimit(params)
+  return {
+    skip,
+    limit,
+  }
+}
+
+export function paginateCursor<
+  Params extends OptionalPaginationParams,
+  TSchema
+>(
+  cursor: FindCursor<WithId<TSchema>>,
+  params: Params
+): FindCursor<WithId<TSchema>> {
+  if (params.pageSize === 'DISABLED') {
+    return cursor
+  }
+  const { skip, limit } = getSkipAndLimit(params)
+  return cursor.skip(skip).limit(limit)
+}
+
+export function paginatePipeline<Params extends OptionalPaginationParams>(
+  params: Params
+): Document[] {
+  if (params.pageSize === 'DISABLED') {
+    return []
+  }
+  const { skip, limit } = getSkipAndLimit(params)
+  return [{ $skip: skip }, { $limit: limit }]
+}

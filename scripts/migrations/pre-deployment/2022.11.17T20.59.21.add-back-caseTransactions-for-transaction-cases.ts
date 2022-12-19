@@ -8,10 +8,7 @@
 
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
-import {
-  CaseRepository,
-  MAX_TRANSACTION_IN_A_CASE,
-} from '@/services/rules-engine/repositories/case-repository'
+import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
@@ -25,8 +22,7 @@ async function migrateTenant(tenant: Tenant, revert: boolean) {
   })
   const cursor = caseRepository.getCasesCursor({
     includeTransactions: false,
-    limit: Number.MAX_SAFE_INTEGER,
-    skip: 0,
+    pageSize: 'DISABLED',
   })
   for await (const c of cursor) {
     if (
@@ -42,8 +38,7 @@ async function migrateTenant(tenant: Tenant, revert: boolean) {
             filterIdList: (c.caseTransactionsIds as any) || [],
             afterTimestamp: 0,
             beforeTimestamp: Number.MAX_SAFE_INTEGER,
-            limit: MAX_TRANSACTION_IN_A_CASE,
-            skip: 0,
+            pageSize: 'DISABLED',
             includeUsers: false,
           })
         ).data

@@ -17,8 +17,8 @@ export const auditLogHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
     const {
-      limit,
-      skip,
+      page,
+      pageSize,
       afterTimestamp,
       beforeTimestamp,
       sortField,
@@ -27,8 +27,8 @@ export const auditLogHandler = lambdaApi()(
     } = event.queryStringParameters as any
 
     const params: DefaultApiGetAuditlogRequest = {
-      limit: parseInt(limit),
-      skip: parseInt(skip),
+      page,
+      pageSize,
       afterTimestamp: parseInt(afterTimestamp) || undefined,
       beforeTimestamp: parseInt(beforeTimestamp),
       sortField: sortField,

@@ -14,7 +14,11 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { CASES_COLLECTION, USERS_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  CASES_COLLECTION,
+  paginatePipeline,
+  USERS_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -30,6 +34,7 @@ import {
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { OptionalPaginationParams, PaginationParams } from '@/utils/pagination'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -48,50 +53,50 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public async getMongoBusinessUsers(params: {
-    limit: number
-    skip: number
-    afterTimestamp?: number
-    beforeTimestamp: number
-    filterId?: string
-    filterName?: string
-    filterOperator?: FilterOperator
-    filterBusinessIndustry?: string
-    filterRiskLevel?: RiskLevel[]
-  }): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
+  public async getMongoBusinessUsers(
+    params: OptionalPaginationParams & {
+      afterTimestamp?: number
+      beforeTimestamp: number
+      filterId?: string
+      filterName?: string
+      filterOperator?: FilterOperator
+      filterBusinessIndustry?: string
+      filterRiskLevel?: RiskLevel[]
+    }
+  ): Promise<{ total: number; data: Array<InternalBusinessUser> }> {
     return (await this.getMongoUsers(params, 'BUSINESS')) as {
       total: number
       data: Array<InternalBusinessUser>
     }
   }
 
-  public async getMongoConsumerUsers(params: {
-    limit: number
-    skip: number
-    afterTimestamp?: number
-    beforeTimestamp: number
-    filterId?: string
-    filterName?: string
-    filterOperator?: FilterOperator
-    filterRiskLevel?: RiskLevel[]
-  }): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
+  public async getMongoConsumerUsers(
+    params: PaginationParams & {
+      afterTimestamp?: number
+      beforeTimestamp: number
+      filterId?: string
+      filterName?: string
+      filterOperator?: FilterOperator
+      filterRiskLevel?: RiskLevel[]
+    }
+  ): Promise<{ total: number; data: Array<InternalConsumerUser> }> {
     return (await this.getMongoUsers(params, 'CONSUMER')) as {
       total: number
       data: Array<InternalConsumerUser>
     }
   }
 
-  public async getMongoAllUsers(params: {
-    limit: number
-    skip: number
-    afterTimestamp?: number
-    beforeTimestamp: number
-    filterId?: string
-    filterName?: string
-    filterOperator?: FilterOperator
-    filterRiskLevel?: RiskLevel[]
-    includeCasesCount?: boolean
-  }): Promise<{
+  public async getMongoAllUsers(
+    params: PaginationParams & {
+      afterTimestamp?: number
+      beforeTimestamp: number
+      filterId?: string
+      filterName?: string
+      filterOperator?: FilterOperator
+      filterRiskLevel?: RiskLevel[]
+      includeCasesCount?: boolean
+    }
+  ): Promise<{
     total: number
     data: Array<InternalUser>
   }> {
@@ -136,9 +141,7 @@ export class UserRepository {
   }
 
   private async getMongoUsers(
-    params: {
-      limit: number
-      skip: number
+    params: OptionalPaginationParams & {
       afterTimestamp?: number
       beforeTimestamp: number
       filterId?: string
@@ -341,8 +344,7 @@ export class UserRepository {
           $match: query,
         },
         { $sort: { createdTimestamp: -1 } },
-        { $skip: params.skip },
-        { $limit: params.limit },
+        ...paginatePipeline(params),
         ...(params.includeCasesCount ? casesCountPipeline : []),
       ])
       .toArray()

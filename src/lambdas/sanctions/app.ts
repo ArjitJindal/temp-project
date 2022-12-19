@@ -28,10 +28,10 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       event.httpMethod === 'GET' &&
       event.resource === '/sanctions/search'
     ) {
-      const q = event.queryStringParameters
+      const q = event.queryStringParameters as any
       const params: DefaultApiGetSanctionsSearchRequest = {
-        limit: q?.limit ? parseInt(q.limit) : undefined,
-        skip: q?.skip ? parseInt(q.skip) : undefined,
+        page: q.page,
+        pageSize: q.pageSize,
       }
       return sanctionsService.getSearchHistory(params)
     } else if (

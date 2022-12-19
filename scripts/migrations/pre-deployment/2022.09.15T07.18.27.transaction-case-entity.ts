@@ -16,6 +16,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { EntityCounter } from '@/@types/openapi-internal/EntityCounter'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { OptionalPagination } from '@/utils/pagination'
 
 export async function migrateTenant(tenant: Tenant) {
   const dynamodb = await getDynamoDbClient()
@@ -45,10 +46,10 @@ export async function migrateTenant(tenant: Tenant) {
     COUNTER_COLLECTION(tenant.id)
   )
 
-  const queryParams: DefaultApiGetTransactionsListRequest = {
-    skip: 0,
-    limit: 0,
-  }
+  const queryParams: OptionalPagination<DefaultApiGetTransactionsListRequest> =
+    {
+      pageSize: 'DISABLED',
+    }
   queryParams.afterTimestamp = 0
   queryParams.beforeTimestamp = Date.now()
   const transactionsCursor = await transactionRepository.getTransactionsCursor(

@@ -1,8 +1,12 @@
 import { MongoClient } from 'mongodb'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongoDBUtils'
+import {
+  paginateCursor,
+  SANCTIONS_SEARCHES_COLLECTION,
+} from '@/utils/mongoDBUtils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
+import { PaginationParams } from '@/utils/pagination'
 
 export class SanctionsSearchRepository {
   tenantId: string
@@ -29,10 +33,9 @@ export class SanctionsSearchRepository {
     })
   }
 
-  public async getSearchHistory(params: {
-    limit?: number
-    skip?: number
-  }): Promise<SanctionsSearchHistory[]> {
+  public async getSearchHistory(
+    params: PaginationParams
+  ): Promise<SanctionsSearchHistory[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -40,12 +43,7 @@ export class SanctionsSearchRepository {
     let cursor = collection
       .find({}, { projection: { response: false } })
       .sort({ createdAt: -1 })
-    if (params.skip) {
-      cursor = cursor.skip(params.skip)
-    }
-    if (params.limit) {
-      cursor = cursor.limit(params.limit)
-    }
+    cursor = paginateCursor(cursor, params)
     return await cursor.toArray()
   }
 

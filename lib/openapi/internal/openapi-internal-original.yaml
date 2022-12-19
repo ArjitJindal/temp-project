@@ -466,15 +466,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -633,15 +631,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -747,15 +743,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: false
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: false
+          name: page
         - schema:
             type: number
           in: query
@@ -884,15 +878,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: false
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: false
+          name: page
         - schema:
             type: number
           in: query
@@ -1021,15 +1013,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -1074,15 +1064,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -1239,15 +1227,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -1820,15 +1806,13 @@ paths:
           description: Internal Server Error
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -2009,9 +1993,13 @@ paths:
       operationId: get-webhooks-webhook_id-deliveries
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /cases:
     get:
       summary: Cases - List
@@ -2028,15 +2016,13 @@ paths:
       description: ''
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
-          required: true
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
-          required: true
+          name: page
         - schema:
             type: number
           in: query
@@ -2247,15 +2233,13 @@ paths:
         in: path
         required: true
       - schema:
-          type: number
+          $ref: '#/components/schemas/PageSize'
         in: query
-        name: limit
-        required: true
+        name: pageSize
       - schema:
-          type: number
+          $ref: '#/components/schemas/Page'
         in: query
-        name: skip
-        required: true
+        name: page
       - schema:
           type: boolean
         in: query
@@ -2342,13 +2326,13 @@ paths:
                   $ref: '#/components/schemas/SanctionsSearchHistory'
       parameters:
         - schema:
-            type: number
+            $ref: '#/components/schemas/PageSize'
           in: query
-          name: limit
+          name: pageSize
         - schema:
-            type: number
+            $ref: '#/components/schemas/Page'
           in: query
-          name: skip
+          name: page
   '/sanctions/search/{searchId}':
     get:
       summary: Get single search history
@@ -4122,6 +4106,15 @@ components:
         - CASE
         - USER
         - PULSE
+    Page:
+      title: Page
+      type: number
+      minimum: 1
+    PageSize:
+      title: PageSize
+      type: number
+      minimum: 1
+      maximum: 100
     AuditLog:
       title: AuditLog
       x-stoplight:

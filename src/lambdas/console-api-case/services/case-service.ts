@@ -9,6 +9,7 @@ import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
 export class CaseService {
@@ -97,9 +98,7 @@ export class CaseService {
 
   public async getCaseTransactions(
     caseId: string,
-    params: {
-      limit: number
-      skip: number
+    params: PaginationParams & {
       includeUsers?: boolean
     }
   ): Promise<CaseTransactionsListResponse> {
