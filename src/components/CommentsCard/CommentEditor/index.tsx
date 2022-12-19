@@ -9,28 +9,38 @@ import { useApi } from '@/api';
 import { Comment as TransactionComment, FileInfo } from '@/apis';
 import { FilesList } from '@/components/files/FilesList';
 
+export interface FormValues {
+  comment: string;
+  files: FileInfo[];
+}
+
 interface Props {
   id: string;
   onCommentAdded: (comment: TransactionComment) => void;
   showFileList?: boolean;
   commentType: 'CASE' | 'USER';
+  values: FormValues;
+  onChangeValues: (newValues: FormValues) => void;
 }
 
-function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }: Props) {
+function CommentEditor(props: Props) {
+  const { id, onCommentAdded, showFileList = false, commentType, values, onChangeValues } = props;
   const api = useApi();
-  const [commentValue, setCommentValue] = useState('');
-  const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const removeFile = useCallback(
-    (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file.s3Key !== s3Key)),
-    [],
+    (s3Key) =>
+      onChangeValues({
+        ...values,
+        files: values.files.filter((file) => file.s3Key !== s3Key),
+      }),
+    [values, onChangeValues],
   );
 
   const submitComment = useCallback(async () => {
     setLoading(true);
     try {
       let comment;
-      const commentData = { Comment: { body: commentValue, files } };
+      const commentData = { Comment: { body: values.comment, files: values.files } };
       if (commentType === 'CASE') {
         comment = await api.postCaseComments({
           caseId: id,
@@ -43,14 +53,16 @@ function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }
         });
       }
       onCommentAdded(comment);
-      setCommentValue('');
-      setFiles([]);
+      onChangeValues({
+        comment: '',
+        files: [],
+      });
     } catch (err) {
       message.error('Failed to add comment');
     } finally {
       setLoading(false);
     }
-  }, [commentType, onCommentAdded, api, id, commentValue, files]);
+  }, [commentType, onCommentAdded, api, id, values, onChangeValues]);
 
   return (
     <div className={s.commentEditor}>
@@ -58,20 +70,32 @@ function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }
         <Col flex="row" className={s.commentEditorInput}>
           <Input.TextArea
             rows={2}
-            onChange={(event) => setCommentValue(event.target.value)}
-            value={commentValue}
+            onChange={(event) => onChangeValues({ ...values, comment: event.target.value })}
+            value={values.comment}
           />
         </Col>
         <div className={s.commentEditorActions}>
-          <Col style={{ padding: '0 1rem' }}>
+          <Col
+            style={{
+              paddingTop: '0rem',
+              paddingBottom: '0rem',
+              paddingLeft: '1rem',
+              paddingRight: '1rem',
+            }}
+          >
             <Upload
               multiple={true}
               fileList={
-                !showFileList ? files.map((file) => ({ uid: file.s3Key, name: file.filename })) : []
+                !showFileList
+                  ? values.files.map((file) => ({ uid: file.s3Key, name: file.filename }))
+                  : []
               }
-              onRemove={(file) =>
-                setFiles((prevFiles) => prevFiles.filter((f) => f.s3Key !== file.uid))
-              }
+              onRemove={(file) => {
+                onChangeValues({
+                  ...values,
+                  files: values.files.filter((f) => f.s3Key !== file.uid),
+                });
+              }}
               customRequest={async ({ file: f, onError, onSuccess }) => {
                 const file = f as File;
                 setLoading(true);
@@ -91,10 +115,10 @@ function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }
                   if (onSuccess) {
                     onSuccess(s3Key);
                   }
-                  setFiles((prevFiles) => [
-                    ...prevFiles,
-                    { s3Key, filename: file.name, size: file.size },
-                  ]);
+                  onChangeValues({
+                    ...values,
+                    files: [...values.files, { s3Key, filename: file.name, size: file.size }],
+                  });
                   hideMessage();
                 } catch (error) {
                   message.error('Failed to upload the file');
@@ -120,7 +144,7 @@ function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }
               loading={loading}
               onClick={submitComment}
               type="primary"
-              disabled={files.length === 0 && !commentValue}
+              disabled={values.files.length === 0 && !values.comment}
             >
               Add Comment
             </Button>
@@ -130,7 +154,7 @@ function CommentEditor({ id, onCommentAdded, showFileList = false, commentType }
       {showFileList && (
         <Row style={{ marginTop: '1rem' }}>
           <FilesList
-            files={files}
+            files={values.files}
             showGreyBackground={true}
             removeFile={removeFile}
             showDeleteButton={true}

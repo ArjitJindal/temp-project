@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
 import { CaseStatus, FileInfo } from '@/apis';
@@ -6,13 +6,18 @@ import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
 import COLORS from '@/components/ui/colors';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 interface CasesProps {
   caseIds: string[];
   newCaseStatus: CaseStatus;
   onSaved: () => void;
-  isBlue?: boolean;
-  rounded?: boolean;
+  initialValues?: FormValues;
+  buttonProps?: {
+    size?: 'small' | undefined;
+    isBlue?: boolean;
+    rounded?: boolean;
+  };
 }
 
 export interface RemoveAllFilesRef {
@@ -47,18 +52,35 @@ export const CLOSING_REASONS = [
 export interface FormValues {
   reasons: CaseClosingReasons[];
   reasonOther: string | null;
+  comment: string | null;
+  files: FileInfo[];
 }
 
 export function CasesStatusChangeForm(props: CasesProps) {
-  const { caseIds, onSaved, newCaseStatus } = props;
+  const {
+    caseIds,
+    onSaved,
+    newCaseStatus,
+    initialValues = {
+      reasons: [],
+      reasonOther: null,
+      comment: '',
+      files: [],
+    },
+    buttonProps = {},
+  } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isSaving, setSaving] = useState(false);
-  const [form] = Form.useForm<FormValues>();
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
-  const [formValues, setFormValues] = useState<FormValues>();
-  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [formValues, setFormValues] = useState<FormValues>(initialValues);
+  const [form] = Form.useForm<FormValues>();
   const api = useApi();
+
+  useDeepEqualEffect(() => {
+    form.setFieldsValue(initialValues);
+    setFormValues(initialValues);
+  }, [initialValues]);
 
   const reopenCase = useCallback(async () => {
     const hideMessage = message.loading(`Saving...`, 0);
@@ -96,7 +118,8 @@ export function CasesStatusChangeForm(props: CasesProps) {
               otherReason:
                 values.reasons.indexOf(OTHER_REASON) !== -1 ? values.reasonOther ?? '' : undefined,
               reason: values.reasons,
-              files,
+              files: values.files,
+              comment: values.comment ?? undefined,
             },
           },
         });
@@ -110,7 +133,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
         setSaving(false);
       }
     },
-    [api, caseIds, newCaseStatus, files, onSaved],
+    [api, caseIds, newCaseStatus, onSaved],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
@@ -122,7 +145,10 @@ export function CasesStatusChangeForm(props: CasesProps) {
   const uploadRef = useRef<RemoveAllFilesRef>(null);
 
   const removeFiles = useCallback(() => {
-    setFiles([]);
+    setFormValues((prevState) => ({
+      ...prevState,
+      files: [],
+    }));
     uploadRef.current?.removeAllFiles();
   }, []);
 
@@ -131,9 +157,9 @@ export function CasesStatusChangeForm(props: CasesProps) {
       <Button
         analyticsName="UpdateCaseStatus"
         style={{
-          backgroundColor: props.isBlue ? COLORS.brandBlue.base : 'white',
-          borderRadius: props.rounded ? '0.5rem' : '0',
-          color: props.isBlue ? 'white' : 'black',
+          backgroundColor: buttonProps.isBlue ? COLORS.brandBlue.base : 'white',
+          borderRadius: buttonProps.rounded ? '0.5rem' : '0',
+          color: buttonProps.isBlue ? 'white' : 'black',
         }}
         onClick={() => {
           if (newCaseStatus === 'CLOSED') {
@@ -143,6 +169,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           }
         }}
         disabled={!caseIds.length || isSaving}
+        size={buttonProps.size}
       >
         {caseStatusToOperationName(newCaseStatus)}
       </Button>
@@ -170,10 +197,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           form={form}
           layout="vertical"
           name="form_in_modal"
-          initialValues={{
-            reasons: [],
-            reasonOther: null,
-          }}
+          initialValues={initialValues}
         >
           <Form.Item
             name="reasons"
@@ -200,19 +224,11 @@ export function CasesStatusChangeForm(props: CasesProps) {
               <Input />
             </Form.Item>
           )}
-          <Form.Item name="documents" label="Attach documents">
-            <UploadFilesList
-              files={files}
-              onFileUploaded={async (file) => {
-                setFiles((prevFiles) => prevFiles.concat(file));
-              }}
-              onFileRemoved={async (fileS3Key) => {
-                setFiles((prevFiles) =>
-                  prevFiles.filter((prevFile) => prevFile.s3Key !== fileS3Key),
-                );
-              }}
-              ref={uploadRef}
-            />
+          <Form.Item name="comment" label="Comment" rules={[{ max: 50 }]}>
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item name="files" label="Attach documents">
+            <FilesInput ref={uploadRef} />
           </Form.Item>
         </Form>
       </Modal>
@@ -258,3 +274,27 @@ export function CasesStatusChangeForm(props: CasesProps) {
     </>
   );
 }
+
+const FilesInput = React.forwardRef(
+  (
+    props: {
+      value?: FileInfo[];
+      onChange?: (value: FileInfo[]) => void;
+    },
+    ref: React.Ref<RemoveAllFilesRef>,
+  ) => {
+    const { value = [], onChange } = props;
+    return (
+      <UploadFilesList
+        files={value}
+        onFileUploaded={async (file) => {
+          onChange?.([...value, file]);
+        }}
+        onFileRemoved={async (fileS3Key) => {
+          onChange?.(value.filter((prevFile) => prevFile.s3Key !== fileS3Key));
+        }}
+        ref={ref}
+      />
+    );
+  },
+);

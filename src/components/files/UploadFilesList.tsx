@@ -1,6 +1,6 @@
 import { message, Upload } from 'antd';
 import filesize from 'filesize';
-import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
 import { UploadOutlined } from '@ant-design/icons';
 import Button from '../ui/Button';
@@ -20,15 +20,11 @@ interface RemoveAllFilesRef {
 
 export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAllFilesRef>) => {
   const api = useApi();
-  const [files, setFiles] = useState<FileInfo[]>(props.files);
-  const removeFile = useCallback(
-    (s3Key) => setFiles((prevFiles) => prevFiles.filter((file) => file.s3Key !== s3Key)),
-    [],
-  );
+  const { files, onFileUploaded, onFileRemoved } = props;
 
   useImperativeHandle(ref, () => ({
-    removeAllFiles: () => {
-      setFiles([]);
+    removeAllFiles: async () => {
+      await Promise.all(files.map((file) => onFileRemoved(file.s3Key)));
     },
   }));
 
@@ -42,7 +38,6 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
       }))}
       onRemove={async (file) => {
         try {
-          removeFile(file.uid);
           await props.onFileRemoved(file.uid);
         } catch (error) {
           message.error('Failed to remove the file');
@@ -51,11 +46,9 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
       customRequest={async ({ file: f, onError, onSuccess }) => {
         const file = f as File;
         const hideMessage = message.loading('Uploading...', 0);
-        let fileS3Key = '';
         try {
           // 1. Get S3 presigned URL
           const { presignedUrl, s3Key } = await api.postGetPresignedUrl({});
-          fileS3Key = s3Key;
 
           // 2. Upload file to S3 directly
           await axios.put(presignedUrl, file, {
@@ -67,14 +60,12 @@ export const UploadFilesList = forwardRef((props: Props, ref: React.Ref<RemoveAl
             onSuccess(s3Key);
           }
           const fileInfo = { s3Key, filename: file.name, size: file.size };
-          setFiles((prevFiles) => [...prevFiles, fileInfo]);
-          await props.onFileUploaded(fileInfo);
+          await onFileUploaded(fileInfo);
           hideMessage();
         } catch (error) {
           message.error('Failed to upload the file');
           if (onError) {
             onError(new Error());
-            removeFile(fileS3Key);
           }
         } finally {
           hideMessage && hideMessage();
