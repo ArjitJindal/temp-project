@@ -1,13 +1,5 @@
 import { Tag, Tooltip, Form, Input, message, Modal, Select } from 'antd';
 import { useCallback, useRef, useState } from 'react';
-import {
-  browserName,
-  browserVersion,
-  deviceType,
-  mobileModel,
-  mobileVendor,
-  osName,
-} from 'react-device-detect';
 import style from './index.module.less';
 import {
   caseStatusToOperationName,
@@ -22,8 +14,6 @@ import COLORS from '@/components/ui/colors';
 import { CaseStatus, FileInfo } from '@/apis';
 import { useApi } from '@/api';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
-import { useAnalytics } from '@/utils/segment/context';
-import { useAuth0User } from '@/utils/user-utils';
 
 interface Props {
   confidence: number;
@@ -44,8 +34,6 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>();
   const [files, setFiles] = useState<FileInfo[]>([]);
-  const analytics = useAnalytics();
-  const user = useAuth0User();
 
   const api = useApi();
 
@@ -79,17 +67,6 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         message.success('Saved');
         setModalVisible(false);
         onSaved();
-        analytics.event({
-          title: 'Console case details - False positive label clicked',
-          tenant: user.tenantName,
-          userId: user.userId,
-          browserName,
-          deviceType,
-          browserVersion,
-          osName,
-          mobileModel,
-          mobileVendor,
-        });
       } catch (e) {
         message.error('Failed to save');
       } finally {
@@ -97,7 +74,7 @@ export const FalsePositiveTag: React.FC<Props> = (props: Props) => {
         setSaving(false);
       }
     },
-    [api, caseIds, newCaseStatus, files, onSaved, analytics, user.tenantName, user.userId],
+    [api, caseIds, newCaseStatus, files, onSaved],
   );
   return (
     <>

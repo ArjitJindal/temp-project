@@ -7,8 +7,6 @@ import { useApi } from '@/api';
 import { Account } from '@/apis';
 import { isAtLeastAdmin, parseUserRole, useAuth0User, UserRole } from '@/utils/user-utils';
 import PageWrapper from '@/components/PageWrapper';
-import { measure } from '@/utils/time-utils';
-import { useAnalytics } from '@/utils/segment/context';
 import Button from '@/components/ui/Button';
 import { TableActionType } from '@/components/ui/Table';
 import { useI18n } from '@/locales';
@@ -111,14 +109,8 @@ export default function () {
     });
   }
 
-  const analytics = useAnalytics();
-
   const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
-    const [accounts, time] = await measure(() => api.getAccounts());
-    analytics.event({
-      title: 'Table Loaded',
-      time,
-    });
+    const accounts = await api.getAccounts();
     const filteredAccounts = accounts.filter(
       (account) => parseUserRole(account.role) !== UserRole.ROOT,
     );

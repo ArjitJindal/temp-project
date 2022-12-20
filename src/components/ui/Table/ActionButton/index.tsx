@@ -1,7 +1,6 @@
 import React, { ReactSVGElement } from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
-import { useAnalytics } from '@/utils/segment/context';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 
 interface Props {
@@ -16,28 +15,11 @@ interface Props {
 }
 
 export default function ActionButton(props: Props) {
-  const {
-    icon,
-    color = 'GREEN',
-    onClick,
-    onClear,
-    children,
-    isActive,
-    analyticsName,
-    title,
-  } = props;
-
-  const analytics = useAnalytics();
+  const { icon, color = 'GREEN', onClick, onClear, children, isActive, title } = props;
 
   const handleClick = function (this: unknown, ...args: any) {
     if (onClick) {
       onClick.apply(this, args);
-    }
-    if (analyticsName) {
-      analytics.event({
-        title: 'Button Clicked',
-        name: analyticsName,
-      });
     }
   };
 

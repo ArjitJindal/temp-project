@@ -8,8 +8,6 @@ import { useTableData } from './helpers';
 import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { useAnalytics } from '@/utils/segment/context';
-import { measure } from '@/utils/time-utils';
 import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
 import { TableColumn } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
@@ -25,7 +23,6 @@ export type AuditLogItem = AuditLog & {
 
 export default function AuditLogTable() {
   const api = useApi();
-  const analytics = useAnalytics();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
@@ -34,21 +31,14 @@ export default function AuditLogTable() {
     const [sortField, sortOrder] = sort[0] ?? [];
     const [start, end] = dateRange ?? [];
 
-    const [response, time] = await measure(() =>
-      api.getAuditlog({
-        page,
-        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterTypes,
-      }),
-    );
-    analytics.event({
-      title: 'Table Loaded',
-      time,
+    return await api.getAuditlog({
+      page,
+      afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+      beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
+      sortField: sortField ?? undefined,
+      sortOrder: sortOrder ?? undefined,
+      filterTypes,
     });
-    return response;
   });
 
   const tableQueryResult = useTableData(queryResults);

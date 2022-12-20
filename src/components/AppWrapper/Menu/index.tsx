@@ -12,15 +12,6 @@ import {
   GlobalOutlined,
   ContainerOutlined,
 } from '@ant-design/icons';
-
-import {
-  browserName,
-  browserVersion,
-  deviceType,
-  mobileModel,
-  mobileVendor,
-  osName,
-} from 'react-device-detect';
 import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { matchPath, useLocation } from 'react-router';
@@ -29,8 +20,6 @@ import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
 import GavelIcon from './gavel.react.svg';
 import s from './styles.module.less';
-import { useAuth0User } from '@/utils/user-utils';
-import { useAnalytics } from '@/utils/segment/context';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
 import { hasName, isTree, RouteItem } from '@/services/routing/types';
@@ -127,8 +116,6 @@ export default function Menu(props: {
   const i18n = useI18n();
   const routes = useRoutes();
   const location = useLocation();
-  const analytics = useAnalytics();
-  const user = useAuth0User();
 
   const selectedKeys = getSelectedKeys(routes, location.pathname);
   return (
@@ -161,17 +148,6 @@ export default function Menu(props: {
           {
             key: 'button',
             onClick: () => {
-              analytics.event({
-                title: 'Clicked on sidebar Collapse button',
-                tenant: user.tenantName,
-                userId: user.userId,
-                browserName,
-                deviceType,
-                browserVersion,
-                osName,
-                mobileModel,
-                mobileVendor,
-              });
               return onChangeCollapsed(!isCollapsed);
             },
             icon: isCollapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />,

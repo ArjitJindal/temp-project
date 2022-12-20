@@ -1,7 +1,5 @@
 import React from 'react';
 import AuthProvider from './AuthProvider';
-import SegmentProvider from './SegmentProvider';
-import IdentityAnalitycs from './IdentityAnalitycs';
 import { SettingsProvider } from './SettingsProvider';
 import RouterProvider from './RouterProvider';
 import AntConfigProvider from './AntConfigProvider';
@@ -19,13 +17,9 @@ export default function Providers(props: Props) {
       <AuthProvider>
         <FlagrightUserProvider>
           <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
-            <SegmentProvider writeKey={SEGMENT_WRITE_KEY}>
-              <RouterProvider>
-                <IdentityAnalitycs>
-                  <QueryClientProvider>{props.children}</QueryClientProvider>
-                </IdentityAnalitycs>
-              </RouterProvider>
-            </SegmentProvider>
+            <RouterProvider>
+              <QueryClientProvider>{props.children}</QueryClientProvider>
+            </RouterProvider>
           </SettingsProvider>
         </FlagrightUserProvider>
       </AuthProvider>

@@ -76,7 +76,6 @@ async function main() {
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
-      segmentWriteKey: config.define.SEGMENT_WRITE_KEY,
     },
   });
   await buildStatic(env);

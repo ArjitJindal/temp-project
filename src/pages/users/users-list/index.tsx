@@ -13,8 +13,6 @@ import { useApi } from '@/api';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser, InternalUser } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
-import { measure } from '@/utils/time-utils';
-import { useAnalytics } from '@/utils/segment/context';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
@@ -55,26 +53,20 @@ const BusinessUsersTab = () => {
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
-  const analytics = useAnalytics();
   const bussinessResult = usePaginatedQuery(
     USERS('bussiness', params),
     async (paginationParams) => {
       const { createdTimestamp, userId, page, riskLevels } = params;
 
-      const [response, time] = await measure(() =>
-        api.getBusinessUsersList({
-          page,
-          ...paginationParams,
-          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-          filterId: userId,
-          filterRiskLevel: riskLevels,
-        }),
-      );
-      analytics.event({
-        title: 'Table Loaded',
-        time,
+      const response = await api.getBusinessUsersList({
+        page,
+        ...paginationParams,
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+        filterId: userId,
+        filterRiskLevel: riskLevels,
       });
+
       return {
         items: response.data,
         total: response.total,
@@ -164,26 +156,17 @@ const ConsumerUsersTab = () => {
     }
   }
 
-  const analytics = useAnalytics();
-
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const consumerResults = usePaginatedQuery(USERS('consumer', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels } = params;
 
-    const [response, time] = await measure(() =>
-      api.getConsumerUsersList({
-        page,
-        ...paginationParams,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-        filterId: userId,
-        filterRiskLevel: riskLevels,
-      }),
-    );
-
-    analytics.event({
-      title: 'Table Loaded',
-      time,
+    const response = await api.getConsumerUsersList({
+      page,
+      ...paginationParams,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+      filterId: userId,
+      filterRiskLevel: riskLevels,
     });
 
     return {
@@ -272,25 +255,20 @@ const AllUsersTab = () => {
     });
   }
 
-  const analytics = useAnalytics();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const allUsersResult = usePaginatedQuery(USERS('all', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels } = params;
-    const [response, time] = await measure(() =>
-      api.getAllUsersList({
-        page,
-        ...paginationParams,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-        filterId: userId,
-        filterRiskLevel: riskLevels,
-      }),
-    );
-    analytics.event({
-      title: 'Table Loaded',
-      time,
+
+    const response = await api.getAllUsersList({
+      page,
+      ...paginationParams,
+      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+      filterId: userId,
+      filterRiskLevel: riskLevels,
     });
+
     return {
       items: response.data,
       total: response.total,

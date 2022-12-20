@@ -13,8 +13,6 @@ import {
   RuleInstance,
 } from '@/apis';
 import { useApi } from '@/api';
-import { useAnalytics } from '@/utils/segment/context';
-import { measure } from '@/utils/time-utils';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
@@ -40,7 +38,6 @@ export type CaseManagementItem = Case & {
 export default function CaseTableWrapper(props: { caseType: CaseType }) {
   const { caseType } = props;
   const api = useApi();
-  const analytics = useAnalytics();
   const navigate = useNavigate();
 
   const pushParamsToNavigation = useCallback(
@@ -116,60 +113,56 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       } = params;
 
       const [sortField, sortOrder] = sort[0] ?? [];
-      const [response, time] = await measure(() =>
-        api.getCaseList({
-          page,
-          ...paginationParams,
-          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-          beforeTimestamp: createdTimestamp
-            ? dayjs(createdTimestamp[1]).valueOf()
-            : Number.MAX_SAFE_INTEGER,
-          ...(transactionTimestamp &&
-            transactionTimestamp.length && {
-              afterTransactionTimestamp: transactionTimestamp
-                ? dayjs(transactionTimestamp[0]).valueOf()
-                : 0,
-              beforeTransactionTimestamp: transactionTimestamp
-                ? dayjs(transactionTimestamp[1]).valueOf()
-                : Number.MAX_SAFE_INTEGER,
-            }),
-          filterId: caseId,
-          filterRulesHit: rulesHitFilter,
-          filterRulesExecuted: rulesExecutedFilter,
-          filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
-          filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
-          filterTransactionState: transactionState,
-          filterStatus: status,
-          filterOriginCurrencies: originCurrenciesFilter,
-          filterDestinationCurrencies: destinationCurrenciesFilter,
-          filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-          filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-          filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
-          transactionType: type,
-          sortField: sortField ?? undefined,
-          sortOrder: sortOrder ?? undefined,
-          includeTransactions: caseType === 'TRANSACTION',
-          includeTransactionUsers: caseType === 'TRANSACTION',
-          filterOriginPaymentMethod: originMethodFilter,
-          filterDestinationPaymentMethod: destinationMethodFilter,
-          filterTransactionTagKey: tagKey,
-          filterTransactionTagValue: tagValue,
-          filterCaseType: caseType,
-          filterTransactionId: transactionId,
-          filterOriginCountry: originCountryFilter,
-          filterDestinationCountry: destinationCountryFilter,
-          filterTransactionAmoutAbove: amountGreaterThanFilter,
-          filterTransactionAmoutBelow: amountLessThanFilter,
-          filterBusinessIndustries: businessIndustryFilter,
-          filterUserKYCStatus: kycStatuses,
-          filterRiskLevel: riskLevels,
-          filterUserState: userStates,
-        }),
-      );
-      analytics.event({
-        title: 'Table Loaded',
-        time,
+
+      const response = await api.getCaseList({
+        page,
+        ...paginationParams,
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp
+          ? dayjs(createdTimestamp[1]).valueOf()
+          : Number.MAX_SAFE_INTEGER,
+        ...(transactionTimestamp &&
+          transactionTimestamp.length && {
+            afterTransactionTimestamp: transactionTimestamp
+              ? dayjs(transactionTimestamp[0]).valueOf()
+              : 0,
+            beforeTransactionTimestamp: transactionTimestamp
+              ? dayjs(transactionTimestamp[1]).valueOf()
+              : Number.MAX_SAFE_INTEGER,
+          }),
+        filterId: caseId,
+        filterRulesHit: rulesHitFilter,
+        filterRulesExecuted: rulesExecutedFilter,
+        filterOutCaseStatus: caseStatus === 'CLOSED' ? undefined : 'CLOSED',
+        filterCaseStatus: caseStatus === 'CLOSED' ? 'CLOSED' : undefined,
+        filterTransactionState: transactionState,
+        filterStatus: status,
+        filterOriginCurrencies: originCurrenciesFilter,
+        filterDestinationCurrencies: destinationCurrenciesFilter,
+        filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+        filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+        filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
+        transactionType: type,
+        sortField: sortField ?? undefined,
+        sortOrder: sortOrder ?? undefined,
+        includeTransactions: caseType === 'TRANSACTION',
+        includeTransactionUsers: caseType === 'TRANSACTION',
+        filterOriginPaymentMethod: originMethodFilter,
+        filterDestinationPaymentMethod: destinationMethodFilter,
+        filterTransactionTagKey: tagKey,
+        filterTransactionTagValue: tagValue,
+        filterCaseType: caseType,
+        filterTransactionId: transactionId,
+        filterOriginCountry: originCountryFilter,
+        filterDestinationCountry: destinationCountryFilter,
+        filterTransactionAmoutAbove: amountGreaterThanFilter,
+        filterTransactionAmoutBelow: amountLessThanFilter,
+        filterBusinessIndustries: businessIndustryFilter,
+        filterUserKYCStatus: kycStatuses,
+        filterRiskLevel: riskLevels,
+        filterUserState: userStates,
       });
+
       return {
         total: response.total,
         items: response.data,

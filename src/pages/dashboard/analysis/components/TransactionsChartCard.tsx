@@ -6,21 +6,11 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import { each, groupBy } from 'lodash';
 import { Annotation } from '@antv/g2plot';
-import {
-  browserName,
-  browserVersion,
-  deviceType,
-  mobileModel,
-  mobileVendor,
-  osName,
-} from 'react-device-detect';
 import styles from '../style.module.less';
 import { getRuleActionColor } from '../../../../utils/rules';
 import { header } from './dashboardutils';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
-import { useAuth0User } from '@/utils/user-utils';
-import { useAnalytics } from '@/utils/segment/context';
 import { useApi } from '@/api';
 import {
   AsyncResource,
@@ -44,8 +34,6 @@ export type timeframe = 'YEAR' | 'MONTH' | 'WEEK' | 'DAY' | null;
 const { TabPane } = Tabs;
 
 const TransactionsChartCard = () => {
-  const analytics = useAnalytics();
-  const user = useAuth0User();
   type GranularityValuesType = 'HOUR' | 'MONTH' | 'DAY';
   const granularityValues = { HOUR: 'HOUR', MONTH: 'MONTH', DAY: 'DAY' };
 
@@ -178,27 +166,6 @@ const TransactionsChartCard = () => {
       offsetY: -10,
     });
   });
-
-  const titleName = (activeTab: string) => {
-    if (activeTab === 'totalTransactions') return 'Clicked on Total Transactions';
-    if (activeTab === 'suspendTransactions') return 'Clicked on Suspended Transactions';
-    if (activeTab === 'stopTransactions') return 'Clicked on Stopped Transactions';
-    return 'Clicked on Flagged Transactions';
-  };
-
-  useEffect(() => {
-    analytics.event({
-      title: titleName(activeTab),
-      tenant: user.tenantName,
-      userId: user.userId,
-      browserName,
-      deviceType,
-      browserVersion,
-      osName,
-      mobileModel,
-      mobileVendor,
-    });
-  }, [activeTab, analytics, user.tenantName, user.userId]);
 
   return (
     <Card

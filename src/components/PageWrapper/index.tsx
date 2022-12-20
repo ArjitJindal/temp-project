@@ -1,19 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Typography } from 'antd';
-import { Link, useLocation } from 'react-router-dom';
-import {
-  browserName,
-  deviceType,
-  browserVersion,
-  osName,
-  mobileModel,
-  mobileVendor,
-} from 'react-device-detect';
+import { Link } from 'react-router-dom';
 import ErrorBoundary from '../ErrorBoundary';
 import Footer from '../AppWrapper/Footer';
 import s from './styles.module.less';
-import { useAnalytics } from '@/utils/segment/context';
-import { useAuth0User } from '@/utils/user-utils';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 
 interface Props {
@@ -29,26 +19,8 @@ interface Props {
 
 export default function PageWrapper(props: Props) {
   const { title, description, backButton } = props;
-  const user = useAuth0User();
-  const analytics = useAnalytics();
-  const location = useLocation();
-
-  const tenantId = user.tenantId;
 
   // todo: migration: check if something is broken
-  useEffect(() => {
-    analytics.page(`Viewed ${location.pathname}`, {
-      url: location.pathname,
-      userEmail: user.verifiedEmail,
-      tenant: user.tenantName,
-      browserName,
-      deviceType,
-      browserVersion,
-      osName,
-      mobileModel,
-      mobileVendor,
-    });
-  }, [analytics, tenantId, location.pathname, user.verifiedEmail, user.tenantName]);
   return (
     <div className={s.root} id="page-wrapper-root">
       {(title || description || backButton) && (
