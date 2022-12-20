@@ -157,9 +157,13 @@ export function CasesStatusChangeForm(props: CasesProps) {
       <Button
         analyticsName="UpdateCaseStatus"
         style={{
-          backgroundColor: buttonProps.isBlue ? COLORS.brandBlue.base : 'white',
+          ...(caseIds.length
+            ? {
+                background: buttonProps.isBlue ? COLORS.brandBlue.base : 'white',
+                color: buttonProps.isBlue ? 'white' : 'black',
+              }
+            : {}),
           borderRadius: buttonProps.rounded ? '0.5rem' : '0',
-          color: buttonProps.isBlue ? 'white' : 'black',
         }}
         onClick={() => {
           if (newCaseStatus === 'CLOSED') {
