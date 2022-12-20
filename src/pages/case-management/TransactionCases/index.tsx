@@ -492,7 +492,6 @@ export default function TransactionCases(props: Props) {
         fixed: 'right',
         width: 120,
         onCell: onCaseCell,
-        exportData: 'caseId',
         render: (dom, entity) => {
           return (
             entity?.caseId && (
@@ -516,7 +515,13 @@ export default function TransactionCases(props: Props) {
         ellipsis: true,
         fixed: 'right',
         onCell: onCaseCell,
-        exportData: 'caseId',
+        exportData: (entity) => {
+          return entity.assignments?.map((assignee) => {
+            return (
+              users[assignee.assigneeUserId]?.name ?? assignee.assigneeUserId ?? 'Unknown user'
+            );
+          });
+        },
         render: (dom, entity) => {
           // const caseItem = updatedCases[entity.caseId as string] || entity;
           return (
