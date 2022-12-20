@@ -71,7 +71,7 @@ const TableList: React.FC = () => {
 
   const filesResult = useQuery(TRANSACTION_FILES(params), async () => {
     const result = await files({
-      current: params.page,
+      page: params.page,
       pageSize: params.pageSize,
     });
     return result;

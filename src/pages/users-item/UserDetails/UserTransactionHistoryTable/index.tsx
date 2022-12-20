@@ -46,8 +46,6 @@ export function Content(props: { userId: string }) {
 
   const [params, setParams] = useState<AllParams<DefaultApiGetTransactionsListRequest>>({
     ...DEFAULT_PARAMS_STATE,
-    limit: -1,
-    skip: -1,
     includeEvents: true,
     beforeTimestamp: Date.now(),
   });
@@ -63,8 +61,6 @@ export function Content(props: { userId: string }) {
 
     const newParams: DefaultApiGetTransactionsListRequest = {
       ...params,
-      skip: ((params.page ?? 1) - 1) * params.pageSize,
-      limit: params.pageSize,
       beforeTimestamp: Date.now(),
       sortField: sortField ?? undefined,
       sortOrder: sortOrder ?? undefined,

@@ -1,10 +1,10 @@
 import * as ar from '@/utils/asyncResource';
-import { PaginatedQueryParams } from '@/utils/queries/hooks';
+import { PaginationParams } from '@/utils/queries/hooks';
 
 export interface QueryResult<Data> {
   data: ar.AsyncResource<Data>;
   refetch: () => void;
-  paginate?: (params: PaginatedQueryParams) => Promise<Data>;
+  paginate?: (params: PaginationParams) => Promise<Data>;
 }
 
 export function map<T, R>(

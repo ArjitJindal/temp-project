@@ -15,6 +15,7 @@ import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
 import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -95,17 +96,16 @@ function useStatsQuery(
   return useQuery(
     TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
     async (): Promise<TransactionsStatsByTypesResponseData[]> => {
-      let limit = undefined;
+      let pageSize = DEFAULT_PAGE_SIZE;
       if (selectorParams.transactionsCount === 'LAST_10') {
-        limit = 10;
+        pageSize = 10;
       } else if (selectorParams.transactionsCount === 'LAST_50') {
-        limit = 50;
+        pageSize = 50;
       }
 
       const response = await api.getTransactionsStatsByType({
         ...FIXED_API_PARAMS,
-        limit,
-        skip: 0,
+        pageSize,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         referenceCurrency,

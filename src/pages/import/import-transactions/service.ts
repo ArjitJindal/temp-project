@@ -4,7 +4,7 @@ import { TableListItem } from './data';
 
 export async function files(
   params: {
-    current?: number;
+    page?: number;
     pageSize?: number;
   },
   options?: { [key: string]: any },

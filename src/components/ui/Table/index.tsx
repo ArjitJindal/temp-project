@@ -12,15 +12,13 @@ import { isEqual } from '@/utils/lang';
 import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
 import DownloadButton from '@/components/ui/Table/DownloadButton';
-import { PaginatedQueryParams } from '@/utils/queries/hooks';
+import { PaginationParams } from '@/utils/queries/hooks';
 
 export type TableActionType = {
   reload: () => void;
 };
 
-export interface CommonParams {
-  page: number;
-  pageSize: number;
+export interface CommonParams extends PaginationParams {
   sort: [string, SortOrder][];
 }
 
@@ -43,7 +41,7 @@ export interface RowSelection {
 export const DEFAULT_PARAMS_STATE: CommonParams = {
   page: 1,
   sort: [],
-  pageSize: DEFAULT_PAGE_SIZE,
+  pageSize: 20,
 };
 
 type PickUpProps<T, Params, ValueType> = Pick<
@@ -79,12 +77,12 @@ export interface Props<T extends object, Params extends object, ValueType>
   params?: AllParams<Params>;
   isEvenRow?: (item: T) => boolean;
   actionsHeader?: ActionRenderer<Params>[];
-  onChangeParams?: (newState: AllParams<Params>) => void;
+  onChangeParams?: (newParams: AllParams<Params>) => void;
   columns: TableColumn<T>[];
   headerSubtitle?: React.ReactNode;
   onReload?: () => void;
   onReset?: () => void;
-  onPaginateExportData?: (params: PaginatedQueryParams) => Promise<TableData<T>>;
+  onPaginateExportData?: (params: PaginationParams) => Promise<TableData<T>>;
 }
 
 export default function Table<

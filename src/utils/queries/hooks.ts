@@ -51,12 +51,13 @@ export type PaginatedData<T> = {
   items: Array<T>;
 };
 
-export type PaginatedQueryParams = {
-  page?: number;
+export type PaginationParams = {
+  pageSize: number;
+  page: number;
 };
 
 export type PaginatedQueryFunction<T = unknown> = (
-  paginationParams: PaginatedQueryParams,
+  paginationParams: Partial<PaginationParams>,
 ) => Promise<PaginatedData<T>>;
 
 export function usePaginatedQuery<TData = unknown, TQueryKey extends QueryKey = QueryKey>(

@@ -23,7 +23,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
   const api = useApi();
   const [selectedWebhookDelivery, setSelectedWebhookDelivery] = useState<WebhookDeliveryAttempt>();
   const webhookResults = usePaginatedQuery(WEBHOOKS(webhookId), async () => {
-    const attempts = await api.getWebhooksWebhookIdDeliveries({ webhookId, limit: QUERY_LIMIT });
+    const attempts = await api.getWebhooksWebhookIdDeliveries({ webhookId, pageSize: QUERY_LIMIT });
     return {
       total: attempts.length,
       items: attempts,

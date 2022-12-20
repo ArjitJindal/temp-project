@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { Typography } from 'antd';
-import _ from 'lodash';
 import { RangeValue } from 'rc-picker/es/interface';
 import EntityFilterButton from '../EntityFilterButton';
 import AuditLogModal from '../AuditLogModal';
@@ -12,7 +11,6 @@ import { useApi } from '@/api';
 import { useAnalytics } from '@/utils/segment/context';
 import { measure } from '@/utils/time-utils';
 import { AllParams, DEFAULT_PARAMS_STATE, TableActionType } from '@/components/ui/Table';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { TableColumn } from '@/components/ui/Table/types';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { AuditLog, AuditLogListResponse } from '@/apis';
@@ -38,8 +36,7 @@ export default function AuditLogTable() {
 
     const [response, time] = await measure(() =>
       api.getAuditlog({
-        limit: DEFAULT_PAGE_SIZE!,
-        skip: (page! - 1) * DEFAULT_PAGE_SIZE!,
+        page,
         afterTimestamp: start ? start.startOf('day').valueOf() : 0,
         beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
         sortField: sortField ?? undefined,

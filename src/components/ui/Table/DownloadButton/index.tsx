@@ -11,14 +11,14 @@ import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import * as Form from '@/components/ui/Form';
 import { getErrorMessage } from '@/utils/lang';
 import { CsvRow, CsvValue, csvValue, serialize } from '@/utils/csv';
-import { PaginatedQueryParams } from '@/utils/queries/hooks';
+import { PaginationParams } from '@/utils/queries/hooks';
 
 const MAXIMUM_EXPORT_ITEMS = 10000;
 
 type Props<T extends object> = {
   currentPage: number;
   rowKey: string;
-  onExportData: (params: PaginatedQueryParams) => Promise<TableData<T>>;
+  onExportData: (params: PaginationParams) => Promise<TableData<T>>;
   columns: TableColumn<T>[];
 };
 
@@ -66,7 +66,8 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
           page: pagesMode === 'CURRENT' ? 1 : page,
           totalPages,
         });
-        const { total, items } = await onExportData({ page });
+        const pageSize = DEFAULT_PAGE_SIZE;
+        const { total, items } = await onExportData({ page, pageSize });
         const totalItemsCount = total ?? items.length;
         if (pagesMode === 'ALL' && totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
           message.error(
@@ -94,7 +95,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
         if (pagesMode === 'CURRENT') {
           break;
         }
-        totalPages = Math.ceil(totalItemsCount / DEFAULT_PAGE_SIZE);
+        totalPages = Math.ceil(totalItemsCount / pageSize);
         page++;
       } while (page < totalPages);
       const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;

@@ -18,6 +18,7 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -171,17 +172,16 @@ function useStatsQuery(
   return useQuery(
     TRANSACTIONS_STATS('by-date', { ...selectorParams, userId, currency }),
     async (): Promise<TransactionsStatsByTimeResponseData[]> => {
-      let limit = undefined;
+      let pageSize = DEFAULT_PAGE_SIZE;
       if (selectorParams.transactionsCount === 'LAST_10') {
-        limit = 10;
+        pageSize = 10;
       } else if (selectorParams.transactionsCount === 'LAST_50') {
-        limit = 50;
+        pageSize = 50;
       }
 
       const response = await api.getTransactionsStatsByTime({
         ...FIXED_API_PARAMS,
-        limit,
-        skip: 0,
+        pageSize,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         referenceCurrency: currency,

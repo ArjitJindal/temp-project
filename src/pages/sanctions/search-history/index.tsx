@@ -23,8 +23,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const queryResults = useQuery(SANCTIONS_SEARCH(params), () => {
     return api.getSanctionsSearch({
-      limit: params.pageSize,
-      skip: (params.page - 1) * params.pageSize,
+      ...params,
     });
   });
 

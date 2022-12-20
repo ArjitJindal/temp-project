@@ -31,8 +31,7 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
   const transactionsResponse = useQuery(CASES_ITEM_TRANSACTIONS(caseId, {}), async () => {
     return await api.getCaseTransactions({
       caseId,
-      limit: 1,
-      skip: 0,
+      pageSize: 1,
       includeUsers: true,
     });
   });

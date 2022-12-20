@@ -44,8 +44,7 @@ export default function RulesHitCard(props: Props) {
   const queryResult = useQuery(CASES_ITEM_TRANSACTIONS(caseId, params), async () => {
     const response = await api.getCaseTransactions({
       caseId,
-      limit: params.pageSize,
-      skip: (params.page - 1) * params.pageSize,
+      ...params,
     });
     return {
       total: response.total,

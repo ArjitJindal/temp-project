@@ -6,9 +6,9 @@ import { useApi } from '@/api';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { map } from '@/utils/queries/types';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 interface Props {
   userId: string;
@@ -41,11 +41,11 @@ export default function TransactionsList(props: Props) {
       ...selectorParams,
       userId,
     }),
-    async ({ page: _page }) => {
+    async (paginationParams) => {
       const { data, total } = await api.getTransactionsList({
         ...FIXED_API_PARAMS,
-        limit: tableParams.pageSize,
-        skip: ((_page ?? tableParams?.page ?? 1) - 1) * tableParams.pageSize,
+        ...tableParams,
+        ...paginationParams,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         includeEvents: true,

@@ -22,7 +22,7 @@ const TableList = () => {
   const i18n = useI18n();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
-  const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async ({ page: _page }) => {
+  const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async (paginationParams) => {
     const {
       pageSize,
       page,
@@ -42,8 +42,9 @@ const TableList = () => {
     const [sortField, sortOrder] = params.sort[0] ?? [];
     const [response, time] = await measure(() =>
       api.getTransactionsList({
-        limit: pageSize,
-        skip: ((_page ?? page) - 1) * pageSize,
+        page,
+        pageSize,
+        ...paginationParams,
         afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
         beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
         filterId: transactionId,

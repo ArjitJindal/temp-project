@@ -45,8 +45,7 @@ export function useTransactions(search: string): QueryResult<TransactionResponse
 
     const response = await api.getTransactionsList({
       filterId: search,
-      limit: 10,
-      skip: 0,
+      pageSize: 10,
       beforeTimestamp: Date.now(),
     });
 

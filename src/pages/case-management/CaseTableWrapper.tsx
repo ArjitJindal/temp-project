@@ -20,7 +20,6 @@ import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { CASES_LIST } from '@/utils/queries/keys';
 import UserCases from '@/pages/case-management/UserCases';
 import { neverReturn } from '@/utils/lang';
@@ -83,8 +82,8 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
   }, [parsedParams]);
 
   const queryResults = usePaginatedQuery<Case>(
-    CASES_LIST(caseType, { ...params }),
-    async ({ page: _page }) => {
+    CASES_LIST(caseType, params),
+    async (paginationParams) => {
       const {
         sort,
         page,
@@ -119,8 +118,8 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       const [sortField, sortOrder] = sort[0] ?? [];
       const [response, time] = await measure(() =>
         api.getCaseList({
-          limit: DEFAULT_PAGE_SIZE!,
-          skip: ((_page ?? page)! - 1) * DEFAULT_PAGE_SIZE!,
+          page,
+          ...paginationParams,
           afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
           beforeTimestamp: createdTimestamp
             ? dayjs(createdTimestamp[1]).valueOf()

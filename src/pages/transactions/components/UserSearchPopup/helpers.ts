@@ -44,8 +44,6 @@ export function useUsers(search: string): QueryResult<UsersResponse> {
     }
 
     const users = await api.getAllUsersList({
-      limit: 20,
-      skip: 0,
       beforeTimestamp: Date.now(),
       filterId: search,
       filterName: search,

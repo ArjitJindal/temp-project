@@ -26,61 +26,61 @@ import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS } from '@/utils/queries/keys';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 const BusinessUsersTab = () => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
   const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
-  {
-    if (isPulseEnabled) {
-      columns.push({
-        title: 'Risk Level',
-        dataIndex: 'labels',
-        exportData: (entity) => {
-          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
-        },
-        tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
-        search: false,
-        render: (dom, entity) => {
-          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
-            return (
-              <RiskLevelTag
-                level={entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel}
-              />
-            );
-          }
-          return '-';
-        },
-      });
-    }
+  if (isPulseEnabled) {
+    columns.push({
+      title: 'Risk Level',
+      dataIndex: 'labels',
+      exportData: (entity) => {
+        return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
+      },
+      tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
+      search: false,
+      render: (dom, entity) => {
+        if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
+          return (
+            <RiskLevelTag
+              level={entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel}
+            />
+          );
+        }
+        return '-';
+      },
+    });
   }
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const analytics = useAnalytics();
-  const bussinessResult = usePaginatedQuery(USERS('bussiness', params), async ({ page: _page }) => {
-    const { createdTimestamp, userId, page, riskLevels } = params;
+  const bussinessResult = usePaginatedQuery(
+    USERS('bussiness', params),
+    async (paginationParams) => {
+      const { createdTimestamp, userId, page, riskLevels } = params;
 
-    const [response, time] = await measure(() =>
-      api.getBusinessUsersList({
-        limit: DEFAULT_PAGE_SIZE,
-        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-        filterId: userId,
-        filterRiskLevel: riskLevels,
-      }),
-    );
-    analytics.event({
-      title: 'Table Loaded',
-      time,
-    });
-    return {
-      items: response.data,
-      total: response.total,
-    };
-  });
+      const [response, time] = await measure(() =>
+        api.getBusinessUsersList({
+          page,
+          ...paginationParams,
+          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+          filterRiskLevel: riskLevels,
+        }),
+      );
+      analytics.event({
+        title: 'Table Loaded',
+        time,
+      });
+      return {
+        items: response.data,
+        total: response.total,
+      };
+    },
+  );
 
   return (
     <>
@@ -167,13 +167,13 @@ const ConsumerUsersTab = () => {
   const analytics = useAnalytics();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
-  const consumerResults = usePaginatedQuery(USERS('consumer', params), async ({ page: _page }) => {
+  const consumerResults = usePaginatedQuery(USERS('consumer', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels } = params;
 
     const [response, time] = await measure(() =>
       api.getConsumerUsersList({
-        limit: DEFAULT_PAGE_SIZE,
-        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
+        page,
+        ...paginationParams,
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
@@ -250,39 +250,37 @@ const AllUsersTab = () => {
   const api = useApi();
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
   const isPulseEnabled = useFeature('PULSE');
-  {
-    if (isPulseEnabled) {
-      columns.push({
-        title: 'Risk Level',
-        exportData: (entity) => {
-          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
-        },
-        hideInSearch: true,
-        tip: 'Risk level of user.',
-        width: 180,
-        render: (dom, entity) => {
-          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
-            return (
-              <RiskLevelTag
-                level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
-              />
-            );
-          }
-          return '-';
-        },
-      });
-    }
+  if (isPulseEnabled) {
+    columns.push({
+      title: 'Risk Level',
+      exportData: (entity) => {
+        return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
+      },
+      hideInSearch: true,
+      tip: 'Risk level of user.',
+      width: 180,
+      render: (dom, entity) => {
+        if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
+          return (
+            <RiskLevelTag
+              level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
+            />
+          );
+        }
+        return '-';
+      },
+    });
   }
 
   const analytics = useAnalytics();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
-  const allUsersResult = usePaginatedQuery(USERS('all', { ...params }), async ({ page: _page }) => {
+  const allUsersResult = usePaginatedQuery(USERS('all', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels } = params;
     const [response, time] = await measure(() =>
       api.getAllUsersList({
-        limit: DEFAULT_PAGE_SIZE,
-        skip: ((_page ?? page) - 1) * DEFAULT_PAGE_SIZE,
+        page,
+        ...paginationParams,
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
         filterId: userId,
