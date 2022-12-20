@@ -13,11 +13,12 @@ import {
   createLambdaErrorPercentageAlarm,
   createLambdaMemoryUtilizationAlarm,
   createLambdaThrottlingAlarm,
+  createSQSOldestMessageAgeAlarm,
   createTarponOverallLambdaAlarm,
   dynamoTableOperationMetrics,
   dynamoTableOperations,
 } from './cdk-cw-alarms'
-import { StackConstants } from './constants'
+import { getDeadLetterQueueName, SQSQueues, StackConstants } from './constants'
 import { LAMBDAS } from './lambdas'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -181,6 +182,21 @@ export class CdkTarponAlarmsStack extends cdk.Stack {
           }
         )
       }
+    }
+
+    for (const sqsQueue of Object.keys(SQSQueues)) {
+      createSQSOldestMessageAgeAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        sqsQueue,
+        Duration.minutes(30)
+      )
+      createSQSOldestMessageAgeAlarm(
+        this,
+        this.betterUptimeCloudWatchTopic,
+        getDeadLetterQueueName(sqsQueue),
+        Duration.minutes(5)
+      )
     }
   }
 }

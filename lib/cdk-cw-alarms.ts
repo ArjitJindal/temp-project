@@ -425,3 +425,30 @@ export const createLambdaMemoryUtilizationAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+
+export const createSQSOldestMessageAgeAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic,
+  sqsQueue: string,
+  threshold: Duration
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  return new Alarm(context, `${sqsQueue}OldestMessageAge`, {
+    comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+    threshold: threshold.toSeconds(),
+    evaluationPeriods: 1,
+    alarmName: `SQS-${sqsQueue}OldestMessageAge`,
+    alarmDescription: `Covers ApproximateAgeOfOldestMessage in ${sqsQueue} in the AWS account. 
+    Alarm triggers when ApproximateAgeOfOldestMessage exceedes ${threshold.toSeconds()} seconds.`,
+    metric: new Metric({
+      label: 'SQS Approximate Age Of Oldest Message',
+      namespace: 'AWS/SQS',
+      metricName: 'ApproximateAgeOfOldestMessage',
+      dimensionsMap: {
+        QueueName: sqsQueue,
+      },
+    }),
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}

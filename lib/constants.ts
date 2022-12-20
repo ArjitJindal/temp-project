@@ -206,3 +206,13 @@ export const StackConstants = {
     'ConsoleApiCaseFunction'
   ),
 }
+
+export const SQSQueues = {
+  AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
+  SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
+  WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
+}
+
+export function getDeadLetterQueueName(queueName: string) {
+  return `DeadLetter${queueName}`
+}

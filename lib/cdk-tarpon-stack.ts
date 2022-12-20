@@ -52,6 +52,7 @@ import { LogGroup } from 'aws-cdk-lib/aws-logs'
 import _ from 'lodash'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
+  getDeadLetterQueueName,
   getNameForGlobalResource,
   getResourceName,
   getResourceNameForTarpon,
@@ -121,33 +122,20 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
-    const slackAlertQueue = new Queue(
-      this,
+    const slackAlertQueue = this.createQueue(
       StackConstants.SLACK_ALERT_QUEUE_NAME,
       {
         visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
       }
     )
-
-    const webhookDeliveryDeadLetterQueue = new Queue(
-      this,
-      StackConstants.WEBHOOK_DELIVERY_DLQ_NAME
-    )
-    const webhookDeliveryVisibilityTimeout = Duration.seconds(
-      DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
-    )
-    const webhookDeliveryQueue = new Queue(
-      this,
+    const webhookDeliveryQueue = this.createQueue(
       StackConstants.WEBHOOK_DELIVERY_QUEUE_NAME,
       {
-        visibilityTimeout: webhookDeliveryVisibilityTimeout,
-        deadLetterQueue: {
-          queue: webhookDeliveryDeadLetterQueue,
-          // Retry up to 3 days
-          maxReceiveCount:
-            Duration.days(3).toSeconds() /
-            webhookDeliveryVisibilityTimeout.toSeconds(),
-        },
+        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+        // Retry up to 3 days
+        maxReceiveCount:
+          Duration.days(3).toSeconds() /
+          DEFAULT_SQS_VISIBILITY_TIMEOUT.toSeconds(),
       }
     )
 
@@ -155,17 +143,13 @@ export class CdkTarponStack extends cdk.Stack {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
       topicName: StackConstants.AUDIT_LOG_TOPIC_NAME,
     })
-    const auditLogDeadLetterQueue = new Queue(
-      this,
-      StackConstants.AUDIT_LOG_DLQ_NAME
-    )
-    const auditLogQueue = new Queue(this, StackConstants.AUDIT_LOG_QUEUE_NAME, {
-      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-      deadLetterQueue: {
-        queue: auditLogDeadLetterQueue,
+    const auditLogQueue = this.createQueue(
+      StackConstants.AUDIT_LOG_QUEUE_NAME,
+      {
+        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: 3,
-      },
-    })
+      }
+    )
     this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
 
     /*
@@ -1395,5 +1379,23 @@ export class CdkTarponStack extends cdk.Stack {
       vpcCidr,
       securityGroup,
     }
+  }
+
+  private createQueue(
+    queueName: string,
+    options: {
+      visibilityTimeout?: Duration
+      maxReceiveCount?: number
+    }
+  ): Queue {
+    const deadLetterQueue = new Queue(this, getDeadLetterQueueName(queueName))
+    const queue = new Queue(this, queueName, {
+      visibilityTimeout: options.visibilityTimeout,
+      deadLetterQueue: {
+        queue: deadLetterQueue,
+        maxReceiveCount: options.maxReceiveCount || 30,
+      },
+    })
+    return queue
   }
 }
