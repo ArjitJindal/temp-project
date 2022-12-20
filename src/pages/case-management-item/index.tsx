@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
@@ -16,17 +16,17 @@ import { CASES_ITEM } from '@/utils/queries/keys';
 import TransactionCaseDetails from '@/pages/case-management-item/TransactionCaseDetails';
 import UserCaseDetails from '@/pages/case-management-item/UserCaseDetails';
 import Button from '@/components/ui/Button';
-
-export interface ExpandTabsRef {
-  expand: (shouldExpand?: boolean) => void;
-}
+import COLORS from '@/components/ui/colors';
+import PrintButton from '@/components/ui/PrintButton';
+import {
+  ExpandableContext,
+  ExpandableProvider,
+} from '@/components/AppWrapper/Providers/ExpandableProvider';
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
-  const i18n = useI18n();
   const api = useApi();
   const queryClient = useQueryClient();
-  const backUrl = useBackUrl();
 
   const queryResults = useQuery(
     CASES_ITEM(caseId),
@@ -44,24 +44,87 @@ function CaseManagementItemPage() {
     queryResults.refetch();
   };
 
-  const transactionRef = useRef<ExpandTabsRef>(null);
-  const userRef = useRef<ExpandTabsRef>(null);
   const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
 
   const isAllCollapsed = useMemo(() => {
     return _.every(collapseState, (value) => value);
   }, [collapseState]);
 
+  const expandableContext = useContext(ExpandableContext);
   const updateCollapseState = useCallback(
     (key: string, value: boolean) => {
+      expandableContext.setExpandMode('MANUAL');
       setCollapseState((prevState) => ({
         ...prevState,
         [key]: value,
       }));
     },
-    [setCollapseState],
+    [expandableContext],
   );
 
+  return (
+    <Card.Root collapsable={false}>
+      <AsyncResourceRenderer resource={queryResults.data}>
+        {(caseItem) => (
+          <>
+            <Card.Section>
+              <Header caseItem={caseItem} onReload={onReload} showCloseButton={false} />
+            </Card.Section>
+            <div
+              className="hide-on-print"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <Button
+                type={'text'}
+                onClick={() =>
+                  expandableContext.setExpandMode(isAllCollapsed ? 'EXPAND_ALL' : 'COLLAPSE_ALL')
+                }
+                analyticsName={'case-management-item-expand-button'}
+                style={{
+                  width: 'max-content',
+                  margin: '1rem 1.5rem',
+                  color: COLORS.lightBlue.base,
+                  borderColor: COLORS.lightBlue.base,
+                }}
+              >
+                {isAllCollapsed ? 'Expand all' : 'Collapse all'}
+              </Button>
+              <PrintButton onClickAction={() => expandableContext.setExpandMode('EXPAND_ALL')} />
+            </div>
+            <Card.Section>
+              {caseItem.caseType === 'TRANSACTION' && (
+                <TransactionCaseDetails
+                  caseItem={caseItem}
+                  onCaseUpdate={handleCaseUpdate}
+                  onReload={onReload}
+                  updateCollapseState={updateCollapseState}
+                />
+              )}
+
+              {caseItem.caseType === 'USER' && (
+                <UserCaseDetails
+                  caseItem={caseItem}
+                  onCaseUpdate={handleCaseUpdate}
+                  updateCollapseState={updateCollapseState}
+                  onReload={onReload}
+                />
+              )}
+            </Card.Section>
+          </>
+        )}
+      </AsyncResourceRenderer>
+    </Card.Root>
+  );
+}
+
+export default function CaseManagementItemPageWrapper() {
+  const i18n = useI18n();
+  const backUrl = useBackUrl();
   return (
     <PageWrapper
       backButton={{
@@ -69,56 +132,9 @@ function CaseManagementItemPage() {
         url: backUrl ?? makeUrl('/case-management'),
       }}
     >
-      <Card.Root>
-        <AsyncResourceRenderer resource={queryResults.data}>
-          {(caseItem) => (
-            <>
-              <Card.Section>
-                <Header caseItem={caseItem} onReload={onReload} showCloseButton={false} />
-              </Card.Section>
-              <Button
-                type={'text'}
-                onClick={
-                  caseItem.caseType === 'TRANSACTION'
-                    ? () => transactionRef.current?.expand(isAllCollapsed)
-                    : () => userRef.current?.expand(isAllCollapsed)
-                }
-                analyticsName={'case-management-item-expand-button'}
-                style={{
-                  width: 'max-content',
-                  margin: '1rem 1.5rem',
-                  color: '#1890ff',
-                  borderColor: '#1890ff',
-                }}
-              >
-                {isAllCollapsed ? 'Expand all' : 'Collapse all'}
-              </Button>
-              <Card.Section>
-                {caseItem.caseType === 'TRANSACTION' && (
-                  <TransactionCaseDetails
-                    caseItem={caseItem}
-                    onCaseUpdate={handleCaseUpdate}
-                    ref={transactionRef}
-                    onReload={onReload}
-                    updateCollapseState={updateCollapseState}
-                  />
-                )}
-
-                {caseItem.caseType === 'USER' && (
-                  <UserCaseDetails
-                    caseItem={caseItem}
-                    onCaseUpdate={handleCaseUpdate}
-                    ref={userRef}
-                    updateCollapseState={updateCollapseState}
-                    onReload={onReload}
-                  />
-                )}
-              </Card.Section>
-            </>
-          )}
-        </AsyncResourceRenderer>
-      </Card.Root>
+      <ExpandableProvider>
+        <CaseManagementItemPage />
+      </ExpandableProvider>
     </PageWrapper>
   );
 }
-export default CaseManagementItemPage;

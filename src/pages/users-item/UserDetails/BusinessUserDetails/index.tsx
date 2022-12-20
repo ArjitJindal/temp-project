@@ -3,16 +3,10 @@ import UserDetails from './UserDetails';
 import ExpectedTransactionLimits from './TransactionLimits';
 import { InternalBusinessUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
-import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   user: InternalBusinessUser;
   collapsedByDefault?: boolean;
-  userDetailsRef?: React.Ref<ExpandTabRef>;
-  expectedTransactionsRef?: React.Ref<ExpandTabRef>;
-  shareHoldersRef?: React.Ref<ExpandTabRef>;
-  dierctorsRef?: React.Ref<ExpandTabRef>;
-  documentsRef?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
@@ -23,7 +17,6 @@ export default function BusinessUserDetails(props: Props) {
     <>
       <Card.Root
         header={{ title: 'User Details', collapsedByDefault: collapsedByDefault ?? true }}
-        ref={props.userDetailsRef}
         onCollapseChange={(isCollapsed) => {
           if (updateCollapseState) {
             updateCollapseState('userDetails', isCollapsed);
@@ -34,7 +27,6 @@ export default function BusinessUserDetails(props: Props) {
       </Card.Root>
       <Card.Root
         header={{ title: 'Expected Transaction Limits', collapsedByDefault }}
-        ref={props.expectedTransactionsRef}
         onCollapseChange={(isCollapsed) => {
           if (updateCollapseState) {
             updateCollapseState('expectedTransactions', isCollapsed);
@@ -45,7 +37,6 @@ export default function BusinessUserDetails(props: Props) {
       </Card.Root>
       <Card.Root
         header={{ title: 'Shareholders', collapsedByDefault }}
-        ref={props.shareHoldersRef}
         onCollapseChange={(isCollapsed) => {
           if (updateCollapseState) {
             updateCollapseState('shareHolders', isCollapsed);
@@ -58,7 +49,6 @@ export default function BusinessUserDetails(props: Props) {
       </Card.Root>
       <Card.Root
         header={{ title: 'Directors', collapsedByDefault }}
-        ref={props.dierctorsRef}
         onCollapseChange={(isCollapsed) => {
           if (updateCollapseState) {
             updateCollapseState('directors', isCollapsed);

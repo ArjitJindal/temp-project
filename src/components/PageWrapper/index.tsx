@@ -1,4 +1,5 @@
 import React from 'react';
+import cn from 'clsx';
 import { Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import ErrorBoundary from '../ErrorBoundary';
@@ -41,7 +42,7 @@ export default function PageWrapper(props: Props) {
           )}
         </header>
       )}
-      <div className={s.body}>
+      <div className={cn(s.body, 'print-container')}>
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
       <Footer />

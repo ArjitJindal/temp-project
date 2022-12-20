@@ -28,3 +28,45 @@ body {
 .ant-pro-table-list-toolbar {
   overflow-x: scroll;
 }
+
+@media print {
+  /* stylelint-disable */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* stylelint-enable */
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+
+  .print-container {
+    width: 100%;
+    position: absolute;
+    padding: 0 !important;
+    left: 0;
+    top: 0;
+  }
+
+  .hide-on-print {
+    display: none !important;
+  }
+
+  ::-webkit-scrollbar {
+    display: none !important;
+    height: 0 !important;
+    width: 0 !important;
+  }
+
+  @page {
+    size: a3 landscape !important;
+    margin: 0 !important;
+  }
+}

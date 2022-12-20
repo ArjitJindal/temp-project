@@ -25,7 +25,7 @@ const FixedCommentEditor = (props: Props) => {
   });
 
   return (
-    <div className={cn(s.comment)}>
+    <div className={s.comment}>
       <div className={s.header}>
         <div className={s.commentTitleParent}>
           <h3 className={cn(s.commentTitle)}>Add a comment</h3>

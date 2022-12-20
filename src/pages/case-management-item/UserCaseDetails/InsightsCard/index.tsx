@@ -14,7 +14,6 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
-import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export const FIXED_API_PARAMS = {
@@ -26,7 +25,6 @@ export const FIXED_API_PARAMS = {
 
 interface Props {
   userId: string;
-  reference?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
@@ -44,7 +42,6 @@ export default function InsightsCard(props: Props) {
   return (
     <Card.Root
       header={{ title: 'Transaction Insights', collapsedByDefault: true }}
-      ref={props.reference}
       onCollapseChange={(isCollapsed) => {
         if (updateCollapseState) {
           updateCollapseState('insights', isCollapsed);

@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { ExpandTabRef } from '../../UserCaseDetails';
+import { useState } from 'react';
 import s from './styles.module.less';
 import HitsTable from './HitsTable';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
@@ -30,7 +29,6 @@ export function expandedRowRender(transaction: CaseTransaction) {
 
 interface Props {
   caseItem: Case;
-  reference?: React.Ref<ExpandTabRef>;
   updateCollapseState: (key: string, value: boolean) => void;
 }
 
@@ -55,7 +53,6 @@ export default function RulesHitCard(props: Props) {
   return (
     <Card.Root
       header={{ title: 'Rules Hits', collapsable: true, collapsedByDefault: true }}
-      ref={props.reference}
       onCollapseChange={(isCollapsed) => updateCollapseState('rulesHits', isCollapsed)}
     >
       <Card.Section>

@@ -7,12 +7,10 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import Table from '@/components/ui/Table';
 import * as Card from '@/components/ui/Card';
 import KeyValueTag from '@/components/ui/KeyValueTag';
-import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   person: InternalConsumerUser;
   collapsedByDefault?: boolean;
-  legalDocumentsRef?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
@@ -21,7 +19,6 @@ export function LegalDocumentsTable(prop: Props) {
   return (
     <Card.Root
       header={{ title: 'Legal Documents', collapsedByDefault: collapsedByDefault || false }}
-      ref={prop.legalDocumentsRef}
       onCollapseChange={(isCollapsed) => {
         if (updateCollapseState) {
           updateCollapseState('legalDocuments', isCollapsed);

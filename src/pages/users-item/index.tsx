@@ -1,7 +1,6 @@
 import _ from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
-import { ExpandTabRef } from '../case-management-item/UserCaseDetails';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import { useI18n } from '@/locales';
@@ -14,9 +13,12 @@ import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import COLORS from '@/components/ui/colors';
+import {
+  ExpandableContext,
+  ExpandableProvider,
+} from '@/components/AppWrapper/Providers/ExpandableProvider';
 
-export default function UserItem() {
-  const i18n = useI18n();
+function UserItem() {
   const { list, id } = useParams<'list' | 'id'>(); // todo: handle nulls properly
 
   const [currentItem, setCurrentItem] = useState<
@@ -72,28 +74,70 @@ export default function UserItem() {
     handleReload(list, id);
   }, [list, id, handleReload]);
 
-  const userRef = React.useRef<ExpandTabRef>(null);
-
   const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
 
   const isAllCollapsed = useMemo(() => {
     return _.every(collapseState, (value) => value);
   }, [collapseState]);
 
+  const expandableContext = useContext(ExpandableContext);
   const updateCollapseState = useCallback(
     (key: string, value: boolean) => {
+      expandableContext.setExpandMode('MANUAL');
       setCollapseState((prevState) => ({
         ...prevState,
         [key]: value,
       }));
     },
-    [setCollapseState],
+    [expandableContext],
   );
 
   const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
     setCurrentItem(success(userItem));
   };
 
+  return (
+    <Card.Root collapsable={false}>
+      <AsyncResourceRenderer resource={currentItem}>
+        {(user) => (
+          <>
+            <Card.Section>
+              <Header user={user} />
+            </Card.Section>
+            <Button
+              type={'text'}
+              onClick={() =>
+                expandableContext.setExpandMode(isAllCollapsed ? 'EXPAND_ALL' : 'COLLAPSE_ALL')
+              }
+              analyticsName={'case-management-item-expand-button'}
+              style={{
+                width: 'max-content',
+                margin: '1rem 1.5rem 0rem 1.5rem',
+                color: COLORS.lightBlue.base,
+                borderColor: COLORS.lightBlue.base,
+              }}
+            >
+              {isAllCollapsed ? 'Expand all' : 'Collapse all'}
+            </Button>
+            <Card.Section>
+              <UserDetails
+                user={user}
+                collapsedByDefault={true}
+                updateCollapseState={updateCollapseState}
+                onUserUpdate={handleUserUpdate}
+                onReload={onReload}
+              />
+            </Card.Section>
+          </>
+        )}
+      </AsyncResourceRenderer>
+    </Card.Root>
+  );
+}
+
+export default function UserItemWrapper() {
+  const i18n = useI18n();
+  const { list } = useParams<'list' | 'id'>(); // todo: handle nulls properly
   return (
     <PageWrapper
       backButton={{
@@ -103,40 +147,9 @@ export default function UserItem() {
         url: makeUrl('/users/list/:list/all', { list }),
       }}
     >
-      <Card.Root>
-        <AsyncResourceRenderer resource={currentItem}>
-          {(user) => (
-            <>
-              <Card.Section>
-                <Header user={user} />
-              </Card.Section>
-              <Button
-                type={'text'}
-                onClick={() => userRef.current?.expand(isAllCollapsed)}
-                analyticsName={'case-management-item-expand-button'}
-                style={{
-                  width: 'max-content',
-                  margin: '1rem 1.5rem 0rem 1.5rem',
-                  color: COLORS.lightBlue.base,
-                  borderColor: COLORS.lightBlue.base,
-                }}
-              >
-                {isAllCollapsed ? 'Expand all' : 'Collapse all'}
-              </Button>
-              <Card.Section>
-                <UserDetails
-                  user={user}
-                  ref={userRef}
-                  collapsedByDefault={true}
-                  updateCollapseState={updateCollapseState}
-                  onUserUpdate={handleUserUpdate}
-                  onReload={onReload}
-                />
-              </Card.Section>
-            </>
-          )}
-        </AsyncResourceRenderer>
-      </Card.Root>
+      <ExpandableProvider>
+        <UserItem />
+      </ExpandableProvider>
     </PageWrapper>
   );
 }

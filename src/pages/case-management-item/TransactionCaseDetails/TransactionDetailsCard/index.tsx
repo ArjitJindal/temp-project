@@ -2,20 +2,17 @@ import * as Card from '@/components/ui/Card';
 import UserDetails from '@/pages/transactions-item/UserDetails';
 import { CaseTransaction } from '@/apis';
 import TransactionInfoCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard/TransactionInfoCard';
-import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetails';
 
 interface Props {
   transaction: CaseTransaction;
-  reference?: React.Ref<ExpandTabRef>;
   updateCollapseState: (key: string, value: boolean) => void;
 }
 
 const TransactionDetailsCard = (props: Props) => {
-  const { transaction, reference, updateCollapseState } = props;
+  const { transaction, updateCollapseState } = props;
   return (
     <Card.Root
       header={{ title: 'Transaction Details' }}
-      ref={reference}
       onCollapseChange={(isCollapsed) => updateCollapseState('transactionDetails', isCollapsed)}
     >
       <Card.Section direction="horizontal" align="start">

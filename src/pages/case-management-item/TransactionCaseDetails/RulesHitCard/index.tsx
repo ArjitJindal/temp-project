@@ -1,5 +1,3 @@
-import React from 'react';
-import { ExpandTabRef } from '../../UserCaseDetails';
 import * as Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { HitRulesDetails } from '@/apis';
@@ -8,7 +6,6 @@ import { filterRulesHitByCaseCreationType } from '@/utils/rules';
 
 interface Props {
   rulesHit: HitRulesDetails[];
-  reference?: React.Ref<ExpandTabRef>;
   updateCollapseState: (key: string, value: boolean) => void;
 }
 
@@ -17,7 +14,6 @@ export default function RulesHitCard(props: Props) {
   return (
     <Card.Root
       header={{ title: 'Rules Hits', collapsable: true, collapsedByDefault: true }}
-      ref={props.reference}
       onCollapseChange={(isCollapsed) => updateCollapseState('rulesHit', isCollapsed)}
     >
       <Card.Section>

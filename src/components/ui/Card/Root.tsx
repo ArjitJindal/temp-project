@@ -1,37 +1,45 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { useContext, useEffect } from 'react';
 import cn from 'clsx';
 import s from './index.module.less';
 import Column from './Column';
 import Header, { HeaderSettings } from './Header';
 import { useLocalStorageState } from './helpers';
 import { useDeepEqualEffect } from '@/utils/hooks';
+import { ExpandableContext } from '@/components/AppWrapper/Providers/ExpandableProvider';
 
 interface Props {
   disabled?: boolean;
   className?: string;
   header?: HeaderSettings;
   children: React.ReactNode;
+  collapsable?: boolean;
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
-interface ExpandCardRef {
-  expand: (shouldExpand?: boolean) => void;
-}
-
-const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
-  const { disabled, className, header, children, onCollapseChange } = props;
-  const { collapsable = true, collapsableKey, collapsedByDefault = false } = header ?? {};
+const Root = (props: Props) => {
+  const { disabled, className, header, children, onCollapseChange, collapsable = true } = props;
+  const {
+    collapsable: headerCollapsable = true,
+    collapsableKey,
+    collapsedByDefault = false,
+  } = header ?? {};
 
   const [isCollapsed, setCollapsed] = useLocalStorageState(
     collapsableKey,
-    collapsable && collapsedByDefault,
+    collapsable && headerCollapsable && collapsedByDefault,
   );
+  const expandableContext = useContext(ExpandableContext);
 
-  useImperativeHandle(ref, () => ({
-    expand: (shouldExpand) => {
-      setCollapsed(!shouldExpand);
-    },
-  }));
+  useEffect(() => {
+    if (!collapsable || !headerCollapsable || disabled) {
+      return;
+    }
+    if (expandableContext.expandMode === 'COLLAPSE_ALL') {
+      setCollapsed(true);
+    } else if (expandableContext.expandMode === 'EXPAND_ALL') {
+      setCollapsed(false);
+    }
+  }, [collapsable, disabled, expandableContext.expandMode, headerCollapsable, setCollapsed]);
 
   useDeepEqualEffect(() => {
     if (onCollapseChange) {
@@ -45,11 +53,11 @@ const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
         {header && (
           <Header
             header={header}
-            isCollapsed={disabled || (collapsable && isCollapsed)}
+            isCollapsed={disabled || (collapsable && headerCollapsable && isCollapsed)}
             setCollapsed={setCollapsed}
           />
         )}
-        {collapsable && !isCollapsed && (
+        {!isCollapsed && (
           <div className={s.container}>
             <Column>{children}</Column>
           </div>
@@ -57,6 +65,6 @@ const Root = forwardRef((props: Props, ref: React.Ref<ExpandCardRef>) => {
       </Column>
     </div>
   );
-});
+};
 
 export default Root;

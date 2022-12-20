@@ -8,13 +8,11 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { CaseStatus, Comment as TransactionComment } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
-import { ExpandTabRef } from '@/pages/case-management-item/TransactionCaseDetails';
 
 interface Props {
   id?: string;
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
-  reference?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
   caseStatus?: CaseStatus;
   onReload: () => void;
@@ -62,7 +60,6 @@ export default function CommentsCard(props: Props) {
           collapsable: true,
           collapsedByDefault: true,
         }}
-        ref={props.reference}
         onCollapseChange={(isCollapsed) =>
           updateCollapseState && updateCollapseState('comments', isCollapsed)
         }

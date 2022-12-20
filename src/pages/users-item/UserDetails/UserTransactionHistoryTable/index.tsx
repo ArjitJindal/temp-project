@@ -19,7 +19,6 @@ import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import Money from '@/components/ui/Money';
 import { Currency } from '@/utils/currencies';
-import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 export type DataItem = {
   index: number;
@@ -328,17 +327,15 @@ export function Content(props: { userId: string }) {
 interface Props {
   userId: string | undefined;
   collapsedByDefault?: boolean;
-  userTransactionHistoryRef?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
 export default function UserTransactionHistoryTable(props: Props) {
-  const { userId, collapsedByDefault, userTransactionHistoryRef, updateCollapseState } = props;
+  const { userId, collapsedByDefault, updateCollapseState } = props;
   return (
     <Card.Root
       disabled={userId == null}
       header={{ title: 'Transaction History', collapsedByDefault: collapsedByDefault ?? true }}
-      ref={userTransactionHistoryRef}
       onCollapseChange={(isCollapsed) => {
         if (updateCollapseState) {
           updateCollapseState('userTransactionHistory', isCollapsed);

@@ -1,4 +1,3 @@
-import { forwardRef, Ref, useImperativeHandle, useRef } from 'react';
 import { Alert } from 'antd';
 import TransactionDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard';
 import RulesHitCard from '@/pages/case-management-item/TransactionCaseDetails/RulesHitCard';
@@ -10,7 +9,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
-import { ExpandTabsRef } from '@/pages/case-management-item';
 
 interface Props {
   caseItem: Case;
@@ -19,11 +17,7 @@ interface Props {
   onReload: () => void;
 }
 
-export interface ExpandTabRef {
-  expand: (shouldExpand?: boolean) => void;
-}
-
-function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
+function TransactionCaseDetails(props: Props) {
   const { caseItem, onCaseUpdate, updateCollapseState } = props;
   const api = useApi();
 
@@ -35,24 +29,6 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
       includeUsers: true,
     });
   });
-
-  const transactionDetailsCardRef = useRef<ExpandTabRef>(null);
-  const rulesHitCardRef = useRef<ExpandTabRef>(null);
-  const transactionEventsCardRef = useRef<ExpandTabRef>(null);
-  const originUserDetailsCardRef = useRef<ExpandTabRef>(null);
-  const destinationUserDetailsCardRef = useRef<ExpandTabRef>(null);
-  const commentsCardRef = useRef<ExpandTabRef>(null);
-
-  useImperativeHandle(ref, () => ({
-    expand: (shouldExpand) => {
-      transactionDetailsCardRef.current?.expand(shouldExpand);
-      rulesHitCardRef.current?.expand(shouldExpand);
-      transactionEventsCardRef.current?.expand(shouldExpand);
-      originUserDetailsCardRef.current?.expand(shouldExpand);
-      destinationUserDetailsCardRef.current?.expand(shouldExpand);
-      commentsCardRef.current?.expand(shouldExpand);
-    },
-  }));
 
   if (caseItem.caseTransactionsIds && caseItem.caseTransactionsIds?.length > 1) {
     console.warn('Case have more than one transaction, it is not supported for a moment');
@@ -85,23 +61,19 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
           <>
             <TransactionDetailsCard
               transaction={transaction}
-              reference={transactionDetailsCardRef}
               updateCollapseState={updateCollapseState}
             />
             <RulesHitCard
               rulesHit={transaction.hitRules}
-              reference={rulesHitCardRef}
               updateCollapseState={updateCollapseState}
             />
             <TransactionEventsCard
               events={transaction.events ?? []}
-              reference={transactionEventsCardRef}
               updateCollapseState={updateCollapseState}
             />
             <UserDetailsCard
               title="Origin (Sender) User Details"
               user={transaction.originUser}
-              reference={originUserDetailsCardRef}
               updateCollapseState={updateCollapseState}
               collapseKey="originUserDetails"
               onReload={props.onReload}
@@ -109,7 +81,6 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
             <UserDetailsCard
               title="Destination (Receiver) User Details"
               user={transaction.destinationUser}
-              reference={destinationUserDetailsCardRef}
               updateCollapseState={updateCollapseState}
               collapseKey="destinationUserDetails"
               onReload={props.onReload}
@@ -121,7 +92,6 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
               onCommentsUpdate={(newComments) => {
                 onCaseUpdate({ ...caseItem, comments: newComments });
               }}
-              reference={commentsCardRef}
               updateCollapseState={updateCollapseState}
               onReload={props.onReload}
               commentType={'CASE'}
@@ -133,4 +103,4 @@ function TransactionCaseDetails(props: Props, ref: Ref<ExpandTabsRef>) {
   );
 }
 
-export default forwardRef(TransactionCaseDetails);
+export default TransactionCaseDetails;

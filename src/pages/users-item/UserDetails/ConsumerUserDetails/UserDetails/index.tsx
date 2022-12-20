@@ -6,12 +6,10 @@ import * as Card from '@/components/ui/Card';
 import { InternalConsumerUser } from '@/apis';
 import SurveyLineIcon from '@/components/ui/icons/Remix/document/survey-line.react.svg';
 import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-line.react.svg';
-import { ExpandTabRef } from '@/pages/case-management-item/UserCaseDetails';
 
 interface Props {
   user: InternalConsumerUser;
   collapsedByDefault?: boolean;
-  userDetailsRef?: React.Ref<ExpandTabRef>;
   updateCollapseState?: (key: string, value: boolean) => void;
 }
 
@@ -20,7 +18,6 @@ export default function UserDetails(props: Props) {
   return (
     <Card.Root
       header={{ title: 'User Details', collapsedByDefault: props?.collapsedByDefault ?? true }}
-      ref={props.userDetailsRef}
       onCollapseChange={(isCollapsed) => {
         if (updateCollapseState) {
           updateCollapseState('userDetails', isCollapsed);
