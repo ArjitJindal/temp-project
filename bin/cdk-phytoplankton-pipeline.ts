@@ -8,7 +8,7 @@ import { config as prodConfig } from '../lib/configs/config-prod';
 import { CdkPhytoplanktonStack } from '../lib/cdk-phytoplankton-stack';
 import { CdkPhytoplanktonPipelineStack } from '../lib/cdk-phytoplankton-pipeline-stack';
 
-const GITHUB_USERS = ['amandugar', 'agupta999', 'chialunwu', 'crooked', 'koluch', 'nadig'];
+const GITHUB_USERS = ['amandugar', 'chialunwu', 'koluch', 'nadig'];
 
 const app = new cdk.App();
 
