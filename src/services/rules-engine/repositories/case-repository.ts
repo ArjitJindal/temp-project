@@ -30,6 +30,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams, OptionalPagination } from '@/utils/pagination'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
@@ -804,6 +805,153 @@ export class CaseRepository {
       pageSize: params.pageSize,
       includeUsers: params.includeUsers,
     })
+  }
+  private getCaseRulesMongoPipeline(caseFilter: string) {
+    return [
+      {
+        $match: {
+          caseId: { $regex: caseFilter, $options: 'i' },
+        },
+      },
+      {
+        $project: {
+          caseTransactions: 1,
+          caseId: 1,
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions.hitRules',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: '$caseTransactions.hitRules.ruleInstanceId',
+          transactionsCount: {
+            $sum: 1,
+          },
+          ruleName: {
+            $first: '$caseTransactions.hitRules.ruleName',
+          },
+          ruleAction: {
+            $first: '$caseTransactions.hitRules.ruleAction',
+          },
+          ruleDescription: {
+            $first: '$caseTransactions.hitRules.ruleDescription',
+          },
+          ruleInstanceId: {
+            $first: '$caseTransactions.hitRules.ruleInstanceId',
+          },
+          ruleId: {
+            $first: '$caseTransactions.hitRules.ruleId',
+          },
+        },
+      },
+    ]
+  }
+
+  private getCaseRulesCursor(caseFilter: string) {
+    const pipeline = this.getCaseRulesMongoPipeline(caseFilter)
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return collection.aggregate<RulesHitPerCase>(pipeline, {
+      allowDiskUse: true,
+    })
+  }
+
+  public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
+    const caseFilter = `^${caseId}$`
+    const cursor = this.getCaseRulesCursor(caseFilter)
+    return await cursor.toArray()
+  }
+
+  private getCaseRuleTransactionsMongoPipeline(
+    caseFilter: string,
+    ruleFilter: string
+  ) {
+    return [
+      {
+        $match: {
+          caseId: { $regex: caseFilter, $options: 'i' },
+        },
+      },
+      {
+        $project: {
+          caseTransactions: 1,
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $unwind: {
+          path: '$caseTransactions.hitRules',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $match: {
+          'caseTransactions.hitRules.ruleInstanceId': {
+            $regex: ruleFilter,
+            $options: 'i',
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId),
+          localField: 'caseTransactions.originUserId',
+          foreignField: 'userId',
+          as: 'originUser',
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION(this.tenantId),
+          localField: 'caseTransactions.destinationUserId',
+          foreignField: 'userId',
+          as: 'destinationUser',
+        },
+      },
+      {
+        $set: {
+          'caseTransactions.originUser': { $first: '$originUser' },
+          'caseTransactions.destinationUser': { $first: '$destinationUser' },
+        },
+      },
+    ]
+  }
+
+  public getCaseRuleTransactionsCursor(caseFilter: string, ruleFilter: string) {
+    const pipeline = this.getCaseRuleTransactionsMongoPipeline(
+      caseFilter,
+      ruleFilter
+    )
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return collection.aggregate<Case>(pipeline, {
+      allowDiskUse: true,
+    })
+  }
+
+  public async getCaseRuleTransactions(caseId: string, ruleInstanceId: string) {
+    const caseFilter = `^${caseId}$`
+    const ruleFilter = `^${ruleInstanceId}$`
+    const cursor = this.getCaseRuleTransactionsCursor(caseFilter, ruleFilter)
+    const res = await cursor.toArray()
+    return { total: res.length, data: res }
   }
 
   public async getCasesByTransactionId(

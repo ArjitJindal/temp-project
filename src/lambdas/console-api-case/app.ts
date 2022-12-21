@@ -220,6 +220,23 @@ export const casesHandler = lambdaApi()(
         }
       )
     } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/cases/{caseId}/rules' &&
+      event.pathParameters?.caseId
+    ) {
+      return await caseService.getCaseRules(event.pathParameters.caseId)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource ===
+        '/cases/{caseId}/rule/{rulesInstanceId}/transactions' &&
+      event.pathParameters?.caseId &&
+      event.pathParameters?.rulesInstanceId
+    ) {
+      return await caseService.getCaseRuleTransactions(
+        event.pathParameters.caseId,
+        event.pathParameters.rulesInstanceId
+      )
+    } else if (
       event.httpMethod === 'DELETE' &&
       event.resource === '/cases/{caseId}/comments/{commentId}' &&
       event.pathParameters?.caseId &&

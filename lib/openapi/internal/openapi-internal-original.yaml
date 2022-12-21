@@ -2256,6 +2256,53 @@ paths:
                 $ref: '#/components/schemas/CaseTransactionsListResponse'
         '404':
           description: Not found
+  '/cases/{caseId}/rule/{rulesInstanceId}/transactions':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: rulesInstanceId
+        in: path
+        required: true
+    get:
+      summary: Get transactions related to a case rule
+      operationId: get-case-transactions-for-rule
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleCaseTransactionItem'
+        '404':
+          description: Not found
+      description: ''
+  '/cases/{caseId}/rules':
+    parameters:
+      - schema:
+          type: string
+        name: caseId
+        in: path
+        required: true
+    get:
+      summary: Get rules related to case
+      operationId: get-case-rules
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RulesHitPerCase'
+        '404':
+          description: Not found
+      description: ''
   '/cases/{caseId}/comments':
     parameters:
       - schema:
@@ -3721,6 +3768,27 @@ components:
       required:
         - total
         - data
+    CaseRuleTransactionListResponse:
+      title: CaseRuleTransactionListResponse
+      type: object
+      x-examples: {}
+      x-stoplight:
+        id: 89245f65deba8
+      properties:
+        total:
+          type: number
+        data:
+          type: object
+          required:
+            - caseTransactions
+          properties:
+            caseTransactions:
+              type: array
+              items:
+                $ref: '#/components/schemas/CaseTransaction'
+      required:
+        - total
+        - data
     CaseUpdateRequest:
       title: CaseUpdateRequest
       type: object
@@ -4158,6 +4226,26 @@ components:
       required:
         - type
         - action
+    RulesHitPerCase:
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/HitRulesDetails
+        - properties:
+            transactionsCount:
+              type: number
+      type: object
+      title: RulesHitPerCase
+    RuleCaseTransactionItem:
+      title: RuleCaseTransactionItem
+      x-stoplight:
+        id: p2637fel700im
+      type: array
+      items:
+        type: object
+        properties:
+          _id:
+            type: string
+          caseTransactions:
+            $ref: '#/components/schemas/CaseTransaction'
   securitySchemes:
     Authorization:
       type: http

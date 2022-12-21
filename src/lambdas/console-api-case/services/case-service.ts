@@ -9,6 +9,7 @@ import { CaseUpdateRequest } from '@/@types/openapi-internal/CaseUpdateRequest'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { TransactionUpdateRequest } from '@/@types/openapi-internal/TransactionUpdateRequest'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
+import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
 
@@ -103,6 +104,17 @@ export class CaseService {
     }
   ): Promise<CaseTransactionsListResponse> {
     return await this.caseRepository.getCaseTransactions(caseId, params)
+  }
+
+  public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
+    return await this.caseRepository.getCaseRules(caseId)
+  }
+
+  public async getCaseRuleTransactions(caseId: string, ruleInstanceId: string) {
+    return await this.caseRepository.getCaseRuleTransactions(
+      caseId,
+      ruleInstanceId
+    )
   }
 
   public async saveCaseComment(caseId: string, comment: Comment) {
