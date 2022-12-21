@@ -19,16 +19,16 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
     // NOTE: These deployment roles in the different accounts need to be created manually once with
     // enough priviledges to run `cdk deploy` for the target account.
     const DEV_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${devConfig.env.account}:role/CodePipelineDeployRole`;
-    const devCodeDeployRole = iam.Role.fromRoleArn(
+    const SANDBOX_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineDeployRole`;
+    const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${prodConfig.env.account}:role/CodePipelineDeployRole`;
+    const codeDeployRole = iam.Role.fromRoleArn(
       this,
-      'DevCodePipelineDeployRole',
-      DEV_CODE_DEPLOY_ROLE_ARN,
+      'DeployCodePipelineDeployRole',
+      `arn:aws:iam::${deployConfig.env.account}:role/CodePipelineDeployRole`,
       {
         mutable: false,
       },
     );
-    const SANDBOX_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${sandboxConfig.env.account}:role/CodePipelineDeployRole`;
-    const PROD_CODE_DEPLOY_ROLE_ARN = `arn:aws:iam::${prodConfig.env.account}:role/CodePipelineDeployRole`;
 
     // Build definition
     const getDeployCodeBuildProject = (env: 'dev' | 'sandbox' | 'prod', roleArn: string) =>
@@ -65,14 +65,14 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           env: {
             'secrets-manager': {
               SENTRY_AUTH_TOKEN:
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:sentryCreds-WEnffs:authToken',
+                'arn:aws:secretsmanager:eu-central-1:073830519512:secret:sentryCreds-NQB0S7:authToken',
             },
           },
         }),
         environment: {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         },
-        role: devCodeDeployRole,
+        role: codeDeployRole,
       });
 
     const getE2ETestProject = (env: 'dev') =>
@@ -101,16 +101,16 @@ export class CdkPhytoplanktonPipelineStack extends cdk.Stack {
           env: {
             'secrets-manager': {
               cypress_username:
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:cypressCreds-BX1Tr2:username',
+                'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:username',
               cypress_password:
-                'arn:aws:secretsmanager:eu-central-1:911899431626:secret:cypressCreds-BX1Tr2:password',
+                'arn:aws:secretsmanager:eu-central-1:073830519512:secret:cypressCreds-yNKjtZ:password',
             },
           },
         }),
         environment: {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         },
-        role: devCodeDeployRole,
+        role: codeDeployRole,
       });
 
     // Define pipeline stage output artifacts

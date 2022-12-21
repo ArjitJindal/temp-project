@@ -5,6 +5,7 @@
   "description": "Flagright console",
   "scripts": {
     "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile || npm run sso-fallback-message",
+    "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",
     "aws-sso-login:sandbox": "npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825",
     "aws-sso-login:prod": "npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449",
@@ -22,8 +23,8 @@
     "deploy:sandbox:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825 && npm run build:sandbox && npm run synth:sandbox && npm run deploy:sandbox -- --profile=AWSAdministratorAccess-293986822825",
     "deploy:prod": "ENV=prod cdk deploy prod-phytoplankton",
     "deploy:prod:clean": "npm run clear && yarn && npm run aws-sso-login --profile=AWSAdministratorAccess-870721492449 && npm run build:prod && npm run synth:prod && npm run deploy:prod -- --profile=AWSAdministratorAccess-870721492449",
-    "deploy:pipeline": "cdk deploy phytoplankton-pipeline --profile=AWSAdministratorAccess-911899431626",
-    "deploy:pipeline:clean": "npm run aws-sso-login:dev && npm run synth:pipeline && npm run deploy:pipeline",
+    "deploy:pipeline": "cdk deploy phytoplankton-pipeline --profile=AWSAdministratorAccess-073830519512",
+    "deploy:pipeline:clean": "npm run aws-sso-login:deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "build:dev": "npm run openapi:build && cross-env ENV=dev node build",
     "build:sandbox": "npm run openapi:build && cross-env ENV=sandbox node build",
     "build:prod": "npm run openapi:build && cross-env ENV=prod node build",
