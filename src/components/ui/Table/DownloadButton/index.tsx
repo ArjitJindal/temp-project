@@ -97,7 +97,7 @@ export default function DownloadButton<T extends object>(props: Props<T>) {
         }
         totalPages = Math.ceil(totalItemsCount / pageSize);
         page++;
-      } while (page < totalPages);
+      } while (page <= totalPages);
       const fileName = `table_data_${new Date().toISOString().replace(/[^\dA-Za-z]/g, '_')}.csv`;
       message.success(`Data export finished, downloading should start in a moment!`);
       download(fileName, serialize(result));

@@ -1,30 +1,22 @@
 import { TableItem } from './types';
-import { QueryResult } from '@/utils/queries/types';
-import { TableData, TableDataItem } from '@/components/ui/Table/types';
-import { map } from '@/utils/asyncResource';
-import { AuditLogListResponse } from '@/apis';
+import { map, QueryResult } from '@/utils/queries/types';
+import { TableDataItem } from '@/components/ui/Table/types';
+import { AuditLog } from '@/apis';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 export function useTableData(
-  queryResult: QueryResult<AuditLogListResponse>,
-): QueryResult<TableData<TableItem>> {
-  const result: QueryResult<TableData<TableItem>> = {
-    data: map(queryResult.data, (response) => {
-      const items: TableDataItem<TableItem>[] = response.data.map(
-        (item, index): TableDataItem<TableItem> => {
-          const dataItem: TableItem = {
-            index,
-            ...item,
-          };
-          return dataItem;
-        },
-      );
-      return {
-        items,
-        success: true,
-        total: response.total,
-      };
+  queryResult: QueryResult<PaginatedData<AuditLog>>,
+): QueryResult<PaginatedData<TableDataItem<TableItem>>> {
+  return map(
+    queryResult,
+    (response): PaginatedData<TableDataItem<TableItem>> => ({
+      total: response.total,
+      items: response.items.map(
+        (item, index): TableDataItem<TableItem> => ({
+          index,
+          ...item,
+        }),
+      ),
     }),
-    refetch: queryResult.refetch,
-  };
-  return result;
+  );
 }
