@@ -12,7 +12,7 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import { useAuth0User } from '@/utils/user-utils';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
-import { CasesStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
+import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import CaseTypeTag from '@/components/ui/CaseTypeTag';
 import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
 
@@ -108,7 +108,7 @@ export default function Header(props: Props) {
             </Tag>
           </Form.Layout.Label>
           {showCloseButton && (
-            <CasesStatusChangeForm
+            <CasesStatusChangeButton
               caseIds={[caseId as string]}
               newCaseStatus={
                 caseItem.caseStatus === 'OPEN' || caseItem.caseStatus === 'REOPENED'

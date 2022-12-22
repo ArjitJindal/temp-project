@@ -2,23 +2,10 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Form, Input, message, Modal, Select } from 'antd';
 import { useApi } from '@/api';
 import { CaseStatus, FileInfo } from '@/apis';
-import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
 import { UploadFilesList } from '@/components/files/UploadFilesList';
-import COLORS from '@/components/ui/colors';
 import { useDeepEqualEffect } from '@/utils/hooks';
-
-interface CasesProps {
-  caseIds: string[];
-  newCaseStatus: CaseStatus;
-  onSaved: () => void;
-  initialValues?: FormValues;
-  buttonProps?: {
-    size?: 'small' | undefined;
-    isBlue?: boolean;
-    rounded?: boolean;
-  };
-}
+import { getErrorMessage } from '@/utils/lang';
 
 export interface RemoveAllFilesRef {
   removeAllFiles: () => void;
@@ -32,7 +19,6 @@ export const caseStatusToOperationName = (caseStatus: CaseStatus) => {
   }
 };
 
-// todo: i18n
 export const OTHER_REASON = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
 // todo: need to take from tenant storage when we implement it
@@ -56,26 +42,38 @@ export interface FormValues {
   files: FileInfo[];
 }
 
-export function CasesStatusChangeForm(props: CasesProps) {
+interface Props {
+  isVisible: boolean;
+  caseIds: string[];
+  newCaseStatus: CaseStatus;
+  defaultReasons?: CaseClosingReasons[];
+  initialValues?: FormValues;
+  onSaved: () => void;
+  onClose: () => void;
+}
+export default function CasesStatusChangeModal(props: Props) {
   const {
     caseIds,
-    onSaved,
     newCaseStatus,
+    isVisible,
+    defaultReasons,
     initialValues = {
-      reasons: [],
+      reasons: defaultReasons ?? [],
       reasonOther: null,
       comment: '',
       files: [],
     },
-    buttonProps = {},
+    onSaved,
+    onClose,
   } = props;
-  const [isModalVisible, setModalVisible] = useState(false);
   const [isOtherReason, setIsOtherReason] = useState(false);
   const [isSaving, setSaving] = useState(false);
   const [isAwaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [form] = Form.useForm<FormValues>();
   const api = useApi();
+
+  const showConfirmation = isVisible && (newCaseStatus === 'REOPENED' || isAwaitingConfirmation);
 
   useDeepEqualEffect(() => {
     form.setFieldsValue(initialValues);
@@ -95,7 +93,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
         },
       });
       message.success('Cases Reopened');
-      setModalVisible(false);
+      onClose();
       onSaved();
     } catch (e) {
       message.error('Failed to save');
@@ -103,7 +101,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
       hideMessage();
       setSaving(false);
     }
-  }, [onSaved, caseIds, api, newCaseStatus]);
+  }, [onClose, onSaved, caseIds, api, newCaseStatus]);
 
   const handleUpdateTransaction = useCallback(
     async (values: FormValues) => {
@@ -124,7 +122,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
           },
         });
         message.success('Saved');
-        setModalVisible(false);
+        onClose();
         onSaved();
       } catch (e) {
         message.error('Failed to save');
@@ -133,7 +131,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
         setSaving(false);
       }
     },
-    [api, caseIds, newCaseStatus, onSaved],
+    [api, caseIds, newCaseStatus, onSaved, onClose],
   );
 
   const possibleReasons = [...COMMON_REASONS, ...CLOSING_REASONS];
@@ -154,32 +152,9 @@ export function CasesStatusChangeForm(props: CasesProps) {
 
   return (
     <>
-      <Button
-        analyticsName="UpdateCaseStatus"
-        style={{
-          ...(caseIds.length
-            ? {
-                background: buttonProps.isBlue ? COLORS.brandBlue.base : 'white',
-                color: buttonProps.isBlue ? 'white' : 'black',
-              }
-            : {}),
-          borderRadius: buttonProps.rounded ? '0.5rem' : '0',
-        }}
-        onClick={() => {
-          if (newCaseStatus === 'CLOSED') {
-            setModalVisible(true);
-          } else {
-            setAwaitingConfirmation(true);
-          }
-        }}
-        disabled={!caseIds.length || isSaving}
-        size={buttonProps.size}
-      >
-        {caseStatusToOperationName(newCaseStatus)}
-      </Button>
       <Modal
         title={modalTitle}
-        visible={isModalVisible}
+        visible={isVisible && !showConfirmation}
         okButtonProps={{
           disabled: isSaving,
         }}
@@ -188,13 +163,12 @@ export function CasesStatusChangeForm(props: CasesProps) {
             removeFiles();
             setFormValues(values);
             setAwaitingConfirmation(true);
-            setModalVisible(false);
           });
         }}
         onCancel={() => {
           removeFiles();
           setAwaitingConfirmation(false);
-          setModalVisible(false);
+          onClose();
         }}
       >
         <Form<FormValues>
@@ -238,7 +212,7 @@ export function CasesStatusChangeForm(props: CasesProps) {
       </Modal>
       <Modal
         title="ⓘ Confirm action"
-        visible={isAwaitingConfirmation}
+        visible={showConfirmation}
         okButtonProps={{
           disabled: isSaving,
         }}
@@ -252,8 +226,8 @@ export function CasesStatusChangeForm(props: CasesProps) {
                 setIsOtherReason(false);
                 setAwaitingConfirmation(false);
               })
-              .catch((info) => {
-                console.log('Failed to save ', info);
+              .catch((e) => {
+                console.error(`Failed to save! ${getErrorMessage(e)}`);
               });
           } else {
             reopenCase()
@@ -261,15 +235,15 @@ export function CasesStatusChangeForm(props: CasesProps) {
                 removeFiles();
                 setAwaitingConfirmation(false);
               })
-              .catch(() => {
-                console.log('Failed to re-open');
+              .catch((e) => {
+                console.error(`Failed to re-open! ${getErrorMessage(e)}`);
               });
           }
         }}
         onCancel={() => {
           removeFiles();
           setAwaitingConfirmation(false);
-          setModalVisible(false);
+          onClose();
         }}
       >
         {modalMessagePrefix} <b>{caseStatusToOperationName(newCaseStatus)}</b> {modalMessageSuffix}{' '}

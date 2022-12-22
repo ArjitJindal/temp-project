@@ -5,7 +5,7 @@ import CommentEditor, { FormValues as CommentEditorFormValues } from '../Comment
 import s from './styles.module.less';
 import { FlagrightAuth0User } from '@/utils/user-utils';
 import { CaseStatus, Comment as TransactionComment } from '@/apis';
-import { CasesStatusChangeForm } from '@/pages/case-management/components/CaseStatusChangeForm';
+import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 
 interface Props {
   id: string;
@@ -31,7 +31,7 @@ const FixedCommentEditor = (props: Props) => {
           <h3 className={cn(s.commentTitle)}>Add a comment</h3>
         </div>
         {commentType === 'CASE' && (
-          <CasesStatusChangeForm
+          <CasesStatusChangeButton
             caseIds={[id]}
             onSaved={props.onReload}
             newCaseStatus={

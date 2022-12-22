@@ -4,7 +4,7 @@ import { ProFormInstance } from '@ant-design/pro-form';
 import _ from 'lodash';
 import { TransactionStateButton } from '../../transactions/components/TransactionStateButton';
 import { TableSearchParams } from '../types';
-import { CasesStatusChangeForm } from '../components/CaseStatusChangeForm';
+import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { QueryResult } from '@/utils/queries/types';
 import { Case, CaseUpdateRequest } from '@/apis';
@@ -273,7 +273,7 @@ export default function UserCases(props: Props) {
         render: (dom, entity) => {
           return (
             entity?.caseId && (
-              <CasesStatusChangeForm
+              <CasesStatusChangeButton
                 caseIds={[entity.caseId]}
                 newCaseStatus={entity.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
                 onSaved={reloadTable}
@@ -414,7 +414,7 @@ export default function UserCases(props: Props) {
               }}
             />
             <Divider type="vertical" style={{ height: '32px' }} />
-            <CasesStatusChangeForm
+            <CasesStatusChangeButton
               caseIds={selectedEntities}
               onSaved={reloadTable}
               newCaseStatus={params.caseStatus === 'CLOSED' ? 'REOPENED' : 'CLOSED'}

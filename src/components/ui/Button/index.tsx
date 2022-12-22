@@ -10,7 +10,7 @@ interface ExtraProps {
 }
 
 export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & ExtraProps) {
-  const { type, icon, size, children, ...rest } = props;
+  const { type, icon, size, children, analyticsName: _analyticsName, ...rest } = props;
 
   const handleClick = function (this: unknown, ...args: any) {
     if (props.onClick) {
