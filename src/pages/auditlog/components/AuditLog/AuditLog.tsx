@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Typography } from 'antd';
 import EntityFilterButton from '../EntityFilterButton';
 import AuditLogModal from '../AuditLogModal';
+import ActionTakenByFilterButton from '../ActionTakeByFilterButton';
 import { TableSearchParams } from './types';
 import { useTableData } from './helpers';
 import DatePicker from '@/components/ui/DatePicker';
@@ -26,7 +27,7 @@ export default function AuditLogTable() {
   const queryResults = usePaginatedQuery<AuditLog>(
     AUDIT_LOGS_LIST(params),
     async (paginationParams) => {
-      const { sort, page, filterTypes, createdTimestamp } = params;
+      const { sort, page, filterTypes, createdTimestamp, filterActionTakenBy } = params;
       const [sortField, sortOrder] = sort[0] ?? [];
       const [start, end] = createdTimestamp ?? [];
 
@@ -38,6 +39,7 @@ export default function AuditLogTable() {
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
         filterTypes,
+        filterActionTakenBy,
       });
       return {
         total: response.total,
@@ -142,17 +144,36 @@ export default function AuditLogTable() {
       showResultsInfo
       onChangeParams={setParams}
       actionsHeader={[
-        ({ params, setParams }) => (
-          <EntityFilterButton
-            initialState={params.filterTypes ?? []}
-            onConfirm={(value) => {
-              setParams((prevState) => ({
-                ...prevState,
-                filterTypes: value,
-              }));
-            }}
-          />
-        ),
+        ({ params, setParams }) => {
+          return (
+            <>
+              <EntityFilterButton
+                initialState={params.filterTypes ?? []}
+                onConfirm={(value) => {
+                  setParams((prevState) => ({
+                    ...prevState,
+                    filterTypes: value,
+                  }));
+                }}
+              />
+            </>
+          );
+        },
+        ({ params, setParams }) => {
+          return (
+            <>
+              <ActionTakenByFilterButton
+                initialState={params.filterActionTakenBy ?? []}
+                onConfirm={(value) => {
+                  setParams((prevState) => ({
+                    ...prevState,
+                    filterActionTakenBy: value,
+                  }));
+                }}
+              />
+            </>
+          );
+        },
       ]}
       form={{
         labelWrap: true,

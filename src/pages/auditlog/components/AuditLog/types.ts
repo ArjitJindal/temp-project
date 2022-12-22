@@ -9,6 +9,7 @@ export type TableSearchParams = Partial<{
   sort: [string, SortOrder][];
   createdTimestamp: RangeValue<Dayjs>;
   filterTypes: AuditLogType[];
+  filterActionTakenBy: string[];
 }>;
 
 export type TableItem = AuditLog & {

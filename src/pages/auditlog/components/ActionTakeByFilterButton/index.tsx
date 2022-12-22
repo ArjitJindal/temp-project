@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Popover } from 'antd';
-import { ContactsOutlined } from '@ant-design/icons';
+import { HighlightOutlined } from '@ant-design/icons';
 import PopupContent from './PopupContent';
 import ActionButton from '@/components/ui/Table/ActionButton';
-import { AuditLogType } from '@/apis';
+import { useUsers } from '@/utils/user-utils';
 
 interface Props {
-  initialState: AuditLogType[];
-  onConfirm: (newState: AuditLogType[]) => void;
+  initialState: string[];
+  onConfirm: (newState: string[]) => void;
 }
 
-export default function EntityFilterButton(props: Props) {
+export default function ActionTakenByFilterButton(props: Props) {
   const { initialState, onConfirm } = props;
   const [visible, setVisible] = useState(false);
+  const [users, loadingUsers] = useUsers();
 
   return (
     <Popover
@@ -35,15 +36,17 @@ export default function EntityFilterButton(props: Props) {
       onVisibleChange={setVisible}
     >
       <ActionButton
-        color="SKY_BLUE"
-        icon={<ContactsOutlined />}
+        color="ORANGE"
+        icon={<HighlightOutlined />}
         analyticsName="user-filter"
         isActive={initialState.length > 0}
         onClear={() => {
           onConfirm([]);
         }}
       >
-        {!initialState || initialState.length === 0 ? 'Entity' : initialState?.join(', ')}
+        {(!loadingUsers && !initialState) || initialState.length === 0
+          ? 'Action Taken By'
+          : initialState.map((userId) => users[userId]?.name ?? userId)?.join(', ')}
       </ActionButton>
     </Popover>
   );
