@@ -65,7 +65,7 @@ export class AuditLogRepository {
 
     if (params.filterActionTakenBy != null) {
       conditions.push({
-        'user.email': { $eq: params.filterActionTakenBy },
+        'user.id': { $in: params.filterActionTakenBy },
       })
     }
     return {

@@ -1836,7 +1836,9 @@ paths:
           in: query
           name: filterTypes
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterActionTakenBy
       description: ''

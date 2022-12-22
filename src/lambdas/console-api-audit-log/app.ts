@@ -24,6 +24,7 @@ export const auditLogHandler = lambdaApi()(
       sortField,
       sortOrder,
       filterTypes,
+      filterActionTakenBy,
     } = event.queryStringParameters as any
 
     const params: DefaultApiGetAuditlogRequest = {
@@ -34,6 +35,9 @@ export const auditLogHandler = lambdaApi()(
       sortField: sortField,
       sortOrder: sortOrder,
       filterTypes: filterTypes ? filterTypes.split(',') : undefined,
+      filterActionTakenBy: filterActionTakenBy
+        ? filterActionTakenBy.split(',')
+        : undefined,
     }
     const auditLogRepository = new AuditLogRepository(tenantId, mongoDb)
     const results = await auditLogRepository.getAllAuditLogs(params)
