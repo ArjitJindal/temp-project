@@ -2,13 +2,13 @@ import * as AWS from 'aws-sdk'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials,
 } from 'aws-lambda'
+import { CredentialsOptions } from 'aws-sdk/lib/credentials'
 import { getCredentialsFromEvent } from './credentials'
 
 export function getS3Client(
-  event: APIGatewayProxyWithLambdaAuthorizerEvent<
-    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
-  >
+  credentials?: Credentials | CredentialsOptions
 ): AWS.S3 {
   if (process.env.ENV === 'local') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -19,6 +19,14 @@ export function getS3Client(
 
   return new AWS.S3({
     signatureVersion: 'v4',
-    credentials: getCredentialsFromEvent(event),
+    credentials,
   })
+}
+
+export function getS3ClientByEvent(
+  event: APIGatewayProxyWithLambdaAuthorizerEvent<
+    APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
+  >
+): AWS.S3 {
+  return getS3Client(getCredentialsFromEvent(event))
 }

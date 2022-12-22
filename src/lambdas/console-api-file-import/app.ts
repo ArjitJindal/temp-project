@@ -5,15 +5,16 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import * as createError from 'http-errors'
-import { Importer } from './importer'
 import { ImportRepository } from './import-repository'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { getS3Client } from '@/utils/s3'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { PresignedUrlResponse } from '@/@types/openapi-internal/PresignedUrlResponse'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
+import { sendBatchJobCommand } from '@/services/batch-job'
+import { getCredentialsFromEvent } from '@/utils/credentials'
+import { FileImportBatchJob } from '@/@types/batch-job'
 
 export type FileImportConfig = {
   IMPORT_BUCKET: string
@@ -26,11 +27,8 @@ export const fileImportHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { TMP_BUCKET, IMPORT_BUCKET } = process.env as FileImportConfig
     const { principalId: tenantId, tenantName } =
       event.requestContext.authorizer
-    const dynamoDb = getDynamoDbClientByEvent(event)
-    const s3 = getS3Client(event)
     const mongoDb = await getMongoDbClient()
     const importRepository = new ImportRepository(tenantId, {
       mongoDb,
@@ -38,39 +36,15 @@ export const fileImportHandler = lambdaApi()(
 
     if (event.httpMethod === 'POST' && event.body) {
       const importRequest: ImportRequest = JSON.parse(event.body)
-      const importer = new Importer(
-        tenantId,
-        tenantName,
-        { dynamoDb, s3, mongoDb },
-        TMP_BUCKET,
-        IMPORT_BUCKET
-      )
-      let importedCount = 0
-      const importId = importRequest.s3Key.replace(/\//g, '')
-      await importRepository.createFileImport({
-        _id: importId,
-        type: importRequest.type,
-        s3Key: importRequest.s3Key,
-        filename: importRequest.filename,
-        statuses: [{ status: 'IN_PROGRESS', timestamp: Date.now() }],
-      })
-      try {
-        if (importRequest.type === 'TRANSACTION') {
-          importedCount = await importer.importTransactions(importRequest)
-        } else if (importRequest.type === 'USER') {
-          importedCount = await importer.importConsumerUsers(importRequest)
-        } else if (importRequest.type === 'BUSINESS') {
-          importedCount = await importer.importBusinessUsers(importRequest)
-        }
-        await importRepository.completeFileImport(importId, importedCount)
-        return 'OK'
-      } catch (e) {
-        await importRepository.failFileImport(
-          importId,
-          e instanceof Error ? e.message : 'Unknown'
-        )
-        throw e
-      }
+      await sendBatchJobCommand(tenantId, {
+        type: 'FILE_IMPORT',
+        parameters: {
+          tenantName,
+          importRequest,
+        },
+        awsCredentials: getCredentialsFromEvent(event),
+      } as FileImportBatchJob)
+      return
     } else if (event.httpMethod === 'GET' && event.pathParameters?.importId) {
       return importRepository.getFileImport(event.pathParameters.importId)
     }
@@ -91,7 +65,7 @@ export const getPresignedUrlHandler = lambdaApi()(
   ): Promise<PresignedUrlResponse> => {
     const { TMP_BUCKET } = process.env as GetPresignedUrlConfig
     const { principalId: tenantId } = event.requestContext.authorizer
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
 
     const s3Key = `${tenantId}/${uuidv4()}`
     const bucketParams = {

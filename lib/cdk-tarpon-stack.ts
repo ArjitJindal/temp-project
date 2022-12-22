@@ -52,6 +52,13 @@ import _ from 'lodash'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import {
+  Choice,
+  Condition,
+  StateMachine,
+  Succeed,
+} from 'aws-cdk-lib/aws-stepfunctions'
+import { LambdaInvoke } from 'aws-cdk-lib/aws-stepfunctions-tasks'
+import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
   getResourceName,
@@ -67,6 +74,11 @@ import {
 } from '@/lambdas/console-api-file-import/app'
 import { TransactionViewConfig } from '@/lambdas/console-api-transaction/app'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
+import {
+  BATCH_JOB_PAYLOAD_RESULT_KEY,
+  BATCH_JOB_RUN_TYPE_RESULT_KEY,
+  LAMBDA_BATCH_JOB_RUN_TYPE,
+} from '@/lambdas/batch-job/app'
 
 const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
@@ -84,6 +96,7 @@ export class CdkTarponStack extends cdk.Stack {
   cwInsightsLayer: LayerVersion
   betterUptimeCloudWatchTopic: Topic
   auditLogTopic: Topic
+  batchJobQueue: Queue
 
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, {
@@ -151,6 +164,11 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
+
+    const batchJobQueue = new Queue(this, StackConstants.BATCH_JOB_QUEUE_NAME, {
+      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+    })
+    this.batchJobQueue = batchJobQueue
 
     /*
      * Kinesis Data Streams
@@ -399,7 +417,6 @@ export class CdkTarponStack extends cdk.Stack {
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
         } as FileImportConfig,
-        timeout: Duration.minutes(15),
       }
     )
     tarponDynamoDbTable.grantReadWriteData(fileImportAlias)
@@ -708,6 +725,81 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(auditLogConsumerAlias)
     auditLogQueue.grantConsumeMessages(auditLogConsumerAlias)
     auditLogConsumerAlias.addEventSource(new SqsEventSource(auditLogQueue))
+
+    /* Batch Job */
+    const { alias: jobDecisionAlias } = this.createFunction({
+      name: StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME,
+    })
+    const { alias: jobRunnerAlias } = this.createFunction(
+      {
+        name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
+      },
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          IMPORT_BUCKET: importBucketName,
+          TMP_BUCKET: tmpBucketName,
+        } as FileImportConfig,
+        timeout: Duration.minutes(15),
+      }
+    )
+    tarponDynamoDbTable.grantReadData(jobRunnerAlias)
+    this.grantMongoDbAccess(jobRunnerAlias)
+    s3TmpBucket.grantRead(jobRunnerAlias)
+    s3ImportBucket.grantWrite(jobRunnerAlias)
+
+    const batchJobStateMachine = new StateMachine(
+      this,
+      getResourceNameForTarpon('BatchJobStateMachine'),
+      {
+        definition: new LambdaInvoke(
+          this,
+          getResourceNameForTarpon('BatchJobDecisionLambda'),
+          {
+            lambdaFunction: jobDecisionAlias,
+          }
+        ).next(
+          new Choice(
+            this,
+            getResourceNameForTarpon('BatchJobRunTypeChoice')
+          ).when(
+            Condition.stringEquals(
+              `$.Payload.${BATCH_JOB_RUN_TYPE_RESULT_KEY}`,
+              LAMBDA_BATCH_JOB_RUN_TYPE
+            ),
+            new LambdaInvoke(
+              this,
+              getResourceNameForTarpon('BatchJobLambdaRunner'),
+              {
+                lambdaFunction: jobRunnerAlias,
+                inputPath: `$.Payload.${BATCH_JOB_PAYLOAD_RESULT_KEY}`,
+              }
+            )
+              // Use default retry settings for now. Configure RetryProps when needed
+              .addRetry({})
+              .next(
+                new Succeed(
+                  this,
+                  getResourceNameForTarpon('BatchJobRunSucceed')
+                )
+              )
+          )
+        ),
+      }
+    )
+    const { alias: jobTriggerConsumerAlias } = this.createFunction(
+      {
+        name: StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME,
+      },
+      {
+        environment: {
+          BATCH_JOB_STATE_MACHINE_ARN: batchJobStateMachine.stateMachineArn,
+        },
+      }
+    )
+    batchJobStateMachine.grantStartExecution(jobTriggerConsumerAlias)
+    jobTriggerConsumerAlias.addEventSource(new SqsEventSource(batchJobQueue))
 
     /*
      * Hammerhead console functions
@@ -1084,6 +1176,7 @@ export class CdkTarponStack extends cdk.Stack {
           },
           AWS_XRAY_CONTEXT_MISSING: 'LOG_ERROR',
           AUDITLOG_TOPIC_ARN: this.auditLogTopic?.topicArn,
+          BATCH_JOB_QUEUE_URL: this.batchJobQueue?.queueUrl,
           // NOTE: RELEASE_VERSION and LAMBDA_CODE_PATH used for Sentry
           RELEASE_VERSION: process.env.RELEASE_VERSION as string,
           LAMBDA_CODE_PATH: LAMBDAS[name].codePath,
@@ -1114,6 +1207,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
     Metric.grantPutMetricData(alias)
     this.auditLogTopic?.grantPublish(alias)
+    this.batchJobQueue?.grantSendMessages(alias)
     return { alias, func }
   }
 

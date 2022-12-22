@@ -156,6 +156,7 @@ export const StackConstants = {
   SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
   WEBHOOK_DELIVERY_DLQ_NAME: getResourceName('webhookDeliveryDeadLetterQueue'),
   WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
+  BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),
   FAST_GEOIP_LAYER_NAME: getResourceName('fast-geoip-layer'),
   TARPON_API_NAME: getResourceName('TarponAPI'),
   TARPON_API_GATEWAY_ALARM_NAME: getResourceName('TarponApiErrorPercentage'),
@@ -203,6 +204,15 @@ export const StackConstants = {
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
   CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiCaseFunction'
+  ),
+  BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'BatchJobTriggerConsumerFunction'
+  ),
+  BATCH_JOB_DECISION_FUNCTION_NAME: getResourceNameForTarpon(
+    'BatchJobDecisionFunction'
+  ),
+  BATCH_JOB_RUNNER_FUNCTION_NAME: getResourceNameForTarpon(
+    'BatchJobRunnerFunction'
   ),
 }
 

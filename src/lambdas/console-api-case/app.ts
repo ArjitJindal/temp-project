@@ -9,7 +9,7 @@ import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 
-import { getS3Client } from '@/utils/s3'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -30,7 +30,7 @@ export const casesHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: client,

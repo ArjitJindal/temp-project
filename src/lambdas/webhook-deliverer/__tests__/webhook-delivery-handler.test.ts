@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto'
-import { SQSEvent, SQSRecord } from 'aws-lambda'
+import { SQSEvent } from 'aws-lambda'
 import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -11,6 +11,7 @@ import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliver
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import { WebhookDeliveryTask } from '@/@types/webhook'
 import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
+import { createSqsEvent } from '@/test-utils/sqs-test-utils'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
@@ -127,9 +128,7 @@ describe('Webhook delivery', () => {
         createdAt: Date.now(),
       }
       const expectedPayload = getExpectedPayload(deliveryTask)
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
 
       const command = mockSecretsManagerSend.mock
         .calls[0][0] as GetSecretValueCommand
@@ -192,9 +191,7 @@ describe('Webhook delivery', () => {
       }
       const expectedPayload = getExpectedPayload(deliveryTask)
       await expect(
-        webhookDeliveryHandler({
-          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-        })
+        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       ).rejects.toThrow()
 
       // Check webhook delivery history
@@ -245,9 +242,7 @@ describe('Webhook delivery', () => {
         createdAt: Date.now(),
       }
       await expect(
-        webhookDeliveryHandler({
-          Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-        })
+        webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       ).rejects.toThrow()
     })
 
@@ -282,9 +277,7 @@ describe('Webhook delivery', () => {
       }
 
       // Should not throw
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
     })
 
     test('webhook server failing to respond in WEBHOOK_REQUEST_TIMEOUT_SEC seconds should not throw error', async () => {
@@ -323,9 +316,7 @@ describe('Webhook delivery', () => {
         webhookUrl,
         createdAt: Date.now(),
       }
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
     })
   })
   describe('Invalid webhook', () => {
@@ -343,9 +334,7 @@ describe('Webhook delivery', () => {
         webhookId: 'ghost-webhook-id',
         createdAt: Date.now(),
       }
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           'ghost-webhook-id',
@@ -377,9 +366,7 @@ describe('Webhook delivery', () => {
         webhookId: INACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
       }
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           INACTIVE_WEBHOOK_ID,
@@ -411,9 +398,7 @@ describe('Webhook delivery', () => {
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
       }
-      await webhookDeliveryHandler({
-        Records: [{ body: JSON.stringify(deliveryTask) } as SQSRecord],
-      })
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           INACTIVE_WEBHOOK_ID,

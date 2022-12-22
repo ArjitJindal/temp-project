@@ -8,7 +8,7 @@ import { DashboardStatsRepository } from '../console-api-dashboard/repositories/
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getS3Client } from '@/utils/s3'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -83,7 +83,7 @@ export const transactionsViewHandler = lambdaApi()(
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,

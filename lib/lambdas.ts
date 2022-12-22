@@ -1,6 +1,7 @@
 import { StackConstants } from './constants'
 
 const DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 10
+const ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS = 14 * 60 // 15 minutes is the hard timeout
 
 export const LAMBDAS: {
   [key: string]: {
@@ -200,5 +201,20 @@ export const LAMBDAS: {
     codePath: 'audit-log-consumer',
     handlerName: 'auditLogConsumerHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
+  [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'batch-job',
+    handlerName: 'jobTriggerHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
+  [StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME]: {
+    codePath: 'batch-job',
+    handlerName: 'jobDecisionHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
+  [StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME]: {
+    codePath: 'batch-job',
+    handlerName: 'jobRunnerHandler',
+    expectedMaxDurationSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
 }

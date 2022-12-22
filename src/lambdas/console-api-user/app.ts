@@ -7,7 +7,7 @@ import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getS3Client } from '@/utils/s3'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
@@ -27,7 +27,7 @@ export const businessUsersViewHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
@@ -132,7 +132,7 @@ export const consumerUsersViewHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
@@ -271,7 +271,7 @@ export const allUsersViewHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId, userId } = event.requestContext.authorizer
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as UserViewConfig
-    const s3 = getS3Client(event)
+    const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userService = new UserService(
