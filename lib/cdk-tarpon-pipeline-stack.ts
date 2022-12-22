@@ -10,7 +10,7 @@ import {
   ComputeType,
 } from 'aws-cdk-lib/aws-codebuild'
 import { Duration } from 'aws-cdk-lib'
-import { config as deployConfig } from './configs/config-deployment'
+import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import { config as devConfig } from './configs/config-dev'
 import { config as sandboxConfig } from './configs/config-sandbox'
 import { config as prodAisa1Config } from './configs/config-prod-asia-1'
@@ -19,6 +19,7 @@ import { config as prodEU1Config } from './configs/config-prod-eu-1'
 import { config as prodEU2Config } from './configs/config-prod-eu-2'
 import { config as prodUS1Config } from './configs/config-prod-us-1'
 import { Config } from './configs/config'
+import { DeployConfig } from './configs/config-deployment'
 
 const PIPELINE_NAME = 'tarpon-pipeline'
 const GENERATED_DIRS = [
@@ -30,7 +31,7 @@ const GENERATED_DIRS = [
 ]
 
 function getReleaseVersion(version: string) {
-  return `tarpon#${version}`
+  return `tarpon:${version}`
 }
 
 export type CdkTarponPipelineStackProps = cdk.StackProps
@@ -38,16 +39,17 @@ export class CdkTarponPipelineStack extends cdk.Stack {
   constructor(
     scope: Construct,
     id: string,
-    props: CdkTarponPipelineStackProps
+    props: CdkTarponPipelineStackProps,
+    deployConfig: DeployConfig
   ) {
     super(scope, id, props)
 
     // NOTE: These deployment roles in the different accounts need to be created manually once with
     // enough priviledges to run `cdk deploy` for the target account.
-    const devCodeDeployRole = iam.Role.fromRoleArn(
+    const codeDeployRole = iam.Role.fromRoleArn(
       this,
-      'DevCodePipelineDeployRole',
-      `arn:aws:iam::${devConfig.env.account}:role/CodePipelineDeployRole`,
+      'DeployCodePipelineDeployRole',
+      `arn:aws:iam::${deployConfig.env.account}:role/CodePipelineDeployRole`,
       {
         mutable: false,
       }
@@ -72,7 +74,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         env: {
           'secrets-manager': {
             SENTRY_AUTH_TOKEN:
-              'arn:aws:secretsmanager:eu-central-1:911899431626:secret:sentryCreds-WEnffs:authToken',
+              'arn:aws:secretsmanager:eu-central-1:073830519512:secret:sentryCreds-NQB0S7:authToken',
           },
           variables: {
             SENTRY_ORG: 'flagright-data-technologies-in',
@@ -127,7 +129,22 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
         computeType: ComputeType.LARGE,
       },
-      role: devCodeDeployRole,
+      role: codeDeployRole,
+    })
+
+    const vpc = new Vpc(this, 'vpc-codebuild', {
+      subnetConfiguration: [
+        {
+          subnetType: SubnetType.PRIVATE_WITH_NAT,
+          cidrMask: 24,
+          name: 'PrivateSubnet1',
+        },
+        {
+          subnetType: SubnetType.PUBLIC,
+          cidrMask: 28,
+          name: 'PublicSubnet1',
+        },
+      ],
     })
     const getDeployCodeBuildProject = (config: Config) => {
       const env = config.stage + (config.region ? `:${config.region}` : '')
@@ -184,9 +201,10 @@ export class CdkTarponPipelineStack extends cdk.Stack {
           buildImage: codebuild.LinuxBuildImage.STANDARD_6_0,
           computeType: ComputeType.LARGE,
         },
-        role: devCodeDeployRole,
+        role: codeDeployRole,
         // Max timeout: 480 minutes (https://docs.aws.amazon.com/codebuild/latest/userguide/limits.html)
         timeout: Duration.hours(8),
+        vpc,
       })
     }
 

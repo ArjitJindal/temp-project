@@ -4,6 +4,7 @@ import { CdkTarponPipelineStack } from '@cdk/cdk-tarpon-pipeline-stack'
 import { CdkTarponStack } from '@cdk/cdk-tarpon-stack'
 import { CdkTarponAlarmsStack } from '@cdk/cdk-alarms-stack'
 import { config as deployConfig } from '@cdk/configs/config-deployment'
+import { config as deployTestConfig } from '@cdk/configs/config-deployment-test'
 import { config as localConfig } from '@cdk/configs/config-local'
 import { config as devConfig } from '@cdk/configs/config-dev'
 import { config as sandboxConfig } from '@cdk/configs/config-sandbox'
@@ -149,8 +150,14 @@ if (process.env.ENV === 'prod:us-1') {
   )
 }
 
-if (!process.env.ENV) {
-  new CdkTarponPipelineStack(app, 'tarpon-pipeline', {
-    env: deployConfig.env,
-  })
+if (process.env.ENV === 'deploy' || process.env.ENV === 'deploy-test') {
+  const config = process.env.ENV === 'deploy' ? deployConfig : deployTestConfig
+  new CdkTarponPipelineStack(
+    app,
+    'tarpon-pipeline',
+    {
+      env: config.env,
+    },
+    config
+  )
 }

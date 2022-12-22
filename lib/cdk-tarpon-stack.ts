@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, Fn, RemovalPolicy, Resource } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
-import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import { Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
   ArnPrincipal,
@@ -51,6 +50,7 @@ import { LogGroup } from 'aws-cdk-lib/aws-logs'
 
 import _ from 'lodash'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
+import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
@@ -203,7 +203,7 @@ export class CdkTarponStack extends cdk.Stack {
      * VPC configuration: https://www.mongodb.com/docs/atlas/security-vpc-peering/
      */
 
-    const { vpc, vpcCidr, securityGroup } = this.createVpc()
+    const { vpc, vpcCidr, securityGroup } = this.createMongoAtlasVpc()
 
     /**
      * S3 Buckets
@@ -299,8 +299,10 @@ export class CdkTarponStack extends cdk.Stack {
      */
 
     const atlasFunctionProps: Partial<FunctionProps> = {
-      securityGroups: this.shouldUseVpc() ? [securityGroup] : undefined,
-      vpc: this.shouldUseVpc() ? vpc : undefined,
+      securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
+        ? [securityGroup]
+        : undefined,
+      vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
       environment: {
         SM_SECRET_ARN: config.application.ATLAS_CREDENTIALS_SECRET_ARN,
       },
@@ -1025,7 +1027,7 @@ export class CdkTarponStack extends cdk.Stack {
     new CfnOutput(this, 'API Gateway endpoint URL - Console API', {
       value: consoleApi.urlForPath('/'),
     })
-    if (this.shouldUseVpc()) {
+    if (this.config.resource.LAMBDA_VPC_ENABLED) {
       new CfnOutput(this, 'Lambda VPC ID', {
         value: vpc.vpcId,
       })
@@ -1325,16 +1327,8 @@ export class CdkTarponStack extends cdk.Stack {
     }
   }
 
-  private shouldUseVpc() {
-    return (
-      this.config.resource.LAMBDA_VPC_ENABLED &&
-      this.config.stage !== 'local' &&
-      process.env.ENV !== 'dev:user'
-    )
-  }
-
-  private createVpc() {
-    if (this.config.stage === 'local' || process.env.ENV === 'dev:user') {
+  private createMongoAtlasVpc() {
+    if (this.config.stage !== 'sandbox' && this.config.stage !== 'prod') {
       return {
         vpc: null,
         vpcCidr: null,
@@ -1343,36 +1337,33 @@ export class CdkTarponStack extends cdk.Stack {
     }
 
     const vpcCidr = '10.0.0.0/21'
-    const vpc = new ec2.Vpc(this, 'vpc', {
+    const vpc = new Vpc(this, 'vpc', {
       cidr: vpcCidr,
       subnetConfiguration: [
         {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          subnetType: SubnetType.PRIVATE_WITH_NAT,
           cidrMask: 24,
           name: 'PrivateSubnet1',
         },
         {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
+          subnetType: SubnetType.PRIVATE_WITH_NAT,
           cidrMask: 24,
           name: 'PrivateSubnet2',
         },
         {
-          subnetType: ec2.SubnetType.PUBLIC,
+          subnetType: SubnetType.PUBLIC,
           cidrMask: 28,
           name: 'PublicSubnet1',
         },
       ],
     })
 
-    const securityGroup = new ec2.SecurityGroup(
-      this,
-      StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-      {
-        vpc,
-        securityGroupName: StackConstants.MONGO_DB_SECURITY_GROUP_NAME,
-      }
-    )
-    securityGroup.addIngressRule(ec2.Peer.ipv4(vpcCidr), ec2.Port.tcp(27017))
+    const securityGroupId = 'atlas-lambda-sg'
+    const securityGroup = new SecurityGroup(this, securityGroupId, {
+      vpc,
+      securityGroupName: securityGroupId,
+    })
+    securityGroup.addIngressRule(Peer.ipv4(vpcCidr), Port.tcp(27017))
 
     return {
       vpc,

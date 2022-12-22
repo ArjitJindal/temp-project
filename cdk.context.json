@@ -34,5 +34,15 @@
     "ap-south-1b",
     "ap-south-1c"
   ],
-  "acknowledged-issue-numbers": [19179]
+  "acknowledged-issue-numbers": [19179],
+  "availability-zones:account=073830519512:region=eu-central-1": [
+    "eu-central-1a",
+    "eu-central-1b",
+    "eu-central-1c"
+  ],
+  "availability-zones:account=073830519512:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ]
 }
