@@ -20,6 +20,7 @@ import {
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { neverReturn } from '@/utils/lang'
 import { ListType } from '@/@types/openapi-public/ListType'
+import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 
 export class ListRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -32,6 +33,7 @@ export class ListRepository {
 
   async createList(
     listType: ListType,
+    subtype: ListSubtype,
     newList: ListData = {}
   ): Promise<ListExisted> {
     const listId = uuidv4()
@@ -40,11 +42,12 @@ export class ListRepository {
       metadata,
       listId,
       listType,
+      subtype,
       createdTimestamp: Date.now(),
       size: items.length,
     }
     await this.updateListHeader(header)
-    await this.updateListItems(listType, listId, items)
+    await this.updateListItems(listId, items)
     return {
       listId,
       header,
@@ -52,8 +55,8 @@ export class ListRepository {
     }
   }
 
-  async deleteList(listType: ListType, listId: string) {
-    const header = await this.getListHeader(listType, listId)
+  async deleteList(listId: string) {
+    const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List not find by id "${listId}"`)
     }
@@ -61,7 +64,7 @@ export class ListRepository {
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
-          ...DynamoDbKeys.LIST_DELETED(this.tenantId, header.listType, listId),
+          ...DynamoDbKeys.LIST_DELETED(this.tenantId, listId),
           header,
         },
       })
@@ -69,7 +72,7 @@ export class ListRepository {
     await this.dynamoDb.send(
       new DeleteCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
+        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listId),
       })
     )
   }
@@ -77,17 +80,12 @@ export class ListRepository {
   async getListHeaders(
     listType: ListType | null = null
   ): Promise<ListHeader[]> {
-    const primaryKey = DynamoDbKeys.LIST_HEADER(
-      this.tenantId,
-      listType ?? '',
-      ''
-    )
-    const { Items = [] } = await paginateQuery(this.dynamoDb, {
+    const primaryKey = DynamoDbKeys.LIST_HEADER(this.tenantId, '')
+    const query = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-      KeyConditionExpression:
-        listType == null
-          ? 'PartitionKeyID = :pk'
-          : 'PartitionKeyID = :pk AND begins_with(SortKeyID, :sk)',
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression:
+        listType != null ? 'header.listType = :listType' : undefined,
       ExpressionAttributeValues:
         listType == null
           ? {
@@ -95,20 +93,18 @@ export class ListRepository {
             }
           : {
               ':pk': primaryKey.PartitionKeyID,
-              ':sk': primaryKey.SortKeyID,
+              ':listType': listType,
             },
-    })
+    }
+    const { Items = [] } = await paginateQuery(this.dynamoDb, query)
     return Items.map(({ header }) => header)
   }
 
-  async getListHeader(
-    listType: ListType,
-    listId: string
-  ): Promise<ListHeader | null> {
+  async getListHeader(listId: string): Promise<ListHeader | null> {
     const { Item } = await this.dynamoDb.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listType, listId),
+        Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listId),
       })
     )
     if (Item == null) {
@@ -123,11 +119,7 @@ export class ListRepository {
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Item: {
-          ...DynamoDbKeys.LIST_HEADER(
-            this.tenantId,
-            listHeader.listType,
-            listHeader.listId
-          ),
+          ...DynamoDbKeys.LIST_HEADER(this.tenantId, listHeader.listId),
           header: listHeader,
         },
       })
@@ -137,16 +129,12 @@ export class ListRepository {
   async refreshListHeader(listHeader: ListHeader): Promise<void> {
     await this.updateListHeader({
       ...listHeader,
-      size: await this.countListValues(listHeader.listType, listHeader.listId),
+      size: await this.countListValues(listHeader.listId),
     })
   }
 
-  async getListItem(
-    listType: ListType,
-    listId: string,
-    key: string
-  ): Promise<ListItem | null> {
-    const header = await this.getListHeader(listType, listId)
+  async getListItem(listId: string, key: string): Promise<ListItem | null> {
+    const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
@@ -162,8 +150,8 @@ export class ListRepository {
     return { key: Item.key, metadata: Item.metadata }
   }
 
-  async setListItem(listType: ListType, listId: string, listItem: ListItem) {
-    const header = await this.getListHeader(listType, listId)
+  async setListItem(listId: string, listItem: ListItem) {
+    const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
@@ -179,8 +167,8 @@ export class ListRepository {
     await this.refreshListHeader(header)
   }
 
-  async deleteListItem(listType: ListType, listId: string, key: string) {
-    const header = await this.getListHeader(listType, listId)
+  async deleteListItem(listId: string, key: string) {
+    const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
@@ -193,12 +181,8 @@ export class ListRepository {
     await this.refreshListHeader(header)
   }
 
-  async updateListItems(
-    listType: ListType,
-    listId: string,
-    listItems: ListItem[]
-  ) {
-    const header = await this.getListHeader(listType, listId)
+  async updateListItems(listId: string, listItems: ListItem[]) {
+    const header = await this.getListHeader(listId)
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
@@ -223,7 +207,6 @@ export class ListRepository {
   }
 
   async getListItems(
-    listType: ListType,
     listId: string,
     params?: {
       cursor?: string
@@ -256,7 +239,7 @@ export class ListRepository {
     }
   }
 
-  async countListValues(listType: ListType, listId: string): Promise<number> {
+  async countListValues(listId: string): Promise<number> {
     const { Count } = await paginateQuery(this.dynamoDb, {
       Select: 'COUNT',
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -300,13 +283,11 @@ export class ListRepository {
   }
 
   async importList(
-    listType: ListType,
     listId: string,
     indexName: string,
     rows: Array<{ [key: string]: string }>
   ): Promise<void> {
     await this.updateListItems(
-      listType,
       listId,
       rows.map((row) => {
         const key = row[indexName]

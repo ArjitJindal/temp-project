@@ -298,16 +298,16 @@ paths:
                 $ref: '#/components/schemas/PresignedUrlResponse'
               examples: {}
       description: Get a presigned URL for uploading a file
-  '/lists/{listType}':
-    parameters:
-      - schema:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
-        name: listType
-        in: path
-        required: true
+  /lists:
     get:
-      summary: Lists - Get All
+      summary: Lists - Get All By Type
       tags: []
+      parameters:
+        - schema:
+            type: string
+          name: listType
+          in: query
+          required: true
       responses:
         '200':
           description: OK
@@ -325,7 +325,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+              $ref: '#/components/schemas/NewListPayload'
       responses:
         '200':
           description: OK
@@ -334,13 +334,8 @@ paths:
               schema:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
       operationId: post-list
-  '/lists/{listType}/{listId}':
+  '/lists/{listId}':
     parameters:
-      - schema:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
-        name: listType
-        in: path
-        required: true
       - schema:
           type: string
         name: listId
@@ -382,13 +377,8 @@ paths:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
         '404':
           description: Not found
-  '/lists/{listType}/{listId}/items':
+  '/lists/{listId}/items':
     parameters:
-      - schema:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
-        name: listType
-        in: path
-        required: true
       - schema:
           type: string
         name: listId
@@ -426,13 +416,8 @@ paths:
       responses:
         '200':
           description: OK
-  '/lists/{listType}/{listId}/items/{key}':
+  '/lists/{listId}/items/{key}':
     parameters:
-      - schema:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
-        name: listType
-        in: path
-        required: true
       - schema:
           type: string
         name: listId
@@ -698,6 +683,16 @@ paths:
   /transactions/uniques:
     get:
       summary: Transaction - Unique values for different fields
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/TransactionsUniquesField'
+          name: field
+          in: query
+          required: true
+        - schema:
+            type: string
+          name: filter
+          in: query
       tags: []
       responses:
         '200':
@@ -705,7 +700,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionsUniquesResponse'
+                type: array
+                items:
+                  type: string
       operationId: get-transactions-uniques
   '/transactions/{transactionId}':
     parameters:
@@ -4131,20 +4128,21 @@ components:
                   type: string
         score:
           type: number
-    TransactionsUniquesResponse:
-      type: object
-      properties:
-        transactionState:
-          type: array
-          items:
-            $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
-        tagsKey:
-          type: array
-          items:
-            type: string
-      required:
-        - transactionState
-        - tagsKey
+    TransactionsUniquesField:
+      title: TransactionsUniquesField
+      type: string
+      enum:
+        - TRANSACTION_STATE
+        - TAGS_KEY
+        - IBAN_NUMBER
+        - CARD_FINGERPRINT_NUMBER
+        - BANK_ACCOUNT_NUMBER
+        - ACH_ACCOUNT_NUMBER
+        - SWIFT_ACCOUNT_NUMBER
+        - BIC
+        - BANK_SWIFT_CODE
+        - UPI_IDENTIFYING_NUMBER
+        - IP_ADDRESS
     RiskEntityType:
       type: string
       title: Risk entity type
@@ -4248,6 +4246,20 @@ components:
             type: string
           caseTransactions:
             $ref: '#/components/schemas/CaseTransaction'
+    NewListPayload:
+      title: NewListPayload
+      type: object
+      properties:
+        listType:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
+        subtype:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListSubtype
+        data:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+      required:
+        - listType
+        - subtype
+        - data
   securitySchemes:
     Authorization:
       type: http

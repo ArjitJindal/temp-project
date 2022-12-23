@@ -35,12 +35,10 @@ export const ConsoleApiPathToLambda: any = {
   '/import/{importId}': StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
   '/files/getPresignedUrl':
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
-  '/lists/{listType}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}/items':
-    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listType}/{listId}/items/{key}':
-    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/lists': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/lists/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/lists/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/lists/{listId}/items/{key}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/stats/by-types':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,

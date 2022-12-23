@@ -407,7 +407,9 @@ export const transactionsViewHandler = lambdaApi()(
       event.httpMethod === 'GET' &&
       event.path.endsWith('/transactions/uniques')
     ) {
-      return await transactionService.getUniques()
+      const { field, filter } = event.queryStringParameters as any
+
+      return await transactionService.getUniques({ field, filter })
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/transactions') &&

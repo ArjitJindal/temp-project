@@ -3904,22 +3904,27 @@ components:
     ListType:
       type: string
       enum:
-        - USERS-WHITELISTS
-        - USERS-BLACKLISTS
+        - WHITELIST
+        - BLACKLIST
+    ListSubtype:
+      type: string
+      enum:
+        - USER_ID
+        - CARD_FINGERPRINT_NUMBER
+        - IBAN_NUMBER
+        - BANK_ACCOUNT_NUMBER
+        - ACH_ACCOUNT_NUMBER
+        - SWIFT_ACCOUNT_NUMBER
+        - BIC
+        - BANK_SWIFT_CODE
+        - UPI_IDENTIFYING_NUMBER
+        - IP_ADDRESS
     ListKeyMetadata:
       type: object
       title: ListKeyMetadata
       additionalProperties: {}
     ListData:
       type: object
-      x-examples:
-        example-1:
-          listId: worst_people
-          name: People I hate
-          items:
-            - key: john
-              metadata:
-                fullName: John Dow
       title: ListData
       description: Payload of a list, new or existed
       properties:
@@ -3949,7 +3954,7 @@ components:
           description: List name
         description:
           type: string
-          description: List name
+          description: List description
         status:
           type: boolean
       additionalProperties: {}
@@ -3990,6 +3995,8 @@ components:
           type: string
         listType:
           $ref: '#/components/schemas/ListType'
+        subtype:
+          $ref: '#/components/schemas/ListSubtype'
         metadata:
           $ref: '#/components/schemas/ListMetadata'
         createdTimestamp:
@@ -3999,6 +4006,7 @@ components:
       required:
         - listId
         - listType
+        - subtype
         - size
         - createdTimestamp
     PaymentMethods:

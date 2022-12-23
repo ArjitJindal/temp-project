@@ -49,12 +49,20 @@ test('User is not in the whitelist user IDs - true', async () => {
 test('User is in the whitelist lists - false', async () => {
   const TEST_TENANT_ID = getTestTenantId()
   const listRepo = new ListRepository(TEST_TENANT_ID, dynamodb)
-  const { listId: listId1 } = await listRepo.createList('USERS-WHITELISTS', {
-    items: [{ key: '1' }, { key: '2' }],
-  })
-  const { listId: listId2 } = await listRepo.createList('USERS-WHITELISTS', {
-    items: [{ key: '3' }, { key: '4' }],
-  })
+  const { listId: listId1 } = await listRepo.createList(
+    'WHITELIST',
+    'USER_ID',
+    {
+      items: [{ key: '1' }, { key: '2' }],
+    }
+  )
+  const { listId: listId2 } = await listRepo.createList(
+    'WHITELIST',
+    'USER_ID',
+    {
+      items: [{ key: '3' }, { key: '4' }],
+    }
+  )
   expect(
     await new WhitelistUsersRuleFilter(
       TEST_TENANT_ID,
@@ -70,12 +78,20 @@ test('User is in the whitelist lists - false', async () => {
 test('User is not in the whitelist lists - true', async () => {
   const TEST_TENANT_ID = getTestTenantId()
   const listRepo = new ListRepository(TEST_TENANT_ID, dynamodb)
-  const { listId: listId1 } = await listRepo.createList('USERS-WHITELISTS', {
-    items: [{ key: '1' }, { key: '2' }],
-  })
-  const { listId: listId2 } = await listRepo.createList('USERS-WHITELISTS', {
-    items: [{ key: '3' }, { key: '4' }],
-  })
+  const { listId: listId1 } = await listRepo.createList(
+    'WHITELIST',
+    'USER_ID',
+    {
+      items: [{ key: '1' }, { key: '2' }],
+    }
+  )
+  const { listId: listId2 } = await listRepo.createList(
+    'WHITELIST',
+    'USER_ID',
+    {
+      items: [{ key: '3' }, { key: '4' }],
+    }
+  )
   expect(
     await new WhitelistUsersRuleFilter(
       TEST_TENANT_ID,

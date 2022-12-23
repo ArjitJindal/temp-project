@@ -7,7 +7,7 @@ import { ListItem } from '@/@types/openapi-public/ListItem'
 
 dynamoDbSetupHook()
 
-const LIST_TYPE = 'USERS-WHITELISTS'
+const LIST_TYPE = 'WHITELIST'
 
 describe('Verify list repository', () => {
   test('Getting list of lists', async () => {
@@ -15,12 +15,12 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const TYPE_1 = 'USERS-WHITELISTS'
-    const TYPE_2 = 'USERS-BLACKLISTS'
+    const TYPE_1 = 'WHITELIST'
+    const TYPE_2 = 'BLACKLIST'
 
-    await listRepo.createList(TYPE_1)
-    await listRepo.createList(TYPE_1)
-    await listRepo.createList(TYPE_2)
+    await listRepo.createList(TYPE_1, 'USER_ID')
+    await listRepo.createList(TYPE_1, 'USER_ID')
+    await listRepo.createList(TYPE_2, 'USER_ID')
 
     expect(await listRepo.getListHeaders(TYPE_2)).toHaveLength(1)
     expect(await listRepo.getListHeaders(TYPE_1)).toHaveLength(2)
@@ -40,43 +40,43 @@ describe('Verify list repository', () => {
 
     const {
       header: { listId },
-    } = await listRepo.createList(LIST_TYPE, {
+    } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       metadata: {
         name,
       },
       items,
     })
-    const header = await listRepo.getListHeader(LIST_TYPE, listId)
+    const header = await listRepo.getListHeader(listId)
     expect(header).not.toBeNull()
     expect(header?.listId).toEqual(listId)
     expect(header?.size).toEqual(items.length)
     expect(header?.metadata?.name).toEqual(name)
 
-    await listRepo.deleteList(LIST_TYPE, listId)
-    const result_2 = await listRepo.getListHeader(LIST_TYPE, listId)
+    await listRepo.deleteList(listId)
+    const result_2 = await listRepo.getListHeader(listId)
     expect(result_2).toBeNull()
   })
   test('Verify list delete', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
-    const { listId } = await listRepo.createList(LIST_TYPE, {
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: [],
     })
-    await listRepo.setListItem(LIST_TYPE, listId, {
+    await listRepo.setListItem(listId, {
       key: 'aaa',
       metadata: { f1: 1 },
     })
-    await listRepo.setListItem(LIST_TYPE, listId, {
+    await listRepo.setListItem(listId, {
       key: 'bbb',
       metadata: { f1: 2 },
     })
-    await listRepo.setListItem(LIST_TYPE, listId, {
+    await listRepo.setListItem(listId, {
       key: 'ccc',
       metadata: { f1: 3 },
     })
-    await listRepo.deleteList(LIST_TYPE, listId)
-    expect(await listRepo.getListHeader(LIST_TYPE, listId)).toBeNull()
+    await listRepo.deleteList(listId)
+    expect(await listRepo.getListHeader(listId)).toBeNull()
     const headers = await listRepo.getListHeaders(LIST_TYPE)
     expect(headers.find((x) => x.listId === listId) ?? null).toBeNull()
   })
@@ -85,7 +85,7 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const list = await listRepo.createList(LIST_TYPE, {
+    const list = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: [{ key: 'c' }, { key: 'b' }, { key: 'a' }],
     })
 
@@ -97,7 +97,7 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const list = await listRepo.createList(LIST_TYPE, {
+    const list = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: [
         { key: 'aaa', metadata: { f1: 1 } },
         { key: 'bbb', metadata: { f1: 2 } },
@@ -116,10 +116,10 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const { listId } = await listRepo.createList(LIST_TYPE)
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {})
 
     {
-      await listRepo.updateListItems(LIST_TYPE, listId, [
+      await listRepo.updateListItems(listId, [
         { key: 'aaa', metadata: { v: 1 } },
         { key: 'bbb', metadata: { v: 1 } },
         { key: 'ccc', metadata: { v: 1 } },
@@ -132,7 +132,7 @@ describe('Verify list repository', () => {
       ])
     }
     {
-      await listRepo.updateListItems(LIST_TYPE, listId, [
+      await listRepo.updateListItems(listId, [
         { key: 'ccc', metadata: { v: 2 } },
         { key: '111', metadata: { v: 2 } },
       ])
@@ -150,14 +150,14 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const { listId } = await listRepo.createList(LIST_TYPE)
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {})
     const items = [
       { key: 'aaa', metadata: { v: 1 } },
       { key: 'bbb', metadata: { v: 1 } },
       { key: 'ccc', metadata: { v: 1 } },
     ]
-    await listRepo.updateListItems(LIST_TYPE, listId, items)
-    const header = await listRepo.getListHeader(LIST_TYPE, listId)
+    await listRepo.updateListItems(listId, items)
+    const header = await listRepo.getListHeader(listId)
     expect(header?.size).toEqual(items.length)
     const allItems = await getAllListItems(listRepo, listId)
     expect(allItems).toEqual(items)
@@ -167,32 +167,32 @@ describe('Verify list repository', () => {
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const { listId } = await listRepo.createList(LIST_TYPE)
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {})
 
-    await listRepo.updateListItems(LIST_TYPE, listId, [
+    await listRepo.updateListItems(listId, [
       { key: 'aaa', metadata: { f1: 1 } },
     ])
-    await listRepo.updateListItems(LIST_TYPE, listId, [
+    await listRepo.updateListItems(listId, [
       { key: 'aaa', metadata: { f1: 2 } },
     ])
 
-    const result = await listRepo.getListItem(LIST_TYPE, listId, 'aaa')
+    const result = await listRepo.getListItem(listId, 'aaa')
     expect(result).toEqual({ key: 'aaa', metadata: { f1: 2 } })
-    expect((await listRepo.getListHeader(LIST_TYPE, listId))?.size).toEqual(1)
+    expect((await listRepo.getListHeader(listId))?.size).toEqual(1)
   })
   test('Large arrays read/write', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const { listId } = await listRepo.createList(LIST_TYPE)
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {})
     const items = [...new Array(100)].map((_, i) => ({
       key: i.toString(),
       metadata: { f1: Math.round(Math.cos(i) * Number.MAX_SAFE_INTEGER) },
     }))
     items.sort((x, y) => x.key.localeCompare(y.key))
 
-    await listRepo.updateListItems(LIST_TYPE, listId, items)
+    await listRepo.updateListItems(listId, items)
     const resultItems = await getAllListItems(listRepo, listId)
     expect(resultItems).toEqual(items)
   })
@@ -202,15 +202,15 @@ describe('Verify list repository', () => {
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
     const lists: List[] = [
-      await listRepo.createList(LIST_TYPE, {
+      await listRepo.createList(LIST_TYPE, 'USER_ID', {
         metadata: { name: 'a' },
         items: [],
       }),
-      await listRepo.createList(LIST_TYPE, {
+      await listRepo.createList(LIST_TYPE, 'USER_ID', {
         metadata: { name: 'b' },
         items: [],
       }),
-      await listRepo.createList(LIST_TYPE, {
+      await listRepo.createList(LIST_TYPE, 'USER_ID', {
         metadata: { name: 'c' },
         items: [],
       }),
@@ -233,23 +233,23 @@ describe('Verify list repository', () => {
 
     const {
       header: { listId },
-    } = await listRepo.createList(LIST_TYPE, { items: [] })
+    } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
+      items: [],
+    })
 
     // Make sure empty list is empty
     {
-      expect((await listRepo.getListHeader(LIST_TYPE, listId))?.size).toEqual(0)
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(0)
     }
 
     // Try to write item and read it, should be the same
     {
       const listItem = { key: 'aaa', metadata: { f1: 42 } }
-      await listRepo.setListItem(LIST_TYPE, listId, listItem)
-      expect((await listRepo.getListHeader(LIST_TYPE, listId))?.size).toEqual(1)
-      expect(
-        await listRepo.getListItem(LIST_TYPE, listId, listItem.key)
-      ).toEqual(listItem)
-      await listRepo.deleteListItem(LIST_TYPE, listId, listItem.key)
-      expect((await listRepo.getListHeader(LIST_TYPE, listId))?.size).toEqual(0)
+      await listRepo.setListItem(listId, listItem)
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(1)
+      expect(await listRepo.getListItem(listId, listItem.key)).toEqual(listItem)
+      await listRepo.deleteListItem(listId, listItem.key)
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(0)
     }
 
     // Try to override item
@@ -257,31 +257,27 @@ describe('Verify list repository', () => {
       const key = 'aaa'
       const item1 = { key, metadata: { f1: 42 } }
       const item2 = { key, metadata: { f1: 666 } }
-      await listRepo.setListItem(LIST_TYPE, listId, item1)
-      expect(await listRepo.getListItem(LIST_TYPE, listId, key)).toEqual(item1)
-      await listRepo.setListItem(LIST_TYPE, listId, item2)
-      expect(await listRepo.getListItem(LIST_TYPE, listId, key)).toEqual(item2)
-      await listRepo.deleteListItem(LIST_TYPE, listId, key)
+      await listRepo.setListItem(listId, item1)
+      expect(await listRepo.getListItem(listId, key)).toEqual(item1)
+      await listRepo.setListItem(listId, item2)
+      expect(await listRepo.getListItem(listId, key)).toEqual(item2)
+      await listRepo.deleteListItem(listId, key)
     }
 
     // Trying to work with non existed list
     {
       const key = 'aaa'
       expect(
-        listRepo.setListItem(LIST_TYPE, 'not_existed', { key })
+        listRepo.setListItem('not_existed', { key })
       ).rejects.not.toBeNull()
-      expect(
-        listRepo.getListItem(LIST_TYPE, 'not_existed', key)
-      ).rejects.not.toBeNull()
-      expect(
-        listRepo.deleteListItem(LIST_TYPE, 'not_existed', key)
-      ).rejects.not.toBeNull()
+      expect(listRepo.getListItem('not_existed', key)).rejects.not.toBeNull()
+      expect(listRepo.deleteListItem('not_existed', key)).rejects.not.toBeNull()
     }
 
     // Trying to work with non existed key
     {
       const key = 'not_existed'
-      expect(await listRepo.getListItem(LIST_TYPE, listId, key)).toBeNull()
+      expect(await listRepo.getListItem(listId, key)).toBeNull()
     }
   })
   test('Test paginated keys reading', async () => {
@@ -297,7 +293,7 @@ describe('Verify list repository', () => {
       },
     }))
 
-    const { listId } = await listRepo.createList(LIST_TYPE, {
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: initialValues,
     })
 
@@ -305,7 +301,6 @@ describe('Verify list repository', () => {
     const readResult = []
     do {
       const r: CursorPaginatedResponse<ListItem> = await listRepo.getListItems(
-        LIST_TYPE,
         listId,
         {
           cursor,
@@ -335,17 +330,17 @@ describe('Verify list repository', () => {
       },
     }))
 
-    const { listId } = await listRepo.createList(LIST_TYPE, {
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: initialValues,
     })
-    const total = await listRepo.countListValues(LIST_TYPE, listId)
+    const total = await listRepo.countListValues(listId)
     expect(total).toEqual(initialValues.length)
   })
   test('Test matching values', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
-    const { listId } = await listRepo.createList(LIST_TYPE, {
+    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: [{ key: 'aaabbb' }, { key: 'ccc' }, { key: 'aaaccc' }],
     })
     expect(await listRepo.match(listId, 'aaabbb', 'EXACT')).toEqual(true)
@@ -363,7 +358,7 @@ async function getAllListItems(listRepo: ListRepository, listId: string) {
   let nextCursor = undefined
   do {
     const response: CursorPaginatedResponse<ListItem> =
-      await listRepo.getListItems(LIST_TYPE, listId, {
+      await listRepo.getListItems(listId, {
         cursor: nextCursor,
       })
     nextCursor = response.cursor

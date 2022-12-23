@@ -51,7 +51,8 @@ import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/Tran
 import dayjs, { duration } from '@/utils/dayjs'
 import { getTimeLabels } from '@/lambdas/console-api-dashboard/utils'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
-import { TransactionsUniquesResponse } from '@/@types/openapi-internal/TransactionsUniquesResponse'
+import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
+import { neverThrow } from '@/utils/lang'
 import { OptionalPagination } from '@/utils/pagination'
 
 type QueryCountResult = { count: number; scannedCount: number }
@@ -1347,23 +1348,112 @@ export class TransactionRepository {
     }
   }
 
-  public async getUniques(): Promise<TransactionsUniquesResponse> {
+  public async getUniques(params: {
+    field: TransactionsUniquesField
+    filter?: string
+  }): Promise<string[]> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<TransactionCaseManagement>(name)
 
-    const distinctStatesPromise = collection
-      .distinct('transactionState')
-      .then((values) => values.filter((x): x is TransactionState => x != null))
-
-    const tagKeysPromise = collection
-      .distinct('tags.key')
-      .then((values: string[]) => values.filter((x): x is string => x != null))
-
-    return {
-      transactionState: await distinctStatesPromise,
-      tagsKey: await tagKeysPromise,
+    let fieldPath: string
+    const additionalConditions = []
+    switch (params.field) {
+      case 'TRANSACTION_STATE':
+        fieldPath = 'transactionState'
+        break
+      case 'TAGS_KEY':
+        fieldPath = 'tags.key'
+        break
+      case 'IBAN_NUMBER':
+        fieldPath = 'originPaymentDetails.IBAN'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'IBAN',
+        })
+        break
+      case 'CARD_FINGERPRINT_NUMBER':
+        fieldPath = 'originPaymentDetails.cardFingerprint'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'CARD',
+        })
+        break
+      case 'BANK_ACCOUNT_NUMBER':
+        fieldPath = 'originPaymentDetails.accountNumber'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'GENERIC_BANK_ACCOUNT',
+        })
+        break
+      case 'ACH_ACCOUNT_NUMBER':
+        fieldPath = 'originPaymentDetails.accountNumber'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'ACH',
+        })
+        break
+      case 'SWIFT_ACCOUNT_NUMBER':
+        fieldPath = 'originPaymentDetails.accountNumber'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'SWIFT',
+        })
+        break
+      case 'BIC':
+        fieldPath = 'originPaymentDetails.BIC'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'IBAN',
+        })
+        break
+      case 'BANK_SWIFT_CODE':
+        fieldPath = 'originPaymentDetails.swiftCode'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'SWIFT',
+        })
+        break
+      case 'UPI_IDENTIFYING_NUMBER':
+        fieldPath = 'originPaymentDetails.upiID'
+        additionalConditions.push({
+          'originPaymentDetails.method': 'UPI',
+        })
+        break
+      case 'IP_ADDRESS':
+        fieldPath = 'deviceData.ipAddress'
+        break
+      default:
+        throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }
+
+    const pipeline: Document[] = [
+      {
+        $match: {
+          $and: [
+            {
+              [fieldPath]: {
+                $exists: true,
+                $ne: null,
+                ...(params.filter != null && params.filter !== ''
+                  ? {
+                      $regex: params.filter,
+                    }
+                  : {}),
+              },
+            },
+            ...additionalConditions,
+          ],
+        },
+      },
+      {
+        $group: {
+          _id: `$${fieldPath}`,
+        },
+      },
+      {
+        $limit: 100,
+      },
+    ]
+
+    const result: string[] = await collection
+      .aggregate<{ _id: string }>(pipeline)
+      .map(({ _id }) => _id)
+      .toArray()
+    return result
   }
   public async getStatsByType(
     params: DefaultApiGetTransactionsListRequest,
