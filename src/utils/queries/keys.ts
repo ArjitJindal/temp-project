@@ -12,6 +12,12 @@ export const CASES_LIST = (type: CaseType, params: AnyParameters): QueryKey => [
   { params },
 ];
 export const CASES_ITEM = (transactionId: string): QueryKey => ['cases', transactionId];
+export const CASES_ITEM_RULES = (caseId: string): QueryKey => ['cases', caseId, 'rules'];
+export const CASES_RULE_TRANSACTIONS = (
+  caseId: string,
+  params: AnyParameters,
+  ruleInstanceId: string,
+): QueryKey => ['cases', caseId, 'transactions', 'list', ruleInstanceId, params];
 export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParameters): QueryKey => [
   'cases',
   caseId,

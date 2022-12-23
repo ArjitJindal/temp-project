@@ -1,0 +1,314 @@
+import React, { useState } from 'react';
+import HitsTable from '../HitsTable';
+import s from '../styles.module.less';
+import * as Card from '@/components/ui/Card';
+import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
+import { Case, CaseTransaction } from '@/apis';
+import { transactionType } from '@/utils/tags';
+import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import UserLink from '@/components/UserLink';
+import { getUserName } from '@/utils/api/users';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import CountryDisplay from '@/components/ui/CountryDisplay';
+import Id from '@/components/ui/Id';
+import { makeUrl } from '@/utils/routing';
+import { useQuery } from '@/utils/queries/hooks';
+import { CASES_RULE_TRANSACTIONS } from '@/utils/queries/keys';
+import { useApi } from '@/api';
+import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+
+export function expandedRowRender(item: RuleHitTransactionItem) {
+  return (
+    <div className={s.expandedRow}>
+      <HitsTable transaction={item.caseTransactions} />
+    </div>
+  );
+}
+
+interface Props {
+  caseItem: Case;
+  rulesInstanceId: any;
+}
+
+type RuleHitTransactionItem = {
+  _id: string;
+  caseTransactions: CaseTransaction;
+};
+
+export default function RulesHitTransactionTable(props: Props) {
+  const { caseItem, rulesInstanceId } = props;
+
+  const api = useApi();
+  const caseId = caseItem.caseId as string;
+
+  const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+
+  const caseTransationsForRuleQueryResult = useQuery(
+    CASES_RULE_TRANSACTIONS(caseId, params, rulesInstanceId),
+    async () => {
+      const response =
+        caseId &&
+        rulesInstanceId &&
+        (await api.getCaseTransactionsForRule({
+          caseId,
+          rulesInstanceId: rulesInstanceId,
+        }));
+      return {
+        total: response ? response[0] : 0,
+        items: response ? response[1] : [],
+      };
+    },
+  );
+
+  return (
+    <Card.Section>
+      <>
+        <QueryResultsTable<RuleHitTransactionItem, CommonParams>
+          disableInternalPadding={true}
+          rowKey="caseTransactions.transactionId"
+          options={{
+            reload: false,
+            setting: false,
+            density: false,
+          }}
+          search={false}
+          scroll={{ x: 2300 }}
+          columns={[
+            {
+              title: 'Transaction ID',
+              exportData: 'caseTransactions.transactionId',
+              width: 100,
+              ellipsis: true,
+              render: (_, entity) => {
+                console.log(`Entities: ${JSON.stringify(entity)}`);
+                return (
+                  <Id
+                    to={makeUrl(`/transactions/item/:id`, {
+                      id: entity.caseTransactions.transactionId,
+                    })}
+                  >
+                    {entity.caseTransactions.transactionId}
+                  </Id>
+                );
+              },
+            },
+            {
+              title: 'Transaction Type',
+              dataIndex: 'caseTransactions.type',
+              exportData: 'caseTransactions.type',
+              width: 100,
+              valueType: 'select',
+              ellipsis: true,
+              fieldProps: {
+                options: transactionType,
+                allowClear: true,
+              },
+              render: (dom, entity) => {
+                return <TransactionTypeTag transactionType={entity.caseTransactions.type} />;
+              },
+            },
+            {
+              title: 'Timestamp',
+              width: 130,
+              ellipsis: true,
+              dataIndex: 'caseTransactions.timestamp',
+              exportData: (entity) =>
+                dayjs(entity.caseTransactions.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
+              valueType: 'dateTimeRange',
+              render: (_, entity) => {
+                return <TimestampDisplay timestamp={entity?.caseTransactions.timestamp} />;
+              },
+            },
+            {
+              title: 'Origin',
+              hideInSearch: true,
+              children: [
+                {
+                  title: 'Origin User ID',
+                  tooltip: 'Origin is the Sender in a transaction',
+                  width: 200,
+                  copyable: true,
+                  ellipsis: true,
+                  dataIndex: 'caseTransactions.originUserId',
+                  exportData: 'caseTransactions.originUserId',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    if (entity == null) {
+                      return <></>;
+                    }
+                    if (!entity.caseTransactions.originUser)
+                      return entity.caseTransactions.originUserId;
+                    return (
+                      <UserLink user={entity.caseTransactions.originUser}>
+                        {String(entity.caseTransactions.originUserId)}
+                      </UserLink>
+                    );
+                  },
+                },
+                {
+                  title: 'Origin User Name',
+                  tooltip: 'Origin is the Sender in a transaction',
+                  exportData: (entity) => getUserName(entity.caseTransactions.originUser),
+                  width: 220,
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return getUserName(entity.caseTransactions.originUser);
+                  },
+                },
+                {
+                  title: 'Origin Method',
+                  width: 160,
+                  exportData: 'caseTransactions.originPaymentDetails.method',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return (
+                      <PaymentMethodTag
+                        paymentMethod={entity.caseTransactions.originPaymentDetails?.method}
+                      />
+                    );
+                  },
+                },
+                {
+                  title: 'Origin Amount',
+                  exportData: 'caseTransactions.originAmountDetails.transactionAmount',
+                  hideInSearch: true,
+                  width: 150,
+                  render: (dom, entity) => {
+                    if (
+                      entity.caseTransactions.originAmountDetails?.transactionAmount !== undefined
+                    ) {
+                      return new Intl.NumberFormat().format(
+                        entity.caseTransactions.originAmountDetails?.transactionAmount,
+                      );
+                    } else {
+                      return entity.caseTransactions.originAmountDetails?.transactionAmount;
+                    }
+                  },
+                },
+                {
+                  title: 'Origin Currency',
+                  exportData: 'caseTransactions.originAmountDetails.transactionCurrency',
+                  hideInSearch: true,
+                  width: 140,
+                  render: (dom, entity) => {
+                    return entity.caseTransactions.originAmountDetails?.transactionCurrency;
+                  },
+                },
+                {
+                  title: 'Origin Country',
+                  exportData: 'caseTransactions.originAmountDetails.country',
+                  hideInSearch: true,
+                  width: 140,
+                  render: (dom, entity) => {
+                    return (
+                      <CountryDisplay
+                        isoCode={entity.caseTransactions.originAmountDetails?.country}
+                      />
+                    );
+                  },
+                },
+              ],
+            },
+            {
+              title: 'Destination',
+              hideInSearch: true,
+              children: [
+                {
+                  title: 'Destination User ID',
+                  tooltip: 'Destination is the Receiver in a transaction',
+                  dataIndex: 'destinationUserId',
+                  exportData: 'caseTransactions.destinationUserId',
+                  copyable: true,
+                  ellipsis: true,
+                  hideInSearch: true,
+                  width: 170,
+                  render: (dom, entity) => {
+                    if (!entity.caseTransactions.destinationUser) {
+                      return entity.caseTransactions.destinationUserId;
+                    }
+                    return (
+                      <UserLink user={entity.caseTransactions.destinationUser}>
+                        {String(entity.caseTransactions.destinationUserId)}
+                      </UserLink>
+                    );
+                  },
+                },
+                {
+                  title: 'Destination User Name',
+                  tooltip: 'Destination is the Receiver in a transaction',
+                  width: 180,
+                  hideInSearch: true,
+                  exportData: (entity) => getUserName(entity.caseTransactions.destinationUser),
+                  render: (dom, entity) => {
+                    return getUserName(entity.caseTransactions.destinationUser);
+                  },
+                },
+                {
+                  title: 'Destination Method',
+                  exportData: 'caseTransactions.destinationPaymentDetails.method',
+                  width: 160,
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return (
+                      <PaymentMethodTag
+                        paymentMethod={entity.caseTransactions.destinationPaymentDetails?.method}
+                      />
+                    );
+                  },
+                },
+                {
+                  title: 'Destination Amount',
+                  width: 200,
+                  dataIndex: 'destnationAmountDetails.transactionAmount',
+                  exportData: 'caseTransactions.destinationAmountDetails.transactionAmount',
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    if (
+                      entity.caseTransactions.destinationAmountDetails?.transactionAmount !==
+                      undefined
+                    ) {
+                      return new Intl.NumberFormat().format(
+                        entity.caseTransactions.destinationAmountDetails?.transactionAmount,
+                      );
+                    } else {
+                      return entity.caseTransactions.destinationAmountDetails?.transactionAmount;
+                    }
+                  },
+                },
+                {
+                  title: 'Destination Currency',
+                  exportData: 'caseTransactions.destinationAmountDetails.transactionCurrency',
+                  width: 200,
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return entity.caseTransactions.destinationAmountDetails?.transactionCurrency;
+                  },
+                },
+                {
+                  title: 'Destination Country',
+                  exportData: 'caseTransactions.destinationAmountDetails.country',
+                  width: 200,
+                  hideInSearch: true,
+                  render: (dom, entity) => {
+                    return (
+                      <CountryDisplay
+                        isoCode={entity.caseTransactions.destinationAmountDetails?.country}
+                      />
+                    );
+                  },
+                },
+              ],
+            },
+          ]}
+          queryResults={caseTransationsForRuleQueryResult}
+          params={params}
+          onChangeParams={setParams}
+          pagination={false}
+          expandable={{ expandedRowRender }}
+        />
+      </>
+    </Card.Section>
+  );
+}
