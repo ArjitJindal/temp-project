@@ -37,7 +37,7 @@ export type TransactionsPatternPercentageRuleParameters = {
   checkReceiver?: 'receiving' | 'all' | 'none'
 }
 
-export default class TransactionsPatternPercentageBaseRule<
+export default abstract class TransactionsPatternPercentageBaseRule<
   T extends TransactionsPatternPercentageRuleParameters
 > extends TransactionAggregationRule<T, TransactionFilters, AggregationData> {
   transactionRepository?: TransactionRepository
@@ -283,14 +283,10 @@ export default class TransactionsPatternPercentageBaseRule<
     )
   }
 
-  protected matchPattern(
+  protected abstract matchPattern(
     _transaction: AuxiliaryIndexTransaction,
     _direction?: 'origin' | 'destination'
-  ): boolean {
-    throw new Error('Not implemented')
-  }
+  ): boolean
 
-  protected getNeededTransactionFields(): Array<keyof Transaction> {
-    throw new Error('Not implemented')
-  }
+  protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 }

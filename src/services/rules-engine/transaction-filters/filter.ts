@@ -2,7 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleFilter } from '../filter'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 
-export class TransactionRuleFilter<P> extends RuleFilter {
+export abstract class TransactionRuleFilter<P> extends RuleFilter {
   tenantId: string
   transaction: Transaction
   parameters: P

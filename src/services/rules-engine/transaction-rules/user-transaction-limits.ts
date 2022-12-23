@@ -1,0 +1,294 @@
+import * as _ from 'lodash'
+import {
+  getTransactionsTotalAmount,
+  isTransactionAmountAboveThreshold,
+} from '../utils/transaction-rule-utils'
+import { RuleHitResult } from '../rule'
+import {
+  AggregationRepository,
+  UserTimeAggregationAttributes,
+} from '../repositories/aggregation-repository'
+import { formatMoney } from '../utils/format-description'
+import { TransactionRule } from './rule'
+import { Amount } from '@/@types/openapi-public/Amount'
+import { FalsePositiveDetails } from '@/@types/openapi-public/FalsePositiveDetails'
+import { TransactionLimit } from '@/@types/openapi-public/TransactionLimit'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
+import { TransactionAmountLimit } from '@/@types/openapi-public/TransactionAmountLimit'
+import { TransactionCountLimit } from '@/@types/openapi-public/TransactionCountLimit'
+import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+
+type TransacdtionLimitHitResult =
+  | {
+      hitDescription: string
+      falsePositiveDetails?: FalsePositiveDetails
+    }
+  | undefined
+
+function granularityToAdverb(granularity: 'day' | 'week' | 'month' | 'year') {
+  switch (granularity) {
+    case 'day':
+      return 'daily'
+    default:
+      return `${granularity}ly`
+  }
+}
+
+export default class UserTransactionLimitsRule extends TransactionRule<unknown> {
+  public static getSchema(): any {
+    return {}
+  }
+
+  public async computeRule() {
+    if (
+      !this.senderUser?.transactionLimits ||
+      !this.transaction.originAmountDetails
+    ) {
+      return
+    }
+
+    const paymentMethod = this.transaction.originPaymentDetails?.method
+    const {
+      maximumDailyTransactionLimit,
+      maximumMonthlyTransactionLimit,
+      maximumWeeklyTransactionLimit,
+      maximumYearlyTransactionLimit,
+      maximumTransactionLimit,
+      paymentMethodLimits,
+    } = this.senderUser.transactionLimits
+    const totalLimits = [
+      { limit: maximumDailyTransactionLimit, granularity: 'day' },
+      { limit: maximumWeeklyTransactionLimit, granularity: 'week' },
+      { limit: maximumMonthlyTransactionLimit, granularity: 'month' },
+      { limit: maximumYearlyTransactionLimit, granularity: 'year' },
+    ].filter((item) => item.limit) as Array<{
+      limit: Amount
+      granularity: 'day' | 'week' | 'month' | 'year'
+    }>
+    const transactionLimitResults = []
+
+    // Check for maximum transaction limit
+    if (maximumTransactionLimit) {
+      transactionLimitResults.push(
+        await this.checkMaximumTransactionLimit(maximumTransactionLimit)
+      )
+    }
+
+    // Check for total transaction limits by time granularity
+    transactionLimitResults.push(
+      ...(await this.checkTotalTransactionLimits(totalLimits))
+    )
+
+    // Check for payment method transaction limits by time granularity
+    if (paymentMethod && paymentMethodLimits?.[paymentMethod]) {
+      transactionLimitResults.push(
+        ...(await this.checkPaymentMethodTransactionLimits(
+          paymentMethod,
+          paymentMethodLimits[paymentMethod]!
+        ))
+      )
+    }
+
+    const transactionLimitHitResults = transactionLimitResults.filter(Boolean)
+
+    const hitResult: RuleHitResult = []
+    if (transactionLimitHitResults.length > 0) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: {
+          hitDescription: transactionLimitHitResults
+            .map((r) => r?.hitDescription)
+            .join(' '),
+        },
+        falsePositiveDetails: transactionLimitHitResults.find(
+          (r) => r?.falsePositiveDetails
+        )?.falsePositiveDetails,
+      })
+    }
+    return hitResult
+  }
+
+  getStatsByGranularity = _.memoize(
+    (
+      granularity: 'day' | 'week' | 'month' | 'year'
+    ): Promise<UserTimeAggregationAttributes> => {
+      const aggregationRepository = new AggregationRepository(
+        this.tenantId,
+        this.dynamoDb
+      )
+      return aggregationRepository.getUserTransactionStatsTimeGroup(
+        this.senderUser!.userId,
+        this.transaction.timestamp,
+        granularity
+      )
+    }
+  )
+
+  private async checkMaximumTransactionLimit(
+    maximumTransactionLimit: Amount
+  ): Promise<TransacdtionLimitHitResult> {
+    const transactionAmountHit = await isTransactionAmountAboveThreshold(
+      this.transaction.originAmountDetails,
+      {
+        [maximumTransactionLimit.amountCurrency]:
+          maximumTransactionLimit.amountValue,
+      }
+    )
+    if (transactionAmountHit.isHit) {
+      const { thresholdHit } = transactionAmountHit
+      let falsePositiveDetails = undefined
+      if (
+        this.ruleInstance.falsePositiveCheckEnabled &&
+        thresholdHit != null &&
+        this.ruleInstance.caseCreationType === 'TRANSACTION'
+      ) {
+        if (
+          this.transaction.originAmountDetails &&
+          thresholdHit.min &&
+          (this.transaction.originAmountDetails.transactionAmount -
+            thresholdHit.min) /
+            this.transaction.originAmountDetails.transactionAmount <
+            0.05
+        ) {
+          falsePositiveDetails = {
+            isFalsePositive: true,
+            confidenceScore: _.random(60, 80),
+          }
+        }
+      }
+      return {
+        falsePositiveDetails,
+        hitDescription: `Sender sent a transaction amount of ${formatMoney(
+          this.transaction.originAmountDetails!
+        )} more than the limit (${formatMoney(maximumTransactionLimit)}).`,
+      }
+    }
+  }
+
+  private async checkTotalTransactionLimits(
+    limits: Array<{
+      limit: Amount
+      granularity: 'day' | 'week' | 'month' | 'year'
+    }>
+  ) {
+    const transactionLimitResults: TransacdtionLimitHitResult[] = []
+    for (const { limit, granularity } of limits) {
+      const stats = await this.getStatsByGranularity(granularity)
+      const currentTotalAmount = stats.transactionsAmount.get('ALL')
+      const totalAmount = await getTransactionsTotalAmount(
+        [currentTotalAmount, this.transaction.originAmountDetails],
+        this.transaction.originAmountDetails!.transactionCurrency
+      )
+      const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
+        [limit.amountCurrency]: limit.amountValue,
+      })
+      if (hitInfo.isHit) {
+        transactionLimitResults.push({
+          hitDescription: `Sender reached the ${granularityToAdverb(
+            granularity
+          )} transaction amount limit (${formatMoney(limit)}).`,
+        })
+      }
+    }
+    return transactionLimitResults
+  }
+
+  private async checkPaymentMethodTransactionLimits(
+    paymentMethod: PaymentMethod,
+    transactionLimit: TransactionLimit
+  ): Promise<TransacdtionLimitHitResult[]> {
+    const transactionLimitResults: TransacdtionLimitHitResult[] = []
+    if (transactionLimit.transactionAmountLimit) {
+      for (const g in transactionLimit.transactionAmountLimit) {
+        const granularity = g as keyof TransactionAmountLimit
+        const limit = transactionLimit.transactionAmountLimit[granularity]
+        if (limit) {
+          const stats = await this.getStatsByGranularity(granularity)
+          const currentTotalAmount = stats.transactionsAmount.get(paymentMethod)
+          const totalAmount = await getTransactionsTotalAmount(
+            [currentTotalAmount, this.transaction.originAmountDetails],
+            this.transaction.originAmountDetails!.transactionCurrency
+          )
+          const hitInfo = await isTransactionAmountAboveThreshold(totalAmount, {
+            [limit.amountCurrency]: limit.amountValue,
+          })
+          if (hitInfo.isHit) {
+            transactionLimitResults.push({
+              hitDescription: `Sender reached the ${granularityToAdverb(
+                granularity
+              )} transaction amount limit (${formatMoney(
+                limit
+              )}) of ${paymentMethod} payment method.`,
+            })
+          }
+        }
+      }
+    }
+    if (transactionLimit.averageTransactionAmountLimit) {
+      for (const g in transactionLimit.averageTransactionAmountLimit) {
+        const granularity = g as keyof TransactionAmountLimit
+        const limit =
+          transactionLimit.averageTransactionAmountLimit[
+            granularity as keyof TransactionAmountLimit
+          ]
+        if (limit) {
+          const stats = await this.getStatsByGranularity(
+            granularity as keyof TransactionAmountLimit
+          )
+          const currentTotalAmount = stats.transactionsAmount.get(paymentMethod)
+          const totalAmount = await getTransactionsTotalAmount(
+            [currentTotalAmount, this.transaction.originAmountDetails],
+            this.transaction.originAmountDetails!.transactionCurrency
+          )
+          const currentTotalCount =
+            stats.transactionsCount.get(paymentMethod) ?? 0
+          const totalCount = currentTotalCount + 1
+          const averageAmount: TransactionAmountDetails = {
+            ...totalAmount,
+            transactionAmount: totalAmount.transactionAmount / totalCount,
+          }
+
+          const hitInfo = await isTransactionAmountAboveThreshold(
+            averageAmount,
+            {
+              [limit.amountCurrency]: limit.amountValue,
+            }
+          )
+          if (hitInfo.isHit) {
+            transactionLimitResults.push({
+              hitDescription: `Sender reached the ${granularityToAdverb(
+                granularity
+              )} average transaction amount limit (${formatMoney(
+                limit
+              )}) of ${paymentMethod} payment method.`,
+            })
+          }
+        }
+      }
+    }
+    if (transactionLimit.transactionCountLimit) {
+      for (const g in transactionLimit.transactionCountLimit) {
+        const granularity = g as keyof TransactionAmountLimit
+        const limit =
+          transactionLimit.transactionCountLimit[
+            granularity as keyof TransactionCountLimit
+          ]
+        if (limit != null) {
+          const stats = await this.getStatsByGranularity(
+            granularity as keyof TransactionCountLimit
+          )
+          const currentTotalCount =
+            stats.transactionsCount.get(paymentMethod) ?? 0
+          if (currentTotalCount + 1 > limit) {
+            transactionLimitResults.push({
+              hitDescription: `Sender reached the ${granularityToAdverb(
+                granularity
+              )} transaction count limit (${limit}) of ${paymentMethod} payment method.`,
+            })
+          }
+        }
+      }
+    }
+    return transactionLimitResults
+  }
+}

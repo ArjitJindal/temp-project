@@ -239,7 +239,7 @@ export const DynamoDbKeys = {
   USER_TIME_AGGREGATION: (
     tenantId: string,
     userId: string,
-    // e.g 2022-01-01, 2022-01, 2022
+    // e.g 2022-01-01, 2022-W10, 2022-01, 2022
     timeLabel?: string
   ) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}#time`,

@@ -8,11 +8,12 @@ import {
 import AWS from 'aws-sdk'
 import _ from 'lodash'
 import dayjs from '@/utils/dayjs'
-import { DynamoDbKeys, TimeGranularity } from '@/core/dynamodb/dynamodb-keys'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { batchWrite, paginateQuery } from '@/utils/dynamodb'
+import { PaymentMethod } from '@/@types/tranasction/payment-type'
 
 type UserAggregationAttributes = {
   sendingFromCountries: Set<string>
@@ -25,9 +26,9 @@ type UserAggregationAttributes = {
   receivingTransactionsCount: number
 }
 
-type UserTimeAggregationAttributes = {
-  sendingTransactionsVolume: TransactionAmountDetails[]
-  receivingTransactionsVolume: TransactionAmountDetails[]
+export type UserTimeAggregationAttributes = {
+  transactionsAmount: Map<PaymentMethod | 'ALL', TransactionAmountDetails>
+  transactionsCount: Map<PaymentMethod | 'ALL', number>
 }
 
 export class AggregationRepository {
@@ -182,91 +183,131 @@ export class AggregationRepository {
   }
 
   /**
-   *  User transactions volume quantils (DAILY, MONTHLY, YEARLY)
+   *  User transactions stats
    */
 
-  public async addUserTransactionsVolumeQuantiles(
+  public async addUserTransactionStatsTimeGroup(
     userId: string,
-    direction: PaymentDirection,
     transactionAmountDetails: TransactionAmountDetails,
+    paymentMethod: PaymentMethod | undefined,
     timestamp: number,
-    timeGranularity: TimeGranularity
-  ) {
-    const attribute: keyof UserTimeAggregationAttributes = `${direction}TransactionsVolume`
-    const currentTransactionsVolume: TransactionAmountDetails = (
-      await this.getUserTransactionsVolumeQuantile(
+    timeGranularity: 'day' | 'week' | 'month' | 'year'
+  ): Promise<void> {
+    const { transactionsAmount, transactionsCount } =
+      await this.getUserTransactionStatsTimeGroup(
         userId,
         timestamp,
         timeGranularity
       )
-    )?.[attribute] || {
+
+    // Transaction amount
+    const defaultTransactionAmount = {
       transactionAmount: 0,
       transactionCurrency: transactionAmountDetails.transactionCurrency,
     }
+    const currentTotalTransactionsAmount: TransactionAmountDetails =
+      transactionsAmount.get('ALL') ?? defaultTransactionAmount
+    const targetCurrency = currentTotalTransactionsAmount.transactionCurrency
     const targetAmount = await getTargetCurrencyAmount(
       transactionAmountDetails,
-      currentTransactionsVolume.transactionCurrency
+      targetCurrency
     )
-    const totalTransactionAmount: TransactionAmountDetails = {
+    transactionsAmount.set('ALL', {
       transactionAmount:
         targetAmount.transactionAmount +
-        currentTransactionsVolume.transactionAmount,
-      transactionCurrency: currentTransactionsVolume.transactionCurrency,
+        currentTotalTransactionsAmount.transactionAmount,
+      transactionCurrency: targetCurrency,
+    })
+    if (paymentMethod) {
+      const currentTotalPaymentMethodTransactionsAmount: TransactionAmountDetails =
+        transactionsAmount.get(paymentMethod) ?? defaultTransactionAmount
+      const targetCurrency =
+        currentTotalPaymentMethodTransactionsAmount.transactionCurrency
+      const targetAmount = await getTargetCurrencyAmount(
+        transactionAmountDetails,
+        targetCurrency
+      )
+      transactionsAmount.set(paymentMethod, {
+        transactionAmount:
+          targetAmount.transactionAmount +
+          currentTotalPaymentMethodTransactionsAmount.transactionAmount,
+        transactionCurrency: targetCurrency,
+      })
     }
 
+    // Transaction count
+    transactionsCount.set('ALL', (transactionsCount.get('ALL') ?? 0) + 1)
+    if (paymentMethod) {
+      transactionsCount.set(
+        paymentMethod,
+        (transactionsCount.get(paymentMethod) ?? 0) + 1
+      )
+    }
+
+    const transactionAmountKey: keyof UserTimeAggregationAttributes =
+      'transactionsAmount'
+    const transactionCountKey: keyof UserTimeAggregationAttributes =
+      'transactionsCount'
     const updateItemInput: AWS.DynamoDB.DocumentClient.UpdateItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionsVolumeQuantileTimeLabel(timestamp, timeGranularity)
+        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
       ),
-      UpdateExpression: `SET ${attribute} = :amount`,
+      UpdateExpression: `SET ${transactionAmountKey} = :amount, ${transactionCountKey} = :count`,
       ExpressionAttributeValues: {
-        ':amount': totalTransactionAmount,
+        ':amount': Object.fromEntries(transactionsAmount.entries()),
+        ':count': Object.fromEntries(transactionsCount.entries()),
       },
       ReturnValues: 'UPDATED_NEW',
     }
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
   }
 
-  public async getUserTransactionsVolumeQuantile(
+  public async getUserTransactionStatsTimeGroup(
     userId: string,
     timestamp: number,
-    timeGranularity: TimeGranularity
-  ): Promise<{
-    sendingTransactionsVolume: TransactionAmountDetails | undefined
-    receivingTransactionsVolume: TransactionAmountDetails | undefined
-  }> {
+    timeGranularity: 'day' | 'week' | 'month' | 'year'
+  ): Promise<UserTimeAggregationAttributes> {
     const attributes: Array<keyof UserTimeAggregationAttributes> = [
-      'receivingTransactionsVolume',
-      'sendingTransactionsVolume',
+      'transactionsAmount',
+      'transactionsCount',
     ]
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
-        this.getTransactionsVolumeQuantileTimeLabel(timestamp, timeGranularity)
+        this.getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
       ),
       ProjectionExpression: attributes.join(','),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    const { transactionsAmount, transactionsCount } = result.Item ?? {}
     return {
-      sendingTransactionsVolume: result.Item?.sendingTransactionsVolume,
-      receivingTransactionsVolume: result.Item?.receivingTransactionsVolume,
+      transactionsAmount: new Map(
+        Object.entries(transactionsAmount ?? {})
+      ) as Map<PaymentMethod | 'ALL', TransactionAmountDetails>,
+      transactionsCount: new Map(
+        Object.entries(transactionsCount ?? {})
+      ) as Map<PaymentMethod | 'ALL', number>,
     }
   }
 
   // TODO: We use UTC time for getting the time label for now. We could use
   // the customer specified timezone if there's a need.
-  private getTransactionsVolumeQuantileTimeLabel(
+  private getTransactionStatsTimeGroupLabel(
     timestamp: number,
-    timeGranularity: TimeGranularity
+    timeGranularity: 'day' | 'week' | 'month' | 'year'
   ): string {
     switch (timeGranularity) {
       case 'day':
         return dayjs(timestamp).format('YYYY-MM-DD')
+      case 'week': {
+        const time = dayjs(timestamp)
+        return `${time.format('YYYY')}-W${time.week()}`
+      }
       case 'month':
         return dayjs(timestamp).format('YYYY-MM')
       case 'year':

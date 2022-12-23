@@ -32,7 +32,10 @@ export interface TransactionVars<P> extends Vars {
   parameters: P
 }
 
-export class TransactionRule<P, T extends object = object> extends Rule {
+export abstract class TransactionRule<
+  P,
+  T extends object = object
+> extends Rule {
   tenantId: string
   transaction: Transaction
   senderUser?: User | Business

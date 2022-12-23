@@ -20,7 +20,7 @@ export type LowValueTransactionsRuleParameters = {
   paymentChannel?: string
 }
 
-export default class LowValueTransactionsRule extends TransactionRule<
+export default abstract class LowValueTransactionsRule extends TransactionRule<
   LowValueTransactionsRuleParameters,
   TransactionFilters
 > {
@@ -62,9 +62,7 @@ export default class LowValueTransactionsRule extends TransactionRule<
         return transaction.destinationAmountDetails
     }
   }
-  protected getDirection(): PaymentDirection {
-    throw new Error('Not implemented')
-  }
+  protected abstract getDirection(): PaymentDirection
 
   public async computeRule() {
     const { lowTransactionCount, lowTransactionValues, paymentChannel } =

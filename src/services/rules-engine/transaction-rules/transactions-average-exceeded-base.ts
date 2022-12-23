@@ -54,7 +54,7 @@ export type TransactionsAverageExceededParameters = {
   }
 }
 
-export default class TransactionAverageExceededBaseRule<
+export default abstract class TransactionAverageExceededBaseRule<
   Params extends TransactionsAverageExceededParameters
 > extends TransactionAggregationRule<
   Params,
@@ -131,16 +131,12 @@ export default class TransactionAverageExceededBaseRule<
     }
   }
 
-  protected getMultiplierThresholds(): {
+  protected abstract getMultiplierThresholds(): {
     currency: CurrencyCode
     value: number
-  } {
-    throw new Error('Not implemented')
   }
 
-  protected getAvgMethod(): 'AMOUNT' | 'NUMBER' {
-    throw new Error('Not implemented')
-  }
+  protected abstract getAvgMethod(): 'AMOUNT' | 'NUMBER'
 
   private async avg(
     period1AmountDetails: (TransactionAmountDetails | undefined)[],

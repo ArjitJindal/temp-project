@@ -17,7 +17,7 @@ Handlebars.registerHelper('if-sender', function (ifSender, ifReceiver) {
   return this.hitParty.type === 'origin' ? ifSender : ifReceiver
 })
 
-function formatMoney(value: any, currency: any): string {
+export function formatMoney(value: any, currency?: any): string {
   if (typeof value === 'number' && !Number.isNaN(value)) {
     return `${value.toFixed(2)} ${currency}`
   }

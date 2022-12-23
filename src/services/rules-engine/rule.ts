@@ -14,7 +14,5 @@ export abstract class Rule {
     throw new Error('Not implemented')
   }
 
-  public async computeRule(): Promise<RuleHitResult | undefined> {
-    throw new Error('Not implemented')
-  }
+  public abstract computeRule(): Promise<RuleHitResult | undefined>
 }

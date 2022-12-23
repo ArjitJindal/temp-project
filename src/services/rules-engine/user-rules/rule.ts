@@ -11,7 +11,7 @@ export type RuleResult = {
 
 export type RuleFilter = () => Promise<boolean> | boolean
 
-export class UserRule<P> extends Rule {
+export abstract class UserRule<P> extends Rule {
   tenantId: string
   user: User | Business
   userEvent: ConsumerUserEvent | undefined

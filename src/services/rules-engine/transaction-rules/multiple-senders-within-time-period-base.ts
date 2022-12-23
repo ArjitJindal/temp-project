@@ -20,7 +20,7 @@ export type SenderReceiverTypes = {
   receiverTypes: Array<'USER' | 'NON_USER'>
 }
 
-export default class MultipleSendersWithinTimePeriodRuleBase extends TransactionRule<
+export default abstract class MultipleSendersWithinTimePeriodRuleBase extends TransactionRule<
   MultipleSendersWithinTimePeriodRuleParameters,
   TransactionFilters
 > {
@@ -40,9 +40,7 @@ export default class MultipleSendersWithinTimePeriodRuleBase extends Transaction
     }
   }
 
-  protected getSenderReceiverTypes(): SenderReceiverTypes {
-    throw new Error('Not implemented')
-  }
+  protected abstract getSenderReceiverTypes(): SenderReceiverTypes
 
   public async computeRule() {
     const { timeWindow, sendersCount } = this.parameters

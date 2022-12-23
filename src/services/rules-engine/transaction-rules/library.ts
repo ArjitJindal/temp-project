@@ -539,14 +539,13 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
       return {
         id: 'R-99',
         type: 'TRANSACTION',
-        name: 'Transaction value exceeds customer declared limit x',
+        name: 'Transaction value exceeds expected limit',
         description:
-          'For a given user, user-declared transaction amount is <= x. Customers define an expected transaction amount when they are onboarding - this will compare that variable on their profile',
-        descriptionTemplate:
-          "{{ if-sender 'Sender sent' 'Receiver received' }} a transaction amount of {{ format-money hitParty.amount }} more than the limit of {{ format-money transactionLimit }}",
+          'For a given user, compares the expected transaction count or transaction amount per payment method or in aggregate for multiple time intervals.',
+        descriptionTemplate: '{{ hitDescription }}',
         defaultParameters: {},
         defaultAction: 'FLAG',
-        ruleImplementationName: 'transaction-amount-user-limit',
+        ruleImplementationName: 'user-transaction-limits',
         labels: [],
         defaultNature: 'AML',
         defaultCasePriority: 'P1',

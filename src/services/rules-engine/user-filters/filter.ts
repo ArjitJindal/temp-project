@@ -3,7 +3,7 @@ import { RuleFilter } from '../filter'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 
-export class UserRuleFilter<P> extends RuleFilter {
+export abstract class UserRuleFilter<P> extends RuleFilter {
   tenantId: string
   user: User | Business
   parameters: P

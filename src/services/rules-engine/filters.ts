@@ -104,10 +104,21 @@ function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {
   )
 }
 
+class UserRuleFilterBase extends UserRuleFilter<unknown> {
+  public async predicate(): Promise<boolean> {
+    return true
+  }
+}
+class TransactionRuleFilterBase extends TransactionRuleFilter<unknown> {
+  public async predicate(): Promise<boolean> {
+    return true
+  }
+}
+
 export const TRANSACTION_FILTERS =
-  createFiltersMap<typeof TransactionRuleFilter>(_TRANSACTION_FILTERS)
+  createFiltersMap<typeof TransactionRuleFilterBase>(_TRANSACTION_FILTERS)
 export const USER_FILTERS =
-  createFiltersMap<typeof UserRuleFilter>(_USER_FILTERS)
+  createFiltersMap<typeof UserRuleFilterBase>(_USER_FILTERS)
 
 if (
   _TRANSACTION_FILTERS.length + _USER_FILTERS.length !==

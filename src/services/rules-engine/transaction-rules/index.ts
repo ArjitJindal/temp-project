@@ -1,3 +1,4 @@
+import { RuleHitResult } from '../rule'
 import CardIssuedCountryRule from './card-issued-country'
 import ConsecutiveTransactionsameTypeRule from './consecutive-transactions-same-type'
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
@@ -15,13 +16,12 @@ import TestFailureRule from './tests/test-failure-rule'
 import TestNonHitRule from './tests/test-non-hit-rule'
 import TestSuccessRule from './tests/test-success-rule'
 import TransactionAmountRule from './transaction-amount'
-import TransactionAmountUserLimitRule from './transaction-amount-user-limit'
+import UserTransactionLimitsRule from './user-transaction-limits'
 import TransactionNewCountryRule from './transaction-new-country'
 import TransactionNewCurrencyRule from './transaction-new-currency'
 import TransactionReferenceKeywordRule from './transaction-reference-keyword'
 import TransactionsVelocityRule from './transactions-velocity'
 import TransactionsVolumeRule from './transactions-volume'
-import TransactionsVolumeQuantilesRule from './transactions-volume-quantiles'
 import UserTransactionPairsRule from './user-transaction-pairs'
 import TransactionMatchesPatternRule from './transaction-amount-pattern'
 import MerchantReceiverNameRule from './merchant-receiver-name'
@@ -43,6 +43,13 @@ import BlacklistPaymentdetailsRule from './blacklist-payment-details'
 import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
 
+class TransactionRuleBase extends TransactionRule<unknown> {
+  public async computeRule(): Promise<RuleHitResult | undefined> {
+    // skip
+    return
+  }
+}
+
 export const TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
@@ -60,12 +67,11 @@ export const TRANSACTION_RULES = {
   'sender-location-changes-frequency': SenderLocationChangesFrequencyRule,
   'transaction-reference-keyword': TransactionReferenceKeywordRule,
   'transaction-amount': TransactionAmountRule,
-  'transaction-amount-user-limit': TransactionAmountUserLimitRule,
+  'user-transaction-limits': UserTransactionLimitsRule,
   'transaction-new-country': TransactionNewCountryRule,
   'transaction-new-currency': TransactionNewCurrencyRule,
   'transactions-velocity': TransactionsVelocityRule,
   'transactions-volume': TransactionsVolumeRule,
-  'transactions-volume-quantiles': TransactionsVolumeQuantilesRule,
   'user-transaction-pairs': UserTransactionPairsRule,
   'transaction-amount-pattern': TransactionMatchesPatternRule,
   'merchant-receiver-name': MerchantReceiverNameRule,
@@ -93,4 +99,4 @@ export const TRANSACTION_RULES = {
   'tests/test-failure-rule': TestFailureRule,
   'tests/test-non-hit-rule': TestNonHitRule,
   'tests/test-always-hit-rule': TestAlwaysHitRule,
-} as unknown as { [key: string]: typeof TransactionRule }
+} as unknown as { [key: string]: typeof TransactionRuleBase }

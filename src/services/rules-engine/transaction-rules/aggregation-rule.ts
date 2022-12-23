@@ -9,23 +9,19 @@ import { hasFeature } from '@/core/utils/context'
 
 const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
-export class TransactionAggregationRule<
+export abstract class TransactionAggregationRule<
   P,
   T extends object = object,
   A = unknown
 > extends TransactionRule<P, T> {
   private aggregationVersion: number | undefined = undefined
 
-  protected async getUpdatedTargetAggregation(
+  protected abstract getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
     _aggregation: A | undefined
-  ): Promise<A> {
-    throw new Error('Not implemented')
-  }
+  ): Promise<A>
 
-  protected getMaxTimeWindow(): TimeWindow {
-    throw new Error('Not implemented')
-  }
+  protected abstract getMaxTimeWindow(): TimeWindow
 
   public async updateAggregation(direction: 'origin' | 'destination') {
     if (!this.shouldUseAggregation()) {

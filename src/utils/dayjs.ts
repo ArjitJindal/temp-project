@@ -1,6 +1,7 @@
 import dayjsLib, { ConfigType, OptionType } from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
 import durationPlugin, {
   Duration,
   DurationUnitType,
@@ -9,6 +10,7 @@ import durationPlugin, {
 dayjsLib.extend(utc)
 dayjsLib.extend(durationPlugin)
 dayjsLib.extend(timezone)
+dayjsLib.extend(weekOfYear)
 
 export type Dayjs = dayjsLib.Dayjs
 

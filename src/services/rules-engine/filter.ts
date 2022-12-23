@@ -3,7 +3,5 @@ export abstract class RuleFilter {
     throw new Error('Not implemented')
   }
 
-  public async predicate(): Promise<boolean> {
-    throw new Error('Not implemented')
-  }
+  public abstract predicate(): Promise<boolean>
 }

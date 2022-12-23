@@ -27,7 +27,7 @@ export type TransactionsPatternVelocityRuleParameters = {
   initialTransactions?: number
 }
 
-export default class TransactionsPatternVelocityBaseRule<
+export default abstract class TransactionsPatternVelocityBaseRule<
   T extends TransactionsPatternVelocityRuleParameters
 > extends TransactionRule<T, TransactionFilters> {
   transactionRepository?: TransactionRepository
@@ -159,16 +159,12 @@ export default class TransactionsPatternVelocityBaseRule<
     return [transactions]
   }
 
-  protected matchPattern(
+  protected abstract matchPattern(
     _transaction: AuxiliaryIndexTransaction,
     _direction?: 'origin' | 'destination',
     _userType?: 'sender' | 'receiver',
     _pure?: boolean
-  ): boolean {
-    throw new Error('Not implemented')
-  }
+  ): boolean
 
-  protected getNeededTransactionFields(): Array<keyof Transaction> {
-    throw new Error('Not implemented')
-  }
+  protected abstract getNeededTransactionFields(): Array<keyof Transaction>
 }
