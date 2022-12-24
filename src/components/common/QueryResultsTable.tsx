@@ -37,12 +37,7 @@ export default function QueryResultsTable<
       actionsHeader={actionsHeader}
       headerSubtitle={
         showResultsInfo &&
-        isSuccess(queryResults.data) && (
-          <div className={s.count}>
-            Displaying {queryResults.data.value.items.length?.toLocaleString()} of{' '}
-            {queryResults.data.value.total?.toLocaleString()} results
-          </div>
-        )
+        isSuccess(queryResults.data) && <ResultsInfo tableData={queryResults.data.value} />
       }
       onReload={queryResults.refetch}
       loading={isLoading(queryResults.data)}
@@ -51,5 +46,16 @@ export default function QueryResultsTable<
       })}
       onPaginateExportData={queryResults.paginate}
     />
+  );
+}
+
+function ResultsInfo<Item>(props: { tableData: TableData<Item> }) {
+  const { tableData } = props;
+  const { items, total = items.length } = tableData;
+  return (
+    <div className={s.count}>
+      Displaying {items.length} of
+      {total >= 10000 ? ` more than ${total}` : ` ${total}`} results
+    </div>
   );
 }
