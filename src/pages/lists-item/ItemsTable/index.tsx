@@ -6,24 +6,30 @@ import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import { getErrorMessage } from '@/utils/lang';
-import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
-import { User } from '@/pages/transactions/components/UserSearchPopup/types';
-import { getUserName } from '@/utils/api/users';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
+import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
+import { TableColumn } from '@/components/ui/Table/types';
+import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
 
-interface UserData {
-  userId: string | null;
-  userFullName: string;
+interface ExistedTableItemData {
+  value: string;
   reason: string;
+  meta: Metadata;
 }
 
-interface ExistedTableItem extends UserData {
+interface NewTableItemData {
+  value: string[];
+  reason: string;
+  meta: Metadata;
+}
+
+interface ExistedTableItem extends ExistedTableItemData {
   type: 'EXISTED';
 }
 
-interface NewTableItem extends UserData {
+interface NewTableItem extends NewTableItemData {
   type: 'NEW';
 }
 
@@ -42,74 +48,70 @@ function UserListTable(props: Props) {
   const { listId, listType, size } = listHeader;
 
   const api = useApi();
-  const [editUserData, setEditUserData] = useState<UserData | null>(null);
-  const [newUserData, setNewUserData] = useState<UserData>({
-    userId: null,
-    userFullName: '',
+  const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
+  const [newUserData, setNewUserData] = useState<NewTableItemData>({
+    value: [],
     reason: '',
+    meta: {},
   });
 
+  console.log('editUserData', editUserData);
   const tableRef = useRef<TableActionType>(null);
 
-  const isNewUserValid = !!(newUserData.userId && newUserData.reason);
+  const isNewUserValid = newUserData.value.length > 0;
   const [isAddUserLoading, setAddUserLoading] = useState(false);
-  const handleChooseUser = useCallback((user: User) => {
-    setNewUserData((state) => ({
-      ...state,
-      userId: user.userId,
-      userFullName: getUserName(user),
-    }));
-  }, []);
-  const handleAddUser = useCallback(() => {
-    const hideMessage = message.loading('Adding user to a list...', 0);
+
+  const handleAddItem = useCallback(() => {
+    const hideMessage = message.loading('Adding item to a list...', 0);
     if (isNewUserValid) {
       setAddUserLoading(true);
-      api
-        .postListItem({
-          listType,
-          listId,
-          ListItem: {
-            key: newUserData.userId ?? '',
-            metadata: {
-              reason: newUserData.reason,
-              userFullName: newUserData.userFullName,
+      Promise.all(
+        newUserData.value.map((itemValue) =>
+          api.postListItem({
+            listId,
+            ListItem: {
+              key: itemValue ?? '',
+              metadata: {
+                reason: newUserData.reason,
+                ...newUserData.meta,
+              },
             },
-          },
-        })
+          }),
+        ),
+      )
         .then(() => {
           hideMessage();
           setNewUserData({
-            userId: null,
-            userFullName: '',
+            value: [],
             reason: '',
+            meta: {},
           });
-          message.success(`User successfully added!`);
+          message.success(`Item successfully added!`);
           tableRef.current?.reload();
         })
         .catch((e) => {
           hideMessage();
-          message.error(`Unable to add user to a list! ${getErrorMessage(e)}`);
+          message.error(`Unable to add an item to a list! ${getErrorMessage(e)}`);
         })
         .finally(() => {
           setAddUserLoading(false);
         });
     }
-  }, [isNewUserValid, newUserData, listId, listType, api]);
+  }, [isNewUserValid, newUserData, listId, api]);
 
   const [isEditUserLoading, setEditUserLoading] = useState(false);
   const isEditUserValid = !!editUserData?.reason;
-  const handleSaveUser = () => {
+  const handleSaveItem = () => {
     if (isEditUserValid) {
       setEditUserLoading(true);
       api
         .postListItem({
-          listType: listHeader.listType,
           listId,
           ListItem: {
-            key: editUserData.userId ?? '',
+            key: editUserData.value ?? '',
             metadata: {
+              ...editUserData.meta,
               reason: editUserData.reason,
-              userFullName: editUserData.userFullName,
             },
           },
         })
@@ -132,7 +134,6 @@ function UserListTable(props: Props) {
     api
       .deleteListItem({
         listId,
-        listType: listHeader.listType,
         key: userId,
       })
       .then(() => {
@@ -149,7 +150,6 @@ function UserListTable(props: Props) {
 
   const listResult = usePaginatedQuery(LISTS_ITEM_TYPE(listId, listType), async ({ page }) => {
     const response = await api.getListItems({
-      listType,
       listId,
       page,
     });
@@ -157,16 +157,16 @@ function UserListTable(props: Props) {
       ...response.map(
         ({ key, metadata }): TableItem => ({
           type: 'EXISTED',
-          userId: key,
-          userFullName: metadata?.userFullName ?? '',
+          value: key,
           reason: metadata?.reason ?? '',
+          meta: metadata ?? {},
         }),
       ),
       {
         type: 'NEW',
-        userId: '',
-        userFullName: '',
+        value: [],
         reason: '',
+        meta: {},
       },
     ];
     return {
@@ -178,7 +178,7 @@ function UserListTable(props: Props) {
   return (
     <div className={s.root}>
       <QueryResultsTable<TableItem, CommonParams>
-        rowKey="userId"
+        rowKey="value"
         actionRef={tableRef}
         options={{
           reload: false,
@@ -188,40 +188,55 @@ function UserListTable(props: Props) {
         search={false}
         columns={[
           {
-            title: 'User ID',
-            width: 120,
+            title: getListSubtypeTitle(listHeader.subtype),
+            width: 220,
             search: false,
             render: (_, entity) =>
               entity.type === 'NEW' ? (
-                <UserSearchPopup initialSearch={''} onConfirm={handleChooseUser} placement="top">
-                  <Button style={{ width: '100%' }}>
-                    {newUserData.userFullName || 'Choose user'}
-                  </Button>
-                </UserSearchPopup>
+                <NewValueInput
+                  value={newUserData.value}
+                  onChange={(value) => {
+                    setNewUserData((prevState) => ({
+                      ...prevState,
+                      value: value,
+                    }));
+                  }}
+                  onChangeMeta={(meta) => {
+                    setNewUserData((prevState) => ({
+                      ...prevState,
+                      meta,
+                    }));
+                  }}
+                  listSubtype={listHeader.subtype}
+                />
               ) : (
-                entity.userId
+                entity.value
               ),
             onCell: (_) => {
-              if (_.type === 'NEW') {
+              if (_.type === 'NEW' && listHeader.subtype === 'USER_ID') {
                 return { colSpan: 2 };
               }
               return {};
             },
-            exportData: (entity) => entity.userId,
+            exportData: (entity) => entity.value,
           },
-          {
-            title: 'User name',
-            width: 120,
-            search: false,
-            render: (_, entity) => entity.userFullName,
-            onCell: (_) => {
-              if (_.type === 'NEW') {
-                return { colSpan: 0 };
-              }
-              return {};
-            },
-            exportData: (entity) => entity.userFullName,
-          },
+          ...(listHeader.subtype === 'USER_ID'
+            ? ([
+                {
+                  title: 'User name',
+                  width: 120,
+                  search: false,
+                  render: (_, entity: TableItem) => entity.meta.userFullName ?? '-',
+                  onCell: (_) => {
+                    if (_.type === 'NEW') {
+                      return { colSpan: 0 };
+                    }
+                    return {};
+                  },
+                  exportData: (entity: TableItem) => entity.meta.userFullName ?? '-',
+                },
+              ] as TableColumn<TableItem>[])
+            : []),
           {
             title: 'Reason for adding to list',
             search: false,
@@ -239,7 +254,7 @@ function UserListTable(props: Props) {
                     }}
                   />
                 );
-              } else if (entity.userId === editUserData?.userId) {
+              } else if (entity.value === editUserData?.value) {
                 return (
                   <Input
                     disabled={isUserDeleteLoading}
@@ -268,20 +283,20 @@ function UserListTable(props: Props) {
                     <Button
                       type="primary"
                       disabled={isAddUserLoading || !isNewUserValid}
-                      onClick={handleAddUser}
+                      onClick={handleAddItem}
                     >
                       Add
                     </Button>
                   </div>
                 );
               } else if (entity.type === 'EXISTED') {
-                if (editUserData?.userId === entity.userId) {
+                if (editUserData?.value === entity.value) {
                   return (
                     <div className={s.actions}>
                       <Button
                         size="small"
                         type="primary"
-                        onClick={handleSaveUser}
+                        onClick={handleSaveItem}
                         disabled={isEditUserLoading || !isEditUserValid}
                       >
                         Save
@@ -317,7 +332,7 @@ function UserListTable(props: Props) {
                       type="ghost"
                       disabled={isUserDeleteLoading}
                       onClick={() => {
-                        handleDeleteUser(entity.userId ?? '');
+                        handleDeleteUser(entity.value ?? '');
                       }}
                     >
                       Remove

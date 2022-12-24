@@ -8,21 +8,12 @@ import PageTabs from '@/components/ui/PageTabs';
 import ListTable, { ListTableRef } from '@/pages/lists/ListTable';
 import { makeUrl } from '@/utils/routing';
 import Button from '@/components/ui/Button';
-import NewListModal from '@/pages/lists/NewListModal';
-import { ListType } from '@/apis';
-
-function parseListType(str: unknown): ListType {
-  if (str === 'users-whitelists') {
-    return 'USERS-WHITELISTS';
-  } else if (str === 'users-blacklists') {
-    return 'USERS-BLACKLISTS';
-  }
-  throw new Error(`Unknown list type: ${str}`);
-}
+import NewListDrawer from '@/pages/lists/NewListDrawer';
+import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 
 export default function CreatedLists() {
-  const listTypeStr = useParams<'type'>().type;
-  const listType = parseListType(listTypeStr);
+  const params = useParams<'type'>();
+  const listType = parseListType(params.type);
 
   const navigate = useNavigate();
   const i18n = useI18n();
@@ -35,13 +26,13 @@ export default function CreatedLists() {
     <>
       <PageWrapper title={i18n('menu.lists.created-lists')}>
         <PageTabs
-          activeKey={listTypeStr}
+          activeKey={stringifyListType(listType)}
           onChange={(key) => {
             navigate(makeUrl(`/lists/:type`, { type: key }), { replace: true });
           }}
           tabBarExtraContent={
             <div className={s.buttons}>
-              {listType === 'USERS-WHITELISTS' && (
+              {listType === 'WHITELIST' && (
                 <>
                   <Button
                     type="skeleton"
@@ -57,7 +48,7 @@ export default function CreatedLists() {
                   {/*</Button>*/}
                 </>
               )}
-              {listType === 'USERS-BLACKLISTS' && (
+              {listType === 'BLACKLIST' && (
                 <>
                   <Button
                     type="skeleton"
@@ -76,15 +67,15 @@ export default function CreatedLists() {
             </div>
           }
         >
-          <Tabs.TabPane tab="Whitelists" key="users-whitelists">
-            <ListTable ref={whitelistsTableRef} listType="USERS-WHITELISTS" />
+          <Tabs.TabPane tab="Whitelists" key="whitelist">
+            <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Blacklists" key="users-blacklists">
-            <ListTable ref={blacklistsTableRef} listType="USERS-BLACKLISTS" />
+          <Tabs.TabPane tab="Blacklists" key="blacklist">
+            <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
           </Tabs.TabPane>
         </PageTabs>
       </PageWrapper>
-      <NewListModal
+      <NewListDrawer
         listType={listType}
         isOpen={isNewModalOpen}
         onCancel={() => {
@@ -92,10 +83,10 @@ export default function CreatedLists() {
         }}
         onSuccess={() => {
           setNewModalOpen(false);
-          if (listType === 'USERS-WHITELISTS') {
+          if (listType === 'WHITELIST') {
             whitelistsTableRef.current?.reload();
           }
-          if (listType === 'USERS-BLACKLISTS') {
+          if (listType === 'BLACKLIST') {
             blacklistsTableRef.current?.reload();
           }
         }}

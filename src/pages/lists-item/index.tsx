@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import s from './index.module.less';
+import ItemsTable from './ItemsTable';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -9,16 +10,18 @@ import { makeUrl } from '@/utils/routing';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { ListHeader, ListType } from '@/apis';
+import { ListHeader } from '@/apis';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Form from '@/components/ui/Form';
 import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
 import PulseLineIcon from '@/components/ui/icons/Remix/health/pulse-line.react.svg';
 import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.svg';
-import UserListTable from '@/pages/lists-item/UserListTable';
+import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 
 export default function CreatedLists() {
-  const { type: listType, id: listId } = useParams<'id' | 'type'>();
+  const params = useParams<'id' | 'type'>();
+  const listType = parseListType(params.type);
+  const listId = params.id;
   const i18n = useI18n();
   const api = useApi();
 
@@ -29,7 +32,6 @@ export default function CreatedLists() {
       setListHeaderRes((prevState) => loading(getOr(prevState, null)));
       api
         .getList({
-          listType: listType as ListType,
           listId,
         })
         .then(
@@ -48,7 +50,7 @@ export default function CreatedLists() {
       <PageWrapper
         backButton={{
           title: i18n('menu.lists.created-lists'),
-          url: makeUrl('/lists/:type', { type: listType?.toLowerCase() }),
+          url: makeUrl('/lists/:type', { type: stringifyListType(listType) }),
         }}
       >
         <Card.Root>
@@ -62,7 +64,7 @@ export default function CreatedLists() {
                         <div className={s.listId}>{listHeader.listId}</div>
                       </Form.Layout.Label>
                       <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
-                        {listType === 'USERS-BLACKLISTS' ? 'Blacklist' : 'Whitelist'}
+                        {listType === 'BLACKLIST' ? 'Blacklist' : 'Whitelist'}
                       </Form.Layout.Label>
                       <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
                         {listHeader.metadata?.name}
@@ -76,15 +78,7 @@ export default function CreatedLists() {
                     </div>
                   </Card.Section>
                   <Card.Section>
-                    <Card.Root
-                      header={{
-                        title: 'Users list',
-                      }}
-                    >
-                      <Card.Section>
-                        <UserListTable listHeader={listHeader} />
-                      </Card.Section>
-                    </Card.Root>
+                    <ItemsTable listHeader={listHeader} />
                   </Card.Section>
                 </>
               );

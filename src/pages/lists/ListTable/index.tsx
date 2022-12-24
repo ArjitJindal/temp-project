@@ -14,6 +14,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { LISTS_OF_TYPE } from '@/utils/queries/keys';
 import { map } from '@/utils/asyncResource';
+import { getListSubtypeTitle, stringifyListType } from '@/pages/lists/helpers';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -46,7 +47,6 @@ function ListTable(props: Props, ref: ListTableRef) {
       const hideMessage = message.loading('Updating list...', 0);
       try {
         await api.patchList({
-          listType,
           listId,
           ListData: {
             metadata,
@@ -92,13 +92,19 @@ function ListTable(props: Props, ref: ListTableRef) {
       render: (_, entity) => (
         <Id
           to={makeUrl('/lists/:type/:listId', {
-            type: listType,
+            type: stringifyListType(listType),
             listId: entity.listId,
           })}
         >
           {entity.listId}
         </Id>
       ),
+    },
+    {
+      title: 'List Subtype',
+      width: 150,
+      search: false,
+      render: (_, entity) => getListSubtypeTitle(entity.subtype),
     },
     {
       title: 'List Name',
@@ -113,7 +119,7 @@ function ListTable(props: Props, ref: ListTableRef) {
       render: (_, entity) => entity.metadata?.description,
     },
     {
-      title: 'Total Users',
+      title: 'Total Records',
       width: 80,
       search: false,
       render: (_, entity) => entity.size,

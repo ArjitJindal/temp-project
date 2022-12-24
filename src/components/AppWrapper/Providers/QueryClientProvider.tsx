@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import {
+  QueryClient,
+  QueryClientProvider as ReactQueryQueryClientProvider,
+} from '@tanstack/react-query';
 
 interface Props {
   children: React.ReactNode;
@@ -13,9 +17,16 @@ const queryClient = new QueryClient({
       keepPreviousData: true,
       retry: false,
     },
+    mutations: {
+      networkMode: 'always',
+    },
   },
 });
 
-export default function (props: Props) {
-  return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
+export default function QueryClientProvider(props: Props) {
+  return (
+    <ReactQueryQueryClientProvider client={queryClient}>
+      {props.children}
+    </ReactQueryQueryClientProvider>
+  );
 }

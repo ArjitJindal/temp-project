@@ -47,11 +47,18 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = () => {
   }
 
   const menuHeaderDropdown = (
-    <Menu className={styles.menu} selectedKeys={[]} onClick={onMenuClick}>
-      <Menu.Item key="logout" icon={<LogoutOutlined />}>
-        Logout
-      </Menu.Item>
-    </Menu>
+    <Menu
+      className={styles.menu}
+      selectedKeys={[]}
+      onClick={onMenuClick}
+      items={[
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          title: 'Logout',
+        },
+      ]}
+    />
   );
   return (
     <HeaderDropdown overlay={menuHeaderDropdown}>

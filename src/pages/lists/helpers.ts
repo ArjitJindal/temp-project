@@ -1,0 +1,58 @@
+import { ListSubtype, ListType } from '@/apis';
+import { neverReturn } from '@/utils/lang';
+
+export function parseListType(str: unknown): ListType {
+  if (str === 'whitelist') {
+    return 'WHITELIST';
+  } else if (str === 'blacklist') {
+    return 'BLACKLIST';
+  }
+  throw new Error(`Unknown list type: ${str}`);
+}
+
+export function stringifyListType(str: ListType): string {
+  return str.toLowerCase();
+}
+
+export const SUBTYPES: ListSubtype[] = [
+  'USER_ID',
+  'CARD_FINGERPRINT_NUMBER',
+  'IBAN_NUMBER',
+  'BANK_ACCOUNT_NUMBER',
+  'ACH_ACCOUNT_NUMBER',
+  'SWIFT_ACCOUNT_NUMBER',
+  'BIC',
+  'BANK_SWIFT_CODE',
+  'UPI_IDENTIFYING_NUMBER',
+  'IP_ADDRESS',
+];
+
+export function getListSubtypeTitle(subtype: ListSubtype) {
+  switch (subtype) {
+    case 'USER_ID':
+      return 'User ID';
+    case 'CARD_FINGERPRINT_NUMBER':
+      return 'Card fingerprint number';
+    case 'IBAN_NUMBER':
+      return 'IBAN number';
+    case 'BANK_ACCOUNT_NUMBER':
+      return 'Bank account number';
+    case 'ACH_ACCOUNT_NUMBER':
+      return 'ACH account number';
+    case 'SWIFT_ACCOUNT_NUMBER':
+      return 'SWIFT account number';
+    case 'BIC':
+      return 'BIC';
+    case 'BANK_SWIFT_CODE':
+      return 'Bank SWIFT code';
+    case 'UPI_IDENTIFYING_NUMBER':
+      return 'UPI/Identifying number';
+    case 'IP_ADDRESS':
+      return 'IP address';
+  }
+  return neverReturn(subtype, 'Unknown subtype');
+}
+
+export interface Metadata {
+  userFullName?: string;
+}

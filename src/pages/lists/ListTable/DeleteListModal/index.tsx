@@ -29,7 +29,6 @@ export default function DeleteListModal(props: Props) {
       setLoading(true);
       api
         .deleteList({
-          listType: listType,
           listId: listId,
         })
         .then(
@@ -70,8 +69,8 @@ export default function DeleteListModal(props: Props) {
       </div>
       <Typography.Paragraph style={{ color: COLORS.purpleGray.base }}>
         Deleting this list will remove all <b>{list?.size}</b> users from this
-        {listType === 'USERS-WHITELISTS' ? ' whitelist ' : ' blacklist'}. This cannot be undone so
-        please consider this carefully.
+        {listType === 'WHITELIST' ? ' whitelist ' : ' blacklist'}. This cannot be undone so please
+        consider this carefully.
       </Typography.Paragraph>
     </Modal>
   );

@@ -249,10 +249,7 @@ export function useRoutes(): RouteItem[] {
           },
           {
             path: '/lists',
-            redirect:
-              lastActiveList === 'whitelist'
-                ? '/lists/users-whitelists'
-                : '/lists/users-blacklists',
+            redirect: lastActiveList === 'whitelist' ? '/lists/whitelist' : '/lists/blacklist',
           },
         ],
       },

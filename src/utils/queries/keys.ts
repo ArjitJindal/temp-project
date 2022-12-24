@@ -2,6 +2,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { Dayjs } from '@/utils/dayjs';
 import { CaseType, ListType } from '@/apis';
+import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 
 type AnyParameters = unknown;
 
@@ -57,7 +58,12 @@ export const TRANSACTIONS_STATS = (
   searchParams: AnyParameters,
 ): QueryKey => ['transactions', 'stats', type, searchParams];
 export const USERS_STATS = (): QueryKey => ['users', 'stats'];
-export const TRANSACTIONS_UNIQUES = (): QueryKey => ['transactions', 'uniques'];
+export const TRANSACTIONS_UNIQUES = (
+  field: TransactionsUniquesField,
+  params: {
+    filter?: string;
+  } = {},
+): QueryKey => ['transactions', 'uniques', field, params];
 export const BUSINESS_USERS_UNIQUES = (): QueryKey => ['users', 'uniques'];
 export const SANCTIONS_SEARCH = (params: AnyParameters): QueryKey => [
   'sanctions',

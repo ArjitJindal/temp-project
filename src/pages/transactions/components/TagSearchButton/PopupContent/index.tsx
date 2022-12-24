@@ -1,10 +1,10 @@
-import { Input, Select, Form as AntForm } from 'antd';
+import { Form as AntForm, Input, Select } from 'antd';
 import React, { useState } from 'react';
 import s from './style.module.less';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
-import { getOr, isLoading, map } from '@/utils/asyncResource';
+import { getOr, isLoading } from '@/utils/asyncResource';
 import { Value } from '@/pages/transactions/components/TagSearchButton/types';
 import * as Form from '@/components/ui/Form';
 import Button from '@/components/ui/Button';
@@ -19,10 +19,11 @@ export default function PopupContent(props: Props) {
   const { initialState, onCancel, onConfirm } = props;
 
   const api = useApi();
-  const result = useQuery(TRANSACTIONS_UNIQUES(), async () => {
-    return await api.getTransactionsUniques();
+  const result = useQuery(TRANSACTIONS_UNIQUES('TAGS_KEY'), async () => {
+    return await api.getTransactionsUniques({
+      field: 'TAGS_KEY',
+    });
   });
-  const tagKeys = map(result.data, ({ tagsKey }) => tagsKey);
 
   const [state, setState] = useState<Value>(initialState);
 
@@ -39,8 +40,8 @@ export default function PopupContent(props: Props) {
             showSearch={true}
             allowClear={true}
             className={s.select}
-            loading={isLoading(tagKeys)}
-            options={getOr(tagKeys, []).map((key) => ({
+            loading={isLoading(result.data)}
+            options={getOr(result.data, []).map((key) => ({
               label: key,
               value: key,
             }))}
