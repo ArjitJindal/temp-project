@@ -925,9 +925,18 @@ export class CaseRepository {
         },
       },
       {
+        $lookup: {
+          from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
+          localField: 'caseTransactions.transactionId',
+          foreignField: 'transactionId',
+          as: 'events',
+        },
+      },
+      {
         $set: {
           'caseTransactions.originUser': { $first: '$originUser' },
           'caseTransactions.destinationUser': { $first: '$destinationUser' },
+          'caseTransactions.events': '$events',
         },
       },
     ]
