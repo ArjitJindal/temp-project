@@ -17,6 +17,7 @@ import UsersItemPage from '@/pages/users-item';
 import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
+import RequestNewPage from '@/pages/rules/request-new';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
@@ -165,17 +166,17 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/rules',
-            redirect:
-              lastActiveRuleTab === 'my-rules'
-                ? '/rules/my-rules'
-                : lastActiveRuleTab === 'rules-library'
-                ? '/rules/rules-library'
-                : '/rules/request-new',
+            redirect: lastActiveRuleTab === 'my-rules' ? '/rules/my-rules' : 'rules-library',
           },
           {
             path: '/rules/:rule',
             name: 'rule',
             component: RulesPage,
+          },
+          {
+            path: '/rules/request-new',
+            name: 'request-rule',
+            component: RequestNewPage,
           },
         ],
       },

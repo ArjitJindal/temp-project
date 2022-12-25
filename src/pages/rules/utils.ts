@@ -12,6 +12,17 @@ export function getRuleInstanceDisplayId(ruleId: string, ruleInstanceId: string 
   return `${ruleId} (${ruleInstanceId || 'N/A'})`;
 }
 
+export function ruleHeaderKeyToDescription(key: string) {
+  const keyToDescription = {
+    'rules-library': 'Create a transaction monitoring rule with a straight-forward 3 step process',
+    'my-rules': 'List of all your rules. Activate/deactivate them in one click',
+  };
+  if (Object.hasOwn(keyToDescription, key)) {
+    return keyToDescription[key];
+  }
+  return '';
+}
+
 export function getRuleInstanceDisplay(
   ruleId: string,
   ruleInstanceId: string | undefined,

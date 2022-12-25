@@ -10,7 +10,6 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
 import { useRules } from '@/utils/rules';
@@ -263,13 +262,8 @@ const MyRule = () => {
       total: ruleInstances.length,
     };
   });
-  const i18n = useI18n();
-  // todo: i18n
   return (
-    <PageWrapper
-      title={i18n('menu.rules.my-rules')}
-      description="List of all your rules. Activate/deactivate them in one click"
-    >
+    <PageWrapper>
       <QueryResultsTable<RuleInstance>
         form={{
           labelWrap: true,

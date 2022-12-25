@@ -7,7 +7,6 @@ import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
 import { RuleConfigurationsEditor } from './components/RuleConfigurationsEditor';
 import { Rule } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
-import { useI18n } from '@/locales';
 
 const STEPS = [
   {
@@ -34,12 +33,8 @@ const StepForm: React.FC<Record<string, any>> = () => {
     setSelectedRule(rule);
   };
 
-  const i18n = useI18n();
   return (
-    <PageWrapper
-      title={i18n('menu.rules.rules-library')}
-      description="Create a transaction monitoring rule with a straight-forward 3 step process"
-    >
+    <PageWrapper>
       <Card bordered={false}>
         <Row justify="center">
           <Steps current={current} className={styles.stepsContainer}>

@@ -24,6 +24,7 @@ const RequestNew: FC<Record<string, any>> = () => {
     <PageWrapper
       title={i18n('menu.rules.request-new')}
       description="Can't find a rule to suit your use case? Request a new rule and we will create one for you."
+      backButton={{ title: 'Back to Rules', url: '/rules/my-rules' }}
     >
       <Card bordered={false}>
         <ProForm
