@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import HitsTable from '../HitsTable';
-import s from '../styles.module.less';
 import * as Card from '@/components/ui/Card';
 import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { Case, CaseTransaction } from '@/apis';
@@ -18,11 +16,19 @@ import { CASES_RULE_TRANSACTIONS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 
 export function expandedRowRender(item: RuleHitTransactionItem) {
+  const preparedEvents =
+    item.caseTransactions.events?.map((eve) => {
+      return {
+        ...eve,
+        _id: eve.transactionId,
+      };
+    }) ?? [];
   return (
-    <div className={s.expandedRow}>
-      <HitsTable transaction={item.caseTransactions} />
+    <div>
+      <TransactionEventsTable events={preparedEvents} />
     </div>
   );
 }
@@ -67,7 +73,7 @@ export default function RulesHitTransactionTable(props: Props) {
       <>
         <QueryResultsTable<RuleHitTransactionItem, CommonParams>
           disableInternalPadding={true}
-          rowKey="caseTransactions.transactionId"
+          rowKey={((entity: any) => entity.caseTransactions.transactionId) as unknown as string}
           options={{
             reload: false,
             setting: false,
@@ -82,7 +88,6 @@ export default function RulesHitTransactionTable(props: Props) {
               width: 100,
               ellipsis: true,
               render: (_, entity) => {
-                console.log(`Entities: ${JSON.stringify(entity)}`);
                 return (
                   <Id
                     to={makeUrl(`/transactions/item/:id`, {
