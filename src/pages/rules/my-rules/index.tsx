@@ -1,14 +1,15 @@
-import { Drawer, message, Popover, Progress, Switch, Tooltip } from 'antd';
-import { useCallback, useMemo, useState } from 'react';
+import { Drawer, message, Popover, Switch, Tooltip } from 'antd';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
+import { DeleteOutlined, EditOutlined, SwapOutlined, UserOutlined } from '@ant-design/icons';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
+import s from './style.module.less';
 import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import { RuleActionTag } from '@/components/rules/RuleActionTag';
 import { useI18n } from '@/locales';
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
@@ -16,6 +17,7 @@ import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { TableActionType } from '@/components/ui/Table';
 
 const MyRule = () => {
   const isPulseEnabled = useFeature('PULSE');
@@ -23,7 +25,14 @@ const MyRule = () => {
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
+  const actionRef = useRef<TableActionType>(null);
+  const reloadTable = useCallback(() => {
+    actionRef.current?.reload();
+  }, []);
+
   const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
   const handleRuleInstanceUpdate = useCallback(
@@ -42,6 +51,17 @@ const MyRule = () => {
     },
     [api],
   );
+  const handleDeleteRuleInstance = useCallback(
+    async (ruleInstance: RuleInstance) => {
+      setDeleting(true);
+      await api.deleteRuleInstancesRuleInstanceId({ ruleInstanceId: ruleInstance.id as string });
+      message.success(`Successfully deleted rule ${ruleInstance.id}`);
+      setDeleting(false);
+      reloadTable();
+    },
+    [api, reloadTable],
+  );
+
   const handleActivationChange = useCallback(
     async (ruleInstance: RuleInstance, activated: boolean) => {
       const hideMessage = message.loading(
@@ -70,16 +90,20 @@ const MyRule = () => {
         title: 'Rule Case Creation Type',
         width: 100,
         dataIndex: 'caseCreationType',
+        render: (dom, entity) => {
+          return (
+            <>
+              {' '}
+              {entity.caseCreationType === 'USER' ? <UserOutlined /> : <SwapOutlined />}{' '}
+              {_.startCase(_.toLower(entity.caseCreationType))}
+            </>
+          );
+        },
       },
       {
         title: 'Rule Case Priority',
         width: 50,
         dataIndex: 'casePriority',
-      },
-      {
-        title: 'Rule Nature',
-        width: 50,
-        dataIndex: 'nature',
       },
     ];
     return [
@@ -128,18 +152,13 @@ const MyRule = () => {
           return '0%';
         },
         render: (_, ruleInstance) => {
+          const percent =
+            ruleInstance.hitCount && ruleInstance.runCount
+              ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
+              : 0;
           return (
             <Tooltip title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}>
-              <Progress
-                percent={
-                  ruleInstance.hitCount && ruleInstance.runCount
-                    ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
-                    : 0
-                }
-                format={(percent) => `${percent?.toFixed(2)}%`}
-                status={ruleInstance.status === 'ACTIVE' ? 'active' : 'normal'}
-                style={{ paddingRight: 20 }}
-              />
+              {percent?.toFixed(2)}%
             </Tooltip>
           );
         },
@@ -170,21 +189,6 @@ const MyRule = () => {
       },
       ...caseCreationHeaders,
       {
-        title: 'Action',
-        align: 'center',
-        width: 30,
-        sorter: (a, b) => a.action.localeCompare(b.action),
-        render: (_, entity) => {
-          const ruleInstance = updatedRuleInstances[entity.id as string] || entity;
-          return (
-            <span>
-              <RuleActionTag ruleAction={ruleInstance.action} />
-            </span>
-          );
-        },
-        exportData: (row) => row.action,
-      },
-      {
         title: 'Created At',
         width: 120,
         sorter: (a, b) =>
@@ -211,8 +215,46 @@ const MyRule = () => {
         },
         exportData: (row) => row.status === 'ACTIVE',
       },
+      {
+        title: 'Actions',
+        width: 30,
+        align: 'center',
+        render: (_, entity) => {
+          return (
+            <>
+              <a
+                className={s.actionIcons}
+                onClick={() => {
+                  if (!deleting) {
+                    setCurrentRow(entity);
+                    setIsEditing(true);
+                    setShowDetail(true);
+                  }
+                }}
+              >
+                <EditOutlined />
+              </a>
+              <a
+                className={s.actionIcons}
+                onClick={() => {
+                  handleDeleteRuleInstance(entity);
+                }}
+              >
+                <DeleteOutlined />
+              </a>
+            </>
+          );
+        },
+      },
     ];
-  }, [handleActivationChange, rules, updatedRuleInstances, isPulseEnabled]);
+  }, [
+    handleActivationChange,
+    rules,
+    updatedRuleInstances,
+    isPulseEnabled,
+    deleting,
+    handleDeleteRuleInstance,
+  ]);
 
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
     const ruleInstances = await api.getRuleInstances();
@@ -232,6 +274,7 @@ const MyRule = () => {
         form={{
           labelWrap: true,
         }}
+        actionRef={actionRef}
         columns={columns}
         queryResults={rulesResult}
         pagination={false}
@@ -263,6 +306,7 @@ const MyRule = () => {
               setCurrentRow(undefined);
               setShowDetail(false);
             }}
+            isEditing={isEditing}
           />
         )}
       </Drawer>

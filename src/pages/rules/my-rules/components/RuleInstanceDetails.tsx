@@ -23,6 +23,7 @@ interface Props {
   ruleInstance: RuleInstance;
   onRuleInstanceUpdate: (newRuleInstance: RuleInstance) => Promise<void>;
   onRuleInstanceDeleted: () => void;
+  isEditing: boolean;
 }
 export const RuleInstanceDetails: React.FC<Props> = ({
   rule,
@@ -30,12 +31,13 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   ruleParametersSchema,
   onRuleInstanceUpdate,
   onRuleInstanceDeleted,
+  isEditing,
 }) => {
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
   const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [ruleNameAlias, setRuleNameAlias] = useState(ruleInstance.ruleNameAlias);
