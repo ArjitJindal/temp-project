@@ -59,6 +59,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         rowKey="createdAt"
         columns={columns}
         search={false}
+        autoAdjustHeight
       />
     </>
   );

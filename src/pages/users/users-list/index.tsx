@@ -56,10 +56,11 @@ const BusinessUsersTab = () => {
   const bussinessResult = usePaginatedQuery(
     USERS('bussiness', params),
     async (paginationParams) => {
-      const { createdTimestamp, userId, page, riskLevels } = params;
+      const { createdTimestamp, userId, page, riskLevels, pageSize } = params;
 
       const response = await api.getBusinessUsersList({
         page,
+        pageSize,
         ...paginationParams,
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
@@ -123,6 +124,7 @@ const BusinessUsersTab = () => {
           persistenceType: 'localStorage',
           persistenceKey: 'users-list-table',
         }}
+        autoAdjustHeight
       />
     </>
   );
@@ -158,10 +160,11 @@ const ConsumerUsersTab = () => {
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const consumerResults = usePaginatedQuery(USERS('consumer', params), async (paginationParams) => {
-    const { userId, createdTimestamp, page, riskLevels } = params;
+    const { userId, createdTimestamp, page, riskLevels, pageSize } = params;
 
     const response = await api.getConsumerUsersList({
       page,
+      pageSize,
       ...paginationParams,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
       beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
@@ -224,6 +227,7 @@ const ConsumerUsersTab = () => {
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',
         }}
+        autoAdjustHeight
       />
     </>
   );
@@ -258,10 +262,11 @@ const AllUsersTab = () => {
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
   const allUsersResult = usePaginatedQuery(USERS('all', params), async (paginationParams) => {
-    const { userId, createdTimestamp, page, riskLevels } = params;
+    const { userId, createdTimestamp, page, riskLevels, pageSize } = params;
 
     const response = await api.getAllUsersList({
       page,
+      pageSize,
       ...paginationParams,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
       beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
@@ -324,6 +329,7 @@ const AllUsersTab = () => {
           persistenceType: 'localStorage',
           persistenceKey: 'users-list',
         }}
+        autoAdjustHeight
       />
     </>
   );

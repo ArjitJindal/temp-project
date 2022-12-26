@@ -443,6 +443,7 @@ export default function UserCases(props: Props) {
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
       }}
+      autoAdjustHeight
     />
   );
 }

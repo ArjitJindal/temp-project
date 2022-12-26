@@ -346,6 +346,7 @@ function UserListTable(props: Props) {
         params={params}
         onChangeParams={setParams}
         queryResults={listResult}
+        autoAdjustHeight
       />
     </div>
   );

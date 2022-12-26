@@ -113,6 +113,7 @@ const TableList = () => {
         queryResult={queryResult}
         params={params}
         onChangeParams={setParams}
+        autoAdjustHeight
       />
     </PageWrapper>
   );

@@ -23,6 +23,7 @@ import UserCases from '@/pages/case-management/UserCases';
 import { neverReturn } from '@/utils/lang';
 import TransactionCases from '@/pages/case-management/TransactionCases';
 import { useRules } from '@/utils/rules';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -75,6 +76,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       ...parsedParams,
       page: parsedParams.page ?? 1,
       sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
     }));
   }, [parsedParams]);
 
@@ -84,6 +86,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
       const {
         sort,
         page,
+        pageSize,
         createdTimestamp,
         caseId,
         rulesHitFilter,
@@ -116,6 +119,7 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
 
       const response = await api.getCaseList({
         page,
+        pageSize,
         ...paginationParams,
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp

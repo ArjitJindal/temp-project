@@ -1,5 +1,5 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
-import React, { useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Checkbox, Pagination } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
@@ -13,6 +13,9 @@ import { usePrevious } from '@/utils/hooks';
 import ResizableTitle from '@/utils/table-utils';
 import DownloadButton from '@/components/ui/Table/DownloadButton';
 import { PaginationParams } from '@/utils/queries/hooks';
+import { getClientOffset } from '@/utils/positions';
+
+const TABLE_SEARCH_SECTION_HEIGHT = 70;
 
 export type TableActionType = {
   reload: () => void;
@@ -41,7 +44,7 @@ export interface RowSelection {
 export const DEFAULT_PARAMS_STATE: CommonParams = {
   page: 1,
   sort: [],
-  pageSize: 20,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 type PickUpProps<T, Params, ValueType> = Pick<
@@ -83,6 +86,8 @@ export interface Props<T extends object, Params extends object, ValueType>
   onReload?: () => void;
   onReset?: () => void;
   onPaginateExportData?: (params: PaginationParams) => Promise<TableData<T>>;
+  showResultsInfo?: boolean;
+  autoAdjustHeight?: boolean;
 }
 
 export default function Table<
@@ -123,7 +128,10 @@ export default function Table<
     },
     onReset,
     onReload,
+    showResultsInfo = false,
+    autoAdjustHeight = false,
   } = props;
+  const tableElement = useRef<HTMLDivElement>(null);
 
   const handleResetSelection = useCallback(() => {
     rowSelection?.onChange([]);
@@ -251,9 +259,20 @@ export default function Table<
     }
   };
 
+  const tableOffsetTop = (tableElement.current && getClientOffset(tableElement.current))?.top || 0;
   return (
-    <div className={style.root}>
+    <div className={style.root} ref={tableElement}>
       <ProTable<TableRow<T>, Params>
+        style={{
+          ...(autoAdjustHeight
+            ? {
+                maxHeight: `calc(100vh - ${
+                  tableOffsetTop + (search ? TABLE_SEARCH_SECTION_HEIGHT : 0)
+                }px)`,
+              }
+            : {}),
+          overflowY: 'scroll',
+        }}
         toolBarRender={(action, rows) => {
           const result = [];
 
@@ -324,6 +343,7 @@ export default function Table<
             ...params,
             page: 1,
             sort: sort,
+            pageSize: DEFAULT_PAGE_SIZE,
           });
         }}
         options={{
@@ -350,17 +370,30 @@ export default function Table<
         <Pagination
           disabled={loading}
           className={style.pagination}
-          size="small"
-          showSizeChanger={false}
+          showSizeChanger
+          showQuickJumper
           pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-          showTitle={true}
           total={data.total ?? dataItems.length}
           current={params?.page}
-          onChange={(page) => {
+          onChange={(page, pageSize) => {
             if (params != null) {
-              onChangeParams({ ...params, page });
+              onChangeParams({ ...params, page, pageSize });
             }
           }}
+          showTotal={
+            showResultsInfo
+              ? (total) => (
+                  <span>
+                    {showResultsInfo && params?.pageSize && params?.page && (
+                      <>
+                        Showing {params.pageSize * (params.page - 1) + 1} -{' '}
+                        {Math.min(params.pageSize * params.page, total)} of {total} results
+                      </>
+                    )}
+                  </span>
+                )
+              : undefined
+          }
         />
       )}
     </div>

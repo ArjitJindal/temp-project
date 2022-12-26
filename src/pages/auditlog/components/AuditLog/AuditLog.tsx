@@ -196,6 +196,7 @@ export default function AuditLogTable() {
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
       }}
+      autoAdjustHeight
     />
   );
 }

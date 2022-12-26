@@ -96,6 +96,7 @@ const TableList: React.FC = () => {
           persistenceKey: 'transactions-files-list',
         }}
         toolBarRender={() => [<FileImportButton type={'TRANSACTION'} />]}
+        autoAdjustHeight
       />
     </PageWrapper>
   );

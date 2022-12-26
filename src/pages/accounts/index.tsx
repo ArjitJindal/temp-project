@@ -144,6 +144,7 @@ export default function () {
           persistenceType: 'localStorage',
           persistenceKey: 'accounts-list',
         }}
+        pagination={false}
       />
     </PageWrapper>
   );

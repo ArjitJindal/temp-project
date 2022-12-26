@@ -100,6 +100,7 @@ const TableList: React.FC = () => {
           <FileImportButton type={'USER'} buttonText="Import (Consumer User)" />,
           <FileImportButton type={'BUSINESS'} buttonText="Import (Business User)" />,
         ]}
+        autoAdjustHeight
       />
     </PageWrapper>
   );

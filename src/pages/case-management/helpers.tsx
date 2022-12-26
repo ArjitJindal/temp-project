@@ -5,11 +5,13 @@ import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
     return {
       page: params.page ?? 1,
+      pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
       createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       transactionTimestamp: params.transactionTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
@@ -54,6 +56,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   deserializer: (raw): TableSearchParams => {
     return {
       page: parseInt(raw.page ?? '') || 1,
+      pageSize: parseInt(raw.pageSize ?? '') || DEFAULT_PAGE_SIZE,
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,

@@ -1,10 +1,9 @@
 import React from 'react';
 import { ParamsType } from '@ant-design/pro-provider';
 import { Alert } from 'antd';
-import s from './styles.module.less';
 import Table, { CommonParams, Props as TableProps } from '@/components/ui/Table';
 import { TableData } from '@/components/ui/Table/types';
-import { getOr, isFailed, isLoading, isSuccess } from '@/utils/asyncResource';
+import { getOr, isFailed, isLoading } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
 type Props<Item extends object, Params extends object = ParamsType, ValueType = 'text'> = Omit<
@@ -35,27 +34,13 @@ export default function QueryResultsTable<
     <Table
       {...rest}
       actionsHeader={actionsHeader}
-      headerSubtitle={
-        showResultsInfo &&
-        isSuccess(queryResults.data) && <ResultsInfo tableData={queryResults.data.value} />
-      }
       onReload={queryResults.refetch}
       loading={isLoading(queryResults.data)}
       data={getOr(queryResults.data, {
         items: [],
       })}
       onPaginateExportData={queryResults.paginate}
+      showResultsInfo={showResultsInfo}
     />
-  );
-}
-
-function ResultsInfo<Item>(props: { tableData: TableData<Item> }) {
-  const { tableData } = props;
-  const { items, total = items.length } = tableData;
-  return (
-    <div className={s.count}>
-      Displaying {items.length} of
-      {total >= 10000 ? ` more than ${total}` : ` ${total}`} results
-    </div>
   );
 }

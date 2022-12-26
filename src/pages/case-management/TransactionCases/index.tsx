@@ -821,6 +821,7 @@ export default function TransactionCases(props: Props) {
         selectedKeys: selectedEntities,
         onChange: setSelectedEntities,
       }}
+      autoAdjustHeight
     />
   );
 }

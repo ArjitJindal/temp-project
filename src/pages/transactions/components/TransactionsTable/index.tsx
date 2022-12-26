@@ -41,11 +41,19 @@ type Props = {
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
   hideSearchForm?: boolean;
   disableSorting?: boolean;
+  autoAdjustHeight?: boolean;
 };
 
 export default function TransactionsTable(props: Props) {
-  const { queryResult, params, hideSearchForm, disableSorting, actionsHeader, onChangeParams } =
-    props;
+  const {
+    queryResult,
+    params,
+    hideSearchForm,
+    disableSorting,
+    actionsHeader,
+    onChangeParams,
+    autoAdjustHeight,
+  } = props;
 
   const columns: TableColumn<TransactionCaseManagement>[] = useMemo(
     () => [
@@ -338,6 +346,7 @@ export default function TransactionsTable(props: Props) {
         persistenceType: 'localStorage',
         persistenceKey: 'transaction-list-table',
       }}
+      autoAdjustHeight={autoAdjustHeight}
     />
   );
 }

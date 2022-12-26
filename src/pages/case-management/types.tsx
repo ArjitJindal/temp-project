@@ -12,6 +12,7 @@ import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSear
 export type TableSearchParams = Partial<{
   caseId: string;
   page: number;
+  pageSize: number;
   sort: [string, SortOrder][];
   timestamp: string[];
   createdTimestamp: string[];
