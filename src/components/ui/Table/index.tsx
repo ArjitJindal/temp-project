@@ -1,6 +1,6 @@
 import ProTable, { ProTableProps } from '@ant-design/pro-table';
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Checkbox, Pagination } from 'antd';
+import { Checkbox, Pagination, Select } from 'antd';
 import _ from 'lodash';
 import cn from 'clsx';
 import { ProColumns, ProColumnType } from '@ant-design/pro-table/es/typing';
@@ -16,6 +16,8 @@ import { PaginationParams } from '@/utils/queries/hooks';
 import { getClientOffset } from '@/utils/positions';
 
 const TABLE_SEARCH_SECTION_HEIGHT = 70;
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export type TableActionType = {
   reload: () => void;
@@ -367,34 +369,61 @@ export default function Table<
         }}
       />
       {pagination !== false && (
-        <Pagination
-          disabled={loading}
-          className={style.pagination}
-          showSizeChanger
-          showQuickJumper
-          pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-          total={data.total ?? dataItems.length}
-          current={params?.page}
-          onChange={(page, pageSize) => {
-            if (params != null) {
-              onChangeParams({ ...params, page, pageSize });
-            }
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            width: '100%',
+            alignItems: 'center',
+            backgroundColor: 'white',
           }}
-          showTotal={
-            showResultsInfo
-              ? (total) => (
-                  <span>
-                    {showResultsInfo && params?.pageSize && params?.page && (
-                      <>
-                        Showing {params.pageSize * (params.page - 1) + 1} -{' '}
-                        {Math.min(params.pageSize * params.page, total)} of {total} results
-                      </>
-                    )}
-                  </span>
-                )
-              : undefined
-          }
-        />
+        >
+          <Pagination
+            disabled={loading}
+            className={style.pagination}
+            showQuickJumper
+            showSizeChanger={false}
+            pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
+            total={data.total ?? dataItems.length}
+            current={params?.page}
+            onChange={(page, pageSize) => {
+              if (params != null) {
+                onChangeParams({ ...params, page, pageSize });
+              }
+            }}
+            showTotal={
+              showResultsInfo
+                ? (total) => (
+                    <span>
+                      {showResultsInfo && params?.pageSize && params?.page && (
+                        <>
+                          Showing {params.pageSize * (params.page - 1) + 1} -{' '}
+                          {Math.min(params.pageSize * params.page, total)} of {total} results
+                        </>
+                      )}
+                    </span>
+                  )
+                : undefined
+            }
+          />
+          <Select
+            defaultValue={DEFAULT_PAGE_SIZE}
+            onChange={(value) => {
+              if (params != null) {
+                onChangeParams({ ...params, pageSize: value });
+              }
+            }}
+            value={params?.pageSize}
+            dropdownMatchSelectWidth={false}
+            placement="topRight"
+          >
+            {PAGE_SIZE_OPTIONS.map((pageSize) => (
+              <Select.Option key={pageSize} value={pageSize}>
+                {pageSize} / page
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
       )}
     </div>
   );
