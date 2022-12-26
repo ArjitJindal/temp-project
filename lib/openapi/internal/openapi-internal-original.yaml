@@ -3389,6 +3389,7 @@ components:
             - $ref: '#/components/schemas/RiskParameterValueRange'
             - $ref: '#/components/schemas/RiskParameterValueMultiple'
             - $ref: '#/components/schemas/RiskParameterValueTimeRange'
+            - $ref: '#/components/schemas/RiskParameterValueDayRange'
       required:
         - content
     RiskParameterValueLiteral:
@@ -3451,6 +3452,19 @@ components:
         - startHour
         - endHour
         - timezone
+    RiskParameterValueDayRange:
+      title: RiskParameterValueDayRange
+      properties:
+        kind:
+          type: string
+          enum:
+            - DAY_RANGE
+        start:
+          type: number
+        end:
+          type: number
+      required:
+        - kind
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object

@@ -6,6 +6,7 @@ import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
   getAgeFromTimestamp,
+  getAgeInDaysFromTimestamp,
   getRiskScoreFromLevel,
   riskLevelPrecendence,
 } from './utils'
@@ -131,14 +132,15 @@ export const updateDynamicRiskScores = async (
     ) ?? []
 
   for (const parameterAttributeDetails of relevantParameters) {
-    if (parameterAttributeDetails.riskEntityType === 'CONSUMER_USER') {
+    if (parameterAttributeDetails.riskEntityType === 'TRANSACTION') {
       if (parameterAttributeDetails.parameter === 'createdTimestamp') {
         if (users.length) {
           users.forEach((user) => {
             const riskLevel = getAgeDerivedRiskLevel(
               parameterAttributeDetails.parameter,
               user,
-              parameterAttributeDetails.riskLevelAssignmentValues
+              parameterAttributeDetails.riskLevelAssignmentValues,
+              'DAY'
             )
             riskScoresList.push(
               getRiskScoreFromLevel(riskClassificationValues, riskLevel)
@@ -146,7 +148,6 @@ export const updateDynamicRiskScores = async (
           })
         }
       }
-    } else if (parameterAttributeDetails.riskEntityType === 'TRANSACTION') {
       if (parameterAttributeDetails.isDerived) {
         if (
           DOMESTIC_FOREIGN_PARAMETERS.includes(
@@ -268,7 +269,10 @@ export const matchParameterValue = (
   ) {
     return true
   }
-  if (parameterValueContent.kind === 'RANGE') {
+  if (
+    parameterValueContent.kind === 'RANGE' ||
+    parameterValueContent.kind === 'DAY_RANGE'
+  ) {
     if (
       typeof valueToMatch === 'number' &&
       (parameterValueContent.start == null ||
@@ -372,11 +376,15 @@ const getIterableAttributeRiskLevel = (
 const getAgeDerivedRiskLevel = (
   paramName: ParameterAttributeRiskValuesParameterEnum,
   entity: User | Business,
-  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
+  granularity = 'YEAR'
 ) => {
   const endValue = _.get(entity, paramName)
   if (endValue) {
-    const age = getAgeFromTimestamp(dayjs(endValue).valueOf())
+    const age =
+      granularity === 'YEAR'
+        ? getAgeFromTimestamp(dayjs(endValue).valueOf())
+        : getAgeInDaysFromTimestamp(dayjs(endValue).valueOf())
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
       if (matchParameterValue(age, parameterValue)) {
         return riskLevel

@@ -37,6 +37,10 @@ export const getAgeFromTimestamp = (timestamp: number) => {
   return dayjs().diff(dayjs(timestamp), 'year')
 }
 
+export const getAgeInDaysFromTimestamp = (timestamp: number) => {
+  return dayjs().diff(dayjs(timestamp), 'day')
+}
+
 export const getRiskScoreFromLevel = (
   riskClassificationValues: Array<any>,
   riskLevel: RiskLevel
