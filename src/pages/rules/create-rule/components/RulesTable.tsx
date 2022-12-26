@@ -33,19 +33,9 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const columns: TableColumn<Rule>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<Rule>[] = [
       {
-        title: 'Rule Case Creation Type',
-        width: 150,
-        dataIndex: 'defaultCaseCreationType',
-      },
-      {
-        title: 'Rule Case Priority',
+        title: 'Default Nature',
         width: 100,
-        dataIndex: 'defaultCasePriority',
-      },
-      {
-        title: 'Rule Nature',
-        width: 100,
-        dataIndex: 'defaultCaseNature',
+        dataIndex: 'defaultNature',
       },
     ];
     return [
@@ -58,27 +48,20 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
         render: (_, entity) => {
           return (
             <>
-              <span className={style.root}>
-                {entity.id} {recommendedRules.includes(entity.id) ? <RecommendedTag /> : ''}
-              </span>
+              <a onClick={() => onSelectRule(entity)}>
+                <span className={style.root}>
+                  {entity.id} {recommendedRules.includes(entity.id) ? <RecommendedTag /> : ''}
+                </span>
+              </a>
+              <span style={{ fontSize: '12px' }}>{entity.name}</span>
             </>
           );
         },
         exportData: (row) => row.id,
       },
       {
-        title: 'Rule Name',
-        width: 300,
-        dataIndex: 'name',
-        sorter: (a, b) => a.name.localeCompare(b.name),
-        render: (_, entity) => {
-          return entity.name;
-        },
-        exportData: (row) => row.name,
-      },
-      {
         title: 'Rule Description',
-        width: 500,
+        width: 300,
         dataIndex: 'description',
         exportData: (row) => row.description,
       },
@@ -115,12 +98,11 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
             <span>
               <Button
                 analyticsName="Select"
-                shape="round"
-                size="small"
-                style={{ borderColor: '#1890ff', color: '#1890ff' }}
+                size="middle"
+                type="primary"
                 onClick={() => onSelectRule(entity)}
               >
-                Select
+                Configure
               </Button>
             </span>
           );

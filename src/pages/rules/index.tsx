@@ -40,12 +40,12 @@ const TableList = () => {
           setCurrentHeaderDescription(ruleHeaderKeyToDescription(key));
         }}
       >
-        <Tabs.TabPane tab="Library" key="rules-library">
-          <StepForm />
-        </Tabs.TabPane>
         <Tabs.TabPane tab="My Rules" key="my-rules">
           <MyRule />
         </Tabs.TabPane>
+        <Tabs.TabPane tab="Library" key="rules-library">
+          <StepForm />
+        </Tabs.TabPane>{' '}
       </PageTabs>
     </PageWrapper>
   );
