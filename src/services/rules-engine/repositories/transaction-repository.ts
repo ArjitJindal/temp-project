@@ -526,7 +526,7 @@ export class TransactionRepository {
                 Item: item,
               },
             })),
-          ] as WriteRequest[],
+          ] as unknown as WriteRequest[],
         },
       }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
