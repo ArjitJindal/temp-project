@@ -56,7 +56,7 @@ export class TransactionEventRepository {
                 },
               },
             },
-          ].filter(Boolean) as WriteRequest[],
+          ].filter(Boolean) as unknown as WriteRequest[],
         },
       }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
