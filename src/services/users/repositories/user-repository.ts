@@ -34,7 +34,11 @@ import {
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { OptionalPaginationParams, PaginationParams } from '@/utils/pagination'
+import {
+  OptionalPaginationParams,
+  PaginationParams,
+  COUNT_QUERY_LIMIT,
+} from '@/utils/pagination'
 
 export class UserRepository {
   dynamoDb: DynamoDBDocumentClient
@@ -296,6 +300,9 @@ export class UserRepository {
               },
             },
             {
+              $limit: COUNT_QUERY_LIMIT,
+            },
+            {
               $group: {
                 _id: {
                   $ifNull: [
@@ -368,7 +375,7 @@ export class UserRepository {
         return user
       })
     }
-    const total = await collection.count(query)
+    const total = await collection.count(query, { limit: COUNT_QUERY_LIMIT })
     return { total, data: users }
   }
 

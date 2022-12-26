@@ -31,7 +31,11 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
-import { PaginationParams, OptionalPagination } from '@/utils/pagination'
+import {
+  PaginationParams,
+  OptionalPagination,
+  COUNT_QUERY_LIMIT,
+} from '@/utils/pagination'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -672,6 +676,9 @@ export class CaseRepository {
     const { preLimitPipeline, postLimitPipeline } =
       this.getCasesMongoPipeline(params)
     const pipeline = preLimitPipeline.concat(postLimitPipeline)
+    pipeline.push({
+      $limit: COUNT_QUERY_LIMIT,
+    })
     pipeline.push({
       $count: 'count',
     })

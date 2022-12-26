@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AUDITLOG_COLLECTION, paginatePipeline } from '@/utils/mongoDBUtils'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
+import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 
 export class AuditLogRepository {
   tenantId: string
@@ -113,6 +114,9 @@ export class AuditLogRepository {
       AUDITLOG_COLLECTION(this.tenantId)
     )
     const pipeline = this.getAuditLogMongoPipeline(params)
+    pipeline.push({
+      $limit: COUNT_QUERY_LIMIT,
+    })
     pipeline.push({
       $count: 'count',
     })
