@@ -8,6 +8,7 @@ import {
 } from 'mongodb'
 import _ from 'lodash'
 import { NotFound } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   CASES_COLLECTION,
   COUNTER_COLLECTION,
@@ -31,6 +32,12 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTransactionsListResponse'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreBoundsFromLevel,
+} from '@/services/risk-scoring/utils'
+import { hasFeature } from '@/core/utils/context'
 import {
   PaginationParams,
   OptionalPagination,
@@ -42,15 +49,18 @@ export const MAX_TRANSACTION_IN_A_CASE = 1000
 export class CaseRepository {
   mongoDb: MongoClient
   tenantId: string
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
     connections: {
       mongoDb?: MongoClient
+      dynamoDb?: DynamoDBDocumentClient
     }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
   }
 
   static getPriority(
@@ -99,11 +109,9 @@ export class CaseRepository {
     }
   }
 
-  private getCasesMongoQuery(
+  private async getCasesMongoQuery(
     params: OptionalPagination<DefaultApiGetCaseListRequest>
-  ): {
-    filter: Filter<Case>
-  } {
+  ): Promise<{ filter: Filter<Case> }> {
     const conditions: Filter<Case>[] = []
     conditions.push({
       createdTimestamp: {
@@ -190,20 +198,35 @@ export class CaseRepository {
       })
     }
 
-    if (params.filterRiskLevel != null) {
+    if (params.filterRiskLevel != null && (await hasFeature('PULSE'))) {
+      const riskRepository = new RiskRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+
+      const riskClassificationValues =
+        await riskRepository.getRiskClassificationValues()
+
       conditions.push({
-        $or: [
-          {
-            'caseUsers.origin.riskLevel': {
-              $in: params.filterRiskLevel,
-            },
-          },
-          {
-            'caseUsers.destination.riskLevel': {
-              $in: params.filterRiskLevel,
-            },
-          },
-        ],
+        $or: params.filterRiskLevel.map((riskLevel) => {
+          const { lowerBoundRiskScore, upperBoundRiskScore } =
+            getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
+          return {
+            $or: [
+              {
+                'caseUsers.originUserDrsScore': {
+                  $gte: lowerBoundRiskScore,
+                  $lte: upperBoundRiskScore,
+                },
+              },
+              {
+                'caseUsers.destinationUserDrsScore': {
+                  $gte: lowerBoundRiskScore,
+                  $lte: upperBoundRiskScore,
+                },
+              },
+            ],
+          }
+        }),
       })
     }
 
@@ -393,22 +416,22 @@ export class CaseRepository {
     }
   }
 
-  public getCasesMongoPipeline(
+  public async getCasesMongoPipeline(
     params: OptionalPagination<DefaultApiGetCaseListRequest>
-  ): {
+  ): Promise<{
     // Pipeline stages to be run before `limit`
     preLimitPipeline: Document[]
     // Pipeline stages to be run after `limit` - for augmentation-purpose only. The fields
     // added here cannot be filtered / sorted.
     postLimitPipeline: Document[]
-  } {
+  }> {
     const sortField =
       params?.sortField !== undefined && params?.sortField !== 'undefined'
         ? params?.sortField
         : 'createdTimestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const { filter } = this.getCasesMongoQuery(params)
+    const { filter } = await this.getCasesMongoQuery(params)
 
     const preLimitPipeline: Document[] = []
     const postLimitPipeline: Document[] = []
@@ -653,11 +676,11 @@ export class CaseRepository {
     return { preLimitPipeline, postLimitPipeline }
   }
 
-  public getCasesCursor(
+  public async getCasesCursor(
     params: OptionalPagination<DefaultApiGetCaseListRequest>
-  ): AggregationCursor<Case> {
+  ): Promise<AggregationCursor<Case>> {
     const { preLimitPipeline, postLimitPipeline } =
-      this.getCasesMongoPipeline(params)
+      await this.getCasesMongoPipeline(params)
     preLimitPipeline.push(...paginatePipeline(params))
     return this.getDenormalizedCases(preLimitPipeline.concat(postLimitPipeline))
   }
@@ -674,7 +697,7 @@ export class CaseRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const { preLimitPipeline, postLimitPipeline } =
-      this.getCasesMongoPipeline(params)
+      await this.getCasesMongoPipeline(params)
     const pipeline = preLimitPipeline.concat(postLimitPipeline)
     pipeline.push({
       $limit: COUNT_QUERY_LIMIT,
@@ -691,8 +714,45 @@ export class CaseRepository {
   public async getCases(
     params: DefaultApiGetCaseListRequest
   ): Promise<{ total: number; data: Case[] }> {
-    const cursor = this.getCasesCursor(params)
+    let cursor = await this.getCasesCursor(params)
     const total = this.getCasesCount(params)
+
+    if (params?.filterRiskLevel && (await hasFeature('PULSE'))) {
+      const riskRepository = new RiskRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+
+      const riskClassification =
+        await riskRepository.getRiskClassificationValues()
+
+      cursor = cursor.map((caseItem) => {
+        let originUserRiskLevel
+        let destinationUserRiskLevel
+
+        if (caseItem?.caseUsers?.originUserDrsScore != null) {
+          originUserRiskLevel = getRiskLevelFromScore(
+            riskClassification,
+            caseItem.caseUsers.originUserDrsScore
+          )
+
+          caseItem.caseUsers.originUserRiskLevel = originUserRiskLevel
+        }
+
+        if (caseItem?.caseUsers?.destinationUserDrsScore != null) {
+          destinationUserRiskLevel = getRiskLevelFromScore(
+            riskClassification,
+            caseItem.caseUsers.destinationUserDrsScore
+          )
+
+          caseItem.caseUsers.destinationUserRiskLevel = destinationUserRiskLevel
+        }
+
+        delete caseItem?.caseUsers?.originUserDrsScore
+        delete caseItem?.caseUsers?.destinationUserDrsScore
+
+        return caseItem
+      })
+    }
     return { total: await total, data: await cursor.toArray() }
   }
 

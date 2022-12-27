@@ -21,7 +21,7 @@ async function migrateTenant(tenant: Tenant) {
   const allRulesInstances = await rulesInstances.getAllRuleInstances()
   const rulesInstancesMap = _.keyBy(allRulesInstances, 'id')
 
-  const cursor = caseRepositry.getCasesCursor({
+  const cursor = await caseRepositry.getCasesCursor({
     includeTransactions: true,
     pageSize: 'DISABLED',
     filterCaseType: 'USER',

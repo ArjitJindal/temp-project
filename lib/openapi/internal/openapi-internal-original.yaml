@@ -3716,6 +3716,14 @@ components:
                 - $ref: '#/components/schemas/InternalConsumerUser'
                 - $ref: '#/components/schemas/InternalBusinessUser'
                 - $ref: '#/components/schemas/MissingUser'
+            originUserDrsScore:
+              type: number
+            destinationUserDrsScore:
+              type: number
+            originUserRiskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+            destinationUserRiskLevel:
+              $ref: '#/components/schemas/RiskLevel'
         comments:
           type: array
           items:

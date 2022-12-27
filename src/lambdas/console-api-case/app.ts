@@ -16,6 +16,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { CasesUpdateRequest } from '@/@types/openapi-internal/CasesUpdateRequest'
 import { Case } from '@/@types/openapi-internal/Case'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export type CaseConfig = {
   TMP_BUCKET: string
@@ -32,8 +33,10 @@ export const casesHandler = lambdaApi()(
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClient()
     const caseRepository = new CaseRepository(tenantId, {
       mongoDb: client,
+      dynamoDb,
     })
     const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
       mongoDb: client,

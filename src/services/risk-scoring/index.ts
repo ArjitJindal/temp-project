@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { RiskRepository } from './repositories/risk-repository'
@@ -24,6 +25,8 @@ import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 import { PulseAuditLogService } from '@/lambdas/console-api-pulse/services/pulse-audit-log'
+import { CASES_COLLECTION } from '@/utils/mongoDBUtils'
+import { Case } from '@/@types/openapi-internal/Case'
 
 const DOMESTIC_FOREIGN_PARAMETERS: ParameterAttributeRiskValuesParameterEnum[] =
   [
@@ -115,7 +118,10 @@ export const updateDynamicRiskScores = async (
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
   transaction: Transaction
-): Promise<any> => {
+): Promise<{
+  originDrsScore: number | undefined | null
+  destinationDrsScore: number | undefined | null
+}> => {
   const riskRepository = new RiskRepository(tenantId, { dynamoDb })
   const userRepository = new UserRepository(tenantId, { dynamoDb })
   const parameterRiskScores = await riskRepository.getParameterRiskItems()
@@ -193,8 +199,12 @@ export const updateDynamicRiskScores = async (
     transaction.originUserId,
     transaction.destinationUserId
   )
+
+  let originDrsScore = null
+  let destinationDrsScore = null
+
   if (transaction.originUserId) {
-    await calculateAndUpdateDRS(
+    originDrsScore = await calculateAndUpdateDRS(
       transaction.originUserId,
       arsScore,
       transaction.transactionId!,
@@ -202,13 +212,15 @@ export const updateDynamicRiskScores = async (
     )
   }
   if (transaction.destinationUserId) {
-    await calculateAndUpdateDRS(
+    destinationDrsScore = await calculateAndUpdateDRS(
       transaction.destinationUserId,
       arsScore,
       transaction.transactionId!,
       riskRepository
     )
   }
+
+  return { originDrsScore, destinationDrsScore }
 }
 
 const calculateAndUpdateDRS = async (
@@ -216,26 +228,25 @@ const calculateAndUpdateDRS = async (
   arsScore: number,
   transactionId: string,
   riskRepository: RiskRepository
-) => {
+): Promise<number | null | undefined> => {
   const krsScore = (await riskRepository.getKrsScore(userId))?.krsScore
   if (krsScore == null) {
-    return
+    return null
   }
 
   const drsObject = await riskRepository.getDrsScore(userId)
   const currentDrsValue = drsObject?.drsScore ?? krsScore
 
   if (!drsObject?.isUpdatable) {
-    return
+    return drsObject?.drsScore
   }
   const auditLogService = new PulseAuditLogService(riskRepository.tenantId)
   const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
   await riskRepository.createOrUpdateDrsScore(userId, drsScore, transactionId!)
   const newDrsObject = await riskRepository.getDrsScore(userId)
+  await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
 
-  if (newDrsObject == null) {
-    await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
-  }
+  return newDrsObject?.drsScore
 }
 
 const getUsersFromTransaction = async (
@@ -431,4 +442,25 @@ const getCountryDerivedRiskLevel = (
     }
   }
   return DEFAULT_RISK_LEVEL
+}
+
+export const updateDynamicRiskScoresInCases = async (
+  transactionId: Transaction['transactionId'],
+  mongoDb: MongoClient,
+  tenantId: string,
+  originDrsScore: number | undefined | null,
+  destinationDrsScore: number | undefined | null
+): Promise<void> => {
+  const caseTable = CASES_COLLECTION(tenantId)
+  const db = mongoDb.db()
+  const collection = db.collection<Case>(caseTable)
+  await collection.updateOne(
+    { caseTransactionsIds: { $elemMatch: { $eq: transactionId } } },
+    {
+      $set: {
+        'caseUsers.originUserDrsScore': originDrsScore,
+        'caseUsers.destinationUserDrsScore': destinationDrsScore,
+      },
+    }
+  )
 }

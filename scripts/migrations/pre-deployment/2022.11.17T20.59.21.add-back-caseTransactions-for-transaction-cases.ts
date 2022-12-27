@@ -20,7 +20,7 @@ async function migrateTenant(tenant: Tenant, revert: boolean) {
   const transactionsRepo = new TransactionRepository(tenant.id, {
     mongoDb,
   })
-  const cursor = caseRepository.getCasesCursor({
+  const cursor = await caseRepository.getCasesCursor({
     includeTransactions: false,
     pageSize: 'DISABLED',
   })

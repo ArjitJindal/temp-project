@@ -228,6 +228,12 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({
       'caseUsers.origin.legalEntity.companyGeneralDetails.businessIndustry': 1,
     })
+    await casesCollection.createIndex({
+      'caseUsers.originUserDrsScore': 1,
+    })
+    await casesCollection.createIndex({
+      'caseUsers.destinationUserDrsScore': 1,
+    })
 
     try {
       await db.createCollection(AUDITLOG_COLLECTION(tenantId))
