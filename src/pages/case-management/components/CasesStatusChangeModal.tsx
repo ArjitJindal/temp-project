@@ -197,12 +197,12 @@ export default function CasesStatusChangeModal(props: Props) {
             <Form.Item
               name="reasonOther"
               label="Describe the reason"
-              rules={[{ required: true, message: 'Please describe the reason', max: 50 }]}
+              rules={[{ required: true, message: 'Please describe the reason', max: 500 }]}
             >
               <Input />
             </Form.Item>
           )}
-          <Form.Item name="comment" label="Comment" rules={[{ max: 50 }]}>
+          <Form.Item name="comment" label="Comment" rules={[{ max: 500 }]}>
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.Item name="files" label="Attach documents">
