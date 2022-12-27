@@ -33,6 +33,10 @@ async function migrateTenant(tenant: Tenant) {
   for await (const case_ of cases) {
     const { caseTransactionsIds } = case_
 
+    if (caseTransactionsIds?.length === 0) {
+      continue
+    }
+
     const dynamicRiskScores: any = await db
       .collection<DrsScore>(dynamicRiskScoresCollectionName)
       .aggregate([
