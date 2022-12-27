@@ -235,9 +235,11 @@ export const casesHandler = lambdaApi()(
       event.pathParameters?.caseId &&
       event.pathParameters?.rulesInstanceId
     ) {
+      const { page, pageSize } = event.queryStringParameters as any
       return await caseService.getCaseRuleTransactions(
         event.pathParameters.caseId,
-        event.pathParameters.rulesInstanceId
+        event.pathParameters.rulesInstanceId,
+        { page, pageSize }
       )
     } else if (
       event.httpMethod === 'DELETE' &&

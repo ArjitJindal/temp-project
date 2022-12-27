@@ -110,10 +110,15 @@ export class CaseService {
     return await this.caseRepository.getCaseRules(caseId)
   }
 
-  public async getCaseRuleTransactions(caseId: string, ruleInstanceId: string) {
+  public async getCaseRuleTransactions(
+    caseId: string,
+    ruleInstanceId: string,
+    params: PaginationParams
+  ) {
     return await this.caseRepository.getCaseRuleTransactions(
       caseId,
-      ruleInstanceId
+      ruleInstanceId,
+      params
     )
   }
 

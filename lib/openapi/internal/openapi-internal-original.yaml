@@ -2267,6 +2267,14 @@ paths:
         name: rulesInstanceId
         in: path
         required: true
+      - schema:
+          $ref: '#/components/schemas/PageSize'
+        in: query
+        name: pageSize
+      - schema:
+          $ref: '#/components/schemas/Page'
+        in: query
+        name: page
     get:
       summary: Get transactions related to a case rule
       operationId: get-case-transactions-for-rule

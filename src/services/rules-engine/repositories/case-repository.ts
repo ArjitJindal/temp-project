@@ -1009,7 +1009,11 @@ export class CaseRepository {
     ]
   }
 
-  public getCaseRuleTransactionsCursor(caseFilter: string, ruleFilter: string) {
+  public getCaseRuleTransactionsCursor(
+    caseFilter: string,
+    ruleFilter: string,
+    params: PaginationParams
+  ) {
     const pipeline = this.getCaseRuleTransactionsMongoPipeline(
       caseFilter,
       ruleFilter
@@ -1017,17 +1021,57 @@ export class CaseRepository {
 
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return collection.aggregate<Case>(pipeline, {
-      allowDiskUse: true,
-    })
+    return collection.aggregate<Case>(
+      [
+        ...pipeline,
+        {
+          $sort: { 'caseTransactions.timestamp': -1 },
+        },
+        ...paginatePipeline(params),
+      ],
+      {
+        allowDiskUse: true,
+      }
+    )
   }
 
-  public async getCaseRuleTransactions(caseId: string, ruleInstanceId: string) {
+  public async getCaseRuleTransactionsCount(
+    caseId: string,
+    ruleInstanceId: string
+  ): Promise<number> {
+    const pipeline = this.getCaseRuleTransactionsMongoPipeline(
+      caseId,
+      ruleInstanceId
+    )
+
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const cursor = await collection.aggregate([
+      ...pipeline,
+      { $group: { _id: null, count: { $sum: 1 } } },
+    ])
+    const res = await cursor.next()
+    return res?.count ?? 0
+  }
+
+  public async getCaseRuleTransactions(
+    caseId: string,
+    ruleInstanceId: string,
+    params: PaginationParams
+  ) {
     const caseFilter = `^${caseId}$`
     const ruleFilter = `^${ruleInstanceId}$`
-    const cursor = this.getCaseRuleTransactionsCursor(caseFilter, ruleFilter)
+    const cursor = this.getCaseRuleTransactionsCursor(
+      caseFilter,
+      ruleFilter,
+      params
+    )
     const res = await cursor.toArray()
-    return { total: res.length, data: res }
+
+    return {
+      total: await this.getCaseRuleTransactionsCount(caseId, ruleInstanceId),
+      cases: res,
+    }
   }
 
   public async getCasesByTransactionId(
