@@ -54,12 +54,15 @@ export default function RulesHitTransactionTable(props: Props) {
   const caseTransationsForRuleQueryResult = useQuery(
     CASES_RULE_TRANSACTIONS(caseId, params, rulesInstanceId),
     async () => {
+      const { page, pageSize } = params;
       const response =
         caseId &&
         rulesInstanceId &&
         (await api.getCaseTransactionsForRule({
           caseId,
           rulesInstanceId: rulesInstanceId,
+          page,
+          pageSize,
         }));
       return {
         total: response ? response[0] : 0,
@@ -310,7 +313,6 @@ export default function RulesHitTransactionTable(props: Props) {
           queryResults={caseTransationsForRuleQueryResult}
           params={params}
           onChangeParams={setParams}
-          pagination={false}
           expandable={{ expandedRowRender }}
         />
       </>
