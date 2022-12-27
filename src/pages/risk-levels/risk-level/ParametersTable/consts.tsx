@@ -6,6 +6,7 @@ import {
   ParameterName,
   ParameterValues,
   RiskLevelTable,
+  riskValueDayRange,
   riskValueLiteral,
   riskValueMultiple,
   riskValueRange,
@@ -20,6 +21,7 @@ import { businessType, consumerType } from '@/utils/customer-type';
 import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/ui/Slider';
 import {
+  RiskParameterValueDayRange,
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
@@ -60,11 +62,14 @@ type RiskValueContentByType<T extends RiskValueType> = T extends 'LITERAL'
   ? RiskParameterValueMultiple
   : T extends 'TIME_RANGE'
   ? RiskParameterValueTimeRange
+  : T extends 'DAY_RANGE'
+  ? RiskParameterValueDayRange
   : never;
 
 export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   STRING: 'LITERAL',
   RANGE: 'RANGE',
+  DAY_RANGE: 'DAY_RANGE',
   COUNTRY: 'MULTIPLE',
   CURRENCY: 'MULTIPLE',
   PAYMENT_METHOD: 'MULTIPLE',
@@ -286,9 +291,9 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
   {
     parameter: 'createdTimestamp',
     title: 'Consumer User age on Platform',
-    description: 'Risk based on how long a consumer has been using your platform (Years)',
-    entity: 'CONSUMER_USER',
-    dataType: 'RANGE',
+    description: 'Risk based on how long a consumer has been using your platform (Days)',
+    entity: 'TRANSACTION',
+    dataType: 'DAY_RANGE',
     riskScoreType: 'ARS',
     isDerived: true,
     parameterType: 'VARIABLE',
@@ -488,7 +493,6 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
     );
   }) as InputRenderer<'MULTIPLE'>,
   RANGE: (({ disabled, value, onChange }) => {
-    // const range = (values[0] ?? '0,0').split(',').map((x) => parseInt(x) || 0);
     const range = [value?.start ?? 0, value?.end ?? 0];
     return (
       <>
@@ -499,13 +503,31 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
           value={[range[0], range[1]]}
           disabled={disabled}
           onChange={(value) => {
-            // onChange([value.map((x) => `${x}`).join(',')]);
             onChange(riskValueRange(value[0], value[1]));
           }}
         />
       </>
     );
   }) as InputRenderer<'RANGE'>,
+  DAY_RANGE: (({ disabled, value, onChange }) => {
+    const range = [value?.start ?? 0, value?.end ?? 0];
+    return (
+      <>
+        <Slider
+          range
+          marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
+          endExclusive={true}
+          min={0}
+          max={900}
+          value={[range[0], range[1]]}
+          disabled={disabled}
+          onChange={(value) => {
+            onChange(riskValueDayRange(value[0], value[1]));
+          }}
+        />
+      </>
+    );
+  }) as InputRenderer<'DAY_RANGE'>,
   TIME_RANGE: (({ disabled, value, onChange }) => {
     return (
       <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
@@ -583,6 +605,31 @@ const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
   return (
     <Slider
       range
+      endExclusive={true}
+      marks={marks}
+      defaultValue={[value.start ?? 0, value.end ?? 0]}
+      disabled={true}
+    />
+  );
+};
+
+const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
+  if (value == null) {
+    return null;
+  }
+  const marks = {};
+
+  if (value.start != null) {
+    marks[value.start] = value.start;
+  }
+  if (value.end != null) {
+    marks[value.end] = value.end;
+  }
+  return (
+    <Slider
+      range
+      min={0}
+      max={900}
       endExclusive={true}
       marks={marks}
       defaultValue={[value.start ?? 0, value.end ?? 0]}
@@ -674,6 +721,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
   CONSUMER_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   BUSINESS_USER_TYPE: DEFAULT_MULTIPLE_RENDERER,
   RANGE: DEFAULT_RANGE_RENDERER,
+  DAY_RANGE: DEFAULT_DAY_RANGE_RENDERER,
   TIME_RANGE: (({ value }) => {
     if (value == null) {
       return null;
@@ -708,6 +756,18 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
         const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
         const hasOverlaps = previousValues.some(({ parameterValue }) => {
           if (parameterValue.content.kind !== 'RANGE') {
+            return false;
+          }
+          const { start: y1 = 0, end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
+          return x1 < y2 && y1 < x2;
+        });
+        if (hasOverlaps) {
+          return 'Age ranges should not overlap';
+        }
+      } else if (newValue.kind === 'DAY_RANGE') {
+        const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
+        const hasOverlaps = previousValues.some(({ parameterValue }) => {
+          if (parameterValue.content.kind !== 'DAY_RANGE') {
             return false;
           }
           const { start: y1 = 0, end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;

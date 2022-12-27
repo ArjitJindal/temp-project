@@ -12,6 +12,7 @@ import {
   RiskParameterValueRange,
   RiskLevel,
   RiskParameterValueTimeRange,
+  RiskParameterValueDayRange,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -33,6 +34,14 @@ export function riskValueLiteral(content: string | number | boolean): RiskParame
 export function riskValueRange(start: number, end: number): RiskParameterValueRange {
   return {
     kind: 'RANGE',
+    start,
+    end,
+  };
+}
+
+export function riskValueDayRange(start: number, end: number): RiskParameterValueDayRange {
+  return {
+    kind: 'DAY_RANGE',
     start,
     end,
   };
@@ -82,6 +91,7 @@ export type RiskLevelTable = RiskLevelTableItem[];
 export type DataType =
   | 'STRING'
   | 'RANGE'
+  | 'DAY_RANGE'
   | 'COUNTRY'
   | 'CURRENCY'
   | 'PAYMENT_METHOD'
