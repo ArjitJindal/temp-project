@@ -1,5 +1,6 @@
 import React, { ReactSVGElement } from 'react';
 import cn from 'clsx';
+import { Tooltip } from 'antd';
 import s from './style.module.less';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
 
@@ -12,6 +13,7 @@ interface Props {
   children: string;
   color?: 'GREEN' | 'ORANGE' | 'BLUE' | 'TURQUOISE' | 'SKY_BLUE' | 'LEAF_GREEN';
   title?: string;
+  toolTip?: string;
 }
 
 export default function ActionButton(props: Props) {
@@ -29,18 +31,20 @@ export default function ActionButton(props: Props) {
   };
 
   return (
-    <button
-      className={cn(s.root, isActive && s.isActive, s[`color-${color}`])}
-      onClick={handleClick}
-      title={title}
-    >
-      <div className={s.icon} role="presentation">
-        {icon}
-      </div>
-      <div className={s.children}>{children}</div>
-      {isActive && onClear && (
-        <CloseCircleFillIcon className={s.clearIcon} role="presentation" onClick={handleClear} />
-      )}
-    </button>
+    <Tooltip title={props.toolTip} placement="bottom">
+      <button
+        className={cn(s.root, isActive && s.isActive, s[`color-${color}`])}
+        onClick={handleClick}
+        title={title}
+      >
+        <div className={s.icon} role="presentation">
+          {icon}
+        </div>
+        <div className={s.children}>{children}</div>
+        {isActive && onClear && (
+          <CloseCircleFillIcon className={s.clearIcon} role="presentation" onClick={handleClear} />
+        )}
+      </button>
+    </Tooltip>
   );
 }

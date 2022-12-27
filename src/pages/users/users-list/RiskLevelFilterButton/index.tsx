@@ -15,7 +15,7 @@ export function RiskLevelButton(props: Props) {
   const { riskLevels, onConfirm } = props;
   const [visible, setVisible] = useState(false);
 
-  const buttonText = riskLevels.length > 0 ? riskLevels.join(', ') : 'Risk Score';
+  const buttonText = riskLevels.length > 0 ? riskLevels.join(', ') : 'DRS';
   return (
     <Popover
       overlayClassName={s.popover}
@@ -35,6 +35,7 @@ export function RiskLevelButton(props: Props) {
           onConfirm([]);
         }}
         title={buttonText}
+        toolTip={'Risk Level Filter'}
       >
         {buttonText}
       </ActionButton>

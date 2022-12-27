@@ -39,6 +39,9 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
 import COUNTRIES from '@/utils/countries';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -65,7 +68,7 @@ export default function TransactionCases(props: Props) {
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers();
-
+  const isPulseEnabled = useFeature('PULSE');
   const tableQueryResult = useTableData(queryResult, 'TRANSACTION');
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
 
@@ -356,6 +359,22 @@ export default function TransactionCases(props: Props) {
               return <CountryDisplay isoCode={entity.transaction?.originAmountDetails?.country} />;
             },
           },
+          isPulseEnabled
+            ? {
+                title: 'Risk Level',
+                width: 140,
+                hideInSearch: true,
+                onCell: onTransactionCell,
+                exportData: (entity) => {
+                  const riskLevel = entity.caseUsers?.originUserRiskLevel;
+                  return riskLevel ? riskLevel : '-';
+                },
+                render: (dom, entity) => {
+                  const riskLevel = entity.caseUsers?.originUserRiskLevel;
+                  return riskLevel ? <RiskLevelTag level={riskLevel} /> : '-';
+                },
+              }
+            : {},
         ],
       },
       {
@@ -458,6 +477,22 @@ export default function TransactionCases(props: Props) {
               );
             },
           },
+          isPulseEnabled
+            ? {
+                title: 'Risk Level',
+                width: 140,
+                hideInSearch: true,
+                onCell: onTransactionCell,
+                exportData: (entity) => {
+                  const riskLevel = entity.caseUsers?.destinationUserRiskLevel;
+                  return riskLevel ? riskLevel : '-';
+                },
+                render: (dom, entity) => {
+                  const riskLevel = entity.caseUsers?.destinationUserRiskLevel;
+                  return riskLevel ? <RiskLevelTag level={riskLevel} /> : <>-</>;
+                },
+              }
+            : {},
         ],
       },
       {
@@ -719,6 +754,7 @@ export default function TransactionCases(props: Props) {
     user.userId,
     onUpdateCases,
     props.rules,
+    isPulseEnabled,
   ]);
 
   return (
@@ -791,6 +827,17 @@ export default function TransactionCases(props: Props) {
                 }));
               }}
             />
+            {isPulseEnabled && (
+              <RiskLevelButton
+                riskLevels={params.riskLevels ?? []}
+                onConfirm={(value) => {
+                  setParams((state) => ({
+                    ...state,
+                    riskLevels: value ?? undefined,
+                  }));
+                }}
+              />
+            )}
             <Divider type="vertical" style={{ height: '32px' }} />
             <CasesStatusChangeButton
               caseIds={selectedEntities}

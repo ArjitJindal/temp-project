@@ -32,7 +32,8 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
-import { RISK_LEVELS } from '@/utils/risk-levels';
+import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -50,6 +51,7 @@ export default function UserCases(props: Props) {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
+  const isPulseEnabled = useFeature('PULSE');
 
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -196,25 +198,27 @@ export default function UserCases(props: Props) {
         valueType: 'select',
         dataIndex: 'kycStatuses',
       },
-      {
-        title: 'User Risk Level',
-        exportData: 'user.riskLevel',
-        width: 150,
-        render: (_, entity) => {
-          const riskLevel = entity.user?.riskLevel;
-          return riskLevel && <RiskLevelTag level={riskLevel} />;
-        },
-        fieldProps: {
-          options: RISK_LEVELS.map((level) => ({
-            label: level,
-            value: level,
-          })).reverse(),
-          allowClear: true,
-          mode: 'multiple',
-        },
-        valueType: 'select',
-        dataIndex: 'riskLevels',
-      },
+      isPulseEnabled
+        ? {
+            title: 'User Risk Level',
+            exportData: (entity) => {
+              const riskLevel =
+                entity?.caseUsers?.originUserRiskLevel ??
+                entity?.caseUsers?.destinationUserRiskLevel;
+              return riskLevel ?? '-';
+            },
+            width: 150,
+            render: (_, entity) => {
+              const riskLevel =
+                entity?.caseUsers?.originUserRiskLevel ??
+                entity?.caseUsers?.destinationUserRiskLevel;
+
+              return riskLevel ? <RiskLevelTag level={riskLevel} /> : '-';
+            },
+            valueType: 'select',
+            dataIndex: 'riskLevels',
+          }
+        : {},
       {
         title: 'Rules Hit',
         hideInTable: true,
@@ -350,6 +354,7 @@ export default function UserCases(props: Props) {
     loadingUsers,
     onUpdateCases,
     props.rules,
+    isPulseEnabled,
   ]);
 
   return (
@@ -413,6 +418,17 @@ export default function UserCases(props: Props) {
                 }));
               }}
             />
+            {isPulseEnabled && (
+              <RiskLevelButton
+                riskLevels={params.riskLevels ?? []}
+                onConfirm={(value) => {
+                  setParams((state) => ({
+                    ...state,
+                    riskLevels: value ?? undefined,
+                  }));
+                }}
+              />
+            )}
             <Divider type="vertical" style={{ height: '32px' }} />
             <CasesStatusChangeButton
               caseIds={selectedEntities}
