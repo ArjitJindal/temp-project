@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { CaseStatus, FileInfo } from '@/apis';
 import Button from '@/components/ui/Button';
 import { CaseClosingReasons } from '@/apis/models/CaseClosingReasons';
@@ -10,7 +11,7 @@ interface Props {
   newCaseStatus: CaseStatus;
   initialValues?: FormValues;
   buttonProps?: {
-    size?: 'small' | undefined;
+    size?: SizeType | undefined;
     isBlue?: boolean;
     rounded?: boolean;
   };

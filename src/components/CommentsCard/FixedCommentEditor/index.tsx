@@ -46,7 +46,7 @@ const FixedCommentEditor = (props: Props) => {
             buttonProps={{
               isBlue: true,
               rounded: true,
-              size: 'small',
+              size: 'middle',
             }}
           />
         )}

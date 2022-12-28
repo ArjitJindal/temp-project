@@ -72,6 +72,10 @@ function CommentEditor(props: Props) {
             rows={2}
             onChange={(event) => onChangeValues({ ...values, comment: event.target.value })}
             value={values.comment}
+            style={{
+              maxHeight: '10rem',
+              minHeight: '4rem',
+            }}
           />
         </Col>
         <div className={s.commentEditorActions}>
