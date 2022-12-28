@@ -7,7 +7,6 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { map } from '@/utils/queries/types';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 interface Props {
@@ -35,7 +34,7 @@ export default function TransactionsList(props: Props) {
   }, [selectorParams]);
 
   const api = useApi();
-  const transactionListResponse = usePaginatedQuery(
+  const queryResult = usePaginatedQuery(
     TRANSACTIONS_LIST({
       ...tableParams,
       ...selectorParams,
@@ -54,23 +53,12 @@ export default function TransactionsList(props: Props) {
       return { items: data, total };
     },
   );
-  const transactionList = map(transactionListResponse, (response) => {
-    let { total } = response;
-    if (selectorParams.transactionsCount === 'LAST_10') {
-      total = Math.min(total ?? response.items.length, 10);
-    } else if (selectorParams.transactionsCount === 'LAST_50') {
-      total = Math.min(total ?? response.items.length, 50);
-    }
-    return {
-      items: response.items,
-      total: total,
-    };
-  });
+
   return (
     <TransactionsTable
       hideSearchForm
       disableSorting
-      queryResult={transactionList}
+      queryResult={queryResult}
       params={tableParams}
       onChangeParams={setTableParams}
     />

@@ -90,6 +90,9 @@ export default function RulesHitTransactionTable(props: Props) {
               exportData: 'caseTransactions.transactionId',
               width: 100,
               ellipsis: true,
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
               render: (_, entity) => {
                 return (
                   <Id
@@ -109,6 +112,9 @@ export default function RulesHitTransactionTable(props: Props) {
               width: 100,
               valueType: 'select',
               ellipsis: true,
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
               fieldProps: {
                 options: transactionType,
                 allowClear: true,
@@ -121,6 +127,9 @@ export default function RulesHitTransactionTable(props: Props) {
               title: 'Timestamp',
               width: 130,
               ellipsis: true,
+              onCell: (_) => ({
+                rowSpan: _.isFirstRow ? _.rowsCount : 0,
+              }),
               dataIndex: 'caseTransactions.timestamp',
               exportData: (entity) =>
                 dayjs(entity.caseTransactions.timestamp).format(DEFAULT_DATE_TIME_FORMAT),
@@ -132,6 +141,7 @@ export default function RulesHitTransactionTable(props: Props) {
             {
               title: 'Origin',
               hideInSearch: true,
+              dataIndex: 'caseTransactions.originUserId',
               children: [
                 {
                   title: 'Origin User ID',
