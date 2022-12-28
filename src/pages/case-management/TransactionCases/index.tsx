@@ -8,7 +8,6 @@ import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { FalsePositiveTag } from '../components/FalsePositiveTag';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import { Case, CaseTransaction, CaseUpdateRequest, RuleAction } from '@/apis';
@@ -42,6 +41,7 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
+import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -309,8 +309,8 @@ export default function TransactionCases(props: Props) {
             exportData: 'transaction.originPaymentDetails.method',
             render: (dom, entity) => {
               return (
-                <PaymentMethodTag
-                  paymentMethod={entity.transaction?.originPaymentDetails?.method}
+                <PaymentMethodTagWithDetails
+                  paymentDetails={entity.transaction?.originPaymentDetails}
                 />
               );
             },
@@ -429,8 +429,8 @@ export default function TransactionCases(props: Props) {
             exportData: 'transaction.destinationPaymentDetails.method',
             render: (dom, entity) => {
               return (
-                <PaymentMethodTag
-                  paymentMethod={entity.transaction?.destinationPaymentDetails?.method}
+                <PaymentMethodTagWithDetails
+                  paymentDetails={entity.transaction?.destinationPaymentDetails}
                 />
               );
             },

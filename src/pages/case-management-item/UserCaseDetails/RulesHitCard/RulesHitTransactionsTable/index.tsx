@@ -7,7 +7,7 @@ import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
@@ -172,8 +172,8 @@ export default function RulesHitTransactionTable(props: Props) {
                   hideInSearch: true,
                   render: (dom, entity) => {
                     return (
-                      <PaymentMethodTag
-                        paymentMethod={entity.caseTransactions.originPaymentDetails?.method}
+                      <PaymentMethodTagWithDetails
+                        paymentDetails={entity.caseTransactions.originPaymentDetails}
                       />
                     );
                   },
@@ -260,8 +260,8 @@ export default function RulesHitTransactionTable(props: Props) {
                   hideInSearch: true,
                   render: (dom, entity) => {
                     return (
-                      <PaymentMethodTag
-                        paymentMethod={entity.caseTransactions.destinationPaymentDetails?.method}
+                      <PaymentMethodTagWithDetails
+                        paymentDetails={entity.caseTransactions.destinationPaymentDetails}
                       />
                     );
                   },

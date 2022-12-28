@@ -7,7 +7,6 @@ import { paymethodOptions, transactionType } from '@/utils/tags';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import { getUserLink, getUserName } from '@/utils/api/users';
-import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { CURRENCIES_SELECT_OPTIONS } from '@/utils/currencies';
 import KeyValueTag from '@/components/ui/KeyValueTag';
@@ -17,6 +16,7 @@ import { ActionRenderer, AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -145,7 +145,7 @@ export default function TransactionsTable(props: Props) {
         width: 180,
         hideInSearch: true,
         render: (dom, entity) => {
-          return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
+          return <PaymentMethodTagWithDetails paymentDetails={entity.originPaymentDetails} />;
         },
       },
       {
@@ -213,7 +213,7 @@ export default function TransactionsTable(props: Props) {
         width: 160,
         hideInSearch: true,
         render: (dom, entity) => {
-          return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
+          return <PaymentMethodTagWithDetails paymentDetails={entity.destinationPaymentDetails} />;
         },
       },
       {

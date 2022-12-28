@@ -31,7 +31,7 @@ interface Props {
   paymentDetails: PaymentDetails | undefined;
 }
 
-function humanizePropertyName(key: string): string {
+export function humanizePropertyName(key: string): string {
   const parts = key.match(/(^|[A-Z])[a-z]*/g);
   if (parts == null) {
     return '';
