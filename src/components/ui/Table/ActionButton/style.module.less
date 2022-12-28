@@ -14,7 +14,7 @@
   }
 
   &.isActive {
-    //box-shadow: 0 -1px 6px 0 fade(@fr-colors-purpleGray, 25%);
+    box-shadow: 0 -1px 6px 0 fade(@fr-colors-purpleGray, 25%);
   }
 
   &.color-GREEN {
@@ -74,6 +74,15 @@
     .icon,
     .clearIcon {
       color: fade(@fr-colors-leafGreen, 85%);
+    }
+  }
+  &.color-WHITE {
+    background: #fff;
+    border-color: #000;
+
+    .icon,
+    .clearIcon {
+      color: fade(#000, 85%);
     }
   }
 }

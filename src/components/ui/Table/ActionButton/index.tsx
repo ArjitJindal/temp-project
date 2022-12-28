@@ -11,7 +11,7 @@ interface Props {
   onClick?: () => void;
   onClear?: () => void;
   children: string;
-  color?: 'GREEN' | 'ORANGE' | 'BLUE' | 'TURQUOISE' | 'SKY_BLUE' | 'LEAF_GREEN';
+  color?: 'GREEN' | 'ORANGE' | 'BLUE' | 'TURQUOISE' | 'SKY_BLUE' | 'LEAF_GREEN' | 'WHITE';
   title?: string;
   toolTip?: string;
 }

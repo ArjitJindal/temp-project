@@ -153,13 +153,6 @@ export default function UserCases(props: Props) {
           return <>{entity.caseTransactionsIds?.length ?? 0}</>;
         },
       },
-      // {
-      //   title: 'Rules Hit',
-      //   width: 150,
-      //   render: (_, entity) => {
-      //     return <span>Not implemented: 'Rules Hit'</span>;
-      //   },
-      // },
       {
         title: 'User Status',
         exportData: 'user.userStateDetails.state',

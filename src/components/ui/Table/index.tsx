@@ -82,6 +82,7 @@ export interface Props<T extends object, Params extends object, ValueType>
   params?: AllParams<Params>;
   isEvenRow?: (item: T) => boolean;
   actionsHeader?: ActionRenderer<Params>[];
+  controlsHeader?: ActionRenderer<Params>[];
   onChangeParams?: (newParams: AllParams<Params>) => void;
   columns: TableColumn<T>[];
   headerSubtitle?: React.ReactNode;
@@ -108,6 +109,7 @@ export default function Table<
     headerTitle,
     headerSubtitle,
     actionsHeader,
+    controlsHeader,
     rowSelection,
     loading,
     pagination,
@@ -281,6 +283,15 @@ export default function Table<
           if (toolBarRender != null && toolBarRender !== false) {
             result.push(...toolBarRender(action, rows));
           }
+          if (controlsHeader && params != null) {
+            result.push(
+              renderControlsHeader<Params>(controlsHeader, {
+                params,
+                setParams: (cb: (oldState: AllParams<Params>) => AllParams<Params>) =>
+                  onChangeParams(cb(params)),
+              }),
+            );
+          }
 
           if (props.onPaginateExportData) {
             result.push(
@@ -430,6 +441,19 @@ export default function Table<
 }
 
 function renderActionHeader<Params extends object>(
+  actionsHeader: ActionRenderer<Params>[],
+  props: ActionRendererProps<Params>,
+) {
+  return (
+    <div className={style.actionHeader}>
+      {actionsHeader.map((action, i) => (
+        <React.Fragment key={i}>{action(props)}</React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+function renderControlsHeader<Params extends object>(
   actionsHeader: ActionRenderer<Params>[],
   props: ActionRendererProps<Params>,
 ) {

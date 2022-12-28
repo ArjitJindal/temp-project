@@ -19,7 +19,7 @@ export default function QueryResultsTable<
   Params extends object = CommonParams,
   ValueType = 'text',
 >(props: Props<T, Params, ValueType>): JSX.Element {
-  const { queryResults, actionsHeader, showResultsInfo = false, ...rest } = props;
+  const { queryResults, actionsHeader, controlsHeader, showResultsInfo = false, ...rest } = props;
 
   if (isFailed(queryResults.data)) {
     return (
@@ -34,6 +34,7 @@ export default function QueryResultsTable<
     <Table
       {...rest}
       actionsHeader={actionsHeader}
+      controlsHeader={controlsHeader}
       onReload={queryResults.refetch}
       loading={isLoading(queryResults.data)}
       data={getOr(queryResults.data, {
