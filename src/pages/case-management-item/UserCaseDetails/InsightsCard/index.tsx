@@ -98,6 +98,8 @@ function useStatsQuery(
         pageSize = 10;
       } else if (selectorParams.transactionsCount === 'LAST_50') {
         pageSize = 50;
+      } else if (selectorParams.transactionsCount === 'ALL') {
+        pageSize = 10000;
       }
 
       const response = await api.getTransactionsStatsByType({

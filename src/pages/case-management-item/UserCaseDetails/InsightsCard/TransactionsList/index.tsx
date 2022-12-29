@@ -20,12 +20,8 @@ export default function TransactionsList(props: Props) {
   const [tableParams, setTableParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
   useDeepEqualEffect(() => {
-    let pageSize = DEFAULT_PAGE_SIZE;
-    if (selectorParams.transactionsCount === 'LAST_10') {
-      pageSize = 10;
-    } else if (selectorParams.transactionsCount === 'LAST_50') {
-      pageSize = 50;
-    }
+    const pageSize = DEFAULT_PAGE_SIZE;
+
     setTableParams((state) => ({
       ...state,
       page: 1,
