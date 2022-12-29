@@ -23,7 +23,7 @@ import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
 
-export const TRANSACTIONS_COUNT_OPTIONS = ['LAST_10', 'LAST_50', 'ALL'] as const;
+export const TRANSACTIONS_COUNT_OPTIONS = ['LAST_10', 'LAST_50', 'DISABLED'] as const;
 export type TranscationsCountType = typeof TRANSACTIONS_COUNT_OPTIONS[number];
 
 export interface Params {
@@ -93,7 +93,7 @@ export default function TransactionsSelector(props: Props) {
             options={[
               { value: 'LAST_10', label: 'Last 10 transactions' },
               { value: 'LAST_50', label: 'Last 50 transactions' },
-              { value: 'ALL', label: 'All transactions' },
+              { value: 'DISABLED', label: 'All transactions' },
             ]}
           />
           <Form.Layout.Label title="Display by" orientation="horizontal">
@@ -177,8 +177,6 @@ function useStatsQuery(
         pageSize = 10;
       } else if (selectorParams.transactionsCount === 'LAST_50') {
         pageSize = 50;
-      } else if (selectorParams.transactionsCount === 'ALL') {
-        pageSize = 10000;
       }
 
       const response = await api.getTransactionsStatsByTime({
