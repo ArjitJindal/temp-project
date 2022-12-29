@@ -717,7 +717,7 @@ export class CaseRepository {
     let cursor = await this.getCasesCursor(params)
     const total = this.getCasesCount(params)
 
-    if (params?.filterRiskLevel && (await hasFeature('PULSE'))) {
+    if (await hasFeature('PULSE')) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })
