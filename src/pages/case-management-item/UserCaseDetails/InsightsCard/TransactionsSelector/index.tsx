@@ -172,11 +172,13 @@ function useStatsQuery(
   return useQuery(
     TRANSACTIONS_STATS('by-date', { ...selectorParams, userId, currency }),
     async (): Promise<TransactionsStatsByTimeResponseData[]> => {
-      let pageSize = DEFAULT_PAGE_SIZE;
+      let pageSize: number | string = DEFAULT_PAGE_SIZE;
       if (selectorParams.transactionsCount === 'LAST_10') {
         pageSize = 10;
       } else if (selectorParams.transactionsCount === 'LAST_50') {
         pageSize = 50;
+      } else if (selectorParams.transactionsCount === 'DISABLED') {
+        pageSize = 'DISABLED';
       }
 
       const response = await api.getTransactionsStatsByTime({
