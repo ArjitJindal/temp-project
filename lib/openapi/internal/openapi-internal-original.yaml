@@ -4209,10 +4209,13 @@ components:
       type: number
       minimum: 1
     PageSize:
-      title: PageSize
-      type: number
-      minimum: 1
-      maximum: 100
+      oneOf:
+        - type: number
+          minimum: 1
+          maximum: 100
+        - type: string
+          enum:
+            - DISABLED
     AuditLog:
       title: AuditLog
       x-stoplight:
