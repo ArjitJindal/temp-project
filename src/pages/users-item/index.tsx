@@ -17,14 +17,16 @@ import {
   ExpandableContext,
   ExpandableProvider,
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 function UserItem() {
   const { list, id } = useParams<'list' | 'id'>(); // todo: handle nulls properly
-
+  usePageViewTracker('User Item');
   const [currentItem, setCurrentItem] = useState<
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
   const api = useApi();
+  const measure = useApiTime();
   const handleReload = useCallback(
     (list: string | undefined, id: string | undefined) => {
       if (id == null || id === 'all') {
@@ -33,12 +35,11 @@ function UserItem() {
       }
       setCurrentItem(loading());
       let isCanceled = false;
+
       const request =
         list === 'consumer'
-          ? api.getConsumerUsersItem({
-              userId: id,
-            })
-          : api.getBusinessUsersItem({ userId: id });
+          ? measure(() => api.getConsumerUsersItem({ userId: id }), 'Consumer User Item')
+          : measure(() => api.getBusinessUsersItem({ userId: id }), 'Business User Item');
       request
         .then((user) => {
           if (isCanceled) {
@@ -63,7 +64,7 @@ function UserItem() {
         isCanceled = true;
       };
     },
-    [api],
+    [api, measure],
   );
 
   useEffect(() => {

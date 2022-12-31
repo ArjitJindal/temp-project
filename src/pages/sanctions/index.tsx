@@ -4,8 +4,10 @@ import { SanctionsSearchTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import PageWrapper from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
+import { usePageViewTracker } from '@/utils/tracker';
 
 const SanctionsPage: React.FC = () => {
+  usePageViewTracker('Sanctions Page');
   const { type = 'search' } = useParams<'type'>();
   const { searchId } = useParams<'searchId'>();
   const navigate = useNavigate();

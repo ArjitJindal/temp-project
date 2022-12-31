@@ -16,11 +16,14 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import RoleTag from '@/components/ui/RoleTag';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 export default function () {
+  usePageViewTracker('Accounts');
   const api = useApi();
   const user = useAuth0User();
   const actionRef = useRef<TableActionType>(null);
+  const measure = useApiTime();
 
   function refreshTable() {
     if (actionRef.current) {
@@ -110,7 +113,7 @@ export default function () {
   }
 
   const accountsResult = usePaginatedQuery(ACCOUNT_LIST(), async () => {
-    const accounts = await api.getAccounts();
+    const accounts = await measure(() => api.getAccounts(), 'Get accounts');
     const filteredAccounts = accounts.filter(
       (account) => parseUserRole(account.role) !== UserRole.ROOT,
     );

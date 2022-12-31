@@ -24,10 +24,13 @@ import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USERS } from '@/utils/queries/keys';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TableSearchParams } from '@/pages/case-management/types';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 const BusinessUsersTab = () => {
+  usePageViewTracker('Users List - Business');
   const api = useApi();
   const isPulseEnabled = useFeature('PULSE');
+  const measure = useApiTime();
   const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
   if (isPulseEnabled) {
     columns.push({
@@ -58,15 +61,19 @@ const BusinessUsersTab = () => {
     async (paginationParams) => {
       const { createdTimestamp, userId, page, riskLevels, pageSize } = params;
 
-      const response = await api.getBusinessUsersList({
-        page,
-        pageSize,
-        ...paginationParams,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-        filterId: userId,
-        filterRiskLevel: riskLevels,
-      });
+      const response = await measure(
+        () =>
+          api.getBusinessUsersList({
+            page,
+            pageSize,
+            ...paginationParams,
+            afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+            beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+            filterId: userId,
+            filterRiskLevel: riskLevels,
+          }),
+        'Get Business Users List',
+      );
 
       return {
         items: response.data,
@@ -131,8 +138,10 @@ const BusinessUsersTab = () => {
 };
 
 const ConsumerUsersTab = () => {
+  usePageViewTracker('Users List - Consumer');
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
+  const measure = useApiTime();
   const columns: TableColumn<InternalConsumerUser>[] = getConsumerUserColumns();
   {
     if (isPulseEnabled) {
@@ -162,15 +171,19 @@ const ConsumerUsersTab = () => {
   const consumerResults = usePaginatedQuery(USERS('consumer', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels, pageSize } = params;
 
-    const response = await api.getConsumerUsersList({
-      page,
-      pageSize,
-      ...paginationParams,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-      filterId: userId,
-      filterRiskLevel: riskLevels,
-    });
+    const response = await measure(
+      () =>
+        api.getConsumerUsersList({
+          page,
+          pageSize,
+          ...paginationParams,
+          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+          filterRiskLevel: riskLevels,
+        }),
+      'Get Consumer Users List',
+    );
 
     return {
       items: response.data,
@@ -235,6 +248,7 @@ const ConsumerUsersTab = () => {
 
 const AllUsersTab = () => {
   const api = useApi();
+  usePageViewTracker('Users List - All');
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
   const isPulseEnabled = useFeature('PULSE');
   if (isPulseEnabled) {
@@ -261,18 +275,23 @@ const AllUsersTab = () => {
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
 
+  const measure = useApiTime();
   const allUsersResult = usePaginatedQuery(USERS('all', params), async (paginationParams) => {
     const { userId, createdTimestamp, page, riskLevels, pageSize } = params;
 
-    const response = await api.getAllUsersList({
-      page,
-      pageSize,
-      ...paginationParams,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
-      filterId: userId,
-      filterRiskLevel: riskLevels,
-    });
+    const response = await measure(
+      () =>
+        api.getAllUsersList({
+          page,
+          pageSize,
+          ...paginationParams,
+          afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+          beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : Date.now(),
+          filterId: userId,
+          filterRiskLevel: riskLevels,
+        }),
+      'Get All Users List',
+    );
 
     return {
       items: response.data,

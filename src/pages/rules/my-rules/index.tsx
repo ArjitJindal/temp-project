@@ -17,8 +17,10 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableActionType } from '@/components/ui/Table';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 const MyRule = () => {
+  usePageViewTracker('My Rule Page');
   const isPulseEnabled = useFeature('PULSE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
@@ -254,9 +256,9 @@ const MyRule = () => {
     deleting,
     handleDeleteRuleInstance,
   ]);
-
+  const measure = useApiTime();
   const rulesResult = usePaginatedQuery(GET_RULE_INSTANCES(), async () => {
-    const ruleInstances = await api.getRuleInstances();
+    const ruleInstances = await measure(() => api.getRuleInstances(), 'Get Rule Instances');
     return {
       items: ruleInstances,
       total: ruleInstances.length,

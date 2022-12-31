@@ -9,6 +9,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_TRANSACTIONS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import { useApi } from '@/api';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 interface Props {
   caseItem: Case;
@@ -18,16 +19,22 @@ interface Props {
 }
 
 function TransactionCaseDetails(props: Props) {
+  usePageViewTracker('Transaction Case Details');
   const { caseItem, onCaseUpdate, updateCollapseState } = props;
   const api = useApi();
+  const measure = useApiTime();
 
   const caseId = caseItem.caseId as string;
   const transactionsResponse = useQuery(CASES_ITEM_TRANSACTIONS(caseId, {}), async () => {
-    return await api.getCaseTransactions({
-      caseId,
-      pageSize: 1,
-      includeUsers: true,
-    });
+    return await measure(
+      () =>
+        api.getCaseTransactions({
+          caseId,
+          pageSize: 1,
+          includeUsers: true,
+        }),
+      'Get Case Transactions',
+    );
   });
 
   if (caseItem.caseTransactionsIds && caseItem.caseTransactionsIds?.length > 1) {

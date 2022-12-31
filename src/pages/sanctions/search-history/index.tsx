@@ -10,6 +10,7 @@ import { SANCTIONS_SEARCH } from '@/utils/queries/keys';
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import Id from '@/components/ui/Id';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 type TableSearchParams = CommonParams & {
   searchTerm?: string;
@@ -19,12 +20,12 @@ type TableSearchParams = CommonParams & {
 };
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
+  usePageViewTracker('Sanctions Search History Page');
   const api = useApi();
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const measure = useApiTime();
   const queryResults = useQuery(SANCTIONS_SEARCH(params), () => {
-    return api.getSanctionsSearch({
-      ...params,
-    });
+    return measure(() => api.getSanctionsSearch({ ...params }), 'Get Sanctions Search');
   });
 
   const columns: TableColumn<SanctionsSearchHistory>[] = [

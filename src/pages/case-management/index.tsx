@@ -7,12 +7,14 @@ import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
 import CaseTableWrapper from '@/pages/case-management/CaseTableWrapper';
+import { usePageViewTracker } from '@/utils/tracker';
 
 function TableList() {
   const i18n = useI18n();
   const navigate = useNavigate();
   const { list = 'transaction' } = useParams<'list' | 'id'>();
   const [_, setTransactionLastActiveTab] = useLocalStorageState('cases-active-tab', list);
+  usePageViewTracker(`Case Management Page - ${list}`);
 
   useEffect(() => {
     setTransactionLastActiveTab(list);

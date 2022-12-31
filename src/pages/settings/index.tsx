@@ -7,8 +7,10 @@ import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/ui/Button';
+import { usePageViewTracker } from '@/utils/tracker';
 
 export default function SettingsPage() {
+  usePageViewTracker('Settings');
   const menuSections: (MenuSection | boolean)[] = [
     {
       name: 'NOMENCLATURE',

@@ -14,6 +14,7 @@ import { ComplyAdvantageSearchHit } from '@/apis/models/ComplyAdvantageSearchHit
 import { SanctionsSearchHistory } from '@/apis/models/SanctionsSearchHistory';
 import { LoadingCard } from '@/components/ui/Card';
 import CountryDisplay from '@/components/ui/CountryDisplay';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 function withKey<T>(array?: T[]): T[] {
   return array?.map((item, i) => ({ ...item, key: i })) || [];
@@ -32,6 +33,7 @@ type Props = {
 
 export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
   const api = useApi();
+  usePageViewTracker('Sanctions Search Page');
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
   const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
   const searchEnabled = !!params.searchTerm;
@@ -50,10 +52,14 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
     { enabled: searchEnabled },
   );
   const showSearchHistory = Boolean(searchId);
+  const measure = useApiTime();
   const searchHistoryQueryResults = useQuery(
     SANCTIONS_SEARCH_HISTORY(searchId),
     () => {
-      return api.getSanctionsSearchSearchId({ searchId: searchId! });
+      return measure(
+        () => api.getSanctionsSearchSearchId({ searchId: searchId! }),
+        'Get Sanctions Search History by ID',
+      );
     },
     { enabled: showSearchHistory },
   );

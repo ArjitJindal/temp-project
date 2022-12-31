@@ -10,6 +10,7 @@ import {
   RiskLevel,
 } from '@/apis';
 import { capitalizeWords } from '@/utils/tags';
+import { useApiTime } from '@/utils/tracker';
 
 interface ContextValue {
   features: FeatureName[];
@@ -24,11 +25,12 @@ export function SettingsProvider(props: {
 }) {
   const globalFeatures = props.globalFeatures;
   const api = useApi();
+  const measure = useApiTime();
   const [settings, setSettings] = useState<TenantSettings>({});
   const [features, setFeatures] = useState<FeatureName[] | null>(null);
   useEffect(() => {
     async function fetch() {
-      const settings = await api.getTenantsSettings();
+      const settings = await measure(() => api.getTenantsSettings(), 'Tenant Settings');
       setSettings(settings);
       setFeatures((settings.features || []).concat(globalFeatures ?? []));
     }
@@ -36,7 +38,7 @@ export function SettingsProvider(props: {
       setFeatures(globalFeatures ?? []);
       console.error(e);
     });
-  }, [api, globalFeatures]);
+  }, [api, globalFeatures, measure]);
   if (features == null) {
     return <PageLoading />;
   }

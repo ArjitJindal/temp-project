@@ -22,18 +22,25 @@ import {
   ExpandableContext,
   ExpandableProvider,
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
   const api = useApi();
+  const measure = useApiTime();
   const queryClient = useQueryClient();
+  usePageViewTracker('Single Case Management Item Page');
 
   const queryResults = useQuery(
     CASES_ITEM(caseId),
     (): Promise<Case> =>
-      api.getCase({
-        caseId,
-      }),
+      measure(
+        () =>
+          api.getCase({
+            caseId,
+          }),
+        'Get Case Details',
+      ),
   );
 
   const handleCaseUpdate = (caseItem: Case) => {

@@ -7,6 +7,7 @@ import { RuleInstanceCreatedInfo } from './components/RuleInstanceCreatedInfo';
 import { RuleConfigurationsEditor } from './components/RuleConfigurationsEditor';
 import { Rule } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
+import { usePageViewTracker } from '@/utils/tracker';
 
 const STEPS = [
   {
@@ -24,6 +25,7 @@ const STEPS = [
 ];
 
 const StepForm: React.FC<Record<string, any>> = () => {
+  usePageViewTracker('Create Rule');
   const [selectedRule, setSelectedRule] = useState<Rule>();
   const [current, setCurrent] = useState(0);
   const next = () => setCurrent(current + 1);

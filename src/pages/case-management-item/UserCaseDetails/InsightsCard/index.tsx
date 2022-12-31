@@ -15,6 +15,7 @@ import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { useApiTime } from '@/utils/tracker';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -90,6 +91,7 @@ function useStatsQuery(
   referenceCurrency: Currency,
 ): QueryResult<TransactionsStatsByTypesResponseData[]> {
   const api = useApi();
+  const measure = useApiTime();
   return useQuery(
     TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
     async (): Promise<TransactionsStatsByTypesResponseData[]> => {
@@ -102,13 +104,17 @@ function useStatsQuery(
         pageSize = 'DISABLED';
       }
 
-      const response = await api.getTransactionsStatsByType({
-        ...FIXED_API_PARAMS,
-        pageSize,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        referenceCurrency,
-      });
+      const response = await measure(
+        () =>
+          api.getTransactionsStatsByType({
+            ...FIXED_API_PARAMS,
+            pageSize,
+            filterUserId: userId,
+            filterStatus: selectorParams.selectedRuleActions,
+            referenceCurrency,
+          }),
+        'Get transactions stats by type',
+      );
 
       return response.data;
     },

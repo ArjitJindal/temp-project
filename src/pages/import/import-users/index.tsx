@@ -10,6 +10,7 @@ import { CommonParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { USER_FILES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { usePageViewTracker } from '@/utils/tracker';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -24,6 +25,7 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
+  usePageViewTracker('Import Users Page');
   const columns: TableColumn<TableListItem>[] = [
     {
       title: 'ID',

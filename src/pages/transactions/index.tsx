@@ -13,10 +13,13 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { dayjs } from '@/utils/dayjs';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 const TableList = () => {
+  usePageViewTracker('Transactions List Page');
   const api = useApi();
   const i18n = useI18n();
+  const measure = useApiTime();
 
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
   const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async (paginationParams) => {
@@ -38,28 +41,32 @@ const TableList = () => {
     } = params;
     const [sortField, sortOrder] = params.sort[0] ?? [];
 
-    const response = await api.getTransactionsList({
-      page,
-      pageSize,
-      ...paginationParams,
-      afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-      beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
-      filterId: transactionId,
-      filterUserId: userFilterMode === 'ALL' ? userId : undefined,
-      filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
-      filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
-      filterOriginCurrencies: originCurrenciesFilter,
-      filterDestinationCurrencies: destinationCurrenciesFilter,
-      transactionType: type,
-      filterTransactionState: transactionState,
-      sortField: sortField ?? undefined,
-      sortOrder: sortOrder ?? undefined,
-      includeUsers: true,
-      filterOriginPaymentMethod: originMethodFilter,
-      filterDestinationPaymentMethod: destinationMethodFilter,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-    });
+    const response = await measure(
+      () =>
+        api.getTransactionsList({
+          page,
+          pageSize,
+          ...paginationParams,
+          afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+          beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : Date.now(),
+          filterId: transactionId,
+          filterUserId: userFilterMode === 'ALL' ? userId : undefined,
+          filterOriginUserId: userFilterMode === 'ORIGIN' ? userId : undefined,
+          filterDestinationUserId: userFilterMode === 'DESTINATION' ? userId : undefined,
+          filterOriginCurrencies: originCurrenciesFilter,
+          filterDestinationCurrencies: destinationCurrenciesFilter,
+          transactionType: type,
+          filterTransactionState: transactionState,
+          sortField: sortField ?? undefined,
+          sortOrder: sortOrder ?? undefined,
+          includeUsers: true,
+          filterOriginPaymentMethod: originMethodFilter,
+          filterDestinationPaymentMethod: destinationMethodFilter,
+          filterTagKey: tagKey,
+          filterTagValue: tagValue,
+        }),
+      'Transactions List',
+    );
 
     return {
       items: response.data,

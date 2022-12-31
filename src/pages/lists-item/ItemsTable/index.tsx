@@ -12,6 +12,7 @@ import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
 import { TableColumn } from '@/components/ui/Table/types';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
+import { useApiTime } from '@/utils/tracker';
 
 interface ExistedTableItemData {
   value: string;
@@ -147,12 +148,10 @@ function UserListTable(props: Props) {
       });
   };
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+  const measure = useApiTime();
 
   const listResult = usePaginatedQuery(LISTS_ITEM_TYPE(listId, listType), async ({ page }) => {
-    const response = await api.getListItems({
-      listId,
-      page,
-    });
+    const response = await measure(() => api.getListItems({ listId, page }), 'Get List Items');
     const data: TableItem[] = [
       ...response.map(
         ({ key, metadata }): TableItem => ({

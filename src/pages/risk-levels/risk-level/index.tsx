@@ -24,8 +24,10 @@ import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/as
 import { getErrorMessage } from '@/utils/lang';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
+import { usePageViewTracker } from '@/utils/tracker';
 
 export default function () {
+  usePageViewTracker('Risk Levels');
   const i18n = useI18n();
   const api = useApi();
   const [valuesResources, setValuesResources] = useState<{

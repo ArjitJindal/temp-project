@@ -5,8 +5,10 @@ import type { FC } from 'react';
 import { fakeSubmitForm } from './service';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
+import { usePageViewTracker } from '@/utils/tracker';
 
 const RequestNew: FC<Record<string, any>> = () => {
+  usePageViewTracker('Request New Rule Page');
   const { run } = useRequest(fakeSubmitForm, {
     manual: true,
     onSuccess: () => {

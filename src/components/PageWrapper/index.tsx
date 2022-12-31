@@ -6,6 +6,7 @@ import ErrorBoundary from '../ErrorBoundary';
 import Footer from '../AppWrapper/Footer';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
+import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker';
 
 interface Props {
   title?: string;
@@ -25,6 +26,8 @@ interface Props {
 export default function PageWrapper(props: Props) {
   const { title, description, backButton, actionButton } = props;
   const navigate = useNavigate();
+  usePageViewTimeTracker();
+  usePageTimeLoadTracker();
 
   // todo: migration: check if something is broken
   return (

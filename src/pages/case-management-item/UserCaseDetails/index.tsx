@@ -4,6 +4,7 @@ import InsightsCard from './InsightsCard';
 import { Case } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
+import { usePageViewTracker } from '@/utils/tracker';
 
 interface Props {
   caseItem: Case;
@@ -15,7 +16,7 @@ interface Props {
 function UserCaseDetails(props: Props) {
   const { caseItem, onCaseUpdate } = props;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
-
+  usePageViewTracker('User Case Details');
   return (
     <>
       <UserIdNameCard user={user} showRiskLevel={true} />

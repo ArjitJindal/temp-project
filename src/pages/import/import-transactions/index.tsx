@@ -10,6 +10,7 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { TRANSACTION_FILES } from '@/utils/queries/keys';
 import { TableColumn } from '@/components/ui/Table/types';
+import { usePageViewTracker } from '@/utils/tracker';
 
 function getStatusColor(status: string): string {
   switch (status) {
@@ -24,6 +25,7 @@ function getStatusColor(status: string): string {
 }
 
 const TableList: React.FC = () => {
+  usePageViewTracker('Import Transactions Page');
   const columns: TableColumn<TableListItem>[] = [
     {
       title: 'ID',

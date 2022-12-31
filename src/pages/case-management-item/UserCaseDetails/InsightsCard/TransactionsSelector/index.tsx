@@ -19,6 +19,7 @@ import { CURRENCIES_SELECT_OPTIONS, Currency } from '@/utils/currencies';
 import { PARTIAL_RULE_ACTIONS } from '@/pages/case-management-item/UserCaseDetails/InsightsCard/TransactionsSelector/Chart/types';
 import NoData from '@/pages/case-management-item/UserCaseDetails/InsightsCard/components/NoData';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { useApiTime } from '@/utils/tracker';
 
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
@@ -169,6 +170,7 @@ function useStatsQuery(
   currency: Currency,
 ): QueryResult<TransactionsStatsByTimeResponseData[]> {
   const api = useApi();
+  const measure = useApiTime();
   return useQuery(
     TRANSACTIONS_STATS('by-date', { ...selectorParams, userId, currency }),
     async (): Promise<TransactionsStatsByTimeResponseData[]> => {
@@ -181,13 +183,17 @@ function useStatsQuery(
         pageSize = 'DISABLED';
       }
 
-      const response = await api.getTransactionsStatsByTime({
-        ...FIXED_API_PARAMS,
-        pageSize,
-        filterUserId: userId,
-        filterStatus: selectorParams.selectedRuleActions,
-        referenceCurrency: currency,
-      });
+      const response = await measure(
+        () =>
+          api.getTransactionsStatsByTime({
+            ...FIXED_API_PARAMS,
+            pageSize,
+            filterUserId: userId,
+            filterStatus: selectorParams.selectedRuleActions,
+            referenceCurrency: currency,
+          }),
+        'Transaction Stats By Time',
+      );
 
       return response.data;
     },

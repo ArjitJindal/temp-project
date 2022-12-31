@@ -15,9 +15,11 @@ import { AuditLog } from '@/apis';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { useApiTime } from '@/utils/tracker';
 
 export default function AuditLogTable() {
   const api = useApi();
+  const measure = useApiTime();
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
@@ -31,16 +33,21 @@ export default function AuditLogTable() {
       const [sortField, sortOrder] = sort[0] ?? [];
       const [start, end] = createdTimestamp ?? [];
 
-      const response = await api.getAuditlog({
-        page,
-        ...paginationParams,
-        afterTimestamp: start ? start.startOf('day').valueOf() : 0,
-        beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        filterTypes,
-        filterActionTakenBy,
-      });
+      const response = await measure(
+        () =>
+          api.getAuditlog({
+            page,
+            ...paginationParams,
+            afterTimestamp: start ? start.startOf('day').valueOf() : 0,
+            beforeTimestamp: end ? end.endOf('day').valueOf() : Number.MAX_SAFE_INTEGER,
+            sortField: sortField ?? undefined,
+            sortOrder: sortOrder ?? undefined,
+            filterTypes,
+            filterActionTakenBy,
+          }),
+        'Get Audit Logs',
+      );
+
       return {
         total: response.total,
         items: response.data,

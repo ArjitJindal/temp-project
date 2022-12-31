@@ -3,6 +3,7 @@ import cn from 'clsx';
 import { Tooltip } from 'antd';
 import s from './style.module.less';
 import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
+import { useButtonTracker } from '@/utils/tracker';
 
 interface Props {
   isActive?: boolean;
@@ -17,11 +18,25 @@ interface Props {
 }
 
 export default function ActionButton(props: Props) {
-  const { icon, color = 'GREEN', onClick, onClear, children, isActive, title } = props;
+  const {
+    icon,
+    color = 'GREEN',
+    onClick,
+    onClear,
+    children,
+    isActive,
+    title,
+    analyticsName,
+  } = props;
 
+  const buttonTracker = useButtonTracker();
   const handleClick = function (this: unknown, ...args: any) {
     if (onClick) {
       onClick.apply(this, args);
+    }
+
+    if (analyticsName) {
+      buttonTracker(analyticsName);
     }
   };
 

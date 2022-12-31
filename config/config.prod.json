@@ -10,6 +10,7 @@
     "SENTRY_DSN": "https://02c8d2cba7c34122b3e765ef586a0dac@o1295082.ingest.sentry.io/6520175",
     "SLACK_CLIENT_ID": "2800969986821.3767916979623",
     "FEATURES_ENABLED": [],
-    "IS_SENTRY_INSTANCE": false
+    "IS_SENTRY_INSTANCE": false,
+    "MIXPANEL_TOKEN": "6547d4fa921f71e8aafb458d36426c8e"
   }
 }

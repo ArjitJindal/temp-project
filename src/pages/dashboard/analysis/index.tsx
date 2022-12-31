@@ -5,8 +5,10 @@ import TopUsersHitCard from './components/TopUsersHitCard';
 import DRSDistributionCard from './components/DRSDistributionCard';
 import PageWrapper from '@/components/PageWrapper';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { usePageViewTracker } from '@/utils/tracker';
 
 function Analysis() {
+  usePageViewTracker('Dashboard Analysis Page');
   return (
     <PageWrapper>
       <Row gutter={[16, 16]}>

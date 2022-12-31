@@ -10,6 +10,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { CASES_ITEM_RULES } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
+import { useApiTime } from '@/utils/tracker';
 
 interface Props {
   caseItem: Case;
@@ -21,15 +22,13 @@ export default function RulesHitCard(props: Props) {
 
   const api = useApi();
   const caseId = caseItem.caseId as string;
+  const measure = useApiTime();
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | string[]>('');
 
   const rulesQueryResults = useQuery(
     CASES_ITEM_RULES(caseId),
-    (): Promise<RulesHitPerCase[]> =>
-      api.getCaseRules({
-        caseId,
-      }),
+    (): Promise<RulesHitPerCase[]> => measure(() => api.getCaseRules({ caseId }), 'Get Case Rules'),
   );
 
   const onChange = (key: string | string[]) => {

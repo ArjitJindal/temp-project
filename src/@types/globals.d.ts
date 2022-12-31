@@ -11,6 +11,7 @@ declare global {
   declare const SENTRY_DSN: string;
   declare const SLACK_CLIENT_ID: string;
   declare const IS_SENTRY_INSTANCE: boolean;
+  declare const MIXPANEL_TOKEN: string;
 }
 
 export {};

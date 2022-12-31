@@ -4,6 +4,7 @@ import { SettingsProvider } from './SettingsProvider';
 import RouterProvider from './RouterProvider';
 import AntConfigProvider from './AntConfigProvider';
 import QueryClientProvider from './QueryClientProvider';
+import MixPanelProvider from './MixPanelProvider';
 import { FlagrightUserProvider } from '@/utils/user-utils';
 import { Feature } from '@/apis';
 
@@ -18,7 +19,9 @@ export default function Providers(props: Props) {
         <FlagrightUserProvider>
           <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
             <RouterProvider>
-              <QueryClientProvider>{props.children}</QueryClientProvider>
+              <QueryClientProvider>
+                <MixPanelProvider>{props.children}</MixPanelProvider>
+              </QueryClientProvider>
             </RouterProvider>
           </SettingsProvider>
         </FlagrightUserProvider>

@@ -23,15 +23,17 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 export default function TransactionsItem() {
+  usePageViewTracker('Transactions Item');
   const i18n = useI18n();
   const [currentItem, setCurrentItem] = useState<AsyncResource<TransactionCaseManagement>>(init());
   const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
   // const { id: transactionId } = useParams<'id'>();
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
-
+  const measure = useApiTime();
   useEffect(() => {
     if (transactionId == null || transactionId === 'all') {
       setCurrentItem(init());
@@ -42,10 +44,13 @@ export default function TransactionsItem() {
     }
     setCurrentItem(loading());
     let isCanceled = false;
-    api
-      .getTransaction({
-        transactionId,
-      })
+    measure(
+      () =>
+        api.getTransaction({
+          transactionId,
+        }),
+      'Get Transaction',
+    )
       .then((transaction) => {
         if (isCanceled) {
           return;
@@ -68,7 +73,7 @@ export default function TransactionsItem() {
     return () => {
       isCanceled = true;
     };
-  }, [currentTransactionId, transactionId, api]);
+  }, [currentTransactionId, transactionId, api, measure]);
 
   return (
     <PageWrapper

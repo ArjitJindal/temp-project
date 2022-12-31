@@ -17,6 +17,7 @@ import { useApi } from '@/api';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
+import { useApiTime } from '@/utils/tracker';
 
 export function expandedRowRender(item: RuleHitTransactionItem) {
   const preparedEvents =
@@ -50,6 +51,7 @@ export default function RulesHitTransactionTable(props: Props) {
   const caseId = caseItem.caseId as string;
 
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+  const measure = useApiTime();
 
   const caseTransationsForRuleQueryResult = useQuery(
     CASES_RULE_TRANSACTIONS(caseId, params, rulesInstanceId),
@@ -58,12 +60,16 @@ export default function RulesHitTransactionTable(props: Props) {
       const response =
         caseId &&
         rulesInstanceId &&
-        (await api.getCaseTransactionsForRule({
-          caseId,
-          rulesInstanceId: rulesInstanceId,
-          page,
-          pageSize,
-        }));
+        (await measure(
+          () =>
+            api.getCaseTransactionsForRule({
+              caseId,
+              rulesInstanceId,
+              page,
+              pageSize,
+            }),
+          'Get Case Transactions for Rule',
+        ));
       return {
         total: response ? response[0] : 0,
         items: response ? response[1] : [],

@@ -8,8 +8,10 @@ import MyRule from './my-rules';
 import PageWrapper from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
+import { usePageViewTracker } from '@/utils/tracker';
 
 const TableList = () => {
+  usePageViewTracker('Rules Page');
   const { rule = 'rules-library' } = useParams<'rule'>();
   const navigate = useNavigate();
   const [currentHeaderId, setCurrentHeaderId] = useState<string>(`menu.rules.${rule}`);
