@@ -6,8 +6,8 @@ import {
   getPageSizeNumber,
   MAX_PAGE_SIZE,
   OptionalPaginationParams,
+  PageSize,
 } from '@/utils/pagination'
-import { PageSize } from '@/@types/openapi-internal/PageSize'
 
 interface DBCredentials {
   username: string

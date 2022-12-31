@@ -1,5 +1,4 @@
-import { PageSize } from '@/@types/openapi-internal/PageSize'
-
+export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
 export const COUNT_QUERY_LIMIT = 10000
@@ -10,19 +9,16 @@ export interface PaginationParams {
 }
 
 export interface OptionalPaginationParams {
-  pageSize?: PageSize
+  pageSize?: PageSize | 'DISABLED'
   page?: number
 }
 
 export type OptionalPagination<Params> = Omit<Params, 'pageSize' | 'page'> &
   OptionalPaginationParams
 
-export function getPageSizeNumber(pageSize: PageSize): number {
+export function getPageSizeNumber(pageSize: PageSize | 'DISABLED'): number {
   if (pageSize === 'DISABLED') {
-    return COUNT_QUERY_LIMIT
+    return Number.MAX_SAFE_INTEGER
   }
-  if (typeof pageSize === 'number') {
-    return pageSize
-  }
-  return DEFAULT_PAGE_SIZE
+  return pageSize
 }
