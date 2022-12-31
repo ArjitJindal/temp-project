@@ -50,7 +50,12 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
             <>
               <a onClick={() => onSelectRule(entity)}>
                 <span className={style.root}>
-                  {entity.id} {recommendedRules.includes(entity.id) ? <RecommendedTag /> : ''}
+                  {entity.id}{' '}
+                  {recommendedRules.includes(entity.id) ? (
+                    <RecommendedTag tooltipTitle="Recommended tag helps you securely and anonymously collaborate with other fintechs globally. Flagright system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones." />
+                  ) : (
+                    ''
+                  )}
                 </span>
               </a>
               <span style={{ fontSize: '12px' }}>{entity.name}</span>
