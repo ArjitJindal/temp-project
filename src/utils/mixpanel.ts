@@ -7,7 +7,7 @@ import {
   mobileModel,
   mobileVendor,
 } from 'react-device-detect';
-import { useLocation } from 'react-router';
+import { useCallback } from 'react';
 import { useAuth0User } from './user-utils';
 
 mixpanel.init(MIXPANEL_TOKEN, { debug: true });
@@ -16,30 +16,33 @@ export const mixPanel = mixpanel;
 
 export const useMixPanelTracker = () => {
   const user = useAuth0User();
-  const { pathname, search } = useLocation();
+  const { pathname, search } = window.location;
 
-  const trackEvent = async (eventName: string, data: object) => {
-    if (process.env.ENV_NAME === 'local') {
-      return;
-    }
-    const ipData: Promise<any> = await fetch('https://ipinfo.io/json').then((res) => res.json());
+  const trackEvent = useCallback(
+    async (eventName: string, data: object) => {
+      if (process.env.ENV_NAME === 'local') {
+        return;
+      }
+      const ipData: Promise<any> = await fetch('https://ipinfo.io/json').then((res) => res.json());
 
-    mixpanel.track(eventName, {
-      ...data,
-      ...user,
-      ...ipData,
-      browserName,
-      deviceType,
-      browserVersion,
-      osName,
-      mobileModel,
-      mobileVendor,
-      Environment: process.env.ENV_NAME,
-      Platform: 'Console',
-      query: search,
-      path: pathname,
-    });
-  };
+      mixpanel.track(eventName, {
+        ...data,
+        ...user,
+        ...ipData,
+        browserName,
+        deviceType,
+        browserVersion,
+        osName,
+        mobileModel,
+        mobileVendor,
+        Environment: process.env.ENV_NAME,
+        Platform: 'Console',
+        query: search,
+        path: pathname,
+      });
+    },
+    [user, pathname, search],
+  );
 
   return trackEvent;
 };

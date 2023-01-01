@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useIsFetching } from '@tanstack/react-query';
 import { useMixPanelTracker } from './mixpanel';
@@ -49,29 +49,35 @@ export function usePageTimeLoadTracker() {
 export function useButtonTracker() {
   const mixPanelTracker = useMixPanelTracker();
 
-  const trackButtonClick = (buttonName: string, data?: object) => {
-    mixPanelTracker('Button Click', {
-      'Button Name': buttonName,
-      ...data,
-    });
-  };
+  const trackButtonClick = useCallback(
+    (buttonName: string, data?: object) => {
+      mixPanelTracker('Button Click', {
+        'Button Name': buttonName,
+        ...data,
+      });
+    },
+    [mixPanelTracker],
+  );
 
   return trackButtonClick;
 }
 
 export const useApiTime = () => {
   const mixPanelTracker = useMixPanelTracker();
-  async function measureTime<T>(body: () => Promise<T>, name: string): Promise<T> {
-    const a = performance.now();
-    const result = await body();
-    const b = performance.now();
-    mixPanelTracker('API Time Elapsed', {
-      'API Name': name,
-      'Time Elapsed': b - a,
-      unit: 'milliseconds',
-    });
-    return result;
-  }
+  const measureTime = useCallback(
+    async function measureTime<T>(body: () => Promise<T>, name: string): Promise<T> {
+      const a = performance.now();
+      const result = await body();
+      const b = performance.now();
+      mixPanelTracker('API Time Elapsed', {
+        'API Name': name,
+        'Time Elapsed': b - a,
+        unit: 'milliseconds',
+      });
+      return result;
+    },
+    [mixPanelTracker],
+  );
 
   return measureTime;
 };
