@@ -7,7 +7,6 @@ import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
 import { getUserName } from '@/utils/api/users';
-import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
@@ -18,6 +17,9 @@ import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { useApiTime } from '@/utils/tracker';
+import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
+import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 
 export function expandedRowRender(item: RuleHitTransactionItem) {
   const preparedEvents =
@@ -51,6 +53,7 @@ export default function RulesHitTransactionTable(props: Props) {
   const caseId = caseItem.caseId as string;
 
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
+  const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const measure = useApiTime();
 
   const caseTransationsForRuleQueryResult = useQuery(
@@ -182,14 +185,21 @@ export default function RulesHitTransactionTable(props: Props) {
                   },
                 },
                 {
-                  title: 'Origin Method',
-                  width: 160,
+                  title: showDetailsView ? 'Payment Details' : 'Payment Method',
+                  width: showDetailsView ? 600 : 160,
                   exportData: 'caseTransactions.originPaymentDetails.method',
                   hideInSearch: true,
                   render: (dom, entity) => {
+                    if (showDetailsView) {
+                      return (
+                        <PaymentDetailsCard
+                          paymentDetails={entity.caseTransactions.originPaymentDetails}
+                        />
+                      );
+                    }
                     return (
-                      <PaymentMethodTagWithDetails
-                        paymentDetails={entity.caseTransactions.originPaymentDetails}
+                      <PaymentMethodTag
+                        paymentMethod={entity.caseTransactions.originPaymentDetails?.method}
                       />
                     );
                   },
@@ -270,14 +280,21 @@ export default function RulesHitTransactionTable(props: Props) {
                   },
                 },
                 {
-                  title: 'Destination Method',
+                  title: showDetailsView ? 'Payment Details' : 'Payment Method',
                   exportData: 'caseTransactions.destinationPaymentDetails.method',
-                  width: 160,
+                  width: showDetailsView ? 600 : 160,
                   hideInSearch: true,
                   render: (dom, entity) => {
+                    if (showDetailsView) {
+                      return (
+                        <PaymentDetailsCard
+                          paymentDetails={entity.caseTransactions.destinationPaymentDetails}
+                        />
+                      );
+                    }
                     return (
-                      <PaymentMethodTagWithDetails
-                        paymentDetails={entity.caseTransactions.destinationPaymentDetails}
+                      <PaymentMethodTag
+                        paymentMethod={entity.caseTransactions.destinationPaymentDetails?.method}
                       />
                     );
                   },
@@ -327,6 +344,19 @@ export default function RulesHitTransactionTable(props: Props) {
             },
           ]}
           queryResults={caseTransationsForRuleQueryResult}
+          controlsHeader={[
+            () => {
+              return (
+                <>
+                  <DetailsViewButton
+                    onConfirm={(value) => {
+                      setShowDetailsView(value);
+                    }}
+                  />
+                </>
+              );
+            },
+          ]}
           params={params}
           onChangeParams={setParams}
           expandable={{ expandedRowRender }}

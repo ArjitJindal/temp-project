@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import DetailsViewButton from '../DetailsViewButton';
 import { TransactionCaseManagement, TransactionState, TransactionType } from '@/apis';
 import { TableColumn, TableData } from '@/components/ui/Table/types';
 import { makeUrl } from '@/utils/routing';
@@ -16,7 +17,8 @@ import { ActionRenderer, AllParams, CommonParams } from '@/components/ui/Table';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
+import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -45,6 +47,8 @@ type Props = {
 };
 
 export default function TransactionsTable(props: Props) {
+  const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
+
   const {
     queryResult,
     params,
@@ -140,12 +144,15 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Origin Method',
+        title: showDetailsView ? 'Origin Payment Details' : 'Origin Method',
         exportData: 'originPaymentDetails.method',
-        width: 180,
+        width: showDetailsView ? 600 : 160,
         hideInSearch: true,
         render: (dom, entity) => {
-          return <PaymentMethodTagWithDetails paymentDetails={entity.originPaymentDetails} />;
+          if (showDetailsView) {
+            return <PaymentDetailsCard paymentDetails={entity.originPaymentDetails} />;
+          }
+          return <PaymentMethodTag paymentMethod={entity.originPaymentDetails?.method} />;
         },
       },
       {
@@ -208,12 +215,15 @@ export default function TransactionsTable(props: Props) {
         },
       },
       {
-        title: 'Destination Method',
+        title: showDetailsView ? 'Destination Payment Details' : 'Destination Method',
         exportData: 'destinationPaymentDetails.method',
-        width: 160,
+        width: showDetailsView ? 600 : 160,
         hideInSearch: true,
         render: (dom, entity) => {
-          return <PaymentMethodTagWithDetails paymentDetails={entity.destinationPaymentDetails} />;
+          if (showDetailsView) {
+            return <PaymentDetailsCard paymentDetails={entity.destinationPaymentDetails} />;
+          }
+          return <PaymentMethodTag paymentMethod={entity.destinationPaymentDetails?.method} />;
         },
       },
       {
@@ -318,7 +328,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
     ],
-    [disableSorting],
+    [disableSorting, showDetailsView],
   );
 
   return (
@@ -342,6 +352,19 @@ export default function TransactionsTable(props: Props) {
       scroll={{ x: 1500 }}
       queryResults={queryResult}
       columns={columns}
+      controlsHeader={[
+        () => {
+          return (
+            <>
+              <DetailsViewButton
+                onConfirm={(value) => {
+                  setShowDetailsView(value);
+                }}
+              />
+            </>
+          );
+        },
+      ]}
       columnsState={{
         persistenceType: 'localStorage',
         persistenceKey: 'transaction-list-table',

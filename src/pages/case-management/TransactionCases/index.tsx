@@ -41,7 +41,9 @@ import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndu
 import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
-import { PaymentMethodTagWithDetails } from '@/components/ui/PaymentMethodTagWithDetails';
+import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
+import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
 
 export type CaseManagementItem = Case & {
   index: number;
@@ -71,6 +73,7 @@ export default function TransactionCases(props: Props) {
   const isPulseEnabled = useFeature('PULSE');
   const tableQueryResult = useTableData(queryResult, 'TRANSACTION');
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
+  const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
 
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -302,15 +305,20 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Method',
-            width: 160,
+            title: showDetailsView ? 'Payment Details' : 'Method',
+            width: showDetailsView ? 600 : 160,
             hideInSearch: true,
             onCell: onTransactionCell,
             exportData: 'transaction.originPaymentDetails.method',
             render: (dom, entity) => {
+              if (showDetailsView) {
+                return (
+                  <PaymentDetailsCard paymentDetails={entity.transaction?.originPaymentDetails} />
+                );
+              }
               return (
-                <PaymentMethodTagWithDetails
-                  paymentDetails={entity.transaction?.originPaymentDetails}
+                <PaymentMethodTag
+                  paymentMethod={entity.transaction?.originPaymentDetails?.method}
                 />
               );
             },
@@ -422,15 +430,22 @@ export default function TransactionCases(props: Props) {
             },
           },
           {
-            title: 'Method',
-            width: 160,
+            title: showDetailsView ? 'Payment Details' : 'Method',
+            width: showDetailsView ? 600 : 160,
             hideInSearch: true,
             onCell: onTransactionCell,
             exportData: 'transaction.destinationPaymentDetails.method',
             render: (dom, entity) => {
+              if (showDetailsView) {
+                return (
+                  <PaymentDetailsCard
+                    paymentDetails={entity.transaction?.destinationPaymentDetails}
+                  />
+                );
+              }
               return (
-                <PaymentMethodTagWithDetails
-                  paymentDetails={entity.transaction?.destinationPaymentDetails}
+                <PaymentMethodTag
+                  paymentMethod={entity.transaction?.destinationPaymentDetails?.method}
                 />
               );
             },
@@ -755,6 +770,7 @@ export default function TransactionCases(props: Props) {
     onUpdateCases,
     props.rules,
     isPulseEnabled,
+    showDetailsView,
   ]);
 
   return (
@@ -858,6 +874,19 @@ export default function TransactionCases(props: Props) {
       search={{
         labelWidth: 120,
       }}
+      controlsHeader={[
+        () => {
+          return (
+            <>
+              <DetailsViewButton
+                onConfirm={(value) => {
+                  setShowDetailsView(value);
+                }}
+              />
+            </>
+          );
+        },
+      ]}
       scroll={{ x: 1300 }}
       columns={columns}
       columnsState={{

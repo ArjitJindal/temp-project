@@ -5,7 +5,7 @@ import s from './style.module.less';
 import FileListIcon from '@/components/ui/icons/Remix/document/file-list-3-line.react.svg';
 
 interface Props {
-  onConfirm: (state: string[]) => void;
+  onConfirm: (state: boolean) => void;
 }
 
 export default function DetailsViewButton(props: Props) {
@@ -14,7 +14,7 @@ export default function DetailsViewButton(props: Props) {
 
   const handleClick = function (this: unknown) {
     setIsActive(!isActive);
-    onConfirm(['']);
+    onConfirm(!isActive);
   };
 
   return (
