@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import _ from 'lodash'
 import { getTransactionRuleByRuleId } from '../library'
+import { UserTransactionLimitsRuleParameter } from '../user-transaction-limits'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
@@ -507,4 +508,108 @@ describe('Time-based limits', () => {
       expectedHits
     )
   })
+})
+
+describe('Only check payment method limits', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'user-transaction-limits',
+      defaultAction: 'FLAG',
+      defaultParameters: {
+        onlyCheckTypes: ['PAYMENT_METHOD'],
+      } as UserTransactionLimitsRuleParameter,
+    },
+  ])
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      transactionLimits: {
+        maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 1000 },
+        paymentMethodLimits: {
+          CARD: {
+            transactionAmountLimit: {
+              day: { amountValue: 1000, amountCurrency: 'EUR' },
+            },
+          },
+        },
+      },
+    }),
+  ])
+  createTransactionRuleTestCase(
+    '',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'ACH' },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+      }),
+    ],
+    [false, true]
+  )
+})
+
+describe('Only check all transactions limits', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'user-transaction-limits',
+      defaultAction: 'FLAG',
+      defaultParameters: {
+        onlyCheckTypes: ['ALL_TRANSACTIONS'],
+      } as UserTransactionLimitsRuleParameter,
+    },
+  ])
+  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+      transactionLimits: {
+        maximumTransactionLimit: { amountCurrency: 'EUR', amountValue: 1000 },
+        paymentMethodLimits: {
+          CARD: {
+            transactionAmountLimit: {
+              day: { amountValue: 100, amountCurrency: 'EUR' },
+            },
+          },
+        },
+      },
+    }),
+  ])
+  createTransactionRuleTestCase(
+    '',
+    TEST_TENANT_ID,
+    [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 10000,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'ACH' },
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 500,
+          transactionCurrency: 'EUR',
+        },
+        originPaymentDetails: { method: 'CARD' },
+      }),
+    ],
+    [true, false]
+  )
 })

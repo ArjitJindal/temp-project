@@ -21,6 +21,8 @@ const ALL_RULES = {
 
 const ajv = new Ajv()
 ajv.addKeyword('ui:schema')
+ajv.addKeyword('enumNames')
+
 export class RuleService {
   ruleRepository: RuleRepository
   ruleInstanceRepository: RuleInstanceRepository

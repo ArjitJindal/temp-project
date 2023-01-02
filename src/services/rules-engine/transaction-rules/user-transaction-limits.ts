@@ -1,4 +1,5 @@
 import * as _ from 'lodash'
+import { JSONSchemaType } from 'ajv'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
@@ -18,6 +19,12 @@ import { TransactionAmountLimit } from '@/@types/openapi-public/TransactionAmoun
 import { TransactionCountLimit } from '@/@types/openapi-public/TransactionCountLimit'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 
+type CheckType = 'PAYMENT_METHOD' | 'ALL_TRANSACTIONS'
+const CHECK_TYPES: Array<{ value: CheckType; label: string }> = [
+  { value: 'PAYMENT_METHOD', label: 'Per payment method' },
+  { value: 'ALL_TRANSACTIONS', label: 'All transactions' },
+]
+
 type TransacdtionLimitHitResult =
   | {
       hitDescription: string
@@ -34,9 +41,30 @@ function granularityToAdverb(granularity: 'day' | 'week' | 'month' | 'year') {
   }
 }
 
-export default class UserTransactionLimitsRule extends TransactionRule<unknown> {
-  public static getSchema(): any {
-    return {}
+export type UserTransactionLimitsRuleParameter = {
+  onlyCheckTypes?: CheckType[]
+}
+
+export default class UserTransactionLimitsRule extends TransactionRule<UserTransactionLimitsRuleParameter> {
+  public static getSchema(): JSONSchemaType<UserTransactionLimitsRuleParameter> {
+    return {
+      type: 'object',
+      properties: {
+        onlyCheckTypes: {
+          type: 'array',
+          title: 'Only check against certain transaction limits',
+          description:
+            'If unspecified, all expected limits defined on user profile will be checked.',
+          uniqueItems: true,
+          items: {
+            type: 'string',
+            enum: CHECK_TYPES.map((v) => v.value),
+            enumNames: CHECK_TYPES.map((v) => v.label),
+          },
+          nullable: true,
+        },
+      },
+    }
   }
 
   public async computeRule() {
@@ -47,6 +75,7 @@ export default class UserTransactionLimitsRule extends TransactionRule<unknown> 
       return
     }
 
+    const { onlyCheckTypes } = this.parameters
     const paymentMethod = this.transaction.originPaymentDetails?.method
     const {
       maximumDailyTransactionLimit,
@@ -67,30 +96,39 @@ export default class UserTransactionLimitsRule extends TransactionRule<unknown> 
     }>
     const transactionLimitResults = []
 
-    // Check for maximum transaction limit
-    if (maximumTransactionLimit) {
+    if (
+      _.isEmpty(onlyCheckTypes) ||
+      onlyCheckTypes?.includes('ALL_TRANSACTIONS')
+    ) {
+      // Check for maximum transaction limit
+      if (maximumTransactionLimit) {
+        transactionLimitResults.push(
+          await this.checkMaximumTransactionLimit(maximumTransactionLimit)
+        )
+      }
+
+      // Check for total transaction limits by time granularity
       transactionLimitResults.push(
-        await this.checkMaximumTransactionLimit(maximumTransactionLimit)
+        ...(await this.checkTotalTransactionLimits(totalLimits))
       )
     }
 
-    // Check for total transaction limits by time granularity
-    transactionLimitResults.push(
-      ...(await this.checkTotalTransactionLimits(totalLimits))
-    )
-
-    // Check for payment method transaction limits by time granularity
-    if (paymentMethod && paymentMethodLimits?.[paymentMethod]) {
-      transactionLimitResults.push(
-        ...(await this.checkPaymentMethodTransactionLimits(
-          paymentMethod,
-          paymentMethodLimits[paymentMethod]!
-        ))
-      )
+    if (
+      _.isEmpty(onlyCheckTypes) ||
+      onlyCheckTypes?.includes('PAYMENT_METHOD')
+    ) {
+      // Check for payment method transaction limits by time granularity
+      if (paymentMethod && paymentMethodLimits?.[paymentMethod]) {
+        transactionLimitResults.push(
+          ...(await this.checkPaymentMethodTransactionLimits(
+            paymentMethod,
+            paymentMethodLimits[paymentMethod]!
+          ))
+        )
+      }
     }
 
     const transactionLimitHitResults = transactionLimitResults.filter(Boolean)
-
     const hitResult: RuleHitResult = []
     if (transactionLimitHitResults.length > 0) {
       hitResult.push({

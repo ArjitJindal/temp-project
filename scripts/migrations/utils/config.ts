@@ -9,7 +9,8 @@ import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
 
 export function getConfig() {
   if (!process.env.ENV) {
-    throw new Error('Env var missing: ENV')
+    process.env.ENV = 'local'
+    console.warn("ENV unspecified. Using 'local'.")
   }
   switch (process.env.ENV) {
     case 'local':
