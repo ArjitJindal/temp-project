@@ -43,9 +43,7 @@ describe('', () => {
     )
     const originLibraryPath = '../.library'
     originLibrary = _.keyBy(
-      (await import(originLibraryPath)).TRANSACTION_RULES_LIBRARY.map(
-        (getRule: any) => getRule()
-      ),
+      (await import(originLibraryPath)).TRANSACTION_RULES_LIBRARY,
       'id'
     )
   })
@@ -53,8 +51,7 @@ describe('', () => {
   describe.each(TRANSACTION_RULES_LIBRARY)(
     'Rule parameters breaking change check (see: https://www.notion.so/flagright/How-to-handle-rule-parameters-breaking-changes-5f7b6fc2116f43bbb1ffbe8b4a2089aa)',
     (rule) => {
-      // TODO: will be unskipped after merging
-      test.skip(`${rule.id}: ${rule.name}`, async () => {
+      test(`${rule.id}: ${rule.name}`, async () => {
         const ruleImplementation =
           TRANSACTION_RULES[rule.ruleImplementationName]
         const schema = ruleImplementation.getSchema()
