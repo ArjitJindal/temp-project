@@ -4212,7 +4212,7 @@ components:
       title: PageSize
       type: number
       minimum: 1
-      maximum: 100
+      maximum: 1000
     AuditLog:
       title: AuditLog
       x-stoplight:

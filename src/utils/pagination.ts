@@ -1,6 +1,6 @@
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
-export const MAX_PAGE_SIZE = 100
+export const MAX_PAGE_SIZE = 1000
 export const COUNT_QUERY_LIMIT = 10000
 
 export interface PaginationParams {
