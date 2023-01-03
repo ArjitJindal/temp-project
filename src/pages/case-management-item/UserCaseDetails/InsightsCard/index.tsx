@@ -14,7 +14,6 @@ import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
 import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useApiTime } from '@/utils/tracker';
 
 export const FIXED_API_PARAMS = {
@@ -34,7 +33,7 @@ export default function InsightsCard(props: Props) {
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
     displayBy: 'COUNT',
-    transactionsCount: 'LAST_10',
+    transactionsCount: 10,
     currency: 'USD',
   });
 
@@ -95,18 +94,11 @@ function useStatsQuery(
   return useQuery(
     TRANSACTIONS_STATS('by-type', { ...selectorParams, referenceCurrency, userId }),
     async (): Promise<TransactionsStatsByTypesResponseData[]> => {
-      let pageSize = DEFAULT_PAGE_SIZE;
-      if (selectorParams.transactionsCount === 'LAST_10') {
-        pageSize = 10;
-      } else if (selectorParams.transactionsCount === 'LAST_50') {
-        pageSize = 50;
-      }
-
       const response = await measure(
         () =>
           api.getTransactionsStatsByType({
             ...FIXED_API_PARAMS,
-            pageSize,
+            pageSize: selectorParams.transactionsCount,
             filterUserId: userId,
             filterStatus: selectorParams.selectedRuleActions,
             referenceCurrency,

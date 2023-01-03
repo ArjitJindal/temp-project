@@ -24,14 +24,11 @@ import { useApiTime } from '@/utils/tracker';
 export const DISPLAY_BY_OPTIONS = ['COUNT', 'AMOUNT'] as const;
 export type DisplayByType = typeof DISPLAY_BY_OPTIONS[number];
 
-export const TRANSACTIONS_COUNT_OPTIONS = ['LAST_10', 'LAST_50', 'DISABLED'] as const;
-export type TranscationsCountType = typeof TRANSACTIONS_COUNT_OPTIONS[number];
-
 export interface Params {
   selectedRuleActions: RuleAction[];
   displayBy: DisplayByType;
   currency: Currency;
-  transactionsCount: TranscationsCountType;
+  transactionsCount: number;
 }
 
 interface Props {
@@ -83,18 +80,18 @@ export default function TransactionsSelector(props: Props) {
           })}
         </div>
         <div className={s.settings}>
-          <Select
-            value={params.transactionsCount}
+          <Select<string>
+            value={`${params.transactionsCount}`}
             onChange={(value) => {
               onChangeParams({
                 ...params,
-                transactionsCount: value,
+                transactionsCount: parseInt(value) || DEFAULT_PAGE_SIZE,
               });
             }}
             options={[
-              { value: 'LAST_10', label: 'Last 10 transactions' },
-              { value: 'LAST_50', label: 'Last 50 transactions' },
-              { value: 'DISABLED', label: 'All transactions' },
+              { value: '10', label: 'Last 10 transactions' },
+              { value: '50', label: 'Last 50 transactions' },
+              { value: '1000', label: 'Last 1000 transactions' },
             ]}
           />
           <Form.Layout.Label title="Display by" orientation="horizontal">
@@ -174,18 +171,11 @@ function useStatsQuery(
   return useQuery(
     TRANSACTIONS_STATS('by-date', { ...selectorParams, userId, currency }),
     async (): Promise<TransactionsStatsByTimeResponseData[]> => {
-      let pageSize = DEFAULT_PAGE_SIZE;
-      if (selectorParams.transactionsCount === 'LAST_10') {
-        pageSize = 10;
-      } else if (selectorParams.transactionsCount === 'LAST_50') {
-        pageSize = 50;
-      }
-
       const response = await measure(
         () =>
           api.getTransactionsStatsByTime({
             ...FIXED_API_PARAMS,
-            pageSize,
+            pageSize: selectorParams.transactionsCount,
             filterUserId: userId,
             filterStatus: selectorParams.selectedRuleActions,
             referenceCurrency: currency,
