@@ -222,4 +222,3 @@ bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite h
 - Create a unit test for the rule that covers all cases in `__test__` folder
 - Add it to requisite rule list (currently `transaction` or `user` rule types)
 - Merge PR and deploy to all environments (Dev, Sandbox and prod regions)
-- Launch the rule on console - [Instructions](https://www.notion.so/flagright/Launching-new-Rule-on-Console-51803611658047d79a5a3757fcc8b755)
