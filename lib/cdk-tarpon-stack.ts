@@ -1396,9 +1396,16 @@ export class CdkTarponStack extends cdk.Stack {
         accessLogDestination: new LogGroupLogDestination(apiLogGroup),
       },
     })
+    // NOTE: We add random spaces to the end of the validation response template (which won't affect the response) to make
+    // the template get updated for every deployment (0.1% chance of conflict) to get around the template being reset for
+    // unknown reasons.
+    const randomSpacesSuffix = _.range(_.random(1, 1000))
+      .map(() => '')
+      .join(' ')
     const apiValidationErrorTemplate = {
       'application/json':
-        '{ "message": $context.error.messageString, "validationErrors": "$context.error.validationErrorString" }',
+        '{ "message": $context.error.messageString, "validationErrors": "$context.error.validationErrorString" }' +
+        randomSpacesSuffix,
     }
     restApi.addGatewayResponse('BadRequestBodyValidationResponse', {
       type: ResponseType.BAD_REQUEST_BODY,
