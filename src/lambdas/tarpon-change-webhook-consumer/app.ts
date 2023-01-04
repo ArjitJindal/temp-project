@@ -1,4 +1,5 @@
-import { KinesisStreamEvent } from 'aws-lambda'
+import path from 'path'
+import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { diff } from 'deep-object-diff'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { v4 as uuidv4 } from 'uuid'
@@ -73,16 +74,24 @@ async function userHandler(
   await sendWebhookTasks(tenantId, webhookTasks)
 }
 
-const handler = new TarponStreamConsumerBuilder(
-  process.env.RETRY_KINESIS_STREAM_NAME as string
+const builder = new TarponStreamConsumerBuilder(
+  path.basename(__dirname),
+  process.env.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!
+).setUserHandler((tenantId, oldUser, newUser) =>
+  userHandler(tenantId, oldUser, newUser)
 )
-  .setUserHandler((tenantId, oldUser, newUser) =>
-    userHandler(tenantId, oldUser, newUser)
-  )
-  .build()
+
+const kinesisHandler = builder.buildKinesisStreamHandler()
+const sqsRetryHandler = builder.buildSqsRetryHandler()
 
 export const tarponChangeWebhookHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    await handler(event)
+    await kinesisHandler(event)
+  }
+)
+
+export const tarponChangeWebhookRetryHandler = lambdaConsumer()(
+  async (event: SQSEvent) => {
+    await sqsRetryHandler(event)
   }
 )

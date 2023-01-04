@@ -172,7 +172,7 @@ export const LAMBDAS: {
   },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
-    handlerName: 'tarponChangeMongodbHandler',
+    handlerName: 'tarponChangeMongodbRetryHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]:
@@ -184,7 +184,7 @@ export const LAMBDAS: {
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
     {
       codePath: 'tarpon-change-webhook-consumer',
-      handlerName: 'tarponChangeWebhookHandler',
+      handlerName: 'tarponChangeWebhookRetryHandler',
       expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
     },
   [StackConstants.SANCTIONS_FUNCTION_NAME]: {

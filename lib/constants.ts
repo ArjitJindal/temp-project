@@ -147,16 +147,10 @@ export const StackConstants = {
     'AuditLogConsumerFunction'
   ),
   AUDIT_LOG_TOPIC_NAME: getResourceName('AuditLogTopic'),
-  AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
-  AUDIT_LOG_DLQ_NAME: getResourceName('AuditLogDeadLetterQueue'),
   BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME: getResourceName(
     'BetterUptimeCloudWatchTopic'
   ),
   BETTER_UPTIME_SUBSCRIPTION_NAME: getResourceName('Subscription'),
-  SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
-  WEBHOOK_DELIVERY_DLQ_NAME: getResourceName('webhookDeliveryDeadLetterQueue'),
-  WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
-  BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),
   FAST_GEOIP_LAYER_NAME: getResourceName('fast-geoip-layer'),
   TARPON_API_NAME: getResourceName('TarponAPI'),
   TARPON_API_GATEWAY_ALARM_NAME: getResourceName('TarponApiErrorPercentage'),
@@ -196,11 +190,8 @@ export const StackConstants = {
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
-  TARPON_MONGODB_RETRY_STREAM_ID: 'tarponMongoDbRetryStream',
-  TARPON_WEBHOOK_RETRY_STREAM_ID: 'tarponWebhookRetryStream',
   HAMMERHEAD_STREAM_ID: 'hammerheadStream',
   HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
-  HAMMERHEAD_RETRY_STREAM_ID: 'hammerheadRetryStream',
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
   CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiCaseFunction'
@@ -220,6 +211,16 @@ export const SQSQueues = {
   AUDIT_LOG_QUEUE_NAME: getResourceName('AuditLogQueue'),
   SLACK_ALERT_QUEUE_NAME: getResourceName('SlackAlertQueue'),
   WEBHOOK_DELIVERY_QUEUE_NAME: getResourceName('WebhookDeliveryQueue'),
+  BATCH_JOB_QUEUE_NAME: getResourceName('BatchJobQueue'),
+  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
+    'TarponChangeCaptureRetryQueue'
+  ),
+  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
+    'WebhookTarponChangeCaptureRetryQueue'
+  ),
+  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME: getResourceName(
+    'HammerheadChangeCaptureRetryQueue'
+  ),
 }
 
 export function getDeadLetterQueueName(queueName: string) {

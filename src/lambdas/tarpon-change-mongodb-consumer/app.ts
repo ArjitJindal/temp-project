@@ -1,4 +1,5 @@
-import { KinesisStreamEvent } from 'aws-lambda'
+import path from 'path'
+import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import {
@@ -219,9 +220,9 @@ async function transactionEventHandler(
     }
   )
 }
-
-const handler = new TarponStreamConsumerBuilder(
-  process.env.RETRY_KINESIS_STREAM_NAME as string
+const builder = new TarponStreamConsumerBuilder(
+  path.basename(__dirname),
+  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!
 )
   .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
     transactionHandler(tenantId, newTransaction)
@@ -236,12 +237,20 @@ const handler = new TarponStreamConsumerBuilder(
     (tenantId, oldTransactionEvent, newTransactionEvent) =>
       transactionEventHandler(tenantId, newTransactionEvent)
   )
-  .build()
 // NOTE: If we handle more entites, please add `localTarponChangeCaptureHandler(...)` to the corresponding
 // place that updates the entity to make local work
 
+const kinesisHandler = builder.buildKinesisStreamHandler()
+const sqsRetryHandler = builder.buildSqsRetryHandler()
+
 export const tarponChangeMongodbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    await handler(event)
+    await kinesisHandler(event)
+  }
+)
+
+export const tarponChangeMongodbRetryHandler = lambdaConsumer()(
+  async (event: SQSEvent) => {
+    await sqsRetryHandler(event)
   }
 )

@@ -1,5 +1,5 @@
-import { KinesisStreamEvent } from 'aws-lambda'
-import { KinesisClient, PutRecordCommand } from '@aws-sdk/client-kinesis'
+import { KinesisStreamEvent, KinesisStreamRecord, SQSEvent } from 'aws-lambda'
+import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import {
@@ -18,7 +18,7 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
-const kinesisClient = new KinesisClient({})
+const sqsClient = new SQSClient({})
 
 type TransactionHandler = (
   tenantId: string,
@@ -41,16 +41,20 @@ type UserEventHandler = (
   newUserEvent: ConsumerUserEvent | undefined
 ) => Promise<void>
 
+// TODO (FDT-45408): Refactor TarponStreamConsumerBuilder to support any DynamoDB table
+
 export class TarponStreamConsumerBuilder {
-  retryStreamName: string
+  name: string
+  retrySqsQueue: string
   transientRepository: TransientRepository
   transactionHandler?: TransactionHandler
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHanlder
   userEventHandler?: UserEventHandler
 
-  constructor(retryStreamName: string) {
-    this.retryStreamName = retryStreamName
+  constructor(name: string, retrySqsQueue: string) {
+    this.name = name
+    this.retrySqsQueue = retrySqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
   }
 
@@ -112,7 +116,7 @@ export class TarponStreamConsumerBuilder {
     }
   }
 
-  private async shouldSendToRetryStream(
+  private async shouldSendToRetryQueue(
     update: DynamoDbEntityUpdate
   ): Promise<boolean> {
     return this.transientRepository.hasPrimaryKeyId(
@@ -120,18 +124,19 @@ export class TarponStreamConsumerBuilder {
     )
   }
 
-  private async sendToRetryStream(update: DynamoDbEntityUpdate) {
-    const response = await kinesisClient.send(
-      new PutRecordCommand({
-        StreamName: this.retryStreamName,
-        PartitionKey: 'default',
-        Data: Buffer.from(update.rawRecord?.kinesis.data as string, 'base64'),
+  private async sendToRetryQueue(update: DynamoDbEntityUpdate) {
+    await sqsClient.send(
+      new SendMessageCommand({
+        MessageBody: JSON.stringify(update.rawRecord!),
+        QueueUrl: this.retrySqsQueue,
+        MessageGroupId: update.entityId,
+        MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
       })
     )
     const partitionKeyId = this.getRetryItemKey(update)
     await this.transientRepository.addKey(
       partitionKeyId,
-      response.SequenceNumber as string
+      update.sequenceNumber as string
     )
   }
 
@@ -151,27 +156,20 @@ export class TarponStreamConsumerBuilder {
     )
   }
 
-  private isFromRetryStream(event: KinesisStreamEvent) {
-    return event.Records[0]?.eventSourceARN?.includes(this.retryStreamName)
-  }
-
   private getRetryItemKey(update: DynamoDbEntityUpdate): string {
-    return `${this.retryStreamName}#${update.entityId}`
+    return `${this.name}#${update.entityId}`
   }
 
-  public build() {
-    return async (event: KinesisStreamEvent) => {
-      if (!this.retryStreamName) {
-        if (process.env.ENV !== 'local') {
-          throw new Error(`Retry stream is not set!`)
-        }
-        this.retryStreamName = 'localRetrStream'
-      }
+  public buildSqsRetryHandler() {
+    return async (event: SQSEvent) => {
+      for (const record of event.Records) {
+        const kinesisStreamRecord = JSON.parse(
+          record.body
+        ) as KinesisStreamRecord
 
-      const isFromRetryStream = this.isFromRetryStream(event)
-
-      if (isFromRetryStream) {
-        for (const update of getDynamoDbUpdates(event)) {
+        for (const update of getDynamoDbUpdates({
+          Records: [kinesisStreamRecord],
+        })) {
           await getContextStorage().run(getContext() || {}, async () => {
             if (await this.shouldRun(update)) {
               updateLogMetadata({
@@ -190,29 +188,33 @@ export class TarponStreamConsumerBuilder {
             }
           })
         }
-      } else {
-        for (const update of getDynamoDbUpdates(event)) {
-          await getContextStorage().run(getContext() || {}, async () => {
-            updateLogMetadata({
-              tenantId: update.tenantId,
-              entityId: update.entityId,
-            })
-            if (await this.shouldSendToRetryStream(update)) {
-              await this.sendToRetryStream(update)
-              logger.warn(
-                `There're other events for the entity currently being retried. Sent to retry stream.`
-              )
-            } else {
-              try {
-                await this.handleDynamoDbUpdate(update)
-              } catch (e) {
-                await this.sendToRetryStream(update)
-                logger.error(e)
-                logger.warn(`Failed to process. Sent to retry stream`)
-              }
-            }
+      }
+    }
+  }
+
+  public buildKinesisStreamHandler() {
+    return async (event: KinesisStreamEvent) => {
+      for (const update of getDynamoDbUpdates(event)) {
+        await getContextStorage().run(getContext() || {}, async () => {
+          updateLogMetadata({
+            tenantId: update.tenantId,
+            entityId: update.entityId,
           })
-        }
+          if (await this.shouldSendToRetryQueue(update)) {
+            await this.sendToRetryQueue(update)
+            logger.warn(
+              `There're other events for the entity currently being retried. Sent to retry queue.`
+            )
+          } else {
+            try {
+              await this.handleDynamoDbUpdate(update)
+            } catch (e) {
+              await this.sendToRetryQueue(update)
+              logger.error(e)
+              logger.warn(`Failed to process. Sent to retry queue`)
+            }
+          }
+        })
       }
     }
   }

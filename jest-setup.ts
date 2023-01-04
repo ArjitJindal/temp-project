@@ -3,7 +3,6 @@ import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 
 process.env.ENV = 'local'
 process.env.DYNAMODB_URI = 'http://localhost:7999'
-process.env.RETRY_KINESIS_STREAM_NAME = 'mock-retry-stream'
 
 jest.mock('@cdk/constants', () => ({
   StackConstants: {

@@ -57,14 +57,6 @@ const KINESIS_STREAM_NAMES = [
     streamId: StackConstants.HAMMERHEAD_STREAM_ID,
     streamName: StackConstants.HAMMERHEAD_STREAM_NAME,
   },
-  {
-    streamId: StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
-    streamName: StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
-  },
-  {
-    streamId: StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
-    streamName: StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
-  },
 ]
 
 export class CdkTarponAlarmsStack extends cdk.Stack {

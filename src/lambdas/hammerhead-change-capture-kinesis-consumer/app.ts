@@ -10,6 +10,8 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 
+// TODO (FDT-45408): Refactor to use dynamodb-stream-consumer-builder
+
 export const hammerheadChangeCaptureHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
     try {

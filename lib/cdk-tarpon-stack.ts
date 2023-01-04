@@ -63,6 +63,7 @@ import {
   getNameForGlobalResource,
   getResourceName,
   getResourceNameForTarpon,
+  SQSQueues,
   StackConstants,
 } from './constants'
 import { Config } from './configs/config'
@@ -84,6 +85,13 @@ const DEFAULT_LAMBDA_TIMEOUT = Duration.seconds(100)
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT.toSeconds() * 6
 )
+const CONSUMER_LAMBDA_TIMEOUT = Duration.minutes(15)
+const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
+  CONSUMER_LAMBDA_TIMEOUT.toSeconds() * 2
+)
+
+// SQS max receive count cannot go above 1000
+const MAX_SQS_RECEIVE_COUNT = 1000
 
 type InternalFunctionProps = {
   name: string
@@ -135,14 +143,11 @@ export class CdkTarponStack extends cdk.Stack {
       protocol: SubscriptionProtocol.HTTPS,
     })
 
-    const slackAlertQueue = this.createQueue(
-      StackConstants.SLACK_ALERT_QUEUE_NAME,
-      {
-        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-      }
-    )
+    const slackAlertQueue = this.createQueue(SQSQueues.SLACK_ALERT_QUEUE_NAME, {
+      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
+    })
     const webhookDeliveryQueue = this.createQueue(
-      StackConstants.WEBHOOK_DELIVERY_QUEUE_NAME,
+      SQSQueues.WEBHOOK_DELIVERY_QUEUE_NAME,
       {
         visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
         // Retry up to 3 days
@@ -156,19 +161,31 @@ export class CdkTarponStack extends cdk.Stack {
       displayName: StackConstants.AUDIT_LOG_TOPIC_NAME,
       topicName: StackConstants.AUDIT_LOG_TOPIC_NAME,
     })
-    const auditLogQueue = this.createQueue(
-      StackConstants.AUDIT_LOG_QUEUE_NAME,
-      {
-        visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-        maxReceiveCount: 3,
-      }
-    )
+    const auditLogQueue = this.createQueue(SQSQueues.AUDIT_LOG_QUEUE_NAME, {
+      maxReceiveCount: 3,
+    })
     this.auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
 
-    const batchJobQueue = new Queue(this, StackConstants.BATCH_JOB_QUEUE_NAME, {
-      visibilityTimeout: DEFAULT_SQS_VISIBILITY_TIMEOUT,
-    })
+    const batchJobQueue = this.createQueue(SQSQueues.BATCH_JOB_QUEUE_NAME)
     this.batchJobQueue = batchJobQueue
+
+    // Kinesis consumer retry queues
+    const tarponChangeCaptureRetryQueue = this.createQueue(
+      SQSQueues.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      {
+        fifo: true,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+      }
+    )
+    const webhookTarponChangeCaptureRetryQueue = this.createQueue(
+      SQSQueues.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      {
+        fifo: true,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+      }
+    )
 
     /*
      * Kinesis Data Streams
@@ -176,16 +193,6 @@ export class CdkTarponStack extends cdk.Stack {
     const tarponStream = this.createKinesisStream(
       StackConstants.TARPON_STREAM_ID,
       StackConstants.TARPON_STREAM_NAME,
-      Duration.days(3)
-    )
-    const tarponMongoDbRetryStream = this.createKinesisStream(
-      StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
-      StackConstants.TARPON_MONGODB_RETRY_STREAM_ID,
-      Duration.days(7)
-    )
-    const tarponWebhookRetryStream = this.createKinesisStream(
-      StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
-      StackConstants.TARPON_WEBHOOK_RETRY_STREAM_ID,
       Duration.days(3)
     )
     const hammerheadStream = this.createKinesisStream(
@@ -741,7 +748,7 @@ export class CdkTarponStack extends cdk.Stack {
           IMPORT_BUCKET: importBucketName,
           TMP_BUCKET: tmpBucketName,
         } as FileImportConfig,
-        timeout: Duration.minutes(15),
+        timeout: CONSUMER_LAMBDA_TIMEOUT,
       }
     )
     tarponDynamoDbTable.grantReadData(jobRunnerAlias)
@@ -846,9 +853,10 @@ export class CdkTarponStack extends cdk.Stack {
       environment: {
         ...atlasFunctionProps.environment,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-        RETRY_KINESIS_STREAM_NAME: tarponMongoDbRetryStream.streamName,
+        TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          tarponChangeCaptureRetryQueue.queueUrl,
       },
-      timeout: Duration.minutes(15),
+      timeout: CONSUMER_LAMBDA_TIMEOUT,
     }
     const { alias: tarponChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
@@ -866,17 +874,14 @@ export class CdkTarponStack extends cdk.Stack {
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
-        StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
         { startingPosition: StartingPosition.TRIM_HORIZON }
       )
-      this.createKinesisEventSourceForRetry(
-        tarponChangeCaptureKinesisConsumerRetryAlias,
-        tarponMongoDbRetryStream
+      tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
+        new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
     }
-    tarponMongoDbRetryStream.grantWrite(tarponChangeCaptureKinesisConsumerAlias)
     transientDynamoDbTable.grantReadWriteData(
       tarponChangeCaptureKinesisConsumerAlias
     )
@@ -885,6 +890,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerAlias)
     this.grantMongoDbAccess(tarponChangeCaptureKinesisConsumerRetryAlias)
+    tarponChangeCaptureRetryQueue.grantSendMessages(
+      tarponChangeCaptureKinesisConsumerAlias
+    )
     slackAlertQueue.grantSendMessages(tarponChangeCaptureKinesisConsumerAlias)
     slackAlertQueue.grantSendMessages(
       tarponChangeCaptureKinesisConsumerRetryAlias
@@ -912,9 +920,10 @@ export class CdkTarponStack extends cdk.Stack {
       environment: {
         ...atlasFunctionProps.environment,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
-        RETRY_KINESIS_STREAM_NAME: tarponWebhookRetryStream.streamName,
+        WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          webhookTarponChangeCaptureRetryQueue.queueUrl,
       },
-      timeout: Duration.minutes(15),
+      timeout: CONSUMER_LAMBDA_TIMEOUT,
     }
     const { alias: webhookTarponChangeCaptureHandlerAlias } =
       this.createFunction(
@@ -932,16 +941,16 @@ export class CdkTarponStack extends cdk.Stack {
       )
     if (!isDevUserStack) {
       this.createKinesisEventSource(
-        StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         webhookTarponChangeCaptureHandlerAlias,
         tarponStream
       )
-      this.createKinesisEventSourceForRetry(
-        webhookTarponChangeCaptureHandlerRetryAlias,
-        tarponWebhookRetryStream
+      webhookTarponChangeCaptureHandlerRetryAlias.addEventSource(
+        new SqsEventSource(webhookTarponChangeCaptureRetryQueue)
       )
     }
-    tarponWebhookRetryStream.grantWrite(webhookTarponChangeCaptureHandlerAlias)
+    webhookTarponChangeCaptureRetryQueue.grantSendMessages(
+      webhookTarponChangeCaptureHandlerAlias
+    )
     webhookDeliveryQueue.grantSendMessages(
       webhookTarponChangeCaptureHandlerAlias
     )
@@ -987,17 +996,20 @@ export class CdkTarponStack extends cdk.Stack {
         },
         {
           ...atlasFunctionProps,
-          timeout: Duration.minutes(15),
+          timeout: CONSUMER_LAMBDA_TIMEOUT,
         }
       )
 
     if (!isDevUserStack) {
       this.createKinesisEventSource(
-        StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         hammerheadChangeCaptureKinesisConsumerAlias,
         hammerheadStream,
         { startingPosition: StartingPosition.TRIM_HORIZON }
       )
+      // TODO (FDT-45408):
+      // 1. Create hammerheadChangeCaptureKinesisConsumerRetryAlias
+      // 2. Create hammerheadChangeCaptureRetryQueue
+      // 3. add event source to hammerheadChangeCaptureRetryQueue
     }
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
 
@@ -1320,29 +1332,12 @@ export class CdkTarponStack extends cdk.Stack {
   }
 
   private createKinesisEventSource(
-    functionName: string,
     alias: Alias,
     stream: IStream,
     props?: Partial<KinesisEventSourceProps>
   ) {
     const eventSource = new KinesisEventSource(stream, {
       batchSize: 10,
-      startingPosition: StartingPosition.LATEST,
-      ...props,
-    })
-    alias.addEventSource(eventSource)
-  }
-
-  private createKinesisEventSourceForRetry(
-    alias: Alias,
-    stream: IStream,
-    props?: Partial<KinesisEventSourceProps>
-  ) {
-    // If there're less than 10000 pending records in the stream, we'll retry evety 5 minutes
-    // we should fix the error before it reaches 10000 records
-    const eventSource = new KinesisEventSource(stream, {
-      batchSize: 10000, // max possible value
-      maxBatchingWindow: Duration.minutes(5), // max possible value
       startingPosition: StartingPosition.LATEST,
       ...props,
     })
@@ -1468,17 +1463,22 @@ export class CdkTarponStack extends cdk.Stack {
 
   private createQueue(
     queueName: string,
-    options: {
+    options?: {
       visibilityTimeout?: Duration
       maxReceiveCount?: number
+      fifo?: boolean
     }
   ): Queue {
-    const deadLetterQueue = new Queue(this, getDeadLetterQueueName(queueName))
+    const maxReceiveCount = options?.maxReceiveCount || 30
     const queue = new Queue(this, queueName, {
-      visibilityTimeout: options.visibilityTimeout,
+      fifo: options?.fifo,
+      visibilityTimeout:
+        options?.visibilityTimeout || DEFAULT_SQS_VISIBILITY_TIMEOUT,
       deadLetterQueue: {
-        queue: deadLetterQueue,
-        maxReceiveCount: options.maxReceiveCount || 30,
+        queue: new Queue(this, getDeadLetterQueueName(queueName), {
+          fifo: options?.fifo,
+        }),
+        maxReceiveCount,
       },
     })
     return queue
