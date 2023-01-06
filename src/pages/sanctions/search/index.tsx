@@ -24,7 +24,7 @@ type TableSearchParams = {
   searchTerm?: string;
   fuzziness?: number;
   countryCodes?: Array<string>;
-  yearOfBirth?: number;
+  yearOfBirth?: string;
 };
 
 type Props = {
@@ -45,7 +45,7 @@ export const SanctionsSearchTable: React.FC<Props> = ({ searchId }) => {
           searchTerm: params.searchTerm as string,
           fuzziness: params.fuzziness,
           countryCodes: params.countryCodes,
-          yearOfBirth: params.yearOfBirth,
+          yearOfBirth: params.yearOfBirth ? parseInt(params.yearOfBirth) : undefined,
         },
       });
     },
