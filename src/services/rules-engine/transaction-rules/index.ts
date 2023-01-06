@@ -42,6 +42,7 @@ import SamePaymentDetailsRule from './same-payment-details'
 import BlacklistPaymentdetailsRule from './blacklist-payment-details'
 import TransactionsExceedPastPeriodRule from './transactions-exceed-past-period'
 import TestAlwaysHitRule from '@/services/rules-engine/transaction-rules/tests/test-always-hit-rule'
+import BlacklistTransactionMatchedValue from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 
 class TransactionRuleBase extends TransactionRule<unknown> {
   public async computeRule(): Promise<RuleHitResult | undefined> {
@@ -93,6 +94,7 @@ export const TRANSACTION_RULES = {
   'too-many-counterparty-country': TooManyCounterpartyCountryRule,
   'blacklist-payment-details': BlacklistPaymentdetailsRule,
   'transactions-exceed-past-period': TransactionsExceedPastPeriodRule,
+  'blacklist-transaction-related-value': BlacklistTransactionMatchedValue,
 
   // TESTING-ONLY RULES
   'tests/test-success-rule': TestSuccessRule,

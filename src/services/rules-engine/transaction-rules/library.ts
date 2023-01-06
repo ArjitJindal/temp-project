@@ -40,6 +40,7 @@ import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/tr
 import { TransactionsAverageAmountExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-amount-exceeded'
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
+import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 
 const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
   [
@@ -1004,6 +1005,29 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
         labels: ['Internal Fraud'],
         defaultNature: 'FRAUD',
         defaultCasePriority: 'P1',
+        defaultCaseCreationType: 'TRANSACTION',
+      }
+    },
+    () => {
+      const defaultParameters: BlacklistTransactionMatchedFieldRuleParameters =
+        {
+          blackListId: '',
+        }
+
+      return {
+        id: 'R-132',
+        name: 'Blacklist transaction related value',
+        type: 'TRANSACTION',
+        description:
+          'Blacklist specific values for a variable type such as card fingerprint, bank account number etc.',
+        descriptionTemplate:
+          '{{ value }} is blacklisted in Blacklist ID {{ blackListId }} for {{ variableType }} field.',
+        defaultParameters,
+        defaultAction: 'BLOCK',
+        ruleImplementationName: 'blacklist-transaction-related-value',
+        labels: ['List'],
+        defaultNature: 'FRAUD',
+        defaultCasePriority: 'P3',
         defaultCaseCreationType: 'TRANSACTION',
       }
     },

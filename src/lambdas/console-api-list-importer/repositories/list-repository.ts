@@ -34,9 +34,10 @@ export class ListRepository {
   async createList(
     listType: ListType,
     subtype: ListSubtype,
-    newList: ListData = {}
+    newList: ListData = {},
+    mannualListId?: string
   ): Promise<ListExisted> {
-    const listId = uuidv4()
+    const listId = mannualListId ?? uuidv4()
     const { items = [], metadata } = newList
     const header = {
       metadata,

@@ -52,6 +52,9 @@ describe('', () => {
     'Rule parameters breaking change check (see: https://www.notion.so/flagright/How-to-handle-rule-parameters-breaking-changes-5f7b6fc2116f43bbb1ffbe8b4a2089aa)',
     (rule) => {
       test(`${rule.id}: ${rule.name}`, async () => {
+        if (!originLibrary?.[rule.id]) {
+          return
+        }
         const ruleImplementation =
           TRANSACTION_RULES[rule.ruleImplementationName]
         const schema = ruleImplementation.getSchema()
