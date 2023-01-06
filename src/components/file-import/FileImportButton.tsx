@@ -68,15 +68,19 @@ export const FileImportButton: React.FC<FileImportButtonProps> = ({ type, button
         const importId = file?.s3Key.replace(/\//g, '') as string;
         for (const _i of _.range(0, 100)) {
           const importInfo = await api.getImportImportId({ importId });
-          const latestStatus = _.last(importInfo.statuses);
-          if (latestStatus?.status === 'FAILED') {
-            setErrorText(importInfo.error);
-            message.error('Failed to import the file');
-            return;
-          } else if (latestStatus?.status === 'SUCCESS') {
-            message.success(`Imported ${importInfo.importedRecords} ${type.toLowerCase()} records`);
-            handleClose();
-            return;
+          if (importInfo) {
+            const latestStatus = _.last(importInfo.statuses);
+            if (latestStatus?.status === 'FAILED') {
+              setErrorText(importInfo.error);
+              message.error('Failed to import the file');
+              return;
+            } else if (latestStatus?.status === 'SUCCESS') {
+              message.success(
+                `Imported ${importInfo.importedRecords} ${type.toLowerCase()} records`,
+              );
+              handleClose();
+              return;
+            }
           }
           await sleep(10 * 1000);
         }
