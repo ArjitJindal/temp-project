@@ -3278,6 +3278,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskLevelAlias'
+        defaultValues:
+          type: object
+          properties:
+            currency:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        defaultViews:
+          type: object
+          properties:
+            expandedCards:
+              type: array
+              items:
+                type: string
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
