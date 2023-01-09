@@ -1,4 +1,5 @@
 import { Aggregator } from './aggregator'
+import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 const GRANULARITIES: Array<'day' | 'week' | 'month' | 'year'> = [
   'day',
@@ -8,10 +9,6 @@ const GRANULARITIES: Array<'day' | 'week' | 'month' | 'year'> = [
 ]
 
 export class UserTransactionStatsTimeGroup extends Aggregator {
-  public shouldAggregate(): boolean {
-    return this.transaction.transactionState === 'SUCCESSFUL'
-  }
-
   public async aggregate(): Promise<void> {
     const userId = this.transaction.originUserId
     const transactionAmount = this.transaction.originAmountDetails
@@ -31,5 +28,9 @@ export class UserTransactionStatsTimeGroup extends Aggregator {
         )
       )
     )
+  }
+
+  public getTargetTransactionState(): TransactionState {
+    return 'SUCCESSFUL'
   }
 }

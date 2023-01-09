@@ -1,6 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AggregationRepository } from '../repositories/aggregation-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export abstract class Aggregator {
   tenantId: string
@@ -17,7 +18,6 @@ export abstract class Aggregator {
     this.aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
   }
 
-  public abstract shouldAggregate(): boolean
-
   public abstract aggregate(): Promise<void>
+  public abstract getTargetTransactionState(): TransactionState
 }

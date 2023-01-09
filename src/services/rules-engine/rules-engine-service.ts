@@ -111,6 +111,11 @@ export class RulesEngineService {
       }
     }
 
+    const previousTransactionEvents =
+      await this.transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
+      )
+
     const { executedRules, hitRules } = await this.verifyTransactionIdempotent(
       transaction
     )
@@ -144,7 +149,7 @@ export class RulesEngineService {
     )
     saveTransactionSegment?.close()
 
-    await this.updateAggregation(savedTransaction)
+    await this.updateAggregation(savedTransaction, previousTransactionEvents)
 
     return {
       transactionId: savedTransaction.transactionId as string,
@@ -164,6 +169,10 @@ export class RulesEngineService {
         `Transaction ${transactionEvent.transactionId} not found`
       )
     }
+    const previousTransactionEvents =
+      await this.transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
+      )
     const updatedTransaction: TransactionWithRulesResult = _.merge(
       {
         ...transaction,
@@ -197,7 +206,10 @@ export class RulesEngineService {
     // For duplicated transaction events with the same state, we don't re-aggregated
     // but this won't prevent re-aggregation if we have the states like [CREATED, APPROVED, CREATED]
     if (transaction.transactionState !== updatedTransaction.transactionState) {
-      await this.updateAggregation(updatedTransaction)
+      await this.updateAggregation(
+        updatedTransaction,
+        previousTransactionEvents
+      )
     }
     const updatedTransactionWithoutRulesResult = {
       ...updatedTransaction,
@@ -563,12 +575,16 @@ export class RulesEngineService {
     }
   }
 
-  private async updateAggregation(transaction: Transaction) {
+  private async updateAggregation(
+    transaction: Transaction,
+    previousTransactionEvents: TransactionEvent[]
+  ) {
     const updateAggregationsSegment = await addNewSubsegment(
       'Rules Engine',
       'Update Aggregations'
     )
     logger.info(`Updating Aggregations`)
+
     await Promise.all(
       Aggregators.map(async (Aggregator) => {
         try {
@@ -577,7 +593,14 @@ export class RulesEngineService {
             transaction,
             this.dynamoDb
           )
-          if (aggregator.shouldAggregate()) {
+
+          if (
+            aggregator.getTargetTransactionState() ===
+              transaction.transactionState &&
+            !previousTransactionEvents
+              .map((event) => event.transactionState)
+              .includes(aggregator.getTargetTransactionState())
+          ) {
             await aggregator.aggregate()
           }
         } catch (e) {

@@ -5,6 +5,7 @@ import { WriteRequest } from 'aws-sdk/clients/dynamodb'
 import {
   BatchWriteCommand,
   DynamoDBDocumentClient,
+  QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
@@ -68,5 +69,26 @@ export class TransactionEventRepository {
       await localTarponChangeCaptureHandler(primaryKey)
     }
     return eventId
+  }
+
+  public async getTransactionEvents(
+    transactionId: string
+  ): Promise<TransactionEvent[]> {
+    const PartitionKeyID = DynamoDbKeys.TRANSACTION_EVENT(
+      this.tenantId,
+      transactionId
+    ).PartitionKeyID
+
+    const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
+      ExpressionAttributeValues: {
+        ':PartitionKeyID': PartitionKeyID,
+      },
+    }
+
+    const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+    return Items as TransactionEvent[]
   }
 }

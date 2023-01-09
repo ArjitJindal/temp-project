@@ -1,10 +1,7 @@
 import { Aggregator } from './aggregator'
+import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export class UserTransactionCountries extends Aggregator {
-  public shouldAggregate(): boolean {
-    return this.transaction.transactionState === 'SUCCESSFUL'
-  }
-
   public async aggregate(): Promise<void> {
     await Promise.all([
       this.transaction.originUserId &&
@@ -36,5 +33,9 @@ export class UserTransactionCountries extends Aggregator {
           'receivingTo'
         ),
     ])
+  }
+
+  public getTargetTransactionState(): TransactionState {
+    return 'SUCCESSFUL'
   }
 }

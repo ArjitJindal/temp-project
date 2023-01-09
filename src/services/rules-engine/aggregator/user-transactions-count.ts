@@ -1,10 +1,7 @@
 import { Aggregator } from './aggregator'
+import { TransactionState } from '@/@types/openapi-internal/TransactionState'
 
 export class UserTransactionsCount extends Aggregator {
-  public shouldAggregate(): boolean {
-    return this.transaction.transactionState === 'SUCCESSFUL'
-  }
-
   public async aggregate(): Promise<void> {
     if (this.transaction.originUserId) {
       await this.aggregationRepository.addUserTransactionsCount(
@@ -18,5 +15,9 @@ export class UserTransactionsCount extends Aggregator {
         'receiving'
       )
     }
+  }
+
+  public getTargetTransactionState(): TransactionState {
+    return 'SUCCESSFUL'
   }
 }
