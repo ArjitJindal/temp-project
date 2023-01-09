@@ -8,6 +8,7 @@ import { useI18n } from '@/locales';
 import { makeUrl } from '@/utils/routing';
 import CaseTableWrapper from '@/pages/case-management/CaseTableWrapper';
 import { usePageViewTracker } from '@/utils/tracker';
+import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 
 function TableList() {
   const i18n = useI18n();
@@ -15,6 +16,7 @@ function TableList() {
   const { list = 'transaction' } = useParams<'list' | 'id'>();
   const [_, setTransactionLastActiveTab] = useLocalStorageState('cases-active-tab', list);
   usePageViewTracker(`Case Management Page - ${list}`);
+  useCloseSidebarByDefault();
 
   useEffect(() => {
     setTransactionLastActiveTab(list);
