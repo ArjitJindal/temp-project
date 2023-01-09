@@ -18,6 +18,7 @@ import {
   ExpandableProvider,
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
 
 function UserItem() {
   const { list, id } = useParams<'list' | 'id'>(); // todo: handle nulls properly
@@ -123,10 +124,10 @@ function UserItem() {
             <Card.Section>
               <UserDetails
                 user={user}
-                collapsedByDefault={true}
                 updateCollapseState={updateCollapseState}
                 onUserUpdate={handleUserUpdate}
                 onReload={onReload}
+                uiSettings={UI_SETTINGS}
               />
             </Card.Section>
           </>

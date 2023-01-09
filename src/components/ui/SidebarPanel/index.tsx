@@ -9,6 +9,7 @@ import styles from './SidebarPanel.module.less';
 type MenuItem = {
   name: string;
   content: React.ReactNode;
+  disabled?: boolean;
 };
 
 export type MenuSection = {
@@ -41,7 +42,9 @@ export default function SidebarPanel({ menuSections }: Props): JSX.Element {
         </Menu.Item>,
       ].concat(
         section.menuItems.map((menuItem) => (
-          <Menu.Item key={getMenuItemKey(section.name, menuItem.name)}>{menuItem.name}</Menu.Item>
+          <Menu.Item disabled={menuItem.disabled} key={getMenuItemKey(section.name, menuItem.name)}>
+            {menuItem.name}
+          </Menu.Item>
         )),
       ),
     );

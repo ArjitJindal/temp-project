@@ -1,6 +1,7 @@
 import CommentsCard from '../../../components/CommentsCard';
 import RulesHitCard from './RulesHitCard';
 import InsightsCard from './InsightsCard';
+import { UI_SETTINGS } from './ui-settings';
 import { Case } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
@@ -23,16 +24,26 @@ function UserCaseDetails(props: Props) {
       <UserDetails
         user={user}
         isEmbedded={true}
-        collapsedByDefault={true}
         hideHistory={true}
         hideInsights={true}
         updateCollapseState={props.updateCollapseState}
         onReload={props.onReload}
         showCommentEditor={false}
+        uiSettings={UI_SETTINGS}
       />
-      <RulesHitCard caseItem={caseItem} updateCollapseState={props.updateCollapseState} />
+      <RulesHitCard
+        caseItem={caseItem}
+        updateCollapseState={props.updateCollapseState}
+        title={UI_SETTINGS.cards.RULES_HITS_AND_TRANSACTIONS.title}
+        collapsableKey={UI_SETTINGS.cards.RULES_HITS_AND_TRANSACTIONS.key}
+      />
       {user?.userId && (
-        <InsightsCard userId={user.userId} updateCollapseState={props.updateCollapseState} />
+        <InsightsCard
+          userId={user.userId}
+          updateCollapseState={props.updateCollapseState}
+          title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title}
+          collapsableKey={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.key}
+        />
       )}
       <CommentsCard
         id={caseItem.caseId}
@@ -44,6 +55,8 @@ function UserCaseDetails(props: Props) {
         caseStatus={caseItem.caseStatus}
         onReload={props.onReload}
         commentType={'CASE'}
+        title={UI_SETTINGS.cards.COMMENTS.title}
+        collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
       />
     </>
   );

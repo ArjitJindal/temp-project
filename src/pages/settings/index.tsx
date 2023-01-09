@@ -3,15 +3,35 @@ import { RuleActionSettings } from './components/RuleActionSettings';
 import { WebhookSettings } from './components/WebhookSettings';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
+import { DefaultValuesSettings } from './components/DefaultValuesSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/ui/Button';
 import { usePageViewTracker } from '@/utils/tracker';
+import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
 
 export default function SettingsPage() {
   usePageViewTracker('Settings');
   const menuSections: (MenuSection | boolean)[] = [
+    {
+      name: 'ORGANIZATION',
+      menuItems: [
+        {
+          name: 'Default Values',
+          content: <DefaultValuesSettings />,
+        },
+        {
+          name: 'Default Views',
+          content: <DefaultViewsSettings />,
+        },
+        {
+          name: 'Billing',
+          content: <div>Billing</div>,
+          disabled: true,
+        },
+      ],
+    },
     {
       name: 'NOMENCLATURE',
       menuItems: [

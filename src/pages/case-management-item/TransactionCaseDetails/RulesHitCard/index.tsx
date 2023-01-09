@@ -1,3 +1,4 @@
+import { UI_SETTINGS } from '../ui-settings';
 import * as Card from '@/components/ui/Card';
 import Table from '@/components/ui/Table';
 import { HitRulesDetails } from '@/apis';
@@ -13,8 +14,11 @@ export default function RulesHitCard(props: Props) {
   const { rulesHit, updateCollapseState } = props;
   return (
     <Card.Root
-      header={{ title: 'Rules Hits', collapsable: true, collapsedByDefault: true }}
-      onCollapseChange={(isCollapsed) => updateCollapseState('rulesHit', isCollapsed)}
+      header={{
+        title: UI_SETTINGS.cards.RULES_HITS.title,
+        collapsableKey: UI_SETTINGS.cards.RULES_HITS.key,
+      }}
+      updateCollapseState={updateCollapseState}
     >
       <Card.Section>
         <Table

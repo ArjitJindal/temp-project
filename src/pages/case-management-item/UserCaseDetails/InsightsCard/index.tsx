@@ -15,6 +15,7 @@ import { TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
 import { useApiTime } from '@/utils/tracker';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
@@ -26,28 +27,24 @@ export const FIXED_API_PARAMS = {
 interface Props {
   userId: string;
   updateCollapseState?: (key: string, value: boolean) => void;
+  title: string;
+  collapsableKey: string;
 }
 
 export default function InsightsCard(props: Props) {
-  const { userId, updateCollapseState } = props;
+  const { userId, updateCollapseState, title, collapsableKey } = props;
+  const settings = useSettings();
   const [selectorParams, setSelectorParams] = useState<Params>({
     selectedRuleActions: [],
     displayBy: 'COUNT',
     transactionsCount: 10,
-    currency: 'USD',
+    currency: (settings?.defaultValues?.currency ?? 'USD') as unknown as Currency,
   });
 
   const statsQueryResult = useStatsQuery(selectorParams, userId, selectorParams.currency);
 
   return (
-    <Card.Root
-      header={{ title: 'Transaction Insights', collapsedByDefault: true }}
-      onCollapseChange={(isCollapsed) => {
-        if (updateCollapseState) {
-          updateCollapseState('insights', isCollapsed);
-        }
-      }}
-    >
+    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
       <Card.Section className={s.root}>
         <TransactionsSelector
           currency={selectorParams.currency}

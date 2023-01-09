@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import _ from 'lodash';
 
 type ExpandMode = 'EXPAND_ALL' | 'COLLAPSE_ALL' | 'MANUAL';
 

@@ -1,3 +1,4 @@
+import { UI_SETTINGS } from '../ui-settings';
 import * as Card from '@/components/ui/Card';
 import UserDetails from '@/pages/transactions-item/UserDetails';
 import { CaseTransaction } from '@/apis';
@@ -10,10 +11,14 @@ interface Props {
 
 const TransactionDetailsCard = (props: Props) => {
   const { transaction, updateCollapseState } = props;
+
   return (
     <Card.Root
-      header={{ title: 'Transaction Details' }}
-      onCollapseChange={(isCollapsed) => updateCollapseState('transactionDetails', isCollapsed)}
+      header={{
+        title: UI_SETTINGS.cards.TRANSACTION_DETAILS.title,
+        collapsableKey: UI_SETTINGS.cards.TRANSACTION_DETAILS.key,
+      }}
+      updateCollapseState={updateCollapseState}
     >
       <Card.Section direction="horizontal" align="start">
         <TransactionInfoCard transaction={transaction} />

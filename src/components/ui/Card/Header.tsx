@@ -6,9 +6,8 @@ import CollapsableIcon from '@/components/ui/icons/Remix/system/arrow-down-s-lin
 
 export interface HeaderSettings {
   title: string;
-  collapsableKey?: (string | number)[];
+  collapsableKey?: string;
   collapsable?: boolean;
-  collapsedByDefault?: boolean;
 }
 
 interface Props {

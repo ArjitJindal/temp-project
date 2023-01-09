@@ -1,3 +1,4 @@
+import { UI_SETTINGS } from '../ui-settings';
 import BusinessUserDetails from './BusinessUserDetails';
 import ConsumerUserDetails from './ConsumerUserDetails';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
@@ -9,14 +10,13 @@ import CommentsCard from '@/components/CommentsCard';
 interface Props {
   user?: InternalConsumerUser | InternalBusinessUser | MissingUser;
   isEmbedded?: boolean;
-  collapsedByDefault?: boolean;
   hideHistory?: boolean;
   hideInsights?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
   onUserUpdate?: (userItem: InternalBusinessUser | InternalConsumerUser) => void;
   onReload: () => void;
   showCommentEditor?: boolean;
-  openCommandFromParent?: boolean;
+  uiSettings: typeof UI_SETTINGS;
 }
 
 function UserDetails(props: Props) {
@@ -26,6 +26,7 @@ function UserDetails(props: Props) {
     hideInsights = false,
     showCommentEditor = true,
     onUserUpdate,
+    uiSettings,
   } = props;
 
   if (user == null || !('type' in user)) {
@@ -36,26 +37,32 @@ function UserDetails(props: Props) {
       {user?.type === 'BUSINESS' && (
         <BusinessUserDetails
           user={user}
-          collapsedByDefault={true}
           updateCollapseState={props.updateCollapseState}
+          uiSettings={uiSettings}
         />
       )}
       {user?.type === 'CONSUMER' && (
         <ConsumerUserDetails
           user={user}
-          collapsedByDefault={true}
           updateCollapseState={props.updateCollapseState}
+          uiSettings={uiSettings}
         />
       )}
       {!hideHistory && (
         <UserTransactionHistoryTable
           userId={user.userId}
-          collapsedByDefault={true}
           updateCollapseState={props.updateCollapseState}
+          title={UI_SETTINGS.cards.TRANSACTION_HISTORY.title}
+          collapsableKey={UI_SETTINGS.cards.TRANSACTION_HISTORY.key}
         />
       )}
       {!hideInsights && (
-        <InsightsCard userId={user.userId} updateCollapseState={props.updateCollapseState} />
+        <InsightsCard
+          userId={user.userId}
+          updateCollapseState={props.updateCollapseState}
+          title={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.title}
+          collapsableKey={UI_SETTINGS.cards.TRANSACTION_INSIGHTS.key}
+        />
       )}
       {showCommentEditor && (
         <CommentsCard
@@ -67,6 +74,8 @@ function UserDetails(props: Props) {
           updateCollapseState={props.updateCollapseState}
           onReload={props.onReload}
           commentType={'USER'}
+          title={UI_SETTINGS.cards.COMMENTS.title}
+          collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
         />
       )}
     </>

@@ -10,21 +10,15 @@ import KeyValueTag from '@/components/ui/KeyValueTag';
 
 interface Props {
   person: InternalConsumerUser;
-  collapsedByDefault?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
+  title: string;
+  collapsableKey: string;
 }
 
 export function LegalDocumentsTable(prop: Props) {
-  const { person, updateCollapseState, collapsedByDefault } = prop;
+  const { person, updateCollapseState, title, collapsableKey } = prop;
   return (
-    <Card.Root
-      header={{ title: 'Legal Documents', collapsedByDefault: collapsedByDefault || false }}
-      onCollapseChange={(isCollapsed) => {
-        if (updateCollapseState) {
-          updateCollapseState('legalDocuments', isCollapsed);
-        }
-      }}
-    >
+    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
       <div className={s.expandedRow}>
         <Table<LegalDocument & { i: number }>
           className={s.table}

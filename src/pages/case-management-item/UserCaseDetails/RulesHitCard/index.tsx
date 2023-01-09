@@ -15,10 +15,12 @@ import { useApiTime } from '@/utils/tracker';
 interface Props {
   caseItem: Case;
   updateCollapseState: (key: string, value: boolean) => void;
+  title: string;
+  collapsableKey: string;
 }
 
 export default function RulesHitCard(props: Props) {
-  const { caseItem, updateCollapseState } = props;
+  const { caseItem, updateCollapseState, title, collapsableKey } = props;
 
   const api = useApi();
   const caseId = caseItem.caseId as string;
@@ -36,10 +38,7 @@ export default function RulesHitCard(props: Props) {
   };
 
   return (
-    <Card.Root
-      header={{ title: 'Rules hits and transactions', collapsable: true, collapsedByDefault: true }}
-      onCollapseChange={(isCollapsed) => updateCollapseState('rulesHits', isCollapsed)}
-    >
+    <Card.Root header={{ title, collapsableKey }} updateCollapseState={updateCollapseState}>
       <Card.Section>
         <AsyncResourceRenderer resource={rulesQueryResults.data}>
           {(response) => {

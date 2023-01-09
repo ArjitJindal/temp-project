@@ -1,4 +1,5 @@
 import { Alert } from 'antd';
+import { UI_SETTINGS } from './ui-settings';
 import TransactionDetailsCard from '@/pages/case-management-item/TransactionCaseDetails/TransactionDetailsCard';
 import RulesHitCard from '@/pages/case-management-item/TransactionCaseDetails/RulesHitCard';
 import TransactionEventsCard from '@/pages/transactions-item/TransactionEventsCard';
@@ -79,17 +80,17 @@ function TransactionCaseDetails(props: Props) {
               updateCollapseState={updateCollapseState}
             />
             <UserDetailsCard
-              title="Origin (Sender) User Details"
+              title={UI_SETTINGS.cards.ORIGIN_USER_DETAILS.title}
               user={transaction.originUser}
               updateCollapseState={updateCollapseState}
-              collapseKey="originUserDetails"
+              collapsableKey={UI_SETTINGS.cards.ORIGIN_USER_DETAILS.key}
               onReload={props.onReload}
             />
             <UserDetailsCard
-              title="Destination (Receiver) User Details"
+              title={UI_SETTINGS.cards.DESTINATION_USER_DETAILS.title}
               user={transaction.destinationUser}
               updateCollapseState={updateCollapseState}
-              collapseKey="destinationUserDetails"
+              collapsableKey={UI_SETTINGS.cards.DESTINATION_USER_DETAILS.key}
               onReload={props.onReload}
             />
             <CommentsCard
@@ -102,6 +103,8 @@ function TransactionCaseDetails(props: Props) {
               updateCollapseState={updateCollapseState}
               onReload={props.onReload}
               commentType={'CASE'}
+              collapsableKey={UI_SETTINGS.cards.COMMENTS.key}
+              title={UI_SETTINGS.cards.COMMENTS.title}
             />
           </>
         );

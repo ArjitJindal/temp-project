@@ -326,21 +326,18 @@ export function Content(props: { userId: string }) {
 
 interface Props {
   userId: string | undefined;
-  collapsedByDefault?: boolean;
   updateCollapseState?: (key: string, value: boolean) => void;
+  title: string;
+  collapsableKey: string;
 }
 
 export default function UserTransactionHistoryTable(props: Props) {
-  const { userId, collapsedByDefault, updateCollapseState } = props;
+  const { userId, updateCollapseState, title, collapsableKey } = props;
   return (
     <Card.Root
       disabled={userId == null}
-      header={{ title: 'Transaction History', collapsedByDefault: collapsedByDefault ?? true }}
-      onCollapseChange={(isCollapsed) => {
-        if (updateCollapseState) {
-          updateCollapseState('userTransactionHistory', isCollapsed);
-        }
-      }}
+      header={{ title, collapsableKey }}
+      updateCollapseState={updateCollapseState}
     >
       {userId && <Content userId={userId} />}
     </Card.Root>
