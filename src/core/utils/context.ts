@@ -69,7 +69,9 @@ export async function getInitialContext(
     }
     return context
   } catch (e) {
-    winstonLogger.error(`Failed to initialize context`)
+    if (process.env.ENV !== 'local') {
+      winstonLogger.error(`Failed to initialize context`)
+    }
     return {}
   }
 }

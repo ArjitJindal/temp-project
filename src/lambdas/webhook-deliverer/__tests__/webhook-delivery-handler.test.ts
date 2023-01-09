@@ -1,10 +1,16 @@
+import 'aws-sdk-client-mock-jest'
 import { createHmac } from 'crypto'
 import { SQSEvent } from 'aws-lambda'
-import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager'
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from '@aws-sdk/client-secrets-manager'
 import express from 'express'
 import bodyParser from 'body-parser'
+import { AwsStub, mockClient } from 'aws-sdk-client-mock'
 import { WebhookDeliveryRepository } from '../../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../../services/webhook/repositories/webhook-repository'
+import { webhookDeliveryHandler as handler } from '../app'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { WebhookDeliveryAttempt } from '@/@types/openapi-internal/WebhookDeliveryAttempt'
@@ -59,31 +65,17 @@ function getExpectedPayload(deliveryTask: WebhookDeliveryTask): WebhookEvent {
 describe('Webhook delivery', () => {
   const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
   const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
-  const mockSecretsManagerSend = jest.fn().mockReturnValue({
-    SecretString: JSON.stringify({
-      [MOCK_SECRET_KEY]: null,
-    }),
-  })
-  let webhookDeliveryHandler: (event: SQSEvent) => void
+  const webhookDeliveryHandler = handler as any as (event: SQSEvent) => void
+  let smMock: AwsStub<any, any>
 
-  beforeAll(async () => {
-    process.env.WEBHOOK_REQUEST_TIMEOUT_SEC = '2'
-    jest.mock('@aws-sdk/client-secrets-manager', () => {
-      return {
-        ...jest.requireActual('@aws-sdk/client-secrets-manager'),
-        SecretsManagerClient: class {
-          async send(command: GetSecretValueCommand) {
-            return mockSecretsManagerSend(command)
-          }
-        },
-      }
-    })
-    webhookDeliveryHandler = (await import('../app'))
-      .webhookDeliveryHandler as any as (event: SQSEvent) => void
-  })
-
-  afterEach(() => {
-    mockSecretsManagerSend.mockClear()
+  beforeEach(() => {
+    smMock = mockClient(SecretsManagerClient)
+      .on(GetSecretValueCommand)
+      .resolves({
+        SecretString: JSON.stringify({
+          [MOCK_SECRET_KEY]: null,
+        }),
+      })
   })
 
   describe('Enabled webhook', () => {
@@ -130,8 +122,7 @@ describe('Webhook delivery', () => {
       const expectedPayload = getExpectedPayload(deliveryTask)
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
 
-      const command = mockSecretsManagerSend.mock
-        .calls[0][0] as GetSecretValueCommand
+      const command = smMock.commandCalls(GetSecretValueCommand)[0].firstArg
       expect(command.input.SecretId).toEqual(
         `${TEST_TENANT_ID}/webhooks/${deliveryTask.webhookId}`
       )

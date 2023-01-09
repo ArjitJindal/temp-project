@@ -2405,6 +2405,80 @@ paths:
           in: path
           required: true
       operationId: get-sanctions-search-$-searchId
+  /live-testing:
+    post:
+      summary: Create new live testing task
+      operationId: post-live-testing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                required:
+                  - taskId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiveTestPulseParameters'
+    get:
+      summary: Get live testing tasks
+      operationId: get-live-testing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LiveTestPulseTask'
+                required:
+                  - total
+                  - data
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+          required: true
+        - schema:
+            $ref: '#/components/schemas/LiveTestType'
+          in: query
+          name: type
+          required: true
+  '/live-testing/{taskId}':
+    get:
+      summary: Get a live testing task by test ID
+      operationId: get-live-testing-test-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiveTestPulseTask'
+      parameters: []
+    parameters:
+      - schema:
+          type: string
+        name: taskId
+        in: path
+        required: true
 components:
   schemas:
     KrsScore:
@@ -3181,16 +3255,16 @@ components:
         statuses:
           type: array
           items:
-            $ref: '#/components/schemas/FileImportStatusChange'
+            $ref: '#/components/schemas/TaskStatusChange'
       required:
         - _id
         - type
         - s3Key
         - filename
         - statuses
-    FileImportStatusChange:
+    TaskStatusChange:
       type: object
-      title: FileImportStatusChange
+      title: TaskStatusChange
       enum:
         - IN_PROGRESS
         - PENDING
@@ -4302,6 +4376,83 @@ components:
         - listType
         - subtype
         - data
+    LiveTestPulseParameters:
+      title: LiveTestPulseParameters
+      type: object
+      x-stoplight:
+        id: 9d4bfe04d1868
+      properties:
+        type:
+          $ref: '#/components/schemas/LiveTestType'
+        classificationValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskClassificationScore'
+        parameterAttributeRiskValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParameterAttributeRiskValues'
+        sampling:
+          $ref: '#/components/schemas/LiveTestPulseSampling'
+      required:
+        - type
+        - classificationValues
+        - parameterAttributeRiskValues
+    LiveTestPulseSampling:
+      title: LiveTestPulseSampling
+      type: object
+      properties:
+        usersCount:
+          type: integer
+      x-stoplight:
+        id: yl7w6xm5dlwif
+    LiveTestPulseTask:
+      title: LiveTestPulseTask
+      x-stoplight:
+        id: 5e85cbedf67fd
+      type: object
+      properties:
+        taskId:
+          type: string
+        createdAt:
+          type: number
+        type:
+          $ref: '#/components/schemas/LiveTestType'
+        parameters:
+          $ref: '#/components/schemas/LiveTestPulseParameters'
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/LiveTestPulseStatistics'
+        latestStatus:
+          $ref: '#/components/schemas/TaskStatusChange'
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatusChange'
+      required:
+        - type
+        - parameters
+        - progress
+        - statistics
+        - latestStatus
+        - statuses
+    LiveTestPulseStatistics:
+      type: object
+      title: LiveTestPulseStatistics
+      x-stoplight:
+        id: 7f7f5d4cde104
+    LiveTestType:
+      title: LiveTestType
+      x-stoplight:
+        id: n6wn9hbaar1cs
+      type: string
+      enum:
+        - PULSE
   securitySchemes:
     Authorization:
       type: http

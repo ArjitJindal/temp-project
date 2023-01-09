@@ -808,6 +808,15 @@ export class CdkTarponStack extends cdk.Stack {
     batchJobStateMachine.grantStartExecution(jobTriggerConsumerAlias)
     jobTriggerConsumerAlias.addEventSource(new SqsEventSource(batchJobQueue))
 
+    /* Live Testing */
+    const { alias: liveTestingHandlerAlias } = this.createFunction(
+      {
+        name: StackConstants.CONSOLE_API_LIVE_TESTING_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+    this.grantMongoDbAccess(liveTestingHandlerAlias)
+
     /*
      * Hammerhead console functions
      */

@@ -171,6 +171,10 @@ export const AUDITLOG_COLLECTION = (tenantId: string) => {
   return `${tenantId}-auditlog`
 }
 
+export const LIVE_TESTING_TASK_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-live-testing-task`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 export const MONTH_DATE_FORMAT = '%Y-%m'

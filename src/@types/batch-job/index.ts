@@ -1,4 +1,5 @@
 import { CredentialsOptions } from 'aws-sdk/lib/credentials'
+import { LiveTestPulseParameters } from '../openapi-internal/LiveTestPulseParameters'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 
 /* File Import */
@@ -14,6 +15,14 @@ export type FileImportBatchJob = {
   awsCredentials?: CredentialsOptions
 }
 
+/* Live Testing (Pulse) */
+type LiveTestingPulseBatchJobType = 'LIVE_TESTING_PULSE'
+export type LiveTestingPulseBatchJob = {
+  type: LiveTestingPulseBatchJobType
+  tenantId: string
+  parameters: LiveTestPulseParameters & { taskId: string }
+}
+
 /* Placeholder */
 type PlaceholderBatchJobType = 'PLACEHOLDER'
 export type PlaceholderBatchJob = {
@@ -21,5 +30,11 @@ export type PlaceholderBatchJob = {
   tenantId: string
 }
 
-export type BatchJobType = FileImportBatchJobType | PlaceholderBatchJobType
-export type BatchJob = FileImportBatchJob | PlaceholderBatchJob
+export type BatchJobType =
+  | FileImportBatchJobType
+  | LiveTestingPulseBatchJobType
+  | PlaceholderBatchJobType
+export type BatchJob =
+  | FileImportBatchJob
+  | LiveTestingPulseBatchJob
+  | PlaceholderBatchJob
