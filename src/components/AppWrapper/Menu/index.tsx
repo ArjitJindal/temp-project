@@ -15,6 +15,8 @@ import {
 import { Link } from 'react-router-dom';
 import { ItemType } from 'antd/es/menu/hooks/useItems';
 import { matchPath, useLocation } from 'react-router';
+import { useContext, useEffect } from 'react';
+import { SideBarContext } from '../Providers/SidebarProvider';
 import TeamOutlined from './Team_Outlined.react.svg';
 import Dashboard from './Dashboard.react.svg';
 import Table from './Table.react.svg';
@@ -117,6 +119,14 @@ export default function Menu(props: {
   const routes = useRoutes();
   const location = useLocation();
 
+  const sideBarCollapseContext = useContext(SideBarContext);
+
+  useEffect(() => {
+    if (sideBarCollapseContext.collapseSideBar === 'AUTOMATIC') {
+      onChangeCollapsed(true);
+    }
+  }, [sideBarCollapseContext.collapseSideBar, onChangeCollapsed]);
+
   const selectedKeys = getSelectedKeys(routes, location.pathname);
   return (
     <div className={s.root}>
@@ -148,6 +158,7 @@ export default function Menu(props: {
           {
             key: 'button',
             onClick: () => {
+              sideBarCollapseContext.setCollapseSideBar('MANUAL');
               return onChangeCollapsed(!isCollapsed);
             },
             icon: isCollapsed ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />,

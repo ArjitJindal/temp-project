@@ -23,6 +23,7 @@ import {
   ExpandableProvider,
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
 
 function CaseManagementItemPage() {
   const { id: caseId } = useParams<'id'>() as { id: string };
@@ -30,6 +31,7 @@ function CaseManagementItemPage() {
   const measure = useApiTime();
   const queryClient = useQueryClient();
   usePageViewTracker('Single Case Management Item Page');
+  useCloseSidebarByDefault();
 
   const queryResults = useQuery(
     CASES_ITEM(caseId),
