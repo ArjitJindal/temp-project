@@ -63,7 +63,7 @@ export default function NewListDrawer(props: Props) {
                 description: values.description,
                 status: values.status,
               },
-              items: values.values.map((key) => ({ key })),
+              items: values.values?.map((key) => ({ key })) ?? [],
             },
           },
         });
