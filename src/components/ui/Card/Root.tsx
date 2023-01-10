@@ -49,7 +49,7 @@ const Root = (props: Props) => {
     if (updateCollapseState && collapsableKey) {
       updateCollapseState(collapsableKey, isCollapsed);
     }
-  }, [collapsableKey, isCollapsed, updateCollapseState]);
+  }, [isCollapsed]);
 
   return (
     <div className={cn(s.root, className, disabled && s.disabled)}>

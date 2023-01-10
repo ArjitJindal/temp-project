@@ -72,7 +72,7 @@ function CaseManagementItemPage() {
   );
 
   return (
-    <Card.Root>
+    <Card.Root collapsable={false}>
       <AsyncResourceRenderer resource={queryResults.data}>
         {(caseItem) => (
           <>
