@@ -1,4 +1,3 @@
-import Avatar from '../../../pages/transactions-item/UserDetails/Avatar/index';
 import Id from '../Id';
 import s from './index.module.less';
 import { InternalBusinessUser, InternalConsumerUser, MissingUser } from '@/apis';
@@ -16,20 +15,19 @@ export default function UserIdNameCard(props: Props) {
   return (
     <>
       <div className={s.user}>
-        <Avatar name={user ? getUserName(user) : undefined} />
-        <div className={s.id}>
-          {user && (
-            <Id to={getUserLink(user)} alwaysShowCopy>
-              {user.userId}
-            </Id>
-          )}
-        </div>
         <div className={s.name}>
           {user ? getUserName(user) : 'Unknown user'}
           {showRiskLevel && (
             <div className={s.risk}>
               DRS Risk Level : {user?.userId && <UserRiskTag userId={user?.userId} />}
             </div>
+          )}
+        </div>
+        <div className={s.id}>
+          {user && (
+            <Id to={getUserLink(user)} alwaysShowCopy>
+              {user.userId}
+            </Id>
           )}
         </div>
       </div>

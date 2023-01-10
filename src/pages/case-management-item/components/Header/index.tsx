@@ -1,137 +1,92 @@
-import React, { useCallback, useState } from 'react';
-import { message, Tag } from 'antd';
+import React from 'react';
+import { Tag } from 'antd';
 import _ from 'lodash';
 import s from './index.module.less';
-import { Case } from '@/apis';
+import SubHeader from './SubHeader';
+import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
-import UserShared2LineIcon from '@/components/ui/icons/Remix/user/user-shared-2-line.react.svg';
 import BriefcaseLineIcon from '@/components/ui/icons/Remix/business/briefcase-line.react.svg';
-import FileListLineIcon from '@/components/ui/icons/Remix/document/file-list-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
-import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
-import { useAuth0User } from '@/utils/user-utils';
-import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import CaseTypeTag from '@/components/ui/CaseTypeTag';
 import { FalsePositiveTag } from '@/pages/case-management/components/FalsePositiveTag';
+import CommentButton from '@/components/CommentButton';
 
 interface Props {
   caseItem: Case;
   onReload: () => void;
-  showCloseButton?: boolean;
+  onCommentAdded: (newComment: Comment) => void;
 }
 
 export default function Header(props: Props) {
-  const { caseItem, onReload, showCloseButton = true } = props;
+  const { caseItem, onReload, onCommentAdded } = props;
   const { caseId } = caseItem;
 
   const api = useApi();
-  const user = useAuth0User();
-  const currentUserId = user.userId ?? undefined;
 
-  const [assignments, setAssignments] = useState(caseItem.assignments || []);
-
-  const handleUpdateCase = useCallback(
-    async (assignments) => {
-      const hideMessage = message.loading(`Saving...`, 0);
-      try {
-        await api.postCases({
-          CasesUpdateRequest: {
-            caseIds: caseId ? [caseId] : [],
-            updates: {
-              assignments,
-            },
-          },
-        });
-        message.success('Saved');
-      } catch (e) {
-        message.error('Failed to save');
-      } finally {
-        hideMessage();
-      }
-    },
-    [api, caseId],
-  );
-
-  const handleUpdateAssignments = useCallback(
-    (assignees: string[]) => {
-      const newAssignments = assignees.map((assigneeUserId) => ({
-        assignedByUserId: currentUserId as string,
-        assigneeUserId,
-        timestamp: Date.now(),
-      }));
-      setAssignments(newAssignments);
-      handleUpdateCase(newAssignments);
-    },
-    [handleUpdateCase, currentUserId],
-  );
-
-  const statusChanges = caseItem.statusChanges ?? [];
   return (
-    <>
-      <EntityHeader
-        idTitle={'Case ID'}
-        tag={
-          caseItem.falsePositiveDetails &&
-          caseItem.caseId &&
-          caseItem.falsePositiveDetails.isFalsePositive && (
-            <FalsePositiveTag
-              caseIds={[caseItem.caseId]}
-              onSaved={() => {
-                onReload();
-              }}
-              newCaseStatus={caseItem.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
-              confidence={caseItem.falsePositiveDetails.confidenceScore}
-            />
-          )
-        }
-        id={caseItem.caseId}
-      >
-        <div className={s.items}>
-          <Form.Layout.Label icon={<UserShared2LineIcon />} title={'Assigned to'}>
-            <AssigneesDropdown
-              assignments={assignments}
-              editing={true}
-              onChange={handleUpdateAssignments}
-            />
-          </Form.Layout.Label>
-          <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Type'}>
-            <CaseTypeTag caseType={caseItem.caseType} />
-          </Form.Layout.Label>
-          <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
-            <Tag
-              className={s.caseStatusTag}
-              color={caseItem.caseStatus === 'CLOSED' ? 'success' : 'warning'}
-            >
-              {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
-            </Tag>
-          </Form.Layout.Label>
-          {showCloseButton && (
-            <CasesStatusChangeButton
-              caseIds={[caseId as string]}
-              newCaseStatus={
-                caseItem.caseStatus === 'OPEN' || caseItem.caseStatus === 'REOPENED'
-                  ? 'CLOSED'
-                  : 'REOPENED'
+    <EntityHeader
+      idTitle={'Case ID'}
+      tag={
+        caseItem.falsePositiveDetails &&
+        caseItem.caseId &&
+        caseItem.falsePositiveDetails.isFalsePositive && (
+          <FalsePositiveTag
+            caseIds={[caseItem.caseId]}
+            onSaved={() => {
+              // todo: implement in-place update instead of reloading
+              onReload();
+            }}
+            newCaseStatus={caseItem.caseStatus === 'OPEN' ? 'CLOSED' : 'REOPENED'}
+            confidence={caseItem.falsePositiveDetails.confidenceScore}
+          />
+        )
+      }
+      id={caseItem.caseId}
+      buttons={
+        <>
+          <CommentButton
+            onSuccess={onCommentAdded}
+            submitRequest={async (commentFormValues) => {
+              if (caseItem.caseId == null) {
+                throw new Error(`Case ID is not defined`);
               }
-              onSaved={() => {
-                onReload();
-              }}
-            />
-          )}
-        </div>
-      </EntityHeader>
-      {caseItem.caseStatus === 'CLOSED' && statusChanges.length > 0 && (
-        <div className={s.closingReason}>
-          <Form.Layout.Label icon={<FileListLineIcon />} title={'Reason for closing'}>
-            <ClosingReasonTag
-              closingReasons={statusChanges[statusChanges.length - 1].reason}
-              otherReason={statusChanges[statusChanges.length - 1].otherReason}
-            />
-          </Form.Layout.Label>
-        </div>
-      )}
-    </>
+              const commentData = {
+                Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+              };
+              return await api.postCaseComments({
+                caseId: caseItem.caseId,
+                ...commentData,
+              });
+            }}
+          />
+          <CasesStatusChangeButton
+            caseIds={[caseId as string]}
+            newCaseStatus={
+              caseItem.caseStatus === 'OPEN' || caseItem.caseStatus === 'REOPENED'
+                ? 'CLOSED'
+                : 'REOPENED'
+            }
+            onSaved={() => {
+              onReload();
+            }}
+          />
+        </>
+      }
+      subHeader={<SubHeader caseItem={caseItem} />}
+    >
+      <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Type'}>
+        <CaseTypeTag caseType={caseItem.caseType} />
+      </Form.Layout.Label>
+      <Form.Layout.Label icon={<BriefcaseLineIcon />} title={'Case Status'}>
+        <Tag
+          className={s.caseStatusTag}
+          color={caseItem.caseStatus === 'CLOSED' ? 'success' : 'warning'}
+        >
+          {_.capitalize(caseItem.caseStatus ? caseItem.caseStatus : 'OPEN')}
+        </Tag>
+      </Form.Layout.Label>
+    </EntityHeader>
   );
 }

@@ -95,7 +95,6 @@ function TransactionCaseDetails(props: Props) {
             />
             <CommentsCard
               id={caseItem.caseId}
-              caseStatus={caseItem.caseStatus}
               comments={caseItem.comments ?? []}
               onCommentsUpdate={(newComments) => {
                 onCaseUpdate({ ...caseItem, comments: newComments });

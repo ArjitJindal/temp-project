@@ -1,12 +1,7 @@
 @import '../ui/colors.less';
+@import '../ui/z-indexes.less';
 @collapsed-menu-width: 80px;
 @open-menu-width: 250px;
-
-// header z-index shouldn't be greater than 1000 as it's the z-index of modal and drawer
-@header-z-index: 999;
-// popover should be lower than header
-@popover-z-index: 998;
-@menu-z-index: 997;
 
 :root {
   .root {
@@ -33,7 +28,6 @@
     align-items: center;
     justify-content: space-between;
     width: 100vw;
-    height: 48px;
     padding: 0 16px;
     overflow: auto;
     color: #fff;

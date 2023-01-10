@@ -17,9 +17,9 @@
 }
 
 .fileListContainer {
-  display: grid;
-  grid-auto-flow: column;
-  gap: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .fileListText {
@@ -32,14 +32,18 @@
   line-height: 0px;
   border-radius: 100%;
   border: 0;
+  cursor: pointer;
 }
 
 .fileAttachmentButton {
-  background-color: rgba(223, 230, 242, 0.45) !important;
-  padding: 0.5rem !important;
+  align-items: center;
+  display: flex;
+  background-color: rgba(223, 230, 242, 0.45);
+  padding: 0.5rem;
   border-radius: 0.5rem;
-  border-color: @fr-colors-purpleGray !important;
-  border-style: solid !important;
-  border-width: 1px !important;
-  width: fit-content !important;
+  border-color: @fr-colors-purpleGray;
+  border-style: solid;
+  border-width: 1px;
+  width: fit-content;
+  flex-wrap: nowrap;
 }

@@ -49,7 +49,7 @@ export default function UserStateEditor({ user }: Props) {
   );
   return (
     <Select
-      style={{ width: 300 }}
+      style={{ minWidth: 140 }}
       allowClear
       options={USER_STATES.map((state) => ({ value: state, label: state }))}
       value={userStateDetails?.state}

@@ -1,5 +1,5 @@
-import { Row, Space } from 'antd';
-import { PaperClipOutlined, CloseCircleFilled } from '@ant-design/icons';
+import { Space } from 'antd';
+import { CloseCircleFilled, PaperClipOutlined } from '@ant-design/icons';
 import filesize from 'filesize';
 import COLORS from '../ui/colors';
 import s from './styles.module.less';
@@ -18,10 +18,13 @@ export const FilesList: React.FC<Props> = ({
   removeFile,
   showDeleteButton = false,
 }) => {
+  if (files.length === 0) {
+    return <></>;
+  }
   return (
     <div className={showGreyBackground ? s.fileListContainer : ''}>
       {files.map((file) => (
-        <Row align="middle" key={file.s3Key} className={s.fileAttachmentButton}>
+        <div key={file.s3Key} className={s.fileAttachmentButton}>
           <Space>
             <PaperClipOutlined style={{ color: COLORS.purpleGray.base }} />
             <a className={`${showGreyBackground ? s.fileListText : ''}`} href={file.downloadLink}>
@@ -39,7 +42,7 @@ export const FilesList: React.FC<Props> = ({
               <CloseCircleFilled style={{ color: COLORS.purpleGray.base }} />
             </button>
           )}
-        </Row>
+        </div>
       ))}
     </div>
   );

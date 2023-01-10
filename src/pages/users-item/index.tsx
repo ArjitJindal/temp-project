@@ -1,13 +1,13 @@
 import _ from 'lodash';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import { useI18n } from '@/locales';
 import PageWrapper from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
-import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
-import { ApiException, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { InternalBusinessUser, InternalConsumerUser, Comment } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/common/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -18,63 +18,28 @@ import {
   ExpandableProvider,
 } from '@/components/AppWrapper/Providers/ExpandableProvider';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import { useQuery } from '@/utils/queries/hooks';
 import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
+import { USERS_ITEM } from '@/utils/queries/keys';
 
 function UserItem() {
   const { list, id } = useParams<'list' | 'id'>(); // todo: handle nulls properly
   usePageViewTracker('User Item');
-  const [currentItem, setCurrentItem] = useState<
-    AsyncResource<InternalConsumerUser | InternalBusinessUser>
-  >(init());
   const api = useApi();
   const measure = useApiTime();
-  const handleReload = useCallback(
-    (list: string | undefined, id: string | undefined) => {
-      if (id == null || id === 'all') {
-        setCurrentItem(init());
-        return function () {};
+  const queryClient = useQueryClient();
+
+  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
+    USERS_ITEM(id as string),
+    () => {
+      if (id == null) {
+        throw new Error(`Id is not defined`);
       }
-      setCurrentItem(loading());
-      let isCanceled = false;
-
-      const request =
-        list === 'consumer'
-          ? measure(() => api.getConsumerUsersItem({ userId: id }), 'Consumer User Item')
-          : measure(() => api.getBusinessUsersItem({ userId: id }), 'Business User Item');
-      request
-        .then((user) => {
-          if (isCanceled) {
-            return;
-          }
-          setCurrentItem(success(user));
-        })
-        .catch((e) => {
-          if (isCanceled) {
-            return;
-          }
-          // todo: i18n
-          let message = 'Unknown error';
-          if (e instanceof ApiException && e.code === 404) {
-            message = `Unable to find user by id "${id}"`;
-          } else if (e instanceof Error && e.message) {
-            message = e.message;
-          }
-          setCurrentItem(failed(message));
-        });
-      return () => {
-        isCanceled = true;
-      };
+      return list === 'consumer'
+        ? measure(() => api.getConsumerUsersItem({ userId: id }), 'Consumer User Item')
+        : measure(() => api.getBusinessUsersItem({ userId: id }), 'Business User Item');
     },
-    [api, measure],
   );
-
-  useEffect(() => {
-    return handleReload(list, id);
-  }, [list, id, handleReload]);
-
-  const onReload = useCallback(() => {
-    handleReload(list, id);
-  }, [list, id, handleReload]);
 
   const [collapseState, setCollapseState] = useState<Record<string, boolean>>({});
 
@@ -95,17 +60,33 @@ function UserItem() {
   );
 
   const handleUserUpdate = (userItem: InternalConsumerUser | InternalBusinessUser) => {
-    setCurrentItem(success(userItem));
+    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+      USERS_ITEM(id as string),
+      userItem,
+    );
+  };
+
+  const handleNewComment = (newComment: Comment) => {
+    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+      USERS_ITEM(id as string),
+      (user) => {
+        if (user == null) {
+          return user;
+        }
+        return {
+          ...user,
+          comments: [...(user?.comments ?? []), newComment],
+        };
+      },
+    );
   };
 
   return (
     <Card.Root collapsable={false}>
-      <AsyncResourceRenderer resource={currentItem}>
+      <AsyncResourceRenderer resource={queryResult.data}>
         {(user) => (
           <>
-            <Card.Section>
-              <Header user={user} />
-            </Card.Section>
+            <Header user={user} onNewComment={handleNewComment} />
             <Button
               type={'text'}
               onClick={() =>
@@ -126,7 +107,7 @@ function UserItem() {
                 user={user}
                 updateCollapseState={updateCollapseState}
                 onUserUpdate={handleUserUpdate}
-                onReload={onReload}
+                onReload={queryResult.refetch}
                 uiSettings={UI_SETTINGS}
               />
             </Card.Section>

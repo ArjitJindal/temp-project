@@ -1,8 +1,10 @@
 import * as Ant from 'antd';
+import React from 'react';
 import styles from './index.module.less';
 import { Comment as ApiComment } from '@/apis';
 import { useUser } from '@/utils/user-utils';
 import { FilesList } from '@/components/files/FilesList';
+import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 
 interface Props {
   deletingCommentIds: string[];
@@ -19,7 +21,9 @@ export default function Comment(props: Props) {
     <Ant.Comment
       content={
         <>
-          <div className={styles.commentBody}>{comment.body}</div>
+          <div className={styles.commentBody}>
+            <MarkdownViewer value={comment.body} />
+          </div>
           <div className={styles.filesListContainer}>
             <FilesList files={comment.files ? comment.files : []} showGreyBackground={true} />
           </div>

@@ -52,7 +52,6 @@ function UserCaseDetails(props: Props) {
           onCaseUpdate({ ...caseItem, comments: newComments });
         }}
         updateCollapseState={props.updateCollapseState}
-        caseStatus={caseItem.caseStatus}
         onReload={props.onReload}
         commentType={'CASE'}
         title={UI_SETTINGS.cards.COMMENTS.title}

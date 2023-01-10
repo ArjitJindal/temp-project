@@ -10,7 +10,9 @@ interface ExtraProps {
   analyticsName?: string;
 }
 
-export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & ExtraProps) {
+type Props = Omit<AntButtonProps, keyof ExtraProps> & ExtraProps;
+
+function Button(props: Props, ref: React.Ref<HTMLElement>) {
   const { type, icon, size, children, analyticsName: _analyticsName, ...rest } = props;
   const buttonTracker = useButtonTracker();
 
@@ -25,6 +27,7 @@ export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & E
 
   return (
     <AntButton
+      ref={ref}
       size={size}
       type={type === 'skeleton' ? 'default' : type}
       className={cn(s.root, s[`size-${size}`], {
@@ -38,3 +41,10 @@ export default function Button(props: Omit<AntButtonProps, keyof ExtraProps> & E
     </AntButton>
   );
 }
+
+const component: React.FunctionComponent<
+  Props & {
+    ref?: React.Ref<HTMLElement>;
+  }
+> = React.forwardRef<HTMLElement>(Button);
+export default component;

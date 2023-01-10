@@ -1,12 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import ReactDOM from 'react-dom';
 import { List, message } from 'antd';
 import Comment from './Comment';
-import FixedCommentEditor from './FixedCommentEditor';
 import * as Card from '@/components/ui/Card';
 import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
-import { CaseStatus, Comment as TransactionComment } from '@/apis';
+import { Comment as TransactionComment } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 
 interface Props {
@@ -14,7 +12,6 @@ interface Props {
   comments: Array<TransactionComment>;
   onCommentsUpdate: (newComments: TransactionComment[]) => void;
   updateCollapseState?: (key: string, value: boolean) => void;
-  caseStatus?: CaseStatus;
   onReload: () => void;
   commentType: 'CASE' | 'USER';
   collapsableKey: string;
@@ -26,7 +23,6 @@ export default function CommentsCard(props: Props) {
     comments,
     id,
     onCommentsUpdate,
-    caseStatus,
     updateCollapseState,
     commentType,
     collapsableKey,
@@ -37,6 +33,7 @@ export default function CommentsCard(props: Props) {
   const [deletingCommentIds, setDeletingCommentIds] = useState<string[]>([]);
   const api = useApi();
 
+  // todo: use mutation instead, implement cache update
   const handleDeleteComment = useCallback(
     async (commentId: string, id: string, commentType: string) => {
       try {
@@ -56,18 +53,12 @@ export default function CommentsCard(props: Props) {
     [api, comments, onCommentsUpdate],
   );
 
-  const handleCommentAdded = useCallback(
-    (newComment: TransactionComment) => {
-      onCommentsUpdate([...comments, newComment]);
-    },
-    [onCommentsUpdate, comments],
-  );
-
   return (
     <>
       <Card.Root
         header={{ title: `${title} (${comments.length})`, collapsableKey }}
         updateCollapseState={updateCollapseState}
+        disabled={comments.length === 0}
       >
         <Card.Section>
           {comments.length > 0 && (
@@ -90,18 +81,6 @@ export default function CommentsCard(props: Props) {
           )}
         </Card.Section>
       </Card.Root>
-      {id &&
-        ReactDOM.createPortal(
-          <FixedCommentEditor
-            id={id}
-            user={user}
-            handleCommentAdded={handleCommentAdded}
-            caseStatus={caseStatus}
-            onReload={props.onReload}
-            commentType={commentType}
-          />,
-          document.getElementById('page-wrapper-root') as HTMLElement,
-        )}
     </>
   );
 }

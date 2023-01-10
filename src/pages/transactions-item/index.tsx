@@ -86,30 +86,28 @@ export default function TransactionsItem() {
         <AsyncResourceRenderer resource={currentItem}>
           {(transaction) => (
             <>
-              <Card.Section direction="horizontal" spacing="double">
-                <EntityHeader id={transaction.transactionId} idTitle="Transaction ID">
-                  <Form.Layout.Label icon={<TimerLineIcon />} title="Transaction Time">
-                    {dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+              <EntityHeader id={transaction.transactionId} idTitle="Transaction ID">
+                <Form.Layout.Label icon={<TimerLineIcon />} title="Transaction Time">
+                  {dayjs(transaction.timestamp).format(DEFAULT_DATE_TIME_FORMAT)}
+                </Form.Layout.Label>
+                <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction State">
+                  <TransactionState transactionState={transaction.transactionState} />
+                </Form.Layout.Label>
+                <Form.Layout.Label icon={<RestartLineIcon />} title="Rule action">
+                  <RuleActionStatus ruleAction={transaction.status} />
+                </Form.Layout.Label>
+                <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
+                  <TransactionTypeTag transactionType={transaction.type} />
+                </Form.Layout.Label>
+                <Form.Layout.Label icon={<FileLineIcon />} title="Reference">
+                  {transaction.reference}
+                </Form.Layout.Label>
+                <Feature name="PULSE_ARS_CALCULATION">
+                  <Form.Layout.Label icon={<HospitalIcon />} title={'Action Risk Score'}>
+                    <ActionRiskDisplay transactionId={transaction.transactionId!} />
                   </Form.Layout.Label>
-                  <Form.Layout.Label icon={<RestartLineIcon />} title="Transaction State">
-                    <TransactionState transactionState={transaction.transactionState} />
-                  </Form.Layout.Label>
-                  <Form.Layout.Label icon={<RestartLineIcon />} title="Rule action">
-                    <RuleActionStatus ruleAction={transaction.status} />
-                  </Form.Layout.Label>
-                  <Form.Layout.Label icon={<TransactionIcon />} title="Transaction Type">
-                    <TransactionTypeTag transactionType={transaction.type} />
-                  </Form.Layout.Label>
-                  <Form.Layout.Label icon={<FileLineIcon />} title="Reference">
-                    {transaction.reference}
-                  </Form.Layout.Label>
-                  <Feature name="PULSE_ARS_CALCULATION">
-                    <Form.Layout.Label icon={<HospitalIcon />} title={'Action Risk Score'}>
-                      <ActionRiskDisplay transactionId={transaction.transactionId!} />
-                    </Form.Layout.Label>
-                  </Feature>
-                </EntityHeader>
-              </Card.Section>
+                </Feature>
+              </EntityHeader>
               <Card.Section>
                 <SenderReceiverDetails transaction={transaction} />
                 <TransactionEventsCard events={transaction.events ?? []} />

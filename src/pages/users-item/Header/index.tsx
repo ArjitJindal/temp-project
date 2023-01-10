@@ -1,52 +1,44 @@
-import UserManualRiskPanel from '../UserDetails/UserManualRiskPanel';
-import KycStatusEditor from '../UserDetails/KycStatusEditor';
-import UserStateEditor from '../UserDetails/UserStateEditor';
-import KycRiskDisplay from '../UserDetails/KycRiskDisplay';
-import DynamicRiskDisplay from '../UserDetails/DynamicRiskDisplay';
-import s from './index.module.less';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
-import Spam2LineIcon from '@/components/ui/icons/Remix/system/spam-2-line.react.svg';
-import Calendar2LineIcon from '@/components/ui/icons/Remix/business/calendar-2-line.react.svg';
-import HospitalIcon from '@/components/ui/icons/Remix/buildings/hospital-line.react.svg';
-import * as Form from '@/components/ui/Form';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import React from 'react';
+import SubHeader from './SubHeader';
+import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import UserIdNameCard from '@/components/ui/UserIdNameCard';
+import CommentButton from '@/components/CommentButton';
+import { useApi } from '@/api';
+import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 
-export default function Header(props: { user: InternalConsumerUser | InternalBusinessUser }) {
-  const { user } = props;
+interface Props {
+  user: InternalConsumerUser | InternalBusinessUser;
+  onNewComment: (newComment: Comment) => void;
+}
+
+export default function Header(props: Props) {
+  const { user, onNewComment } = props;
   const userId = user.userId;
+
+  const api = useApi();
+
   return (
-    <div className={s.root}>
+    <EntityHeader
+      buttons={
+        <CommentButton
+          onSuccess={onNewComment}
+          submitRequest={async (commentFormValues) => {
+            if (userId == null) {
+              throw new Error(`User ID is not defined`);
+            }
+            const commentData = {
+              Comment: { body: commentFormValues.comment, files: commentFormValues.files },
+            };
+            return await api.postUserComments({
+              userId: userId,
+              ...commentData,
+            });
+          }}
+        />
+      }
+      subHeader={<SubHeader user={user} />}
+    >
       <UserIdNameCard user={user} />
-      <div className={s.items}>
-        <Feature name="PULSE">
-          <Form.Layout.Label icon={<Spam2LineIcon />} title={'DRS Risk Level'}>
-            <UserManualRiskPanel userId={userId} />
-          </Form.Layout.Label>
-        </Feature>
-        <div className={s.status}>
-          <Form.Layout.Label icon={<Calendar2LineIcon />} title={'KYC Status'}>
-            <KycStatusEditor user={user} />
-          </Form.Layout.Label>
-          <Form.Layout.Label icon={<Calendar2LineIcon />} title={'User Status'}>
-            <UserStateEditor user={user} />
-          </Form.Layout.Label>
-        </div>
-        <div>
-          <Feature name="PULSE_KRS_CALCULATION">
-            <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
-              <KycRiskDisplay userId={user.userId} />
-            </Form.Layout.Label>
-          </Feature>
-        </div>
-        <div>
-          <Feature name="PULSE_ARS_CALCULATION">
-            <Form.Layout.Label icon={<HospitalIcon />} title={'Dynamic Risk Score'}>
-              <DynamicRiskDisplay userId={user.userId} />
-            </Form.Layout.Label>
-          </Feature>
-        </div>
-      </div>
-    </div>
+    </EntityHeader>
   );
 }

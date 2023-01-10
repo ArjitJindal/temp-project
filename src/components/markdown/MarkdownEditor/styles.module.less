@@ -1,0 +1,60 @@
+@import 'src/components/ui/colors';
+
+.root {
+  flex: 1;
+
+  :global {
+    .toastui-editor-defaultUI {
+      border-color: @fr-colors-purpleGrayTint;
+
+      .ProseMirror {
+        padding: 16px;
+      }
+    }
+
+    .toastui-editor-toolbar {
+      height: 32px;
+    }
+
+    .toastui-editor-toolbar-item-wrapper {
+      margin: 0;
+    }
+
+    .toastui-editor-defaultUI-toolbar {
+      height: 32px;
+      border-bottom-color: @fr-colors-purpleGrayTint;
+      padding: 0 8px;
+
+      & button {
+        margin: 0;
+        transform: scale(0.75);
+      }
+    }
+
+    .toastui-editor-toolbar-group {
+      align-items: center;
+    }
+
+    .toastui-editor-toolbar-divider {
+      margin: 0 4px;
+    }
+
+    .toastui-editor-ww-container {
+      border-radius: 3px;
+    }
+  }
+}
+
+.toolButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .header {
+    font-size: 1.2em;
+  }
+
+  .attach {
+    width: 20px;
+  }
+}

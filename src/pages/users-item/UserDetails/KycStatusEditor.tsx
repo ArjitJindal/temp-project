@@ -47,7 +47,7 @@ export default function KycStatusEditor({ user }: Props) {
   );
   return (
     <Select
-      style={{ width: 300 }}
+      style={{ minWidth: 160 }}
       options={KYC_STATUSES.map((status) => ({ value: status, label: status }))}
       value={kycStatusDetails?.status}
       onChange={handleChangeKYCStatus}

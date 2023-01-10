@@ -1,8 +1,8 @@
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
 import { useQuery as useQueryRQ } from '@tanstack/react-query';
-import { UseQueryOptions } from '@tanstack/react-query/src/types';
+import { UseMutationResult, UseQueryOptions } from '@tanstack/react-query/src/types';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { failed, loading, success } from '@/utils/asyncResource';
+import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 
 export function useQuery<
@@ -43,6 +43,21 @@ export function useQuery<
     };
   }
   throw neverThrow(results, `Unhandled query result state. ${JSON.stringify(results)}`);
+}
+
+export function getMutationAsyncResource<
+  TData = unknown,
+  TError = unknown,
+  TVariables = unknown,
+  TContext = unknown,
+>(mutation: UseMutationResult<TData, TError, TVariables, TContext>): AsyncResource {
+  if (mutation.isLoading) {
+    return loading();
+  }
+  if (mutation.isError) {
+    return failed(getErrorMessage(mutation.error));
+  }
+  return success(null);
 }
 
 export type PaginatedData<T> = {

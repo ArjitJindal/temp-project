@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import _ from 'lodash';
 import Header from './components/Header';
-import { Case } from '@/apis';
+import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -49,6 +49,18 @@ function CaseManagementItemPage() {
     queryClient.setQueryData(CASES_ITEM(caseId), caseItem);
   };
 
+  const handleCommentAdded = (newComment: Comment) => {
+    queryClient.setQueryData<Case>(CASES_ITEM(caseId), (caseItem) => {
+      if (caseItem == null) {
+        return caseItem;
+      }
+      return {
+        ...caseItem,
+        comments: [...(caseItem?.comments ?? []), newComment],
+      };
+    });
+  };
+
   const onReload = () => {
     queryResults.refetch();
   };
@@ -76,9 +88,7 @@ function CaseManagementItemPage() {
       <AsyncResourceRenderer resource={queryResults.data}>
         {(caseItem) => (
           <>
-            <Card.Section>
-              <Header caseItem={caseItem} onReload={onReload} showCloseButton={false} />
-            </Card.Section>
+            <Header caseItem={caseItem} onReload={onReload} onCommentAdded={handleCommentAdded} />
             <div
               className="hide-on-print"
               style={{
