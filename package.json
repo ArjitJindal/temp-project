@@ -51,7 +51,8 @@
     "test:all": "npm run test:unit && npm run test:cypress",
     "tsc": "tsc --noEmit",
     "cypress:open": "cypress open",
-    "cypress:test:dev": "cypress run"
+    "cypress:test:dev": "cypress run",
+    "postinstall": "husky install"
   },
   "lint-staged": {
     "**/*.less": "stylelint --syntax less",
@@ -143,6 +144,7 @@
     "express-history-api-fallback": "^2.2.1",
     "fs-extra": "^10.1.0",
     "gh-pages": "^3.0.0",
+    "husky": "^8.0.3",
     "jest": "^29.2.2",
     "json-templates": "^4.2.0",
     "less": "^4.1.3",
