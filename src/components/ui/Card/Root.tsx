@@ -35,6 +35,12 @@ const Root = (props: Props) => {
   const expandableContext = useContext(ExpandableContext);
 
   useEffect(() => {
+    if (disabled && collapsableKey && updateCollapseState) {
+      updateCollapseState(collapsableKey, true);
+    }
+  }, [collapsableKey, disabled, updateCollapseState]);
+
+  useEffect(() => {
     if (!collapsable || !headerCollapsable || disabled) {
       return;
     }

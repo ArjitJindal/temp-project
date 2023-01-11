@@ -12,11 +12,7 @@ const ALL_UI_SETTINGS: UiSettingsType[] = [
   TRANSACTION_CASE_DETAILS_UI_SETTINGS,
   USER_CASE_DETAILS_UI_SETTINGS,
   USER_DETAILS_UI_SETTINGS,
-  // Add more ui settings here
 ];
-export const DEFAULT_EXPANDED_CARDS = ALL_UI_SETTINGS.flatMap((uiSettings) =>
-  Object.values(uiSettings.cards).map((card) => card.key),
-);
 
 function uiSettingsToTreeData(settings: UiSettingsType) {
   return {
@@ -31,7 +27,7 @@ export const DefaultViewsSettings = () => {
   const api = useApi();
 
   const [expandedCardKeys, setExpandedCardKeys] = useState<string[]>(
-    settings?.defaultViews?.expandedCards ?? DEFAULT_EXPANDED_CARDS,
+    settings?.defaultViews?.expandedCards ?? [],
   );
   const [saving, setSaving] = useState(false);
 
