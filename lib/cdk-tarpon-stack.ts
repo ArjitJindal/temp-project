@@ -337,8 +337,14 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: apiKeyGeneratorAlias } = this.createFunction(
       {
         name: StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
+        memorySize:
+          config.resource.API_KEY_GENERATOR_LAMBDA?.MEMORY_SIZE ??
+          config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        timeout: Duration.minutes(4),
+      }
     )
     this.grantMongoDbAccess(apiKeyGeneratorAlias)
     apiKeyGeneratorAlias.role?.attachInlinePolicy(

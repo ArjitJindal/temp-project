@@ -23,6 +23,10 @@ export type Config = {
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: number
     }
+    // Also used in sandbox for initial setup
+    API_KEY_GENERATOR_LAMBDA?: {
+      MEMORY_SIZE: number
+    }
     // API Key authorizer result is cached for 3600 seconds
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: number

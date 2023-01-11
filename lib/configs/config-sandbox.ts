@@ -16,6 +16,9 @@ export const config: Config = {
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: 256,
     },
+    API_KEY_GENERATOR_LAMBDA: {
+      MEMORY_SIZE: 512,
+    },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
     },
