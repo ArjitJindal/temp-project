@@ -72,7 +72,7 @@ export class RiskRepository {
     this.tenantId = tenantId
   }
 
-  async getKrsScore(userId: string): Promise<any> {
+  async getKrsScore(userId: string): Promise<KrsScore | null> {
     const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
@@ -88,7 +88,7 @@ export class RiskRepository {
     }
     delete krsScoreItem.PartitionKeyID
     delete krsScoreItem.SortKeyID
-    return krsScoreItem
+    return krsScoreItem as KrsScore
   }
 
   async createOrUpdateKrsScore(userId: string, score: number): Promise<any> {
@@ -145,6 +145,25 @@ export class RiskRepository {
       await handleLocalChangeCapture(primaryKey)
     }
     return score
+  }
+
+  async getArsScore(transactionId: string): Promise<ArsScore | null> {
+    try {
+      const getItemInput: AWS.DynamoDB.DocumentClient.GetItemInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1'),
+      }
+      const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+
+      if (!result.Item) {
+        return null
+      }
+
+      return result.Item as ArsScore
+    } catch (error) {
+      logger.error('Error getting ars score', error)
+      return null
+    }
   }
 
   async getDrsScore(userId: string): Promise<DrsScore | null> {
@@ -219,12 +238,11 @@ export class RiskRepository {
   }
 
   async createOrUpdateRiskClassificationConfig(
-    riskClassificationValues: any
+    riskClassificationValues: RiskClassificationScore[]
   ): Promise<RiskClassificationConfig> {
     const now = Date.now()
-    const newRiskClassificationValues: any = {
+    const newRiskClassificationValues: RiskClassificationConfig = {
       classificationValues: riskClassificationValues,
-      createdAt: riskClassificationValues.createdAt || now,
       updatedAt: now,
     }
     const putItemInput: AWS.DynamoDB.DocumentClient.PutItemInput = {

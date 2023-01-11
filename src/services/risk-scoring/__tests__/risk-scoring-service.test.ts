@@ -1,34 +1,25 @@
-import { updateDynamicRiskScores, updateInitialRiskScores } from '..'
+import { RiskScoringService } from '..'
 import { RiskRepository } from '../repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import {
-  getTestUser,
-  setUpConsumerUsersHooks,
-} from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { Feature } from '@/@types/openapi-internal/Feature'
-import { testRiskItem } from '@/test-utils/risk-item-utils'
+import {
+  TEST_ITERABLE_RISK_ITEM,
+  TEST_VARIABLE_RISK_ITEM,
+} from '@/test-utils/pulse-test-utils'
 
 const dynamoDb = getDynamoDbClient()
-
-const features: Feature[] = [
-  'PULSE',
-  'PULSE_KRS_CALCULATION',
-  'PULSE_ARS_CALCULATION',
-]
-
-withFeatureHook(features)
-
+withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
 dynamoDbSetupHook()
 
 const testUser1 = getTestUser({ userId: '1' })
 const testUser2 = getTestUser({ userId: '2' })
 const testTenantId = getTestTenantId()
 
-setUpConsumerUsersHooks(testTenantId, [testUser1, testUser2])
+setUpUsersHooks(testTenantId, [testUser1, testUser2])
 
 describe('Risk Scoring', () => {
   beforeAll(() => {
@@ -42,7 +33,8 @@ describe('Risk Scoring', () => {
 
   describe('Risk Scoring Tests', () => {
     it('should update inital the risk score of a user', async () => {
-      await updateInitialRiskScores(testTenantId, dynamoDb, testUser1)
+      const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+      await riskScoringService.updateInitialRiskScores(testUser1)
 
       const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
 
@@ -94,9 +86,12 @@ describe('Risk Scoring', () => {
       },
     })
 
-    await riskRepository.createOrUpdateParameterRiskItem(testRiskItem)
+    await riskRepository.createOrUpdateParameterRiskItem(
+      TEST_VARIABLE_RISK_ITEM
+    )
 
-    await updateDynamicRiskScores(testTenantId, dynamoDb, testTransaction1)
+    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    await riskScoringService.updateDynamicRiskScores(testTransaction1)
 
     const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
 
@@ -105,6 +100,64 @@ describe('Risk Scoring', () => {
         manualRiskLevel: 'VERY_LOW',
         isUpdatable: false,
         drsScore: 10,
+      })
+    )
+  })
+
+  it('VARIABLE risk factor', async () => {
+    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    const testTransaction = getTestTransaction({
+      originUserId: testUser1.userId,
+      destinationUserId: testUser2.userId,
+      originAmountDetails: {
+        country: 'IN',
+        transactionAmount: 10000000,
+        transactionCurrency: 'INR',
+      },
+    })
+    await riskRepository.createOrUpdateParameterRiskItem(
+      TEST_VARIABLE_RISK_ITEM
+    )
+    await riskScoringService.updateDynamicRiskScores(testTransaction)
+
+    const arsScore = await riskRepository.getArsScore(
+      testTransaction.transactionId
+    )
+
+    expect(arsScore).toEqual(
+      expect.objectContaining({
+        arsScore: 50,
+        originUserId: testUser1.userId,
+        destinationUserId: testUser2.userId,
+      })
+    )
+  })
+
+  it('ITERABLE risk factor', async () => {
+    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    const testTransaction = getTestTransaction({
+      originUserId: testUser1.userId,
+      destinationUserId: testUser2.userId,
+      originAmountDetails: {
+        country: 'IN',
+        transactionAmount: 10000000,
+        transactionCurrency: 'INR',
+      },
+    })
+    await riskRepository.createOrUpdateParameterRiskItem(
+      TEST_ITERABLE_RISK_ITEM
+    )
+    await riskScoringService.updateDynamicRiskScores(testTransaction)
+
+    const arsScore = await riskRepository.getArsScore(
+      testTransaction.transactionId
+    )
+
+    expect(arsScore).toEqual(
+      expect.objectContaining({
+        arsScore: 70,
+        originUserId: testUser1.userId,
+        destinationUserId: testUser2.userId,
       })
     )
   })

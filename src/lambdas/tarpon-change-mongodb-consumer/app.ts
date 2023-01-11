@@ -26,10 +26,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
-import {
-  updateDynamicRiskScores,
-  updateDynamicRiskScoresInCases,
-} from '@/services/risk-scoring'
+import { RiskScoringService } from '@/services/risk-scoring'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
 const sqs = new AWS.SQS()
@@ -60,13 +57,13 @@ async function transactionHandler(
     dynamoDb,
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
-
   const caseCreationService = new CaseCreationService(
     casesRepo,
     usersRepo,
     ruleInstancesRepo,
     transactionsRepo
   )
+  const riskScoringService = new RiskScoringService(tenantId, dynamoDb)
 
   const transactionId = transaction.transactionId
   let currentStatus: RuleAction | null = null
@@ -86,14 +83,12 @@ async function transactionHandler(
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
-      await updateDynamicRiskScores(tenantId, dynamoDb, transaction)
+      await riskScoringService.updateDynamicRiskScores(transaction)
 
     logger.info(`Calculation of ARS & DRS Completed`)
 
-    await updateDynamicRiskScoresInCases(
+    await casesRepo.updateDynamicRiskScores(
       transaction.transactionId,
-      mongoDb,
-      tenantId,
       originDrsScore,
       destinationDrsScore
     )

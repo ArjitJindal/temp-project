@@ -9,7 +9,7 @@ import {
 import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
-import { updateInitialRiskScores } from '@/services/risk-scoring'
+import { RiskScoringService } from '@/services/risk-scoring'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 
@@ -23,6 +23,7 @@ async function migrateTenant(tenant: Tenant | null, timestamp: number) {
   const mongoDb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const usersCollectionName = USERS_COLLECTION(tenant.id)
   const db = mongoDb.db()
+  const riskScoringService = new RiskScoringService(tenant.id, dynamodb)
 
   const usersBeforeTimestamp = await db
     .collection<User | Business>(usersCollectionName)
@@ -30,7 +31,7 @@ async function migrateTenant(tenant: Tenant | null, timestamp: number) {
     .toArray()
 
   for await (const user of usersBeforeTimestamp) {
-    await updateInitialRiskScores(tenant.id, dynamodb, user)
+    await riskScoringService.updateInitialRiskScores(user)
   }
 
   const dashboardStatsRepository = new DashboardStatsRepository(tenant.id, {

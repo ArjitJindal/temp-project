@@ -10,10 +10,7 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import {
-  getTestUser,
-  setUpConsumerUsersHooks,
-} from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 dynamoDbSetupHook()
 
@@ -31,7 +28,7 @@ describe('R-2 description formatting', () => {
     },
   ])
 
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({
       userId: '1',
       userDetails: {
@@ -76,7 +73,7 @@ describe('R-75 description formatting', () => {
     },
   ])
 
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({
       userId: '1',
       userDetails: {
@@ -132,7 +129,7 @@ describe('Core logic', () => {
   const user1DateOfBirth = dayjs().subtract(20, 'years')
   const user2DateOfBirth = dayjs().subtract(40, 'years')
 
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({
       userId: '1',
       userDetails: {

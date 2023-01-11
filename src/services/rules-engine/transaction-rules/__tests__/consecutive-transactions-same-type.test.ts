@@ -10,10 +10,7 @@ import {
   testRuleDescriptionFormatting,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import {
-  getTestUser,
-  setUpConsumerUsersHooks,
-} from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
 const TEST_TENANT_ID = getTestTenantId()
 
@@ -34,7 +31,7 @@ describe('Core logic', () => {
     },
   ])
 
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({ userId: '1-1' }),
     getTestUser({ userId: '2-1' }),
     getTestUser({ userId: '3-1' }),

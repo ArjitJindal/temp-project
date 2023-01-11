@@ -3610,20 +3610,10 @@ components:
           enum:
             - ITERABLE
             - VARIABLE
-        matchType:
-          type: string
-          enum:
-            - DIRECT
-            - ARRAY_MATCH
         targetIterableParameter:
           type: string
           enum:
             - generalDetails.countryOfNationality
-        riskScoreType:
-          type: string
-          enum:
-            - KRS
-            - ARS
       required:
         - parameter
         - isActive

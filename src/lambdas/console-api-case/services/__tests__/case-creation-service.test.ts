@@ -11,10 +11,7 @@ import {
   bulkVerifyTransactions,
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
-import {
-  getTestUser,
-  setUpConsumerUsersHooks,
-} from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -498,7 +495,7 @@ function setup(
       },
     ])
   }
-  setUpConsumerUsersHooks(tenantId, [TEST_USER_1, TEST_USER_2])
+  setUpUsersHooks(tenantId, [TEST_USER_1, TEST_USER_2])
 }
 
 function expectUserCase(

@@ -82,7 +82,6 @@ export class PulseAuditLogService {
             }
           }
         ),
-      riskScoreType: parameterRiskItemValue.riskScoreType,
     }
   }
 
@@ -137,7 +136,6 @@ export class PulseAuditLogService {
       logMetadata: {
         parameter: newParameterRiskItemValue.parameter,
         riskEntityType: newParameterRiskItemValue.riskEntityType,
-        riskScoreType: newParameterRiskItemValue.riskScoreType,
         targetIterableParameter:
           newParameterRiskItemValue.targetIterableParameter,
       },

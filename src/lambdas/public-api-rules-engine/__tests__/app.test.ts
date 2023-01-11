@@ -13,7 +13,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
   getTestBusiness,
   getTestUser,
-  setUpConsumerUsersHooks,
+  setUpUsersHooks,
 } from '@/test-utils/user-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
@@ -24,11 +24,11 @@ import {
 import { userHandler } from '@/lambdas/public-api-user-management/app'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { testRiskItem } from '@/test-utils/risk-item-utils'
+import { TEST_VARIABLE_RISK_ITEM } from '@/test-utils/pulse-test-utils'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
-import { updateInitialRiskScores } from '@/services/risk-scoring'
+import { RiskScoringService } from '@/services/risk-scoring'
 
 const features: Feature[] = [
   'PULSE',
@@ -42,7 +42,7 @@ dynamoDbSetupHook()
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [
+  setUpUsersHooks(TEST_TENANT_ID, [
     getTestUser({ userId: '1' }),
     getTestUser({ userId: '2' }),
   ])
@@ -423,19 +423,24 @@ describe('Risk Scoring Tests', () => {
   const riskRepository = new RiskRepository(TEST_TENANT_ID, { dynamoDb })
   const testUser1 = getTestUser({ userId: 'userId1' })
   const testUser2 = getTestUser({ userId: 'userId2' })
-  setUpConsumerUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
+  setUpUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
   it('check on isUpdatable is true risk score changes', async () => {
-    await riskRepository.createOrUpdateParameterRiskItem(testRiskItem)
-    await updateInitialRiskScores(TEST_TENANT_ID, dynamoDb, testUser1)
+    await riskRepository.createOrUpdateParameterRiskItem(
+      TEST_VARIABLE_RISK_ITEM
+    )
+    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, dynamoDb)
+    await riskScoringService.updateInitialRiskScores(testUser1)
     const riskScore = await riskRepository.getParameterRiskItem(
       'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
       'TRANSACTION'
     )
 
-    expect(riskScore).toEqual(testRiskItem)
+    expect(riskScore).toEqual(TEST_VARIABLE_RISK_ITEM)
     const allRiskScores = await riskRepository.getParameterRiskItems()
 
-    expect(allRiskScores).toEqual([expect.objectContaining(testRiskItem)])
+    expect(allRiskScores).toEqual([
+      expect.objectContaining(TEST_VARIABLE_RISK_ITEM),
+    ])
 
     const testTransaction1 = getTestTransaction({
       originUserId: testUser1.userId,
@@ -465,7 +470,9 @@ describe('Risk Scoring Tests', () => {
     )
   })
   it("shouldn't update the risk score on isUpdatable is false", async () => {
-    await riskRepository.createOrUpdateParameterRiskItem(testRiskItem)
+    await riskRepository.createOrUpdateParameterRiskItem(
+      TEST_VARIABLE_RISK_ITEM
+    )
     const testTransaction1 = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,

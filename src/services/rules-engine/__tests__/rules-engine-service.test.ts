@@ -9,10 +9,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
 import { getContextStorage } from '@/core/utils/context'
-import {
-  getTestUser,
-  setUpConsumerUsersHooks,
-} from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^([a-z0-9]){8}$/)
@@ -90,7 +87,7 @@ describe('Verify Transaction', () => {
         filters: { whitelistUsers: { userIds: ['1'] } },
       },
     ])
-    setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+    setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
     test('rule is not run', async () => {
       const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
@@ -330,7 +327,7 @@ describe('Verify Transaction Event', () => {
         },
       },
     ])
-    setUpConsumerUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+    setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
     test('returns risk-level action with PULSE feature flag', async () => {
       await getContextStorage().run({ features: ['PULSE'] }, async () => {

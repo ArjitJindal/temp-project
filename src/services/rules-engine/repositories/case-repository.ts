@@ -1189,4 +1189,22 @@ export class CaseRepository {
       })
       .toArray()
   }
+
+  public async updateDynamicRiskScores(
+    transactionId: string,
+    originDrsScore: number | undefined | null,
+    destinationDrsScore: number | undefined | null
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    await collection.updateOne(
+      { caseTransactionsIds: { $elemMatch: { $eq: transactionId } } },
+      {
+        $set: {
+          'caseUsers.originUserDrsScore': originDrsScore,
+          'caseUsers.destinationUserDrsScore': destinationDrsScore,
+        },
+      }
+    )
+  }
 }

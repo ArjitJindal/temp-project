@@ -1,5 +1,6 @@
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
+import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
@@ -63,6 +64,15 @@ export function getTestUser(user: Partial<User> = {}): User {
   }
 }
 
+export function getTestBusiness(business: Partial<Business> = {}): Business {
+  return {
+    createdTimestamp: 1641654664,
+    userId: 'test-business-id',
+    legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
+    ...business,
+  }
+}
+
 export async function createConsumerUsers(testTenantId: string, users: User[]) {
   for (const user of users) {
     await createConsumerUser(testTenantId, user)
@@ -81,7 +91,31 @@ export async function createConsumerUser(testTenantId: string, user: User) {
   }
 }
 
-export function setUpConsumerUsersHooks(tenantId: string, users: Array<User>) {
+export async function createBusinessUsers(
+  testTenantId: string,
+  users: Business[]
+) {
+  for (const user of users) {
+    await createBusinessUser(testTenantId, user)
+  }
+}
+
+export async function createBusinessUser(testTenantId: string, user: Business) {
+  const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
+  const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
+  const createdUser = await userRepository.saveBusinessUser(user)
+  await userRepository.saveUserMongo(createdUser)
+  return async () => {
+    await userRepository.deleteUser(createdUser.userId)
+    await userRepository.deleteUserMongo(createdUser.userId)
+  }
+}
+
+export function setUpUsersHooks(
+  tenantId: string,
+  users: Array<User | Business>
+) {
   const cleanups: Array<() => void> = [
     async () => {
       return
@@ -90,19 +124,14 @@ export function setUpConsumerUsersHooks(tenantId: string, users: Array<User>) {
 
   beforeAll(async () => {
     for (const user of users) {
-      cleanups.push(await createConsumerUser(tenantId, user))
+      cleanups.push(
+        isConsumerUser(user)
+          ? await createConsumerUser(tenantId, user as User)
+          : await createBusinessUser(tenantId, user as Business)
+      )
     }
   })
   afterAll(async () => {
     await Promise.all(cleanups.map((cleanup) => cleanup()))
   })
-}
-
-export function getTestBusiness(business: Partial<Business> = {}): Business {
-  return {
-    createdTimestamp: 1641654664,
-    userId: 'test-business-id',
-    legalEntity: { companyGeneralDetails: { legalName: 'Test Business' } },
-    ...business,
-  }
 }

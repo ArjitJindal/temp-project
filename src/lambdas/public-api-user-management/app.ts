@@ -12,7 +12,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { updateInitialRiskScores } from '@/services/risk-scoring'
+import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 
 const handleRiskLevelParam = (
@@ -75,7 +75,8 @@ export const userHandler = lambdaApi()(
         : await userRepository.saveBusinessUser(userPayload)
       if (hasFeature('PULSE')) {
         if (hasFeature('PULSE_KRS_CALCULATION')) {
-          await updateInitialRiskScores(tenantId, dynamoDb, user)
+          const riskScoringService = new RiskScoringService(tenantId, dynamoDb)
+          await riskScoringService.updateInitialRiskScores(user)
         }
         if (userPayload.riskLevel) {
           await handleRiskLevelParam(tenantId, dynamoDb, user)
