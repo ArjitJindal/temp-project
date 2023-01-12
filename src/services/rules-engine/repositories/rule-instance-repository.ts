@@ -24,6 +24,7 @@ function toRuleInstance(item: any): RuleInstance {
     type: item.type,
     ruleId: item.ruleId,
     ruleNameAlias: item.ruleNameAlias,
+    ruleDescriptionAlias: item.ruleDescriptionAlias,
     filters: item.filters,
     parameters: item.riskLevelParameters
       ? item.riskLevelParameters[DEFAULT_RISK_LEVEL]

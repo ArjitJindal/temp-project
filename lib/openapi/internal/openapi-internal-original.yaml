@@ -2638,6 +2638,8 @@ components:
             - USER
         ruleNameAlias:
           type: string
+        ruleDescriptionAlias:
+          type: string
         filters:
           type: object
         riskLevelParameters:

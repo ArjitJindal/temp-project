@@ -30,6 +30,7 @@ export class RuleAuditLogService {
       caseCreationType: ruleInstance.caseCreationType,
       type: ruleInstance.type,
       ruleNameAlias: ruleInstance.ruleNameAlias,
+      ruleDescripionAlias: ruleInstance.ruleDescriptionAlias,
       ...ruleInstance.filters,
       veryHighRiskLevelParameters: ruleInstance.riskLevelParameters?.VERY_HIGH,
       highRiskLevelParameters: ruleInstance.riskLevelParameters?.HIGH,
