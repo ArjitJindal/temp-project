@@ -63,9 +63,7 @@ export const config: Config = {
     AUTH0_AUDIENCE: 'https://asia-2.api.flagright.com/',
     AUTH0_TOKEN_ISSUER: 'https://login.console.flagright.com/',
     AUTH0_JWKS_URI: 'https://login.console.flagright.com/.well-known/jwks.json',
-    AUTH0_MANAGEMENT_CLIENT_ID: 'gVL7LOtgnFfPMsRgZYRWWhpDk9SjAFZV',
-    AUTH0_MANAGEMENT_CLIENT_SECRET:
-      'aJD1Dxa3cw9ZOrzbMPqbTzr-1lcyUGjQzrtSj1UpV1FDk7Qillpcr_l_h-R6PA0X',
+    AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:auth0ManagementAPICreds-H5WoFp`,
     AUTH0_CONSOLE_CLIENT_ID: 'rfyoZTdxlqbFZ42DZ3lMVCnj3j9Onlki',
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-ZcHWor`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-IMzUl1`,

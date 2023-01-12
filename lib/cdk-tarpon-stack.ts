@@ -514,19 +514,44 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(transactionsViewAlias)
 
     /* Accounts */
-    this.createFunction(
+    const { alias: accountsFunctionAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN:
+            config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN,
+        },
+      }
+    )
+
+    this.grantSecretsManagerAccess(
+      accountsFunctionAlias,
+      [this.config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN],
+      'READ'
     )
 
     /* Tenants */
-    this.createFunction(
+    const { alias: tenantsFunctionAlias } = this.createFunction(
       {
         name: StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
       },
-      atlasFunctionProps
+      {
+        ...atlasFunctionProps,
+        environment: {
+          ...atlasFunctionProps.environment,
+          AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN:
+            config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN,
+        },
+      }
+    )
+    this.grantSecretsManagerAccess(
+      tenantsFunctionAlias,
+      [this.config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN],
+      'READ'
     )
 
     /* Business users view */

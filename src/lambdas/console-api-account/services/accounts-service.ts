@@ -13,6 +13,7 @@ import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { logger } from '@/core/logger'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { isValidRole } from '@/@types/jwt'
+import { getAuth0Credentials } from '@/utils/auth0-utils'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -43,18 +44,14 @@ export type Tenant = {
 
 export class AccountsService {
   private authenticationClient: AuthenticationClient
-  private managementClient: ManagementClient<AppMetadata>
   private config: AccountsConfig
 
   constructor(config: AccountsConfig) {
     this.config = config
     const options = {
       domain: config.AUTH0_DOMAIN,
-      clientId: config.AUTH0_MANAGEMENT_CLIENT_ID,
-      clientSecret: config.AUTH0_MANAGEMENT_CLIENT_SECRET,
     }
     this.authenticationClient = new AuthenticationClient(options)
-    this.managementClient = new ManagementClient(options)
   }
 
   private static organizationToTenant(organization: Organization): Tenant {
@@ -92,8 +89,29 @@ export class AccountsService {
     }
   }
 
+  async getAuth0Client() {
+    const { clientId, clientSecret } = await getAuth0Credentials()
+    return {
+      domain: this.config.AUTH0_DOMAIN,
+      clientId,
+      clientSecret,
+    }
+  }
+
+  async getManagementClient(): Promise<ManagementClient<AppMetadata>> {
+    const options = await this.getAuth0Client()
+    return new ManagementClient(options)
+  }
+
+  async getAuthenticationClient() {
+    const options = await this.getAuth0Client()
+    return new AuthenticationClient(options)
+  }
+
   async getAccountTenant(userId: string): Promise<Tenant> {
-    const usersManagement = getUsersManagement(this.managementClient)
+    const managementClient = await this.getManagementClient()
+
+    const usersManagement = getUsersManagement(managementClient)
     const organizations = await usersManagement.getUserOrganizations({
       id: userId,
     })
@@ -121,8 +139,13 @@ export class AccountsService {
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null
     let account: Account | null = null
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
+
+    const authenticationClient = await this.getAuthenticationClient()
+
     try {
-      user = await this.managementClient.createUser({
+      user = await managementClient.createUser({
         connection: CONNECTION_NAME,
         email: params.email,
         // NOTE: We need at least one upper case character
@@ -136,7 +159,7 @@ export class AccountsService {
         email: params.email,
       })
       account = AccountsService.userToAccount(user)
-      await this.managementClient.organizations.addMembers(
+      await managementClient.organizations.addMembers(
         { id: tenant.orgId },
         {
           members: [account.id],
@@ -148,7 +171,7 @@ export class AccountsService {
       })
     } catch (e) {
       if (user) {
-        await this.managementClient.deleteUser({ id: user.user_id as string })
+        await managementClient.deleteUser({ id: user.user_id as string })
         logger.info('Deleted user', {
           email: params.email,
         })
@@ -156,14 +179,14 @@ export class AccountsService {
       throw e
     }
 
-    await this.managementClient.sendEmailVerification({
+    await managementClient.sendEmailVerification({
       user_id: user.user_id as string,
       client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
     })
     logger.info(`Sent verification email`, {
       email: params.email,
     })
-    await this.authenticationClient.requestChangePasswordEmail({
+    await authenticationClient.requestChangePasswordEmail({
       client_id: this.config.AUTH0_CONSOLE_CLIENT_ID,
       connection: CONNECTION_NAME,
       email: params.email,
@@ -175,8 +198,10 @@ export class AccountsService {
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
     // todo: this call can only return up to 1000 users, need to handle this
-    const members = await this.managementClient.organizations.getMembers({
+    const members = await managementClient.organizations.getMembers({
       id: tenant.orgId,
       include_totals: false,
     })
@@ -184,7 +209,7 @@ export class AccountsService {
     const ids = members.map((x) => x.user_id)
 
     // todo: this call support maximum 50 items per page, need to paginate
-    const users = await this.managementClient.getUsers({
+    const users = await managementClient.getUsers({
       q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
     })
 
@@ -192,7 +217,8 @@ export class AccountsService {
   }
 
   async getTenants(): Promise<Tenant[]> {
-    const organizations = await this.managementClient.organizations.getAll()
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const organizations = await managementClient.organizations.getAll()
     return organizations.map(AccountsService.organizationToTenant)
   }
 
@@ -201,7 +227,8 @@ export class AccountsService {
     newTenant: Tenant,
     userId: string
   ): Promise<void> {
-    await this.managementClient.organizations.removeMembers(
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    await managementClient.organizations.removeMembers(
       { id: oldTenant.orgId },
       {
         members: [userId],
@@ -210,10 +237,10 @@ export class AccountsService {
     // Need to do this call to make sure operations are executed in exact order.
     // Without it if you try to remove and add member from the same organization,
     // it will be removed but will not be added
-    await this.managementClient.organizations.getMembers({
+    await managementClient.organizations.getMembers({
       id: newTenant.orgId,
     })
-    await this.managementClient.organizations.addMembers(
+    await managementClient.organizations.addMembers(
       { id: newTenant.orgId },
       {
         members: [userId],
@@ -223,13 +250,14 @@ export class AccountsService {
 
   async deleteUser(tenant: Tenant, idToDelete: string): Promise<void> {
     const userTenant = await this.getAccountTenant(idToDelete)
+    const managementClient = new ManagementClient(await this.getAuth0Client())
 
     if (userTenant == null || userTenant.id !== tenant.id) {
       throw new BadRequest(
         `Unable to find user "${idToDelete}" in the tenant |${tenant.id}|`
       )
     }
-    await this.managementClient.deleteUser({ id: idToDelete })
+    await managementClient.deleteUser({ id: idToDelete })
   }
 
   async patchUser(
@@ -238,6 +266,8 @@ export class AccountsService {
     patch: AccountPatchPayload
   ): Promise<Account> {
     const userTenant = await this.getAccountTenant(accountId)
+    const managementClient: ManagementClient<AppMetadata> =
+      await this.getManagementClient()
 
     if (userTenant == null || userTenant.id !== tenant.id) {
       throw new BadRequest(
@@ -245,11 +275,11 @@ export class AccountsService {
       )
     }
 
-    const user = await this.managementClient.getUser({
+    const user = await managementClient.getUser({
       id: accountId,
     })
 
-    const patchedUser = await this.managementClient.updateUser(
+    const patchedUser = await managementClient.updateUser(
       {
         id: accountId,
       },

@@ -51,10 +51,8 @@ export const config: Config = {
     AUTH0_TOKEN_ISSUER: 'https://login.dev.console.flagright.com/',
     AUTH0_JWKS_URI:
       'https://login.dev.console.flagright.com/.well-known/jwks.json',
-    AUTH0_MANAGEMENT_CLIENT_ID: 'O5XVh8xujWiL7Ij7gFCNbQdLrS5UPS6F',
-    AUTH0_MANAGEMENT_CLIENT_SECRET:
-      'RrqgajkOImtw1ugT-32DiFzYsqMAMa7dwhiLhEJcQeSLnCkcR-GvYr1jLy9xv2U6',
     AUTH0_CONSOLE_CLIENT_ID: 'uGGbVNumU7d57NswPLD5UaTwvf17tc7y',
+    AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:auth0ManagementAPICreds-f1T4yd`,
     ATLAS_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:mongoAtlasCreds-RvzMVI`,
     COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:complyAdvantageCreds-j8uTMO`,
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
