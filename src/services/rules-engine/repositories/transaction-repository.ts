@@ -33,6 +33,7 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  prefixRegexMatchFilter,
 } from '@/utils/mongoDBUtils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
@@ -154,11 +155,13 @@ export class TransactionRepository {
     }
     if (params.filterId != null) {
       conditions.push({
-        transactionId: { $regex: params.filterId, $options: 'i' },
+        transactionId: prefixRegexMatchFilter(params.filterId),
       })
     }
     if (params.transactionType != null) {
-      conditions.push({ type: { $regex: params.transactionType } })
+      conditions.push({
+        type: prefixRegexMatchFilter(params.transactionType),
+      })
     }
     if (params.filterOutStatus != null) {
       conditions.push({ status: { $ne: params.filterOutStatus } })
@@ -253,10 +256,7 @@ export class TransactionRepository {
         elemCondition['key'] = { $eq: params.filterTagKey }
       }
       if (params.filterTagValue) {
-        elemCondition['value'] = {
-          $regex: params.filterTagValue,
-          $options: 'i',
-        }
+        elemCondition['value'] = prefixRegexMatchFilter(params.filterTagValue)
       }
       conditions.push({
         tags: {
@@ -1359,7 +1359,7 @@ export class TransactionRepository {
     const collection = db.collection<TransactionCaseManagement>(name)
 
     let fieldPath: string
-    const additionalConditions = []
+    const filterConditions = []
     switch (params.field) {
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
@@ -1369,49 +1369,49 @@ export class TransactionRepository {
         break
       case 'IBAN_NUMBER':
         fieldPath = 'originPaymentDetails.IBAN'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'IBAN',
         })
         break
       case 'CARD_FINGERPRINT_NUMBER':
         fieldPath = 'originPaymentDetails.cardFingerprint'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'CARD',
         })
         break
       case 'BANK_ACCOUNT_NUMBER':
         fieldPath = 'originPaymentDetails.accountNumber'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'GENERIC_BANK_ACCOUNT',
         })
         break
       case 'ACH_ACCOUNT_NUMBER':
         fieldPath = 'originPaymentDetails.accountNumber'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'ACH',
         })
         break
       case 'SWIFT_ACCOUNT_NUMBER':
         fieldPath = 'originPaymentDetails.accountNumber'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'SWIFT',
         })
         break
       case 'BIC':
         fieldPath = 'originPaymentDetails.BIC'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'IBAN',
         })
         break
       case 'BANK_SWIFT_CODE':
         fieldPath = 'originPaymentDetails.swiftCode'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'SWIFT',
         })
         break
       case 'UPI_IDENTIFYING_NUMBER':
         fieldPath = 'originPaymentDetails.upiID'
-        additionalConditions.push({
+        filterConditions.push({
           'originPaymentDetails.method': 'UPI',
         })
         break
@@ -1422,25 +1422,23 @@ export class TransactionRepository {
         throw neverThrow(params.field, `Unknown field: ${params.field}`)
     }
 
+    if (params.filter) {
+      filterConditions.push({
+        [fieldPath]: prefixRegexMatchFilter(params.filter),
+      })
+    }
+
     const pipeline: Document[] = [
-      {
-        $match: {
-          $and: [
-            {
-              [fieldPath]: {
-                $exists: true,
-                $ne: null,
-                ...(params.filter != null && params.filter !== ''
-                  ? {
-                      $regex: params.filter,
-                    }
-                  : {}),
-              },
+      filterConditions.length > 0
+        ? {
+            $match: {
+              $and: filterConditions,
             },
-            ...additionalConditions,
-          ],
-        },
-      },
+          }
+        : {},
+      // If we have filter conditions, it's for auto-complete. It's acceptable that
+      // we don't filter all the documents for performance concerns.
+      filterConditions.length > 0 ? { $limit: 10000 } : {},
       {
         $group: {
           _id: `$${fieldPath}`,
@@ -1449,7 +1447,7 @@ export class TransactionRepository {
       {
         $limit: 100,
       },
-    ]
+    ].filter((stage) => !_.isEmpty(stage))
 
     const result: string[] = await collection
       .aggregate<{ _id: string }>(pipeline)

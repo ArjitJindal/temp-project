@@ -13,6 +13,7 @@ import {
   CASES_COLLECTION,
   COUNTER_COLLECTION,
   paginatePipeline,
+  prefixRegexMatchFilter,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
@@ -133,14 +134,11 @@ export class CaseRepository {
     }
 
     if (params.filterId != null) {
-      conditions.push({ caseId: { $regex: params.filterId, $options: 'i' } })
+      conditions.push({ caseId: prefixRegexMatchFilter(params.filterId) })
     }
     if (params.transactionType != null) {
       conditions.push({
-        'caseTransactions.type': {
-          $regex: params.transactionType,
-          $options: 'i',
-        },
+        'caseTransactions.type': prefixRegexMatchFilter(params.transactionType),
       })
     }
     if (params.filterOutStatus != null) {
@@ -382,10 +380,9 @@ export class CaseRepository {
         elemCondition['key'] = { $eq: params.filterTransactionTagKey }
       }
       if (params.filterTransactionTagValue) {
-        elemCondition['value'] = {
-          $regex: params.filterTransactionTagValue,
-          $options: 'i',
-        }
+        elemCondition['value'] = prefixRegexMatchFilter(
+          params.filterTransactionTagValue
+        )
       }
       conditions.push({
         'caseTransactions.tags': {
@@ -877,7 +874,7 @@ export class CaseRepository {
     return [
       {
         $match: {
-          caseId: { $regex: caseFilter, $options: 'i' },
+          caseId: prefixRegexMatchFilter(caseFilter),
         },
       },
       {
@@ -947,7 +944,7 @@ export class CaseRepository {
     return [
       {
         $match: {
-          caseId: { $regex: caseFilter, $options: 'i' },
+          caseId: prefixRegexMatchFilter(caseFilter),
         },
       },
       {
@@ -969,10 +966,8 @@ export class CaseRepository {
       },
       {
         $match: {
-          'caseTransactions.hitRules.ruleInstanceId': {
-            $regex: ruleFilter,
-            $options: 'i',
-          },
+          'caseTransactions.hitRules.ruleInstanceId':
+            prefixRegexMatchFilter(ruleFilter),
         },
       },
       {

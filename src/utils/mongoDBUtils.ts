@@ -1,5 +1,6 @@
 import { Document, FindCursor, FindOptions, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
+import { escapeStringRegexp } from './regex'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -263,4 +264,14 @@ export function paginatePipeline<Params extends OptionalPaginationParams>(
   }
   const { skip, limit } = getSkipAndLimit(params)
   return [{ $skip: skip }, { $limit: limit }]
+}
+
+/**
+ * Matching utils
+ */
+
+// This should be the default regex filter to use for performance concerns
+// Ref: https://www.mongodb.com/docs/manual/reference/operator/query/regex/#index-use
+export function prefixRegexMatchFilter(input: string) {
+  return { $regex: `^${escapeStringRegexp(input)}` }
 }

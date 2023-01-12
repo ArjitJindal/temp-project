@@ -17,6 +17,7 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   CASES_COLLECTION,
   paginatePipeline,
+  prefixRegexMatchFilter,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -175,7 +176,7 @@ export class UserRepository {
 
     if (params.filterId != null) {
       filterConditions.push({
-        userId: { $regex: params.filterId, $options: 'i' },
+        userId: prefixRegexMatchFilter(params.filterId),
       })
     }
     if (params.filterBusinessIndustries != null) {
@@ -195,28 +196,17 @@ export class UserRepository {
         filterNameConditions.push({
           $or: [
             {
-              'userDetails.name.firstName': {
-                $regex: part,
-                $options: 'i',
-              },
+              'userDetails.name.firstName': prefixRegexMatchFilter(part),
             },
             {
-              'userDetails.name.middleName': {
-                $regex: part,
-                $options: 'i',
-              },
+              'userDetails.name.middleName': prefixRegexMatchFilter(part),
             },
             {
-              'userDetails.name.lastName': {
-                $regex: part,
-                $options: 'i',
-              },
+              'userDetails.name.lastName': prefixRegexMatchFilter(part),
             },
             {
-              'legalEntity.companyGeneralDetails.legalName': {
-                $regex: part,
-                $options: 'i',
-              },
+              'legalEntity.companyGeneralDetails.legalName':
+                prefixRegexMatchFilter(part),
             },
           ],
         })
