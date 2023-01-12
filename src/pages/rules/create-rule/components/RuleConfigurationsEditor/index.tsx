@@ -30,6 +30,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
   const isPulseEnabled = useFeature('PULSE');
   const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
   const [ruleNameAlias, setRuleNameAlias] = useState<string>();
+  const [ruleDescriptionAlias, setRuleDescriptionAlias] = useState<string>();
   const [falsePositiveCheckEnabled, setFalsePositiveCheckEnabled] = useState<boolean>(
     rule.defaultFalsePositiveCheckEnabled ?? false,
   );
@@ -102,6 +103,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
           RuleInstance: {
             ruleId: rule.id as string,
             ruleNameAlias,
+            ruleDescriptionAlias,
             filters,
             parameters,
             riskLevelParameters,
@@ -120,7 +122,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
         setActivating(false);
       }
     },
-    [api, filters, onActivated, ruleNameAlias],
+    [api, filters, onActivated, ruleNameAlias, ruleDescriptionAlias],
   );
 
   return (
@@ -134,7 +136,12 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
               onChange={(event) => setRuleNameAlias(event.target.value)}
             />
           </Descriptions.Item>
-          <Descriptions.Item label="Rule Description"> {rule.description}</Descriptions.Item>
+          <Descriptions.Item label="Rule Description">
+            <Input
+              value={ruleDescriptionAlias || rule.description}
+              onChange={(event) => setRuleDescriptionAlias(event.target.value)}
+            />
+          </Descriptions.Item>
         </Descriptions>
       </Row>
       <Row justify="center" className={styles.section}>

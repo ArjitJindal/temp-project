@@ -41,6 +41,9 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [ruleNameAlias, setRuleNameAlias] = useState(ruleInstance.ruleNameAlias);
+  const [ruleDescriptionAlias, setRuleDescriptionAlias] = useState(
+    ruleInstance.ruleDescriptionAlias,
+  );
   const [parameters, setParameters] = useState(ruleInstance.parameters);
   const [filters, setFilters] = useState(ruleInstance.filters);
   const [riskLevelParameters, setRiskLevelParameters] = useState(
@@ -116,6 +119,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         ...ruleInstance,
         // We don't save rule name alias if it's the same as the rule name
         ruleNameAlias: ruleNameAlias === rule.name ? undefined : ruleNameAlias,
+        ruleDescriptionAlias:
+          ruleDescriptionAlias === rule.description ? undefined : ruleDescriptionAlias,
         filters,
         parameters,
         riskLevelParameters,
@@ -147,6 +152,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
     caseCreationType,
     casePriority,
     falsePositiveCheckEnabled,
+    ruleDescriptionAlias,
+    rule.description,
   ]);
   const handleDeleteRuleInstance = useCallback(async () => {
     setDeleting(true);
@@ -212,7 +219,14 @@ export const RuleInstanceDetails: React.FC<Props> = ({
           )}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Rule Description:</b>} valueType="text">
-          {rule.description}
+          {editing && !saving ? (
+            <Input
+              value={ruleDescriptionAlias || rule.description}
+              onChange={(event) => setRuleDescriptionAlias(event.target.value)}
+            />
+          ) : (
+            ruleInstance.ruleDescriptionAlias || rule.description
+          )}
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Created At:</b>} valueType="dateTime">
           {ruleInstance.createdAt}
