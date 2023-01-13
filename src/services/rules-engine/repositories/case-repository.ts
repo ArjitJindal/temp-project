@@ -825,17 +825,14 @@ export class CaseRepository {
     } = {}
   ): Promise<Case | null> {
     const { data } = await this.getCases({
-      filterId: `^${caseId}$`,
+      filterId: caseId,
       includeTransactions: params.includeTransactions ?? false,
       includeTransactionEvents: params.includeTransactionEvents ?? false,
       includeTransactionUsers: params.includeTransactionUsers ?? false,
       page: 1,
       pageSize: 1,
     })
-    if (data.length === 0) {
-      return null
-    }
-    return data[0]
+    return data?.find((c) => c.caseId === caseId) ?? null
   }
 
   public async getCaseTransactions(
@@ -932,19 +929,18 @@ export class CaseRepository {
   }
 
   public async getCaseRules(caseId: string): Promise<Array<RulesHitPerCase>> {
-    const caseFilter = `^${caseId}$`
-    const cursor = this.getCaseRulesCursor(caseFilter)
+    const cursor = this.getCaseRulesCursor(caseId)
     return await cursor.toArray()
   }
 
   private getCaseRuleTransactionsMongoPipeline(
-    caseFilter: string,
-    ruleFilter: string
+    caseId: string,
+    ruleInstanceId: string
   ) {
     return [
       {
         $match: {
-          caseId: prefixRegexMatchFilter(caseFilter),
+          caseId,
         },
       },
       {
@@ -966,8 +962,7 @@ export class CaseRepository {
       },
       {
         $match: {
-          'caseTransactions.hitRules.ruleInstanceId':
-            prefixRegexMatchFilter(ruleFilter),
+          'caseTransactions.hitRules.ruleInstanceId': ruleInstanceId,
         },
       },
       {
@@ -1005,13 +1000,13 @@ export class CaseRepository {
   }
 
   public getCaseRuleTransactionsCursor(
-    caseFilter: string,
-    ruleFilter: string,
+    caseId: string,
+    ruleInstanceId: string,
     params: PaginationParams
   ) {
     const pipeline = this.getCaseRuleTransactionsMongoPipeline(
-      caseFilter,
-      ruleFilter
+      caseId,
+      ruleInstanceId
     )
 
     const db = this.mongoDb.db()
@@ -1054,11 +1049,9 @@ export class CaseRepository {
     ruleInstanceId: string,
     params: PaginationParams
   ) {
-    const caseFilter = `^${caseId}$`
-    const ruleFilter = `^${ruleInstanceId}$`
     const cursor = this.getCaseRuleTransactionsCursor(
-      caseFilter,
-      ruleFilter,
+      caseId,
+      ruleInstanceId,
       params
     )
     const res = await cursor.toArray()
