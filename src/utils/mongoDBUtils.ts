@@ -1,6 +1,7 @@
 import { Document, FindCursor, FindOptions, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@cdk/constants'
 import { escapeStringRegexp } from './regex'
+import { getSecret } from './secrets-manager'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -16,9 +17,6 @@ interface DBCredentials {
   host: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AWS = require('aws-sdk')
-const secretsmanager = new AWS.SecretsManager()
 const SM_SECRET_ARN = process.env.SM_SECRET_ARN as string
 
 let cacheClient: MongoClient
@@ -38,7 +36,7 @@ export async function getMongoDbClient(
     return await MongoClient.connect(`mongodb://localhost:27018/${dbName}`)
   }
 
-  const credentials = await getCredentials()
+  const credentials = await getSecret<DBCredentials>(SM_SECRET_ARN as string)
   const DB_USERNAME = credentials['username']
   const DB_PASSWORD = encodeURIComponent(credentials['password'])
   const DB_HOST = credentials['host']
@@ -57,15 +55,6 @@ export function failure(body: object): object {
 
 export function notFound(body: object): object {
   return buildResponse(404, body)
-}
-
-async function getCredentials(): Promise<DBCredentials> {
-  const smRes = await secretsmanager
-    .getSecretValue({
-      SecretId: SM_SECRET_ARN,
-    })
-    .promise()
-  return JSON.parse(smRes.SecretString)
 }
 
 function buildResponse(statusCode: number, body: object): object {

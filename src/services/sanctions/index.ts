@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import AWS from 'aws-sdk'
 import fetch from 'node-fetch'
 import { NotFound } from 'http-errors'
 import { StackConstants } from '@cdk/constants'
@@ -10,11 +9,11 @@ import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyA
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+import { getSecret } from '@/utils/secrets-manager'
 
 const COMPLYADVANTAGE_SEARCH_API_URI =
   'https://api.complyadvantage.com/searches'
 
-const secretsmanager = new AWS.SecretsManager()
 const COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN = process.env
   .COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN as string
 
@@ -42,12 +41,9 @@ export class SanctionsService {
     if (process.env.COMPLYADVANTAGE_API_KEY) {
       return process.env.COMPLYADVANTAGE_API_KEY
     }
-    const smRes = await secretsmanager
-      .getSecretValue({
-        SecretId: COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN,
-      })
-      .promise()
-    return JSON.parse(smRes.SecretString as string).apiKey
+    return (await getSecret<{ apiKey: string }>(
+      COMPLYADVANTAGE_CREDENTIALS_SECRET_ARN
+    ))!.apiKey
   }
 
   public async search(

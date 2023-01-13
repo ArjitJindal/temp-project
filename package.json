@@ -94,6 +94,7 @@
   },
   "homepage": "https://github.com/flagright/tarpon#readme",
   "devDependencies": {
+    "@aws-sdk/credential-providers": "^3.245.0",
     "@openapitools/openapi-generator-cli": "^2.5.1",
     "@sentry/cli": "^2.8.1",
     "@slack/types": "^2.7.0",
