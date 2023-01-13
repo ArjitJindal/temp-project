@@ -23,7 +23,7 @@ export class RuleRepository {
     this.tenantId = tenantId
   }
 
-  async getAllRules(): Promise<ReadonlyArray<Rule>> {
+  async getAllRules(): Promise<Array<Rule>> {
     return this.getRules(
       this.tenantId === FLAGRIGHT_TENANT_ID
         ? {}
@@ -62,7 +62,7 @@ export class RuleRepository {
 
   private async getRules(
     query: Partial<AWS.DynamoDB.DocumentClient.QueryInput>
-  ): Promise<ReadonlyArray<Rule>> {
+  ): Promise<Array<Rule>> {
     const queryInput: AWS.DynamoDB.DocumentClient.QueryInput = {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,

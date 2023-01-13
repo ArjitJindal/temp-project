@@ -6,6 +6,7 @@ import {
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
+import { DEFAULT_CURRENCY_KEYWORD } from '../transaction-rules/library'
 import { TransactionRuleFilter } from './filter'
 
 export type TransactionAmountRuleFilterParameter = {
@@ -18,6 +19,14 @@ export class TransactionAmountRuleFilter extends TransactionRuleFilter<Transacti
       type: 'object',
       properties: {
         transactionAmountRange: TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA(),
+      },
+    }
+  }
+
+  public static getDefaultValues(): TransactionAmountRuleFilterParameter {
+    return {
+      transactionAmountRange: {
+        [DEFAULT_CURRENCY_KEYWORD]: {},
       },
     }
   }

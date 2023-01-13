@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import _ from 'lodash'
 import {
   CheckDirectionRuleFilter,
   CheckDirectionRuleFilterParameter,
@@ -104,6 +105,23 @@ function createFiltersMap<T>(filters: Array<any>): { [key: string]: T } {
   )
 }
 
+function createDefaultValuesMap<T>(filters: Array<any>): { [key: string]: T } {
+  const filteredDefaultValues = filters.filter(
+    (filter) => !_.isEmpty(filter?.getDefaultValues())
+  )
+
+  return Object.fromEntries(
+    filteredDefaultValues.map((filter) => {
+      const object = filter.getDefaultValues()
+      const keys = Object.keys(object)
+      if (Object.keys(object).length !== 1) {
+        throw new Error('Rule filter can only have one key')
+      }
+      return [keys[0], filter]
+    })
+  )
+}
+
 class UserRuleFilterBase extends UserRuleFilter<unknown> {
   public async predicate(): Promise<boolean> {
     return true
@@ -119,6 +137,8 @@ export const TRANSACTION_FILTERS =
   createFiltersMap<typeof TransactionRuleFilterBase>(_TRANSACTION_FILTERS)
 export const USER_FILTERS =
   createFiltersMap<typeof UserRuleFilterBase>(_USER_FILTERS)
+export const TRANSACTION_FILTER_DEFAULT_VALUES =
+  createDefaultValuesMap<typeof TransactionRuleFilterBase>(_TRANSACTION_FILTERS)
 
 if (
   _TRANSACTION_FILTERS.length + _USER_FILTERS.length !==

@@ -72,7 +72,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/RuleFilters'
               examples: {}
       operationId: get-rule-filters
       description: ''
@@ -2615,6 +2615,24 @@ components:
         - defaultNature
         - defaultCasePriority
         - defaultCaseCreationType
+    RuleFilters:
+      title: RuleFilter
+      type: object
+      properties:
+        schema:
+          type: object
+          properties:
+            properties:
+              type: object
+            type:
+              type: string
+          required:
+            - properties
+            - type
+        defaultValues:
+          type: object
+      required:
+        - schema
     RuleInstance:
       title: RuleInstance
       type: object

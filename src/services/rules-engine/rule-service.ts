@@ -1,5 +1,7 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
+import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -9,6 +11,7 @@ import { USER_RULES } from '@/services/rules-engine/user-rules'
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleActions'
+import { replaceMagicKeyword } from '@/utils/objectUtils'
 
 const RISK_LEVELS = RiskLevelRuleParameters.attributeTypeMap.map(
   (attribute) => attribute.name
@@ -35,8 +38,23 @@ export class RuleService {
     this.ruleInstanceRepository = ruleInstanceRepository
   }
 
-  async getAllRules(): Promise<ReadonlyArray<Rule>> {
-    return this.ruleRepository.getAllRules()
+  async getAllRules(): Promise<Array<Rule>> {
+    let rules = await this.ruleRepository.getAllRules()
+
+    const tenantRepo = new TenantRepository(
+      this.ruleInstanceRepository.tenantId,
+      { dynamoDb: this.ruleInstanceRepository.dynamoDb }
+    )
+
+    const tenantSettings = await tenantRepo.getTenantSettings()
+
+    rules = replaceMagicKeyword(
+      rules,
+      DEFAULT_CURRENCY_KEYWORD,
+      tenantSettings?.defaultValues?.currency ?? 'USD'
+    ) as Array<Rule>
+
+    return rules
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

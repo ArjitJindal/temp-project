@@ -42,6 +42,8 @@ import { TransactionsAverageNumberExceededParameters } from '@/services/rules-en
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 
+export const DEFAULT_CURRENCY_KEYWORD = '__DEFAULT_CURRENCY__'
+
 const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
   [
     () => ({
@@ -62,14 +64,14 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     () => {
       const defaultParameters: TransactionAmountRuleParameters = {
         transactionAmountThreshold: {
-          USD: 10000,
+          [DEFAULT_CURRENCY_KEYWORD]: 10000,
         },
       }
       return {
         id: 'R-2',
         type: 'TRANSACTION',
         name: 'Transaction amount too high',
-        description: 'Transaction amount is >= x in USD or equivalent',
+        description: `Transaction amount is >= x in ${DEFAULT_CURRENCY_KEYWORD} or equivalent`,
         descriptionTemplate:
           'Transaction amount is {{ format-money limit currency }} or more',
         defaultParameters,
@@ -169,7 +171,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     () => {
       const defaultParameters: LowValueTransactionsRuleParameters = {
         lowTransactionValues: {
-          EUR: {
+          [DEFAULT_CURRENCY_KEYWORD]: {
             max: 1000,
             min: 990,
           },
@@ -196,7 +198,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     () => {
       const defaultParameters: LowValueTransactionsRuleParameters = {
         lowTransactionValues: {
-          EUR: {
+          [DEFAULT_CURRENCY_KEYWORD]: {
             max: 1000,
             min: 990,
           },
@@ -463,7 +465,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     () => {
       const defaultParameters: TransactionsVolumeRuleParameters = {
         transactionVolumeThreshold: {
-          USD: 10000,
+          [DEFAULT_CURRENCY_KEYWORD]: 10000,
         },
         timeWindow: {
           units: 1,
@@ -493,8 +495,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
     () => {
       const defaultParameters: TransactionAmountRuleParameters = {
         transactionAmountThreshold: {
-          EUR: 10000,
-          USD: 10000,
+          [DEFAULT_CURRENCY_KEYWORD]: 10000,
         },
       }
       return {
@@ -743,7 +744,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           min: 5,
         },
         multiplierThreshold: {
-          currency: 'EUR',
+          currency: DEFAULT_CURRENCY_KEYWORD,
           value: 200,
         },
         checkSender: 'sending',
@@ -773,7 +774,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<() => Omit<Rule, 'parametersSchema'>> =
           granularity: 'hour',
         },
         transactionVolumeThreshold: {
-          USD: 10000,
+          [DEFAULT_CURRENCY_KEYWORD]: 10000,
         },
       }
       return {
