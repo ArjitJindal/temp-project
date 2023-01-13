@@ -61,6 +61,7 @@ export const config: Config = {
   application: {
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://eu-2.api.flagright.com/',
+    AUTH0_MANAGEMENT_API_AUDIENCE: 'https://flagright.eu.auth0.com/api/v2/',
     AUTH0_TOKEN_ISSUER: 'https://login.console.flagright.com/',
     AUTH0_JWKS_URI: 'https://login.console.flagright.com/.well-known/jwks.json',
     AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN: `arn:aws:secretsmanager:${region}:${account}:secret:auth0ManagementAPICreds-jETvIi`,

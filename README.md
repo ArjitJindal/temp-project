@@ -207,13 +207,13 @@ bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite h
 Sandbox env:
 
 ```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env sandbox
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env sandbox --auth0DisplayName flagright-sandbox --createAuth0Org true
 ```
 
 Prod env (need to specify region):
 
 ```bash
-bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env prod-asia-1
+bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite https://sh-payments.com/ --env prod-asia-1 --auth0DisplayName flagright-prod --createAuth0Org true
 ```
 
 ### Creating a new rule

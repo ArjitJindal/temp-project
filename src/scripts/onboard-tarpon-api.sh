@@ -8,10 +8,17 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if [ -z "$tenantName" ] || [ -z "$tenantWebsite" ] || [ -z "$env" ]
+if [ -z "$tenantName" ] || [ -z "$tenantWebsite" ] || [ -z "$env" ] || [ -z "$createAuth0Org" ]
 then
-    echo "Please provide tenantName, tenantWebsite, env"
+    echo "Please provide tenantName, tenantWebsite, env, createAuth0Org"
     exit 1
+fi
+
+if [ "$createAuth0Org" == "true" ]; then
+    if [ -z "$auth0DisplayName" ]; then
+        echo "Please provide auth0DisplayName"
+        exit 1
+    fi
 fi
 
 if [ "$env" == "dev" ]; then
@@ -111,4 +118,12 @@ apiKey=$(awscurl --service execute-api \
     --profile $profile \
     "https://"$apiPrefix"api.flagright.com/console/apikey?tenantId=$tenantId&usagePlanId=$usagePlanId");
 
-echo "Tarpon API Key: $apiKey"
+echo "Tarpon API Key: $apiKey";
+
+if [ "$createAuth0Org" == "true" ]; then
+    echo "Creating Auth0 organization"
+    organization=$(ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix)
+    echo $organization
+else
+    echo "Skipping Auth0 organization creation"
+fi

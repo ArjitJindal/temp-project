@@ -89,7 +89,7 @@ export class AccountsService {
     }
   }
 
-  async getAuth0Client() {
+  private async getAuth0Client() {
     const { clientId, clientSecret } = await getAuth0Credentials()
     return {
       domain: this.config.AUTH0_DOMAIN,
