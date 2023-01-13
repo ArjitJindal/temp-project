@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Button } from 'antd';
 import { DeleteFilled } from '@ant-design/icons';
+import _ from 'lodash';
 import {
   Entity,
   ParameterName,
@@ -13,7 +14,7 @@ import style from './style.module.less';
 import { RiskLevel } from '@/apis';
 import RiskLevelSwitch from '@/components/ui/RiskLevelSwitch';
 import { AsyncResource, isLoading, useLastSuccessValue } from '@/utils/asyncResource';
-import { isEqual } from '@/utils/lang';
+import { DEFAULT_COUNTRY_RISK_VALUES } from '@/utils/defaultCountriesRiskLevel';
 
 interface Props {
   item: RiskLevelTableItem;
@@ -24,7 +25,6 @@ interface Props {
 export default function ValuesTable(props: Props) {
   const { currentValuesRes, item, onSave } = props;
   const { parameter, dataType, entity } = item;
-
   const lastValues = useLastSuccessValue(currentValuesRes, []);
   const [values, setValues] = useState(lastValues);
 
@@ -32,15 +32,15 @@ export default function ValuesTable(props: Props) {
     setValues(lastValues);
   }, [lastValues]);
 
-  const isChanged = !isEqual(lastValues, values);
+  const isEqual = _.isEqual(lastValues, values);
   const loading = isLoading(currentValuesRes);
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
   const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
 
-  const handleUpdateValues = (cb: (oldValues: ParameterValues) => ParameterValues) => {
+  const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
     setValues(cb);
-  };
+  }, []);
 
   const handleAdd = () => {
     if (newValue && newRiskLevel != null) {
@@ -81,12 +81,44 @@ export default function ValuesTable(props: Props) {
     null,
   );
 
+  const handleSetDefaultValues = useCallback(() => {
+    if (item.dataType === 'COUNTRY') {
+      setValues(DEFAULT_COUNTRY_RISK_VALUES);
+    }
+  }, [setValues, item.dataType]);
+
+  const handleClearValues = useCallback(() => {
+    setValues([]);
+  }, [setValues]);
+
+  const handleRemoveValue = useCallback(
+    (value: string) => {
+      const newValues = values.map(({ parameterValue: { content }, riskLevel }) => {
+        if (content.kind !== 'MULTIPLE') return { parameterValue: { content }, riskLevel };
+        content.values = content.values.filter(({ content: val }) => val !== value);
+        return { parameterValue: { content }, riskLevel };
+      });
+      handleUpdateValues(() =>
+        newValues.filter(({ parameterValue: { content } }) =>
+          content.kind === 'MULTIPLE' ? content.values.length > 0 : true,
+        ),
+      );
+    },
+    [values, handleUpdateValues],
+  );
+
   return (
     <div className={style.root}>
       <div className={style.table}>
         <div className={style.header}>Variable</div>
         <div className={style.header}>Risk Score</div>
-        <div className={style.header}></div>
+        <div className={style.header}>
+          {item.dataType === 'COUNTRY' && (
+            <Button onClick={() => handleSetDefaultValues()} size="small" type="primary" block>
+              Load Default
+            </Button>
+          )}
+        </div>
         {values.map(({ parameterValue, riskLevel }) => {
           const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
             handleUpdateValues((values) =>
@@ -112,6 +144,7 @@ export default function ValuesTable(props: Props) {
               <div>
                 {VALUE_RENDERERS[dataType]({
                   value: parameterValue.content,
+                  handleRemoveValue,
                 })}
               </div>
               <div>
@@ -162,11 +195,14 @@ export default function ValuesTable(props: Props) {
         )}
       </div>
       <div className={style.footer}>
-        <Button disabled={loading || !isChanged} onClick={handleCancel}>
-          Cancel changes
+        <Button disabled={loading || isEqual} onClick={handleCancel}>
+          Cancel
         </Button>
-        <Button disabled={loading || !isChanged} onClick={handleSave} type="primary">
-          Save changes
+        <Button disabled={loading || isEqual} onClick={handleSave} type="primary">
+          Save
+        </Button>
+        <Button disabled={loading || values.length === 0} onClick={handleClearValues}>
+          Clear all
         </Button>
       </div>
     </div>

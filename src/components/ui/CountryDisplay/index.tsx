@@ -6,10 +6,11 @@ interface Props {
   // Alpha-2 code
   isoCode?: string;
   countryName?: string;
+  flagStyle?: React.CSSProperties;
 }
 
 export default function CountryDisplay(props: Props): JSX.Element {
-  const { isoCode, countryName } = props;
+  const { isoCode, countryName, flagStyle = {} } = props;
   if (!isoCode && !countryName) {
     return <>-</>;
   }
@@ -18,8 +19,10 @@ export default function CountryDisplay(props: Props): JSX.Element {
 
   return (
     <Space align="start">
-      {name && <ReactCountryFlag countryCode={code} svg />}
-      <span>{name || code}</span>{' '}
+      <div>
+        {name && <ReactCountryFlag countryCode={code} svg style={flagStyle} />}
+        <span>{name || code}</span>
+      </div>
     </Space>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, Select } from 'antd';
+import { Input, Select, Tag } from 'antd';
 import _ from 'lodash';
 import {
   DataType,
@@ -52,6 +52,7 @@ export type InputRenderer<T extends RiskValueType> = (
 
 export type ValueRenderer<T extends RiskValueType> = (props: {
   value?: RiskValueContentByType<T>;
+  handleRemoveValue?: (value: string) => void;
 }) => React.ReactNode;
 
 type RiskValueContentByType<T extends RiskValueType> = T extends 'LITERAL'
@@ -612,14 +613,29 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </span>
     );
   }) as ValueRenderer<'MULTIPLE'>,
-  COUNTRY: (({ value }) => {
+  COUNTRY: (({ value, handleRemoveValue }) => {
     if (value == null) {
       return null;
     }
     return (
       <span>
         {value.values.map((item) => (
-          <CountryDisplay key={`${item.content}`} isoCode={`${item.content}`} />
+          <Tag
+            onClose={() => {
+              const content = item.content;
+              if (handleRemoveValue && typeof content === 'string') {
+                handleRemoveValue(content);
+              }
+            }}
+            style={{ marginBottom: '4px' }}
+            closable
+          >
+            <CountryDisplay
+              key={`${item.content}`}
+              isoCode={`${item.content}`}
+              flagStyle={{ marginRight: '4px' }}
+            />
+          </Tag>
         ))}
       </span>
     );
