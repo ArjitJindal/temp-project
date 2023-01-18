@@ -83,6 +83,7 @@ export default class MarkdownEditor extends React.Component<Props> {
           }
         }}
         usageStatistics={false}
+        placeholder="Write a narrative explaning the case closure reason and findings If any"
       />
     );
   }
