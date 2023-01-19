@@ -10,6 +10,7 @@ defaults:
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   test:
@@ -18,6 +19,16 @@ jobs:
         node-version: [16.x]
     runs-on: ubuntu-20.04
     steps:
+      - name: Check out if PR is ready for review or comment contains `/test`
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.draft) {
+              console.log('PR is a draft, skipping tests');
+              process.exit(78);
+            }
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -44,7 +55,7 @@ jobs:
           mongodb-port: 27018
       - name: Run Tests
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          NODE_OPTIONS: --max-old-space-size=8192
         run: npm run test:ci
   # If we'll have more than one job in the future and we require all jobs to pass before we can
   # merge a PR. Consider to use https://github.com/marketplace/actions/alls-green (related to: https://github.com/orgs/community/discussions/26733).
