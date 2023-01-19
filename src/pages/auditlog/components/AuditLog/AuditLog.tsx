@@ -148,7 +148,6 @@ export default function AuditLogTable() {
     <QueryResultsTable<AuditLog, TableSearchParams>
       queryResults={tableQueryResult}
       params={params}
-      showResultsInfo
       onChangeParams={setParams}
       actionsHeader={[
         ({ params, setParams }) => {

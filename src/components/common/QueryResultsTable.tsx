@@ -19,7 +19,7 @@ export default function QueryResultsTable<
   Params extends object = CommonParams,
   ValueType = 'text',
 >(props: Props<T, Params, ValueType>): JSX.Element {
-  const { queryResults, actionsHeader, controlsHeader, showResultsInfo = false, ...rest } = props;
+  const { queryResults, actionsHeader, controlsHeader, showResultsInfo = true, ...rest } = props;
 
   if (isFailed(queryResults.data)) {
     return (

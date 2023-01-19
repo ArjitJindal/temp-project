@@ -132,7 +132,7 @@ export default function Table<
     },
     onReset,
     onReload,
-    showResultsInfo = false,
+    showResultsInfo = true,
     autoAdjustHeight = false,
   } = props;
   const tableElement = useRef<HTMLDivElement>(null);

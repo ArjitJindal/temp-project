@@ -775,7 +775,6 @@ export default function TransactionCases(props: Props) {
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
-      showResultsInfo
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}

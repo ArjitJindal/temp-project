@@ -352,7 +352,6 @@ export default function UserCases(props: Props) {
 
   return (
     <QueryResultsTable<TableItem, TableSearchParams>
-      showResultsInfo
       queryResults={tableQueryResult}
       params={params}
       onChangeParams={onChangeParams}
