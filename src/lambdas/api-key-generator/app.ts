@@ -13,12 +13,18 @@ import {
   AUDITLOG_COLLECTION,
   CASES_COLLECTION,
   getMongoDbClient,
-  TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { sendBatchJobCommand } from '@/services/batch-job'
+import { getCredentialsFromEvent } from '@/utils/credentials'
+import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
+import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const base62 = require('base-x')(
@@ -28,6 +34,7 @@ const base62 = require('base-x')(
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string
   usagePlanId: string
+  demoTenant: string
 }
 
 function createUuid() {
@@ -70,10 +77,26 @@ export const apiKeyGeneratorHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
     >
   ) => {
-    const { tenantId, usagePlanId } =
+    const { tenantId, usagePlanId, demoTenant } =
       event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
-    await createMongoDBCollections(await getMongoDbClient(), tenantId)
-    return createNewApiKeyForTenant(tenantId, usagePlanId)
+    const mongoClient = await getMongoDbClient()
+    const isDemo = demoTenant === 'true' && process.env.ENV === 'sandbox'
+    const fullTenantId = getFullTenantId(tenantId, isDemo)
+    await createMongoDBCollections(mongoClient, fullTenantId)
+    if (isDemo) {
+      const dynamoDb = await getDynamoDbClient()
+      const tenantRepository = new TenantRepository(fullTenantId, { dynamoDb })
+      await tenantRepository.createOrUpdateTenantSettings({
+        features: ['DEMO_MODE'],
+      })
+      const batchJob: DemoModeDataLoadBatchJob = {
+        type: 'DEMO_MODE_DATA_LOAD',
+        tenantId: fullTenantId,
+        awsCredentials: getCredentialsFromEvent(event),
+      }
+      await sendBatchJobCommand(fullTenantId, batchJob)
+    }
+    return createNewApiKeyForTenant(fullTenantId, usagePlanId)
   }
 )
 

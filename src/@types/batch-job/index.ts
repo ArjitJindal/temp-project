@@ -23,6 +23,14 @@ export type LiveTestingPulseBatchJob = {
   parameters: LiveTestPulseParameters & { taskId: string }
 }
 
+/* Demo Mode Data Load */
+type DemoModeDataLoadBatchJobType = 'DEMO_MODE_DATA_LOAD'
+export type DemoModeDataLoadBatchJob = {
+  type: DemoModeDataLoadBatchJobType
+  tenantId: string
+  awsCredentials?: CredentialsOptions
+}
+
 /* Placeholder */
 type PlaceholderBatchJobType = 'PLACEHOLDER'
 export type PlaceholderBatchJob = {
@@ -34,7 +42,9 @@ export type BatchJobType =
   | FileImportBatchJobType
   | LiveTestingPulseBatchJobType
   | PlaceholderBatchJobType
+  | DemoModeDataLoadBatchJobType
 export type BatchJob =
   | FileImportBatchJob
   | LiveTestingPulseBatchJob
   | PlaceholderBatchJob
+  | DemoModeDataLoadBatchJob

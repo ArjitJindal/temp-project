@@ -12,6 +12,7 @@ import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { logger } from '@/core/logger'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { isValidRole } from '@/@types/jwt'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 
@@ -291,5 +292,42 @@ export class AccountsService {
       }
     )
     return AccountsService.userToAccount(patchedUser)
+  }
+
+  async getUserSettings(
+    tenant: Tenant,
+    accountId: string
+  ): Promise<AccountSettings> {
+    const managementClient = await this.getManagementClient()
+    const user = await managementClient.getUser({
+      id: accountId,
+    })
+    return {
+      demoMode: user.user_metadata?.['demoMode'] === true,
+    }
+  }
+
+  async patchUserSettings(
+    tenant: Tenant,
+    accountId: string,
+    patch: Partial<AccountSettings>
+  ): Promise<AccountSettings> {
+    const managementClient = await this.getManagementClient()
+    const user = await managementClient.getUser({
+      id: accountId,
+    })
+
+    const updatedUser = await managementClient.updateUser(
+      {
+        id: accountId,
+      },
+      {
+        user_metadata: {
+          ...user.user_metadata,
+          ...patch,
+        },
+      }
+    )
+    return updatedUser.user_metadata ?? {}
   }
 }

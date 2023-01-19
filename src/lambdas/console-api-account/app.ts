@@ -11,6 +11,7 @@ import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPaylo
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 
 export type AccountsConfig = {
   AUTH0_DOMAIN: string
@@ -79,21 +80,6 @@ export const accountsHandler = lambdaApi()(
       }
       await accountsService.changeUserTenant(oldTenant, newTenant, userId)
       return true
-    } else if (
-      event.httpMethod === 'DELETE' &&
-      event.resource === '/accounts/{accountId}'
-    ) {
-      const { pathParameters } = event
-      assertRole({ role, verifiedEmail }, 'admin')
-
-      const idToDelete = pathParameters?.accountId
-      if (!idToDelete) {
-        throw new Error(`userId is not provided`)
-      }
-
-      const organization = await accountsService.getAccountTenant(userId)
-      await accountsService.deleteUser(organization, idToDelete)
-      return true
     } else if (event.resource === '/accounts/{accountId}') {
       const { pathParameters } = event
       const accountId = pathParameters?.accountId
@@ -122,6 +108,28 @@ export const accountsHandler = lambdaApi()(
           organization,
           accountId,
           patchPayload
+        )
+      }
+    } else if (event.resource === '/accounts/{accountId}/settings') {
+      const { pathParameters } = event
+      const accountId = pathParameters?.accountId
+      if (!accountId) {
+        throw new BadRequest(`accountId is not provided`)
+      }
+      if (accountId != userId) {
+        assertRole({ role, verifiedEmail }, 'root')
+      }
+      if (event.httpMethod === 'GET') {
+        return await accountsService.getUserSettings(organization, accountId)
+      } else if (event.httpMethod === 'PATCH') {
+        if (event.body == null) {
+          throw new BadRequest(`Body should not be empty`)
+        }
+        const payload = JSON.parse(event.body) as AccountSettings
+        return await accountsService.patchUserSettings(
+          organization,
+          accountId,
+          payload
         )
       }
     }

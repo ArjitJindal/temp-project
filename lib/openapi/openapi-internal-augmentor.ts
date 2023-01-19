@@ -21,6 +21,8 @@ export const ConsoleApiPathToLambda: any = {
   '/accounts': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/change_tenant':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/accounts/{accountId}/settings':
+    StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/apikey': StackConstants.API_KEY_GENERATOR_FUNCTION_NAME,
   '/iam/rules': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,

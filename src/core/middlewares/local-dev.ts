@@ -5,7 +5,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerHandler,
 } from 'aws-lambda'
 import * as jwt from 'jsonwebtoken'
-import { getToken } from '@/lambdas/jwt-authorizer/app'
+import { getFullTenantId, getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
@@ -45,8 +45,13 @@ export const localDev =
         }
         const userInfo = decoded.payload as Record<string, unknown>
 
+        const tenantId = userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`]
+        const demoMode = userInfo[`${CUSTOM_CLAIMS_NS}/demoMode`] === true
+
+        const fullTenantId = getFullTenantId(tenantId as string, demoMode)
+
         const jwtAuthorizerResult: JWTAuthorizerResult = {
-          principalId: userInfo[`${CUSTOM_CLAIMS_NS}/tenantId`],
+          principalId: fullTenantId,
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
           verifiedEmail:

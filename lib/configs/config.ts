@@ -23,6 +23,9 @@ export type Config = {
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: number
     }
+    BATCH_JOB_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     // Also used in sandbox for initial setup
     API_KEY_GENERATOR_LAMBDA?: {
       MEMORY_SIZE: number

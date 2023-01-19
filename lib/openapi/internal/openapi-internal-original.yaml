@@ -1557,6 +1557,42 @@ paths:
                 $ref: '#/components/schemas/DrsScore'
         '403':
           description: Not enough privileges
+  '/accounts/{accountId}/settings':
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    get:
+      summary: Account - Change Settings
+      operationId: account-get-settings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSettings'
+        '403':
+          description: Not enough privileges
+    patch:
+      summary: Account - Change Settings
+      operationId: account-change-settings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountSettings'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSettings'
+        '403':
+          description: Not enough privileges
   '/accounts/{accountId}':
     parameters:
       - schema:
@@ -3325,6 +3361,12 @@ components:
         - email
         - emailVerified
         - name
+    AccountSettings:
+      title: AccountSettings
+      type: object
+      properties:
+        demoMode:
+          type: boolean
     AccountInvitePayload:
       title: AccountInvitePayload
       type: object
@@ -3659,6 +3701,7 @@ components:
         - SANCTIONS
         - RULES_ENGINE_RULE_BASED_AGGREGATION
         - FALSE_POSITIVE_CHECK
+        - DEMO_MODE
       description: ''
     AccountRole:
       type: string

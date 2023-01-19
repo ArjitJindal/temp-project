@@ -75,6 +75,10 @@ export const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
   return match[1]
 }
 
+export const getFullTenantId = (tenantId: string, demoMode: boolean) => {
+  return tenantId + (demoMode ? `-test` : '')
+}
+
 export const jwtAuthorizer = lambdaAuthorizer()(
   async (
     event: APIGatewayRequestAuthorizerEvent
@@ -105,14 +109,18 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/tenantName`]
     const verifiedEmail =
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
+    const demoMode =
+      process.env.ENV === 'sandbox' &&
+      verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/demoMode`] === true
+    const fullTenantId = getFullTenantId(tenantId, demoMode)
     const tenantScopeCredentials = await getTenantScopeCredentials(
-      tenantId,
+      fullTenantId,
       accountId,
       requestId
     )
 
     return {
-      principalId: tenantId,
+      principalId: fullTenantId,
       policyDocument: {
         Version: '2012-10-17',
         Statement: [

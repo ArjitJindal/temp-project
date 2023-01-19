@@ -46,6 +46,7 @@ export const StackConstants = {
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
+  S3_DEMO_MODE_BUCKET_NAME: 'demo-mode-data-files',
   API_KEY_AUTHORIZER_BASE_ROLE_NAME: getResourceNameForTarpon(
     'ApiKeyAuthorizerBaseRole'
   ),

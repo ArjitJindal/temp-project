@@ -10,6 +10,7 @@
     "target": "ES2020",
     "lib": ["es2020"],
     "baseUrl": ".",
+    "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"],
       "@cdk/*": ["./lib/*"]

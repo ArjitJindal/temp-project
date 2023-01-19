@@ -238,6 +238,7 @@ export class CdkTarponStack extends cdk.Stack {
     let s3ImportBucket
     let s3DocumentBucket
     let s3TmpBucket
+    let s3demoModeBucket
 
     const s3BucketCors = [
       {
@@ -256,6 +257,10 @@ export class CdkTarponStack extends cdk.Stack {
     )
     const tmpBucketName = getNameForGlobalResource(
       StackConstants.S3_TMP_BUCKET_PREFIX,
+      config
+    )
+    const s3demoModeBucketName = getNameForGlobalResource(
+      StackConstants.S3_DEMO_MODE_BUCKET_NAME,
       config
     )
     if (!isDevUserStack) {
@@ -291,6 +296,14 @@ export class CdkTarponStack extends cdk.Stack {
           },
         ],
       })
+
+      s3demoModeBucket = new s3.Bucket(this, s3demoModeBucketName, {
+        bucketName: s3demoModeBucketName,
+        cors: s3BucketCors,
+        removalPolicy:
+          config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
+        encryption: s3.BucketEncryption.S3_MANAGED,
+      })
     } else {
       s3ImportBucket = s3.Bucket.fromBucketName(
         this,
@@ -303,6 +316,11 @@ export class CdkTarponStack extends cdk.Stack {
         documentBucketName
       )
       s3TmpBucket = s3.Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
+      s3demoModeBucket = s3.Bucket.fromBucketName(
+        this,
+        s3demoModeBucketName,
+        s3demoModeBucketName
+      )
     }
 
     /**
@@ -347,6 +365,8 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     this.grantMongoDbAccess(apiKeyGeneratorAlias)
+    tarponDynamoDbTable.grantWriteData(apiKeyGeneratorAlias)
+    s3demoModeBucket.grantRead(apiKeyGeneratorAlias)
     apiKeyGeneratorAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('ApiKeyGeneratorPolicy'), {
         policyName: getResourceNameForTarpon('ApiKeyGeneratorPolicy'),
@@ -771,6 +791,9 @@ export class CdkTarponStack extends cdk.Stack {
     const { alias: jobRunnerAlias } = this.createFunction(
       {
         name: StackConstants.BATCH_JOB_RUNNER_FUNCTION_NAME,
+        memorySize:
+          config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
+          config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       },
       {
         ...atlasFunctionProps,
@@ -786,6 +809,7 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(jobRunnerAlias)
     s3TmpBucket.grantRead(jobRunnerAlias)
     s3ImportBucket.grantWrite(jobRunnerAlias)
+    s3demoModeBucket.grantRead(jobRunnerAlias)
 
     const batchJobStateMachine = new StateMachine(
       this,

@@ -128,3 +128,16 @@ if [ "$createAuth0Org" == "true" ]; then
 else
     echo "Skipping Auth0 organization creation"
 fi
+
+if [ "$createDemoTenant" == "true" ]; then
+    echo "Creating demo tenant"
+    apiKeyDemo=$(awscurl --service execute-api \
+        -X POST \
+        --region "$region" \
+        --profile $profile \
+        "https://"$apiPrefix"api.flagright.com/console/apikey?tenantId=${tenantId}&demoTenant=true&usagePlanId=$usagePlanId");
+    echo "Tarpon Demo API Key: $apiKeyDemo"
+else
+    echo "Skipping creating demo tenant"
+fi
+
