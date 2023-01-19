@@ -1,5 +1,7 @@
-@import '../ui/colors.less';
-@import '../ui/z-indexes.less';
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
 @collapsed-menu-width: 80px;
 @open-menu-width: 250px;
 
@@ -31,8 +33,14 @@
     padding: 0 16px;
     overflow: auto;
     color: #fff;
-    background: @fr-colors-brandBlue;
+    background-color: @fr-colors-brandBlue;
     box-shadow: 0 4px 4px rgb(0 0 0 / 10%);
+    transition: background-color @default-animation-speed, color @default-animation-speed;
+
+    &.isDemoMode {
+      background-color: white;
+      color: black;
+    }
   }
 
   .aside {

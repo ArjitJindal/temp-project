@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useContext } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Button } from 'antd';
@@ -26,6 +26,7 @@ export interface FlagrightAuth0User {
   tenantName: string;
   tenantConsoleApiUrl: string;
   tenantApiAudience: string;
+  demoMode: boolean;
 }
 
 let cachedUsers: Promise<Account[]> | null = null;
@@ -118,6 +119,20 @@ export function useUser(userId: string | null | undefined): Account | null {
   return users[userId];
 }
 
+// export async function useAccountSettings(): AsyncResource<AccountSettings> {
+//   const api = useApi();
+//   const { userId } = useAuth0User();
+//   const result = useQuery(ACCOUNT_ITEM_SETTINGS(userId ?? null), async () => {
+//     if (userId == null) {
+//       return {};
+//     }
+//     return await api.accountGetSettings({
+//       accountId: userId,
+//     });
+//   });
+//   return result.data;
+// }
+
 const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);
 
 export function FlagrightUserProvider(props: { children: React.ReactNode }) {
@@ -131,6 +146,7 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
     const tenantId: string | null = user[`${NAMESPACE}/tenantId`];
     const tenantName: string | null = user[`${NAMESPACE}/tenantName`];
     const verifiedEmail: string | null = user[`${NAMESPACE}/verifiedEmail`];
+    const demoMode: boolean | null = user[`${NAMESPACE}/demoMode`];
 
     if (
       tenantConsoleApiUrl == null ||
@@ -152,6 +168,7 @@ export function FlagrightUserProvider(props: { children: React.ReactNode }) {
       tenantName: tenantName,
       tenantConsoleApiUrl: tenantConsoleApiUrl,
       tenantApiAudience: tenantApiAudience,
+      demoMode: demoMode === true,
       verifiedEmail: verifiedEmail ?? null,
     };
 

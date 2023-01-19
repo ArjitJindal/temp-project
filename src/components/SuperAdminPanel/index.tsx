@@ -20,6 +20,7 @@ const FEATURES: Feature[] = [
   'DASHBOARD_BLOCK_USER',
   'RULES_ENGINE_RULE_BASED_AGGREGATION',
   'FALSE_POSITIVE_CHECK',
+  'DEMO_MODE',
 ];
 
 export default function SuperAdminPanel() {

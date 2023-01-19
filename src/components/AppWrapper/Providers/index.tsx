@@ -6,6 +6,7 @@ import AntConfigProvider from './AntConfigProvider';
 import QueryClientProvider from './QueryClientProvider';
 import MixPanelProvider from './MixPanelProvider';
 import SideBarProvider from './SidebarProvider';
+import DemoModeProvider from './DemoModeProvider';
 import { FlagrightUserProvider } from '@/utils/user-utils';
 import { Feature } from '@/apis';
 
@@ -22,7 +23,9 @@ export default function Providers(props: Props) {
             <RouterProvider>
               <QueryClientProvider>
                 <SideBarProvider>
-                  <MixPanelProvider>{props.children}</MixPanelProvider>
+                  <MixPanelProvider>
+                    <DemoModeProvider>{props.children}</DemoModeProvider>
+                  </MixPanelProvider>
                 </SideBarProvider>
               </QueryClientProvider>
             </RouterProvider>

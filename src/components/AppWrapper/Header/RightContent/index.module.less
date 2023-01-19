@@ -1,5 +1,6 @@
 @import 'node_modules/antd/es/style/themes/default.less';
-@import '../../../ui/colors.less';
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
 
 @pro-header-hover-bg: rgba(0, 0, 0, 0.025);
 
@@ -65,10 +66,23 @@
 .icon {
   width: 32px;
   height: 32px;
-  color: rgba(255, 255, 255, 0.85);
+  color: white;
   vertical-align: middle;
-  &:hover {
-    color: white;
+  transition: color @default-animation-speed;
+
+  &.isDemoMode {
+    color: black;
+  }
+}
+
+.demoModeLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+
+  &.isDemoMode {
+    color: @fr-colors-brandBlue;
   }
 }
 
