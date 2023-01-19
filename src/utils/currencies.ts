@@ -207,7 +207,7 @@ export const CURRENCIES = [
   {
     value: 'COP',
     label: 'COP (Colombian peso)',
-    symbol: '$',
+    symbol: 'Col$',
   },
   {
     value: 'CRC',

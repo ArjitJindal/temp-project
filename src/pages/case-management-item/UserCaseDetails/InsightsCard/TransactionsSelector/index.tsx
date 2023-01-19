@@ -107,6 +107,7 @@ export default function TransactionsSelector(props: Props) {
                 { value: 'COUNT', label: 'Transaction count' },
                 { value: 'AMOUNT', label: 'Transaction amount' },
               ]}
+              style={{ width: '200px' }}
             />
           </Form.Layout.Label>
           <Form.Layout.Label title="Currency" orientation="horizontal">
@@ -120,6 +121,7 @@ export default function TransactionsSelector(props: Props) {
               }}
               options={CURRENCIES_SELECT_OPTIONS}
               showSearch
+              style={{ width: '200px' }}
             />
           </Form.Layout.Label>
         </div>
