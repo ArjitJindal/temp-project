@@ -103,7 +103,7 @@ export default function TransactionsItem() {
                   {transaction.reference}
                 </Form.Layout.Label>
                 <Feature name="PULSE_ARS_CALCULATION">
-                  <Form.Layout.Label icon={<HospitalIcon />} title={'Action Risk Score'}>
+                  <Form.Layout.Label icon={<HospitalIcon />} title={'Transaction risk score'}>
                     <ActionRiskDisplay transactionId={transaction.transactionId!} />
                   </Form.Layout.Label>
                 </Feature>

@@ -115,7 +115,7 @@ export default function DRSDistributionCard() {
             <Card
               bordered={false}
               bodyStyle={{ padding: 0 }}
-              title={header('User Distribution by DRS Risk Level')}
+              title={header('User Distribution by CRA Risk Level')}
             >
               <Row>
                 <Col span={12}>

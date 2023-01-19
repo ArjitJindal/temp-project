@@ -48,14 +48,14 @@ const RiskAlgorithmTable: React.FC = () => {
         <ProCard
           title={
             <>
-              <span className={styles.KRSheader}>Dynamic Risk Score (DRS)</span>
+              <span className={styles.KRSheader}>Customer risk assessment (CRA)</span>
               <div className={styles.KRSsubheader}>
-                Dynamic aggregate score of your customer based on their KRS and ARS.
+                Dynamic aggregate score of your customer based on their KRS and TRS.
               </div>
             </>
           }
           collapsible
-          extra="DRS"
+          extra="CRA"
           hoverable
         >
           <ProCard bordered bodyStyle={{ border: 10 }}>
@@ -63,11 +63,11 @@ const RiskAlgorithmTable: React.FC = () => {
               <div className={styles.header}>Formula</div>
               <div> </div>
               <div className={styles.KRSformula}>
-                DRS[i] = avg (KRS + DRS[i-1] + ARS[i] )[i] = avg (KRS + DRS[i-1] + ARS[i] )
+                CRA[i] = avg (KRS + CRA[i-1] + TRS[i] )[i] = avg (KRS + CRA[i-1] + TRS[i] )
               </div>
-              <div className={styles.KRSformula}>DRS[0] = KRS</div>
-              <div className={styles.KRSformula}>DRS[1] = avg ( KRS + ARS[1] )</div>
-              <div className={styles.KRSformula}>DRS[2] = avg ( DRS[1] + ARS[2] )</div>
+              <div className={styles.KRSformula}>CRA[0] = KRS</div>
+              <div className={styles.KRSformula}>CRA[1] = avg ( KRS + TRS[1] )</div>
+              <div className={styles.KRSformula}>CRA[2] = avg ( CRA[1] + TRS[2] )</div>
             </pre>
           </ProCard>
         </ProCard>
@@ -174,15 +174,15 @@ const RiskAlgorithmTable: React.FC = () => {
         <ProCard
           title={
             <>
-              <span className={styles.KRSheader}>Action Risk Score (ARS)</span>
+              <span className={styles.KRSheader}>Transaction risk score (TRS)</span>
               <div className={styles.KRSsubheader}>
-                Risk score of your customer’s transaction activity. ARS changes corresponding to
+                Risk score of your customer’s transaction activity. TRS changes corresponding to
                 user activity.
               </div>
             </>
           }
           collapsible
-          extra="ARS"
+          extra="TRS"
           hoverable
         >
           <ProCard bordered bodyStyle={{ border: 10 }}>
@@ -190,7 +190,7 @@ const RiskAlgorithmTable: React.FC = () => {
               <div className={styles.header}>Formula</div>
               <div> </div>
               <div className={styles.KRSformula}>
-                ARSi = avg [ rORG[i] + rDES[i] + rMET[i] + rMER[i] + rPOMET[i] + amount]
+                TRSi = avg [ rORG[i] + rDES[i] + rMET[i] + rMER[i] + rPOMET[i] + amount]
               </div>
               <div> </div>
               <div className="token-line ">where:</div>

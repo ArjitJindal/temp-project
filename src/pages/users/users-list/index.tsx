@@ -39,7 +39,7 @@ const BusinessUsersTab = () => {
       exportData: (entity) => {
         return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
       },
-      tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
+      tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
       search: false,
       render: (dom, entity) => {
         if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
@@ -151,7 +151,7 @@ const ConsumerUsersTab = () => {
         exportData: (entity) => {
           return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
         },
-        tip: 'Dynamic risk Score - accounts for both Base risk and action risk scores.',
+        tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
         search: false,
         render: (dom, entity) => {
           if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {

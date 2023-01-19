@@ -42,7 +42,7 @@ export default function TransactionInfoCard(props: Props) {
           {transaction.reference ?? '-'}
           <Form.Layout.Label icon={<BuildingIcon />} title="Product Type" />
           {transaction.productType ?? '-'}
-          <Form.Layout.Label icon={<BuildingIcon />} title="Action Risk Score" />
+          <Form.Layout.Label icon={<BuildingIcon />} title="Transaction risk score" />
           <Feature name="PULSE_ARS_CALCULATION">
             <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
               <ActionRiskDisplay transactionId={transaction.transactionId!} />

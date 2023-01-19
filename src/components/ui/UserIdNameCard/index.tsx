@@ -19,7 +19,7 @@ export default function UserIdNameCard(props: Props) {
           {user ? getUserName(user) : 'Unknown user'}
           {showRiskLevel && (
             <div className={s.risk}>
-              DRS Risk Level : {user?.userId && <UserRiskTag userId={user?.userId} />}
+              CRA Risk Level : {user?.userId && <UserRiskTag userId={user?.userId} />}
             </div>
           )}
         </div>

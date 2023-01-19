@@ -24,7 +24,7 @@ export default function SubHeader(props: Props) {
     <div className={s.root}>
       <div className={s.items}>
         <Feature name="PULSE">
-          <Form.Layout.Label icon={<Spam2LineIcon />} title={'DRS Risk Level'}>
+          <Form.Layout.Label icon={<Spam2LineIcon />} title={'CRA Risk Level'}>
             <UserManualRiskPanel userId={userId} />
           </Form.Layout.Label>
         </Feature>
@@ -45,7 +45,7 @@ export default function SubHeader(props: Props) {
         </div>
         <div>
           <Feature name="PULSE_ARS_CALCULATION">
-            <Form.Layout.Label icon={<HospitalIcon />} title={'Dynamic Risk Score'}>
+            <Form.Layout.Label icon={<HospitalIcon />} title={'Customer risk assessment'}>
               <DynamicRiskDisplay userId={user.userId} />
             </Form.Layout.Label>
           </Feature>
