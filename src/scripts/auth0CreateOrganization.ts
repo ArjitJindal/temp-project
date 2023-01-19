@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import { getConfig } from '../../scripts/migrations/utils/config'
+import { getConfig, loadConfigEnv } from '../../scripts/migrations/utils/config'
 import { Config } from '../../lib/configs/config'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 
@@ -40,6 +40,8 @@ if (
     'Missing required argument. Please provide: --apiPrefix, --tenantId, --auth0OrganizationName, --tenantName, ENV'
   )
 }
+
+loadConfigEnv()
 
 const createAuth0Organization = async (
   apiPrefix: string,

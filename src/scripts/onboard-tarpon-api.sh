@@ -68,8 +68,9 @@ else
     exit 1
 fi
 
-echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to ~/.aws/credentials (profile: $profile)"
-npm run aws-sso-login --profile=$profile
+export AWS_REGION=$region
+
+echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to the terminal as environment variables first
 
 existingTenantId=$(aws apigateway get-usage-plans \
     --profile $profile --region $region \

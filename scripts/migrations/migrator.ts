@@ -3,9 +3,9 @@ import { exit } from 'process'
 import { StackConstants } from '@cdk/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import AWS from 'aws-sdk'
-import { config } from '@cdk/configs/config-local'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
+import { loadConfigEnv } from './utils/config'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
@@ -33,10 +33,9 @@ const migrationCollection =
     ? 'migrations-pre-deployment'
     : 'migrations-post-deployment'
 
+loadConfigEnv()
 if (process.env.ENV === 'local') {
   process.env.AWS_REGION = 'local'
-  process.env.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN =
-    config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN
 }
 
 function refreshCredentialsPeriodically() {

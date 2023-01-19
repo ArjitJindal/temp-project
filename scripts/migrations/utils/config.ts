@@ -33,3 +33,10 @@ export function getConfig() {
       throw new Error(`Unknown env: ${process.env.ENV}`)
   }
 }
+
+export function loadConfigEnv() {
+  const config = getConfig()
+  Object.entries(config.application).forEach((entry) => {
+    process.env[entry[0]] = String(entry[1])
+  })
+}
