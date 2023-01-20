@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { useState } from 'react';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
+import { flattenObject } from '@/utils/json';
 
 interface Props {
   data: AuditLog;
@@ -41,7 +42,8 @@ const TableTemplate = (props: TableTemplateProp) => {
           title: 'Parameter Name',
           dataIndex: 'key',
           key: 'key',
-          render: (text) => <b>{_.startCase(text)}</b>,
+          render: (text) =>
+            typeof text === 'string' ? <b>{_.startCase(text.replaceAll('.', ' > '))}</b> : '',
           width: 80,
         },
         {
@@ -75,8 +77,8 @@ type convertDataReturn = {
 const convertDataOldImageAndNewImageToArr = (data: AuditLog): convertDataReturn => {
   const changedDetails: object[] = [];
   const notChangedDetails: object[] = [];
-  const oldImage = data?.oldImage;
-  const newImage = data?.newImage;
+  const oldImage: any = flattenObject(data?.oldImage);
+  const newImage: any = flattenObject(data?.newImage);
 
   const oldImageKeys = oldImage ? Object.keys(oldImage) : [];
   const newImageKeys = newImage ? Object.keys(newImage) : [];
