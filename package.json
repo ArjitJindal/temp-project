@@ -6,7 +6,7 @@
   "scripts": {
     "all": "npm-run-all -l -s",
     "parallel": "npm-run-all -l -p",
-    "aws-sso-login": "aws sso login --profile $npm_config_profile && cdk-sso-sync $npm_config_profile || npm run sso-fallback-message && echo '\nAWS Credentials:\n====================================' && echo export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile $npm_config_profile) && echo export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile $npm_config_profile) && echo export AWS_SESSION_TOKEN=$(aws configure get aws_session_token --profile $npm_config_profile) && echo '===================================='",
+    "aws-sso-login": "aws sso login --profile $npm_config_profile && yawsso -p $npm_config_profile || npm run sso-fallback-message && echo '\nAWS Credentials:\n====================================' && echo export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id --profile $npm_config_profile) && echo export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key --profile $npm_config_profile) && echo export AWS_SESSION_TOKEN=$(aws configure get aws_session_token --profile $npm_config_profile) && echo '===================================='",
     "aws-sso-login:deploy": "npm run aws-sso-login --profile=AWSAdministratorAccess-073830519512",
     "aws-sso-login:dev": "npm run aws-sso-login --profile=AWSAdministratorAccess-911899431626",
     "aws-sso-login:sandbox": "npm run aws-sso-login --profile=AWSAdministratorAccess-293986822825",
@@ -124,7 +124,6 @@
     "aws-sdk-client-mock-jest": "^2.0.1",
     "body-parser": "^1.20.0",
     "builtin-modules": "^3.3.0",
-    "cdk-sso-sync": "^0.0.6",
     "chalk": "^4.1.2",
     "command-line-args": "^5.2.0",
     "commander": "^9.2.0",

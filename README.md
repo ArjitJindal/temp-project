@@ -14,9 +14,11 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
 ## Prerequisites
 
+- AWS CLI - [Install AWS CLI](https://aws.amazon.com/cli/)
 - CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
 - Node.js (v14) - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
 - Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
+- [yawsso](https://github.com/victorskl/yawsso) - `pip3 install yawsso`
 
 ## Build
 
