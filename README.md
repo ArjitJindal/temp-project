@@ -8,6 +8,12 @@ Named after the saviors of the environment, [Phytoplankton](https://www.youtube.
 
 This project is initialized with Ant Design.
 
+## Prerequisites
+
+- AWS CLI - [Install AWS CLI](https://aws.amazon.com/cli/)
+- CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)management tool.offering=community)
+- [yawsso](https://github.com/victorskl/yawsso) - `pip3 install yawsso`
+
 ## Prepare Environment
 
 Install `node_modules`:
