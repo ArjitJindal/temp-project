@@ -7,7 +7,7 @@ export type Auth0ManagementAPICreds = {
 
 let cacheAuth0ManagementAPICreds: Auth0ManagementAPICreds
 
-export async function getAuth0Credentials() {
+export async function getAuth0Credentials(): Promise<Auth0ManagementAPICreds> {
   if (cacheAuth0ManagementAPICreds) {
     return cacheAuth0ManagementAPICreds
   }

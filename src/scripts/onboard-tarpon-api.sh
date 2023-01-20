@@ -70,7 +70,7 @@ fi
 
 export AWS_REGION=$region
 
-echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to the terminal as environment variables first
+echo "❗❗ Please copy the credentials of the corresponding account from https://d-9a6713bec9.awsapps.com/start#/ and paste to the terminal as environment variables first"
 
 existingTenantId=$(aws apigateway get-usage-plans \
     --profile $profile --region $region \
@@ -123,7 +123,7 @@ echo "Tarpon API Key: $apiKey";
 
 if [ "$createAuth0Org" == "true" ]; then
     echo "Creating Auth0 organization"
-    organization=$(ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix)
+    organization=$(AWS_REGION=$region ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix --auth0Emails=$auth0Emails)
     echo $organization
 else
     echo "Skipping Auth0 organization creation"

@@ -1,39 +1,35 @@
 import fetch from 'node-fetch'
+import commandLineArgs from 'command-line-args'
 import { getConfig, loadConfigEnv } from '../../scripts/migrations/utils/config'
 import { Config } from '../../lib/configs/config'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
+import { AccountsService } from '@/lambdas/console-api-account/services/accounts-service'
 
-const args = process.argv.slice(2)
-
-let apiPrefix = ''
-let tenantId = ''
 const config = getConfig()
-let auth0OrganizationName = ''
-let tenantName = ''
 
-for (let i = 0; i < args.length; i++) {
-  if (args[i].startsWith('--apiPrefix')) {
-    apiPrefix = args[i].split('=')[1]
-  }
-
-  if (args[i].startsWith('--tenantId')) {
-    tenantId = args[i].split('=')[1]
-  }
-
-  if (args[i].startsWith('--auth0OrganizationName')) {
-    auth0OrganizationName = args[i].split('=')[1]
-  }
-
-  if (args[i].startsWith('--tenantName')) {
-    tenantName = args[i].split('=')[1]
-  }
+type OptionsType = {
+  apiPrefix: string
+  tenantId: string
+  auth0OrganizationName: string
+  tenantName: string
+  auth0Emails?: string
 }
 
+const optionDefinitions = [
+  { name: 'apiPrefix', type: String },
+  { name: 'tenantId', type: String },
+  { name: 'auth0OrganizationName', type: String },
+  { name: 'tenantName', type: String },
+  { name: 'auth0Emails', type: String },
+]
+
+const options = commandLineArgs(optionDefinitions)
+
 if (
-  !apiPrefix ||
-  !tenantId ||
-  !auth0OrganizationName ||
-  !tenantName ||
+  !options.apiPrefix ||
+  !options.tenantId ||
+  !options.auth0OrganizationName ||
+  !options.tenantName ||
   !process.env.ENV
 ) {
   throw new Error(
@@ -44,13 +40,12 @@ if (
 loadConfigEnv()
 
 const createAuth0Organization = async (
-  apiPrefix: string,
-  tenantId: string,
-  auth0OrganizationName: string,
-  config: Config,
-  tenantName: string
+  options: OptionsType,
+  config: Config
 ) => {
   const { clientId, clientSecret } = await getAuth0Credentials()
+
+  const auth0Emails: Array<any> = options?.auth0Emails?.split(',') || []
 
   const auth0Url = 'https://' + config.application.AUTH0_DOMAIN + '/oauth/token'
   const bearerTokenReq = await fetch(auth0Url, {
@@ -79,11 +74,11 @@ const createAuth0Organization = async (
       Authorization: `Bearer ${bearerToken}`,
     },
     body: JSON.stringify({
-      name: tenantName.toLowerCase().replace(/ /g, '-'),
-      display_name: auth0OrganizationName,
+      name: options.tenantName.toLowerCase().replace(/ /g, '-'),
+      display_name: options.auth0OrganizationName,
       metadata: {
-        tenantId,
-        consoleApiUrl: `https://${apiPrefix}.console.flagright.com/console`,
+        tenantId: options.tenantId,
+        consoleApiUrl: `https://${options.apiPrefix}.console.flagright.com/console`,
         apiAudience: config.application.AUTH0_AUDIENCE,
       },
     }),
@@ -104,12 +99,28 @@ const createAuth0Organization = async (
   console.log(
     `Auth0 organization created: ${auth0Organization.name} (id: ${auth0Organization.id})`
   )
+
+  const accountsService = new AccountsService({
+    AUTH0_CONSOLE_CLIENT_ID: clientId,
+    AUTH0_DOMAIN: config.application.AUTH0_DOMAIN,
+  })
+
+  for (let i = 0; i < auth0Emails.length; i++) {
+    const auth0Email = auth0Emails[i]
+
+    const account = await accountsService.createAccountInOrganization(
+      {
+        id: auth0Organization.metadata.tenantId,
+        name: auth0Organization.name as unknown as string,
+        apiAudience: auth0Organization.metadata
+          .apiAudience as unknown as string,
+        orgId: auth0Organization.id as unknown as string,
+      },
+      { email: auth0Email, role: 'admin' }
+    )
+
+    console.log(account)
+  }
 }
 
-createAuth0Organization(
-  apiPrefix,
-  tenantId,
-  auth0OrganizationName,
-  config,
-  tenantName
-)
+createAuth0Organization(options as OptionsType, config)
