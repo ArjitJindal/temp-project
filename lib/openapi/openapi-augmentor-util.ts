@@ -27,6 +27,53 @@ function assertValidLambdaMappings(openapi: any, pathToLambda: PathToLambda) {
   }
 }
 
+/**
+ * AWS APIGateway request validator detail error messagae doesn't work well for `allOf`.
+ * For example, `allOf[A, B]`, and we have a missing required parameter in A,
+ * the error message will just say:
+ * "instance failed to match all required schemas (matched only 1 out of 2)"
+ * This is the workaround to "flatten" the schema (recursively) to have better error message.
+ */
+function flattenAndDeRefAllOf(schema: any, schemas: any) {
+  if (schema.properties) {
+    for (const propertyKey in schema.properties) {
+      schema.properties[propertyKey] = flattenAndDeRefAllOf(
+        schema.properties[propertyKey],
+        schemas
+      )
+    }
+    return schema
+  }
+  if (schema.allOf) {
+    const newSchema = {
+      type: 'object',
+      properties: {},
+      required: [],
+    }
+    for (const subSchema of schema.allOf || []) {
+      let s = subSchema
+      if ('$ref' in subSchema) {
+        const refSchemaKey = subSchema['$ref'].replace(
+          '#/components/schemas/',
+          ''
+        )
+        s = schemas[refSchemaKey]
+        if (!s) {
+          continue
+        }
+      }
+      s = flattenAndDeRefAllOf(s, schemas)
+      newSchema.properties = {
+        ...newSchema.properties,
+        ..._.cloneDeep(s.properties),
+      }
+      newSchema.required = newSchema.required.concat(s.required || [])
+    }
+    return newSchema
+  }
+  return schema
+}
+
 export function getAugmentedOpenapi(
   openapiPath: string,
   pathToLambda: { [key: string]: string },
@@ -193,6 +240,14 @@ export function getAugmentedOpenapi(
         },
       },
     }
+  }
+
+  // Flatten allOf
+  for (const schemaKey in openapi.components.schemas) {
+    openapi.components.schemas[schemaKey] = flattenAndDeRefAllOf(
+      openapi.components.schemas[schemaKey],
+      openapi.components.schemas
+    )
   }
 
   return openapi
