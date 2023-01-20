@@ -286,10 +286,8 @@ export class TransactionRepository {
       params?.sortField !== undefined ? params?.sortField : 'timestamp'
     const sortOrder = params?.sortOrder === 'ascend' ? 1 : -1
 
-    const pipeline: Document[] = [
-      { $match: query },
-      { $sort: { [sortField]: sortOrder } },
-    ]
+    const pipeline: Document[] = [{ $match: query }]
+
     if (sortField === 'ruleHitCount') {
       pipeline.push(
         {
@@ -299,6 +297,8 @@ export class TransactionRepository {
         },
         { $sort: { Hit: sortOrder } }
       )
+    } else {
+      pipeline.push({ $sort: { [sortField]: sortOrder } })
     }
     pipeline.push(...paginatePipeline(params))
     if (params?.includeUsers) {
@@ -414,15 +414,17 @@ export class TransactionRepository {
   public async getTransactionCaseManagement(
     transactionId: string
   ): Promise<TransactionCaseManagement | null> {
-    return await this.getDenormalizedTransactions(
-      {
-        transactionId,
-      },
-      {
-        includeUsers: true,
-        includeEvents: true,
-        beforeTimestamp: Date.now(),
-      }
+    return (
+      await this.getDenormalizedTransactions(
+        {
+          transactionId,
+        },
+        {
+          includeUsers: true,
+          includeEvents: true,
+          beforeTimestamp: Date.now(),
+        }
+      )
     ).next()
   }
 

@@ -2311,6 +2311,14 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
+      - schema:
+          type: string
+        in: query
+        name: sortField
+      - schema:
+          type: string
+        in: query
+        name: sortOrder
     get:
       summary: Get transactions related to a case rule
       operationId: get-case-transactions-for-rule
@@ -2952,6 +2960,8 @@ components:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
             caseStatus:
               $ref: '#/components/schemas/CaseStatus'
+            arsScore:
+              $ref: '#/components/schemas/ArsScore'
           required:
             - status
       title: TransactionCaseManagement
@@ -3096,6 +3106,8 @@ components:
               type: array
               items:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
+            arsScore:
+              $ref: '#/components/schemas/ArsScore'
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/User

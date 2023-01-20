@@ -38,12 +38,13 @@ import {
   getRiskLevelFromScore,
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, hasFeatures } from '@/core/utils/context'
 import {
   PaginationParams,
   OptionalPagination,
   COUNT_QUERY_LIMIT,
 } from '@/utils/pagination'
+import { CaseTransaction } from '@/@types/openapi-internal/CaseTransaction'
 
 export const MAX_TRANSACTION_IN_A_CASE = 1000
 
@@ -1002,20 +1003,28 @@ export class CaseRepository {
   public getCaseRuleTransactionsCursor(
     caseId: string,
     ruleInstanceId: string,
-    params: PaginationParams
+    params: PaginationParams,
+    sortFields: { sortField: string; sortOrder: string }
   ) {
     const pipeline = this.getCaseRuleTransactionsMongoPipeline(
       caseId,
       ruleInstanceId
     )
 
+    const sortOrder = sortFields.sortOrder === 'ascend' ? 1 : -1
+
     const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    return collection.aggregate<Case>(
+    const collection = db.collection<CaseTransaction>(
+      CASES_COLLECTION(this.tenantId)
+    )
+    return collection.aggregate<CaseTransaction>(
       [
         ...pipeline,
         {
-          $sort: { 'caseTransactions.timestamp': -1 },
+          $sort: {
+            [sortFields.sortField ?? 'caseTransactions.timestamp']:
+              sortOrder ?? -1,
+          },
         },
         ...paginatePipeline(params),
       ],
@@ -1047,14 +1056,35 @@ export class CaseRepository {
   public async getCaseRuleTransactions(
     caseId: string,
     ruleInstanceId: string,
-    params: PaginationParams
-  ) {
+    params: PaginationParams,
+    sortFields: { sortField: string; sortOrder: string }
+  ): Promise<{ total: number; cases: CaseTransaction[] }> {
     const cursor = this.getCaseRuleTransactionsCursor(
       caseId,
       ruleInstanceId,
-      params
+      params,
+      sortFields
     )
+
     const res = await cursor.toArray()
+
+    if (hasFeatures(['PULSE', 'PULSE_ARS_CALCULATION'])) {
+      const riskRepository = new RiskRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+
+      const riskClassificationValues =
+        await riskRepository.getRiskClassificationValues()
+
+      for (const caseItem of res) {
+        if (caseItem?.arsScore?.arsScore) {
+          caseItem.arsScore.riskLevel = getRiskLevelFromScore(
+            riskClassificationValues,
+            caseItem.arsScore.arsScore
+          )
+        }
+      }
+    }
 
     return {
       total: await this.getCaseRuleTransactionsCount(caseId, ruleInstanceId),

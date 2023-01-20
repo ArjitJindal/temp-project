@@ -106,6 +106,14 @@ export function hasFeature(feature: Feature): boolean {
   )
 }
 
+export function hasFeatures(features: Feature[]): boolean {
+  return (
+    features.every((feature) => hasFeature(feature)) ||
+    getTestEnabledFeatures()?.some((feature) => features.includes(feature)) ||
+    false
+  )
+}
+
 export function getTestEnabledFeatures(): Feature[] | undefined {
   return process.env.ENV === 'local'
     ? (process.env.TEST_ENABLED_FEATURES?.split(',') as Feature[])

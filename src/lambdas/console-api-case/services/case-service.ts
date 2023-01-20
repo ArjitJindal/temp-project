@@ -113,12 +113,14 @@ export class CaseService {
   public async getCaseRuleTransactions(
     caseId: string,
     ruleInstanceId: string,
-    params: PaginationParams
+    params: PaginationParams,
+    sortFields: { sortField: string; sortOrder: string }
   ) {
     return await this.caseRepository.getCaseRuleTransactions(
       caseId,
       ruleInstanceId,
-      params
+      params,
+      sortFields
     )
   }
 

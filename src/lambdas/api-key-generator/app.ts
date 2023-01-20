@@ -257,7 +257,12 @@ export const createMongoDBCollections = async (
     await casesCollection.createIndex({
       'caseUsers.destinationUserDrsScore': 1,
     })
-
+    await casesCollection.createIndex({
+      'caseTransactions.arsScore': 1,
+    })
+    await transactionCollection.createIndex({
+      arsScore: 1,
+    })
     try {
       await db.createCollection(AUDITLOG_COLLECTION(tenantId))
     } catch (e) {

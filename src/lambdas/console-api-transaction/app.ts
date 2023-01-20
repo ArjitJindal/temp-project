@@ -17,6 +17,8 @@ import { TransactionCaseManagement } from '@/@types/openapi-internal/Transaction
 import { TransactionsUpdateRequest } from '@/@types/openapi-internal/TransactionsUpdateRequest'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -72,6 +74,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<TransactionC
     originUser: 'SKIP',
     destinationUser: 'SKIP',
     events: 'SKIP',
+    arsScore: 'SKIP',
   }
 
 export const transactionsViewHandler = lambdaApi()(
@@ -85,11 +88,18 @@ export const transactionsViewHandler = lambdaApi()(
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
     const client = await getMongoDbClient()
+    const dynamoDb = await getDynamoDbClient()
     const transactionRepository = new TransactionRepository(tenantId, {
       mongoDb: client,
     })
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb,
+      mongoDb: client,
+    })
+
     const transactionService = new TransactionService(
       transactionRepository,
+      riskRepository,
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET

@@ -11,15 +11,19 @@ import { Currency } from '@/utils/currency-utils'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 
 export class TransactionService {
   transactionRepository: TransactionRepository
   s3: AWS.S3
   documentBucketName: string
   tmpBucketName: string
+  riskRepository: RiskRepository
 
   constructor(
     transactionRepository: TransactionRepository,
+    riskRepository: RiskRepository,
     s3: AWS.S3,
     tmpBucketName: string,
     documentBucketName: string
@@ -28,15 +32,32 @@ export class TransactionService {
     this.s3 = s3
     this.tmpBucketName = tmpBucketName
     this.documentBucketName = documentBucketName
+    this.riskRepository = riskRepository
   }
 
   public async getTransactions(
     params: DefaultApiGetTransactionsListRequest
   ): Promise<TransactionsListResponse> {
     const result = await this.transactionRepository.getTransactions(params)
+
     result.data = result.data.map((transaction) =>
       this.getAugmentedTransactionCaseManagement(transaction)
     )
+
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+
+    result.data = result.data.map((transaction) => {
+      if (transaction?.arsScore?.arsScore != null) {
+        transaction.arsScore.riskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          transaction.arsScore.arsScore
+        )
+      }
+
+      return transaction
+    })
+
     return result
   }
 

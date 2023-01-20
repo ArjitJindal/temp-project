@@ -119,12 +119,13 @@ export class RiskRepository {
     score: number,
     originUserId?: string,
     destinationUserId?: string
-  ): Promise<any> {
-    const newArsScoreItem: any = {
+  ): Promise<number> {
+    const newArsScoreItem: ArsScore = {
       arsScore: score,
       createdAt: Date.now(),
-      originUserId: originUserId,
-      destinationUserId: destinationUserId,
+      originUserId,
+      destinationUserId,
+      transactionId,
     }
     const primaryKey = DynamoDbKeys.ARS_VALUE_ITEM(
       this.tenantId,
