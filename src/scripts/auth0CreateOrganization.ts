@@ -4,6 +4,8 @@ import { getConfig, loadConfigEnv } from '../../scripts/migrations/utils/config'
 import { Config } from '../../lib/configs/config'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { AccountsService } from '@/lambdas/console-api-account/services/accounts-service'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 const config = getConfig()
 
@@ -13,6 +15,7 @@ type OptionsType = {
   auth0OrganizationName: string
   tenantName: string
   auth0Emails?: string
+  featureFlags?: string
 }
 
 const optionDefinitions = [
@@ -21,6 +24,7 @@ const optionDefinitions = [
   { name: 'auth0OrganizationName', type: String },
   { name: 'tenantName', type: String },
   { name: 'auth0Emails', type: String },
+  { name: 'featureFlags', type: String },
 ]
 
 const options = commandLineArgs(optionDefinitions)
@@ -46,7 +50,8 @@ const createAuth0Organization = async (
   const { clientId, clientSecret } = await getAuth0Credentials()
 
   const auth0Emails: Array<any> = options?.auth0Emails?.split(',') || []
-
+  const featureFlags: Array<any> = options?.featureFlags?.split(',') || []
+  const dynamoDb = getDynamoDbClient()
   const auth0Url = 'https://' + config.application.AUTH0_DOMAIN + '/oauth/token'
   const bearerTokenReq = await fetch(auth0Url, {
     method: 'POST',
@@ -121,6 +126,16 @@ const createAuth0Organization = async (
 
     console.log(account)
   }
+
+  const tenantRepository = new TenantRepository(options.tenantId, {
+    dynamoDb,
+  })
+
+  await tenantRepository.createOrUpdateTenantSettings({
+    features: featureFlags,
+  })
+
+  console.log('Tenant settings updated with feature flags ' + featureFlags)
 }
 
 createAuth0Organization(options as OptionsType, config)

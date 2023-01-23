@@ -123,7 +123,7 @@ echo "Tarpon API Key: $apiKey";
 
 if [ "$createAuth0Org" == "true" ]; then
     echo "Creating Auth0 organization"
-    organization=$(AWS_REGION=$region ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix --auth0Emails=$auth0Emails)
+    organization=$(AWS_REGION=$region ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix --auth0Emails=$auth0Emails --featureFlags=$featureFlags)
     echo $organization
 else
     echo "Skipping Auth0 organization creation"
