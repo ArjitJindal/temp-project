@@ -32,7 +32,7 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { ClosingReasonTag } from '@/pages/case-management/components/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 
 interface Props {
@@ -51,7 +51,7 @@ export default function UserCases(props: Props) {
   const actionRef = useRef<TableActionType>(null);
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();

@@ -38,7 +38,7 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import { getUserName } from '@/utils/api/users';
 import COUNTRIES from '@/utils/countries';
 import BusinessIndustryButton from '@/pages/transactions/components/BusinessIndustryButton';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
@@ -70,7 +70,7 @@ export default function TransactionCases(props: Props) {
   const formRef = useRef<ProFormInstance<TableSearchParams>>();
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers();
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const tableQueryResult = useTableData(queryResult, 'TRANSACTION');
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);

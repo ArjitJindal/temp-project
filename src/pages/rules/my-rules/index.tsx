@@ -10,7 +10,7 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
 import { useRules } from '@/utils/rules';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -21,7 +21,7 @@ import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},

@@ -21,6 +21,7 @@ export function prepareTableData(
       events: item.events ?? [],
       ruleName: null,
       ruleDescription: null,
+      arsRiskLevel: item.arsScore?.riskLevel,
     };
     if (item.hitRules.length === 0) {
       return dataItem;

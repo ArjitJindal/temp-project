@@ -14,7 +14,7 @@ import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleFiltersEditor } from '@/components/rules/RuleFiltersEditor';
 
 interface Props {
@@ -34,8 +34,8 @@ export const RuleInstanceDetails: React.FC<Props> = ({
   isEditing,
 }) => {
   const api = useApi();
-  const isPulseEnabled = useFeature('PULSE');
-  const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const isFalsePositiveCheckEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
 
   const [editing, setEditing] = useState(isEditing);
   const [saving, setSaving] = useState(false);

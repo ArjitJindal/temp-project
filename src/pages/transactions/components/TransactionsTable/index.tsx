@@ -19,6 +19,8 @@ import Id from '@/components/ui/Id';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -48,6 +50,7 @@ type Props = {
 
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
+  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
 
   const {
     queryResult,
@@ -80,6 +83,21 @@ export default function TransactionsTable(props: Props) {
           );
         },
       },
+      isPulseEnabled
+        ? {
+            title: 'TRS level',
+            width: 130,
+            ellipsis: true,
+            dataIndex: 'arsScore.arsScore',
+            exportData: 'arsScore.riskLevel',
+            hideInSearch: true,
+            sorter: true,
+            render: (_, entity) => {
+              return <RiskLevelTag level={entity?.arsScore?.riskLevel} />;
+            },
+            tooltip: 'Transaction Risk Score level',
+          }
+        : {},
       {
         title: 'Transaction Type',
         dataIndex: 'type',
@@ -119,6 +137,7 @@ export default function TransactionsTable(props: Props) {
           return <TransactionStateTag transactionState={entity.transactionState} />;
         },
       },
+
       {
         title: 'Origin User ID',
         tooltip: 'Origin is the Sender in a transaction',
@@ -328,7 +347,7 @@ export default function TransactionsTable(props: Props) {
         },
       },
     ],
-    [disableSorting, showDetailsView],
+    [disableSorting, showDetailsView, isPulseEnabled],
   );
 
   return (

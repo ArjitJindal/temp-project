@@ -18,7 +18,7 @@ import CreatedListsPage from '@/pages/lists';
 import ListsItemPage from '@/pages/lists-item';
 import RulesPage from '@/pages/rules';
 import RequestNewPage from '@/pages/rules/request-new';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RouteItem } from '@/services/routing/types';
 import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
@@ -26,11 +26,11 @@ import AuditLogPage from '@/pages/auditlog';
 import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 
 export function useRoutes(): RouteItem[] {
-  const isRiskLevelsEnabled = useFeature('PULSE');
-  const isImportFilesEnabled = useFeature('IMPORT_FILES');
-  const isListsFeatureEnabled = useFeature('LISTS');
-  const isSanctionsEnabled = useFeature('SANCTIONS');
-  const isAuditLogEnabled = useFeature('AUDIT_LOGS');
+  const isRiskLevelsEnabled = useFeatureEnabled('PULSE');
+  const isImportFilesEnabled = useFeatureEnabled('IMPORT_FILES');
+  const isListsFeatureEnabled = useFeatureEnabled('LISTS');
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+  const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');

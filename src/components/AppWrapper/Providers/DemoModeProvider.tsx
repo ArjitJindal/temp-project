@@ -2,7 +2,7 @@ import React, { useContext, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { message } from 'antd';
 import { useAuth0User } from '@/utils/user-utils';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { AsyncResource, failed, loading, success } from '@/utils/asyncResource';
 
@@ -14,7 +14,7 @@ interface DemoModeContextValue {
 const Context = React.createContext<DemoModeContextValue | null>(null);
 
 export function useDemoMode(): [AsyncResource<boolean>, (value: boolean) => void] {
-  const isDemoModeAvailable = useFeature('DEMO_MODE');
+  const isDemoModeAvailable = useFeatureEnabled('DEMO_MODE');
   const context = useContext(Context);
 
   if (!isDemoModeAvailable) {

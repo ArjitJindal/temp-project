@@ -1,7 +1,7 @@
 import React from 'react';
 import { Space, Switch } from 'antd';
 import cn from 'clsx';
-import { useFeature } from '../../Providers/SettingsProvider';
+import { useFeatureEnabled } from '../../Providers/SettingsProvider';
 import AvatarDropdown from './AvatarDropdown';
 import styles from './index.module.less';
 import SuperAdminPanel from '@/components/SuperAdminPanel';
@@ -14,9 +14,9 @@ export type SiderTheme = 'light' | 'dark';
 
 export default function RightContent() {
   const user = useAuth0User();
-  const isHelpCenterEnabled = useFeature('HELP_CENTER');
+  const isHelpCenterEnabled = useFeatureEnabled('HELP_CENTER');
   const [isDemoModeRes, setDemoMode] = useDemoMode();
-  const isDemoModeAvailable = useFeature('DEMO_MODE');
+  const isDemoModeAvailable = useFeatureEnabled('DEMO_MODE');
   const isDemoMode = getOr(isDemoModeRes, false);
 
   const helpButton = (

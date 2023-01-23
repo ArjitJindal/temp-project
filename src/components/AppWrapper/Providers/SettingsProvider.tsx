@@ -63,9 +63,14 @@ export function useFeatures(): FeatureName[] {
   return context.features;
 }
 
-export function useFeature(feature: FeatureName): boolean {
+export function useFeatureEnabled(feature: FeatureName): boolean {
   const features = useFeatures();
   return features.includes(feature) || false;
+}
+
+export function useFeaturesEnabled(features: FeatureName[]): boolean {
+  const enabledFeatures = useFeatures();
+  return features.every((feature) => enabledFeatures.includes(feature));
 }
 
 export function Feature(props: {
@@ -73,7 +78,7 @@ export function Feature(props: {
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const isEnabled = useFeature(props.name);
+  const isEnabled = useFeatureEnabled(props.name);
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
 }
 

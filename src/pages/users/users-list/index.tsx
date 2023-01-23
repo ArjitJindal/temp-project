@@ -10,7 +10,7 @@ import { RiskLevelButton } from './RiskLevelFilterButton';
 import { dayjs } from '@/utils/dayjs';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 import { useApi } from '@/api';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { InternalBusinessUser, InternalConsumerUser, InternalUser } from '@/apis';
 import PageWrapper from '@/components/PageWrapper';
 import '../../../components/ui/colors';
@@ -29,7 +29,7 @@ import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 const BusinessUsersTab = () => {
   usePageViewTracker('Users List - Business');
   const api = useApi();
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const measure = useApiTime();
   const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
   if (isPulseEnabled) {
@@ -139,7 +139,7 @@ const BusinessUsersTab = () => {
 
 const ConsumerUsersTab = () => {
   usePageViewTracker('Users List - Consumer');
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const measure = useApiTime();
   const columns: TableColumn<InternalConsumerUser>[] = getConsumerUserColumns();
@@ -250,7 +250,7 @@ const AllUsersTab = () => {
   const api = useApi();
   usePageViewTracker('Users List - All');
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
-  const isPulseEnabled = useFeature('PULSE');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   if (isPulseEnabled) {
     columns.push({
       title: 'Risk Level',

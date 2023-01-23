@@ -20,6 +20,8 @@ import { useApiTime } from '@/utils/tracker';
 import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
+import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export function expandedRowRender(item: RuleHitTransactionItem) {
   const preparedEvents =
@@ -48,7 +50,7 @@ type RuleHitTransactionItem = {
 
 export default function RulesHitTransactionTable(props: Props) {
   const { caseItem, rulesInstanceId } = props;
-
+  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
   const api = useApi();
   const caseId = caseItem.caseId as string;
 
@@ -114,6 +116,21 @@ export default function RulesHitTransactionTable(props: Props) {
                 );
               },
             },
+            isPulseEnabled
+              ? {
+                  title: 'TRS level',
+                  width: 130,
+                  ellipsis: true,
+                  dataIndex: 'caseTransactions.arsScore.arsScore',
+                  exportData: 'caseTransactions.arsScore.arsScore',
+                  hideInSearch: true,
+                  sorter: true,
+                  render: (_, entity) => {
+                    return <RiskLevelTag level={entity?.caseTransactions?.arsScore?.riskLevel} />;
+                  },
+                  tooltip: 'Transaction Risk Score level',
+                }
+              : {},
             {
               title: 'Transaction Type',
               dataIndex: 'caseTransactions.type',

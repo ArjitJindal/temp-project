@@ -6,7 +6,7 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import * as Card from '@/components/ui/Card';
 import TransactionEventsTable from '@/pages/transactions-item/TransactionEventsTable';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
-import { RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
+import { RiskLevel, RuleAction, TransactionAmountDetails, TransactionEvent } from '@/apis';
 import { useApi } from '@/api';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { makeUrl } from '@/utils/routing';
@@ -19,6 +19,8 @@ import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import Money from '@/components/ui/Money';
 import { Currency } from '@/utils/currencies';
+import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export type DataItem = {
   index: number;
@@ -33,12 +35,14 @@ export type DataItem = {
   events: Array<TransactionEvent>;
   ruleName: string | null;
   ruleDescription: string | null;
+  arsRiskLevel?: RiskLevel;
 };
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
+  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
 
   // Using this hack to fix sticking dropdown on scroll
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -139,6 +143,25 @@ export function Content(props: { userId: string }) {
                 );
               },
             },
+            isPulseEnabled
+              ? {
+                  title: 'TRS level',
+                  width: 130,
+                  ellipsis: true,
+                  dataIndex: 'arsScore.arsScore',
+                  exportData: 'arsRiskLevel',
+                  key: 'arsRiskLevel',
+                  hideInSearch: true,
+                  sorter: true,
+                  render: (_, entity) => {
+                    return <RiskLevelTag level={entity?.arsRiskLevel} />;
+                  },
+                  onCell: (_) => ({
+                    rowSpan: _.isFirstRow ? _.rowsCount : 0,
+                  }),
+                  tooltip: 'Transaction Risk Score level',
+                }
+              : {},
             {
               title: 'Rules Hit',
               dataIndex: 'ruleName',

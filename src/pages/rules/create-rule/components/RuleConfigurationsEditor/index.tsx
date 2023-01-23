@@ -11,7 +11,7 @@ import { RuleParametersEditor } from '@/components/rules/RuleParametersEditor';
 import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
-import { useFeature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   RULE_CASE_CREATION_TYPE_OPTIONS,
   RULE_CASE_PRIORITY,
@@ -27,8 +27,8 @@ interface Props {
 
 export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActivated }) => {
   const api = useApi();
-  const isPulseEnabled = useFeature('PULSE');
-  const isFalsePositiveCheckEnabled = useFeature('FALSE_POSITIVE_CHECK');
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const isFalsePositiveCheckEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
   const [ruleNameAlias, setRuleNameAlias] = useState<string>();
   const [ruleDescriptionAlias, setRuleDescriptionAlias] = useState<string>();
   const [falsePositiveCheckEnabled, setFalsePositiveCheckEnabled] = useState<boolean>(
