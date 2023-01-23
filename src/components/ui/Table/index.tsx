@@ -275,7 +275,7 @@ export default function Table<
                 }px)`,
               }
             : {}),
-          overflowY: 'scroll',
+          overflow: 'auto',
         }}
         toolBarRender={(action, rows) => {
           const result = [];
