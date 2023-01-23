@@ -34,6 +34,7 @@ import {
   StartingPosition,
   ILayerVersion,
   Tracing,
+  Version,
 } from 'aws-cdk-lib/aws-lambda'
 import { Asset } from 'aws-cdk-lib/aws-s3-assets'
 
@@ -423,6 +424,15 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(transactionAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(transactionAlias)
     hammerheadDynamoDbTable.grantReadData(transactionAlias)
+
+    // Configure AutoScaling for Tx Function
+    const as = transactionAlias.addAutoScaling({
+      maxCapacity: config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+    })
+    // Configure Target Tracking
+    as.scaleOnUtilization({
+      utilizationTarget: 0.7,
+    })
 
     const { alias: transactionEventAlias } = this.createFunction({
       name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
@@ -1262,16 +1272,29 @@ export class CdkTarponStack extends cdk.Stack {
     // This is needed to allow using ${Function.Arn} in openapi.yaml
     ;(func.node.defaultChild as CfnFunction).overrideLogicalId(name)
 
+    let lambdaOptions: {
+      aliasName: string
+      version: Version
+      provisionedConcurrentExecutions?: number
+    } = {
+      aliasName: StackConstants.LAMBDA_LATEST_ALIAS_NAME,
+      version: func.currentVersion,
+      provisionedConcurrentExecutions: provisionedConcurrency,
+    }
+    // Check for autoscaling lambda - currrently only transaction lambda
+    if (name === StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME) {
+      lambdaOptions = {
+        aliasName: StackConstants.LAMBDA_LATEST_ALIAS_NAME,
+        version: func.currentVersion,
+      }
+    }
+
     // Alias is required for setting provisioned concurrency. We always create
     // an alias for a lambda even it has no provisioned concurrency.
     const alias = new Alias(
       this,
       `${name}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}`,
-      {
-        aliasName: StackConstants.LAMBDA_LATEST_ALIAS_NAME,
-        version: func.currentVersion,
-        provisionedConcurrentExecutions: provisionedConcurrency,
-      }
+      lambdaOptions
     )
     // This is needed because of the usage of SpecRestApi
     alias.grantInvoke(new ServicePrincipal('apigateway.amazonaws.com'))

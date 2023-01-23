@@ -23,7 +23,7 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 0,
     },
     TRANSACTION_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 0,
+      PROVISIONED_CONCURRENCY: 2, // 2 so we can have auto scaling
     },
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
