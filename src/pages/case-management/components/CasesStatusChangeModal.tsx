@@ -203,7 +203,10 @@ export default function CasesStatusChangeModal(props: Props) {
             </Form.Item>
           )}
           <Form.Item name="comment" label="Comment" rules={[{ max: 500 }]}>
-            <Input.TextArea rows={2} />
+            <Input.TextArea
+              rows={4}
+              placeholder="Write a narrative explaning the case closure reason and findings, if any."
+            />
           </Form.Item>
           <Form.Item name="files" label="Attach documents">
             <FilesInput ref={uploadRef} />
