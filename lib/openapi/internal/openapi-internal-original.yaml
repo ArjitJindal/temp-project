@@ -3108,6 +3108,8 @@ components:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionEvent
             arsScore:
               $ref: '#/components/schemas/ArsScore'
+          required:
+            - status
     InternalConsumerUser:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
@@ -4410,11 +4412,12 @@ components:
     RulesHitPerCase:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/HitRulesDetails
-        - properties:
+        - type: object
+          properties:
             transactionsCount:
               type: number
-      type: object
-      title: RulesHitPerCase
+          required:
+            - transactionsCount
     RuleCaseTransactionItem:
       title: RuleCaseTransactionItem
       x-stoplight:
