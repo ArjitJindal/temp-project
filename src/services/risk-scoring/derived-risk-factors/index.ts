@@ -4,6 +4,7 @@ import {
   KRS_USER_AGE_RISK_HANDLERS,
 } from './user-age'
 import { ARS_DOMESTIC_FOREIGN_COUNTRY_RISK_HANDLERS } from './domestic-foreign-country'
+import { ARS_3DSDONE_RISK_HANDLERS } from './3dsDone'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -53,6 +54,7 @@ const TRANSACTION_RISK_FACTOR_HANDLERS: Array<
 > = [
   ...ARS_USER_AGE_RISK_HANDLERS,
   ...ARS_DOMESTIC_FOREIGN_COUNTRY_RISK_HANDLERS,
+  ...ARS_3DSDONE_RISK_HANDLERS,
 ]
 
 const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = _.keyBy(

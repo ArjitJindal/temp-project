@@ -3576,7 +3576,6 @@ components:
             - type: boolean
       required:
         - kind
-        - content
     RiskParameterValueRange:
       title: RiskParameterValueRange
       properties:
@@ -3671,6 +3670,7 @@ components:
             - domesticOrForeignDestinationCountryConsumer
             - domesticOrForeignOriginCountryBusiness
             - domesticOrForeignDestinationCountryBusiness
+            - _3dsDone
         isActive:
           type: boolean
         isDerived:
@@ -3690,6 +3690,8 @@ components:
           type: string
           enum:
             - generalDetails.countryOfNationality
+        isNullableAllowed:
+          type: boolean
       required:
         - parameter
         - isActive

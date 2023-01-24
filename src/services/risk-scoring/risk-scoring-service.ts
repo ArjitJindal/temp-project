@@ -45,7 +45,7 @@ function matchParameterValue(
   const parameterValueContent = parameterValue.content
   if (
     parameterValueContent.kind === 'LITERAL' &&
-    parameterValueContent === valueToMatch
+    parameterValueContent.content === valueToMatch
   ) {
     return true
   }
@@ -134,9 +134,10 @@ function getIterableAttributeRiskLevel(
 
 function getDerivedAttributeRiskLevel(
   derivedValue: any,
-  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>
+  riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,
+  isNullableAllowed: boolean | undefined
 ): RiskLevel {
-  if (derivedValue) {
+  if (derivedValue || isNullableAllowed) {
     for (const { parameterValue, riskLevel } of riskLevelAssignmentValues) {
       if (matchParameterValue(derivedValue, parameterValue)) {
         return riskLevel
@@ -296,7 +297,8 @@ export class RiskScoringService {
         matchedRiskLevels = derivedValues.map((derivedValue) =>
           getDerivedAttributeRiskLevel(
             derivedValue,
-            parameterAttributeDetails.riskLevelAssignmentValues
+            parameterAttributeDetails.riskLevelAssignmentValues,
+            parameterAttributeDetails.isNullableAllowed
           )
         )
       } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
