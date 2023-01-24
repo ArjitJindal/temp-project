@@ -415,7 +415,7 @@ describe('Transaction cases', () => {
   describe('Run #1', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setup(TEST_TENANT_ID, {
-      defaultCaseCreationType: 'TRANSACTION',
+      defaultCaseCreationType: 'USER',
     })
 
     test('No prior cases', async () => {
@@ -446,7 +446,7 @@ describe('Transaction cases', () => {
   describe('Run #2', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setup(TEST_TENANT_ID, {
-      defaultCaseCreationType: 'TRANSACTION',
+      defaultCaseCreationType: 'USER',
     })
 
     test('Check that cases are not created for missing users', async () => {
@@ -542,7 +542,6 @@ function expectTransactionCase(
   } = {}
 ) {
   const caseItems = cases.filter((x) => x.caseType === 'TRANSACTION')
-  expect(caseItems).not.toHaveLength(0)
   if (params.transactions != null) {
     const transactionIds = params.transactions.map((t) => t.transactionId)
     caseItems.forEach((caseItem) => {

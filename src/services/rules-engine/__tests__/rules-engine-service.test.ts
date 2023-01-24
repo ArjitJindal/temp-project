@@ -56,7 +56,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],
@@ -69,7 +69,7 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],
@@ -193,7 +193,7 @@ describe('Verify Transaction', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],
@@ -206,7 +206,7 @@ describe('Verify Transaction', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],
@@ -354,7 +354,7 @@ describe('Verify Transaction Event', () => {
               ruleHit: true,
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
-                caseCreationType: 'TRANSACTION',
+                caseCreationType: 'USER',
               },
             },
           ],
@@ -367,7 +367,7 @@ describe('Verify Transaction Event', () => {
               ruleAction: 'BLOCK',
               ruleHitMeta: {
                 hitDirections: ['ORIGIN', 'DESTINATION'],
-                caseCreationType: 'TRANSACTION',
+                caseCreationType: 'USER',
               },
             },
           ],
@@ -391,7 +391,7 @@ describe('Verify Transaction Event', () => {
             ruleHit: true,
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],
@@ -404,7 +404,7 @@ describe('Verify Transaction Event', () => {
             ruleAction: 'FLAG',
             ruleHitMeta: {
               hitDirections: ['ORIGIN', 'DESTINATION'],
-              caseCreationType: 'TRANSACTION',
+              caseCreationType: 'USER',
             },
           },
         ],

@@ -160,7 +160,7 @@ describe('Public API - Verify a transaction', () => {
           ruleHit: true,
           ruleHitMeta: {
             hitDirections: ['ORIGIN', 'DESTINATION'],
-            caseCreationType: 'TRANSACTION',
+            caseCreationType: 'USER',
           },
         },
       ],
@@ -173,7 +173,7 @@ describe('Public API - Verify a transaction', () => {
           ruleAction: 'FLAG',
           ruleHitMeta: {
             hitDirections: ['ORIGIN', 'DESTINATION'],
-            caseCreationType: 'TRANSACTION',
+            caseCreationType: 'USER',
           },
         },
       ],

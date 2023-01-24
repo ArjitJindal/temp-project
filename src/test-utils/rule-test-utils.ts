@@ -39,7 +39,7 @@ export async function createRule(
     defaultAction: 'FLAG',
     ruleImplementationName: 'first-payment',
     labels: [],
-    defaultCaseCreationType: 'TRANSACTION',
+    defaultCaseCreationType: 'USER',
     defaultCasePriority: 'P1',
     defaultNature: 'AML',
     ...rule,
