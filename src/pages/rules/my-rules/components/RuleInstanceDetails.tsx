@@ -2,11 +2,7 @@ import ProDescriptions from '@ant-design/pro-descriptions';
 import { Checkbox, Input, message, Radio, Row, Space } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useCallback, useState } from 'react';
-import {
-  RULE_CASE_CREATION_TYPE_OPTIONS,
-  RULE_CASE_PRIORITY,
-  RULE_NATURE_OPTIONS,
-} from '../../utils';
+import { RULE_CASE_PRIORITY, RULE_NATURE_OPTIONS } from '../../utils';
 import { ruleIdsWithAllowedFalsePositiveCheck } from '../../create-rule/components/RuleConfigurationsEditor/consts';
 import { Rule, RuleInstance } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
@@ -233,16 +229,6 @@ export const RuleInstanceDetails: React.FC<Props> = ({
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Updated At:</b>} valueType="dateTime">
           {ruleInstance.createdAt}
-        </ProDescriptions.Item>
-        <ProDescriptions.Item label={<b>Case Creation Type</b>}>
-          <Radio.Group
-            name="caseCreationType"
-            options={RULE_CASE_CREATION_TYPE_OPTIONS}
-            onChange={(event) => setCaseCreationType(event.target.value)}
-            optionType="button"
-            disabled={!editing || saving}
-            value={caseCreationType}
-          ></Radio.Group>
         </ProDescriptions.Item>
         <ProDescriptions.Item label={<b>Nature</b>}>
           <Radio.Group

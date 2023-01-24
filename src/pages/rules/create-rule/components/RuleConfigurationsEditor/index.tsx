@@ -12,11 +12,7 @@ import { RiskLevel } from '@/apis/models/RiskLevel';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { RiskLevelRuleActions } from '@/apis/models/RiskLevelRuleActions';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import {
-  RULE_CASE_CREATION_TYPE_OPTIONS,
-  RULE_CASE_PRIORITY,
-  RULE_NATURE_OPTIONS,
-} from '@/pages/rules/utils';
+import { RULE_CASE_PRIORITY, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import { RuleFiltersEditor } from '@/components/rules/RuleFiltersEditor';
 
 interface Props {
@@ -46,7 +42,6 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
         }
       : undefined,
   );
-  const [caseCreationType, setCaseCreationType] = useState(rule.defaultCaseCreationType);
   const [nature, setNature] = useState(rule.defaultNature);
   const [casePriority, setCasePriority] = useState(rule.defaultCasePriority);
   const [parameters, setParameters] = useState(rule.defaultParameters);
@@ -146,15 +141,6 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
       </Row>
       <Row justify="center" className={styles.section}>
         <Descriptions column={1} colon={false} layout="vertical">
-          <Descriptions.Item label="Case Creation Type">
-            <Radio.Group
-              name="caseCreationType"
-              options={RULE_CASE_CREATION_TYPE_OPTIONS}
-              onChange={(event) => setCaseCreationType(event.target.value)}
-              optionType="button"
-              value={caseCreationType}
-            ></Radio.Group>
-          </Descriptions.Item>
           <Descriptions.Item label="Case Priority">
             <Radio.Group
               name="casePriority"
@@ -225,7 +211,7 @@ export const RuleConfigurationsEditor: React.FC<Props> = ({ rule, onBack, onActi
                 parameters,
                 riskLevelParameters,
                 casePriority,
-                caseCreationType,
+                rule.defaultCaseCreationType,
                 falsePositiveCheckEnabled,
                 nature,
               )

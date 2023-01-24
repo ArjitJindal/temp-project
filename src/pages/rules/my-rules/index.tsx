@@ -1,7 +1,7 @@
 import { Drawer, message, Popover, Switch, Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
-import { DeleteOutlined, EditOutlined, SwapOutlined, UserOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
@@ -87,20 +87,6 @@ const MyRule = () => {
   );
   const columns: TableColumn<RuleInstance>[] = useMemo(() => {
     const caseCreationHeaders: TableColumn<RuleInstance>[] = [
-      {
-        title: 'Rule Case Creation Type',
-        width: 100,
-        dataIndex: 'caseCreationType',
-        render: (dom, entity) => {
-          return (
-            <>
-              {' '}
-              {entity.caseCreationType === 'USER' ? <UserOutlined /> : <SwapOutlined />}{' '}
-              {_.startCase(_.toLower(entity.caseCreationType))}
-            </>
-          );
-        },
-      },
       {
         title: 'Rule Case Priority',
         width: 50,
