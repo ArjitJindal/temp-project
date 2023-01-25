@@ -176,9 +176,10 @@ export class UserRepository {
 
     if (params.filterId != null) {
       filterConditions.push({
-        userId: prefixRegexMatchFilter(params.filterId),
+        userId: params.filterId,
       })
     }
+
     if (params.filterBusinessIndustries != null) {
       filterConditions.push({
         'legalEntity.companyGeneralDetails.businessIndustry': {
@@ -196,24 +197,26 @@ export class UserRepository {
         filterNameConditions.push({
           $or: [
             {
-              'userDetails.name.firstName': prefixRegexMatchFilter(part),
+              'userDetails.name.firstName': prefixRegexMatchFilter(part, true),
             },
             {
-              'userDetails.name.middleName': prefixRegexMatchFilter(part),
+              'userDetails.name.middleName': prefixRegexMatchFilter(part, true),
             },
             {
-              'userDetails.name.lastName': prefixRegexMatchFilter(part),
+              'userDetails.name.lastName': prefixRegexMatchFilter(part, true),
             },
             {
               'legalEntity.companyGeneralDetails.legalName':
-                prefixRegexMatchFilter(part),
+                prefixRegexMatchFilter(part, true),
+            },
+            {
+              userId: prefixRegexMatchFilter(part, true),
             },
           ],
         })
       }
       filterConditions.push({ $and: filterNameConditions })
     }
-
     const riskRepository = new RiskRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,

@@ -261,6 +261,9 @@ export function paginatePipeline<Params extends OptionalPaginationParams>(
 
 // This should be the default regex filter to use for performance concerns
 // Ref: https://www.mongodb.com/docs/manual/reference/operator/query/regex/#index-use
-export function prefixRegexMatchFilter(input: string) {
-  return { $regex: `^${escapeStringRegexp(input)}` }
+export function prefixRegexMatchFilter(input: string, caseInsensitive = false) {
+  return {
+    $regex: `^${escapeStringRegexp(input)}`,
+    $options: caseInsensitive ? 'i' : '',
+  }
 }
