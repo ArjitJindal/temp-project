@@ -27,7 +27,7 @@ import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 
-const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
+export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
     riskLevel: 'VERY_LOW',
     lowerBoundRiskScore: 0,
