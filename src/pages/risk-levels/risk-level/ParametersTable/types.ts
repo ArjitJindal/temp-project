@@ -22,7 +22,9 @@ export function riskValue(content: RiskValueContent): RiskParameterValue {
   };
 }
 
-export function riskValueLiteral(content: string | number | boolean): RiskParameterValueLiteral {
+export function riskValueLiteral(
+  content: string | number | boolean | undefined,
+): RiskParameterValueLiteral {
   return {
     kind: 'LITERAL',
     content,
@@ -64,6 +66,7 @@ export function riskValueTimeRange(
     timezone,
   };
 }
+
 export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
 export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
@@ -82,6 +85,7 @@ export interface RiskLevelTableItem {
   parameterType: ParameterAttributeRiskValuesParameterTypeEnum;
   targetIterableParameter?: ParameterAttributeRiskValuesTargetIterableParameterEnum;
   risklevel?: RiskLevel;
+  isNullableAllowed?: boolean;
 }
 export type RiskLevelTable = RiskLevelTableItem[];
 export type DataType =
@@ -96,4 +100,5 @@ export type DataType =
   | 'TRANSACTION_TYPES'
   | 'RESIDENCE_TYPES'
   | 'TIME_RANGE'
-  | 'BUSINESS_INDUSTRY';
+  | 'BUSINESS_INDUSTRY'
+  | 'BOOLEAN';

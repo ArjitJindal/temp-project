@@ -39,6 +39,7 @@ import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/asyncResource';
 import { timezones } from '@/utils/timezones';
+import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
@@ -80,6 +81,7 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   RESIDENCE_TYPES: 'MULTIPLE',
   BUSINESS_INDUSTRY: 'MULTIPLE',
   TIME_RANGE: 'TIME_RANGE',
+  BOOLEAN: 'LITERAL',
 };
 
 // todo: i18n
@@ -333,6 +335,16 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     isDerived: false,
     parameterType: 'VARIABLE',
   },
+  {
+    parameter: '_3dsDone',
+    title: '3DS Done',
+    description: 'Risk value based on whether 3DS was done on CARD transaction',
+    entity: 'TRANSACTION',
+    dataType: 'BOOLEAN',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+    isNullableAllowed: true,
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
@@ -370,6 +382,42 @@ const MultipleSelect: React.FC<
     >
       {options.map(({ value, label }) => (
         <Select.Option disabled={disabledOptions.includes(value)} key={value} value={value}>
+          {label}
+        </Select.Option>
+      ))}
+    </Select>
+  );
+};
+
+const SingleSelect: React.FC<
+  InputRendererProps<'LITERAL'> & {
+    options: Array<{ value: RiskParameterValueLiteral['content']; label: string }>;
+  }
+> = (props) => {
+  const { value, disabled, onChange, options, existedValues = [] } = props;
+  const disabledOptions: RiskParameterValueLiteral['content'][] = existedValues.map(
+    (x) => x.content,
+  );
+
+  return (
+    <Select<RiskParameterValueLiteral['content']>
+      style={{ width: '100%' }}
+      value={value?.content ?? ''}
+      onChange={(value) => {
+        onChange(riskValueLiteral(value));
+      }}
+      showSearch={true}
+      disabled={disabled}
+      filterOption={(input, option) => {
+        const optionValue = option?.children?.toString() ?? '';
+        return (
+          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
+          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
+        );
+      }}
+    >
+      {options.map(({ value, label }) => (
+        <Select.Option disabled={disabledOptions.includes(value)} key={`${value}`} value={value}>
           {label}
         </Select.Option>
       ))}
@@ -527,6 +575,9 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       </div>
     );
   }) as InputRenderer<'TIME_RANGE'>,
+  BOOLEAN: ((props) => {
+    return <SingleSelect options={_3DS_DONE_OPTIONS} {...props} />;
+  }) as InputRenderer<'LITERAL'>,
 };
 
 const DEFAULT_MULTIPLE_RENDERER: ValueRenderer<'MULTIPLE'> = ({ value }) => {
@@ -703,6 +754,11 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
       </div>
     );
   }) as ValueRenderer<'TIME_RANGE'>,
+  BOOLEAN: (({ value }) => {
+    return (
+      <span>{value?.content === true ? 'Yes' : value?.content === false ? 'No' : 'Unknown'}</span>
+    );
+  }) as ValueRenderer<'LITERAL'>,
 };
 
 type Validation<T extends RiskValueType> = (params: {
