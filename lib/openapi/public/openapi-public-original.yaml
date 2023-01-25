@@ -3800,12 +3800,6 @@ components:
       title: PEPStatus
       x-stoplight:
         id: ha9qqemmdqu1y
-      enum:
-        - SUCCESSFUL
-        - FAILED
-        - NOT_STARTED
-        - IN_PROGRESS
-        - MANUAL_REVIEW
       properties:
         isPepHit:
           type: boolean
