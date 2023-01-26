@@ -83,7 +83,7 @@ const createAuth0Organization = async (
       display_name: options.auth0OrganizationName,
       metadata: {
         tenantId: options.tenantId,
-        consoleApiUrl: `https://${options.apiPrefix}.console.flagright.com/console`,
+        consoleApiUrl: `https://${options.apiPrefix}api.flagright.com/console`,
         apiAudience: config.application.AUTH0_AUDIENCE,
       },
     }),
