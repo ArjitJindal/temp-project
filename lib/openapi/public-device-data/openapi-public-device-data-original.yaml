@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Flagright Device Data API
+  version: '1.0'
+  description: Flagright's Device data harvesting API
+  contact:
+    name: Madhu Nadig
+    email: support@flagright.com
+    url: https://flagright.com
+servers:
+  - url: http://localhost:3000
+paths:
+  /device/metric:
+    parameters: []
+    post:
+      security:
+        - x-api-key: []
+      summary: Post Device Metric
+      operationId: post-device-metric
+      responses:
+        '200':
+          description: OK
+      description: Post device metric
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceMetric'
+            examples:
+              Example 1:
+                value:
+                  userId: asda43fhghtysdfts
+                  timestamp: 1672942548000
+                  transactionId: string
+                  deviceFingerprint: string
+                  isVirtualDevice: true
+                  ipAddress: string
+                  location:
+                    latitude: 13.0033
+                    longitude: 76.1004
+                  totalNumberOfContacts: 31
+                  batteryLevel: 44
+                  externalTotalStorageInGb: 64
+                  externalFreeStorageInGb: 3
+                  manufacturer: Samsung
+                  mainTotalStorageInGb: 32
+                  model: Galaxy S7
+                  operatingSystem:
+                    name: Android
+                    version: 12.3.1˜
+                  deviceCountryCode: IN
+                  deviceLaungageCode: KA
+                  ramInGb: 4
+                  isDataRoamingEnabled: true
+                  isLocationEnabled: true
+                  isAccessibilityEnabled: true
+                  isBluetoothActive: true
+                  networkOperator: Airtel
+        description: ''
+components:
+  schemas:
+    DeviceMetric:
+      title: DeviceMetric
+      x-stoplight:
+        id: v5ebumcige2yz
+      type: object
+      properties:
+        userId:
+          type: string
+          description: Unique user identifier
+        timestamp:
+          type: number
+          description: UNIX timestamp in ms
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER_SIGNUP
+        transactionId:
+          type: string
+          description: Unique transaction identifier
+        deviceFingerprint:
+          type: string
+          description: Unique device Fingerprint
+        isVirtualDevice:
+          type: boolean
+        ipAddress:
+          type: string
+        location:
+          $ref: '#/components/schemas/Location'
+        totalNumberOfContacts:
+          type: number
+        batteryLevel:
+          type: number
+        externalTotalStorageInGb:
+          type: number
+        externalFreeStorageInGb:
+          type: number
+        manufacturer:
+          type: string
+        mainTotalStorageInGb:
+          type: number
+        model:
+          type: string
+        operatingSystem:
+          $ref: '#/components/schemas/OperatingSystemDetails'
+        deviceCountryCode:
+          type: string
+          description: ISO 2 alpha country code
+          minLength: 2
+          maxLength: 2
+        deviceLaungageCode:
+          type: string
+          description: ISO 639‑1 Language Code
+          minLength: 2
+          maxLength: 2
+        ramInGb:
+          type: number
+        isDataRoamingEnabled:
+          type: boolean
+        isLocationEnabled:
+          type: boolean
+        isAccessibilityEnabled:
+          type: boolean
+        isBluetoothActive:
+          type: boolean
+        networkOperator:
+          type: string
+      required:
+        - userId
+        - timestamp
+        - type
+    Location:
+      title: Location
+      x-stoplight:
+        id: bw44g2zpv6hjp
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+    OperatingSystemDetails:
+      title: OperatingSystemDetails
+      x-stoplight:
+        id: w3xk35gn6nupb
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+      required:
+        - name
+  securitySchemes:
+    x-api-key:
+      name: x-api-key
+      type: apiKey
+      in: header

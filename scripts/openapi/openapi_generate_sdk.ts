@@ -21,7 +21,9 @@ function replaceRequestParameters(path: string) {
   fs.writeFileSync(path, newText)
 }
 
-function buildApi(type: 'public' | 'public-management' | 'internal') {
+function buildApi(
+  type: 'public' | 'public-management' | 'public-device-data' | 'internal'
+) {
   exec(`mkdir -p src/@types/openapi-${type}/ 1>/dev/null 2>&1`)
   exec(
     `
@@ -52,6 +54,7 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
 
 buildApi('public')
 buildApi('public-management')
+buildApi('public-device-data')
 buildApi('internal')
 
 console.info('Done!')

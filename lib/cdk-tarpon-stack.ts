@@ -1437,13 +1437,20 @@ export class CdkTarponStack extends cdk.Stack {
   } {
     // Log group ID cannot be changed
     let logGroupId: string
-    let openapiName: 'public' | 'public-management' | 'internal'
+    let openapiName:
+      | 'public'
+      | 'public-management'
+      | 'public-device-data'
+      | 'internal'
     if (apiName === StackConstants.TARPON_API_NAME) {
       openapiName = 'public'
       logGroupId = 'LogGroupPublicApi'
     } else if (apiName === StackConstants.TARPON_MANAGEMENT_API_NAME) {
       openapiName = 'public-management'
       logGroupId = 'LogGroupPublicManagementApi'
+    } else if (apiName === StackConstants.TARPON_DEVICE_DATA_API_NAME) {
+      openapiName = 'public-device-data'
+      logGroupId = 'LogGroupPublicDeviceDataApi'
     } else if (apiName === StackConstants.CONSOLE_API_NAME) {
       openapiName = 'internal'
       logGroupId = 'LogGroupConsoleApi'

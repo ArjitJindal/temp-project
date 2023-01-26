@@ -9,6 +9,7 @@ async function main() {
     CONFIRM_PUSH_MAIN,
     PUBLIC_PROJECT_TOKEN,
     PUBLIC_MANAGEMENT_PROJECT_TOKEN,
+    PUBLIC_DEVICE_DATA_PROJECT_TOKEN,
     INTERNAL_PROJECT_TOKEN,
   } = process.env
 
@@ -43,6 +44,12 @@ async function main() {
     )
     process.exit(1)
   }
+  if (!PUBLIC_DEVICE_DATA_PROJECT_TOKEN) {
+    console.error(
+      'ERROR: Please set the PUBLIC_DEVICE_DATA_PROJECT_TOKEN environment variables'
+    )
+    process.exit(1)
+  }
   if (!INTERNAL_PROJECT_TOKEN) {
     console.error(
       'ERROR: Please set the INTERNAL_PROJECT_TOKEN environment variables'
@@ -58,6 +65,9 @@ async function main() {
       )
       exec(
         `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_MANAGEMENT_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public-management --branch ${BRANCH_NAME}`
+      )
+      exec(
+        `./node_modules/.bin/stoplight push --ci-token ${PUBLIC_DEVICE_DATA_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/public-device-data --branch ${BRANCH_NAME}`
       )
       exec(
         `./node_modules/.bin/stoplight push --ci-token ${INTERNAL_PROJECT_TOKEN} --directory ${OUTPUT_DIR}/internal --branch ${BRANCH_NAME}`

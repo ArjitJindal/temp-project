@@ -88,6 +88,9 @@ export const StackConstants = {
   PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleFunction'
   ),
+  PUBLIC_DEVICE_DATA_API_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicDeviceDataApiMetricFunction'
+  ),
   PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleInstanceFunction'
   ),
@@ -159,6 +162,7 @@ export const StackConstants = {
     'TarponApiThrottlingCount'
   ),
   TARPON_MANAGEMENT_API_NAME: getResourceName('TarponManagementAPI'),
+  TARPON_DEVICE_DATA_API_NAME: getResourceName('TarponDeviceDataAPI'),
   TARPON_MANAGEMENT_API_GATEWAY_ALARM_NAME: getResourceName(
     'TarponManagementApiErrorPercentage'
   ),

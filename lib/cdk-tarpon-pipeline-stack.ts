@@ -28,6 +28,7 @@ const GENERATED_DIRS = [
   'src/@types/openapi-internal',
   'src/@types/openapi-public',
   'src/@types/openapi-public-management',
+  'src/@types/openapi-public-device-data',
 ]
 
 function getReleaseVersion(version: string) {
