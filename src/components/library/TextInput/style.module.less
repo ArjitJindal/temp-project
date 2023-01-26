@@ -1,0 +1,44 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  height: 40px;
+  padding: 8px;
+  border: 1px solid @fr-colors-v2-gray-2;
+  border-radius: 4px;
+  outline: none;
+  transition-property: border-color;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+
+  &::placeholder {
+    color: @fr-colors-v2-gray-6;
+  }
+
+  &.size-SMALL {
+    height: 32px;
+    padding: 4px 8px;
+  }
+
+  &:not(:disabled) {
+    &.isError {
+      border-color: @fr-colors-v2-alert-critical;
+    }
+
+    &:not(.isError) {
+      &:focus {
+        border-color: @fr-colors-v2-primary-flagrightBlue;
+      }
+    }
+  }
+
+  &:disabled {
+    pointer-events: none;
+    border-color: @fr-colors-v2-state-disabled;
+    background: @fr-colors-v2-gray-1;
+
+    &::placeholder {
+      color: fade(@fr-colors-v2-state-disabled, 85%);
+    }
+  }
+}

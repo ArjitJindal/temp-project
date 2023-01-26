@@ -1,0 +1,38 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  max-width: 800px;
+}
+
+.header {
+  display: flex;
+}
+
+.title {
+  background: var(--storybook-color-1);
+  color: white;
+  padding: 0 4px;
+  font-size: 10px;
+  border: 1px solid var(--storybook-color-1);
+}
+
+.content {
+  border: 1px solid var(--storybook-color-1);
+}
+
+.children {
+  display: flex;
+  padding: 1rem;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.description {
+  margin-top: 0.5rem;
+  font-size: 12px;
+  color: #0000008a;
+  text-align: right;
+}

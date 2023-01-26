@@ -1,10 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import _ from 'lodash';
-import { useAuth0 } from '@auth0/auth0-react';
-import { Button } from 'antd';
-import * as Sentry from '@sentry/browser';
 import { useApi } from '@/api';
-import ErrorPage from '@/components/ErrorPage';
 import { Account } from '@/apis';
 
 // todo: rename file and utils to use "account" instead of "user" in names
@@ -31,7 +27,7 @@ export interface FlagrightAuth0User {
 
 let cachedUsers: Promise<Account[]> | null = null;
 
-const NAMESPACE = 'https://flagright.com';
+export const NAMESPACE = 'https://flagright.com';
 
 export function useAuth0User(): FlagrightAuth0User {
   const context = useContext(Context);
@@ -133,76 +129,4 @@ export function useUser(userId: string | null | undefined): Account | null {
 //   return result.data;
 // }
 
-const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);
-
-export function FlagrightUserProvider(props: { children: React.ReactNode }) {
-  const { user, logout, loginWithRedirect } = useAuth0();
-  const flagrightUser: FlagrightAuth0User | 'ORPHAN' | null = useMemo(() => {
-    if (user == null) {
-      return null;
-    }
-    const tenantConsoleApiUrl: string | null = user[`${NAMESPACE}/tenantConsoleApiUrl`];
-    const tenantApiAudience: string | null = user[`${NAMESPACE}/tenantApiAudience`];
-    const tenantId: string | null = user[`${NAMESPACE}/tenantId`];
-    const tenantName: string | null = user[`${NAMESPACE}/tenantName`];
-    const verifiedEmail: string | null = user[`${NAMESPACE}/verifiedEmail`];
-    const demoMode: boolean | null = user[`${NAMESPACE}/demoMode`];
-
-    if (
-      tenantConsoleApiUrl == null ||
-      tenantApiAudience == null ||
-      tenantId == null ||
-      tenantName == null
-    ) {
-      return 'ORPHAN';
-    }
-
-    const name = user.name ?? '-';
-
-    const appUser = {
-      name: name,
-      picture: user.picture ?? null,
-      role: user[`${NAMESPACE}/role`] ?? 'user',
-      userId: user[`${NAMESPACE}/userId`] ?? null,
-      tenantId: tenantId,
-      tenantName: tenantName,
-      tenantConsoleApiUrl: tenantConsoleApiUrl,
-      tenantApiAudience: tenantApiAudience,
-      demoMode: demoMode === true,
-      verifiedEmail: verifiedEmail ?? null,
-    };
-
-    Sentry.setUser({
-      id: appUser.userId,
-      email: appUser.verifiedEmail ?? undefined,
-      username: appUser.name ?? undefined,
-    });
-    Sentry.setTag('tenant', `${appUser.tenantId} (${appUser.tenantName})`);
-
-    return appUser;
-  }, [user]);
-  if (flagrightUser == null) {
-    // todo: i18n
-    return (
-      <ErrorPage title={'Unauthorized'}>
-        <p>Please, log in</p>
-        <Button onClick={() => loginWithRedirect()}>Log in</Button>
-      </ErrorPage>
-    );
-  }
-  if (flagrightUser === 'ORPHAN') {
-    // todo: i18n
-    return (
-      <ErrorPage title={'User Not Provisioned'}>
-        <p>
-          User does not have a provisioned Flagright Account. If your organization already uses
-          Flagright, please ask your Flagright Console Admin to add you to the Console. If you are
-          not a Flagright customer yet, please contact Flagright Sales Team at hello@flagright.com
-        </p>
-        <Button onClick={() => logout()}>Log out</Button>
-      </ErrorPage>
-    );
-  }
-
-  return <Context.Provider value={{ user: flagrightUser }}>{props.children}</Context.Provider>;
-}
+export const Context = React.createContext<{ user: FlagrightAuth0User } | null>(null);

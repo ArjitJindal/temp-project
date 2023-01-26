@@ -1,85 +1,165 @@
 import React from 'react';
-import * as Card from '@/components/ui/Card';
-import * as Form from '@/components/ui/Form';
-import FontSizeIcon from '@/components/ui/icons/Remix/editor/font-size.react.svg';
+import { Navigate, Route, Routes } from 'react-router';
+import s from './index.module.less';
+import CategoriesMenu from './CategoriesMenu';
+import { makeUrl } from '@/utils/routing';
+import Label from '@/components/library/Label/story';
+import Checkbox from '@/components/library/Checkbox/story';
+import Select from '@/components/library/Select/story';
+import TextInput from '@/components/library/TextInput/story';
+import NumberInput from '@/components/library/NumberInput/story';
+import Radio from '@/components/library/Radio/story';
+import LeftNav from '@/components/library/VerticalMenu/story';
+import StepButtons from '@/components/library/ButtonGroup/story';
+import SelectionGroup from '@/components/library/SelectionGroup/story';
+import Stepper from '@/components/library/Stepper/story';
+import Card from '@/components/ui/Card/story';
+import Form from '@/components/library/Form/story';
+import Drawer from '@/components/library/Drawer/story';
+import Alert from '@/components/library/Alert/story';
+import { Component } from '@/pages/storybook/components';
 
-function Component(props: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h1>{props.title}</h1>
-      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {props.children}
-      </div>
-    </div>
-  );
+interface StoryProps {}
+
+interface CategoryComponent {
+  component: string;
+  story: React.FunctionComponent<StoryProps>;
 }
 
-function Case(props: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h2>{props.title}</h2>
-      {props.children}
-    </div>
-  );
+interface Category {
+  key: string;
+  category: string;
+  components: CategoryComponent[];
 }
+
+type Config = Category[];
+
+const config: Config = [
+  {
+    key: 'navigation',
+    category: 'Navigation',
+    components: [
+      {
+        component: 'LeftNav',
+        story: LeftNav,
+      },
+      {
+        component: 'Stepper',
+        story: Stepper,
+      },
+      {
+        component: 'StepButtons',
+        story: StepButtons,
+      },
+    ],
+  },
+  {
+    key: 'feedback',
+    category: 'Feedback',
+    components: [
+      {
+        component: 'Alert',
+        story: Alert,
+      },
+    ],
+  },
+  {
+    key: 'forms',
+    category: 'Forms',
+    components: [
+      {
+        component: 'Form',
+        story: Form,
+      },
+      {
+        component: 'Label',
+        story: Label,
+      },
+      {
+        component: 'Select',
+        story: Select,
+      },
+      {
+        component: 'TextInput',
+        story: TextInput,
+      },
+      {
+        component: 'NumberInput',
+        story: NumberInput,
+      },
+      {
+        component: 'Radio',
+        story: Radio,
+      },
+      {
+        component: 'Checkbox',
+        story: Checkbox,
+      },
+      {
+        component: 'SelectionGroup',
+        story: SelectionGroup,
+      },
+    ],
+  },
+  {
+    key: 'layout',
+    category: 'Layout',
+    components: [
+      {
+        component: 'Drawer',
+        story: Drawer,
+      },
+      {
+        component: 'Card',
+        story: Card,
+      },
+    ],
+  },
+];
 
 export default function () {
   // todo: i18n
   return (
-    <div>
-      <Component title={'@/components/ui/Card'}>
-        <Case title="Single section">
-          <Card.Root>
-            <Card.Section>Section</Card.Section>
-          </Card.Root>
-        </Case>
-        <Case title="Multiple sections">
-          <Card.Root>
-            <Card.Section>Section 1</Card.Section>
-            <Card.Section>Section 2</Card.Section>
-            <Card.Section>Section 3</Card.Section>
-            <Card.Section>Section 4</Card.Section>
-          </Card.Root>
-        </Case>
-        <Case title="With title">
-          <Card.Root
-            header={{
-              title: 'Card title',
-            }}
-          >
-            <Card.Section>Section 2</Card.Section>
-            <Card.Section>Section 3</Card.Section>
-            <Card.Section>Section 4</Card.Section>
-          </Card.Root>
-        </Case>
-        <Case title="Complex layout">
-          <Card.Root>
-            <Card.Section>Section 1</Card.Section>
-            <Card.Row>
-              <Card.Section>Section 2.1</Card.Section>
-              <Card.Column>
-                <Card.Section>Section 2.2.1</Card.Section>
-                <Card.Section>Section 2.2.2</Card.Section>
-              </Card.Column>
-            </Card.Row>
-            <Card.Section>Section 4</Card.Section>
-          </Card.Root>
-        </Case>
-      </Component>
-      <Component title={'@/components/ui/Form'}>
-        <Case title="Label with icon">
-          <Card.Root>
-            <Card.Section direction="horizontal">
-              <Form.Layout.Label icon={<FontSizeIcon />} title="Font size">
-                Some label content
-              </Form.Layout.Label>
-              <Form.Layout.Label icon={<FontSizeIcon />} title="Bold title" variant="bold">
-                Another content
-              </Form.Layout.Label>
-            </Card.Section>
-          </Card.Root>
-        </Case>
-      </Component>
+    <div className={s.root}>
+      <div className={s.menu}>
+        <CategoriesMenu
+          items={config.map((category) => ({ key: category.key, title: category.category }))}
+          onMakeUrl={(category) => makeUrl(`/storybook/:category`, { category })}
+        />
+      </div>
+      {config.length > 0 && (
+        <div className={s.content}>
+          <Routes>
+            {config.map((category) => (
+              <Route
+                key={category.key}
+                path={makeUrl(`/storybook/:category`, { category: category.key })}
+                element={
+                  <>
+                    {category.components.map((component) => {
+                      const Story = component.story;
+                      return (
+                        <Component key={component.component} title={component.component}>
+                          <Story />
+                        </Component>
+                      );
+                    })}
+                  </>
+                }
+              />
+            ))}
+            <Route
+              path="/storybook"
+              element={
+                <Navigate
+                  replace
+                  to={makeUrl(`/storybook/:category`, { category: config[0].key })}
+                />
+              }
+            />
+          </Routes>
+        </div>
+      )}
     </div>
   );
 }

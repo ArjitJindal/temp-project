@@ -17,9 +17,9 @@ interface ContextValue {
   settings: TenantSettings;
 }
 
-const Context = React.createContext<ContextValue | null>(null);
+export const Context = React.createContext<ContextValue | null>(null);
 
-export function SettingsProvider(props: {
+export default function SettingsProvider(props: {
   globalFeatures?: FeatureName[];
   children: React.ReactNode;
 }) {

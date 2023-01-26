@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
-import Providers from './Providers';
+import Providers, { LocalOnlyProviders } from './Providers';
 import Menu from './Menu';
 import Header from './Header';
 import s from './styles.module.less';
@@ -12,8 +12,6 @@ import { getOr } from '@/utils/asyncResource';
 interface Props {
   children?: React.ReactNode;
 }
-
-export const THEME = 'light';
 
 function Content(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
@@ -33,8 +31,12 @@ function Content(props: Props) {
 }
 
 export default function AppWrapper(props: Props) {
-  if (window.location.pathname === '/storybook') {
-    return <StorybookPage />;
+  if (window.location.pathname.startsWith('/storybook')) {
+    return (
+      <LocalOnlyProviders>
+        <StorybookPage />
+      </LocalOnlyProviders>
+    );
   }
 
   return (

@@ -29,12 +29,12 @@ export default function Header(props: Props) {
           }
         }}
       >
-        <h3 className={s.title}>{title}</h3>
         {collapsable && (
           <div className={cn(s.collapseIcon, isCollapsed && s.isCollapsed)}>
             <CollapsableIcon />
           </div>
         )}
+        <h3 className={s.title}>{title}</h3>
       </div>
     </Section>
   );

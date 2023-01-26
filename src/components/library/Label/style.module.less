@@ -1,0 +1,33 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.label {
+  line-height: 1;
+
+  &.level-1 {
+    font-weight: 600;
+  }
+
+  &.level-2 {
+  }
+
+  &.level-3 {
+    color: @fr-colors-v2-gray-6;
+  }
+}
+
+.description {
+  color: @fr-colors-v2-gray-6;
+}

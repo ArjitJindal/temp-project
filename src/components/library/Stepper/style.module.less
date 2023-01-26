@@ -1,0 +1,72 @@
+@import 'src/components/ui/colors';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.steps {
+  display: grid;
+  gap: 1rem;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(min-content, 300px);
+}
+
+.step {
+  display: flex;
+  gap: 10px;
+
+  &.isActive {
+    .stepTitle {
+      &,
+      .optional {
+        color: @fr-colors-brandBlue;
+      }
+    }
+  }
+
+  &.isPassed,
+  &.isActive {
+    .stepNumber {
+      background: @fr-colors-brandBlue;
+      color: white;
+    }
+  }
+}
+
+.stepNumber {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: @fr-colors-v2-gray-2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px;
+}
+
+.stepTitle {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+
+  .optional {
+    font-weight: normal;
+    color: @fr-colors-gray-4;
+  }
+}
+
+.stepDescription {
+  font-size: 12px;
+  font-style: italic;
+  color: @fr-colors-gray-4;
+  line-height: 20px;
+  margin-top: 2px;
+}
+
+.children {
+  flex: 1;
+}

@@ -1,0 +1,83 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+@import 'src/components/ui/z-indexes';
+
+@padding: 1rem;
+
+.lockScroll {
+  overflow: hidden;
+}
+
+.root {
+  display: flex;
+  justify-content: flex-end;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: visibility @default-animation-speed, background @default-animation-speed;
+  visibility: hidden;
+  background: transparent;
+  z-index: @drawer-z-index;
+
+  &.isVisible {
+    visibility: visible;
+    background: fade(black, 40%);
+
+    .content {
+      transform: none;
+    }
+  }
+}
+
+.header {
+  padding: @padding;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  border-bottom: 1px solid @fr-colors-v2-gray-2;
+}
+
+.headerSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.icon {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.description {
+  color: @fr-colors-gray-4;
+}
+
+.content {
+  display: grid;
+  background: white;
+  transform: translateX(100%);
+  transition: transform @default-animation-speed;
+  max-width: 1024px;
+  grid-template-rows: max-content auto max-content;
+}
+
+.children {
+  padding: @padding;
+  overflow-y: auto;
+}
+
+.footer {
+  padding: @padding;
+  border-top: 1px solid @fr-colors-v2-gray-2;
+}

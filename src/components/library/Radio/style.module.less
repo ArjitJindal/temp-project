@@ -1,0 +1,75 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+
+  &:checked {
+    + .content {
+      border-color: @fr-colors-v2-primary-flagrightBlue;
+      &::before {
+        background: @fr-colors-v2-primary-flagrightBlue;
+        opacity: 1;
+      }
+    }
+  }
+
+  &:disabled {
+    + .content {
+      pointer-events: none;
+      border-color: @fr-colors-v2-state-disabled;
+      background: @fr-colors-v2-gray-1;
+
+      &::before {
+        background: @fr-colors-v2-state-disabled;
+      }
+    }
+  }
+}
+
+.content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  border: 1px solid @fr-colors-v2-gray-6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &::before {
+    content: ' ';
+    display: block;
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity @default-animation-speed @default-animation-function;
+    opacity: 0;
+  }
+}
+
+.icon {
+  opacity: 0;
+  color: white;
+}
