@@ -44,6 +44,13 @@ export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
     required: ['units', 'granularity'],
   } as const)
 
+export const TIME_WINDOW_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...TIME_WINDOW_SCHEMA(options),
+    nullable: true,
+    required: [],
+  } as const)
+
 export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',

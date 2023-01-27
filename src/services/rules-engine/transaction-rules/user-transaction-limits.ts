@@ -1,5 +1,6 @@
 import * as _ from 'lodash'
 import { JSONSchemaType } from 'ajv'
+import dayjs from 'dayjs'
 import {
   getTransactionsTotalAmount,
   isTransactionAmountAboveThreshold,
@@ -10,6 +11,13 @@ import {
   UserTimeAggregationAttributes,
 } from '../repositories/aggregation-repository'
 import { formatMoney } from '../utils/format-description'
+import {
+  TIME_WINDOW_OPTIONAL_SCHEMA,
+  TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
+  TimeWindow,
+} from '../utils/rule-parameter-schemas'
+import { TransactionRepository } from '../repositories/transaction-repository'
+import { subtractTime } from '../utils/time-utils'
 import { TransactionRule } from './rule'
 import { Amount } from '@/@types/openapi-public/Amount'
 import { FalsePositiveDetails } from '@/@types/openapi-public/FalsePositiveDetails'
@@ -43,6 +51,8 @@ function granularityToAdverb(granularity: 'day' | 'week' | 'month' | 'year') {
 
 export type UserTransactionLimitsRuleParameter = {
   onlyCheckTypes?: CheckType[]
+  timeWindow?: TimeWindow
+  threshold?: number
 }
 
 export default class UserTransactionLimitsRule extends TransactionRule<UserTransactionLimitsRuleParameter> {
@@ -63,6 +73,8 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
           },
           nullable: true,
         },
+        threshold: TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA(),
+        timeWindow: TIME_WINDOW_OPTIONAL_SCHEMA(),
       },
     }
   }
@@ -73,6 +85,43 @@ export default class UserTransactionLimitsRule extends TransactionRule<UserTrans
       !this.transaction.originAmountDetails
     ) {
       return
+    }
+
+    if (
+      this.parameters.threshold &&
+      this.parameters.timeWindow?.granularity &&
+      this.parameters.timeWindow?.units
+    ) {
+      const { threshold, timeWindow } = this.parameters
+
+      const transactionRepository = new TransactionRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+
+      const transactionsCount =
+        await transactionRepository.getGenericUserSendingTransactionsCount(
+          this.senderUser.userId,
+          this.transaction.originPaymentDetails,
+          {
+            beforeTimestamp: this.transaction.timestamp,
+            afterTimestamp: subtractTime(
+              dayjs(this.transaction.timestamp),
+              timeWindow
+            ),
+          },
+          {
+            ...(this.parameters?.onlyCheckTypes?.includes('PAYMENT_METHOD')
+              ? {
+                  originPaymentMethod:
+                    this.transaction.originPaymentDetails?.method,
+                }
+              : {}),
+          }
+        )
+
+      if (transactionsCount + 1 <= threshold) {
+        return
+      }
     }
 
     const { onlyCheckTypes } = this.parameters
