@@ -112,7 +112,14 @@ const createAuth0Organization = async (
 
   for (let i = 0; i < auth0Emails.length; i++) {
     const auth0Email = auth0Emails[i]
-
+    if (
+      !(typeof auth0Email === 'string') ||
+      !auth0Email ||
+      !auth0Email.includes('@') ||
+      !auth0Email.includes('.')
+    ) {
+      continue
+    }
     const account = await accountsService.createAccountInOrganization(
       {
         id: auth0Organization.metadata.tenantId,

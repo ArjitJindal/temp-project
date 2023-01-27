@@ -27,42 +27,49 @@ if [ "$env" == "dev" ]; then
     managementApiId=9lbziivbh1
     profile="AWSAdministratorAccess-911899431626"
     region="eu-central-1"
+    tsScriptRegion="dev"
 elif [ "$env" == "sandbox" ]; then
     apiPrefix="sandbox."
     apiId=i5deptp279
     managementApiId=0s4uddw2b8
     profile="AWSAdministratorAccess-293986822825"
     region="eu-central-1"
+    tsScriptRegion="sandbox"
 elif [ "$env" == "prod-asia-1" ]; then
     apiPrefix="asia-1."
     apiId=afxr1lytv8
     managementApiId=ipnq6xnl8d
     profile="AWSAdministratorAccess-870721492449"
     region="ap-southeast-1"
+    tsScriptRegion="prod:asia-1"
 elif [ "$env" == "prod-asia-2" ]; then
     apiPrefix="asia-2."
     apiId=hlpwcaxvcj
     managementApiId=gc0h405ip9
     profile="AWSAdministratorAccess-870721492449"
     region="ap-south-1"
+    tsScriptRegion="prod:asia-2"
 elif [ "$env" == "prod-eu-1" ]; then
     apiPrefix="eu-1."
     apiId=chw09486vg
     managementApiId=akxtug4fh2
     profile="AWSAdministratorAccess-870721492449"
     region="eu-central-1"
+    tsScriptRegion="prod:eu-1"
 elif [ "$env" == "prod-eu-2" ]; then
     apiPrefix="eu-2."
     apiId=axoppr09ui
     managementApiId=yz827gk7l0
     profile="AWSAdministratorAccess-870721492449"
     region="eu-west-2"
+    tsScriptRegion="prod:eu-2"
 elif [ "$env" == "prod-us-1" ]; then
     apiPrefix="us-1."
     apiId=eb7lsu6eqb
     managementApiId=w79lu22nyb
     profile="AWSAdministratorAccess-870721492449"
     region="us-west-2"
+    tsScriptRegion="prod:us-1"
 else
     echo "Unknown env"
     exit 1
@@ -123,7 +130,7 @@ echo "Tarpon API Key: $apiKey";
 
 if [ "$createAuth0Org" == "true" ]; then
     echo "Creating Auth0 organization"
-    organization=$(AWS_REGION=$region ENV=$env ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix --auth0Emails=$auth0Emails --featureFlags=$featureFlags)
+    organization=$(AWS_REGION=$region ENV=$tsScriptRegion ts-node src/scripts/auth0CreateOrganization.ts --tenantName=$tenantName --auth0OrganizationName=$auth0DisplayName --tenantId=$tenantId --apiPrefix=$apiPrefix --auth0Emails=$auth0Emails --featureFlags=$featureFlags)
     echo $organization
 else
     echo "Skipping Auth0 organization creation"
