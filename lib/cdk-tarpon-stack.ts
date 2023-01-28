@@ -1071,6 +1071,9 @@ export class CdkTarponStack extends cdk.Stack {
         {
           ...atlasFunctionProps,
           timeout: CONSUMER_LAMBDA_TIMEOUT,
+          memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
+            ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
+            : 256,
         }
       )
 
