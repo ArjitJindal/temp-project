@@ -187,6 +187,14 @@ export class CdkTarponStack extends cdk.Stack {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
       }
     )
+    const hammerheadChangeCaptureRetryQueue = this.createQueue(
+      SQSQueues.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME,
+      {
+        fifo: true,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+      }
+    )
 
     /*
      * Kinesis Data Streams
@@ -1062,19 +1070,34 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     /* Hammerhead Kinesis Change capture consumer */
+    const hammerheadChangeConsumerProps = {
+      ...atlasFunctionProps,
+      memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
+        ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
+        : 256,
+      environment: {
+        ...atlasFunctionProps.environment,
+        SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
+        HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
+          hammerheadChangeCaptureRetryQueue.queueUrl,
+      },
+      timeout: CONSUMER_LAMBDA_TIMEOUT,
+    }
 
     const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
       this.createFunction(
         {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
         },
+        hammerheadChangeConsumerProps
+      )
+
+    const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
+      this.createFunction(
         {
-          ...atlasFunctionProps,
-          timeout: CONSUMER_LAMBDA_TIMEOUT,
-          memorySize: config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA
-            ? config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA.MEMORY_SIZE
-            : 256,
-        }
+          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
+        },
+        hammerheadChangeConsumerProps
       )
 
     if (!isDevUserStack) {
@@ -1083,12 +1106,46 @@ export class CdkTarponStack extends cdk.Stack {
         hammerheadStream,
         { startingPosition: StartingPosition.TRIM_HORIZON }
       )
-      // TODO (FDT-45408):
-      // 1. Create hammerheadChangeCaptureKinesisConsumerRetryAlias
-      // 2. Create hammerheadChangeCaptureRetryQueue
-      // 3. add event source to hammerheadChangeCaptureRetryQueue
+      hammerheadChangeCaptureKinesisConsumerRetryAlias.addEventSource(
+        new SqsEventSource(hammerheadChangeCaptureRetryQueue)
+      )
     }
+
+    transientDynamoDbTable.grantReadWriteData(
+      hammerheadChangeCaptureKinesisConsumerAlias
+    )
+    transientDynamoDbTable.grantReadWriteData(
+      hammerheadChangeCaptureKinesisConsumerRetryAlias
+    )
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
+    this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerRetryAlias)
+    hammerheadChangeCaptureRetryQueue.grantSendMessages(
+      tarponChangeCaptureKinesisConsumerAlias
+    )
+    slackAlertQueue.grantSendMessages(
+      hammerheadChangeCaptureKinesisConsumerAlias
+    )
+    slackAlertQueue.grantSendMessages(
+      hammerheadChangeCaptureKinesisConsumerRetryAlias
+    )
+    tarponDynamoDbTable.grantReadData(
+      hammerheadChangeCaptureKinesisConsumerAlias
+    )
+    tarponDynamoDbTable.grantReadData(
+      hammerheadChangeCaptureKinesisConsumerRetryAlias
+    )
+    tarponRuleDynamoDbTable.grantReadData(
+      hammerheadChangeCaptureKinesisConsumerAlias
+    )
+    tarponRuleDynamoDbTable.grantReadData(
+      hammerheadChangeCaptureKinesisConsumerRetryAlias
+    )
+    hammerheadDynamoDbTable.grantReadWriteData(
+      hammerheadChangeCaptureKinesisConsumerAlias
+    )
+    hammerheadDynamoDbTable.grantReadWriteData(
+      hammerheadChangeCaptureKinesisConsumerRetryAlias
+    )
 
     /**
      * API Gateway

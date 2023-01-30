@@ -17,6 +17,9 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
 const sqsClient = new SQSClient({})
 
@@ -40,10 +43,23 @@ type UserEventHandler = (
   oldUserEvent: ConsumerUserEvent | undefined,
   newUserEvent: ConsumerUserEvent | undefined
 ) => Promise<void>
+type ArsScoreEventHandler = (
+  tenantId: string,
+  oldArsValue: ArsScore | undefined,
+  newArsValue: ArsScore | undefined
+) => Promise<void>
+type DrsScoreEventHandler = (
+  tenantId: string,
+  oldDrsValue: DrsScore | undefined,
+  newDrsValue: DrsScore | undefined
+) => Promise<void>
+type KrsScoreEventHandler = (
+  tenantId: string,
+  oldKrsValue: KrsScore | undefined,
+  newKrsValue: KrsScore | undefined
+) => Promise<void>
 
-// TODO (FDT-45408): Refactor TarponStreamConsumerBuilder to support any DynamoDB table
-
-export class TarponStreamConsumerBuilder {
+export class StreamConsumerBuilder {
   name: string
   retrySqsQueue: string
   transientRepository: TransientRepository
@@ -51,6 +67,9 @@ export class TarponStreamConsumerBuilder {
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHanlder
   userEventHandler?: UserEventHandler
+  arsScoreEventHandler?: ArsScoreEventHandler
+  drsScoreEventHandler?: DrsScoreEventHandler
+  krsScoreEventHandler?: KrsScoreEventHandler
 
   constructor(name: string, retrySqsQueue: string) {
     this.name = name
@@ -60,27 +79,44 @@ export class TarponStreamConsumerBuilder {
 
   public setTransactionHandler(
     transactionHandler: TransactionHandler
-  ): TarponStreamConsumerBuilder {
+  ): StreamConsumerBuilder {
     this.transactionHandler = transactionHandler
     return this
   }
   public setTransactionEventHandler(
     transactionEventHandler: TransactionEventHandler
-  ): TarponStreamConsumerBuilder {
+  ): StreamConsumerBuilder {
     this.transactionEventHandler = transactionEventHandler
     return this
   }
-  public setUserHandler(userHandler: UserHanlder): TarponStreamConsumerBuilder {
+  public setUserHandler(userHandler: UserHanlder): StreamConsumerBuilder {
     this.userHandler = userHandler
     return this
   }
   public setUserEventHandler(
     userEventHandler: UserEventHandler
-  ): TarponStreamConsumerBuilder {
+  ): StreamConsumerBuilder {
     this.userEventHandler = userEventHandler
     return this
   }
-
+  public setArsScoreEventHandler(
+    arsScoreEventHandler: ArsScoreEventHandler
+  ): StreamConsumerBuilder {
+    this.arsScoreEventHandler = arsScoreEventHandler
+    return this
+  }
+  public setDrsScoreEventHandler(
+    drsScoreEventHandler: DrsScoreEventHandler
+  ): StreamConsumerBuilder {
+    this.drsScoreEventHandler = drsScoreEventHandler
+    return this
+  }
+  public setKrsScoreEventHandler(
+    krsScoreEventHandler: KrsScoreEventHandler
+  ): StreamConsumerBuilder {
+    this.krsScoreEventHandler = krsScoreEventHandler
+    return this
+  }
   public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
       await this.transactionHandler(
@@ -112,6 +148,24 @@ export class TarponStreamConsumerBuilder {
         update.tenantId,
         update.OldImage as ConsumerUserEvent | BusinessUserEvent,
         update.NewImage as ConsumerUserEvent | BusinessUserEvent
+      )
+    } else if (update.type === 'ARS_VALUE' && this.arsScoreEventHandler) {
+      await this.arsScoreEventHandler(
+        update.tenantId,
+        update.OldImage as ArsScore,
+        update.NewImage as ArsScore
+      )
+    } else if (update.type === 'DRS_VALUE' && this.drsScoreEventHandler) {
+      await this.drsScoreEventHandler(
+        update.tenantId,
+        update.OldImage as DrsScore,
+        update.NewImage as DrsScore
+      )
+    } else if (update.type === 'KRS_VALUE' && this.krsScoreEventHandler) {
+      await this.krsScoreEventHandler(
+        update.tenantId,
+        update.OldImage as KrsScore,
+        update.NewImage as KrsScore
       )
     }
   }

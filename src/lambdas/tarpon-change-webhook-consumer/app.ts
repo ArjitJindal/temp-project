@@ -5,7 +5,7 @@ import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { v4 as uuidv4 } from 'uuid'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
+import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { WebhookDeliveryTask } from '@/@types/webhook'
@@ -74,7 +74,7 @@ async function userHandler(
   await sendWebhookTasks(tenantId, webhookTasks)
 }
 
-const builder = new TarponStreamConsumerBuilder(
+const builder = new StreamConsumerBuilder(
   path.basename(__dirname),
   process.env.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!
 ).setUserHandler((tenantId, oldUser, newUser) =>

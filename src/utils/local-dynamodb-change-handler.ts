@@ -58,11 +58,11 @@ export async function localTarponChangeCaptureHandler(key: {
     undefined,
     entity.Item
   )
-  const { tarponChangeMongodbHandler } = await import(
+  const { tarponChangeMongoDbHandler } = await import(
     '@/lambdas/tarpon-change-mongodb-consumer/app'
   )
   await (
-    tarponChangeMongodbHandler as any as (
+    tarponChangeMongoDbHandler as any as (
       event: KinesisStreamEvent
     ) => Promise<void>
   )(kinesisEvent)
@@ -89,11 +89,11 @@ export async function localHammerheadChangeCaptureHandler(key: {
     undefined,
     entity.Item
   )
-  const { hammerheadChangeCaptureHandler } = await import(
-    '@/lambdas/hammerhead-change-capture-kinesis-consumer/app'
+  const { hammerheadChangeMongoDbHandler } = await import(
+    '@/lambdas/hammerhead-change-mongodb-consumer/app'
   )
   await (
-    hammerheadChangeCaptureHandler as any as (
+    hammerheadChangeMongoDbHandler as any as (
       event: KinesisStreamEvent
     ) => Promise<void>
   )(kinesisEvent)

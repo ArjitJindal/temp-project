@@ -19,7 +19,7 @@ import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
-import { TarponStreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
+import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -215,8 +215,9 @@ async function transactionEventHandler(
     }
   )
 }
-const builder = new TarponStreamConsumerBuilder(
-  path.basename(__dirname),
+
+const tarponBuilder = new StreamConsumerBuilder(
+  path.basename(__dirname) + '-tarpon',
   process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL!
 )
   .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
@@ -232,20 +233,21 @@ const builder = new TarponStreamConsumerBuilder(
     (tenantId, oldTransactionEvent, newTransactionEvent) =>
       transactionEventHandler(tenantId, newTransactionEvent)
   )
-// NOTE: If we handle more entites, please add `localTarponChangeCaptureHandler(...)` to the corresponding
+
+// NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding
 // place that updates the entity to make local work
 
-const kinesisHandler = builder.buildKinesisStreamHandler()
-const sqsRetryHandler = builder.buildSqsRetryHandler()
+const tarponKinesisHandler = tarponBuilder.buildKinesisStreamHandler()
+const tarponSqsRetryHandler = tarponBuilder.buildSqsRetryHandler()
 
-export const tarponChangeMongodbHandler = lambdaConsumer()(
+export const tarponChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    await kinesisHandler(event)
+    await tarponKinesisHandler(event)
   }
 )
 
-export const tarponChangeMongodbRetryHandler = lambdaConsumer()(
+export const tarponChangeMongoDbRetryHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
-    await sqsRetryHandler(event)
+    await tarponSqsRetryHandler(event)
   }
 )

@@ -177,14 +177,25 @@ export const LAMBDAS: {
   },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
-    handlerName: 'tarponChangeMongodbHandler',
+    handlerName: 'tarponChangeMongoDbHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
+  [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'hammerhead-change-mongodb-consumer',
+    handlerName: 'hammerheadChangeMongoDbHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]: {
     codePath: 'tarpon-change-mongodb-consumer',
-    handlerName: 'tarponChangeMongodbRetryHandler',
+    handlerName: 'tarponChangeMongoDbRetryHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
+    {
+      codePath: 'hammerhead-change-mongodb-consumer',
+      handlerName: 'hammerheadChangeMongoDbRetryHandler',
+      expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+    },
   [StackConstants.WEBHOOK_TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]:
     {
       codePath: 'tarpon-change-webhook-consumer',
@@ -200,11 +211,6 @@ export const LAMBDAS: {
   [StackConstants.SANCTIONS_FUNCTION_NAME]: {
     codePath: 'sanctions',
     handlerName: 'sanctionsHandler',
-    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
-  },
-  [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'hammerhead-change-capture-kinesis-consumer',
-    handlerName: 'hammerheadChangeCaptureHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.AUDIT_LOG_CONSUMER_FUNCTION_NAME]: {
