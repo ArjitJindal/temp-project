@@ -345,6 +345,15 @@ export const TRANSACTION_RISK_PARAMETERS: RiskLevelTable = [
     parameterType: 'VARIABLE',
     isNullableAllowed: true,
   },
+  {
+    parameter: 'cardIssuedCountry',
+    title: 'Card Issued Country',
+    description: 'Risk value based on card issued country',
+    entity: 'TRANSACTION',
+    dataType: 'COUNTRY',
+    isDerived: true,
+    parameterType: 'VARIABLE',
+  },
 ];
 
 export const ALL_RISK_PARAMETERS = [
