@@ -3671,6 +3671,7 @@ components:
             - domesticOrForeignOriginCountryBusiness
             - domesticOrForeignDestinationCountryBusiness
             - _3dsDone
+            - cardIssuedCountry
         isActive:
           type: boolean
         isDerived:

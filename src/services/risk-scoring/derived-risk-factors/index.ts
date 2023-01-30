@@ -6,6 +6,7 @@ import {
 import { ARS_DOMESTIC_FOREIGN_COUNTRY_RISK_HANDLERS } from './domestic-foreign-country'
 import { ARS_3DSDONE_RISK_HANDLERS } from './3dsDone'
 import { ARS_IPADDRESSCOUNTRY_RISK_HANDLERS } from './ipAddressCountry'
+import { ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS } from './card-issued-country'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
@@ -57,6 +58,7 @@ const TRANSACTION_RISK_FACTOR_HANDLERS: Array<
   ...ARS_DOMESTIC_FOREIGN_COUNTRY_RISK_HANDLERS,
   ...ARS_3DSDONE_RISK_HANDLERS,
   ...ARS_IPADDRESSCOUNTRY_RISK_HANDLERS,
+  ...ARS_CARD_ISSUED_COUNTRY_RISK_HANDLERS,
 ]
 
 const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = _.keyBy(

@@ -1,0 +1,94 @@
+import { v4 as uuidv4 } from 'uuid'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '../repositories/risk-repository'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getTestUser } from '@/test-utils/user-test-utils'
+import { createArsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
+import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValuesParameterEnum,
+} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+
+withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
+dynamoDbSetupHook()
+
+const RISK_FACTOR: (
+  parameter: ParameterAttributeRiskValuesParameterEnum
+) => ParameterAttributeRiskValues = (parameter) => ({
+  parameter,
+  isActive: true,
+  isDerived: true,
+  riskEntityType: 'TRANSACTION',
+  riskLevelAssignmentValues: [
+    {
+      parameterValue: {
+        content: {
+          kind: 'MULTIPLE',
+          values: [
+            { kind: 'LITERAL', content: 'US' },
+            { kind: 'LITERAL', content: 'IN' },
+          ],
+        },
+      },
+      riskLevel: 'MEDIUM',
+    },
+    {
+      parameterValue: {
+        content: {
+          kind: 'MULTIPLE',
+          values: [
+            { kind: 'LITERAL', content: 'DE' },
+            { kind: 'LITERAL', content: 'CA' },
+          ],
+        },
+      },
+      riskLevel: 'VERY_LOW',
+    },
+  ],
+  parameterType: 'VARIABLE',
+})
+
+createArsRiskFactorTestCases(
+  'cardIssuedCountry',
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RISK_FACTOR('cardIssuedCountry'),
+  [
+    {
+      testName: 'Card issued country is US',
+      transaction: getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'US',
+          transactionReferenceField: 'DEPOSIT',
+          _3dsDone: true,
+        },
+      }),
+      users: [getTestUser()],
+      expectedScore: 50,
+    },
+  ]
+)
+
+createArsRiskFactorTestCases(
+  'cardIssuedCountry',
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  RISK_FACTOR('cardIssuedCountry'),
+  [
+    {
+      testName: 'Card issued country is DE',
+      transaction: getTestTransaction({
+        originPaymentDetails: {
+          method: 'CARD',
+          cardFingerprint: uuidv4(),
+          cardIssuedCountry: 'DE',
+          transactionReferenceField: 'DEPOSIT',
+          _3dsDone: true,
+        },
+      }),
+      users: [getTestUser()],
+      expectedScore: 10,
+    },
+  ]
+)
