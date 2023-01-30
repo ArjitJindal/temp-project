@@ -21,7 +21,9 @@ const IGNORED = [
   'mongodb-client-encryption',
   'encoding',
   // The data files inside 'fast-geoip' package cannot be bundled by webpack, we exclude
-  // it from being bundled and copy node_modules/fast-geoip to dist/rules-engine/node_modules/fast-geoip
+  // it from being bundled and put it to a lambda layer instead.
+  // To use it in a lambda, add `fastGeoIpLayer` lambda layer to the lambda in cdk-tarpon-stack and
+  // dynamically import it in the code.
   'fast-geoip',
 ]
 

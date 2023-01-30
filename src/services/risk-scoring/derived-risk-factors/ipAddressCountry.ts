@@ -1,4 +1,3 @@
-import * as geoip from 'fast-geoip'
 import { TransactionRiskFactorValueHandler } from '.'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
@@ -12,7 +11,8 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
       if (ipAddress == null) {
         return []
       }
-      const ipInfo = await geoip.lookup(ipAddress)
+      const geoIp = await import('fast-geoip')
+      const ipInfo = await geoIp.lookup(ipAddress)
       return ipInfo?.country ? [ipInfo.country] : []
     },
   },
