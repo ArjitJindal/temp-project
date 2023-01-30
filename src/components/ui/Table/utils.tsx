@@ -4,10 +4,10 @@ import { isMultiRows, TableDataItem, TableRow } from '@/components/ui/Table/type
 
 export const handleResize =
   (
-    index: number,
+    index: string,
     setUpdatedColumnWidth: React.Dispatch<
       React.SetStateAction<{
-        [key: number]: number;
+        [key: string]: number;
       }>
     >,
   ) =>

@@ -177,18 +177,19 @@ export default function Table<
   const dataKeys = dataItems.map((x) => (isMultiRows(x) ? x.item[rowKey] : x[rowKey]));
 
   const [updatedColumnWidth, setUpdatedColumnWidth] = useState<{
-    [key: number]: number;
+    [key: string]: number;
   }>({});
 
   function adjustColumns<T extends object>(
     columns: TableColumn<T>[] | undefined | null,
+    suffix = '',
   ): ProColumns<TableRow<T>>[] {
     return (columns ?? []).map((col: TableColumn<T>, index): ProColumns<TableRow<T>> => {
       const sortOrder = params?.sort.find(([field]) => field === col.dataIndex)?.[1];
-      const width = updatedColumnWidth[index] || col.width;
+      const width = updatedColumnWidth[`${index}${suffix}`] ?? col.width;
       const onHeaderCell = (column: unknown) => ({
         width: (column as TableColumn<T>).width,
-        onResize: handleResize(index, setUpdatedColumnWidth),
+        onResize: handleResize(`${index}${suffix}`, setUpdatedColumnWidth),
       });
       const sharedProps = {
         ...col,
@@ -200,7 +201,7 @@ export default function Table<
       if (isGroupColumn(col)) {
         return {
           ...sharedProps,
-          children: adjustColumns(col.children),
+          children: adjustColumns(col.children, `${suffix}-${index}`),
         };
       }
       return {
