@@ -43,7 +43,7 @@ export class CaseCreationService {
     if (transaction.destinationUserId)
       userIds.push(transaction.destinationUserId)
     if (userIds.length) {
-      return await this.userRepository.getMongoUsersById(userIds)
+      return await this.userRepository.getMongoUsersByIds(userIds)
     } else {
       return []
     }

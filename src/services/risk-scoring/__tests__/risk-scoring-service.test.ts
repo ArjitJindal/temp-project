@@ -1,3 +1,4 @@
+import { MongoClient } from 'mongodb'
 import { RiskScoringService } from '..'
 import { RiskRepository } from '../repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -10,6 +11,7 @@ import {
   TEST_ITERABLE_RISK_ITEM,
   TEST_VARIABLE_RISK_ITEM,
 } from '@/test-utils/pulse-test-utils'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
@@ -22,9 +24,12 @@ const testTenantId = getTestTenantId()
 setUpUsersHooks(testTenantId, [testUser1, testUser2])
 
 describe('Risk Scoring', () => {
-  beforeAll(() => {
+  let mongoDb: MongoClient
+
+  beforeAll(async () => {
     process.env.NODE_ENV = 'development'
     process.env.ENV = 'local'
+    mongoDb = await getMongoDbClient()
   })
 
   const riskRepository = new RiskRepository(testTenantId, {
@@ -33,7 +38,10 @@ describe('Risk Scoring', () => {
 
   describe('Risk Scoring Tests', () => {
     it('should update inital the risk score of a user', async () => {
-      const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+      const riskScoringService = new RiskScoringService(testTenantId, {
+        dynamoDb,
+        mongoDb,
+      })
       await riskScoringService.updateInitialRiskScores(testUser1)
 
       const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
@@ -90,7 +98,10 @@ describe('Risk Scoring', () => {
       TEST_VARIABLE_RISK_ITEM
     )
 
-    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(testTenantId, {
+      dynamoDb,
+      mongoDb,
+    })
     await riskScoringService.updateDynamicRiskScores(testTransaction1)
 
     const getRiskScore = await riskRepository.getDrsScore(testUser1.userId)
@@ -105,7 +116,10 @@ describe('Risk Scoring', () => {
   })
 
   it('VARIABLE risk factor', async () => {
-    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(testTenantId, {
+      dynamoDb,
+      mongoDb,
+    })
     const testTransaction = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,
@@ -134,7 +148,10 @@ describe('Risk Scoring', () => {
   })
 
   it('ITERABLE risk factor', async () => {
-    const riskScoringService = new RiskScoringService(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(testTenantId, {
+      dynamoDb,
+      mongoDb,
+    })
     const testTransaction = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,

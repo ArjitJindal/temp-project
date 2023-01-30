@@ -77,7 +77,7 @@ describe('Consoel API - Live Testing', () => {
       type: 'PULSE',
       parameters: TEST_PARAMETERS,
       progress: 0,
-      statistics: [],
+      statistics: { current: [], simulated: [] },
       latestStatus: { status: 'PENDING', timestamp: expect.any(Number) },
       statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
     })
@@ -124,7 +124,7 @@ describe('Consoel API - Live Testing', () => {
           type: 'PULSE',
           parameters: TEST_PARAMETERS,
           progress: 0,
-          statistics: [],
+          statistics: { current: [], simulated: [] },
           latestStatus: { status: 'PENDING', timestamp: expect.any(Number) },
           statuses: [{ status: 'PENDING', timestamp: expect.any(Number) }],
         },

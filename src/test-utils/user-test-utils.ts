@@ -1,3 +1,4 @@
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
@@ -5,7 +6,9 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
-export function getTestUser(user: Partial<User> = {}): User {
+export function getTestUser(
+  user: Partial<User | InternalUser> = {}
+): User | InternalUser {
   return {
     createdTimestamp: 1641654664,
     userId: '96647cfd9e8fe66ee0f3362e011e34e8',
@@ -73,13 +76,19 @@ export function getTestBusiness(business: Partial<Business> = {}): Business {
   }
 }
 
-export async function createConsumerUsers(testTenantId: string, users: User[]) {
+export async function createConsumerUsers(
+  testTenantId: string,
+  users: Array<User | InternalUser>
+) {
   for (const user of users) {
     await createConsumerUser(testTenantId, user)
   }
 }
 
-export async function createConsumerUser(testTenantId: string, user: User) {
+export async function createConsumerUser(
+  testTenantId: string,
+  user: User | InternalUser
+) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })

@@ -11,6 +11,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
@@ -75,12 +76,17 @@ export function createKrsRiskFactorTestCases(
   describe(parameter, () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, dynamoDb)
+    let riskScoringService: RiskScoringService
     const riskRepository = new RiskRepository(TEST_TENANT_ID, {
       dynamoDb,
     })
 
     beforeAll(async () => {
+      const mongoDb = await getMongoDbClient()
+      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+        dynamoDb,
+        mongoDb,
+      })
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )
@@ -117,12 +123,20 @@ export function createArsRiskFactorTestCases(
   describe(parameter, () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
-    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, dynamoDb)
+    let riskScoringService: RiskScoringService
     const riskRepository = new RiskRepository(TEST_TENANT_ID, {
       dynamoDb,
     })
 
     beforeAll(async () => {
+      const mongoDb = await getMongoDbClient()
+      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+        dynamoDb,
+        mongoDb,
+      })
+      const riskRepository = new RiskRepository(TEST_TENANT_ID, {
+        dynamoDb,
+      })
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )

@@ -110,6 +110,15 @@ async function krsScoreEventHandler(
     mongoDb,
   })
   await riskRepository.addKrsValueToMongo(krsScore)
+  const userCollection = mongoDb
+    .db()
+    .collection<Business | User>(USERS_COLLECTION(tenantId))
+  await userCollection.updateOne(
+    { userId: krsScore.userId },
+    {
+      $set: { krsScore },
+    }
+  )
   logger.info(`KRS Score Processed`)
 }
 

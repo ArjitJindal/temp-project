@@ -14,6 +14,7 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { hasFeature, updateLogMetadata } from '@/core/utils/context'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const handleRiskLevelParam = (
   tenantId: string,
@@ -36,6 +37,7 @@ export const userHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
     const userRepository = new UserRepository(tenantId, {
       dynamoDb: dynamoDb,
     })
@@ -75,7 +77,10 @@ export const userHandler = lambdaApi()(
         : await userRepository.saveBusinessUser(userPayload)
       if (hasFeature('PULSE')) {
         if (hasFeature('PULSE_KRS_CALCULATION')) {
-          const riskScoringService = new RiskScoringService(tenantId, dynamoDb)
+          const riskScoringService = new RiskScoringService(tenantId, {
+            dynamoDb,
+            mongoDb,
+          })
           await riskScoringService.updateInitialRiskScores(user)
         }
         if (userPayload.riskLevel) {

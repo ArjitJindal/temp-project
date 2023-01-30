@@ -165,6 +165,10 @@ export const LIVE_TESTING_TASK_COLLECTION = (tenantId: string) => {
   return `${tenantId}-live-testing-task`
 }
 
+export const LIVE_TESTING_RESULT_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-live-testing-result`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 
 export const MONTH_DATE_FORMAT = '%Y-%m'

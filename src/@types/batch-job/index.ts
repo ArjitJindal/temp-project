@@ -21,6 +21,7 @@ export type LiveTestingPulseBatchJob = {
   type: LiveTestingPulseBatchJobType
   tenantId: string
   parameters: LiveTestPulseParameters & { taskId: string }
+  awsCredentials?: CredentialsOptions
 }
 
 /* Demo Mode Data Load */

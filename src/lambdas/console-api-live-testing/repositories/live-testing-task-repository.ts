@@ -12,6 +12,7 @@ import {
   TaskStatusChangeStatusEnum,
 } from '@/@types/openapi-internal/TaskStatusChange'
 import { DefaultApiGetLiveTestingRequest } from '@/@types/openapi-internal/RequestParameters'
+import { LiveTestPulseStatisticsResult } from '@/@types/openapi-internal/LiveTestPulseStatisticsResult'
 
 export class LiveTestingTaskRepository {
   tenantId: string
@@ -42,11 +43,29 @@ export class LiveTestingTaskRepository {
       type: parameters.type,
       parameters,
       progress: 0,
-      statistics: [],
+      statistics: { current: [], simulated: [] },
       latestStatus: status,
       statuses: [status],
     })
     return taskId
+  }
+
+  public async updateStatistics(
+    taskId: string,
+    statistics: LiveTestPulseStatisticsResult
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<LiveTestPulseTask>(
+      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne(
+      { _id: taskId as any },
+      {
+        $set: {
+          statistics,
+        },
+      }
+    )
   }
 
   public async updateTaskStatus(

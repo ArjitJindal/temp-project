@@ -29,6 +29,7 @@ import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-inte
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { RiskScoringService } from '@/services/risk-scoring'
+import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const features: Feature[] = [
   'PULSE',
@@ -424,11 +425,15 @@ describe('Risk Scoring Tests', () => {
   const testUser1 = getTestUser({ userId: 'userId1' })
   const testUser2 = getTestUser({ userId: 'userId2' })
   setUpUsersHooks(TEST_TENANT_ID, [testUser1, testUser2])
+
   it('check on isUpdatable is true risk score changes', async () => {
     await riskRepository.createOrUpdateParameterRiskItem(
       TEST_VARIABLE_RISK_ITEM
     )
-    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, dynamoDb)
+    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb: await getMongoDbClient(),
+    })
     await riskScoringService.updateInitialRiskScores(testUser1)
     const riskScore = await riskRepository.getParameterRiskItem(
       'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
@@ -463,7 +468,7 @@ describe('Risk Scoring Tests', () => {
     expect(getRiskScore).toEqual(
       expect.objectContaining({
         isUpdatable: true,
-        drsScore: 76.66666666666667,
+        drsScore: 70,
         userId: testUser1.userId,
         transactionId: testTransaction1.transactionId,
       })

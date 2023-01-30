@@ -1,5 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
+import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import {
@@ -168,36 +169,74 @@ function getSchemaAttributeRiskLevel(
 
 export class RiskScoringService {
   tenantId: string
-  dynamoDb: DynamoDBDocumentClient
   riskRepository: RiskRepository
   userRepository: UserRepository
 
-  constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
+  constructor(
+    tenantId: string,
+    connections: {
+      dynamoDb?: DynamoDBDocumentClient
+      mongoDb: MongoClient
+    }
+  ) {
     this.tenantId = tenantId
-    this.dynamoDb = dynamoDb
-    this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    this.userRepository = new UserRepository(tenantId, { dynamoDb })
+    this.riskRepository = new RiskRepository(tenantId, {
+      dynamoDb: connections.dynamoDb,
+    })
+    this.userRepository = new UserRepository(tenantId, {
+      mongoDb: connections.mongoDb,
+    })
   }
 
-  public async updateInitialRiskScores(user: User | Business): Promise<any> {
-    const riskFactors = await this.riskRepository.getParameterRiskItems()
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
+  public async calculateKrsScore(
+    user: User | Business,
+    riskClassificationValues: RiskClassificationScore[],
+    riskFactors: ParameterAttributeRiskValues[]
+  ): Promise<number> {
     const riskScoresList = await this.getRiskFactorScores(
       ['BUSINESS', 'CONSUMER_USER'],
       user,
       riskFactors || [],
       riskClassificationValues
     )
-
     logger.info(`Risk scores: ${riskScoresList}`)
-
-    const krsScore = riskScoresList.length
+    return riskScoresList.length
       ? _.mean(riskScoresList)
       : getDefaultRiskValue(riskClassificationValues)
+  }
 
-    logger.info(`KRS Score: ${krsScore}`)
+  public async calculateArsScore(
+    transaction: Transaction,
+    riskClassificationValues: RiskClassificationScore[],
+    riskFactors: ParameterAttributeRiskValues[]
+  ): Promise<number> {
+    const riskScoresList = await this.getRiskFactorScores(
+      ['TRANSACTION'],
+      transaction,
+      riskFactors || [],
+      riskClassificationValues
+    )
+    return riskScoresList.length
+      ? _.mean(riskScoresList)
+      : getDefaultRiskValue(riskClassificationValues)
+  }
 
+  public calculateDrsScore(
+    currentDrsScore: number,
+    newArsScore: number
+  ): number {
+    return _.mean([currentDrsScore, newArsScore])
+  }
+
+  public async updateInitialRiskScores(user: User | Business): Promise<any> {
+    const riskFactors = await this.riskRepository.getParameterRiskItems()
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+    const krsScore = await this.calculateKrsScore(
+      user,
+      riskClassificationValues,
+      riskFactors || []
+    )
     await this.riskRepository.createOrUpdateKrsScore(user.userId, krsScore)
     await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
@@ -213,18 +252,11 @@ export class RiskScoringService {
     const riskFactors = await this.riskRepository.getParameterRiskItems()
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
-    const riskScoresList = await this.getRiskFactorScores(
-      ['TRANSACTION'],
+    const arsScore = await this.calculateArsScore(
       transaction,
-      riskFactors || [],
-      riskClassificationValues
+      riskClassificationValues,
+      riskFactors || []
     )
-    const arsScore = riskScoresList.length
-      ? _.mean(riskScoresList)
-      : getDefaultRiskValue(riskClassificationValues)
-
-    logger.info(`ARS Scores List: ${riskScoresList}`)
-    logger.info(`ARS Score: ${arsScore}`)
 
     await this.riskRepository.createOrUpdateArsScore(
       transaction.transactionId!,
@@ -341,7 +373,7 @@ export class RiskScoringService {
       return drsObject?.drsScore
     }
     const auditLogService = new PulseAuditLogService(this.tenantId)
-    const drsScore = _.mean([currentDrsValue, krsScore, arsScore])
+    const drsScore = this.calculateDrsScore(currentDrsValue, arsScore)
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
       drsScore,
@@ -359,7 +391,7 @@ export class RiskScoringService {
         transaction.originUserId,
         transaction.destinationUserId,
       ].filter(Boolean) as string[]
-      const users = await this.userRepository.getUsers(userIds)
+      const users = await this.userRepository.getMongoUsersByIds(userIds)
       return {
         originUser: users.find(
           (user) => user.userId === transaction.originUserId

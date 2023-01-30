@@ -94,7 +94,7 @@ export class UserRepository {
   public async getMongoAllUsers(
     params: PaginationParams & {
       afterTimestamp?: number
-      beforeTimestamp: number
+      beforeTimestamp?: number
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
@@ -148,7 +148,7 @@ export class UserRepository {
   private async getMongoUsers(
     params: OptionalPaginationParams & {
       afterTimestamp?: number
-      beforeTimestamp: number
+      beforeTimestamp?: number
       filterId?: string
       filterName?: string
       filterOperator?: FilterOperator
@@ -231,7 +231,7 @@ export class UserRepository {
       {
         createdTimestamp: {
           $gte: params.afterTimestamp || 0,
-          $lte: params.beforeTimestamp,
+          $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
         },
         ...(userType ? { type: userType } : {}),
         ...(params.filterRiskLevel?.length &&
@@ -435,7 +435,7 @@ export class UserRepository {
     return await collection.findOne({ userId })
   }
 
-  public async getMongoUsersById(
+  public async getMongoUsersByIds(
     userIds: string[]
   ): Promise<(InternalConsumerUser | InternalBusinessUser)[]> {
     const db = this.mongoDb.db()

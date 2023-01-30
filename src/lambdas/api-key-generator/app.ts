@@ -16,6 +16,8 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  LIVE_TESTING_TASK_COLLECTION,
+  LIVE_TESTING_RESULT_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -274,6 +276,31 @@ export const createMongoDBCollections = async (
     await auditlogCollection.createIndex({ auditlogId: 1 })
     await auditlogCollection.createIndex({ timestamp: -1 })
     await auditlogCollection.createIndex({ type: 1, action: 1 })
+
+    try {
+      await db.createCollection(LIVE_TESTING_TASK_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const liveTestingTaskCollection = db.collection(
+      LIVE_TESTING_TASK_COLLECTION(tenantId)
+    )
+    await liveTestingTaskCollection.createIndex({
+      type: 1,
+      createdAt: -1,
+    })
+
+    try {
+      await db.createCollection(LIVE_TESTING_RESULT_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const liveTestingResultCollection = db.collection(
+      LIVE_TESTING_RESULT_COLLECTION(tenantId)
+    )
+    await liveTestingResultCollection.createIndex({
+      taskId: 1,
+    })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)
   }

@@ -63,7 +63,10 @@ async function transactionHandler(
     ruleInstancesRepo,
     transactionsRepo
   )
-  const riskScoringService = new RiskScoringService(tenantId, dynamoDb)
+  const riskScoringService = new RiskScoringService(tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
 
   const transactionId = transaction.transactionId
   let currentStatus: RuleAction | null = null

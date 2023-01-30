@@ -19,11 +19,14 @@ async function migrateTenant(tenant: Tenant | null, timestamp: number) {
     return
   }
   console.info(`Starting to migrate tenant ${tenant.name} (ID: ${tenant.id})`)
-  const dynamodb = await getDynamoDbClient()
+  const dynamoDb = await getDynamoDbClient()
   const mongoDb = await getMongoDbClient(StackConstants.MONGO_DB_DATABASE_NAME)
   const usersCollectionName = USERS_COLLECTION(tenant.id)
   const db = mongoDb.db()
-  const riskScoringService = new RiskScoringService(tenant.id, dynamodb)
+  const riskScoringService = new RiskScoringService(tenant.id, {
+    dynamoDb,
+    mongoDb,
+  })
 
   const usersBeforeTimestamp = await db
     .collection<User | Business>(usersCollectionName)

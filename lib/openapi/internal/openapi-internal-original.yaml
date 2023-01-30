@@ -517,7 +517,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
         - schema:
@@ -675,7 +675,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
       x-internal: false
@@ -800,7 +800,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
         - schema:
@@ -935,7 +935,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
         - schema:
@@ -1859,7 +1859,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
         - schema:
@@ -2125,7 +2125,7 @@ paths:
           in: query
           name: sortField
         - schema:
-            type: string
+            $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
         - schema:
@@ -3123,6 +3123,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            krsScore:
+              $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
             casesCount:
@@ -3142,6 +3144,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Comment'
+            krsScore:
+              $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
             casesCount:
@@ -4467,13 +4471,13 @@ components:
           $ref: '#/components/schemas/LiveTestPulseSampling'
       required:
         - type
-        - classificationValues
-        - parameterAttributeRiskValues
     LiveTestPulseSampling:
       title: LiveTestPulseSampling
       type: object
       properties:
         usersCount:
+          type: integer
+        userLatestTransactionsCount:
           type: integer
       x-stoplight:
         id: yl7w6xm5dlwif
@@ -4496,9 +4500,7 @@ components:
           minimum: 0
           maximum: 1
         statistics:
-          type: array
-          items:
-            $ref: '#/components/schemas/LiveTestPulseStatistics'
+          $ref: '#/components/schemas/LiveTestPulseStatisticsResult'
         latestStatus:
           $ref: '#/components/schemas/TaskStatusChange'
         statuses:
@@ -4515,8 +4517,31 @@ components:
     LiveTestPulseStatistics:
       type: object
       title: LiveTestPulseStatistics
+      properties:
+        count:
+          type: number
+        riskType:
+          type: string
+          enum:
+            - KRS
+            - DRS
+            - ARS
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+    LiveTestPulseStatisticsResult:
+      type: object
+      title: LiveTestPulseStatisticsResult
       x-stoplight:
         id: 7f7f5d4cde104
+      properties:
+        current:
+          type: array
+          items:
+            $ref: '#/components/schemas/LiveTestPulseStatistics'
+        simulated:
+          type: array
+          items:
+            $ref: '#/components/schemas/LiveTestPulseStatistics'
     LiveTestType:
       title: LiveTestType
       x-stoplight:
@@ -4524,6 +4549,51 @@ components:
       type: string
       enum:
         - PULSE
+    LiveTestPulseRiskScoreResult:
+      title: LiveTestPulseResult
+      type: object
+      properties:
+        krs:
+          type: object
+          properties:
+            riskScore:
+              type: number
+            riskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+        drs:
+          type: object
+          properties:
+            riskScore:
+              type: number
+            riskLevel:
+              $ref: '#/components/schemas/RiskLevel'
+    LiveTestPulseResult:
+      title: LiveTestPulseResult
+      type: object
+      properties:
+        taskId:
+          type: string
+        type:
+          type: string
+          enum:
+            - PULSE
+        userId:
+          type: string
+        current:
+          $ref: '#/components/schemas/LiveTestPulseRiskScoreResult'
+        simulated:
+          $ref: '#/components/schemas/LiveTestPulseRiskScoreResult'
+      required:
+        - taskId
+        - type
+        - userId
+        - old
+        - new
+    SortOrder:
+      type: string
+      enum:
+        - ascend
+        - descend
   securitySchemes:
     Authorization:
       type: http

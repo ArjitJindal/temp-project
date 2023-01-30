@@ -145,7 +145,7 @@ export class TransactionRepository {
     conditions.push({
       timestamp: {
         $gte: params.afterTimestamp || 0,
-        $lte: params.beforeTimestamp,
+        $lte: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
       },
     })
     if (params.filterIdList != null) {

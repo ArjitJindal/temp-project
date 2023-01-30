@@ -11,6 +11,7 @@ import { sendBatchJobCommand } from '@/services/batch-job'
 import { LiveTestingPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { DefaultApiGetLiveTestingRequest } from '@/@types/openapi-internal/RequestParameters'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 export const liveTestingHandler = lambdaApi()(
   async (
@@ -44,6 +45,7 @@ export const liveTestingHandler = lambdaApi()(
             taskId,
             ...liveTestParameters,
           },
+          awsCredentials: getCredentialsFromEvent(event),
         } as LiveTestingPulseBatchJob)
         return { taskId }
       }

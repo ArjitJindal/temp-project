@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 
 export function getTestTransaction(
-  transaction: Partial<Transaction> = {}
+  transaction: Partial<Transaction | TransactionCaseManagement> = {}
 ): Transaction {
   return {
     transactionId: uuidv4(),
