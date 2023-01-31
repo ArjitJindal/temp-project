@@ -161,12 +161,12 @@ export const AUDITLOG_COLLECTION = (tenantId: string) => {
   return `${tenantId}-auditlog`
 }
 
-export const LIVE_TESTING_TASK_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-live-testing-task`
+export const SIMULATION_TASK_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-simulation-task`
 }
 
-export const LIVE_TESTING_RESULT_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-live-testing-result`
+export const SIMULATION_RESULT_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-simulation-result`
 }
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'

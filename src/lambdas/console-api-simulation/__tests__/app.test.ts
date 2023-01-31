@@ -1,15 +1,15 @@
 import 'aws-sdk-client-mock-jest'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { mockClient } from 'aws-sdk-client-mock'
-import { liveTestingHandler } from '../app'
-import { LiveTestPulseParameters } from '@/@types/openapi-internal/LiveTestPulseParameters'
+import { simulationHandler } from '../app'
+import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import {
   getApiGatewayGetEvent,
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
-const TEST_PARAMETERS: LiveTestPulseParameters = {
+const TEST_PARAMETERS: SimulationPulseParameters = {
   type: 'PULSE',
   classificationValues: [],
   parameterAttributeRiskValues: [],
@@ -18,17 +18,17 @@ const TEST_PARAMETERS: LiveTestPulseParameters = {
   },
 }
 
-describe('Consoel API - Live Testing', () => {
+describe('Consoel API - Simulation', () => {
   let sqsMock: any
 
   beforeEach(() => {
     sqsMock = mockClient(SQSClient)
   })
 
-  test('creates a new live testing task', async () => {
+  test('creates a new simulation task', async () => {
     const tenantId = getTestTenantId()
-    const response = await liveTestingHandler(
-      getApiGatewayPostEvent(tenantId, '/live-testing', TEST_PARAMETERS),
+    const response = await simulationHandler(
+      getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
       null as any,
       null as any
     )
@@ -42,7 +42,7 @@ describe('Consoel API - Live Testing', () => {
         sqsMock.commandCalls(SendMessageCommand)[0].firstArg.input.MessageBody
       )
     ).toEqual({
-      type: 'LIVE_TESTING_PULSE',
+      type: 'SIMULATION_PULSE',
       tenantId,
       parameters: {
         taskId: expect.any(String),
@@ -51,19 +51,19 @@ describe('Consoel API - Live Testing', () => {
     })
   })
 
-  test('gets a live testing task by ID', async () => {
+  test('gets a simulation task by ID', async () => {
     const tenantId = getTestTenantId()
     const taskId: string = JSON.parse(
       (
-        await liveTestingHandler(
-          getApiGatewayPostEvent(tenantId, '/live-testing', TEST_PARAMETERS),
+        await simulationHandler(
+          getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
           null as any,
           null as any
         )
       )?.body as string
     ).taskId
-    const response = await liveTestingHandler(
-      getApiGatewayGetEvent(tenantId, '/live-testing/{taskId}', {
+    const response = await simulationHandler(
+      getApiGatewayGetEvent(tenantId, '/simulation/{taskId}', {
         pathParameters: { taskId },
       }),
       null as any,
@@ -83,10 +83,10 @@ describe('Consoel API - Live Testing', () => {
     })
   })
 
-  test('gets a non-existent live testing task', async () => {
+  test('gets a non-existent simulation task', async () => {
     const tenantId = getTestTenantId()
-    const response = await liveTestingHandler(
-      getApiGatewayGetEvent(tenantId, '/live-testing/{taskId}', {
+    const response = await simulationHandler(
+      getApiGatewayGetEvent(tenantId, '/simulation/{taskId}', {
         pathParameters: { taskId: 'unknown' },
       }),
       null as any,
@@ -96,19 +96,19 @@ describe('Consoel API - Live Testing', () => {
     expect(response?.statusCode).toEqual(404)
   })
 
-  test('gets live testing tasks', async () => {
+  test('gets simulation tasks', async () => {
     const tenantId = getTestTenantId()
     const taskId: string = JSON.parse(
       (
-        await liveTestingHandler(
-          getApiGatewayPostEvent(tenantId, '/live-testing', TEST_PARAMETERS),
+        await simulationHandler(
+          getApiGatewayPostEvent(tenantId, '/simulation', TEST_PARAMETERS),
           null as any,
           null as any
         )
       )?.body as string
     ).taskId
-    const response = await liveTestingHandler(
-      getApiGatewayGetEvent(tenantId, '/live-testing', {
+    const response = await simulationHandler(
+      getApiGatewayGetEvent(tenantId, '/simulation', {
         queryStringParameters: { page: '0', type: 'PULSE' },
       }),
       null as any,
@@ -130,8 +130,8 @@ describe('Consoel API - Live Testing', () => {
         },
       ],
     })
-    const unknownResponse = await liveTestingHandler(
-      getApiGatewayGetEvent(tenantId, '/live-testing', {
+    const unknownResponse = await simulationHandler(
+      getApiGatewayGetEvent(tenantId, '/simulation', {
         queryStringParameters: { page: '0', type: 'UNKNOWN' },
       }),
       null as any,

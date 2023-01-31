@@ -16,8 +16,8 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  LIVE_TESTING_TASK_COLLECTION,
-  LIVE_TESTING_RESULT_COLLECTION,
+  SIMULATION_TASK_COLLECTION,
+  SIMULATION_RESULT_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -278,27 +278,27 @@ export const createMongoDBCollections = async (
     await auditlogCollection.createIndex({ type: 1, action: 1 })
 
     try {
-      await db.createCollection(LIVE_TESTING_TASK_COLLECTION(tenantId))
+      await db.createCollection(SIMULATION_TASK_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
-    const liveTestingTaskCollection = db.collection(
-      LIVE_TESTING_TASK_COLLECTION(tenantId)
+    const simulationTaskCollection = db.collection(
+      SIMULATION_TASK_COLLECTION(tenantId)
     )
-    await liveTestingTaskCollection.createIndex({
+    await simulationTaskCollection.createIndex({
       type: 1,
       createdAt: -1,
     })
 
     try {
-      await db.createCollection(LIVE_TESTING_RESULT_COLLECTION(tenantId))
+      await db.createCollection(SIMULATION_RESULT_COLLECTION(tenantId))
     } catch (e) {
       // ignore already exists
     }
-    const liveTestingResultCollection = db.collection(
-      LIVE_TESTING_RESULT_COLLECTION(tenantId)
+    const simulationResultCollection = db.collection(
+      SIMULATION_RESULT_COLLECTION(tenantId)
     )
-    await liveTestingResultCollection.createIndex({
+    await simulationResultCollection.createIndex({
       taskId: 1,
     })
   } catch (e) {

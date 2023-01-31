@@ -191,8 +191,8 @@ export const StackConstants = {
   CONSOLE_API_RISK_LEVEL_AND_SCORE_FUNCTION_NAME: getResourceNameForHammerhead(
     'ConsoleApiRiskLevelAndScoreFunction'
   ),
-  CONSOLE_API_LIVE_TESTING_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiLiveTestingFunction'
+  CONSOLE_API_SIMULATION_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiSimulationFunction'
   ),
   AUDIT_LOG_FUNCTION_NAME: getResourceNameForHammerhead('AuditLogFunction'),
   NUMBER_OF_RISK_LEVELS: 5,

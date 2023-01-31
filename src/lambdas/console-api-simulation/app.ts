@@ -3,17 +3,17 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { LiveTestingTaskRepository } from './repositories/live-testing-task-repository'
+import { SimulationTaskRepository } from './repositories/simulation-task-repository'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { LiveTestPulseParameters } from '@/@types/openapi-internal/LiveTestPulseParameters'
+import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import { sendBatchJobCommand } from '@/services/batch-job'
-import { LiveTestingPulseBatchJob } from '@/@types/batch-job'
+import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { DefaultApiGetLiveTestingRequest } from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 
-export const liveTestingHandler = lambdaApi()(
+export const simulationHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
@@ -21,44 +21,44 @@ export const liveTestingHandler = lambdaApi()(
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const liveTestingTaskRepository = new LiveTestingTaskRepository(
+    const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
     )
 
-    if (event.resource === '/live-testing') {
+    if (event.resource === '/simulation') {
       if (event.httpMethod === 'GET') {
-        return liveTestingTaskRepository.getLiveTestingTasks(
-          event.queryStringParameters as any as DefaultApiGetLiveTestingRequest
+        return simulationTaskRepository.getSimulationTasks(
+          event.queryStringParameters as any as DefaultApiGetSimulationsRequest
         )
       } else if (event.httpMethod === 'POST' && event.body) {
-        const liveTestParameters = JSON.parse(
+        const simulationParameters = JSON.parse(
           event.body
-        ) as LiveTestPulseParameters
-        const taskId = await liveTestingTaskRepository.createLiveTestingTask(
-          liveTestParameters
+        ) as SimulationPulseParameters
+        const taskId = await simulationTaskRepository.createSimulationTask(
+          simulationParameters
         )
         await sendBatchJobCommand(tenantId, {
-          type: 'LIVE_TESTING_PULSE',
+          type: 'SIMULATION_PULSE',
           tenantId,
           parameters: {
             taskId,
-            ...liveTestParameters,
+            ...simulationParameters,
           },
           awsCredentials: getCredentialsFromEvent(event),
-        } as LiveTestingPulseBatchJob)
+        } as SimulationPulseBatchJob)
         return { taskId }
       }
     } else if (
-      event.resource === '/live-testing/{taskId}' &&
+      event.resource === '/simulation/{taskId}' &&
       event.httpMethod === 'GET' &&
       event.pathParameters?.taskId
     ) {
-      const task = await liveTestingTaskRepository.getLiveTestingTask(
+      const task = await simulationTaskRepository.getSimulationTask(
         event.pathParameters.taskId
       )
       if (task == null) {
-        throw new NotFound(`Live testing task not found`)
+        throw new NotFound(`Simulation task not found`)
       }
       return task
     }

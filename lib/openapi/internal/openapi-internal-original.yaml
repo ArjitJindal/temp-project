@@ -2449,10 +2449,10 @@ paths:
           in: path
           required: true
       operationId: get-sanctions-search-$-searchId
-  /live-testing:
+  /simulation:
     post:
-      summary: Create new live testing task
-      operationId: post-live-testing
+      summary: Create new simulation task
+      operationId: post-simulation
       responses:
         '200':
           description: OK
@@ -2469,10 +2469,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LiveTestPulseParameters'
+              $ref: '#/components/schemas/SimulationPulseParameters'
     get:
-      summary: Get live testing tasks
-      operationId: get-live-testing
+      summary: Get simulation tasks
+      operationId: get-simulations
       responses:
         '200':
           description: OK
@@ -2486,7 +2486,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/LiveTestPulseTask'
+                      $ref: '#/components/schemas/SimulationPulseTask'
                 required:
                   - total
                   - data
@@ -2501,21 +2501,21 @@ paths:
           name: page
           required: true
         - schema:
-            $ref: '#/components/schemas/LiveTestType'
+            $ref: '#/components/schemas/SimulationType'
           in: query
           name: type
           required: true
-  '/live-testing/{taskId}':
+  '/simulation/{taskId}':
     get:
-      summary: Get a live testing task by test ID
-      operationId: get-live-testing-test-id
+      summary: Get a simulation task by test ID
+      operationId: get-simulation-test-id
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LiveTestPulseTask'
+                $ref: '#/components/schemas/SimulationPulseTask'
       parameters: []
     parameters:
       - schema:
@@ -4451,14 +4451,14 @@ components:
         - listType
         - subtype
         - data
-    LiveTestPulseParameters:
-      title: LiveTestPulseParameters
+    SimulationPulseParameters:
+      title: SimulationPulseParameters
       type: object
       x-stoplight:
         id: 9d4bfe04d1868
       properties:
         type:
-          $ref: '#/components/schemas/LiveTestType'
+          $ref: '#/components/schemas/SimulationType'
         classificationValues:
           type: array
           items:
@@ -4468,11 +4468,11 @@ components:
           items:
             $ref: '#/components/schemas/ParameterAttributeRiskValues'
         sampling:
-          $ref: '#/components/schemas/LiveTestPulseSampling'
+          $ref: '#/components/schemas/SimulationPulseSampling'
       required:
         - type
-    LiveTestPulseSampling:
-      title: LiveTestPulseSampling
+    SimulationPulseSampling:
+      title: SimulationPulseSampling
       type: object
       properties:
         usersCount:
@@ -4481,8 +4481,8 @@ components:
           type: integer
       x-stoplight:
         id: yl7w6xm5dlwif
-    LiveTestPulseTask:
-      title: LiveTestPulseTask
+    SimulationPulseTask:
+      title: SimulationPulseTask
       x-stoplight:
         id: 5e85cbedf67fd
       type: object
@@ -4492,15 +4492,15 @@ components:
         createdAt:
           type: number
         type:
-          $ref: '#/components/schemas/LiveTestType'
+          $ref: '#/components/schemas/SimulationType'
         parameters:
-          $ref: '#/components/schemas/LiveTestPulseParameters'
+          $ref: '#/components/schemas/SimulationPulseParameters'
         progress:
           type: number
           minimum: 0
           maximum: 1
         statistics:
-          $ref: '#/components/schemas/LiveTestPulseStatisticsResult'
+          $ref: '#/components/schemas/SimulationPulseStatisticsResult'
         latestStatus:
           $ref: '#/components/schemas/TaskStatusChange'
         statuses:
@@ -4514,9 +4514,9 @@ components:
         - statistics
         - latestStatus
         - statuses
-    LiveTestPulseStatistics:
+    SimulationPulseStatistics:
       type: object
-      title: LiveTestPulseStatistics
+      title: SimulationPulseStatistics
       properties:
         count:
           type: number
@@ -4528,29 +4528,29 @@ components:
             - ARS
         riskLevel:
           $ref: '#/components/schemas/RiskLevel'
-    LiveTestPulseStatisticsResult:
+    SimulationPulseStatisticsResult:
       type: object
-      title: LiveTestPulseStatisticsResult
+      title: SimulationPulseStatisticsResult
       x-stoplight:
         id: 7f7f5d4cde104
       properties:
         current:
           type: array
           items:
-            $ref: '#/components/schemas/LiveTestPulseStatistics'
+            $ref: '#/components/schemas/SimulationPulseStatistics'
         simulated:
           type: array
           items:
-            $ref: '#/components/schemas/LiveTestPulseStatistics'
-    LiveTestType:
-      title: LiveTestType
+            $ref: '#/components/schemas/SimulationPulseStatistics'
+    SimulationType:
+      title: SimulationType
       x-stoplight:
         id: n6wn9hbaar1cs
       type: string
       enum:
         - PULSE
-    LiveTestPulseRiskScoreResult:
-      title: LiveTestPulseResult
+    SimulationPulseRiskScoreResult:
+      title: SimulationPulseResult
       type: object
       properties:
         krs:
@@ -4567,8 +4567,8 @@ components:
               type: number
             riskLevel:
               $ref: '#/components/schemas/RiskLevel'
-    LiveTestPulseResult:
-      title: LiveTestPulseResult
+    SimulationPulseResult:
+      title: SimulationPulseResult
       type: object
       properties:
         taskId:
@@ -4580,9 +4580,9 @@ components:
         userId:
           type: string
         current:
-          $ref: '#/components/schemas/LiveTestPulseRiskScoreResult'
+          $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
         simulated:
-          $ref: '#/components/schemas/LiveTestPulseRiskScoreResult'
+          $ref: '#/components/schemas/SimulationPulseRiskScoreResult'
       required:
         - taskId
         - type

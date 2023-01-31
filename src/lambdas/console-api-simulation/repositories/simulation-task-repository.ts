@@ -2,19 +2,19 @@ import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
 import _ from 'lodash'
 import {
-  LIVE_TESTING_TASK_COLLECTION,
+  SIMULATION_TASK_COLLECTION,
   paginateFindOptions,
 } from '@/utils/mongoDBUtils'
-import { LiveTestPulseParameters } from '@/@types/openapi-internal/LiveTestPulseParameters'
-import { LiveTestPulseTask } from '@/@types/openapi-internal/LiveTestPulseTask'
+import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
+import { SimulationPulseTask } from '@/@types/openapi-internal/SimulationPulseTask'
 import {
   TaskStatusChange,
   TaskStatusChangeStatusEnum,
 } from '@/@types/openapi-internal/TaskStatusChange'
-import { DefaultApiGetLiveTestingRequest } from '@/@types/openapi-internal/RequestParameters'
-import { LiveTestPulseStatisticsResult } from '@/@types/openapi-internal/LiveTestPulseStatisticsResult'
+import { DefaultApiGetSimulationsRequest } from '@/@types/openapi-internal/RequestParameters'
+import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
 
-export class LiveTestingTaskRepository {
+export class SimulationTaskRepository {
   tenantId: string
   mongoDb: MongoClient
 
@@ -23,12 +23,12 @@ export class LiveTestingTaskRepository {
     this.mongoDb = mongoDb
   }
 
-  public async createLiveTestingTask(
-    parameters: LiveTestPulseParameters
+  public async createSimulationTask(
+    parameters: SimulationPulseParameters
   ): Promise<string> {
     const db = this.mongoDb.db()
-    const collection = db.collection<LiveTestPulseTask>(
-      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    const collection = db.collection<SimulationPulseTask>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const taskId = uuidv4()
     const now = Date.now()
@@ -52,11 +52,11 @@ export class LiveTestingTaskRepository {
 
   public async updateStatistics(
     taskId: string,
-    statistics: LiveTestPulseStatisticsResult
+    statistics: SimulationPulseStatisticsResult
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<LiveTestPulseTask>(
-      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    const collection = db.collection<SimulationPulseTask>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     await collection.updateOne(
       { _id: taskId as any },
@@ -74,8 +74,8 @@ export class LiveTestingTaskRepository {
     progress?: number
   ) {
     const db = this.mongoDb.db()
-    const collection = db.collection<LiveTestPulseTask>(
-      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    const collection = db.collection<SimulationPulseTask>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const newStatus: TaskStatusChange = {
       status,
@@ -102,26 +102,26 @@ export class LiveTestingTaskRepository {
     )
   }
 
-  public async getLiveTestingTask(
+  public async getSimulationTask(
     taskId: string
-  ): Promise<LiveTestPulseTask | null> {
+  ): Promise<SimulationPulseTask | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<LiveTestPulseTask>(
-      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    const collection = db.collection<SimulationPulseTask>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const task = await collection.findOne({ _id: taskId as any })
     return task ? _.omit(task, '_id') : null
   }
 
-  public async getLiveTestingTasks(
-    params: DefaultApiGetLiveTestingRequest
-  ): Promise<{ total: number; data: LiveTestPulseTask[] }> {
+  public async getSimulationTasks(
+    params: DefaultApiGetSimulationsRequest
+  ): Promise<{ total: number; data: SimulationPulseTask[] }> {
     const db = this.mongoDb.db()
-    const collection = db.collection<LiveTestPulseTask>(
-      LIVE_TESTING_TASK_COLLECTION(this.tenantId)
+    const collection = db.collection<SimulationPulseTask>(
+      SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const query = { type: params.type }
-    const liveTestingTasks = await collection
+    const simulationTasks = await collection
       .find(query, {
         sort: { createdAt: -1 },
         ...paginateFindOptions(params),
@@ -131,7 +131,7 @@ export class LiveTestingTaskRepository {
 
     return {
       total,
-      data: liveTestingTasks.map((task) => _.omit(task, '_id')),
+      data: simulationTasks.map((task) => _.omit(task, '_id')),
     }
   }
 }

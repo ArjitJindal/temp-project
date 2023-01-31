@@ -1,20 +1,20 @@
 import { jobRunnerHandler } from '../app'
-import { LiveTestingPulseBatchJob } from '@/@types/batch-job'
+import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { LiveTestingTaskRepository } from '@/lambdas/console-api-live-testing/repositories/live-testing-task-repository'
+import { SimulationTaskRepository } from '@/lambdas/console-api-simulation/repositories/simulation-task-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { LiveTestPulseParameters } from '@/@types/openapi-internal/LiveTestPulseParameters'
+import { SimulationPulseParameters } from '@/@types/openapi-internal/SimulationPulseParameters'
 import { createConsumerUsers, getTestUser } from '@/test-utils/user-test-utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { LiveTestingResultRepository } from '@/lambdas/console-api-live-testing/repositories/live-testing-result-repository'
+import { SimulationResultRepository } from '@/lambdas/console-api-simulation/repositories/simulation-result-repository'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 
 dynamoDbSetupHook()
 
-describe('Live testing (Pulse) batch job runner', () => {
+describe('Simulation (Pulse) batch job runner', () => {
   test('new risk level classifications', async () => {
     const tenantId = getTestTenantId()
     const mongoDb = await getMongoDbClient()
@@ -53,7 +53,7 @@ describe('Live testing (Pulse) batch job runner', () => {
       },
     ])
 
-    const parameters: LiveTestPulseParameters = {
+    const parameters: SimulationPulseParameters = {
       type: 'PULSE',
       classificationValues: [
         {
@@ -72,20 +72,20 @@ describe('Live testing (Pulse) batch job runner', () => {
         usersCount: 100,
       },
     }
-    const liveTestingTaskRepository = new LiveTestingTaskRepository(
+    const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
     )
-    const liveTestingResultRepository = new LiveTestingResultRepository(
+    const simulationResultRepository = new SimulationResultRepository(
       tenantId,
       mongoDb
     )
 
-    const taskId = await liveTestingTaskRepository.createLiveTestingTask(
+    const taskId = await simulationTaskRepository.createSimulationTask(
       parameters
     )
-    const testJob: LiveTestingPulseBatchJob = {
-      type: 'LIVE_TESTING_PULSE',
+    const testJob: SimulationPulseBatchJob = {
+      type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
         taskId,
@@ -96,7 +96,7 @@ describe('Live testing (Pulse) batch job runner', () => {
     await jobRunnerHandler(testJob)
 
     expect(
-      await liveTestingTaskRepository.getLiveTestingTask(taskId)
+      await simulationTaskRepository.getSimulationTask(taskId)
     ).toMatchObject({
       progress: 1,
       statistics: {
@@ -114,7 +114,7 @@ describe('Live testing (Pulse) batch job runner', () => {
       ],
     })
     expect(
-      await liveTestingResultRepository.getLiveTestingResults(taskId)
+      await simulationResultRepository.getSimulationResults(taskId)
     ).toEqual([
       {
         current: {
@@ -255,7 +255,7 @@ describe('Live testing (Pulse) batch job runner', () => {
       },
     ])
 
-    const parameters: LiveTestPulseParameters = {
+    const parameters: SimulationPulseParameters = {
       type: 'PULSE',
       parameterAttributeRiskValues: [
         {
@@ -337,20 +337,20 @@ describe('Live testing (Pulse) batch job runner', () => {
         usersCount: 100,
       },
     }
-    const liveTestingTaskRepository = new LiveTestingTaskRepository(
+    const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
     )
-    const liveTestingResultRepository = new LiveTestingResultRepository(
+    const simulationResultRepository = new SimulationResultRepository(
       tenantId,
       mongoDb
     )
 
-    const taskId = await liveTestingTaskRepository.createLiveTestingTask(
+    const taskId = await simulationTaskRepository.createSimulationTask(
       parameters
     )
-    const testJob: LiveTestingPulseBatchJob = {
-      type: 'LIVE_TESTING_PULSE',
+    const testJob: SimulationPulseBatchJob = {
+      type: 'SIMULATION_PULSE',
       tenantId: tenantId,
       parameters: {
         taskId,
@@ -361,7 +361,7 @@ describe('Live testing (Pulse) batch job runner', () => {
     await jobRunnerHandler(testJob)
 
     expect(
-      await liveTestingTaskRepository.getLiveTestingTask(taskId)
+      await simulationTaskRepository.getSimulationTask(taskId)
     ).toMatchObject({
       progress: 1,
       statistics: {
@@ -390,7 +390,7 @@ describe('Live testing (Pulse) batch job runner', () => {
       ],
     })
     expect(
-      await liveTestingResultRepository.getLiveTestingResults(taskId)
+      await simulationResultRepository.getSimulationResults(taskId)
     ).toEqual([
       {
         current: {

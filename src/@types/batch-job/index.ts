@@ -1,5 +1,5 @@
 import { CredentialsOptions } from 'aws-sdk/lib/credentials'
-import { LiveTestPulseParameters } from '../openapi-internal/LiveTestPulseParameters'
+import { SimulationPulseParameters } from '../openapi-internal/SimulationPulseParameters'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 
 /* File Import */
@@ -15,12 +15,12 @@ export type FileImportBatchJob = {
   awsCredentials?: CredentialsOptions
 }
 
-/* Live Testing (Pulse) */
-type LiveTestingPulseBatchJobType = 'LIVE_TESTING_PULSE'
-export type LiveTestingPulseBatchJob = {
-  type: LiveTestingPulseBatchJobType
+/* Simulation (Pulse) */
+type SimulationPulseBatchJobType = 'SIMULATION_PULSE'
+export type SimulationPulseBatchJob = {
+  type: SimulationPulseBatchJobType
   tenantId: string
-  parameters: LiveTestPulseParameters & { taskId: string }
+  parameters: SimulationPulseParameters & { taskId: string }
   awsCredentials?: CredentialsOptions
 }
 
@@ -41,11 +41,11 @@ export type PlaceholderBatchJob = {
 
 export type BatchJobType =
   | FileImportBatchJobType
-  | LiveTestingPulseBatchJobType
+  | SimulationPulseBatchJobType
   | PlaceholderBatchJobType
   | DemoModeDataLoadBatchJobType
 export type BatchJob =
   | FileImportBatchJob
-  | LiveTestingPulseBatchJob
+  | SimulationPulseBatchJob
   | PlaceholderBatchJob
   | DemoModeDataLoadBatchJob

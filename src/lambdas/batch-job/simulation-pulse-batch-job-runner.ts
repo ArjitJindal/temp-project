@@ -1,37 +1,37 @@
 import _ from 'lodash'
-import { LiveTestingTaskRepository } from '../console-api-live-testing/repositories/live-testing-task-repository'
-import { LiveTestingResultRepository } from '../console-api-live-testing/repositories/live-testing-result-repository'
+import { SimulationTaskRepository } from '../console-api-simulation/repositories/simulation-task-repository'
+import { SimulationResultRepository } from '../console-api-simulation/repositories/simulation-result-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { LiveTestingPulseBatchJob } from '@/@types/batch-job'
+import { SimulationPulseBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getRiskLevelFromScore } from '@/services/risk-scoring/utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { LiveTestPulseSampling } from '@/@types/openapi-internal/LiveTestPulseSampling'
-import { LiveTestPulseResult } from '@/@types/openapi-internal/LiveTestPulseResult'
+import { SimulationPulseSampling } from '@/@types/openapi-internal/SimulationPulseSampling'
+import { SimulationPulseResult } from '@/@types/openapi-internal/SimulationPulseResult'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { LiveTestPulseStatisticsResult } from '@/@types/openapi-internal/LiveTestPulseStatisticsResult'
+import { SimulationPulseStatisticsResult } from '@/@types/openapi-internal/SimulationPulseStatisticsResult'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 
 type SimulationResult = {
-  userResults: Array<Omit<LiveTestPulseResult, 'taskId' | 'type'>>
+  userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>>
   transactionResults: {
     current: RiskLevel[]
     simulated: RiskLevel[]
   }
 }
 
-export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
+export class SimulationPulseBatchJobRunner extends BatchJobRunner {
   usersRepository?: UserRepository
   riskRepository?: RiskRepository
   transactionRepository?: TransactionRepository
   riskScoringService?: RiskScoringService
 
-  public async run(job: LiveTestingPulseBatchJob) {
+  public async run(job: SimulationPulseBatchJob) {
     const { tenantId, parameters, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
@@ -44,15 +44,15 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
       mongoDb,
     })
 
-    const liveTestingTaskRepository = new LiveTestingTaskRepository(
+    const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,
       mongoDb
     )
-    const liveTestingResultRepository = new LiveTestingResultRepository(
+    const simulationResultRepository = new SimulationResultRepository(
       tenantId,
       mongoDb
     )
-    await liveTestingTaskRepository.updateTaskStatus(
+    await simulationTaskRepository.updateTaskStatus(
       parameters.taskId,
       'IN_PROGRESS'
     )
@@ -79,27 +79,27 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
       }
 
       if (results?.userResults && results?.userResults.length > 0) {
-        await liveTestingResultRepository.saveLiveTestingResults(
+        await simulationResultRepository.saveSimulationResults(
           results.userResults.map((userResult) => ({
             taskId: parameters.taskId,
             type: 'PULSE',
             ...userResult,
           }))
         )
-        await liveTestingTaskRepository.updateStatistics(
+        await simulationTaskRepository.updateStatistics(
           parameters.taskId,
           this.getStatistics(results)
         )
       }
     } catch (e) {
-      await liveTestingTaskRepository.updateTaskStatus(
+      await simulationTaskRepository.updateTaskStatus(
         parameters.taskId,
         'FAILED'
       )
       throw e
     }
 
-    await liveTestingTaskRepository.updateTaskStatus(
+    await simulationTaskRepository.updateTaskStatus(
       parameters.taskId,
       'SUCCESS'
     )
@@ -118,7 +118,7 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
 
   private getStatistics(
     results: SimulationResult
-  ): LiveTestPulseStatisticsResult {
+  ): SimulationPulseStatisticsResult {
     const currentKrsCount = this.getRiskTypeStatistics(
       'KRS',
       results.userResults
@@ -161,14 +161,15 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
 
   private async mapNewRiskLevels(
     newClassificationValues: RiskClassificationScore[],
-    sampling?: LiveTestPulseSampling
+    sampling?: SimulationPulseSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
       await this.riskRepository!.getRiskClassificationValues()
     const users = await this.usersRepository!.getMongoAllUsers({
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
-    const userResults: Array<Omit<LiveTestPulseResult, 'taskId' | 'type'>> = []
+    const userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>> =
+      []
     const transactionResults = {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
@@ -246,7 +247,7 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
   private async recalculateRiskScores(
     classificationValues: RiskClassificationScore[] | undefined,
     parameterAttributeRiskValues: ParameterAttributeRiskValues[],
-    sampling?: LiveTestPulseSampling
+    sampling?: SimulationPulseSampling
   ): Promise<SimulationResult> {
     const currentClassificationValues =
       await this.riskRepository!.getRiskClassificationValues()
@@ -257,7 +258,8 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
       pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
     })
 
-    const userResults: Array<Omit<LiveTestPulseResult, 'taskId' | 'type'>> = []
+    const userResults: Array<Omit<SimulationPulseResult, 'taskId' | 'type'>> =
+      []
     const transactionResults = {
       current: [] as RiskLevel[],
       simulated: [] as RiskLevel[],
@@ -341,7 +343,7 @@ export class LiveTestingPulseBatchJobRunner extends BatchJobRunner {
 
   private async getUserTransactions(
     userId: string,
-    sampling?: LiveTestPulseSampling
+    sampling?: SimulationPulseSampling
   ) {
     const userTransactions = (
       await this.transactionRepository!.getTransactions({
