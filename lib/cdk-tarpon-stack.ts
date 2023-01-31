@@ -669,13 +669,16 @@ export class CdkTarponStack extends cdk.Stack {
     hammerheadDynamoDbTable.grantReadData(dashboardStatsAlias)
 
     /* User */
-    const { alias: userAlias } = this.createFunction({
-      name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-      layers: [fastGeoIpLayer],
-      provisionedConcurrency:
-        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
-      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
-    })
+    const { alias: userAlias } = this.createFunction(
+      {
+        name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+        layers: [fastGeoIpLayer],
+        provisionedConcurrency:
+          config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+        memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
+      },
+      atlasFunctionProps
+    )
     tarponDynamoDbTable.grantReadWriteData(userAlias)
     hammerheadDynamoDbTable.grantReadWriteData(userAlias)
     this.grantMongoDbAccess(userAlias)

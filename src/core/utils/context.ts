@@ -53,6 +53,7 @@ export async function getInitialContext(
       logMetadata: {
         tenantId,
         functionName: lambdaContext?.functionName,
+        region: process.env.AWS_REGION,
       },
       metricDimensions: {
         tenantId,
