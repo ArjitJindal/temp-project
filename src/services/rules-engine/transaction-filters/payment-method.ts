@@ -1,6 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-
-import _ from 'lodash'
 import { PAYMENT_METHOD_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { PaymentMethods } from '@/@types/openapi-public/PaymentMethods'
@@ -14,7 +12,9 @@ export class PaymentMethodRuleFilter extends TransactionRuleFilter<PaymentMethod
     return {
       type: 'object',
       properties: {
-        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA(),
+        paymentMethod: PAYMENT_METHOD_OPTIONAL_SCHEMA({
+          uiSchema: { group: 'transaction' },
+        }),
       },
     }
   }

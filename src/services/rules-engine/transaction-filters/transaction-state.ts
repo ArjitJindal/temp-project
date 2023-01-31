@@ -1,6 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-
-import _ from 'lodash'
 import { TRANSACTION_STATE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
@@ -14,7 +12,11 @@ export class TransactionStateRuleFilter extends TransactionRuleFilter<Transactio
     return {
       type: 'object',
       properties: {
-        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA(),
+        transactionState: TRANSACTION_STATE_OPTIONAL_SCHEMA({
+          uiSchema: {
+            group: 'transaction',
+          },
+        }),
       },
     }
   }

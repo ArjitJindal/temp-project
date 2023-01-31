@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { expandCountryGroup } from '@/utils/countries'
@@ -15,6 +14,9 @@ export class CountryRuleFilter extends TransactionRuleFilter<CountryRuleFilterPa
       properties: {
         transactionCountries: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Transaction Countries',
+          uiSchema: {
+            group: 'transaction',
+          },
         }),
       },
     }

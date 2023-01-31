@@ -3,10 +3,15 @@ import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
 import { PAYMENT_METHODS } from '@/@types/tranasction/payment-type'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { COUNTRY_CODES } from '@/utils/countries'
+import {
+  uiSchema,
+  UiSchemaParams,
+} from '@/services/rules-engine/utils/rule-schema-utils'
 
 type SchemaOptions = {
   title?: string
   description?: string
+  uiSchema?: UiSchemaParams<unknown>
 }
 
 export type TimeWindow = {
@@ -23,6 +28,7 @@ export type DayWindow = {
 
 export const TIME_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
+    ...uiSchema(options?.uiSchema, { subtype: 'TIME_WINDOW' }),
     type: 'object',
     title: options?.title || 'Time Window',
     description: options?.description,
@@ -54,10 +60,11 @@ export const TIME_WINDOW_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
+    ...uiSchema(options?.uiSchema, { subtype: 'DAY_WINDOW' }),
     title: options?.title || 'Time Window (Day)',
     description: options?.description,
     properties: {
-      units: { type: 'integer', title: 'Number of time unit', minimum: 0 },
+      units: { type: 'integer', title: 'Number of days', minimum: 0 },
       granularity: {
         type: 'string',
         title: 'Time granularity',
@@ -77,6 +84,7 @@ export const DAY_WINDOW_SCHEMA = (options?: SchemaOptions) =>
 export const AGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
+    ...uiSchema(options?.uiSchema, { subtype: 'AGE' }),
     title: options?.title || 'Age',
     description: options?.description,
     properties: {
@@ -97,8 +105,30 @@ export const AGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
+export const AGE_RANGE_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    ...uiSchema(options?.uiSchema, { subtype: 'AGE_RANGE' }),
+    title: options?.title || 'User Age Range',
+    description: options?.description,
+    properties: {
+      minAge: AGE_OPTIONAL_SCHEMA({ title: 'Min age' }),
+      maxAge: AGE_OPTIONAL_SCHEMA({ title: 'Max age' }),
+    },
+    required: [],
+  } as const)
+
+export const AGE_RANGE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...AGE_RANGE_SCHEMA(options),
+    nullable: true,
+  } as const)
+
 export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>
   ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'COUNTRIES',
+    }),
     type: 'array',
     title: options?.title || 'Countries (ISO 3166-1 alpha-2)',
     description: options?.description,
@@ -112,17 +142,27 @@ export const COUNTRIES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
     nullable: true,
   } as const)
 
-export const CURRENRIES_SCHEMA = (options?: SchemaOptions) =>
+export const CURRENCY_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    ...uiSchema(options?.uiSchema, { subtype: 'CURRENCY' }),
+    title: options?.title || 'Currency',
+    description: options?.description,
+  } as const)
+
+export const CURRENCIES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
+    ...uiSchema(options?.uiSchema, { subtype: 'CURRENCIES' }),
     title: options?.title || 'Currencies',
     description: options?.description,
-    items: { type: 'string' },
+    items: CURRENCY_SCHEMA(),
   } as const)
 
 export const TRANSACTION_STATE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_STATE' }),
     enum: [
       'CREATED',
       'PROCESSING',
@@ -148,6 +188,7 @@ export const TRANSACTION_STATE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const TRANSACTIONS_THRESHOLD_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'integer',
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTIONS_THRESHOLD' }),
     title: options?.title || 'Transactions Count Threshold',
     description:
       options?.description ||
@@ -165,6 +206,7 @@ export const TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA = (
 export const TRANSACTION_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPES' }),
     title: options?.title || 'Target Transaction Types',
     description: options?.description,
     items: {
@@ -183,6 +225,7 @@ export const TRANSACTION_TYPES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
+    ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
     title: options?.title || 'Payment Method',
     description: options?.description,
     enum: PAYMENT_METHODS,
@@ -197,6 +240,9 @@ export const PAYMENT_METHOD_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const USER_TYPE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'USER_TYPE',
+    }),
     title: options?.title || 'User Type',
     description: options?.description,
     enum: USER_TYPES,
@@ -211,6 +257,9 @@ export const USER_TYPE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 export const PAYMENT_CHANNEL_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'PAYMENT_CHANNEL',
+    }),
     title: options?.title || 'Payment Channel',
     description: options?.description,
   } as const)
@@ -223,6 +272,9 @@ export const PAYMENT_CHANNEL_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
 
 export const TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA = (options?: SchemaOptions) =>
   ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'TRANSACTION_AMOUNT_THRESHOLDS',
+    }),
     type: 'object',
     title: options?.title || 'Transactions Amount Threshold',
     description: options?.description,
@@ -240,10 +292,13 @@ export const TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-export const CHECK_SENDER_SCHEMA = () =>
+export const CHECK_SENDER_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'string',
     title: 'Sender Transaction Direction to Check',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'CHECK_SENDER',
+    }),
     description:
       "sending: only check the sender's past sending transactions; all: check the sender's past sending and receiving transactions; none: do not check the sender",
     enum: ['sending', 'all', 'none'],
@@ -256,8 +311,11 @@ export const CHECK_SENDER_OPTIONAL_SCHEMA = () =>
     nullable: true,
   } as const)
 
-export const CHECK_RECEIVER_SCHEMA = () =>
+export const CHECK_RECEIVER_SCHEMA = (options?: SchemaOptions) =>
   ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'CHECK_RECEIVER',
+    }),
     type: 'string',
     title: 'Receiver Transaction Direction to Check',
     description:
@@ -282,6 +340,9 @@ export type TransactionAmountRange = {
 export const TRANSACTION_AMOUNT_RANGE_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'object',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'TRANSACTION_AMOUNT_RANGE',
+    }),
     title: options?.title || 'Transaction Amount Range',
     description: options?.description,
     additionalProperties: {
@@ -302,30 +363,40 @@ export const TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-export const INITIAL_TRANSACTIONS_SCHEMA = () =>
+export const INITIAL_TRANSACTIONS_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'integer',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'INITIAL_TRANSACTIONS',
+    }),
     title: 'Initial Transactions Count Threshold',
     description:
       "rule is executed after the user's past transactions is greater or equal to the threshold",
   } as const)
 
-export const INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA = () =>
+export const INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
-    ...INITIAL_TRANSACTIONS_SCHEMA(),
+    ...INITIAL_TRANSACTIONS_SCHEMA(options),
     nullable: true,
   } as const)
 
-export const LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA = () =>
+export const LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA = (
+  options?: SchemaOptions
+) =>
   ({
     type: 'integer',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'LEVENSHTEIN_DISTANCE_THRESHOLD',
+    }),
     title: 'Maximum number of single-character edits (Levenshtein distance)',
     description:
       'rule is run if the number of single-character edits is greater than the threshold',
   } as const)
 
-export const LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA = () =>
+export const LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
   ({
-    ...LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA(),
+    ...LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA(options),
     nullable: true,
   } as const)

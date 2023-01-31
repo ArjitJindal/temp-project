@@ -66,6 +66,9 @@ export const ruleHandler = lambdaApi()(
         schema: {
           type: 'object',
           properties: _.merge({}, ...filters),
+          'ui:schema': {
+            'ui:order': Object.keys(filters),
+          },
         },
         defaultValues: replaceMagicKeyword(
           _.merge({}, ...defaultValues),

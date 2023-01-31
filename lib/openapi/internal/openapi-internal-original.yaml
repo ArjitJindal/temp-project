@@ -2670,6 +2670,8 @@ components:
               type: object
             type:
               type: string
+            ui:schema:
+              type: object
           required:
             - properties
             - type

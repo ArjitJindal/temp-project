@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { UserRuleFilter } from './filter'
 import { Business } from '@/@types/openapi-public/Business'
@@ -17,6 +16,9 @@ export class UserCountryOfNationalityRuleFilter extends UserRuleFilter<UserCount
       properties: {
         userNationalityCountries: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Nationality Countries',
+          uiSchema: {
+            group: 'geography',
+          },
         }),
       },
     }

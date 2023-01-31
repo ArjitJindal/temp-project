@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { RuleHitResult } from '../rule'
-import { CURRENRIES_SCHEMA } from '../utils/rule-parameter-schemas'
+import { CURRENCIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRule } from './rule'
 
 export type HighRiskCurrencyRuleParameters = {
@@ -12,7 +12,7 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
     return {
       type: 'object',
       properties: {
-        highRiskCurrencies: CURRENRIES_SCHEMA({
+        highRiskCurrencies: CURRENCIES_SCHEMA({
           title: 'High Risk Currencies',
         }),
       },

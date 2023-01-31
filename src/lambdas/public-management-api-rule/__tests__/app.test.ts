@@ -61,88 +61,12 @@ describe('Public Management API - Rule', () => {
       null as any,
       null as any
     )
-    expect(response).toMatchObject({
-      statusCode: 200,
-      body: JSON.stringify([
-        {
-          id: 'R-1',
-          type: 'TRANSACTION',
-          name: 'First payment of a Customer',
-          description: 'First transaction of a user',
-          parametersSchema: {
-            type: 'object',
-            properties: {
-              transactionAmountThreshold: {
-                additionalProperties: {
-                  type: 'integer',
-                },
-                type: 'object',
-                title: 'Transactions Amount Threshold',
-                nullable: true,
-                required: [],
-              },
-            },
-            required: [],
-          },
-          defaultParameters: {},
-          defaultAction: 'FLAG',
-          labels: [],
-          defaultCaseCreationType: 'USER',
-          defaultCasePriority: 'P1',
-          defaultNature: 'AML',
-        },
-        {
-          id: 'R-2',
-          type: 'TRANSACTION',
-          name: 'Transaction amount too high',
-          description: 'Transaction amount is >= x in USD or equivalent',
-          parametersSchema: {
-            type: 'object',
-            properties: {
-              transactionAmountThreshold: {
-                additionalProperties: {
-                  type: 'integer',
-                },
-                type: 'object',
-                title: 'Transactions Amount Threshold',
-                required: [],
-              },
-              paymentChannel: {
-                type: 'string',
-                title: 'Payment Channel',
-                nullable: true,
-              },
-            },
-            required: ['transactionAmountThreshold'],
-          },
-          defaultParameters: {
-            transactionAmountThreshold: {
-              USD: 10000,
-            },
-          },
-          defaultAction: 'SUSPEND',
-          labels: [],
-          defaultCaseCreationType: 'USER',
-          defaultCasePriority: 'P1',
-          defaultNature: 'AML',
-        },
-      ]),
-    })
-  })
-
-  test('Rules - Get', async () => {
-    const response = await ruleHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/rules/{ruleId}', {
-        pathParameters: {
-          ruleId: 'R-1',
-        },
-      }),
-      null as any,
-      null as any
-    )
-    expect(response).toMatchObject({
-      statusCode: 200,
-      body: JSON.stringify({
+    if (response == null) {
+      throw new Error(`Response is empty`)
+    }
+    expect(response.statusCode).toEqual(200)
+    expect(JSON.parse(response.body)).toMatchObject([
+      {
         id: 'R-1',
         type: 'TRANSACTION',
         name: 'First payment of a Customer',
@@ -155,6 +79,7 @@ describe('Public Management API - Rule', () => {
                 type: 'integer',
               },
               type: 'object',
+              'ui:schema': { 'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS' },
               title: 'Transactions Amount Threshold',
               nullable: true,
               required: [],
@@ -168,7 +93,86 @@ describe('Public Management API - Rule', () => {
         defaultCaseCreationType: 'USER',
         defaultCasePriority: 'P1',
         defaultNature: 'AML',
+      },
+      {
+        id: 'R-2',
+        type: 'TRANSACTION',
+        name: 'Transaction amount too high',
+        description: 'Transaction amount is >= x in USD or equivalent',
+        parametersSchema: {
+          type: 'object',
+          properties: {
+            transactionAmountThreshold: {
+              additionalProperties: {
+                type: 'integer',
+              },
+              type: 'object',
+              'ui:schema': { 'ui:subtype': 'TRANSACTION_AMOUNT_THRESHOLDS' },
+              title: 'Transactions Amount Threshold',
+              required: [],
+            },
+            paymentChannel: {
+              type: 'string',
+              title: 'Payment Channel',
+              nullable: true,
+            },
+          },
+          required: ['transactionAmountThreshold'],
+        },
+        defaultParameters: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        },
+        defaultAction: 'SUSPEND',
+        labels: [],
+        defaultCaseCreationType: 'USER',
+        defaultCasePriority: 'P1',
+        defaultNature: 'AML',
+      },
+    ])
+  })
+
+  test('Rules - Get', async () => {
+    const response = await ruleHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/rules/{ruleId}', {
+        pathParameters: {
+          ruleId: 'R-1',
+        },
       }),
+      null as any,
+      null as any
+    )
+    if (response == null) {
+      throw new Error(`Response is empty`)
+    }
+    expect(response.statusCode).toEqual(200)
+    expect(JSON.parse(response.body)).toMatchObject({
+      id: 'R-1',
+      type: 'TRANSACTION',
+      name: 'First payment of a Customer',
+      description: 'First transaction of a user',
+      parametersSchema: {
+        type: 'object',
+        properties: {
+          transactionAmountThreshold: {
+            additionalProperties: {
+              type: 'integer',
+            },
+            type: 'object',
+            title: 'Transactions Amount Threshold',
+            nullable: true,
+            required: [],
+          },
+        },
+        required: [],
+      },
+      defaultParameters: {},
+      defaultAction: 'FLAG',
+      labels: [],
+      defaultCaseCreationType: 'USER',
+      defaultCasePriority: 'P1',
+      defaultNature: 'AML',
     })
   })
 

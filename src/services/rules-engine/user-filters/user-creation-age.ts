@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 
 import _ from 'lodash'
-import { AGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { AGE_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { UserRuleFilter } from './filter'
 import dayjs, { duration } from '@/utils/dayjs'
 import { Business } from '@/@types/openapi-public/Business'
@@ -24,18 +24,11 @@ export class UserCreationAgeRuleFilter extends UserRuleFilter<UserCreationAgeRul
     return {
       type: 'object',
       properties: {
-        userCreationAgeRange: {
-          type: 'object',
+        userCreationAgeRange: AGE_RANGE_OPTIONAL_SCHEMA({
           title: 'User Creation Age Range',
           description:
             'User creation age is calculated by "NOW - createdTimestamp of a user"',
-          properties: {
-            minAge: AGE_OPTIONAL_SCHEMA({ title: 'Min age' }),
-            maxAge: AGE_OPTIONAL_SCHEMA({ title: 'Max age' }),
-          },
-          required: [],
-          nullable: true,
-        },
+        }),
       },
     }
   }

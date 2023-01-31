@@ -1,8 +1,42 @@
 import { JSONSchemaType } from 'ajv'
 
-export type ExtendedJSONSchemaType<Type> = JSONSchemaType<Type> & {
+interface UiSchema<Type> {
   'ui:schema'?: {
+    'ui:subtype'?: string
     'ui:order'?: (keyof Type)[]
+    'ui:group'?: 'user' | 'geography' | 'transaction'
+  }
+}
+
+export type ExtendedJSONSchemaType<Type> = JSONSchemaType<Type> & UiSchema<Type>
+
+export interface UiSchemaParams<Type> {
+  subtype?: string
+  order?: (keyof Type)[]
+  group?: 'user' | 'geography' | 'transaction'
+}
+
+export function uiSchema<T extends object>(
+  ...args: (UiSchemaParams<T> | undefined)[]
+): UiSchema<T> {
+  const result: UiSchema<T>['ui:schema'] = {}
+
+  for (const params of args) {
+    if (params != null) {
+      if (params.group) {
+        result['ui:group'] = params.group
+      }
+      if (params.order) {
+        result['ui:order'] = params.order
+      }
+      if (params.subtype) {
+        result['ui:subtype'] = params.subtype
+      }
+    }
+  }
+
+  return {
+    'ui:schema': result,
   }
 }
 

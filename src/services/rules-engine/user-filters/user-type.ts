@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import { USER_TYPE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { UserRuleFilter } from './filter'
 import { Business } from '@/@types/openapi-public/Business'
@@ -15,7 +14,13 @@ export class UserTypeRuleFilter extends UserRuleFilter<UserTypeRuleFilterParamet
     return {
       type: 'object',
       properties: {
-        userType: USER_TYPE_OPTIONAL_SCHEMA(),
+        userType: USER_TYPE_OPTIONAL_SCHEMA({
+          title: 'User type',
+          description: 'Select type of users you want the rule is run',
+          uiSchema: {
+            group: 'user',
+          },
+        }),
       },
     }
   }

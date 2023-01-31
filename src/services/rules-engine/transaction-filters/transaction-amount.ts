@@ -2,8 +2,8 @@ import { JSONSchemaType } from 'ajv'
 
 import _ from 'lodash'
 import {
-  TransactionAmountRange,
   TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA,
+  TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
 import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import { DEFAULT_CURRENCY_KEYWORD } from '../transaction-rules/library'
@@ -18,7 +18,11 @@ export class TransactionAmountRuleFilter extends TransactionRuleFilter<Transacti
     return {
       type: 'object',
       properties: {
-        transactionAmountRange: TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA(),
+        transactionAmountRange: TRANSACTION_AMOUNT_RANGE_OPTIONAL_SCHEMA({
+          uiSchema: {
+            group: 'transaction',
+          },
+        }),
       },
     }
   }

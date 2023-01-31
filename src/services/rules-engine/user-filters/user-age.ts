@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 
 import _ from 'lodash'
-import { AGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { AGE_RANGE_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { UserRuleFilter } from './filter'
 import dayjs, { duration } from '@/utils/dayjs'
@@ -25,16 +25,14 @@ export class UserAgeRuleFilter extends UserRuleFilter<UserAgeRuleFilterParameter
     return {
       type: 'object',
       properties: {
-        userAgeRange: {
-          type: 'object',
-          title: 'User Age Range',
-          properties: {
-            minAge: AGE_OPTIONAL_SCHEMA({ title: 'Min age' }),
-            maxAge: AGE_OPTIONAL_SCHEMA({ title: 'Max age' }),
+        userAgeRange: AGE_RANGE_OPTIONAL_SCHEMA({
+          title: 'Target age range in years',
+          description:
+            'When users of a transaction are within this age range, the rule is run',
+          uiSchema: {
+            group: 'user',
           },
-          required: [],
-          nullable: true,
-        },
+        }),
       },
     }
   }
