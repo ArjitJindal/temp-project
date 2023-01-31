@@ -678,6 +678,7 @@ export class CdkTarponStack extends cdk.Stack {
     })
     tarponDynamoDbTable.grantReadWriteData(userAlias)
     hammerheadDynamoDbTable.grantReadWriteData(userAlias)
+    this.grantMongoDbAccess(userAlias)
 
     /* List Importer */
     const { alias: listsAlias } = this.createFunction({
