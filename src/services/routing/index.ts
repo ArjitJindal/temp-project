@@ -35,7 +35,6 @@ export function useRoutes(): RouteItem[] {
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
   const [lastActiveSanctionsTab] = useLocalStorageState('sanctions-active-tab', 'search');
-  const [lastCasesActiveTab] = useLocalStorageState('cases-active-tab', 'transaction');
   const user = useAuth0User();
   const isAtLeastAdminUser = isAtLeastAdmin(user);
 
@@ -72,16 +71,13 @@ export function useRoutes(): RouteItem[] {
             name: 'item',
           },
           {
-            path: '/case-management/:list',
-            name: 'list',
-            component: CaseManagementPage,
+            path: '/case-management',
+            redirect: '/case-management/cases',
           },
           {
-            path: '/case-management',
-            redirect:
-              lastCasesActiveTab === 'user'
-                ? '/case-management/user'
-                : '/case-management/transaction',
+            path: '/case-management/cases',
+            component: CaseManagementPage,
+            name: 'list',
           },
         ],
       },
@@ -328,7 +324,6 @@ export function useRoutes(): RouteItem[] {
     isSanctionsEnabled,
     isAuditLogEnabled,
     lastActiveSanctionsTab,
-    lastCasesActiveTab,
     isAtLeastAdminUser,
   ]);
 }

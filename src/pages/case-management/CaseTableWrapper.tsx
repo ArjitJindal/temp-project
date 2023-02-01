@@ -20,8 +20,6 @@ import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams, DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { CASES_LIST } from '@/utils/queries/keys';
 import UserCases from '@/pages/case-management/UserCases';
-import { neverReturn } from '@/utils/lang';
-import TransactionCases from '@/pages/case-management/TransactionCases';
 import { useRules } from '@/utils/rules';
 import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 import { useApiTime } from '@/utils/tracker';
@@ -44,20 +42,11 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
-      navigate(
-        makeUrl(
-          '/case-management/:list',
-          {
-            list: caseType === 'USER' ? 'user' : 'transaction',
-          },
-          queryAdapter.serializer(params),
-        ),
-        {
-          replace: true,
-        },
-      );
+      navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
+        replace: true,
+      });
     },
-    [caseType, navigate],
+    [navigate],
   );
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
@@ -268,31 +257,15 @@ export default function CaseTableWrapper(props: { caseType: CaseType }) {
     });
   }, [rules.ruleInstances, rules.rules]);
 
-  if (caseType === 'USER') {
-    return (
-      <UserCases
-        params={params}
-        queryResult={queryResults}
-        onUpdateCases={(caseIds, updates) => {
-          updateCasesMutation.mutate({ caseIds, updates });
-        }}
-        onChangeParams={handleChangeParams}
-        rules={getRulesAndInstances}
-      />
-    );
-  }
-  if (caseType === 'TRANSACTION') {
-    return (
-      <TransactionCases
-        params={params}
-        queryResult={queryResults}
-        onChangeParams={handleChangeParams}
-        onUpdateCases={(caseIds, updates) => {
-          updateCasesMutation.mutate({ caseIds, updates });
-        }}
-        rules={getRulesAndInstances}
-      />
-    );
-  }
-  return neverReturn(caseType, <></>);
+  return (
+    <UserCases
+      params={params}
+      queryResult={queryResults}
+      onUpdateCases={(caseIds, updates) => {
+        updateCasesMutation.mutate({ caseIds, updates });
+      }}
+      onChangeParams={handleChangeParams}
+      rules={getRulesAndInstances}
+    />
+  );
 }
