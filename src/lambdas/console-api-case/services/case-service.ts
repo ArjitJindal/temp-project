@@ -12,6 +12,7 @@ import { CaseTransactionsListResponse } from '@/@types/openapi-internal/CaseTran
 import { RulesHitPerCase } from '@/@types/openapi-internal/RulesHitPerCase'
 import { PaginationParams } from '@/utils/pagination'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'
+import { addNewSubsegment } from '@/core/xray'
 
 export class CaseService {
   caseRepository: CaseRepository
@@ -37,7 +38,12 @@ export class CaseService {
   public async getCases(
     params: DefaultApiGetCaseListRequest
   ): Promise<CasesListResponse> {
+    const caseGetSegment = await addNewSubsegment(
+      'Case Service',
+      'Mongo Get Cases Query'
+    )
     const result = await this.caseRepository.getCases(params)
+    caseGetSegment?.close()
     result.data = result.data.map((caseEntity) =>
       this.getAugmentedCase(caseEntity)
     )
@@ -93,7 +99,13 @@ export class CaseService {
       includeTransactionUsers?: boolean
     } = {}
   ): Promise<Case | null> {
+    const caseGetSegment = await addNewSubsegment(
+      'Case Service',
+      'Mongo Get Case Query'
+    )
     const caseEntity = await this.caseRepository.getCaseById(caseId, params)
+    caseGetSegment?.close()
+
     return caseEntity && this.getAugmentedCase(caseEntity)
   }
 

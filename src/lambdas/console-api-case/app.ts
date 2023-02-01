@@ -7,6 +7,7 @@ import { DashboardStatsRepository } from '../console-api-dashboard/repositories/
 import { CaseService } from './services/case-service'
 import { CaseAuditLogService } from './services/case-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { addNewSubsegment } from '@/core/xray'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -157,7 +158,13 @@ export const casesHandler = lambdaApi()(
           ? filterRiskLevel.split(',')
           : undefined,
       }
-      return caseService.getCases(params)
+      const caseGetSegment = await addNewSubsegment('Case Service', 'Get Cases')
+      caseGetSegment?.addAnnotation('tenantId', tenantId)
+      caseGetSegment?.addAnnotation('getParams', JSON.stringify(params))
+      const cases = caseService.getCases(params)
+      caseGetSegment?.close()
+
+      return cases
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/cases' &&
@@ -166,11 +173,20 @@ export const casesHandler = lambdaApi()(
       const updateRequest = JSON.parse(event.body) as CasesUpdateRequest
       const caseIds = updateRequest?.caseIds || []
       const { updates } = updateRequest
+      const caseUpdateSegment = await addNewSubsegment(
+        'Case Service',
+        'Case Update'
+      )
+      caseUpdateSegment?.addAnnotation('tenantId', tenantId)
+      caseUpdateSegment?.addAnnotation('caseIds', caseIds.toString())
+
       const updateResult = await caseService.updateCases(
         userId,
         caseIds,
         updates
       )
+      caseUpdateSegment?.close()
+
       await caseAuditLogService.handleAuditLogForCaseUpdate(caseIds, updates)
       return updateResult
     } else if (
@@ -179,10 +195,17 @@ export const casesHandler = lambdaApi()(
       event.pathParameters?.caseId
     ) {
       const caseId = event.pathParameters?.caseId as string
+      const caseGetSegment = await addNewSubsegment(
+        'Case Service',
+        'Get Case Details'
+      )
+      caseGetSegment?.addAnnotation('tenantId', tenantId)
+      caseGetSegment?.addAnnotation('caseId', caseId)
       const caseItem: Case | null = await caseService.getCase(caseId, {
         includeTransactionEvents: true,
         includeTransactionUsers: true,
       })
+      caseGetSegment?.close()
       if (caseItem == null) {
         throw new NotFound(`Case not found: ${caseId}`)
       }
@@ -213,7 +236,16 @@ export const casesHandler = lambdaApi()(
     ) {
       const { page, pageSize, includeUsers } =
         event.queryStringParameters as any
-      return await caseService.getCaseTransactions(
+      const caseGetTransactionsSegment = await addNewSubsegment(
+        'Case Service',
+        'Get Case Transactions'
+      )
+      caseGetTransactionsSegment?.addAnnotation('tenantId', tenantId)
+      caseGetTransactionsSegment?.addAnnotation(
+        'caseId',
+        event.pathParameters.caseId
+      )
+      const caseTransactions = await caseService.getCaseTransactions(
         event.pathParameters.caseId,
         {
           page,
@@ -221,6 +253,8 @@ export const casesHandler = lambdaApi()(
           includeUsers: includeUsers === 'true',
         }
       )
+      caseGetTransactionsSegment?.close()
+      return caseTransactions
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/cases/{caseId}/rules' &&
@@ -236,12 +270,23 @@ export const casesHandler = lambdaApi()(
     ) {
       const { page, pageSize, sortField, sortOrder } =
         event.queryStringParameters as any
-      return await caseService.getCaseRuleTransactions(
+      const caseGetRuleTransactionsSegment = await addNewSubsegment(
+        'Case Service',
+        'Get Case Rule Transactions'
+      )
+      caseGetRuleTransactionsSegment?.addAnnotation('tenantId', tenantId)
+      caseGetRuleTransactionsSegment?.addAnnotation(
+        'caseId',
+        event.pathParameters.caseId
+      )
+      const caseRuleTransactions = await caseService.getCaseRuleTransactions(
         event.pathParameters.caseId,
         event.pathParameters.rulesInstanceId,
         { page, pageSize },
         { sortField, sortOrder }
       )
+      caseGetRuleTransactionsSegment?.close()
+      return caseRuleTransactions
     } else if (
       event.httpMethod === 'DELETE' &&
       event.resource === '/cases/{caseId}/comments/{commentId}' &&

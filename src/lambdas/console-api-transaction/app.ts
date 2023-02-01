@@ -8,6 +8,7 @@ import { DashboardStatsRepository } from '../console-api-dashboard/repositories/
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { addNewSubsegment } from '@/core/xray'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -146,6 +147,11 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
       } = event.queryStringParameters as any
+      const transactionsGetSegment = await addNewSubsegment(
+        'Transaction Service',
+        'Get Transactions'
+      )
+      transactionsGetSegment?.addAnnotation('tenantId', tenantId)
       const params: DefaultApiGetTransactionsListRequest = {
         page,
         pageSize,
@@ -182,6 +188,7 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
       }
+      transactionsGetSegment?.close()
       return transactionService.getTransactions(params)
     } else if (
       event.httpMethod === 'GET' &&
@@ -253,11 +260,18 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
       }
+      const transactionsStatsGetSegment = await addNewSubsegment(
+        'Transaction Service',
+        'Get Transactions Stats By Type'
+      )
+      transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
+      const result = await transactionService.getStatsByType(
+        params,
+        referenceCurrency ?? 'USD'
+      )
+      transactionsStatsGetSegment?.close()
       return {
-        data: await transactionService.getStatsByType(
-          params,
-          referenceCurrency ?? 'USD'
-        ),
+        data: result,
       }
     } else if (
       event.httpMethod === 'GET' &&
@@ -329,11 +343,18 @@ export const transactionsViewHandler = lambdaApi()(
         filterTagKey,
         filterTagValue,
       }
+      const transactionsStatsGetSegment = await addNewSubsegment(
+        'Transaction Service',
+        'Get Transactions Stats By Time'
+      )
+      transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
+      const result = await transactionService.getStatsByTime(
+        params,
+        referenceCurrency ?? 'USD'
+      )
+      transactionsStatsGetSegment?.close()
       return {
-        data: await transactionService.getStatsByTime(
-          params,
-          referenceCurrency ?? 'USD'
-        ),
+        data: result,
       }
     } else if (
       event.httpMethod === 'GET' &&
@@ -418,8 +439,14 @@ export const transactionsViewHandler = lambdaApi()(
       event.path.endsWith('/transactions/uniques')
     ) {
       const { field, filter } = event.queryStringParameters as any
-
-      return await transactionService.getUniques({ field, filter })
+      const transactionsStatsGetSegment = await addNewSubsegment(
+        'Transaction Service',
+        'Transaction Uniques'
+      )
+      transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
+      const result = await transactionService.getUniques({ field, filter })
+      transactionsStatsGetSegment?.close()
+      return result
     } else if (
       event.httpMethod === 'POST' &&
       event.path.endsWith('/transactions') &&

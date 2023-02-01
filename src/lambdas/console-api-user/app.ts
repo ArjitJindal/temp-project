@@ -7,6 +7,7 @@ import { UserService } from './services/user-service'
 import { UserAuditLogService } from './services/user-audit-log-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
+import { addNewSubsegment } from '@/core/xray'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -53,7 +54,16 @@ export const businessUsersViewHandler = lambdaApi()(
         filterBusinessIndustries,
         filterRiskLevel,
       } = event.queryStringParameters as any
-      return userService.getBusinessUsers({
+      const businessUserSegment = await addNewSubsegment(
+        'User Service',
+        'Get Business Users'
+      )
+      businessUserSegment?.addAnnotation('tenantId', tenantId)
+      businessUserSegment?.addAnnotation(
+        'getParams',
+        JSON.stringify(event.queryStringParameters)
+      )
+      const result = await userService.getBusinessUsers({
         page,
         pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
@@ -68,6 +78,8 @@ export const businessUsersViewHandler = lambdaApi()(
           ? filterRiskLevel.split(',')
           : undefined,
       })
+      businessUserSegment?.close()
+      return result
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/business/users/{userId}' &&
@@ -156,7 +168,16 @@ export const consumerUsersViewHandler = lambdaApi()(
         filterOperator,
         filterRiskLevel,
       } = event.queryStringParameters as any
-      return userService.getConsumerUsers({
+      const consumerUserSegment = await addNewSubsegment(
+        'User Service',
+        'Get Consumer Users'
+      )
+      consumerUserSegment?.addAnnotation('tenantId', tenantId)
+      consumerUserSegment?.addAnnotation(
+        'getParams',
+        JSON.stringify(event.queryStringParameters)
+      )
+      const result = await userService.getConsumerUsers({
         page,
         pageSize,
         afterTimestamp: parseInt(afterTimestamp) || undefined,
@@ -168,6 +189,8 @@ export const consumerUsersViewHandler = lambdaApi()(
           ? filterRiskLevel.split(',')
           : undefined,
       })
+      consumerUserSegment?.close()
+      return result
     } else if (event.httpMethod === 'GET' && event.path.endsWith('/users')) {
       const {
         page,
