@@ -547,6 +547,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     tarponDynamoDbTable.grantReadWriteData(transactionsViewAlias)
+    hammerheadDynamoDbTable.grantReadData(transactionsViewAlias)
     s3TmpBucket.grantRead(transactionsViewAlias)
     s3DocumentBucket.grantWrite(transactionsViewAlias)
     this.grantMongoDbAccess(transactionsViewAlias)
@@ -707,6 +708,7 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
     tarponDynamoDbTable.grantReadWriteData(caseAlias)
+    hammerheadDynamoDbTable.grantReadData(caseAlias)
     s3TmpBucket.grantRead(caseAlias)
     s3DocumentBucket.grantWrite(caseAlias)
     this.grantMongoDbAccess(caseAlias)
