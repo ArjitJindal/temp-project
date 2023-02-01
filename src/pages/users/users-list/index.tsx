@@ -26,16 +26,13 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 
-const BusinessUsersTab = () => {
-  usePageViewTracker('Users List - Business');
-  const api = useApi();
-  const isPulseEnabled = useFeatureEnabled('PULSE');
-  const measure = useApiTime();
-  const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
-  if (isPulseEnabled) {
-    columns.push({
-      title: 'Risk Level',
-      dataIndex: 'labels',
+function getPulseColumns<
+  T extends InternalBusinessUser | InternalConsumerUser | InternalUser,
+>(): TableColumn<T>[] {
+  return [
+    {
+      title: 'CRA Risk Level',
+      dataIndex: 'drsRiskLevel',
       exportData: (entity) => {
         return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
       },
@@ -51,7 +48,73 @@ const BusinessUsersTab = () => {
         }
         return '-';
       },
-    });
+      width: 150,
+      hideInSearch: true,
+    },
+    {
+      title: 'CRA Risk Score',
+      dataIndex: 'drsScore',
+      exportData: (entity) => {
+        return entity?.drsScore?.drsScore ?? '-';
+      },
+      tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+      search: false,
+      render: (dom, entity) => {
+        if (entity?.drsScore?.drsScore == null) {
+          return <span>{entity?.drsScore?.drsScore}</span>;
+        }
+        return <span>{entity?.drsScore?.drsScore.toFixed(2)}</span>;
+      },
+      width: 150,
+      hideInSearch: true,
+    },
+    {
+      title: 'KRS Risk Level',
+      dataIndex: 'krsRiskLevel',
+      exportData: (entity) => {
+        return entity?.krsScore?.riskLevel || '-';
+      },
+      tip: 'Know your customer - accounts for KYC Risk Level',
+      search: false,
+      render: (dom, entity) => {
+        if (entity?.krsScore?.riskLevel) {
+          return <RiskLevelTag level={entity?.krsScore?.riskLevel} />;
+        }
+
+        return '-';
+      },
+      width: 150,
+      hideInSearch: true,
+    },
+    {
+      title: 'KRS Risk Score',
+      dataIndex: 'krsScore',
+      exportData: (entity) => {
+        return entity?.krsScore?.krsScore ?? '-';
+      },
+      tip: 'Know your customer - accounts for KYC Risk Score',
+      search: false,
+      render: (dom, entity) => {
+        if (entity?.krsScore?.krsScore == null) {
+          return <span>{entity?.krsScore?.krsScore}</span>;
+        }
+        return <span>{entity?.krsScore?.krsScore.toFixed(2)}</span>;
+      },
+      width: 150,
+      hideInSearch: true,
+    },
+  ];
+}
+
+const BusinessUsersTab = () => {
+  usePageViewTracker('Users List - Business');
+  const api = useApi();
+  const isPulseEnabled = useFeatureEnabled('PULSE');
+  const measure = useApiTime();
+  const columns: TableColumn<InternalBusinessUser>[] = getBusinessUserColumns();
+
+  if (isPulseEnabled) {
+    columns.push(...getPulseColumns<InternalBusinessUser>());
   }
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
@@ -143,28 +206,9 @@ const ConsumerUsersTab = () => {
   const api = useApi();
   const measure = useApiTime();
   const columns: TableColumn<InternalConsumerUser>[] = getConsumerUserColumns();
-  {
-    if (isPulseEnabled) {
-      columns.push({
-        title: 'Risk Level',
-        dataIndex: 'labels',
-        exportData: (entity) => {
-          return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
-        },
-        tip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
-        search: false,
-        render: (dom, entity) => {
-          if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
-            return (
-              <RiskLevelTag
-                level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
-              />
-            );
-          }
-          return '-';
-        },
-      });
-    }
+
+  if (isPulseEnabled) {
+    columns.push(...getPulseColumns<InternalConsumerUser>());
   }
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
@@ -251,26 +295,9 @@ const AllUsersTab = () => {
   usePageViewTracker('Users List - All');
   const columns: TableColumn<InternalUser>[] = getAllUserColumns();
   const isPulseEnabled = useFeatureEnabled('PULSE');
+
   if (isPulseEnabled) {
-    columns.push({
-      title: 'Risk Level',
-      exportData: (entity) => {
-        return entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel || '-';
-      },
-      hideInSearch: true,
-      tip: 'Risk level of user.',
-      width: 180,
-      render: (dom, entity) => {
-        if (entity?.drsScore?.manualRiskLevel || entity?.drsScore?.derivedRiskLevel) {
-          return (
-            <RiskLevelTag
-              level={entity.drsScore.manualRiskLevel || entity.drsScore.derivedRiskLevel}
-            />
-          );
-        }
-        return '-';
-      },
-    });
+    columns.push(...getPulseColumns<InternalUser>());
   }
 
   const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);

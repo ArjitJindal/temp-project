@@ -11,7 +11,7 @@ import TransactionsList from '@/pages/case-management-item/UserCaseDetails/Insig
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import { TransactionsStatsByTypesResponseData } from '@/apis';
+import { SortOrder, TransactionsStatsByTypesResponseData } from '@/apis';
 import { QueryResult } from '@/utils/queries/types';
 import { Currency } from '@/utils/currencies';
 import { useApiTime } from '@/utils/tracker';
@@ -21,7 +21,7 @@ export const FIXED_API_PARAMS = {
   afterTimestamp: 0,
   beforeTimestamp: Number.MAX_SAFE_INTEGER,
   sortField: 'timestamp',
-  sortOrder: 'descend',
+  sortOrder: 'descend' as SortOrder,
 };
 
 interface Props {
