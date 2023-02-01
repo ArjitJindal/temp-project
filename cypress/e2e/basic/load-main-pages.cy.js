@@ -9,11 +9,9 @@ describe('navigate sidebar', () => {
     cy.wait(3000); // wait a second or two for page to be redirected
     /* eslint-enable cypress/no-unnecessary-waiting */
 
-    cy.visit('/case-management/transaction');
+    cy.visit('/case-management/cases');
     cy.get('h2', { timeout: 8000 }).contains('Case Management');
     cy.get('.ant-table', { timeout: 3000 });
-    cy.visit('/case-management/user');
-    cy.get('h2', { timeout: 3000 }).contains('Case Management');
     cy.get('.ant-table', { timeout: 3000 });
     cy.visit('/transactions/list');
     cy.get('h2', { timeout: 3000 }).contains('Transactions');
