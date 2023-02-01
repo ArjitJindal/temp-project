@@ -35,6 +35,7 @@ import {
   getRiskScoreBoundsFromLevel,
 } from '@/services/risk-scoring/utils'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import {
   OptionalPaginationParams,
   PaginationParams,
@@ -352,6 +353,8 @@ export class UserRepository {
     if (isPulseEnabled) {
       users = users.map((user) => {
         const drsScore = user?.drsScore
+        const krsScore = user?.krsScore
+        let newUser = user
         if (drsScore != null) {
           const derivedRiskLevel = drsScore?.manualRiskLevel
             ? undefined
@@ -363,9 +366,30 @@ export class UserRepository {
             ...drsScore,
             derivedRiskLevel,
           }
-          return { ...user, drsScore: newDrsScore }
+          newUser = {
+            ...newUser,
+            drsScore: newDrsScore,
+          }
         }
-        return user
+
+        if (krsScore != null) {
+          const derivedRiskLevel = getRiskLevelFromScore(
+            riskClassificationValues,
+            krsScore?.krsScore
+          )
+
+          const newKrsScore: KrsScore = {
+            ...krsScore,
+            riskLevel: derivedRiskLevel,
+          }
+
+          newUser = {
+            ...newUser,
+            krsScore: newKrsScore,
+          }
+        }
+
+        return newUser
       })
     }
     const total = await collection.count(query, { limit: COUNT_QUERY_LIMIT })
