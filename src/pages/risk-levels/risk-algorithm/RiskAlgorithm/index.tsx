@@ -62,9 +62,7 @@ const RiskAlgorithmTable: React.FC = () => {
             <pre className={styles.pre}>
               <div className={styles.header}>Formula</div>
               <div> </div>
-              <div className={styles.KRSformula}>
-                CRA[i] = avg (KRS + CRA[i-1] + TRS[i] )[i] = avg (KRS + CRA[i-1] + TRS[i] )
-              </div>
+              <div className={styles.KRSformula}>CRA[i] = avg (CRA[i-1] + TRS[i] )</div>
               <div className={styles.KRSformula}>CRA[0] = KRS</div>
               <div className={styles.KRSformula}>CRA[1] = avg ( KRS + TRS[1] )</div>
               <div className={styles.KRSformula}>CRA[2] = avg ( CRA[1] + TRS[2] )</div>
