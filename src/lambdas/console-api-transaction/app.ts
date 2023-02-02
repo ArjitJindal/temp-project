@@ -152,6 +152,10 @@ export const transactionsViewHandler = lambdaApi()(
         'Get Transactions'
       )
       transactionsGetSegment?.addAnnotation('tenantId', tenantId)
+      transactionsGetSegment?.addAnnotation(
+        'params',
+        JSON.stringify(event.queryStringParameters)
+      )
       const params: DefaultApiGetTransactionsListRequest = {
         page,
         pageSize,
@@ -265,6 +269,10 @@ export const transactionsViewHandler = lambdaApi()(
         'Get Transactions Stats By Type'
       )
       transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
+      transactionsStatsGetSegment?.addAnnotation(
+        'params',
+        JSON.stringify(params)
+      )
       const result = await transactionService.getStatsByType(
         params,
         referenceCurrency ?? 'USD'
@@ -348,6 +356,10 @@ export const transactionsViewHandler = lambdaApi()(
         'Get Transactions Stats By Time'
       )
       transactionsStatsGetSegment?.addAnnotation('tenantId', tenantId)
+      transactionsStatsGetSegment?.addAnnotation(
+        'params',
+        JSON.stringify(params)
+      )
       const result = await transactionService.getStatsByTime(
         params,
         referenceCurrency ?? 'USD'
