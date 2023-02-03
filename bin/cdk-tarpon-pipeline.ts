@@ -14,7 +14,13 @@ import { config as prodConfigUS1 } from '@cdk/configs/config-prod-us-1'
 import { config as prodConfigEu1 } from '@cdk/configs/config-prod-eu-1'
 import { config as prodConfigEu2 } from '@cdk/configs/config-prod-eu-2'
 
-const GITHUB_USERS = ['amandugar', 'chialunwu', 'koluch', 'nadig']
+const GITHUB_USERS = [
+  'amandugar',
+  'chialunwu',
+  'koluch',
+  'nadig',
+  'timrcoulson',
+]
 
 const app = new cdk.App()
 

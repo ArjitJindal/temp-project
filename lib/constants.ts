@@ -4,7 +4,8 @@ function getSuffix(): string {
   let suffix = ''
   if (process.env.ENV === 'dev:user') {
     suffix =
-      (process.env.GITHUB_USER || '').replace(/-/g, '') +
+      // Lambda names cannot be longer than 64 characters in length.
+      (process.env.GITHUB_USER || '').slice(0, 9).replace(/-/g, '') +
       (process.env.S_NO || '1')
   }
   return suffix
