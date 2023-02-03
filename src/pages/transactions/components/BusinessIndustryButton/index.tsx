@@ -4,6 +4,7 @@ import s from './style.module.less';
 import PopupContent from './PopupContent';
 import BriefcaseIcon from '@/components/ui/icons/Remix/business/briefcase-3-fill.react.svg';
 import ActionButton from '@/components/ui/Table/ActionButton';
+import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   businessIndustry: string[];
@@ -16,11 +17,14 @@ export default function BusinessIndustryButton(props: Props) {
 
   const buttonText =
     businessIndustry.length > 0 ? businessIndustry.join(', ') : 'Business Industry';
+
+  useTableScrollVisible(setVisible);
+
   return (
     <Popover
       overlayClassName={s.popover}
       overlayInnerStyle={{ padding: 0 }}
-      content={<PopupContent value={businessIndustry} key={`${visible}`} onConfirm={onConfirm} />}
+      content={<PopupContent value={businessIndustry} onConfirm={onConfirm} />}
       trigger="click"
       placement="bottomLeft"
       visible={visible}

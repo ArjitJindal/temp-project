@@ -9,6 +9,7 @@ import {
   getTransactionStateLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   transactionStates: TransactionState[];
@@ -26,11 +27,14 @@ export function TransactionStateButton(props: Props) {
           .map((transactionState) => getTransactionStateLabel(transactionState, settings))
           .join(', ')
       : 'Transaction State';
+
+  useTableScrollVisible(setVisible);
+
   return (
     <Popover
       overlayClassName={s.popover}
       overlayInnerStyle={{ padding: 0 }}
-      content={<PopupContent value={transactionStates} key={`${visible}`} onConfirm={onConfirm} />}
+      content={<PopupContent value={transactionStates} onConfirm={onConfirm} />}
       trigger="click"
       placement="bottomLeft"
       visible={visible}

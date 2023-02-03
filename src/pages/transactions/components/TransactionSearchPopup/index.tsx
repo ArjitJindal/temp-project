@@ -4,6 +4,7 @@ import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
 import { Transaction } from '@/apis';
+import { useTableScrollVisible } from '@/utils/hooks';
 
 interface Props {
   children: React.ReactNode;
@@ -16,6 +17,8 @@ export default function TransactionSearchPopup(props: Props) {
   const { children, initialSearch, placement = 'bottomLeft', onConfirm } = props;
   const [visible, setVisible] = useState(false);
 
+  useTableScrollVisible(setVisible);
+
   return (
     <Popover
       overlayClassName={s.popover}
@@ -23,8 +26,6 @@ export default function TransactionSearchPopup(props: Props) {
       content={
         <PopupContent
           initialSearch={initialSearch ?? ''}
-          isVisible={visible}
-          key={`${visible}`}
           onConfirm={(transaction) => {
             onConfirm(transaction);
             setVisible(false);
@@ -32,6 +33,7 @@ export default function TransactionSearchPopup(props: Props) {
           onCancel={() => {
             setVisible(false);
           }}
+          isVisible={visible}
         />
       }
       trigger="click"
