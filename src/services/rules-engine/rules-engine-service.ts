@@ -35,6 +35,7 @@ import {
   getContextStorage,
   hasFeature,
   updateLogMetadata,
+  publishMetric,
 } from '@/core/utils/context'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -44,7 +45,6 @@ import { TransactionEventMonitoringResult } from '@/@types/openapi-public/Transa
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
 import { RULE_EXECUTION_TIME_MS_METRIC } from '@/core/cloudwatch/metrics'
 import { addNewSubsegment } from '@/core/xray'
 
@@ -350,7 +350,6 @@ export class RulesEngineService {
       receiverUser?: User | Business
     }
   ) {
-    const metricPublisher = new MetricPublisher()
     const context = _.cloneDeep(getContext() || {})
     context.metricDimensions = {
       ...context.metricDimensions,
@@ -434,10 +433,7 @@ export class RulesEngineService {
 
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric
-        metricPublisher.publicMetric(
-          RULE_EXECUTION_TIME_MS_METRIC,
-          ruleExecutionTimeMs
-        )
+        publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
 
         logger.info(`Completed rule`)
 

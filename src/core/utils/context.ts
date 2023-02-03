@@ -6,6 +6,7 @@ import {
   Context as LambdaContext,
 } from 'aws-lambda'
 import _ from 'lodash'
+import { MetricDatum } from '@aws-sdk/client-cloudwatch'
 import { winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -13,6 +14,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { Metric } from '@/core/cloudwatch/metrics'
 
 type LogMetaData = {
   tenantId?: string
@@ -22,6 +24,7 @@ type Context = LogMetaData & {
   features?: Feature[]
   logMetadata?: { [key: string]: string | undefined }
   metricDimensions?: { [key: string]: string | undefined }
+  metrics?: { [namespace: string]: MetricDatum[] }
   user?: Partial<Account>
 }
 
@@ -55,6 +58,7 @@ export async function getInitialContext(
         functionName: lambdaContext?.functionName,
         region: process.env.AWS_REGION,
       },
+      metrics: {},
       metricDimensions: {
         tenantId,
         functionName: lambdaContext?.functionName,
@@ -89,6 +93,42 @@ export function updateLogMetadata(addedMetadata: { [key: string]: any }) {
     )
     Sentry.setTags(context.logMetadata)
   }
+}
+
+export function publishMetric(
+  metric: Metric,
+  value: number,
+  dimensions?: { [key: string]: string }
+) {
+  const context = asyncLocalStorage.getStore()
+  if (!context) {
+    return
+  }
+  const dimensionsWithContext = {
+    ...context.metricDimensions,
+    ...dimensions,
+  }
+  const metricDatum = {
+    MetricName: metric.name,
+    Dimensions: Object.entries(dimensionsWithContext || {})
+      // Lambda function name isn't defined in local dev.
+      .filter((entry) => entry[1] !== undefined)
+      .map((entry) => ({
+        Name: entry[0],
+        Value: entry[1],
+      })),
+    Unit: 'None',
+    Value: value,
+    Timestamp: new Date(),
+  }
+
+  if (context.metrics == undefined) {
+    context.metrics = {}
+  }
+  context.metrics[metric.namespace] = [
+    metricDatum,
+    ...(context.metrics[metric.namespace] || []),
+  ]
 }
 
 export function getContextStorage(): AsyncLocalStorage<Context> {

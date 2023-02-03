@@ -23,14 +23,13 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { ConsumedCapacity, DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getCredentialsFromEvent } from './credentials'
-import { MetricPublisher } from '@/core/cloudwatch/metric-publisher'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
   DYNAMODB_WRITE_CAPACITY_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
-import { getContext } from '@/core/utils/context'
+import { getContext, publishMetric } from '@/core/utils/context'
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -64,7 +63,6 @@ function getAugmentedDynamoDBCommand(command: any): {
 export function withMetrics(
   client: DynamoDBDocumentClient
 ): DynamoDBDocumentClient {
-  const metricPublisher = new MetricPublisher()
   client.send = _.wrap(
     client.send.bind(client),
     async (func: any, command: any, ...args) => {
@@ -72,21 +70,16 @@ export function withMetrics(
       const result = await func(commandInfo.command, ...args)
       const consumedCapacity = result?.ConsumedCapacity as ConsumedCapacity
       const capacityUnits = consumedCapacity?.CapacityUnits
+
       if (commandInfo.type === 'READ' && capacityUnits) {
-        // Don't await
-        metricPublisher.publicMetric(
-          DYNAMODB_READ_CAPACITY_METRIC,
-          capacityUnits,
-          { table: command?.input?.TableName }
-        )
+        publishMetric(DYNAMODB_READ_CAPACITY_METRIC, capacityUnits, {
+          table: command?.input?.TableName,
+        })
       }
       if (commandInfo.type === 'WRITE' && capacityUnits) {
-        // Don't await
-        metricPublisher.publicMetric(
-          DYNAMODB_WRITE_CAPACITY_METRIC,
-          capacityUnits,
-          { table: command?.input?.TableName }
-        )
+        publishMetric(DYNAMODB_WRITE_CAPACITY_METRIC, capacityUnits, {
+          table: command?.input?.TableName,
+        })
       }
       return result
     }
@@ -156,17 +149,25 @@ export function getDynamoDbRawClient(
   return rawClient
 }
 
+type DynamoOption = (client: DynamoDBDocumentClient) => DynamoDBDocumentClient
 export function getDynamoDbClient(
   credentials?: Credentials | CredentialsOptions,
-  options?: { retry?: boolean }
+  options?: { retry?: boolean; metrics?: boolean }
 ): DynamoDBDocumentClient {
   const rawClient = getDynamoDbRawClient(credentials)
   const client = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
   })
-  // TODO: re-enalbe metrics in FDT-45338
-  const retry = options?.retry ?? true
-  return retry ? withRetry(client) : client
+  const { retry = false, metrics = true } = { ...options }
+
+  const opts: DynamoOption[] = []
+  if (retry) {
+    opts.push(withRetry)
+  }
+  if (metrics) {
+    opts.push(withMetrics)
+  }
+  return opts.reduce((client, opt) => opt(client), client)
 }
 
 async function getLastEvaluatedKey(
