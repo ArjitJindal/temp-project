@@ -1,23 +1,54 @@
-import React, { useState } from 'react';
+import React, { useImperativeHandle, useState } from 'react';
 import { FieldValidators, Validator } from './utils/validation/types';
 import { FieldMeta, FormContext, FormContextValue } from '@/components/library/Form/context';
+import { useDeepEqualEffect, usePrevious } from '@/utils/hooks';
+import { isEqual } from '@/utils/lang';
+import { checkFormValid, validateForm } from '@/components/library/Form/utils/validation/utils';
+
+export interface FormRef<FormValues> {
+  setValues: (formValues: FormValues) => void;
+}
 
 interface Props<FormValues> {
+  id?: string;
   initialValues: FormValues;
   children: React.ReactNode;
   formValidators?: Validator<FormValues>[];
   fieldValidators?: FieldValidators<FormValues>;
-  onSubmit?: (values: FormValues) => void;
+  className?: string;
+  alwaysShowErrors?: boolean;
+  onSubmit?: (values: FormValues, state: { isValid: boolean }) => void;
+  onChange?: (state: { values: FormValues; isValid: boolean }) => void;
 }
 
-export default function Form<FormValues>(props: Props<FormValues>) {
-  const { initialValues, children, fieldValidators, formValidators, onSubmit } = props;
-  const [formState, setFormState] = useState<FormValues>(initialValues);
+function Form<FormValues>(props: Props<FormValues>, ref: React.Ref<FormRef<FormValues>>) {
+  const {
+    id,
+    initialValues,
+    children,
+    fieldValidators,
+    formValidators,
+    className,
+    alwaysShowErrors = false,
+    onSubmit,
+    onChange,
+  } = props;
+  const [formValues, setFormValues] = useState<FormValues>(initialValues);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
 
+  useImperativeHandle(
+    ref,
+    (): FormRef<FormValues> => ({
+      setValues: (formValues: FormValues) => {
+        setFormValues(formValues);
+      },
+    }),
+  );
+
   const formContext: FormContextValue<FormValues> = {
-    values: formState,
-    setValues: setFormState,
+    alwaysShowErrors: alwaysShowErrors,
+    values: formValues,
+    setValues: setFormValues,
     meta: fieldMeta,
     setMeta: (key, cb) => {
       setFieldsMeta((state) => ({
@@ -29,11 +60,28 @@ export default function Form<FormValues>(props: Props<FormValues>) {
     formValidators,
   };
 
+  const previouValues = usePrevious(formValues);
+  useDeepEqualEffect(() => {
+    if (onChange) {
+      if (!isEqual(formValues, previouValues)) {
+        const validationResult = validateForm(formValues, formValidators, fieldValidators);
+        onChange({
+          values: formValues,
+          isValid: validationResult == null,
+        });
+      }
+    }
+  }, [onChange, formValues, previouValues]);
+
   return (
     <form
+      id={id}
+      className={className}
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit?.(formState);
+        onSubmit?.(formValues, {
+          isValid: checkFormValid(formValues, formValidators, fieldValidators),
+        });
       }}
     >
       <FormContext.Provider value={formContext as FormContextValue<unknown>}>
@@ -42,3 +90,9 @@ export default function Form<FormValues>(props: Props<FormValues>) {
     </form>
   );
 }
+
+export default React.forwardRef(Form) as <FormValues>(
+  props: Props<FormValues> & { ref?: React.Ref<FormRef<FormValues>> },
+) => JSX.Element;
+
+export { InputProps } from '@/components/library/Form/types';

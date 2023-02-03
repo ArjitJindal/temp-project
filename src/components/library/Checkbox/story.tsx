@@ -3,7 +3,7 @@ import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
-  const [value, setValue] = useState(false);
+  const [value, setValue] = useState<undefined | boolean>(false);
   return (
     <>
       <UseCase title={'Basic case'} description="Checkbox input element itself, without label">

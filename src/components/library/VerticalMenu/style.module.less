@@ -4,6 +4,7 @@
 .root {
   display: flex;
   gap: 16px;
+  flex: 1;
 }
 
 .items {
@@ -12,6 +13,9 @@
 }
 
 .item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 12px;
   border-left: 2px solid transparent;
   font-size: 14px;
@@ -21,12 +25,17 @@
     color @default-animation-speed;
 
   &.isActive {
-    font-weight: 600;
     border-left-color: @fr-colors-brandBlue;
     background-color: @fr-colors-brandBlueTint;
-    color: black;
-  }
 
+    > .title {
+      font-weight: 600;
+      color: black;
+    }
+  }
+}
+
+.title {
   &::after {
     display: block;
     content: attr(title);
@@ -41,4 +50,10 @@
 .children {
   border-left: 1px solid @fr-colors-v2-gray-3;
   padding-left: 16px;
+  flex: 1;
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
 }

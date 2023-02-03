@@ -1,44 +1,45 @@
-import React from 'react';
 import cn from 'clsx';
-import FormField from '../GenericFormField';
+import React from 'react';
 import s from './index.module.less';
 import Label, { Props as LabelProps } from '@/components/library/Label';
+import { InputProps } from '@/components/library/Form';
+import GenericFormField from '@/components/library/Form/GenericFormField';
 
-export interface InputProps<Value> {
-  isError?: boolean;
-  isDisabled?: boolean;
-  value?: Value;
-  onChange?: (newValue: Value) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-}
-
-interface Props<FormValues, Key extends keyof FormValues = keyof FormValues> {
+interface Props<FormValues, Key extends keyof FormValues> {
   name: Key;
   label: string;
-  input: React.FunctionComponent<InputProps<FormValues[Key]>>;
+  description?: string;
   labelProps?: Partial<LabelProps>;
+  children: (inputProps: InputProps<FormValues[Key]>) => JSX.Element;
 }
 
-export default function InputField<
-  FormValues = Record<string, unknown>,
-  Key extends keyof FormValues = keyof FormValues,
->(props: Props<FormValues, Key>): JSX.Element {
-  const { name, label, labelProps, input: Input } = props;
+export default function InputField<FormValues, Key extends keyof FormValues = keyof FormValues>(
+  props: Props<FormValues, Key>,
+): JSX.Element {
+  const { name, label, description, labelProps, children } = props;
   return (
-    <FormField<FormValues> name={name}>
-      {({ value, validationResult, isVisited, onChange, ...rest }) => {
-        const isError = validationResult != null;
-        const showError = isError && isVisited;
+    <GenericFormField<FormValues, Key> name={name}>
+      {(childrenProps) => {
+        const { value, onChange, isValid, isDisabled, showError, errorMessage, onFocus, onBlur } =
+          childrenProps;
         return (
-          <Label {...labelProps} label={label}>
-            <Input value={value as any} onChange={onChange} isError={showError} {...rest} />
-            {validationResult && showError && (
-              <div className={cn(s.hint, isError && s.isError)}>{validationResult}</div>
+          <Label label={label} description={description} {...labelProps}>
+            {children({
+              value,
+              onChange,
+              isError: showError,
+              isDisabled: isDisabled,
+              onFocus: onFocus,
+              onBlur: onBlur,
+            })}
+            {showError && (
+              <div className={cn(s.hint, !isValid && s.isError)}>
+                {errorMessage ?? 'Invalid field'}
+              </div>
             )}
           </Label>
         );
       }}
-    </FormField>
+    </GenericFormField>
   );
 }

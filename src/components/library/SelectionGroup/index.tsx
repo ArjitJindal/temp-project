@@ -1,33 +1,33 @@
 import React from 'react';
 import cn from 'clsx';
 import s from './style.module.less';
-import { InputProps } from '@/components/library/Form/InputField';
 import Checkbox from '@/components/library/Checkbox';
 import Radio from '@/components/library/Radio';
+import { InputProps } from '@/components/library/Form';
 
-interface Option {
-  value: string;
+interface Option<Value extends string = string> {
+  value: Value;
   label: string;
   description?: string;
   isDisabled?: boolean;
 }
 
-interface CommonProps {
+interface CommonProps<Value extends string> {
   name?: string; // todo: generalize
-  options: Option[];
+  options: Option<Value>[];
 }
 
-interface MultipleProps extends CommonProps, InputProps<string[]> {
+interface MultipleProps<Value extends string> extends CommonProps<Value>, InputProps<string[]> {
   mode: 'MULTIPLE';
 }
 
-interface SingleProps extends CommonProps, InputProps<string> {
+interface SingleProps<Value extends string> extends CommonProps<Value>, InputProps<string> {
   mode: 'SINGLE';
 }
 
-type Props = MultipleProps | SingleProps;
+type Props<Value extends string> = MultipleProps<Value> | SingleProps<Value>;
 
-export default function SelectionGroup(props: Props) {
+export default function SelectionGroup<Value extends string = string>(props: Props<Value>) {
   const { mode, options } = props;
   const isSingle = props.mode === 'SINGLE';
   const values: string[] = isSingle ? (props.value ? [props.value] : []) : props.value ?? [];

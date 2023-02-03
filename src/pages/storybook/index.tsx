@@ -9,7 +9,7 @@ import Select from '@/components/library/Select/story';
 import TextInput from '@/components/library/TextInput/story';
 import NumberInput from '@/components/library/NumberInput/story';
 import Radio from '@/components/library/Radio/story';
-import LeftNav from '@/components/library/VerticalMenu/story';
+import VerticalMenu from '@/components/library/VerticalMenu/story';
 import StepButtons from '@/components/library/ButtonGroup/story';
 import SelectionGroup from '@/components/library/SelectionGroup/story';
 import Stepper from '@/components/library/Stepper/story';
@@ -17,6 +17,7 @@ import Card from '@/components/ui/Card/story';
 import Form from '@/components/library/Form/story';
 import Drawer from '@/components/library/Drawer/story';
 import Alert from '@/components/library/Alert/story';
+import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/story';
 import { Component } from '@/pages/storybook/components';
 
 interface StoryProps {}
@@ -40,8 +41,8 @@ const config: Config = [
     category: 'Navigation',
     components: [
       {
-        component: 'LeftNav',
-        story: LeftNav,
+        component: 'VerticalMenu',
+        story: VerticalMenu,
       },
       {
         component: 'Stepper',
@@ -112,6 +113,16 @@ const config: Config = [
       {
         component: 'Card',
         story: Card,
+      },
+    ],
+  },
+  {
+    key: 'misc',
+    category: 'Misc',
+    components: [
+      {
+        component: '@/pages/rules/RuleConfigurationDrawer/RuleParametersStep/JsonSchemaEditor',
+        story: JsonSchemaEditor,
       },
     ],
   },

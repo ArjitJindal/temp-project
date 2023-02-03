@@ -3,7 +3,7 @@ import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState<string | undefined>();
   return (
     <>
       <UseCase title={'Basic case'}>
@@ -15,9 +15,9 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
-      <UseCase title={'Small size'}>
+      <UseCase title={'Large size'}>
         <Component
-          size="SMALL"
+          size="LARGE"
           placeholder={'Placeholder example'}
           value={value}
           onChange={(newValue) => {

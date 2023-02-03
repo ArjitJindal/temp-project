@@ -1,6 +1,9 @@
-import { EffectCallback, useCallback, useEffect, useRef } from 'react';
+import { EffectCallback, useCallback, useEffect, useRef, useState } from 'react';
+import { customAlphabet } from 'nanoid/non-secure';
 import _ from 'lodash';
 import { isEqual } from '@/utils/lang';
+
+const nanoid = customAlphabet('1234567890abcdef', 16);
 
 export function usePrevious<T>(value: T): T | null {
   const ref = useRef<T>();
@@ -18,6 +21,11 @@ export function useDeepEqualEffect(effect: EffectCallback, deps: unknown[]) {
       return effect();
     }
   }, [effect, depsChanged]);
+}
+
+export function useId(prefix = `id`): string {
+  const [id] = useState(nanoid());
+  return prefix + id;
 }
 
 export const useTableScrollVisible = (

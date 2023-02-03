@@ -8,8 +8,8 @@ export function neverReturn<T>(obj: never, defaultValue: T): T {
 }
 
 export function getErrorMessage(e: unknown) {
-  if (e instanceof Error && e.message) {
-    return e.message;
+  if (typeof e === 'object' && e != null && 'message' in e) {
+    return (e as any).message ?? 'Unknown error';
   }
   return 'Unknown error';
 }

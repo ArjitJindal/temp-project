@@ -38,6 +38,25 @@ export default function (): JSX.Element {
             setValues(newValue);
           }}
         />
+        <Component
+          mode="TAGS"
+          placeholder={'Tags select'}
+          options={[
+            { value: 'option1', label: 'Option #1' },
+            { value: 'option2', label: 'Option #2 with a very, very, very long title' },
+            { value: 'option3', label: 'Option #3' },
+            { value: 'option4', label: 'Option #4' },
+            { value: 'option5', label: 'Option #5' },
+            { value: 'option6', label: 'Option #6' },
+            { value: 'option7', label: 'Option #7' },
+            { value: 'option8', label: 'Option #8' },
+            { value: 'option9', label: 'Option #9' },
+          ]}
+          value={values}
+          onChange={(newValue) => {
+            setValues(newValue);
+          }}
+        />
       </UseCase>
       <UseCase title={'Disabled'}>
         <Component
@@ -79,8 +98,8 @@ export default function (): JSX.Element {
           }}
         />
         <Component
-          size="SMALL"
-          placeholder={'Small size'}
+          size="LARGE"
+          placeholder={'Large size'}
           options={[
             { value: 'option1', label: 'First option' },
             { value: 'option2', label: 'Second option' },
@@ -92,7 +111,7 @@ export default function (): JSX.Element {
         />
         <Component
           mode="MULTIPLE"
-          size="SMALL"
+          size="LARGE"
           placeholder={'Small size, multi select'}
           options={[
             { value: 'option1', label: 'First option' },

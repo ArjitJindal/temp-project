@@ -3,9 +3,9 @@ import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {
-  const [selected1, setSelected1] = useState<string>('disabled');
-  const [selected2, setSelected2] = useState<string[]>([]);
-  const [selected3, setSelected3] = useState<string>('disabled');
+  const [selected1, setSelected1] = useState<string | undefined>('disabled');
+  const [selected2, setSelected2] = useState<string[] | undefined>([]);
+  const [selected3, setSelected3] = useState<string | undefined>('disabled');
   return (
     <>
       <UseCase title={'Radio-buttons mode'}>

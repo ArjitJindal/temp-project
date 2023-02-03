@@ -14,13 +14,20 @@ export class ApiException<T> extends Error {
     public body: T,
     public headers: { [key: string]: string },
   ) {
-    let message: string;
+    let message: string = `Unknown error happened while communicating to our servers ("${httpMessage}")`;
     if (code === 404) {
       message = `Requested resource not found`;
+    } else if (code >= 400 && code < 500) {
+      try {
+        if (typeof body === 'string') {
+          const json = JSON.parse(body);
+          if (json.message) {
+            message = json.message;
+          }
+        }
+      } catch (e) {}
     } else if (code > 500) {
       message = `Something has gone wrong, sorry!`;
-    } else {
-      message = `Unknown error happened while communicating to our servers ("${httpMessage}")`;
     }
     super(message);
   }

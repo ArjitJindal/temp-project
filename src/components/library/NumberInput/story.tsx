@@ -16,10 +16,17 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
-      <UseCase title={'Small size'}>
+      <UseCase title={'Sizes'}>
         <Component
-          size="SMALL"
-          placeholder={'Placeholder example'}
+          placeholder={'Default size'}
+          value={value}
+          onChange={(newValue) => {
+            setValue(newValue);
+          }}
+        />
+        <Component
+          size="LARGE"
+          placeholder={'Large size'}
           value={value}
           onChange={(newValue) => {
             setValue(newValue);

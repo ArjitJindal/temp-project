@@ -56,7 +56,9 @@ export default function Money(props: Props) {
 
 function CurrencySymbol(props: { currency: Currency; currencyInfo: CurrencyInfo }) {
   const { currencyInfo } = props;
-  return <span title={`${currencyInfo.label}`}>{currencyInfo?.symbol ?? currencyInfo?.value}</span>;
+  return (
+    <span title={`${currencyInfo.label}`}>{currencyInfo?.symbol ?? `${currencyInfo?.value} `}</span>
+  );
 }
 
 function formatNumber(amount: number, compact = false): string {

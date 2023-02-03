@@ -1,16 +1,18 @@
 import React, { useCallback } from 'react';
-import { ValidationResult } from '../utils/validation/types';
+import { FieldValidator, NestedValidationResult } from '../utils/validation/types';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
+import { validateField } from '@/components/library/Form/utils/validation/utils';
+import { InputProps } from '@/components/library/Form';
 
-interface FormFieldRenderProps<Value> {
-  value: Value;
-  onChange: (newValue: Value) => void;
+interface FormFieldRenderProps<Value> extends InputProps<Value> {
   isValid: boolean;
   isTouched: boolean;
   isVisited: boolean;
+  showError: boolean;
   onFocus: () => void;
   onBlur: () => void;
-  validationResult: ValidationResult;
+  validationResult: NestedValidationResult;
+  errorMessage: string | null;
 }
 
 interface Props<Key, Value> {
@@ -24,7 +26,7 @@ export default function GenericFormField<
 >(props: Props<Key, FormValues[Key]>): JSX.Element {
   const { name, children } = props;
   const context = useFormContext<FormValues>();
-  const { values, setValues, meta, setMeta, fieldValidators } = context;
+  const { values, setValues, meta, setMeta, fieldValidators, alwaysShowErrors } = context;
   const value = values[name];
   const onChange = useCallback(
     (newValue) => {
@@ -35,7 +37,16 @@ export default function GenericFormField<
     },
     [values, name, setValues],
   );
-  const validationResult = fieldValidators?.[name]?.(value) ?? null;
+  // todo: fix any
+  const fieldValidator = (fieldValidators as any)?.[name] as unknown as FieldValidator<
+    FormValues[Key]
+  >;
+  const validationResult = validateField(fieldValidator, value);
+
+  const isTouched = meta[name as string]?.isTouched === true;
+  const isVisited = meta[name as string]?.isVisited === true;
+  const isValid = validationResult == null;
+  const showError = !isValid && (isVisited || alwaysShowErrors);
 
   return (
     <>
@@ -48,11 +59,26 @@ export default function GenericFormField<
         onBlur: () => {
           setMeta(name as string, (prev) => ({ ...prev, isVisited: true }));
         },
-        isTouched: meta[name as string]?.isTouched === true,
-        isVisited: meta[name as string]?.isVisited === true,
-        isValid: validationResult == null,
+        isTouched: isTouched,
+        isVisited: isVisited,
+        isValid: isValid,
+        showError: showError,
         validationResult: validationResult,
+        errorMessage: showError ? validationResultToErrorMessage(validationResult) : null,
       })}
     </>
   );
+}
+
+function validationResultToErrorMessage(validationResult: NestedValidationResult): string | null {
+  if (validationResult == null) {
+    return null;
+  }
+  if (typeof validationResult === 'string') {
+    return validationResult;
+  }
+  return Object.entries(validationResult)
+    .map(([_, children]) => validationResultToErrorMessage(children))
+    .filter((x): x is string => x != null)
+    .join('; ');
 }

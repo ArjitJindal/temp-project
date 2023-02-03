@@ -1,15 +1,14 @@
-import { Drawer, message, Popover, Switch, Tooltip } from 'antd';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { message, Popover, Switch, Tooltip } from 'antd';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import _ from 'lodash';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { RuleParametersTable } from '../create-rule/components/RuleParametersTable';
+import { useMutation } from '@tanstack/react-query';
+import { RuleParametersTable } from '../RulesTable/RuleParametersTable';
 import { getRuleInstanceDisplayId } from '../utils';
 import s from './style.module.less';
-import { RuleInstanceDetails } from './components/RuleInstanceDetails';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { RuleInstance } from '@/apis';
 import { useApi } from '@/api';
-import PageWrapper from '@/components/PageWrapper';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableColumn } from '@/components/ui/Table/types';
 import { useRules } from '@/utils/rules';
@@ -18,6 +17,8 @@ import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
 import { TableActionType } from '@/components/ui/Table';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigurationDrawer';
+import { getErrorMessage } from '@/utils/lang';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -32,7 +33,6 @@ const MyRule = () => {
   }, []);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [deleting, setDeleting] = useState(false);
   const [currentRow, setCurrentRow] = useState<RuleInstance>();
   const { rules } = useRules();
@@ -214,7 +214,6 @@ const MyRule = () => {
                 onClick={() => {
                   if (!deleting) {
                     setCurrentRow(entity);
-                    setIsEditing(true);
                     setShowDetail(true);
                   }
                 }}
@@ -250,8 +249,57 @@ const MyRule = () => {
       total: ruleInstances.length,
     };
   });
+
+  const rule = (currentRow && rules[currentRow?.ruleId]) ?? null;
+  const ruleInstance: RuleInstance | null =
+    currentRow && currentRow.id ? updatedRuleInstances[currentRow.id] || currentRow : null;
+
+  const saveInstanceMutation = useMutation<unknown, unknown, FormValues>(
+    async (formValues) => {
+      if (rule == null) {
+        throw new Error(`Rule is not defined`);
+      }
+      if (ruleInstance == null || ruleInstance?.id == null) {
+        throw new Error(`Rule instance is not defined`);
+      }
+      const { basicDetailsStep, standardFiltersStep, ruleParametersStep } = formValues;
+      const { ruleAction, ruleParameters, riskLevelParameters, riskLevelActions } =
+        ruleParametersStep;
+
+      const newRuleInstance: RuleInstance = {
+        ...ruleInstance,
+        ruleId: rule.id as string,
+        ruleNameAlias: basicDetailsStep.ruleName,
+        ruleDescriptionAlias: basicDetailsStep.ruleDescription,
+        filters: standardFiltersStep,
+        casePriority: basicDetailsStep.casePriority,
+        nature: basicDetailsStep.ruleNature,
+        ...(isPulseEnabled
+          ? {
+              riskLevelParameters: riskLevelParameters,
+              riskLevelActions: riskLevelActions,
+            }
+          : {
+              action: ruleAction ?? ruleInstance.action,
+              parameters: ruleParameters,
+            }),
+      };
+      await handleRuleInstanceUpdate(newRuleInstance);
+    },
+    {
+      onSuccess: () => {
+        setShowDetail(false);
+        message.success(`Rule saved!`);
+      },
+      onError: (err) => {
+        console.error(err);
+        message.error(`Unable to save rule! ${getErrorMessage(err)}`);
+      },
+    },
+  );
+
   return (
-    <PageWrapper>
+    <>
       <QueryResultsTable<RuleInstance>
         form={{
           labelWrap: true,
@@ -268,31 +316,38 @@ const MyRule = () => {
           persistenceKey: 'my-rules-table',
         }}
       />
-
-      <Drawer
-        width={700}
-        visible={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
+      <RuleConfigurationDrawer
+        rule={rule}
+        formInitialValues={
+          ruleInstance
+            ? {
+                basicDetailsStep: {
+                  ruleName: ruleInstance.ruleNameAlias,
+                  ruleDescription: ruleInstance.ruleDescriptionAlias,
+                  ruleNature: ruleInstance.nature,
+                  casePriority: ruleInstance.casePriority,
+                },
+                standardFiltersStep: ruleInstance.filters,
+                ruleParametersStep: isPulseEnabled
+                  ? {
+                      riskLevelParameters: ruleInstance.riskLevelParameters,
+                      riskLevelActions: ruleInstance.riskLevelActions,
+                    }
+                  : {
+                      ruleParameters: ruleInstance.parameters,
+                      ruleAction: ruleInstance.action,
+                    },
+              }
+            : undefined
+        }
+        isSubmitting={saveInstanceMutation.isLoading}
+        isVisible={showDetail}
+        onChangeVisibility={setShowDetail}
+        onSubmit={(formValues) => {
+          saveInstanceMutation.mutate(formValues);
         }}
-        closable={false}
-      >
-        {Object.keys(rules).length && currentRow?.id && (
-          <RuleInstanceDetails
-            rule={rules[currentRow.ruleId]}
-            ruleParametersSchema={rules[currentRow.ruleId].parametersSchema}
-            ruleInstance={updatedRuleInstances[currentRow.id] || currentRow}
-            onRuleInstanceUpdate={handleRuleInstanceUpdate}
-            onRuleInstanceDeleted={() => {
-              setCurrentRow(undefined);
-              setShowDetail(false);
-            }}
-            isEditing={isEditing}
-          />
-        )}
-      </Drawer>
-    </PageWrapper>
+      />
+    </>
   );
 };
 

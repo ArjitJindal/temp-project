@@ -5,12 +5,15 @@ import TextInput from '@/components/library/TextInput';
 import Checkbox from '@/components/library/Checkbox';
 
 export default function (): JSX.Element {
-  const [textValue, setTextValue] = useState('');
-  const [checkboxValue, setCheckboxValue] = useState(false);
+  const [textValue, setTextValue] = useState<undefined | string>('');
+  const [checkboxValue, setCheckboxValue] = useState<undefined | boolean>(false);
   return (
     <>
       <UseCase title={'Basic case'}>
         <Component label="Label text">
+          <TextInput value={textValue} onChange={setTextValue} />
+        </Component>
+        <Component label="Optional label" isOptional={true}>
           <TextInput value={textValue} onChange={setTextValue} />
         </Component>
       </UseCase>

@@ -4,8 +4,13 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
+}
+
+.optional {
+  font-weight: normal;
+  color: @fr-colors-v2-gray-6;
 }
 
 .row {
@@ -14,7 +19,7 @@
 }
 
 .label {
-  line-height: 1;
+  line-height: 20px;
 
   &.level-1 {
     font-weight: 600;
@@ -30,4 +35,9 @@
 
 .description {
   color: @fr-colors-v2-gray-6;
+  line-height: 24px;
+}
+
+.labelDescription {
+  //margin-bottom: 8px;
 }
