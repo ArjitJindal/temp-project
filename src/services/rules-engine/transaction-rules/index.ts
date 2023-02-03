@@ -51,7 +51,7 @@ class TransactionRuleBase extends TransactionRule<unknown> {
   }
 }
 
-export const TRANSACTION_RULES = {
+export const _TRANSACTION_RULES = {
   'card-issued-country': CardIssuedCountryRule,
   'consecutive-transactions-same-type': ConsecutiveTransactionsameTypeRule,
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
@@ -101,4 +101,10 @@ export const TRANSACTION_RULES = {
   'tests/test-failure-rule': TestFailureRule,
   'tests/test-non-hit-rule': TestNonHitRule,
   'tests/test-always-hit-rule': TestAlwaysHitRule,
-} as unknown as { [key: string]: typeof TransactionRuleBase }
+} as const
+
+export type TransactionRuleImplementationName = keyof typeof _TRANSACTION_RULES
+
+export const TRANSACTION_RULES = _TRANSACTION_RULES as unknown as {
+  [key: string]: typeof TransactionRuleBase
+}
