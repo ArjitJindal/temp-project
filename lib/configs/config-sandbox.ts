@@ -75,5 +75,6 @@ export const config: Config = {
     SLACK_REDIRECT_URI:
       'https://sandbox.api.flagright.com/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
+    INTEGRATION_TEST_API_KEY_ID: '0s2a2y2ds4',
   },
 }

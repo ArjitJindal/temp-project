@@ -192,6 +192,19 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 `npm run migration:post:up`,
               ],
             },
+            ...(['dev', 'sandbox'].includes(config.stage)
+              ? {
+                  post_build: {
+                    commands: [
+                      `export AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN=${config.application.AUTH0_MANAGEMENT_CREDENTIALS_SECRET_ARN}`,
+                      `export ENV=${env}`,
+                      `export AWS_REGION=${config.env.region}`,
+                      ...assumeRuleCommands,
+                      `npm run postman:integration:${config.stage}`,
+                    ],
+                  },
+                }
+              : {}),
           },
           artifacts: {
             'base-directory': 'cdk.out',

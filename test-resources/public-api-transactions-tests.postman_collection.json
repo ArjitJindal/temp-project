@@ -1,0 +1,792 @@
+{
+  "info": {
+    "_postman_id": "503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5",
+    "name": "Public API Tests Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "updatedAt": "2023-02-01T15:59:59.000Z"
+  },
+  "item": [
+    {
+      "name": "200 Response",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "5493f52e-37bd-40cc-8bcd-86aca6541429",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "",
+              "pm.test(\"Test transactionId is Same\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    var inputJson = JSON.parse(pm.request.body.raw)",
+              "    const inputTransactionId = inputJson.transactionId",
+              "    pm.expect(jsonData.transactionId).eq(inputTransactionId)",
+              "});",
+              "",
+              "pm.test(\"Have executed Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"executedRules\");",
+              "});",
+              "",
+              "pm.test(\"Have hitRules Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"hitRules\")",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "79cf4c20-1b65-40e6-a97a-2091b078d496",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "No Api Key",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "4eb48a0b-b251-4575-b314-4fa1e0efa551",
+            "exec": [
+              "pm.test(\"Status code is 401\", function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test(\"Should Give Unauthorized\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Unauthorized\");",
+              "});",
+              "",
+              "pm.test(\"Content-Type is present\", function () {",
+              "    pm.response.to.have.header(\"Content-Type\");",
+              "});",
+              "",
+              "",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "55f3420c-0450-4b9c-9973-63c6ebe98757",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "2jIV7FVYX25tqURvgAxEo8jyfSBP7ZolOjtHsXCLFqIACXJ4Cyy1bUBER5sn2vNC2bDuG5xUTQLWxUUmn2tHNGcRfVr4yc9SoqD9",
+            "disabled": true
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Incorrect Domain",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "8541af14-c7e4-4096-aa9e-d392b0f1f6ea",
+            "exec": [
+              "pm.test(\"Status code is 403\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test(\"Your test name\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Forbidden\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "b6a56512-bc67-4697-80aa-319f22aaae6a",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{incorrectEnv}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{incorrectEnv}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Incorrect API Key",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "46863b08-add7-420a-88fd-8647507f2cb2",
+            "exec": [
+              "pm.test(\"Status code is 500\", function () {",
+              "    pm.response.to.have.status(500);",
+              "});",
+              "",
+              "pm.test(\"Your test name\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(null);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "9da866b3-e5cf-4fbb-a660-cc12369164bb",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}1"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "No Body",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "d3c29c61-4681-43ea-8368-ad0267114a6a",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"timestamp\\\",\\\"transactionId\\\"])]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "2ec6314f-635f-4bf5-8cf9-6797887ef8ed",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Transaction Id not Given",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "b6fe03e0-63fc-4bee-b091-5059b8cb3677",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[object has missing required properties ([\\\"transactionId\\\"])]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "c4556296-baf7-4237-bdc0-14ee1ae4b37c",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Incorrect Type Provided in Transaction Id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "9c2f9983-9330-41cc-a724-05cb70a95370",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (boolean) does not match any allowed primitive type (allowed: [\\\"string\\\"])]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "06de28da-9558-434d-b4e0-1dd3e2f8ac72",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": true,\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Incorrect Timestamp",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "5b38f334-95fb-41ee-8045-5a9ed4bad4d4",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[numeric instance is lower than the required minimum (minimum: 1262300400000, found: 1)]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "94ec0f6c-5155-4764-8d77-0a960d73c33b",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": 1,\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Duplicate Transaction Id",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "54f3f499-1040-479c-8130-836d759e251c",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Test transactionId is Same\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    var inputJson = JSON.parse(pm.request.body.raw)",
+              "    const inputTransactionId = inputJson.transactionId",
+              "    pm.expect(jsonData.transactionId).eq(inputTransactionId)",
+              "});",
+              "",
+              "pm.test(\"Test Message of Same transaction Id\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"The provided transactionId already exists. No rules were run. If you want to update the attributes of this transaction, please use transaction events instead.\");",
+              "});",
+              "",
+              "pm.test(\"Have executed Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"executedRules\");",
+              "});",
+              "",
+              "pm.test(\"Have hitRules Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"hitRules\")",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "ea5b4126-d74f-4e9d-9397-355d38b5c3df",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid Method",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "c2442a1f-faf8-490a-9c84-a32643bfbb8e",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[instance failed to match exactly one schema (matched 0 out of 9)]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "bc38c401-f80a-4bca-938d-fc0aff8197fd",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"AMAN\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Invalid Country Code Given",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "e57be525-5260-4d9c-90c3-6b7a1f2dad95",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[instance value (\\\"AB\\\") not found in enum (possible values: [\\\"AF\\\",\\\"AL\\\",\\\"DZ\\\",\\\"AS\\\",\\\"AD\\\",\\\"AO\\\",\\\"AI\\\",\\\"AQ\\\",\\\"AG\\\",\\\"AR\\\",\\\"AM\\\",\\\"AW\\\",\\\"AU\\\",\\\"AT\\\",\\\"AZ\\\",\\\"BS\\\",\\\"BH\\\",\\\"BD\\\",\\\"BB\\\",\\\"BY\\\",\\\"BE\\\",\\\"BZ\\\",\\\"BJ\\\",\\\"BM\\\",\\\"BT\\\",\\\"BO\\\",\\\"BQ\\\",\\\"BA\\\",\\\"BW\\\",\\\"BV\\\",\\\"BR\\\",\\\"IO\\\",\\\"BN\\\",\\\"BG\\\",\\\"BF\\\",\\\"BI\\\",\\\"CV\\\",\\\"KH\\\",\\\"CM\\\",\\\"CA\\\",\\\"KY\\\",\\\"CF\\\",\\\"TD\\\",\\\"CL\\\",\\\"CN\\\",\\\"CX\\\",\\\"CC\\\",\\\"CO\\\",\\\"KM\\\",\\\"CD\\\",\\\"CG\\\",\\\"CK\\\",\\\"CR\\\",\\\"HR\\\",\\\"CU\\\",\\\"CW\\\",\\\"CY\\\",\\\"CZ\\\",\\\"CI\\\",\\\"DK\\\",\\\"DJ\\\",\\\"DM\\\",\\\"DO\\\",\\\"EC\\\",\\\"EG\\\",\\\"SV\\\",\\\"GQ\\\",\\\"ER\\\",\\\"EE\\\",\\\"SZ\\\",\\\"ET\\\",\\\"FK\\\",\\\"FO\\\",\\\"FJ\\\",\\\"FI\\\",\\\"FR\\\",\\\"GF\\\",\\\"PF\\\",\\\"TF\\\",\\\"GA\\\",\\\"GM\\\",\\\"GE\\\",\\\"DE\\\",\\\"GH\\\",\\\"GI\\\",\\\"GR\\\",\\\"GL\\\",\\\"GD\\\",\\\"GP\\\",\\\"GU\\\",\\\"GT\\\",\\\"GG\\\",\\\"GN\\\",\\\"GW\\\",\\\"GY\\\",\\\"HT\\\",\\\"HM\\\",\\\"VA\\\",\\\"HN\\\",\\\"HK\\\",\\\"HU\\\",\\\"IS\\\",\\\"IN\\\",\\\"ID\\\",\\\"IR\\\",\\\"IQ\\\",\\\"IE\\\",\\\"IM\\\",\\\"IL\\\",\\\"IT\\\",\\\"JM\\\",\\\"JP\\\",\\\"JE\\\",\\\"JO\\\",\\\"KZ\\\",\\\"KE\\\",\\\"KI\\\",\\\"KP\\\",\\\"KR\\\",\\\"KW\\\",\\\"KG\\\",\\\"LA\\\",\\\"LV\\\",\\\"LB\\\",\\\"LS\\\",\\\"LR\\\",\\\"LY\\\",\\\"LI\\\",\\\"LT\\\",\\\"LU\\\",\\\"MO\\\",\\\"MG\\\",\\\"MW\\\",\\\"MY\\\",\\\"MV\\\",\\\"ML\\\",\\\"MT\\\",\\\"MH\\\",\\\"MQ\\\",\\\"MR\\\",\\\"MU\\\",\\\"YT\\\",\\\"MX\\\",\\\"FM\\\",\\\"MD\\\",\\\"MC\\\",\\\"MN\\\",\\\"ME\\\",\\\"MS\\\",\\\"MA\\\",\\\"MZ\\\",\\\"MM\\\",\\\"NA\\\",\\\"NR\\\",\\\"NP\\\",\\\"NL\\\",\\\"NC\\\",\\\"NZ\\\",\\\"NI\\\",\\\"NE\\\",\\\"NG\\\",\\\"NU\\\",\\\"NF\\\",\\\"MK\\\",\\\"MP\\\",\\\"NO\\\",\\\"OM\\\",\\\"PK\\\",\\\"PW\\\",\\\"PS\\\",\\\"PA\\\",\\\"PG\\\",\\\"PY\\\",\\\"PE\\\",\\\"PH\\\",\\\"PN\\\",\\\"PL\\\",\\\"PT\\\",\\\"PR\\\",\\\"QA\\\",\\\"RO\\\",\\\"RU\\\",\\\"RW\\\",\\\"RE\\\",\\\"BL\\\",\\\"SH\\\",\\\"KN\\\",\\\"LC\\\",\\\"MF\\\",\\\"PM\\\",\\\"VC\\\",\\\"WS\\\",\\\"SM\\\",\\\"ST\\\",\\\"SA\\\",\\\"SN\\\",\\\"RS\\\",\\\"SC\\\",\\\"SL\\\",\\\"SG\\\",\\\"SX\\\",\\\"SK\\\",\\\"SI\\\",\\\"SB\\\",\\\"SO\\\",\\\"ZA\\\",\\\"GS\\\",\\\"SS\\\",\\\"ES\\\",\\\"LK\\\",\\\"SD\\\",\\\"SR\\\",\\\"SJ\\\",\\\"SE\\\",\\\"CH\\\",\\\"SY\\\",\\\"TW\\\",\\\"TJ\\\",\\\"TZ\\\",\\\"TH\\\",\\\"TL\\\",\\\"TG\\\",\\\"TK\\\",\\\"TO\\\",\\\"TT\\\",\\\"TN\\\",\\\"TM\\\",\\\"TC\\\",\\\"TV\\\",\\\"TR\\\",\\\"UG\\\",\\\"UA\\\",\\\"AE\\\",\\\"GB\\\",\\\"UM\\\",\\\"US\\\",\\\"UY\\\",\\\"UZ\\\",\\\"VU\\\",\\\"VE\\\",\\\"VN\\\",\\\"VG\\\",\\\"VI\\\",\\\"WF\\\",\\\"EH\\\",\\\"YE\\\",\\\"ZM\\\",\\\"ZW\\\",\\\"AX\\\",\\\"N/A\\\"])]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "0dec913d-6c23-4931-b0b1-75c6dd322afd",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"AB\",\n    \"transactionAmount\": 100044440,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": 10033.34,\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Only Transaction Id and Timestamp Given",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "c02622f4-6b05-4e97-aced-d2ad4661bd64",
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "",
+              "pm.test(\"Test transactionId is Same\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    var inputJson = JSON.parse(pm.request.body.raw)",
+              "    const inputTransactionId = inputJson.transactionId",
+              "    pm.expect(jsonData.transactionId).eq(inputTransactionId)",
+              "});",
+              "",
+              "pm.test(\"Have executed Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"executedRules\");",
+              "});",
+              "",
+              "pm.test(\"Have hitRules Rules\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"hitRules\")",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "d85b6016-5130-4479-ac20-d31394a288e0",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}-12\",\n  \"timestamp\": {{timestamp}}\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Amount Provided as String",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "id": "f00f1b66-462d-4740-8571-4de6a980f27d",
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Invalid Request Body Test\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Invalid request body\");",
+              "});",
+              "",
+              "pm.test(\"Validation Error Check\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.validationErrors).to.eql(\"[instance type (string) does not match any allowed primitive type (allowed: [\\\"integer\\\",\\\"number\\\"])]\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "0aa76e64-8c85-4260-9b5d-ede674406d09",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "tenant-id",
+            "value": "flagright"
+          },
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"transactionId\": \"{{transactionId}}\",\n  \"type\": \"TRANSFER\",\n  \"originUserId\": \"1\",\n  \"destinationUserId\": \"3\",\n  \"timestamp\": {{timestamp}},\n  \"originAmountDetails\": {\n    \"country\": \"IN\",\n    \"transactionAmount\": \"100044440\",\n    \"transactionCurrency\": \"USD\"\n  },\n  \"destinationAmountDetails\": {\n    \"country\": \"DE\",\n    \"transactionAmount\": \"10033.34\",\n    \"transactionCurrency\": \"USD\"\n  },\n  \"promotionCodeUsed\": true,\n  \"originPaymentDetails\": {\n    \"method\": \"GENERIC_BANK_ACCOUNT\",\n    \"accountType\": \"Savings\",\n    \"accountNumber\": \"121445521\",\n    \"bankName\": \"State Bank of India\",\n    \"name\": \"Binod Ramamurthie\",\n    \"bankCode\": \"SBI0033921\",\n    \"specialInstructions\": \"IMPS\",\n    \"paymentChannel\": \"Intra Bank\" \n  },\n  \"destinationPaymentDetails\": {\n    \"method\": \"CARD\",\n    \"cardFingerprint\": \"000000000000\",\n    \"cardIssuedCountry\": \"CN\",\n    \"cardAuthenticated\": false,\n    \"cardLast4Digits\": \"0019\",\n    \"cardBrand\": \"DISCOVER\",\n    \"cardFunding\": \"CREDIT\"\n  },\n  \"reference\": \"dog\",\n  \"tags\": [{\"key\": \"flowType\", \"value\": \"wallet\"}]\n}"
+        },
+        "url": {
+          "raw": "https://{{env}}.api.flagright.com/transactions",
+          "protocol": "https",
+          "host": ["{{env}}", "api", "flagright", "com"],
+          "path": ["transactions"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

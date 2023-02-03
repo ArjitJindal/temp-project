@@ -223,3 +223,37 @@ bash src/scripts/onboard-tarpon-api.sh --tenantName sh-payment --tenantWebsite h
 - Create a unit test for the rule that covers all cases in `__test__` folder
 - Add it to requisite rule list (currently `transaction` or `user` rule types)
 - Merge PR and deploy to all environments (Dev, Sandbox and prod regions)
+
+### Integration Tests
+
+#### Introduction
+
+We are having Integrations tests to ensure that the APIs are working as expected. Every API has its own set of integration tests written in `Postman Collection` and stored in `test-resources/` folder.
+
+Collection Link: https://lively-firefly-529317.postman.co/workspace/Flagright-Workspace~7e6e7bab-de2f-4a94-84a0-dca68b5b3d52/collection/24163049-503b80a7-dd73-4ed0-8aa6-5eaaa06f9ea5
+
+#### Running Integration Tests
+
+For Dev environment:
+
+```bash
+npm run postman:integration:dev
+```
+
+For Sandbox environment:
+
+```bash
+npm run postman:integration:sandbox
+```
+
+We have integration tests for the following APIs:
+
+- Public API Transactions
+
+#### Sync Postman collection
+
+We can write tests in Postman and sync them to the repo using the following command this will sync the collection to `test-resources/` folder. But only the tests will be synced, not the environment variables. Environment variables are needed to be managed in code as required under `scripts/run-integration-tests.ts`.
+
+```bash
+npm run postman:sync:collection
+```

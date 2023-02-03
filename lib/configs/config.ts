@@ -88,9 +88,12 @@ export type Config = {
     MAXIMUM_ALLOWED_EXPORT_SIZE: number
     NODE_ENV?: string
     BETTERUPTIME_HOOK_URL?: string
+    POSTMAN_SECRET_ARN?: string
     SLACK_CLIENT_ID: string
     SLACK_CLIENT_SECRET: string
     SLACK_REDIRECT_URI: string
     WEBHOOK_REQUEST_TIMEOUT_SEC: number
+    INTEGRATION_TEST_API_KEY_ID?: string
+    POSTMAN_COLLECTION_ID?: string
   }
 }
