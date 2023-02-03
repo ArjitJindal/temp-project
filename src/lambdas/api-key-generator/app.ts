@@ -18,6 +18,8 @@ import {
   USERS_COLLECTION,
   SIMULATION_TASK_COLLECTION,
   SIMULATION_RESULT_COLLECTION,
+  KRS_SCORES_COLLECTION,
+  DRS_SCORES_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -300,6 +302,25 @@ export const createMongoDBCollections = async (
     )
     await simulationResultCollection.createIndex({
       taskId: 1,
+    })
+
+    try {
+      await db.createCollection(KRS_SCORES_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const krsScoresCollection = db.collection(KRS_SCORES_COLLECTION(tenantId))
+    await krsScoresCollection.createIndex({
+      userId: 1,
+    })
+    try {
+      await db.createCollection(DRS_SCORES_COLLECTION(tenantId))
+    } catch (e) {
+      // ignore already exists
+    }
+    const drsScoresCollection = db.collection(DRS_SCORES_COLLECTION(tenantId))
+    await drsScoresCollection.createIndex({
+      userId: 1,
     })
   } catch (e) {
     logger.error(`Error in creating MongoDB collections: ${e}`)

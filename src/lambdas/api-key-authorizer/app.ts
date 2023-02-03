@@ -45,8 +45,9 @@ async function getTenantScopeCredentials(
   return assumeRoleResult.Credentials
 }
 
-function getTenantIdFromApiKey(apiKey: string) {
-  return base62.decode(apiKey).toString().split('.')[0]
+function getTenantIdFromApiKey(apiKey: string): string | null {
+  const decodedApiKey = base62.decode(apiKey).toString()
+  return decodedApiKey.match(/\w+\.\w+/) ? decodedApiKey.split('.')[0] : null
 }
 
 export const apiKeyAuthorizer = lambdaAuthorizer()(
@@ -59,10 +60,31 @@ export const apiKeyAuthorizer = lambdaAuthorizer()(
     if (!apiKey) {
       throw new Error('x-api-key header is missing')
     }
-    updateLogMetadata({ apiKeySuffix: apiKey.substring(apiKey.length - 5) })
-
     const tenantId = getTenantIdFromApiKey(apiKey)
-    updateLogMetadata({ tenantId })
+    // NOTE: "Surprisingly", if the api key is invalid, lambda authorizer will still be executed, and
+    // the api key will be validated after lambda authorizer returns.
+    // To avoid error in case of invalid api key, we early return if we cannot decode the api key.
+    if (!tenantId) {
+      return {
+        principalId: 'unknown',
+        policyDocument: {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Deny',
+              Action: '*',
+              Resource: ['*'],
+            },
+          ],
+        },
+        usageIdentifierKey: apiKey,
+      }
+    }
+
+    updateLogMetadata({
+      tenantId,
+      apiKeySuffix: apiKey.substring(apiKey.length - 5),
+    })
 
     const tenantScopeCredentials = await getTenantScopeCredentials(
       tenantId,
