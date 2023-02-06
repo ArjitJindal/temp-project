@@ -529,6 +529,15 @@ export class CdkTarponStack extends cdk.Stack {
     tarponDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
     tarponRuleDynamoDbTable.grantReadWriteData(publicRuleInstanceAlias)
 
+    /* Device Data (Public) */
+    const { alias: publicDeviceDataAlias } = this.createFunction(
+      {
+        name: StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME,
+      },
+      atlasFunctionProps
+    )
+    tarponDynamoDbTable.grantReadWriteData(publicDeviceDataAlias)
+
     /* Transactions view */
     const { alias: transactionsViewAlias } = this.createFunction(
       {
@@ -1183,6 +1192,18 @@ export class CdkTarponStack extends cdk.Stack {
       publicConsoleApi.restApiName
     )
 
+    // Public Device Data API
+    const { api: publicDeviceDataApi, logGroup: publicDeviceDataApiLogGroup } =
+      this.createApiGateway(StackConstants.TARPON_DEVICE_DATA_API_NAME)
+
+    createAPIGatewayThrottlingAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      publicDeviceDataApiLogGroup,
+      StackConstants.TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME,
+      publicDeviceDataApi.restApiName
+    )
+
     // Console API
     const { api: consoleApi, logGroup: consoleApiLogGroup } =
       this.createApiGateway(StackConstants.CONSOLE_API_NAME)
@@ -1271,6 +1292,9 @@ export class CdkTarponStack extends cdk.Stack {
     })
     new CfnOutput(this, 'API Gateway endpoint URL - Console API', {
       value: consoleApi.urlForPath('/'),
+    })
+    new CfnOutput(this, 'API Gateway endpoint URL - Public Device Data API', {
+      value: publicDeviceDataApi.urlForPath('/'),
     })
     if (this.config.resource.LAMBDA_VPC_ENABLED) {
       new CfnOutput(this, 'Lambda VPC ID', {

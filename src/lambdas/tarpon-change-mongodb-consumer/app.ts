@@ -6,6 +6,7 @@ import {
   getMongoDbClient,
   USER_EVENTS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
+  DEVICE_DATA_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
@@ -28,6 +29,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
+import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
 
 const sqs = new AWS.SQS()
 
@@ -191,6 +193,34 @@ async function userEventHandler(
   )
 }
 
+async function deviceDataMetricsHandler(
+  tenantId: string,
+  deviceMetrics: DeviceMetric | undefined
+) {
+  if (!deviceMetrics) {
+    return
+  }
+  updateLogMetadata({
+    userId: deviceMetrics.userId,
+  })
+  logger.info(`Processing Device Metric`)
+
+  const db = (await getMongoDbClient()).db()
+  const deviceMetricsDataCollection = db.collection<
+    ConsumerUserEvent | BusinessUserEvent
+  >(DEVICE_DATA_COLLECTION(tenantId))
+
+  await deviceMetricsDataCollection.replaceOne(
+    { metricId: deviceMetrics.metricId },
+    {
+      ...deviceMetrics,
+    },
+    {
+      upsert: true,
+    }
+  )
+}
+
 async function transactionEventHandler(
   tenantId: string,
   transactionEvent: TransactionEvent | undefined
@@ -231,6 +261,9 @@ const tarponBuilder = new StreamConsumerBuilder(
   )
   .setUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
     userEventHandler(tenantId, newUserEvent)
+  )
+  .setDeviceDataMetricsHandler((tenantId, oldUserEvent, newUserEvent) =>
+    deviceDataMetricsHandler(tenantId, newUserEvent)
   )
   .setTransactionEventHandler(
     (tenantId, oldTransactionEvent, newTransactionEvent) =>

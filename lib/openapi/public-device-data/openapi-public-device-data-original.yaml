@@ -76,6 +76,8 @@ components:
           enum:
             - TRANSACTION
             - USER_SIGNUP
+        metricId:
+          type: string
         transactionId:
           type: string
           description: Unique transaction identifier

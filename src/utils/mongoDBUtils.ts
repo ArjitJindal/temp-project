@@ -179,6 +179,11 @@ export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
 export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
 export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
 
+/** Device DATA Metrics collection */
+export const DEVICE_DATA_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-device-data-metrics`
+}
+
 /*
   Pagination
  */

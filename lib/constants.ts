@@ -170,6 +170,12 @@ export const StackConstants = {
   TARPON_MANAGEMENT_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'TarponManagementApiThrottlingCount'
   ),
+  TARPON_DEVICE_DATA_API_GATEWAY_ALARM_NAME: getResourceName(
+    'TarponDeviceDataApiErrorPercentage'
+  ),
+  TARPON_DEVICE_DATA_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
+    'TarponDeviceDataApiThrottlingCount'
+  ),
   CONSOLE_API_NAME: getResourceName('TarponAPI-console'),
   CONSOLE_API_GATEWAY_ALARM_NAME: getResourceName(
     'ConsoleTarponApiErrorPercentage'

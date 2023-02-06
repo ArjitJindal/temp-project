@@ -67,7 +67,7 @@ export const LAMBDAS: {
   },
   [StackConstants.PUBLIC_DEVICE_DATA_API_FUNCTION_NAME]: {
     codePath: 'public-device-data',
-    handlerName: 'devideDataHandler',
+    handlerName: 'deviceDataHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
   [StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME]: {
