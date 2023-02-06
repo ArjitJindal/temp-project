@@ -13,6 +13,21 @@ import PolicyBuilder from '@/core/policies/policy-generator'
 import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
+import { logger } from '@/core/logger'
+
+const UNAUTHORIZED_RESPONSE = {
+  principalId: 'unknown',
+  policyDocument: {
+    Version: '2012-10-17',
+    Statement: [
+      {
+        Effect: 'Deny',
+        Action: '*',
+        Resource: ['*'],
+      },
+    ],
+  },
+}
 
 const AUTH0_CUSTOM_CLAIMS_NAMESPACE = 'https://flagright.com'
 
@@ -59,18 +74,22 @@ async function getTenantScopeCredentials(
   return assumeRoleResult.Credentials
 }
 
-export const getToken = (event: APIGatewayRequestAuthorizerEvent) => {
+export const getToken = (
+  event: APIGatewayRequestAuthorizerEvent
+): string | null => {
   const token =
     event.headers?.['authorization'] ?? event.headers?.['Authorization']
   if (!token) {
-    throw new Error('Expected "Authorization" header to be set')
+    logger.warn('Expected "Authorization" header to be set')
+    return null
   }
 
   const match = token.match(/^Bearer (.*)$/)
   if (!match || match.length < 2) {
-    throw new Error(
+    logger.warn(
       `Invalid Authorization token - ${token} does not match "Bearer .*"`
     )
+    return null
   }
   return match[1]
 }
@@ -86,19 +105,32 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     const arn = ARN.parse(event.methodArn)
     const { apiId, stage, accountId, requestId } = event.requestContext
     const token = getToken(event)
+    if (!token) {
+      return UNAUTHORIZED_RESPONSE
+    }
+
     updateLogMetadata({ jwtToken: token })
 
     const decoded = jwt.decode(token, { complete: true })
     if (!decoded || !decoded.header || !decoded.header.kid) {
-      throw new Error('invalid token')
+      logger.warn('token failed to be decoded')
+      return UNAUTHORIZED_RESPONSE
     }
     const key = await jwks.getSigningKey(decoded.header.kid)
     const signingKey = key.getPublicKey()
-    const verifiedDecoded = jwt.verify(
-      token,
-      signingKey,
-      jwtOptions
-    ) as jwt.JwtPayload
+
+    let verifiedDecoded: jwt.JwtPayload
+    try {
+      verifiedDecoded = jwt.verify(
+        token,
+        signingKey,
+        jwtOptions
+      ) as jwt.JwtPayload
+    } catch (e) {
+      logger.warn('token failed to be verified')
+      return UNAUTHORIZED_RESPONSE
+    }
+
     updateLogMetadata({ verifiedJwtPayload: verifiedDecoded })
 
     // TODO: Use role

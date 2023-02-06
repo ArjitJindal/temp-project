@@ -39,6 +39,9 @@ export const localDev =
       ) {
         // For requests from Console
         const token = getToken(event)
+        if (!token) {
+          throw new Error('Unable to get token')
+        }
         const decoded = jwt.decode(token, { complete: true })
         if (!decoded || !decoded.header || !decoded.header.kid) {
           throw new Error('Unable to read user data from token')
