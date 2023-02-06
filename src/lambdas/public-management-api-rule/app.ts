@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
+import _ from 'lodash'
 import { toPublicRule } from './utils'
 import { RuleService } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -12,6 +13,10 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { RuleInstanceUpdatable } from '@/@types/openapi-public-management/RuleInstanceUpdatable'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleInstance as PublicRuleInstance } from '@/@types/openapi-public-management/RuleInstance'
+import {
+  TRANSACTION_FILTERS,
+  USER_FILTERS,
+} from '@/services/rules-engine/filters'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -30,6 +35,18 @@ export const ruleHandler = lambdaApi()(
 
     if (event.httpMethod === 'GET' && event.resource === '/rules') {
       return (await ruleService.getAllRules()).map((rule) => toPublicRule(rule))
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/rule-filters-schema'
+    ) {
+      const filters = [
+        ...Object.values(USER_FILTERS),
+        ...Object.values(TRANSACTION_FILTERS),
+      ].map((filterClass) => (filterClass.getSchema() as any)?.properties || {})
+      return {
+        type: 'object',
+        properties: _.merge({}, ...filters),
+      }
     } else if (
       event.httpMethod === 'GET' &&
       event.resource === '/rules/{ruleId}' &&

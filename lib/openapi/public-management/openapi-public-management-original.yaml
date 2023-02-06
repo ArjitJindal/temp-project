@@ -256,6 +256,56 @@ paths:
 
 
         Created rule instances can be idempotently updated with the `POST /rule-instances/{ruleInstanceId}`. All the fields in the [RuleInstanceUpdatable](https://flagright-console.stoplight.io/docs/flagright-management-api-1/1ee6d64e6acf0-rule-instance-updatable) schema can be updated for a rule.
+  /rule-filters-schema:
+    get:
+      security:
+        - x-api-key: []
+      summary: Rule Filters Schema - Get
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              examples:
+                example-1:
+                  value:
+                    type: object
+                    properties:
+                      paymentMethod:
+                        type: string
+                        ui:schema:
+                          ui:group: transaction
+                          ui:subtype: PAYMENT_METHOD
+                        title: Payment Method
+                        enum:
+                          - ACH
+                          - CARD
+                          - IBAN
+                          - SWIFT
+                          - UPI
+                          - WALLET
+                          - MPESA
+                          - GENERIC_BANK_ACCOUNT
+                          - CHECK
+                        nullable: true
+      operationId: get-rule-filters-schema
+      description: >-
+        ### Retrieve Rule Filters Schema
+
+
+        `GET /rule-filteres-schema` endpoint returns the rule filters supported by flagright as [JSON Schema](https://json-schema.org/). 
+
+
+        When you create a [ruleInstance](https://flagright-console.stoplight.io/docs/flagright-management-api-1/f112abcc9788b-rule-instance-create), you can use the schema returned by this endpoint to construct `filters` field for a rule instance.
+
+
+        If you need an update to a rule filter or a new rule filter, you can always contact the Flagright team.
+      parameters: []
+    parameters: []
 components:
   schemas:
     RuleInstance:
@@ -298,6 +348,9 @@ components:
           type: string
         filters:
           type: object
+          description:
+            Rule filters. A key-value json object corresponding to the json
+            schema returned by /rule-filters-schema endpoint.
         parameters:
           type: object
         ruleNameAlias:

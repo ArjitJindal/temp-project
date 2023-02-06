@@ -133,6 +133,42 @@ describe('Public Management API - Rule', () => {
     ])
   })
 
+  test('Rule Filters Schema- Get', async () => {
+    const response = await ruleHandler(
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/rule-filters-schema'),
+      null as any,
+      null as any
+    )
+    if (response == null) {
+      throw new Error(`Response is empty`)
+    }
+    expect(response.statusCode).toEqual(200)
+    const returnedSchema = JSON.parse(response.body)
+    expect(returnedSchema.type).toEqual('object')
+    expect(returnedSchema.properties).toMatchObject({
+      paymentMethod: {
+        type: 'string',
+        'ui:schema': {
+          'ui:group': 'transaction',
+          'ui:subtype': 'PAYMENT_METHOD',
+        },
+        title: 'Payment Method',
+        enum: [
+          'ACH',
+          'CARD',
+          'IBAN',
+          'SWIFT',
+          'UPI',
+          'WALLET',
+          'MPESA',
+          'GENERIC_BANK_ACCOUNT',
+          'CHECK',
+        ],
+        nullable: true,
+      },
+    })
+  })
+
   test('Rules - Get', async () => {
     const response = await ruleHandler(
       getApiGatewayGetEvent(TEST_TENANT_ID, '/rules/{ruleId}', {

@@ -17,6 +17,8 @@ const env = (process.env.ENV || 'prod').split(':')[0]
 
 export const PublicManagementApiPathToLambda: any = {
   '/rules': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
+  '/rule-filters-schema':
+    StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
   '/rules/{ruleId}': StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
   '/rule-instances':
     StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,
