@@ -1068,7 +1068,7 @@ export class CaseRepository {
 
     const res = await cursor.toArray()
 
-    if (hasFeatures(['PULSE', 'PULSE_ARS_CALCULATION'])) {
+    if (hasFeatures(['PULSE'])) {
       const riskRepository = new RiskRepository(this.tenantId, {
         dynamoDb: this.dynamoDb,
       })

@@ -10,7 +10,7 @@ import {
   ParameterAttributeRiskValuesParameterEnum,
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 
-withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const RISK_FACTOR: (

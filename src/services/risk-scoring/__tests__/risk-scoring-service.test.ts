@@ -14,7 +14,7 @@ import {
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const dynamoDb = getDynamoDbClient()
-withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const testUser1 = getTestUser({ userId: '1' })

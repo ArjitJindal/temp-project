@@ -3712,8 +3712,6 @@ components:
         id: xc9jmvdpmvtof
       enum:
         - PULSE
-        - PULSE_KRS_CALCULATION
-        - PULSE_ARS_CALCULATION
         - AUDIT_LOGS
         - SLACK_ALERTS
         - IMPORT_FILES

@@ -82,7 +82,7 @@ async function transactionHandler(
   logger.info(`Starting Case Creation`)
   const cases = await caseCreationService.handleTransaction(transaction)
   logger.info(`Case Creation Completed`)
-  if (await tenantHasFeature(tenantId, 'PULSE_ARS_CALCULATION')) {
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Calculating ARS & DRS`)
 
     const { originDrsScore, destinationDrsScore } =
@@ -150,7 +150,7 @@ async function userHandler(
   const usersRepo = new UserRepository(tenantId, { mongoDb })
   await usersRepo.saveUserMongo(user)
 
-  if (await tenantHasFeature(tenantId, 'PULSE_KRS_CALCULATION')) {
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
     logger.info(`Refreshing DRS User distribution stats`)
     await dashboardStatsRepository.refreshUserStats()
     logger.info(`Refreshing DRS User distribution stats - completed`)

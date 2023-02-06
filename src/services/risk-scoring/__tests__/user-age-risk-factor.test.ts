@@ -5,7 +5,7 @@ import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { createKrsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
-withFeatureHook(['PULSE', 'PULSE_KRS_CALCULATION', 'PULSE_ARS_CALCULATION'])
+withFeatureHook(['PULSE'])
 dynamoDbSetupHook()
 
 const CLASSFICATIONS: RiskClassificationScore[] = [

@@ -31,11 +31,7 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
-const features: Feature[] = [
-  'PULSE',
-  'PULSE_KRS_CALCULATION',
-  'PULSE_ARS_CALCULATION',
-]
+const features: Feature[] = ['PULSE']
 
 withFeatureHook(features)
 

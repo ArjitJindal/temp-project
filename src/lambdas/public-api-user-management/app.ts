@@ -76,13 +76,12 @@ export const userHandler = lambdaApi()(
         ? await userRepository.saveConsumerUser(userPayload)
         : await userRepository.saveBusinessUser(userPayload)
       if (hasFeature('PULSE')) {
-        if (hasFeature('PULSE_KRS_CALCULATION')) {
-          const riskScoringService = new RiskScoringService(tenantId, {
-            dynamoDb,
-            mongoDb,
-          })
-          await riskScoringService.updateInitialRiskScores(user)
-        }
+        const riskScoringService = new RiskScoringService(tenantId, {
+          dynamoDb,
+          mongoDb,
+        })
+        await riskScoringService.updateInitialRiskScores(user)
+
         if (userPayload.riskLevel) {
           await handleRiskLevelParam(tenantId, dynamoDb, user)
         }

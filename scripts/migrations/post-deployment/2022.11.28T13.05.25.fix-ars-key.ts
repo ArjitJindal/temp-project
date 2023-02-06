@@ -11,7 +11,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!(await tenantHasFeature(tenant.id, 'PULSE_ARS_CALCULATION'))) {
+  if (!(await tenantHasFeature(tenant.id, 'PULSE'))) {
     return
   }
 
