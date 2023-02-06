@@ -14,7 +14,7 @@ import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigura
 import { Rule, RuleInstance } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const TableList = () => {
   usePageViewTracker('Rules Page');
@@ -34,7 +34,7 @@ const TableList = () => {
   const [currentRule, setCurrentRule] = useState<Rule | null>(null);
 
   const api = useApi();
-  const isPulseEnabled = useFeaturesEnabled(['PULSE']);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const newInstanceMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {

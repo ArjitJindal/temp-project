@@ -9,8 +9,6 @@ import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider'
 
 const FEATURES: Feature[] = [
   'PULSE',
-  'PULSE_KRS_CALCULATION',
-  'PULSE_ARS_CALCULATION',
   'SLACK_ALERTS',
   'AUDIT_LOGS',
   'IMPORT_FILES',

@@ -21,7 +21,7 @@ function Analysis() {
         <Col span={24}>
           <RuleHitCard />
         </Col>
-        <Feature name="PULSE_KRS_CALCULATION">
+        <Feature name="PULSE">
           <Col span={24}>
             <DRSDistributionCard />
           </Col>

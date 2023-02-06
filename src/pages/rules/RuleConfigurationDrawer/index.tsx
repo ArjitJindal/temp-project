@@ -33,7 +33,7 @@ import {
 } from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/utils';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const BASIC_DETAILS_STEP = 'basic_details';
 const STANDARD_FILTERS_STEP = 'standard_filters';
@@ -62,7 +62,7 @@ interface Props {
 
 export default function RuleConfigurationDrawer(props: Props) {
   const { isVisible, isSubmitting, formInitialValues, onChangeVisibility, rule, onSubmit } = props;
-  const isPulseEnabled = useFeaturesEnabled(['PULSE']);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const orderedProps = getOrderedProps(rule?.parametersSchema);
 

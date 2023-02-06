@@ -37,14 +37,10 @@ export default function SubHeader(props: Props) {
           </Form.Layout.Label>
         </div>
         <div>
-          <Feature name="PULSE_KRS_CALCULATION">
+          <Feature name="PULSE">
             <Form.Layout.Label icon={<HospitalIcon />} title={'KYC Risk Score'}>
               <KycRiskDisplay userId={user.userId} />
             </Form.Layout.Label>
-          </Feature>
-        </div>
-        <div>
-          <Feature name="PULSE_ARS_CALCULATION">
             <Form.Layout.Label icon={<HospitalIcon />} title={'Customer risk assessment'}>
               <DynamicRiskDisplay userId={user.userId} />
             </Form.Layout.Label>

@@ -19,7 +19,7 @@ import Id from '@/components/ui/Id';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export interface TransactionsTableParams extends CommonParams {
@@ -50,7 +50,7 @@ type Props = {
 
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
-  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   const {
     queryResult,

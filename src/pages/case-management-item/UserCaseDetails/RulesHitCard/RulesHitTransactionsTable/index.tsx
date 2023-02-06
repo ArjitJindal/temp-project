@@ -20,7 +20,7 @@ import { useApiTime } from '@/utils/tracker';
 import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
 import { PaymentDetailsCard } from '@/components/ui/PaymentDetailsCard';
 import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export function expandedRowRender(item: RuleHitTransactionItem) {
@@ -50,7 +50,7 @@ type RuleHitTransactionItem = {
 
 export default function RulesHitTransactionTable(props: Props) {
   const { caseItem, rulesInstanceId } = props;
-  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
   const api = useApi();
   const caseId = caseItem.caseId as string;
 

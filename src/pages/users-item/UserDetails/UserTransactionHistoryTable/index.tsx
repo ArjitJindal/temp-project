@@ -19,7 +19,7 @@ import { USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import TransactionStateTag from '@/components/ui/TransactionStateTag';
 import Money from '@/components/ui/Money';
 import { Currency } from '@/utils/currencies';
-import { useFeaturesEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export type DataItem = {
@@ -42,7 +42,7 @@ export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
-  const isPulseEnabled = useFeaturesEnabled(['PULSE', 'PULSE_ARS_CALCULATION']);
+  const isPulseEnabled = useFeatureEnabled('PULSE');
 
   // Using this hack to fix sticking dropdown on scroll
   const rootRef = useRef<HTMLDivElement | null>(null);
