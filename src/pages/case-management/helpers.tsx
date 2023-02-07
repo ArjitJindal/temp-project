@@ -5,13 +5,12 @@ import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
-import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
+import { defaultQueryAdapter } from '@/components/ui/Table/helpers/queryAdapter';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
     return {
-      page: params.page ?? 1,
-      pageSize: params.pageSize ?? DEFAULT_PAGE_SIZE,
+      ...defaultQueryAdapter.serializer(params),
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
       createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
       transactionTimestamp: params.transactionTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
@@ -27,17 +26,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       originMethodFilter: params.originMethodFilter,
       destinationMethodFilter: params.destinationMethodFilter,
       transactionState: params.transactionState?.join(','),
-      sort: (params.sort ?? [])
-        .map(([key, order]) => {
-          if (order === 'descend') {
-            return `-${key}`;
-          }
-          if (order === 'ascend') {
-            return `${key}`;
-          }
-          return key;
-        })
-        .join(','),
       tagKey: params.tagKey ?? undefined,
       tagValue: params.tagValue ?? undefined,
       caseStatus: params.caseStatus,
@@ -55,8 +43,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
   },
   deserializer: (raw): TableSearchParams => {
     return {
-      page: parseInt(raw.page ?? '') || 1,
-      pageSize: parseInt(raw.pageSize ?? '') || DEFAULT_PAGE_SIZE,
+      ...defaultQueryAdapter.deserializer(raw),
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
@@ -81,15 +68,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         raw.transactionState != null
           ? raw.transactionState.split(',').filter(isTransactionState)
           : undefined,
-      sort:
-        raw.sort?.split(',').map((key) => {
-          if (key.startsWith('-')) {
-            return [key.substring(1), 'descend'];
-          } else if (key.startsWith('+')) {
-            return [key.substring(1), 'ascend'];
-          }
-          return [key, 'ascend'];
-        }) ?? [],
       tagKey: raw.tagKey ?? undefined,
       tagValue: raw.tagValue ?? undefined,
       caseStatus:

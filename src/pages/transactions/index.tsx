@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -14,14 +16,43 @@ import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_PARAMS_STATE } from '@/components/ui/Table';
 import { dayjs } from '@/utils/dayjs';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
+import { makeUrl, parseQueryString } from '@/utils/routing';
+import { useDeepEqualEffect } from '@/utils/hooks';
+import { DEFAULT_PAGE_SIZE } from '@/components/ui/Table/consts';
 
 const TableList = () => {
   usePageViewTracker('Transactions List Page');
   const api = useApi();
   const i18n = useI18n();
   const measure = useApiTime();
+  const navigate = useNavigate();
 
+  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
+
+  const pushParamsToNavigation = useCallback(
+    (params: TransactionsTableParams) => {
+      navigate(makeUrl('/transactions/list', {}, queryAdapter.serializer(params)), {
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+
+  const handleChangeParams = (newParams: TransactionsTableParams) => {
+    pushParamsToNavigation(newParams);
+  };
+
+  useDeepEqualEffect(() => {
+    setParams((prevState: TransactionsTableParams) => ({
+      ...prevState,
+      ...parsedParams,
+      page: parsedParams.page ?? 1,
+      sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
+  }, [parsedParams]);
+
   const queryResult = usePaginatedQuery(TRANSACTIONS_LIST(params), async (paginationParams) => {
     const {
       pageSize,
@@ -119,7 +150,7 @@ const TableList = () => {
         ]}
         queryResult={queryResult}
         params={params}
-        onChangeParams={setParams}
+        onChangeParams={handleChangeParams}
         autoAdjustHeight
       />
     </PageWrapper>

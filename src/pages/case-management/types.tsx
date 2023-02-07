@@ -6,14 +6,11 @@ import {
   TransactionState,
   UserState,
 } from '@/apis';
-import { SortOrder } from '@/components/ui/Table/types';
+import { CommonParams } from '@/components/ui/Table';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 
 export type TableSearchParams = Partial<{
   caseId: string;
-  page: number;
-  pageSize: number;
-  sort: [string, SortOrder][];
   timestamp: string[];
   createdTimestamp: string[];
   rulesHitFilter: Array<string>;
@@ -41,4 +38,5 @@ export type TableSearchParams = Partial<{
   kycStatuses: KYCStatus[];
   userStates: UserState[];
   riskLevels: RiskLevel[];
-}>;
+}> &
+  CommonParams;

@@ -24,7 +24,7 @@ import RiskLevelTag from '@/components/ui/RiskLevelTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
-  timestamp?: string;
+  timestamp?: string[];
   transactionId?: string;
   type?: string;
   transactionState?: TransactionState[];
