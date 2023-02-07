@@ -20,7 +20,7 @@ import {
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
-import dayjs from '@/utils/dayjs'
+import dayjs, { convertToDays } from '@/utils/dayjs'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { logger } from '@/core/logger'
@@ -56,10 +56,7 @@ function matchParameterValue(
   ) {
     return true
   }
-  if (
-    parameterValueContent.kind === 'RANGE' ||
-    parameterValueContent.kind === 'DAY_RANGE'
-  ) {
+  if (parameterValueContent.kind === 'RANGE') {
     if (
       typeof valueToMatch === 'number' &&
       (parameterValueContent.start == null ||
@@ -79,6 +76,26 @@ function matchParameterValue(
       locationTimeHours >= parameterValueContent.startHour &&
       locationTimeHours < parameterValueContent.endHour
     ) {
+      return true
+    }
+  }
+  if (parameterValueContent.kind === 'DAY_RANGE') {
+    const days = valueToMatch as number
+    const start = convertToDays(
+      parameterValueContent.start,
+      parameterValueContent.startGranularity
+    )
+
+    if (parameterValueContent.endGranularity === 'INFINITE' && days >= start) {
+      return true
+    }
+
+    const end = convertToDays(
+      parameterValueContent.end,
+      parameterValueContent.endGranularity
+    )
+
+    if (days >= start && days <= end) {
       return true
     }
   }

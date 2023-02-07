@@ -3638,8 +3638,25 @@ components:
           type: number
         end:
           type: number
+        startGranularity:
+          type: string
+          enum:
+            - DAYS
+            - MONTHS
+            - YEARS
+        endGranularity:
+          type: string
+          enum:
+            - DAYS
+            - MONTHS
+            - YEARS
+            - INFINITE
       required:
         - kind
+        - start
+        - end
+        - startGranularity
+        - endGranularity
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object

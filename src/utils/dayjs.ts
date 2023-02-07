@@ -25,3 +25,16 @@ export default function dayjs(
 export function duration(time: number, unit?: DurationUnitType): Duration {
   return dayjsLib.duration(time, unit)
 }
+
+export const convertToDays = (value: number, unit: string) => {
+  switch (unit) {
+    case 'DAYS':
+      return value
+    case 'MONTHS':
+      return value * 30
+    case 'YEARS':
+      return value * 365
+    default:
+      return value
+  }
+}
