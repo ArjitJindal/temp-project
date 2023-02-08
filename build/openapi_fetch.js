@@ -27,7 +27,7 @@ async function main() {
   if (process.env.ENV === 'local') {
     if (!fs.existsSync(LOCAL_OPENAPI_PATH)) {
       console.error(
-        `${LOCAL_OPENAPI_PATH} doesn't exist. Run "npm run openapi:build" in tarpon first.`,
+        `${LOCAL_OPENAPI_PATH} doesn't exist. Run "npm run openapi:prepare" in tarpon first.`,
       );
       sys.exit(1);
     }
