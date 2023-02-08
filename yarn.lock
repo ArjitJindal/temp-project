@@ -3422,6 +3422,18 @@
   resolved "https://registry.yarnpkg.com/@types/amap-js-api/-/amap-js-api-1.4.10.tgz#35c3ec81860a956f34bbd52672ba9cf2f4704b5e"
   integrity sha512-AcYR7/GFBazu3Ho+psX+s1D2e+6G5yfplKAQ9js0NJ09SlvB9dAz10sbfzv/cvaKV1hgE1m9MzC2UVVbsqiSIg==
 
+"@types/auth0-js@*":
+  version "9.14.7"
+  resolved "https://registry.yarnpkg.com/@types/auth0-js/-/auth0-js-9.14.7.tgz#ffa07e66ba37b1e07c5299e877658c0c841c071e"
+  integrity sha512-Lfoj9XItsnjI/1lxHs4r5wlQjkD4XLy81tAVt6B3j3N9mJL4o4ZQu1SbNcq7aImdhkzss53vxubwBJ3rp3AjUQ==
+
+"@types/auth0-lock@^11.27.4":
+  version "11.27.4"
+  resolved "https://registry.yarnpkg.com/@types/auth0-lock/-/auth0-lock-11.27.4.tgz#da8476e5346ee5bbed2f4dad1cacd4270771929d"
+  integrity sha512-yT1CNqXATr6UQh/a7+jNjnfAu1cww0eLxpyJn4UdByAz0SliYWUr+c/N3AC65591aX9R4Q122fHwlnQZADYJOA==
+  dependencies:
+    "@types/auth0-js" "*"
+
 "@types/babel__core@^7.1.14":
   version "7.1.19"
   resolved "https://registry.yarnpkg.com/@types/babel__core/-/babel__core-7.1.19.tgz#7b497495b7d1b4812bdb9d02804d0576f43ee460"

@@ -1,3 +1,4 @@
+// todo: need branding?
 export default {
   'pages.layouts.userLayout.title': 'Login to Flagright console',
   'pages.login.accountLogin.tab': 'Account Login',

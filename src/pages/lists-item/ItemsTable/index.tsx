@@ -56,7 +56,6 @@ function UserListTable(props: Props) {
     meta: {},
   });
 
-  console.log('editUserData', editUserData);
   const tableRef = useRef<TableActionType>(null);
 
   const isNewUserValid = newUserData.value.length > 0;

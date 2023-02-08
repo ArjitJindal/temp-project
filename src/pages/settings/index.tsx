@@ -10,6 +10,9 @@ import SidebarPanel, { MenuSection } from '@/components/ui/SidebarPanel';
 import Button from '@/components/ui/Button';
 import { usePageViewTracker } from '@/utils/tracker';
 import { DefaultViewsSettings } from '@/pages/settings/components/DefaultViewsSettings';
+import { getBranding } from '@/utils/branding';
+
+const branding = getBranding();
 
 export default function SettingsPage() {
   usePageViewTracker('Settings');
@@ -59,7 +62,7 @@ export default function SettingsPage() {
               <div style={{ marginTop: '200px' }}>
                 <h3>Sanctions/PEP/Adverse media screening{'     '}</h3>
                 <Button
-                  href="mailto:support@flagright.com"
+                  href={`mailto:${branding.supportEmail}`}
                   type="primary"
                   className="justify-content"
                 >
@@ -76,7 +79,7 @@ export default function SettingsPage() {
               <div style={{ marginTop: '200px' }}>
                 <h3>Sage: KYC/KYB Orchestrator{'     '}</h3>
                 <Button
-                  href="mailto:support@flagright.com"
+                  href={`mailto:${branding.supportEmail}`}
                   type="primary"
                   className="justify-content"
                 >
@@ -94,7 +97,7 @@ export default function SettingsPage() {
               <div style={{ marginTop: '200px' }}>
                 <h3>Blockchain analytics{'     '}</h3>
                 <Button
-                  href="mailto:support@flagright.com"
+                  href={`mailto:${branding.supportEmail}`}
                   type="primary"
                   className="justify-content"
                 >
@@ -112,7 +115,7 @@ export default function SettingsPage() {
               <div style={{ marginTop: '200px' }}>
                 <h3>Launchpad: Get expert support for fintech licensing{'     '}</h3>
                 <Button
-                  href="mailto:support@flagright.com"
+                  href={`mailto:${branding.supportEmail}`}
                   type="primary"
                   className="justify-content"
                 >
@@ -145,7 +148,7 @@ export default function SettingsPage() {
             <>
               <div style={{ marginTop: '200px' }}>
                 <Button
-                  href="mailto:support@flagright.com"
+                  href={`mailto:${branding.supportEmail}`}
                   type="primary"
                   className="justify-content"
                 >

@@ -21,7 +21,6 @@ export interface FlagrightAuth0User {
   tenantId: string;
   tenantName: string;
   tenantConsoleApiUrl: string;
-  tenantApiAudience: string;
   demoMode: boolean;
 }
 

@@ -4,6 +4,9 @@ import ProCard from '@ant-design/pro-card';
 import RcResizeObserver from 'rc-resize-observer';
 import { Link } from 'react-router-dom';
 import styles from './style.module.less';
+import { getBranding } from '@/utils/branding';
+
+const branding = getBranding();
 
 const { Divider } = ProCard;
 const RiskAlgorithmTable: React.FC = () => {
@@ -17,10 +20,10 @@ const RiskAlgorithmTable: React.FC = () => {
             <li>
               <h3>How is the score calculated when there is no data?</h3>
               <p>
-                When there is no data avaliable for a risk factor, Flagright system defaults to very
-                high risk. For example, for a user for whom there's no data on country of
-                nationality, Flagright systems assume the risk level of very high risk for that
-                parameter.
+                When there is no data avaliable for a risk factor, {branding.companyName} system
+                defaults to very high risk. For example, for a user for whom there's no data on
+                country of nationality, {branding.companyName} systems assume the risk level of very
+                high risk for that parameter.
               </p>
             </li>
             <li>

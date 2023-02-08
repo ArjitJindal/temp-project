@@ -1,7 +1,5 @@
 import React from 'react';
-import AuthProvider from './AuthProvider';
 import SettingsProvider from './SettingsProvider';
-import RouterProvider from './RouterProvider';
 import AntConfigProvider from './AntConfigProvider';
 import QueryClientProvider from './QueryClientProvider';
 import MixPanelProvider from './MixPanelProvider';
@@ -16,14 +14,12 @@ interface Props {
   children?: React.ReactNode;
 }
 
-export function LocalOnlyProviders(props: Props) {
+export function StorybookMockProviders(props: Props) {
   return (
     <AntConfigProvider>
       <FlagrightUserProviderMock>
         <SettingsProviderMock>
-          <RouterProvider>
-            <SideBarProvider>{props.children}</SideBarProvider>
-          </RouterProvider>
+          <SideBarProvider>{props.children}</SideBarProvider>
         </SettingsProviderMock>
       </FlagrightUserProviderMock>
     </AntConfigProvider>
@@ -33,21 +29,17 @@ export function LocalOnlyProviders(props: Props) {
 export default function Providers(props: Props) {
   return (
     <AntConfigProvider>
-      <AuthProvider>
+      <QueryClientProvider>
         <FlagrightUserProvider>
           <SettingsProvider globalFeatures={FEATURES_ENABLED as Feature[]}>
-            <RouterProvider>
-              <QueryClientProvider>
-                <SideBarProvider>
-                  <MixPanelProvider>
-                    <DemoModeProvider>{props.children}</DemoModeProvider>
-                  </MixPanelProvider>
-                </SideBarProvider>
-              </QueryClientProvider>
-            </RouterProvider>
+            <SideBarProvider>
+              <MixPanelProvider>
+                <DemoModeProvider>{props.children}</DemoModeProvider>
+              </MixPanelProvider>
+            </SideBarProvider>
           </SettingsProvider>
         </FlagrightUserProvider>
-      </AuthProvider>
+      </QueryClientProvider>
     </AntConfigProvider>
   );
 }

@@ -44,8 +44,8 @@ export function riskValueDayRange(start: number, end: number): RiskParameterValu
     kind: 'DAY_RANGE',
     start,
     end,
-    endGranularity: 'DAYS',
     startGranularity: 'DAYS',
+    endGranularity: 'DAYS',
   };
 }
 

@@ -25,6 +25,7 @@ import s from './styles.module.less';
 import { I18n, TranslationId, useI18n } from '@/locales';
 import { useRoutes } from '@/services/routing';
 import { hasName, isTree, RouteItem } from '@/services/routing/types';
+import { getBranding } from '@/utils/branding';
 
 const icons = {
   FlagOutlined: (
@@ -68,9 +69,11 @@ function getSelectedKeys(routes: RouteItem[], currentPath: string): string[] {
   }
   return result;
 }
+
+const branding = getBranding();
 const disabledMessage = (
   <div>
-    Please <a href="mailto:support@flagright.com">contact us</a> to access this feature.
+    Please <a href={`mailto:${branding.supportEmail}`}>contact us</a> to access this feature.
   </div>
 );
 function renderItems(parentTranslationKey: string, items: RouteItem[], i18n: I18n): ItemType[] {

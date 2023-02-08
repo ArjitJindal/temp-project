@@ -37,19 +37,25 @@ function serve() {
   });
 
   /*
-  openssl genrsa -out build-utils/self_priv.pem 1024
-  openssl req -new -key build-utils/self_priv.pem -out build-utils/certrequest.csr
-  openssl x509 -req -in build-utils/certrequest.csr -signkey build-utils/self_priv.pem -out self_cert.pem
+  openssl genrsa -out build/certificates/self_priv.pem 1024
+  openssl req -new -key build/certificates/self_priv.pem -out build/certificates/certrequest.csr
+  openssl x509 -req -in build/certificates/certrequest.csr -signkey build/certificates/self_priv.pem -out build/certificates/self_cert.pem
   */
-  const USE_HTTPS = false;
+  const USE_HTTPS = true;
 
   const options = {
     passphrase: process.env.HTTPS_PASSPHRASE || '',
   };
 
   if (USE_HTTPS) {
-    options.key = fs.readFileSync(path.resolve(SCRIPT_DIR, 'self_priv.pem'), 'utf8');
-    options.cert = fs.readFileSync(path.resolve(SCRIPT_DIR, 'self_cert.pem'), 'utf8');
+    options.key = fs.readFileSync(
+      path.resolve(SCRIPT_DIR, 'certificates', 'self_priv.pem'),
+      'utf8',
+    );
+    options.cert = fs.readFileSync(
+      path.resolve(SCRIPT_DIR, 'certificates', 'self_cert.pem'),
+      'utf8',
+    );
   }
 
   const http = USE_HTTPS ? require('https') : require('http');

@@ -9,6 +9,7 @@ import { RecommendedTag } from '@/components/ui/RecommendedTag';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { GET_RULES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/common/QueryResultsTable';
+import { getBranding } from '@/utils/branding';
 
 interface Props {
   onSelectRule: (rule: Rule) => void;
@@ -26,6 +27,8 @@ export const recommendedRules = [
   'R-122',
   'R-124',
 ];
+
+const branding = getBranding();
 
 export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
   const api = useApi();
@@ -51,7 +54,9 @@ export const RulesTable: React.FC<Props> = ({ onSelectRule }) => {
                 <span className={style.root}>
                   {entity.id}{' '}
                   {recommendedRules.includes(entity.id) ? (
-                    <RecommendedTag tooltipTitle="Recommended tag helps you securely and anonymously collaborate with other fintechs globally. Flagright system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones." />
+                    <RecommendedTag
+                      tooltipTitle={`Recommended tag helps you securely and anonymously collaborate with other fintechs globally. ${branding.companyName} system continuously monitors the most commonly used rules across customers in 6 continents and tags the frequently used ones.`}
+                    />
                   ) : (
                     ''
                   )}

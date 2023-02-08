@@ -1,7 +1,4 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMemo } from 'react';
-import jwt_decode from 'jwt-decode';
-import { useLocalStorageState } from 'ahooks';
 import {
   AuthorizationAuthentication,
   Configuration,
@@ -15,6 +12,7 @@ import {
 import { PromiseMiddlewareWrapper } from './apis/middleware';
 import { ObjectDefaultApi as FlagrightApi } from './apis/types/ObjectParamAPI';
 import { useAuth0User } from '@/utils/user-utils';
+import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 
 class AuthorizationMiddleware implements Middleware {
   auth: SecurityAuthentication;
@@ -32,52 +30,22 @@ class AuthorizationMiddleware implements Middleware {
     return context;
   }
 }
-export function useAuth(): SecurityAuthentication {
-  const user = useAuth0User();
-  const userIdentityKey = JSON.stringify(user);
-  const [jwt, setJwt] = useLocalStorageState<{ [key: string]: string }>('jwt', {});
-  const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
+export function useSecurityAuthentication(): SecurityAuthentication {
+  const { accessToken } = useAuth();
   return useMemo(() => {
-    const audience = AUTH0_AUDIENCE ?? user.tenantApiAudience;
     return new AuthorizationAuthentication({
       getToken: async () => {
-        const cachedJwt = jwt[userIdentityKey];
-        if (cachedJwt) {
-          const decodedJwt = jwt_decode<{ exp: number }>(cachedJwt);
-          if (decodedJwt.exp > Date.now() / 1000) {
-            return cachedJwt;
-          }
+        if (accessToken == null) {
+          throw new Error(`accessToken should not be null at this point`);
         }
-        let token;
-        try {
-          token = await getAccessTokenSilently({
-            scope: 'openid profile email',
-            audience,
-          });
-        } catch (e) {
-          token = await getAccessTokenWithPopup({
-            scope: 'openid profile email',
-            audience,
-          });
-        }
-        setJwt({
-          [userIdentityKey]: token,
-        });
-        return token;
+        return accessToken;
       },
     });
-  }, [
-    user.tenantApiAudience,
-    jwt,
-    userIdentityKey,
-    setJwt,
-    getAccessTokenSilently,
-    getAccessTokenWithPopup,
-  ]);
+  }, [accessToken]);
 }
 
 export function useApi(): FlagrightApi {
-  const auth = useAuth();
+  const auth = useSecurityAuthentication();
   const user = useAuth0User();
   const api = useMemo(() => {
     const apiUrl = API_BASE_PATH ?? user.tenantConsoleApiUrl;

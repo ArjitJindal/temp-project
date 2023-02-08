@@ -2,13 +2,14 @@
 
 .logo {
   position: relative;
-  height: 28px;
 
   > img {
     position: absolute;
-    top: 0;
+    top: 50%;
+    transform: translateY(-50%);
     opacity: 0;
     transition: opacity @default-animation-speed;
+    color: white;
 
     &.isVisible {
       opacity: 1;

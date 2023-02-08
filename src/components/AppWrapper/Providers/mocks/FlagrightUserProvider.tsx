@@ -14,7 +14,6 @@ export default function FlagrightUserProviderMock(props: { children: React.React
           tenantId: 'mock',
           tenantName: 'Mock Tenant',
           tenantConsoleApiUrl: 'https://example.com/mock',
-          tenantApiAudience: '',
           demoMode: false,
         },
       }}

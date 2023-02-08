@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import * as Sentry from '@sentry/react';
 import { BrowserTracing } from '@sentry/tracing';
@@ -9,6 +9,7 @@ import { useRoutes } from '@/services/routing';
 import { isRedirect, isTree, RouteItem } from '@/services/routing/types';
 
 import './global.less';
+import { getBranding } from '@/utils/branding';
 
 Sentry.init({
   dsn: SENTRY_DSN,
@@ -39,7 +40,13 @@ function Routing() {
   return <Routes>{renderRoutes(routes)}</Routes>;
 }
 
+const branding = getBranding();
+
 function App() {
+  useEffect(() => {
+    document.title = `${branding.companyName} Console`;
+  }, []);
+
   return (
     <AppWrapper>
       <Routing />

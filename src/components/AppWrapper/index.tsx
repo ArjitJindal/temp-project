@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import cn from 'clsx';
-import Providers, { LocalOnlyProviders } from './Providers';
+import { Navigate, useLocation } from 'react-router';
+import Providers, { StorybookMockProviders } from './Providers';
 import Menu from './Menu';
 import Header from './Header';
 import s from './styles.module.less';
@@ -8,12 +9,16 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import StorybookPage from '@/pages/storybook';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
+import LoginPage from '@/pages/login';
+import LogoutPage from '@/pages/logout';
+import AuthProvider, { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
+import RouterProvider from '@/components/AppWrapper/Providers/RouterProvider';
 
 interface Props {
   children?: React.ReactNode;
 }
 
-function Content(props: Props) {
+function MainContent(props: Props) {
   const [isCollapsed, setCollapsed] = useState(false);
   const [isDemoModeRes] = useDemoMode();
 
@@ -30,20 +35,45 @@ function Content(props: Props) {
   );
 }
 
-export default function AppWrapper(props: Props) {
-  if (window.location.pathname.startsWith('/storybook')) {
+function SpecialRoutes(props: Props) {
+  const { accessToken } = useAuth();
+  const location = useLocation();
+
+  if (location.pathname.startsWith('/storybook')) {
     return (
-      <LocalOnlyProviders>
+      <StorybookMockProviders>
         <StorybookPage />
-      </LocalOnlyProviders>
+      </StorybookMockProviders>
     );
+  }
+
+  if (location.pathname.startsWith('/login')) {
+    return <LoginPage />;
+  }
+
+  if (location.pathname.startsWith('/logout')) {
+    return <LogoutPage />;
+  }
+
+  if (accessToken == null) {
+    return <Navigate to={'/login'} />;
   }
 
   return (
     <Providers>
       <ErrorBoundary>
-        <Content {...props} />
+        <MainContent {...props} />
       </ErrorBoundary>
     </Providers>
+  );
+}
+
+export default function AppWrapper(props: Props) {
+  return (
+    <RouterProvider>
+      <AuthProvider>
+        <SpecialRoutes {...props} />
+      </AuthProvider>
+    </RouterProvider>
   );
 }

@@ -7,6 +7,7 @@ import { WebhookDeliveryAttemptsTable } from './WebhookDeliveryAttemptsTable';
 import { WebhookConfiguration, WebhookEventType, WebhookSecrets } from '@/apis';
 import Button from '@/components/ui/Button';
 import { useApi } from '@/api';
+import { getBranding } from '@/utils/branding';
 
 const WEBHOOK_EVENTS: WebhookEventType[] = ['USER_STATE_UPDATED'];
 
@@ -24,6 +25,8 @@ function isValidWebhookUrl(webhookUrl: string): boolean {
     return false;
   }
 }
+
+const branding = getBranding();
 
 export const WebhookDetails: React.FC<Props> = ({
   webhook,
@@ -53,14 +56,12 @@ export const WebhookDetails: React.FC<Props> = ({
       setLoadingSecret(false);
     }
   }, [api, webhook._id]);
+
   return (
     <>
       <Row justify="end" style={{ paddingBottom: 10 }}>
         <Space>
-          <a
-            href="https://docs.flagright.com/docs/flagright-api/0b0bb2cf007e5-webhooks-overview"
-            target="_blank"
-          >
+          <a href={branding.apiDocsLinks.webhooks} target="_blank">
             Learn more about webhooks
           </a>
           <Button

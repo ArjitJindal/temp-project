@@ -3,7 +3,6 @@ import cn from 'clsx';
 import { Button, Col, Row, Typography } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import ErrorBoundary from '../ErrorBoundary';
-import Footer from '../AppWrapper/Footer';
 import s from './styles.module.less';
 import ArrowLeftSLine from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import { usePageTimeLoadTracker, usePageViewTimeTracker } from '@/utils/tracker';
@@ -70,7 +69,6 @@ export default function PageWrapper(props: Props) {
       <div className={cn(s.body, 'print-container')}>
         <ErrorBoundary>{props.children}</ErrorBoundary>
       </div>
-      <Footer />
     </div>
   );
 }
