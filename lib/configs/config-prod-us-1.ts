@@ -63,7 +63,7 @@ export const config: Config = {
   },
   application: {
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
-    AUTH0_AUDIENCE: 'https://us-1.api.flagright.com/',
+    AUTH0_AUDIENCE: 'https://api.flagright.com/',
     AUTH0_MANAGEMENT_API_AUDIENCE: 'https://flagright.eu.auth0.com/api/v2/',
     AUTH0_TOKEN_ISSUER: 'https://login.console.flagright.com/',
     AUTH0_JWKS_URI: 'https://login.console.flagright.com/.well-known/jwks.json',
