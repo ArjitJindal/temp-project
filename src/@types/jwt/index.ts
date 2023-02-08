@@ -1,14 +1,23 @@
 import * as AWS from 'aws-sdk'
 import { Forbidden } from 'http-errors'
-import { AccountRole } from '../openapi-internal/AccountRole'
+import { AccountRoleName } from '../openapi-internal/AccountRoleName'
 
-export const ROLES: AccountRole[] = ['root', 'admin', 'user']
+export const ROLES: AccountRoleName[] = [
+  'root',
+  'admin',
+  'user',
+  'analyst',
+  'approver',
+  'auditor',
+  'developer',
+  'qa_analyst',
+]
 
-export function isValidRole(role: unknown): role is AccountRole {
+export function isValidRole(role: unknown): role is AccountRoleName {
   if (role == null || typeof role !== 'string') {
     return false
   }
-  return ROLES.indexOf(role as AccountRole) !== -1
+  return ROLES.indexOf(role as AccountRoleName) !== -1
 }
 
 export function assertRole(
@@ -16,7 +25,7 @@ export function assertRole(
     role: string
     verifiedEmail: string | undefined
   },
-  requiredRole: AccountRole
+  requiredRole: AccountRoleName
 ) {
   const { role, verifiedEmail } = userInfo
   if (isValidRole(role) && ROLES.indexOf(role) > ROLES.indexOf(requiredRole)) {
@@ -34,7 +43,7 @@ export function assertRole(
 export interface JWTAuthorizerResult extends AWS.STS.Credentials {
   principalId: string
   userId: string
-  role: AccountRole
+  role: AccountRoleName
   tenantName: string
   verifiedEmail: string
 }

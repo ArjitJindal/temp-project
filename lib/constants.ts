@@ -62,6 +62,9 @@ export const StackConstants = {
   CONSOLE_API_ACCOUNT_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiAccountFunction'
   ),
+  CONSOLE_API_ROLE_FUNCTION_NAME: getResourceNameForTarpon(
+    'ConsoleApiRoleFunction'
+  ),
   CONSOLE_API_TENANT_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiTenantFunction'
   ),

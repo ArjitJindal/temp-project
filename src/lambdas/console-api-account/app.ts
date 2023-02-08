@@ -10,7 +10,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
-import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 
 export type AccountsConfig = {
@@ -42,7 +42,7 @@ export const accountsHandler = lambdaApi()(
         throw new BadRequest(`Body should not be empty`)
       }
       const body: AccountInvitePayload = JSON.parse(event.body)
-      const inviteRole: AccountRole = body.role ?? 'user'
+      const inviteRole: AccountRoleName = body.role ?? 'user'
       if (!isValidRole(inviteRole)) {
         throw new BadRequest(`User role is not valid`)
       }

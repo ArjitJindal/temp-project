@@ -9,7 +9,7 @@ import {
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
 import { AccountsConfig } from '../app'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
-import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { logger } from '@/core/logger'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -31,7 +31,7 @@ function getUsersManagement(managementClient: ManagementClient): {
 const CONNECTION_NAME = 'Username-Password-Authentication'
 
 export interface AppMetadata {
-  role: AccountRole
+  role: AccountRoleName
 }
 
 export type Account = ApiAccount
@@ -76,7 +76,7 @@ export class AccountsService {
     if (email == null) {
       throw new Conflict('User email can not be null')
     }
-    const role: AccountRole =
+    const role: AccountRoleName =
       app_metadata && isValidRole(app_metadata.role)
         ? app_metadata.role
         : 'user'
@@ -135,7 +135,7 @@ export class AccountsService {
     tenant: Tenant,
     params: {
       email: string
-      role: AccountRole
+      role: AccountRoleName
     }
   ): Promise<Account> {
     let user: User<AppMetadata, UserMetadata> | null = null

@@ -139,6 +139,16 @@ const actions: { [action: string]: () => Promise<APIGatewayProxyResult> } = {
       require('./events/get-accounts').event
     )
   },
+  'get-roles': () => {
+    return require('./src/lambdas/console-api-roles/app').rolesHandler(
+      require('./events/get-roles').event
+    )
+  },
+  'get-permissions': () => {
+    return require('./src/lambdas/console-api-roles/app').rolesHandler(
+      require('./events/get-permissions').event
+    )
+  },
   'sanctions-search': () => {
     return require('./src/lambdas/sanctions/app').sanctionsHandler(
       require('./events/sanctions-search').event

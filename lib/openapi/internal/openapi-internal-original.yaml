@@ -1527,6 +1527,44 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TenantSettings'
+  /roles:
+    get:
+      summary: Role - List
+      operationId: get-roles
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountRole'
+  '/roles/{roleId}/permissions':
+    get:
+      summary: Permissions - List
+      operationId: get-permissions
+      tags: []
+      parameters:
+        - schema:
+            type: string
+          name: roleId
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Permissions
+                properties:
+                  permissions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
   '/accounts/{accountId}/change_tenant':
     parameters:
       - schema:
@@ -3366,7 +3404,7 @@ components:
         id:
           type: string
         role:
-          $ref: '#/components/schemas/AccountRole'
+          $ref: '#/components/schemas/AccountRoleName'
         email:
           type: string
         emailVerified:
@@ -3394,7 +3432,7 @@ components:
         email:
           type: string
         role:
-          $ref: '#/components/schemas/AccountRole'
+          $ref: '#/components/schemas/AccountRoleName'
       required:
         - email
     AccountPatchPayload:
@@ -3402,7 +3440,7 @@ components:
       type: object
       properties:
         role:
-          $ref: '#/components/schemas/AccountRole'
+          $ref: '#/components/schemas/AccountRoleName'
     Tenant:
       title: Tenant
       type: object
@@ -3740,16 +3778,82 @@ components:
         - RULES_ENGINE_RULE_BASED_AGGREGATION
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
+        - RBAC
       description: ''
-    AccountRole:
+    AccountRoleName:
       type: string
-      title: AccountRole
+      title: AccountRoleName
       x-stoplight:
-        id: byu0hqffp9hxz
+        id: byu0hqffp9h2
       enum:
         - root
+        - analyst
         - admin
         - user
+        - approver
+        - auditor
+        - developer
+        - qa_analyst
+    AccountRole:
+      type: object
+      title: AccountRole
+      x-stoplight:
+        id: byu0hqffp9hxw
+      properties:
+        id:
+          type: string
+        name:
+          $ref: '#/components/schemas/AccountRoleName'
+    Permission:
+      type: string
+      title: Permission
+      x-stoplight:
+        id: kwammtv515uc4
+      enum:
+        - case-management:case-overview:read
+        - case-management:case-overview:write
+        - case-management:case-details:read
+        - case-management:case-details:write
+        - case-management:download:read
+        - rules:my-rules:read
+        - rules:my-rules:write
+        - rules:library:read
+        - rules:library:write
+        - risk-scoring:risk-levels:read
+        - risk-scoring:risk-levels:write
+        - risk-scoring:risk-factors:read
+        - risk-scoring:risk-factors:write
+        - risk-scoring:risk-algorithms:read
+        - users:user-overview:read
+        - users:user-overview:write
+        - users:user-details:read
+        - dashboard:download-data:read
+        - settings:organisation:read
+        - settings:organisation:write
+        - settings:billing:read
+        - settings:billing:write
+        - settings:nomenclature:read
+        - settings:nomenclature:write
+        - settings:addons:read
+        - settings:addons:write
+        - settings:alerts:read
+        - settings:alerts:write
+        - settings:developers:read
+        - settings:developers:write
+        - transactions:overview:read
+        - transactions:details:read
+        - transactions:download:read
+        - team-management:download:read
+        - audit-log:download:read
+        - lists:whitelist:read
+        - lists:whitelist:write
+        - lists:blacklist:read
+        - lists:blacklist:write
+        - lists:download:read
+        - simulation:rules:read
+        - simulation:rules:write
+        - simulation:risk-scoring:read
+        - simulation:risk-scoring:write
     CaseStatus:
       type: string
       title: CaseStatus

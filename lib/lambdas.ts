@@ -85,6 +85,11 @@ export const LAMBDAS: {
     handlerName: 'accountsHandler',
     expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
   },
+  [StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME]: {
+    codePath: 'console-api-role',
+    handlerName: 'rolesHandler',
+    expectedMaxDurationSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_DURATION_SECONDS,
+  },
   [StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME]: {
     codePath: 'console-api-tenant',
     handlerName: 'tenantsHandler',

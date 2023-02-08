@@ -13,7 +13,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { AccountRole } from '@/@types/openapi-internal/AccountRole'
+import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { Metric } from '@/core/cloudwatch/metrics'
 
 type LogMetaData = {
@@ -68,7 +68,7 @@ export async function getInitialContext(
         ? {
             id: userId,
             email: verifiedEmail,
-            role: role as AccountRole,
+            role: role as AccountRoleName,
           }
         : undefined,
     }
