@@ -111,12 +111,20 @@ export const jwtAuthorizer = lambdaAuthorizer()(
 
     updateLogMetadata({ jwtToken: token })
 
-    const decoded = jwt.decode(token, { complete: true })
-    if (!decoded || !decoded.header || !decoded.header.kid) {
+    let kid: string
+    try {
+      const decoded = jwt.decode(token, { complete: true })
+      if (!decoded?.header?.kid) {
+        logger.warn('token failed to be decoded')
+        return UNAUTHORIZED_RESPONSE
+      }
+      kid = decoded?.header?.kid
+    } catch (e) {
       logger.warn('token failed to be decoded')
       return UNAUTHORIZED_RESPONSE
     }
-    const key = await jwks.getSigningKey(decoded.header.kid)
+
+    const key = await jwks.getSigningKey(kid)
     const signingKey = key.getPublicKey()
 
     let verifiedDecoded: jwt.JwtPayload
