@@ -26,8 +26,8 @@ const env = {
 };
 
 function serve() {
-  const port = parseInt(process.env.SERVER_PORT || 8001); // can be on any port, but 443 is the default when no port names specified in browsers
-  const folder = path.join(env.PROJECT_DIR, env.OUTPUT_FOLDER); // can be on any port, but 443 is the default when no port names specified in browsers
+  const port = parseInt(process.env.SERVER_PORT || 8001);
+  const folder = path.join(env.PROJECT_DIR, env.OUTPUT_FOLDER);
 
   const app = express();
   app.use(express.static(process.env.SERVE_DIRECTORY || folder));
@@ -60,7 +60,7 @@ function serve() {
 
   const http = USE_HTTPS ? require('https') : require('http');
   const server = http.createServer(options, app);
-  log(`Serving files on ${USE_HTTPS ? 'https' : 'http'}://localhost:${port}...`);
+  log(`Serving files on ${USE_HTTPS ? 'https' : 'http'}://flagright.local:${port}...`);
   server.listen(port);
 }
 

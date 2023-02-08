@@ -57,10 +57,13 @@ const response = await api.getTransactionsList();
 Assuming you have nvm and yarn installed:
 
 ```
+> echo '127.0.0.1\tflagright.local' | sudo tee -a '/etc/hosts'
+> nvm use
 > yarn
-> nvm use 12
 > yarn dev
 ```
+
+Console should be available under https://flagright.local:8001/ (ignore warning about invalid certificate)
 
 ## Running It Locally With Tarpon API
 
