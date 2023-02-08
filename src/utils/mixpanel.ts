@@ -10,6 +10,8 @@ import {
 import { useCallback } from 'react';
 import { useAuth0User } from './user-utils';
 
+let ipData: any = undefined;
+
 mixpanel.init(MIXPANEL_TOKEN, { debug: true });
 
 export const mixPanel = mixpanel;
@@ -23,7 +25,13 @@ export const useMixPanelTracker = () => {
       if (process.env.ENV_NAME === 'local') {
         return;
       }
-      const ipData: Promise<any> = await fetch('https://ipinfo.io/json').then((res) => res.json());
+      if (!ipData) {
+        try {
+          ipData = await fetch('https://ipinfo.io/json').then((res) => res.json());
+        } catch (e) {
+          // ignore
+        }
+      }
 
       mixpanel.track(eventName, {
         ...data,
