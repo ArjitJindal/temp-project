@@ -1,5 +1,5 @@
-import * as Sentry from '@sentry/serverless'
 import { Subsegment } from 'aws-xray-sdk-core'
+import { logger } from '@/core/logger'
 
 // NOTE: Allowed special chars: _, ., :, /, %, &, #, =, +, \, -, @
 // ref: https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
@@ -30,6 +30,6 @@ export async function addNewSubsegment(
   try {
     return AWSXRay.getSegment()?.addNewSubsegment(name)
   } catch (e) {
-    Sentry.captureException(e)
+    logger.error(e)
   }
 }

@@ -1,5 +1,4 @@
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns'
-import * as Sentry from '@sentry/serverless'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogRecord } from '@/@types/audit-log'
 import { getContext } from '@/core/utils/context'
@@ -28,7 +27,6 @@ export async function publishAuditLog(
       })
     )
   } catch (e) {
-    Sentry.captureException(e)
     logger.error('Failed to publish audit log', e)
   }
 }

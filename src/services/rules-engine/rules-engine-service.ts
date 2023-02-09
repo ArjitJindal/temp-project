@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/serverless'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import _ from 'lodash'
@@ -480,7 +479,6 @@ export class RulesEngineService {
         }
       } catch (e) {
         logger.error(e)
-        Sentry.captureException(e)
       }
     })
   }
