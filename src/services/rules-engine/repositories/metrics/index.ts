@@ -72,7 +72,7 @@ export class MetricsRepository {
     return deviceMetric
   }
 
-  public async saveMetricsMongo(
+  public async saveMetricMongo(
     deviceMetric: DeviceMetric
   ): Promise<DeviceMetric> {
     const db = this.mongoDb.db()

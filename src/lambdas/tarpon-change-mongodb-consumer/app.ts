@@ -7,7 +7,6 @@ import {
   getMongoDbClient,
   USER_EVENTS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
-  DEVICE_DATA_COLLECTION,
 } from '@/utils/mongoDBUtils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Business } from '@/@types/openapi-public/Business'
@@ -32,6 +31,7 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
+import { MetricsRepository } from '@/services/rules-engine/repositories/metrics'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
 const sqs = new AWS.SQS()
@@ -237,20 +237,11 @@ async function deviceDataMetricsHandler(
   })
   logger.info(`Processing Device Metric`)
 
-  const db = (await getMongoDbClient()).db()
-  const deviceMetricsDataCollection = db.collection<
-    ConsumerUserEvent | BusinessUserEvent
-  >(DEVICE_DATA_COLLECTION(tenantId))
-
-  await deviceMetricsDataCollection.replaceOne(
-    { metricId: deviceMetrics.metricId },
-    {
-      ...deviceMetrics,
-    },
-    {
-      upsert: true,
-    }
-  )
+  const mongoDb = await getMongoDbClient()
+  const metricsRepository = new MetricsRepository(tenantId, {
+    mongoDb: mongoDb,
+  })
+  metricsRepository.saveMetricMongo(deviceMetrics)
 }
 
 async function transactionEventHandler(

@@ -28,7 +28,7 @@ export const deviceDataHandler = lambdaApi()(
       const metricsRepository = new MetricsRepository(tenantId, {
         dynamoDb: dynamoDb,
       })
-      metricsRepository.saveMetric(metricsPayload)
+      await metricsRepository.saveMetric(metricsPayload)
       return true
     }
 
