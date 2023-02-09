@@ -2,6 +2,7 @@ import dayjsLib, { ConfigType, OptionType } from 'dayjs';
 import tz from 'dayjs/plugin/timezone';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import utc from 'dayjs/plugin/utc';
+import { RiskParameterValueDayRange } from '@/apis';
 
 dayjsLib.extend(tz);
 dayjsLib.extend(localizedFormat);
@@ -18,3 +19,19 @@ export const DEFAULT_DATE_FORMAT = 'll';
 export const DEFAULT_TIME_FORMAT = 'LTS';
 export const DEFAULT_DATE_TIME_FORMAT = 'll LTS';
 export const YEAR_MONTH_DATE_FORMAT = 'YYYY-MM-DD';
+
+export const convertToDays = (
+  value: number,
+  granularity: RiskParameterValueDayRange['startGranularity'],
+) => {
+  switch (granularity) {
+    case 'DAYS':
+      return value;
+    case 'MONTHS':
+      return value * 30;
+    case 'YEARS':
+      return value * 365;
+    default:
+      return value;
+  }
+};

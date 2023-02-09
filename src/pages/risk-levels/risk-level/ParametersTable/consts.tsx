@@ -1,6 +1,10 @@
-import React from 'react';
-import { Input, Select, Tag } from 'antd';
+import { Tag } from 'antd';
 import _ from 'lodash';
+import { useEffect } from 'react';
+import style from './style.module.less';
+import Select from '@/components/library/Select';
+import TextInput from '@/components/library/TextInput';
+import Label from '@/components/library/Label';
 import {
   DataType,
   ParameterName,
@@ -22,6 +26,8 @@ import { RiskLevel } from '@/utils/risk-levels';
 import Slider from '@/components/ui/Slider';
 import {
   RiskParameterValueDayRange,
+  RiskParameterValueDayRangeEndGranularityEnum,
+  RiskParameterValueDayRangeStartGranularityEnum,
   RiskParameterValueLiteral,
   RiskParameterValueMultiple,
   RiskParameterValueRange,
@@ -32,7 +38,6 @@ import { PaymentMethodTag } from '@/components/ui/PaymentTypeTag';
 import { TransactionTypeTag } from '@/components/ui/TransactionTypeTag';
 import { isTransactionType } from '@/utils/api/transactions';
 import { RESIDENCE_TYPES } from '@/utils/residence-types';
-
 import { capitalizeWords } from '@/utils/tags';
 import { useApi } from '@/api';
 import { BUSINESS_USERS_UNIQUES } from '@/utils/queries/keys';
@@ -40,12 +45,17 @@ import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/asyncResource';
 import { timezones } from '@/utils/timezones';
 import { _3DS_DONE_OPTIONS } from '@/utils/3dsOptions';
+import { convertToDays } from '@/utils/dayjs';
+import NumberInput from '@/components/library/NumberInput';
 
 type InputRendererProps<T extends RiskValueType> = {
   disabled?: boolean;
   value?: RiskValueContentByType<T> | null;
   existedValues?: RiskValueContentByType<T>[];
   onChange: (values: RiskValueContentByType<T>) => void;
+  setShouldShowNewValueInput: (shouldShow: boolean) => void;
+  shouldShowNewValueInput: boolean;
+  setOnlyDeleteLast: (onlyDeleteLast: boolean) => void;
 };
 export type InputRenderer<T extends RiskValueType> = (
   props: InputRendererProps<T>,
@@ -83,6 +93,17 @@ export const DATA_TYPE_TO_VALUE_TYPE: { [key in DataType]: RiskValueType } = {
   TIME_RANGE: 'TIME_RANGE',
   BOOLEAN: 'LITERAL',
 };
+
+const DAY_RANGE_GRANULARITY = [
+  { value: 'DAYS', label: 'days' },
+  { value: 'MONTHS', label: 'months' },
+  { value: 'YEARS', label: 'years' },
+];
+
+const EXTENDED_DAY_RANGE_GRANULARITY = [
+  ...DAY_RANGE_GRANULARITY,
+  { value: 'INFINITE', label: 'and above' },
+];
 
 // todo: i18n
 export const USER_RISK_PARAMETERS: RiskLevelTable = [
@@ -372,29 +393,17 @@ const MultipleSelect: React.FC<
     x.values.map((y) => `${y.content}`),
   );
   return (
-    <Select<string[]>
-      mode="multiple"
+    <Select<string>
       style={{ width: '100%' }}
       value={value?.values.map(({ content }) => `${content}`) ?? []}
       onChange={(value) => {
-        onChange(riskValueMultiple(value.map((x) => riskValueLiteral(x))));
+        onChange(riskValueMultiple((value as string[]).map((x) => riskValueLiteral(x))));
       }}
       showSearch={true}
-      disabled={disabled}
-      filterOption={(input, option) => {
-        const optionValue = option?.children?.toString() ?? '';
-        return (
-          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
-          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
-        );
-      }}
-    >
-      {options.map(({ value, label }) => (
-        <Select.Option disabled={disabledOptions.includes(value)} key={value} value={value}>
-          {label}
-        </Select.Option>
-      ))}
-    </Select>
+      isDisabled={disabled}
+      options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
+      mode="TAGS"
+    />
   );
 };
 
@@ -416,30 +425,19 @@ const SingleSelect: React.FC<
         onChange(riskValueLiteral(value));
       }}
       showSearch={true}
-      disabled={disabled}
-      filterOption={(input, option) => {
-        const optionValue = option?.children?.toString() ?? '';
-        return (
-          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0 ||
-          optionValue.toLowerCase().indexOf(input.toLowerCase()) >= 0
-        );
-      }}
-    >
-      {options.map(({ value, label }) => (
-        <Select.Option disabled={disabledOptions.includes(value)} key={`${value}`} value={value}>
-          {label}
-        </Select.Option>
-      ))}
-    </Select>
+      isDisabled={disabled}
+      mode="SINGLE"
+      options={options.map((x) => ({ ...x, isDisabled: disabledOptions.includes(x.value) }))}
+    />
   );
 };
 
 export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
   STRING: (({ disabled, value, onChange }) => (
-    <Input
-      disabled={disabled}
+    <TextInput
+      isDisabled={disabled}
       value={`${value?.content ?? ''}`}
-      onChange={(e) => onChange(riskValueLiteral(e.target.value))}
+      onChange={(val) => onChange(riskValueLiteral(val))}
     />
   )) as InputRenderer<'LITERAL'>,
   COUNTRY: ((props) => {
@@ -519,67 +517,152 @@ export const INPUT_RENDERERS: { [key in DataType]: InputRenderer<any> } = {
       </>
     );
   }) as InputRenderer<'RANGE'>,
-  DAY_RANGE: (({ disabled, value, onChange }) => {
-    const range = [value?.start ?? 0, value?.end ?? 0];
-    return (
-      <>
-        <Slider
-          range
-          marks={range.reduce((acc, x) => ({ ...acc, [x]: x }), {})}
-          endExclusive={true}
-          min={0}
-          max={900}
-          value={[range[0], range[1]]}
-          disabled={disabled}
-          onChange={(value) => {
-            onChange(riskValueDayRange(value[0], value[1]));
-          }}
-        />
-      </>
-    );
+  DAY_RANGE: (({
+    disabled,
+    onChange,
+    shouldShowNewValueInput,
+    setShouldShowNewValueInput,
+    value,
+    existedValues,
+    setOnlyDeleteLast,
+  }) => {
+    const length = existedValues?.length;
+    const previousEndGranularity = !length ? 'DAYS' : existedValues[length - 1]?.endGranularity;
+    const previousEnd = !length ? 0 : existedValues[length - 1]?.end;
+    const startValue = length ? previousEnd : 0;
+
+    useEffect(() => {
+      if (length && existedValues[length - 1]?.endGranularity === 'INFINITE') {
+        setShouldShowNewValueInput(false);
+      } else {
+        setShouldShowNewValueInput(true);
+      }
+    }, [existedValues, setShouldShowNewValueInput, length]);
+
+    useEffect(() => {
+      setOnlyDeleteLast(true);
+    }, [setOnlyDeleteLast]);
+
+    return shouldShowNewValueInput ? (
+      <div className={style.dayRangeRoot}>
+        <div className={style.dayRangeContainer}>
+          <Label label="From" element="div">
+            <div className={style.dayRangeInputContainer}>
+              <NumberInput
+                isDisabled={true}
+                value={previousEnd}
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              />
+              <Select
+                isDisabled={true}
+                options={DAY_RANGE_GRANULARITY}
+                value={previousEndGranularity}
+                style={{ width: 150 }}
+              />
+            </div>
+          </Label>
+        </div>
+
+        <div className={style.dayRangeContainer}>
+          <Label label="To" element="div">
+            <div className={style.dayRangeInputContainer}>
+              <NumberInput
+                isDisabled={disabled || value?.endGranularity === 'INFINITE'}
+                htmlAttrs={{ type: 'number', style: { width: 100 } }}
+                value={value?.endGranularity !== 'INFINITE' ? value?.end : 0}
+                onChange={(val) => {
+                  onChange(
+                    riskValueDayRange(
+                      startValue,
+                      previousEndGranularity as RiskParameterValueDayRangeStartGranularityEnum,
+                      value?.endGranularity === 'INFINITE' ? 0 : (val as number),
+                      value?.endGranularity ?? previousEndGranularity,
+                    ),
+                  );
+                }}
+              />
+              <Select
+                isDisabled={disabled}
+                onChange={(val) => {
+                  onChange(
+                    riskValueDayRange(
+                      startValue,
+                      previousEndGranularity as RiskParameterValueDayRangeStartGranularityEnum,
+                      value?.end ?? 0,
+                      val as RiskParameterValueDayRangeEndGranularityEnum,
+                    ),
+                  );
+                }}
+                options={EXTENDED_DAY_RANGE_GRANULARITY}
+                value={value?.endGranularity ?? previousEndGranularity}
+                style={{ width: 150 }}
+                mode="SINGLE"
+              />
+            </div>
+          </Label>
+        </div>
+      </div>
+    ) : null;
   }) as InputRenderer<'DAY_RANGE'>,
   TIME_RANGE: (({ disabled, value, onChange }) => {
     return (
       <div style={{ display: 'grid', gridAutoFlow: 'column', gap: '.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <div>Start Time</div>
-          <Select
-            disabled={disabled}
-            onChange={(val) =>
-              onChange(
-                riskValueTimeRange(val, value?.endHour ?? 0, value?.timezone ?? currentTimeZone),
-              )
-            }
-            options={timeValues}
-            value={value?.startHour ?? 0}
-            showSearch
-          />
+          <Label label="Start Time" element="div">
+            <Select
+              isDisabled={disabled}
+              onChange={(val) =>
+                onChange(
+                  riskValueTimeRange(
+                    val ?? 0,
+                    value?.endHour ?? 0,
+                    value?.timezone ?? currentTimeZone,
+                  ),
+                )
+              }
+              options={timeValues}
+              value={value?.startHour ?? 0}
+              showSearch
+            />
+          </Label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <div>End Time</div>
-          <Select
-            disabled={disabled}
-            onChange={(val) =>
-              onChange(
-                riskValueTimeRange(value?.startHour ?? 0, val, value?.timezone ?? currentTimeZone),
-              )
-            }
-            options={timeValues}
-            value={value?.endHour ?? 0}
-            showSearch
-          />
+          <Label label="End Time" element="div">
+            <Select<number>
+              isDisabled={disabled}
+              onChange={(val) =>
+                onChange(
+                  riskValueTimeRange(
+                    value?.startHour ?? 0,
+                    val ?? 0,
+                    value?.timezone ?? currentTimeZone,
+                  ),
+                )
+              }
+              options={timeValues}
+              value={value?.endHour ?? 0}
+              showSearch
+            />
+          </Label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-          <div>Timezone</div>
-          <Select
-            disabled={disabled}
-            onChange={(val) =>
-              onChange(riskValueTimeRange(value?.startHour ?? 0, value?.endHour ?? 0, val))
-            }
-            options={timeZonesData}
-            value={value?.timezone ?? currentTimeZone}
-            showSearch
-          />
+          <Label label="Time Zone" element="div">
+            <Select
+              isDisabled={disabled}
+              onChange={(val) =>
+                onChange(
+                  riskValueTimeRange(
+                    value?.startHour ?? 0,
+                    value?.endHour ?? 0,
+                    val ?? currentTimeZone,
+                  ),
+                )
+              }
+              options={timeZonesData}
+              value={value?.timezone ?? currentTimeZone}
+              showSearch
+            />
+          </Label>
         </div>
       </div>
     );
@@ -626,28 +709,48 @@ const DEFAULT_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
   );
 };
 
-const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'RANGE'> = ({ value }) => {
+const DEFAULT_DAY_RANGE_RENDERER: ValueRenderer<'DAY_RANGE'> = ({ value }) => {
   if (value == null) {
     return null;
   }
-  const marks = {};
 
-  if (value.start != null) {
-    marks[value.start] = value.start;
-  }
-  if (value.end != null) {
-    marks[value.end] = value.end;
-  }
   return (
-    <Slider
-      range
-      min={0}
-      max={900}
-      endExclusive={true}
-      marks={marks}
-      defaultValue={[value.start ?? 0, value.end ?? 0]}
-      disabled={true}
-    />
+    <div className={style.dayRangeRoot}>
+      <div className={style.dayRangeContainer}>
+        <Label label="From" element="div">
+          <div className={style.dayRangeInputContainer}>
+            <NumberInput
+              isDisabled={true}
+              htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              value={value.start}
+            />
+            <Select
+              isDisabled={true}
+              value={value.startGranularity}
+              options={DAY_RANGE_GRANULARITY}
+              style={{ width: 150 }}
+            />
+          </div>
+        </Label>
+      </div>
+      <div className={style.dayRangeContainer}>
+        <Label label="To" element="div">
+          <div className={style.dayRangeInputContainer}>
+            <NumberInput
+              isDisabled={true}
+              htmlAttrs={{ type: 'number', style: { width: 100 } }}
+              value={value.endGranularity === 'INFINITE' ? undefined : value.end}
+            />
+            <Select
+              isDisabled={true}
+              value={value.endGranularity}
+              options={EXTENDED_DAY_RANGE_GRANULARITY}
+              style={{ width: 150 }}
+            />
+          </div>
+        </Label>
+      </div>
+    </div>
   );
 };
 
@@ -798,13 +901,33 @@ export const NEW_VALUE_VALIDATIONS: Validation<any>[] = [
           return 'Age ranges should not overlap';
         }
       } else if (newValue.kind === 'DAY_RANGE') {
-        const { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
+        if (newValue.endGranularity === 'INFINITE') {
+          return null;
+        }
+        let { start: x1 = 0, end: x2 = Number.MAX_SAFE_INTEGER } = newValue;
+
+        if (x1 == null || x2 == null) {
+          return 'Start and end range should be specified';
+        }
+
+        x1 = convertToDays(x1, newValue.startGranularity);
+        x2 = convertToDays(x2, newValue.endGranularity);
+
+        if (x1 >= x2) {
+          return 'Start date should be before end date';
+        }
+
         const hasOverlaps = previousValues.some(({ parameterValue }) => {
           if (parameterValue.content.kind !== 'DAY_RANGE') {
             return false;
           }
-          const { start: y1 = 0, end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
-          return x1 < y2 && y1 < x2;
+          let { end: y2 = Number.MAX_SAFE_INTEGER } = parameterValue.content;
+          y2 = convertToDays(
+            y2,
+            parameterValue.content.endGranularity as RiskParameterValueDayRangeStartGranularityEnum,
+          );
+
+          return x1 < y2;
         });
         if (hasOverlaps) {
           return 'Age ranges should not overlap';

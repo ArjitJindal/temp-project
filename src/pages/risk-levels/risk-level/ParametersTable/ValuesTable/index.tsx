@@ -37,6 +37,8 @@ export default function ValuesTable(props: Props) {
 
   const [newValue, setNewValue] = useState<RiskValueContent | null>(null);
   const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel | null>(null);
+  const [shouldShowNewValueInput, setShouldShowNewValueInput] = useState(true);
+  const [onlyDeleteLast, setOnlyDeleteLast] = useState(false);
 
   const handleUpdateValues = useCallback((cb: (oldValues: ParameterValues) => ParameterValues) => {
     setValues(cb);
@@ -119,7 +121,7 @@ export default function ValuesTable(props: Props) {
             </Button>
           )}
         </div>
-        {values.map(({ parameterValue, riskLevel }) => {
+        {values.map(({ parameterValue, riskLevel }, index) => {
           const handleChangeRiskLevel = (newRiskLevel: RiskLevel) => {
             handleUpdateValues((values) =>
               values.map((x) =>
@@ -158,7 +160,7 @@ export default function ValuesTable(props: Props) {
                 <Button
                   className={style.deleteButton}
                   type="text"
-                  disabled={loading}
+                  disabled={loading || (onlyDeleteLast && index !== values.length - 1)}
                   onClick={handleDeleteKey}
                 >
                   <DeleteFilled />
@@ -174,21 +176,35 @@ export default function ValuesTable(props: Props) {
               value: newValue,
               existedValues: values.map((x) => x.parameterValue.content),
               onChange: setNewValue,
+              setShouldShowNewValueInput,
+              shouldShowNewValueInput,
+              setOnlyDeleteLast,
             })}
           </div>
-          <div>
-            <RiskLevelSwitch disabled={loading} current={newRiskLevel} onChange={setNewRiskLevel} />
-          </div>
-          <div>
-            <Button
-              disabled={
-                loading || !newValue || newRiskLevel == null || newValueValidationMessage != null
-              }
-              onClick={handleAdd}
-            >
-              Add
-            </Button>
-          </div>
+          {shouldShowNewValueInput && (
+            <>
+              <div>
+                <RiskLevelSwitch
+                  disabled={loading}
+                  current={newRiskLevel}
+                  onChange={setNewRiskLevel}
+                />
+              </div>
+              <div>
+                <Button
+                  disabled={
+                    loading ||
+                    !newValue ||
+                    newRiskLevel == null ||
+                    newValueValidationMessage != null
+                  }
+                  onClick={handleAdd}
+                >
+                  Add
+                </Button>
+              </div>
+            </>
+          )}
         </>
         {newValueValidationMessage != null && (
           <Alert message={newValueValidationMessage} type="error" />

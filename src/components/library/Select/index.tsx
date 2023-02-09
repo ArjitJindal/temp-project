@@ -1,40 +1,43 @@
 import React from 'react';
 import cn from 'clsx';
-import { Select as AntSelect } from 'antd';
+import { Select as AntSelect, SelectProps } from 'antd';
 import s from './style.module.less';
 import { InputProps } from '@/components/library/Form';
 
-export interface Option<Value extends string> {
+type InputType = string | number | boolean | undefined;
+
+export interface Option<Value extends InputType> {
   value: Value;
   label: string;
   isDisabled?: boolean;
 }
 
-interface CommonProps<Value extends string> {
+interface CommonProps<Value extends InputType> {
   placeholder?: string;
   size?: 'DEFAULT' | 'LARGE';
   options: Option<Value>[];
+  style?: React.CSSProperties;
+  showSearch?: boolean;
 }
 
-interface SingleProps<Value extends string> extends CommonProps<Value>, InputProps<Value> {
+interface SingleProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value> {
   mode?: 'SINGLE';
 }
 
-interface MultipleProps<Value extends string> extends CommonProps<Value>, InputProps<Value[]> {
+interface MultipleProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value[]> {
   mode: 'MULTIPLE';
 }
 
-interface TagsProps<Value extends string> extends CommonProps<Value>, InputProps<Value[]> {
+interface TagsProps<Value extends InputType> extends CommonProps<Value>, InputProps<Value[]> {
   mode: 'TAGS';
 }
 
-type Props<Value extends string> = SingleProps<Value> | MultipleProps<Value> | TagsProps<Value>;
+type Props<Value extends InputType> = SingleProps<Value> | MultipleProps<Value> | TagsProps<Value>;
 
-export default function Select<Value extends string = string>(props: Props<Value>) {
+export default function Select<Value extends InputType = InputType>(props: Props<Value>) {
   const { isDisabled, options, placeholder, size = 'DEFAULT', isError, onFocus, onBlur } = props;
   const sharedProps = {
     disabled: isDisabled,
-    options: options.map((option) => ({ ...option, disabled: option.isDisabled ?? false })),
     placeholder: placeholder,
     allowClear: true,
     onFocus: onFocus,
@@ -42,33 +45,36 @@ export default function Select<Value extends string = string>(props: Props<Value
     filterOption: (inputValue: string, option?: Option<Value>) => {
       const searchString = inputValue.toLowerCase();
       return (
-        option?.label.toLowerCase().includes(searchString) ||
-        option?.value.toLowerCase().includes(searchString) ||
+        (option?.label.toLowerCase().includes(searchString) ||
+          option?.value?.toString().toLowerCase().includes(searchString)) ??
         false
       );
     },
+    showSearch: props.showSearch,
   };
 
+  const AntSelectProps = {
+    ...sharedProps,
+    mode: props.mode === 'MULTIPLE' ? 'multiple' : props.mode === 'TAGS' ? 'tags' : undefined,
+    value: props.value,
+    onChange: (newValue: Value | Value[] | undefined) => {
+      props.onChange?.(newValue as (Value & Value[]) | undefined);
+    },
+  } as SelectProps<Value | Value[]>;
+
   return (
-    <div className={cn(s.root, isError && s.isError, s[`size-${size}`])}>
-      {props.mode === 'MULTIPLE' || props.mode === 'TAGS' ? (
-        <AntSelect<string[], Option<Value>>
-          {...sharedProps}
-          mode={props.mode === 'MULTIPLE' ? 'multiple' : 'tags'}
-          value={props.value}
-          onChange={(newValue: string[]) => {
-            props.onChange?.(newValue as Value[]);
-          }}
-        />
-      ) : (
-        <AntSelect<string, Option<Value>>
-          {...sharedProps}
-          value={props.value}
-          onChange={(newValue: string) => {
-            props.onChange?.(newValue as Value);
-          }}
-        />
-      )}
+    <div className={cn(s.root, isError && s.isError, s[`size-${size}`])} style={props.style}>
+      <AntSelect {...AntSelectProps}>
+        {options?.map((option) => (
+          <AntSelect.Option
+            key={`${option.value}`}
+            value={option.value}
+            disabled={option.isDisabled}
+          >
+            {option.label}
+          </AntSelect.Option>
+        ))}
+      </AntSelect>
     </div>
   );
 }

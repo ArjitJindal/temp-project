@@ -35,6 +35,7 @@ export default function NumberInput(props: Props) {
         min: min,
         max: max,
         step,
+        ...rest.htmlAttrs,
       }}
     />
   );

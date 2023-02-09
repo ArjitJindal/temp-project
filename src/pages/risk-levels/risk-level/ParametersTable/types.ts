@@ -39,13 +39,18 @@ export function riskValueRange(start: number, end: number): RiskParameterValueRa
   };
 }
 
-export function riskValueDayRange(start: number, end: number): RiskParameterValueDayRange {
+export function riskValueDayRange(
+  start: number,
+  startGranularity: RiskParameterValueDayRange['startGranularity'],
+  end: number,
+  endGranularity: RiskParameterValueDayRange['endGranularity'],
+): RiskParameterValueDayRange {
   return {
     kind: 'DAY_RANGE',
     start,
     end,
-    startGranularity: 'DAYS',
-    endGranularity: 'DAYS',
+    endGranularity,
+    startGranularity,
   };
 }
 
