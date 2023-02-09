@@ -44,21 +44,28 @@ function refreshCredentialsPeriodically() {
   // assume a cross-account role in deployment and the max session duration is 1 hour.
   setInterval(
     async () => {
-      const sts = new AWS.STS()
-      const assumeRoleResult = await sts
-        .assumeRole({
-          RoleArn: process.env.ASSUME_ROLE_ARN as string,
-          RoleSessionName: 'migration',
-        })
-        .promise()
-      process.env.AWS_ACCESS_KEY_ID = assumeRoleResult.Credentials?.AccessKeyId
-      process.env.AWS_SECRET_ACCESS_KEY =
-        assumeRoleResult.Credentials?.SecretAccessKey
-      process.env.AWS_SESSION_TOKEN = assumeRoleResult.Credentials?.SessionToken
-      console.info('Refreshed AWS credentials')
+      try {
+        const sts = new AWS.STS()
+        const assumeRoleResult = await sts
+          .assumeRole({
+            RoleArn: process.env.ASSUME_ROLE_ARN as string,
+            RoleSessionName: 'migration',
+          })
+          .promise()
+        process.env.AWS_ACCESS_KEY_ID =
+          assumeRoleResult.Credentials?.AccessKeyId
+        process.env.AWS_SECRET_ACCESS_KEY =
+          assumeRoleResult.Credentials?.SecretAccessKey
+        process.env.AWS_SESSION_TOKEN =
+          assumeRoleResult.Credentials?.SessionToken
+        console.info('Refreshed AWS credentials')
+      } catch (e) {
+        console.error('Failed to refresh AWS credentials')
+        console.error(e)
+      }
     },
-    // 50 minutes
-    60 * 50 * 1000
+    // 30 minutes
+    30 * 60 * 1000
   )
 }
 

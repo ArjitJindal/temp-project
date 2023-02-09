@@ -567,7 +567,7 @@ export class RulesEngineService {
     }
     return {
       parameters: ruleInstance.parameters,
-      action: ruleInstance.action,
+      action: ruleInstance.action as RuleAction,
     }
   }
 

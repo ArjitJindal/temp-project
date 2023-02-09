@@ -2768,8 +2768,6 @@ components:
       required:
         - ruleId
         - casePriority
-        - parameters
-        - action
         - caseCreationType
         - nature
     RuleAction:

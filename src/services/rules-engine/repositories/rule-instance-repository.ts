@@ -80,6 +80,13 @@ export class RuleInstanceRepository {
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
+      // Save fallback parameters/action in case we remove PULSE feature flag
+      parameters:
+        ruleInstance.parameters ??
+        Object.values(ruleInstance.riskLevelParameters ?? {})[0],
+      action:
+        ruleInstance.action ??
+        Object.values(ruleInstance.riskLevelActions ?? {})[0],
       id: ruleInstanceId,
       status: ruleInstance.status || 'ACTIVE',
       createdAt: ruleInstance.createdAt || now,
