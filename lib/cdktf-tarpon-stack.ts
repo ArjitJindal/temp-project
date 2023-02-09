@@ -11,21 +11,17 @@ export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id)
 
-    const awsAccount = config.env.account as string
     const awsRegion = config.env.region as string
-    const awsProfile = `AWSAdministratorAccess-${awsAccount}`
     const stateBucket = `flagright-terraform-state-${config.stage}`
 
     // AWS
     new cdktf.S3Backend(this, {
       bucket: stateBucket,
       key: config.stage,
-      profile: awsProfile,
       region: awsRegion,
     })
     new aws.provider.AwsProvider(this, awsRegion, {
       region: awsRegion,
-      profile: awsProfile,
     })
     const state = new aws.s3Bucket.S3Bucket(this, 'tfstate', {
       bucket: stateBucket,
