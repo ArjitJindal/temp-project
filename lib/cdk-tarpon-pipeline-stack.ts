@@ -157,6 +157,11 @@ export class CdkTarponPipelineStack extends cdk.Stack {
         'export AWS_SECRET_ACCESS_KEY=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SecretAccessKey")',
         'export AWS_SESSION_TOKEN=$(echo "${TEMP_ROLE}" | jq -r ".Credentials.SessionToken")',
       ]
+      const installTerraform = [
+        'curl -s -qL -o terraform_install.zip https://releases.hashicorp.com/terraform/1.3.7/terraform_1.3.7_linux_amd64.zip',
+        'unzip terraform_install.zip -d /usr/bin/',
+        'chmod +x /usr/bin/terraform',
+      ]
       const shouldReleaseSentry =
         config.stage === 'prod' && config.region === 'eu-1'
       return new codebuild.PipelineProject(this, `TarponDeploy-${env}`, {
@@ -187,6 +192,7 @@ export class CdkTarponPipelineStack extends cdk.Stack {
                 ...assumeRuleCommands,
                 // Don't upload soure maps to Lambda
                 'rm dist/**/*.js.map',
+                ...installTerraform,
                 `npm run synth:${env}`,
                 `npm run deploy:${env}`,
                 `npm run migration:post:up`,

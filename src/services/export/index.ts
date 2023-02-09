@@ -42,7 +42,7 @@ function makeRows<T>(object: T, reference: CsvHeaderSettings<T>): Row {
   function traverse<T>(object: T, reference: CsvHeaderSettings<T>) {
     for (const entry of Object.entries(reference)) {
       const key = entry[0] as CsvHeaderSettingsKeys<CsvHeaderSettings<T>>
-      const action = entry[1] as CsvAction<typeof object[typeof key]>
+      const action = entry[1] as CsvAction<(typeof object)[typeof key]>
       if (action === 'SKIP') {
         continue
       }

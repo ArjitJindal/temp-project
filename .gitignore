@@ -116,6 +116,10 @@ dist
 cdk.out
 .cdk*
 
+# CDKTF
+cdktf.out
+.gen
+
 # OSX
 .DS_Store
 

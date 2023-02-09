@@ -41,6 +41,8 @@ jobs:
       - run: npm run build:local
       - run: npm run synth:local
       - run: npm run tsc
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
       - run: npm run lint
       - run: npm run format:check
       - name: Setup DynamoDB localy

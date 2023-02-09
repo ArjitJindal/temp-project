@@ -11,11 +11,13 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 - events - Invocation events that you can use to invoke the function.
 - lib/cdk-tarpon-stack.ts - The CDK configuration of the application's AWS resources.
 - lib/cdk-alarms-stack.ts - The CDK configuration of the application's Alarms.
+- lib/cdktf-tarpon-stack.ts - The CDKTF configuration of the application's non-AWS resources.
 
 ## Prerequisites
 
 - AWS CLI - [Install AWS CLI](https://aws.amazon.com/cli/)
 - CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
+- Terraform - [Install the Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
 - Node.js (v14) - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
 - Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
 - [yawsso](https://github.com/victorskl/yawsso) - `pip3 install yawsso`
