@@ -47,6 +47,7 @@ export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   search,
 ];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
+export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
   'transactions',
   'list',

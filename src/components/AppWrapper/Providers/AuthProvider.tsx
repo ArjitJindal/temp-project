@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
-import { Auth0UserProfile } from 'auth0-js';
 import { Spin } from 'antd';
 import Auth0Lock from './auth0Lock';
 import COLORS from '@/components/ui/colors';
@@ -37,7 +36,7 @@ interface AuthContextValue {
   accessToken: string | null;
   login: () => void;
   logout: () => void;
-  getUserInfo: () => Promise<Auth0UserProfile>;
+  refreshAccessToken: () => void;
 }
 
 const Context = React.createContext<AuthContextValue | null>(null);
@@ -82,21 +81,33 @@ export default function AuthProvider(props: { children: React.ReactNode }) {
     setStoredValue(null);
   }, [setStoredValue]);
 
-  const handleGetUserInfo = useCallback((): Promise<Auth0UserProfile> => {
+  const handleRefreshAccessToken = useCallback((): Promise<void> => {
+    if (accessToken == null) {
+      throw new Error(`Access token is null`);
+    }
     return new Promise((resolve, reject) => {
-      if (!isInitialized || accessToken == null) {
-        reject(Error(`You should be authorised to get user info`));
-      } else {
-        lock.getUserInfo(accessToken, (error, profile) => {
+      lock.checkSession(
+        {
+          access_token: accessToken,
+        },
+        (error, authResult) => {
           if (error) {
+            setStoredValue(null);
+            setAccessToken(null);
             reject(error);
-          } else {
-            resolve(profile);
+          } else if (authResult != null) {
+            const newAccessToken = authResult.accessToken;
+            setAccessToken(newAccessToken);
+            setStoredValue({
+              token: newAccessToken,
+              expiresIn: Date.now() + authResult.expiresIn * 1000,
+            });
+            resolve();
           }
-        });
-      }
+        },
+      );
     });
-  }, [accessToken, isInitialized]);
+  }, [accessToken, setStoredValue]);
 
   useEffect(() => {
     const now = Date.now();
@@ -131,14 +142,14 @@ export default function AuthProvider(props: { children: React.ReactNode }) {
     }
   }, [storedValue, setStoredValue]);
 
-  const contextValue = useMemo(
+  const contextValue: AuthContextValue = useMemo(
     () => ({
       accessToken,
       login: handleLogin,
       logout: handleLogout,
-      getUserInfo: handleGetUserInfo,
+      refreshAccessToken: handleRefreshAccessToken,
     }),
-    [accessToken, handleLogin, handleLogout, handleGetUserInfo],
+    [accessToken, handleLogin, handleLogout, handleRefreshAccessToken],
   );
 
   if (!isInitialized) {

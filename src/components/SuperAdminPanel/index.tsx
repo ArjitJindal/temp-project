@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import { Feature } from '@/apis';
 import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 
 const FEATURES: Feature[] = [
   'PULSE',
@@ -25,6 +26,7 @@ export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
+  const { refreshAccessToken } = useAuth();
   const user = useAuth0User();
   const api = useApi();
   const queryResult = useQuery(['tenants'], () => api.getTenantsList());
@@ -43,6 +45,7 @@ export default function SuperAdminPanel() {
           newTenantId,
         },
       });
+      await refreshAccessToken();
       window.location.reload();
     } catch (e) {
       message.error('Failed to switch tenant');
