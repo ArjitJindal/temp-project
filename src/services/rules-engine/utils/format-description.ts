@@ -1,4 +1,5 @@
 import Handlebars from 'handlebars'
+import { Comparator } from './rule-parameter-schemas'
 import { formatCountry } from '@/utils/countries'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { logger } from '@/core/logger'
@@ -109,3 +110,12 @@ export async function generateRuleDescription(
   }
   return ruleInfo.description
 }
+
+Handlebars.registerHelper('format-comparator', function (value: Comparator) {
+  switch (value) {
+    case 'GREATER_THAN_OR_EQUAL_TO':
+      return 'greater than or equal to'
+    case 'LESS_THAN_OR_EQUAL_TO':
+      return 'less than or equal to'
+  }
+})

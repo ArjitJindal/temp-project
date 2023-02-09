@@ -266,8 +266,8 @@ export async function getTransactionUserPastTransactions(
   transactionRepository: TransactionRepository,
   options: {
     timeWindow: TimeWindow
-    checkSender: 'sending' | 'all' | 'none'
-    checkReceiver: 'receiving' | 'all' | 'none'
+    checkSender: 'sending' | 'receiving' | 'all' | 'none'
+    checkReceiver: 'sending' | 'receiving' | 'all' | 'none'
     transactionState?: TransactionState
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod

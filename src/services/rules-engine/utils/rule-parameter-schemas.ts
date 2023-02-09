@@ -203,6 +203,15 @@ export const TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+export const TRANSACTION_TYPE_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    enum: TRANSACTION_TYPES,
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_TYPE' }),
+    title: options?.title || 'Target Transaction Type',
+    description: options?.description,
+  } as const)
+
 export const TRANSACTION_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     type: 'array',
@@ -398,5 +407,46 @@ export const LEVENSHTEIN_DISTANCE_THRESHOLD_OPTIONAL_SCHEMA = (
 ) =>
   ({
     ...LEVENSHTEIN_DISTANCE_THRESHOLD_SCHEMA(options),
+    nullable: true,
+  } as const)
+
+export type Comparator = 'GREATER_THAN_OR_EQUAL_TO' | 'LESS_THAN_OR_EQUAL_TO'
+export const COMPARATORS: Comparator[] = [
+  'GREATER_THAN_OR_EQUAL_TO',
+  'LESS_THAN_OR_EQUAL_TO',
+]
+
+export const COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'string',
+    enum: COMPARATORS,
+    ...uiSchema(options?.uiSchema, { subtype: 'COMPARATOR' }),
+    title: options?.title || 'Comparator',
+    description: options?.description,
+  } as const)
+
+export type ValueComparator = {
+  value: number
+  comparator: Comparator
+}
+
+export const VALUE_COMPARATOR_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    type: 'object',
+    title: options?.title || 'Value Threshold',
+    description: options?.description,
+    properties: {
+      value: {
+        type: 'number',
+        title: 'Value',
+      },
+      comparator: COMPARATOR_SCHEMA(),
+    },
+    required: ['value', 'comparator'],
+  } as const)
+
+export const VALUE_COMPARATOR_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...VALUE_COMPARATOR_SCHEMA(options),
     nullable: true,
   } as const)

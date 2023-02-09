@@ -1,4 +1,5 @@
 import { JSONSchemaType } from 'ajv'
+import { ValueComparator } from './rule-parameter-schemas'
 
 interface UiSchema<Type> {
   'ui:schema'?: {
@@ -56,4 +57,16 @@ export function mergeRuleSchemas<T>(
       new Set((schema1.required || []).concat(schema2.required || []))
     ),
   } as JSONSchemaType<T>
+}
+
+export function compareNumber(
+  value: number,
+  comparator: ValueComparator
+): boolean {
+  switch (comparator.comparator) {
+    case 'GREATER_THAN_OR_EQUAL_TO':
+      return value >= comparator.value
+    case 'LESS_THAN_OR_EQUAL_TO':
+      return value >= comparator.value
+  }
 }

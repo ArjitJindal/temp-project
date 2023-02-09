@@ -34,6 +34,7 @@ import { TooManyCounterpartyCountryRuleParameters } from './too-many-counterpart
 import { TransactionsRoundValueVelocityRuleParameters } from './transactions-round-value-velocity'
 import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-details'
 import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
+import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-outflow-inflow-volume'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -1030,6 +1031,34 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       labels: ['List'],
       defaultNature: 'FRAUD',
       defaultCasePriority: 'P3',
+      defaultCaseCreationType: 'USER',
+    }
+  },
+  () => {
+    const defaultParameters: TransactionsOutflowInflowVolumeRuleParameters = {
+      timeWindow: {
+        units: 30,
+        granularity: 'day',
+      },
+      outflowTransactionType: 'WITHDRAWAL',
+      inflowTransactionType: 'DEPOSIT',
+      outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
+    }
+
+    return {
+      id: 'R-41',
+      name: 'Transaction outflow and inflow pattern',
+      type: 'TRANSACTION',
+      description:
+        'Compare transaction outflow volume with transaction inflow volume.',
+      descriptionTemplate:
+        'Transaction outflow volume ({{ format-money outflowAmount }}) is {{ format-comparator parameters.outflowInflowComparator }} transaction inflow volume ({{ format-money inflowAmount }})',
+      defaultParameters,
+      defaultAction: 'FLAG',
+      ruleImplementationName: 'transactions-outflow-inflow-volume',
+      labels: [],
+      defaultNature: 'FRAUD',
+      defaultCasePriority: 'P1',
       defaultCaseCreationType: 'USER',
     }
   },
