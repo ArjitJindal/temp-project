@@ -57,10 +57,10 @@ export const userHandler = lambdaApi()(
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
 
-      if ((userPayload as User).userId) {
+      if (userPayload.userId) {
         const user = isConsumerUser
-          ? await userRepository.getConsumerUser(userPayload.userId)
-          : await userRepository.getBusinessUser(userPayload.userId)
+          ? await userRepository.getConsumerUser(userPayload.userId as string)
+          : await userRepository.getBusinessUser(userPayload.userId as string)
         if (user) {
           return {
             userId: user.userId,
@@ -72,20 +72,28 @@ export const userHandler = lambdaApi()(
         }
       }
 
-      const user = isConsumerUser
-        ? await userRepository.saveConsumerUser(userPayload)
-        : await userRepository.saveBusinessUser(userPayload)
       if (hasFeature('PULSE')) {
         const riskScoringService = new RiskScoringService(tenantId, {
           dynamoDb,
           mongoDb,
         })
-        await riskScoringService.updateInitialRiskScores(user)
+        await riskScoringService.updateInitialRiskScores(
+          userPayload as User | Business
+        )
 
         if (userPayload.riskLevel) {
-          await handleRiskLevelParam(tenantId, dynamoDb, user)
+          await handleRiskLevelParam(
+            tenantId,
+            dynamoDb,
+            userPayload as User | Business
+          )
         }
       }
+
+      const user = isConsumerUser
+        ? await userRepository.saveConsumerUser(userPayload)
+        : await userRepository.saveBusinessUser(userPayload)
+
       return {
         userId: user.userId,
         // TODO: Implement risk score

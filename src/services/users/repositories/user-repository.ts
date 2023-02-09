@@ -553,11 +553,14 @@ export class UserRepository {
     return newUser
   }
 
-  public async saveUserMongo(user: User | Business): Promise<User | Business> {
+  public async saveUserMongo(
+    user: (User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }
+  ): Promise<(User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }> {
     const db = this.mongoDb.db()
-    const userCollection = db.collection<Business | User>(
-      USERS_COLLECTION(this.tenantId)
-    )
+    const userCollection = db.collection<
+      (User | Business) & { krsScore?: KrsScore; drsScore?: DrsScore }
+    >(USERS_COLLECTION(this.tenantId))
+
     await userCollection.replaceOne({ userId: user.userId }, user, {
       upsert: true,
     })

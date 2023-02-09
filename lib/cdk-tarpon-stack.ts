@@ -1155,7 +1155,7 @@ export class CdkTarponStack extends cdk.Stack {
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerAlias)
     this.grantMongoDbAccess(hammerheadChangeCaptureKinesisConsumerRetryAlias)
     hammerheadChangeCaptureRetryQueue.grantSendMessages(
-      tarponChangeCaptureKinesisConsumerAlias
+      hammerheadChangeCaptureKinesisConsumerAlias
     )
     slackAlertQueue.grantSendMessages(
       hammerheadChangeCaptureKinesisConsumerAlias

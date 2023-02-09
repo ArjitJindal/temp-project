@@ -1,6 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
+import * as Sentry from '@sentry/node'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import {
   getMongoDbClient,
@@ -30,6 +31,7 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { RiskScoringService } from '@/services/risk-scoring'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import { DeviceMetric } from '@/@types/openapi-public-device-data/DeviceMetric'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
 const sqs = new AWS.SQS()
 
@@ -150,6 +152,35 @@ async function userHandler(
     mongoDb,
   })
   const usersRepo = new UserRepository(tenantId, { mongoDb })
+
+  if (await tenantHasFeature(tenantId, 'PULSE')) {
+    const dynamoDb = await getDynamoDbClient()
+    const riskRepository = new RiskRepository(tenantId, { dynamoDb })
+
+    const krsScore = await riskRepository.getKrsScore(user.userId)
+    const drsScore = await riskRepository.getDrsScore(user.userId)
+
+    if (!krsScore && !drsScore) {
+      if (
+        process.env.NODE_ENV !== 'development' &&
+        process.env.NODE_ENV !== 'test' &&
+        process.env.ENV !== 'local'
+      ) {
+        Sentry.captureException(
+          new Error(
+            `KRS and DRS scores are not available for user ${user.userId} in tenant ${tenantId}`
+          )
+        )
+      }
+    }
+
+    user = {
+      ...user,
+      ...(krsScore && { krsScore }),
+      ...(drsScore && { drsScore }),
+    }
+  }
+
   await usersRepo.saveUserMongo(user)
 
   if (await tenantHasFeature(tenantId, 'PULSE')) {

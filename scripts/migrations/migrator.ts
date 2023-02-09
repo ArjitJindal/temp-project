@@ -96,6 +96,8 @@ async function main() {
   if (migrationType === 'POST_DEPLOYMENT' && !process.argv.includes('create')) {
     await syncMongoDbIndices()
     await syncRulesLibrary()
+
+    // TODO: Remove or comment this after all tenants have been migrated and retry queue works properly
     await syncKrsAndDrsScoresForAllTenants()
   }
 }

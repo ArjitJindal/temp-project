@@ -3,11 +3,8 @@ import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import {
   getMongoDbClient,
   CASES_COLLECTION,
-  USERS_COLLECTION,
   TRANSACTIONS_COLLECTION,
 } from '@/utils/mongoDBUtils'
-import { Business } from '@/@types/openapi-public/Business'
-import { User } from '@/@types/openapi-public/User'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -83,16 +80,6 @@ async function drsScoreEventHandler(
   })
   await riskRepository.addDrsValueToMongo(drsScore)
 
-  const userCollection = mongoDb
-    .db()
-    .collection<Business | User>(USERS_COLLECTION(tenantId))
-
-  await userCollection.updateOne(
-    { userId: drsScore.userId },
-    {
-      $set: { drsScore },
-    }
-  )
   logger.info(`DRS Score Processed`)
 }
 
@@ -110,15 +97,7 @@ async function krsScoreEventHandler(
     mongoDb,
   })
   await riskRepository.addKrsValueToMongo(krsScore)
-  const userCollection = mongoDb
-    .db()
-    .collection<Business | User>(USERS_COLLECTION(tenantId))
-  await userCollection.updateOne(
-    { userId: krsScore.userId },
-    {
-      $set: { krsScore },
-    }
-  )
+
   logger.info(`KRS Score Processed`)
 }
 
