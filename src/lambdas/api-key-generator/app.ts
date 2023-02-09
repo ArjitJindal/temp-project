@@ -2,12 +2,9 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { APIGateway } from 'aws-sdk'
-import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { logger } from '@/core/logger'
-
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   AUDITLOG_COLLECTION,
@@ -24,55 +21,18 @@ import {
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { Case } from '@/@types/openapi-internal/Case'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { sendBatchJobCommand } from '@/services/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { DemoModeDataLoadBatchJob } from '@/@types/batch-job'
 import { getFullTenantId } from '@/lambdas/jwt-authorizer/app'
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const base62 = require('base-x')(
-  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-)
+import { createNewApiKeyForTenant } from '@/services/api-key'
 
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string
   usagePlanId: string
   demoTenant: string
-}
-
-function createUuid() {
-  return uuidv4().replace(/-/g, '')
-}
-
-function createNewApiKey(tenantId: string) {
-  return base62.encode(
-    Buffer.from(`${tenantId}.${createUuid()}${createUuid()}`)
-  )
-}
-
-async function createNewApiKeyForTenant(
-  tenantId: string,
-  usagePlanId: string
-): Promise<string> {
-  // TODO: Verify tenantId exists (in DB and Usage Plan)
-  const newApiKey = createNewApiKey(tenantId)
-  const apiGateway = new APIGateway()
-  const apiKeyResult = await apiGateway
-    .createApiKey({
-      enabled: true,
-      name: tenantId, // TODO: concat with user ID
-      value: newApiKey,
-    })
-    .promise()
-  await apiGateway
-    .createUsagePlanKey({
-      usagePlanId,
-      keyId: apiKeyResult.id as string,
-      keyType: 'API_KEY',
-    })
-    .promise()
-  return newApiKey
 }
 
 export const apiKeyGeneratorHandler = lambdaApi()(

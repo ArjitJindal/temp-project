@@ -4,7 +4,7 @@ import { CaseRepository } from '@/services/rules-engine/repositories/case-reposi
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { CasePriority } from '@/@types/openapi-public-management/CasePriority'
 
 async function migrateTenant(tenant: Tenant) {

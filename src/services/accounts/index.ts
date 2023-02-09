@@ -7,7 +7,7 @@ import {
   AuthenticationClient,
 } from 'auth0'
 import { UserMetadata } from 'aws-sdk/clients/elastictranscoder'
-import { AccountsConfig } from '../app'
+import { AccountsConfig } from '../../lambdas/console-api-account/app'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { logger } from '@/core/logger'
@@ -15,6 +15,7 @@ import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPaylo
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { isValidRole } from '@/@types/jwt'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
+import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -329,5 +330,91 @@ export class AccountsService {
       }
     )
     return updatedUser.user_metadata ?? {}
+  }
+
+  async createAuth0Organization(
+    tenantData: TenantCreationRequest,
+    tenantId: string
+  ): Promise<Organization> {
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+
+    const organization = await managementClient.organizations.create({
+      name: tenantData.tenantName.toLowerCase(),
+      display_name: tenantData?.auth0DisplayName?.replace(/[^a-zA-Z0-9]/g, '_'),
+      metadata: {
+        tenantId,
+        consoleApiUrl: `${process.env.AUTH0_AUDIENCE}console`,
+        apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
+      },
+    })
+
+    if (organization.id == null) {
+      throw new Error('Unable to create organization')
+    }
+
+    return organization
+  }
+
+  async getOrganization(tenantName: string): Promise<Organization | null> {
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    try {
+      const organization = await managementClient.organizations.getByName({
+        name: tenantName.toLowerCase(),
+      })
+
+      return organization
+    } catch (e) {
+      if ((e as Error & { statusCode: number })?.statusCode === 404) {
+        return null
+      }
+      throw e
+    }
+  }
+
+  async createAccountInOrganizationMultiple(
+    organization: Organization,
+    emails: string[],
+    role: AccountRoleName
+  ): Promise<void> {
+    const tenantId = organization.metadata?.tenantId
+
+    if (tenantId == null) {
+      throw new BadRequest('Unable to find tenant id in organization metadata')
+    }
+
+    for await (const email of emails) {
+      await this.createAccountInOrganization(
+        {
+          id: tenantId as unknown as string,
+          name: organization.name,
+          orgId: organization.id,
+          apiAudience: organization.metadata?.apiAudience,
+        },
+        { email, role }
+      )
+    }
+  }
+
+  async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    try {
+      const users = await managementClient.getUsers({
+        q: `email:(${emails.join(' OR ')})`,
+        fields: 'email',
+        include_fields: true,
+        per_page: 1,
+      })
+
+      if (users.length > 0) {
+        return true
+      }
+    } catch (e) {
+      if ((e as Error & { statusCode: number })?.statusCode === 404) {
+        return false
+      }
+      throw e
+    }
+
+    return false
   }
 }

@@ -4,7 +4,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = await getDynamoDbClient()

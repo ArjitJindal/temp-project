@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 import {
   DRS_SCORES_COLLECTION,

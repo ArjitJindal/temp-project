@@ -2,10 +2,7 @@ import { MigrationFn } from 'umzug'
 import { StackConstants } from '@cdk/constants'
 import { getConfig } from '../utils/config'
 import { AccountsConfig } from '@/lambdas/console-api-account/app'
-import {
-  Tenant,
-  AccountsService,
-} from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant, AccountsService } from '@/services/accounts'
 import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DashboardStatsRepository } from '@/lambdas/console-api-dashboard/repositories/dashboard-stats-repository'

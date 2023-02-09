@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import {
   DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY,
   getMongoDbClient,

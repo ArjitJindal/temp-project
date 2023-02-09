@@ -1,6 +1,6 @@
 import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { createMongoDBCollections } from '@/lambdas/api-key-generator/app'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 

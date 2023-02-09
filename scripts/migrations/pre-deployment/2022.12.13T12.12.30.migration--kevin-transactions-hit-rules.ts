@@ -4,13 +4,10 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb'
 import { getConfig } from '../utils/config'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { AccountsConfig } from '@/lambdas/console-api-account/app'
-import {
-  Tenant,
-  AccountsService,
-} from '@/lambdas/console-api-account/services/accounts-service'
 import { getMongoDbClient, TRANSACTIONS_COLLECTION } from '@/utils/mongoDBUtils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { AccountsService, Tenant } from '@/services/accounts'
 
 async function migrateTenant(tenant: Tenant | null) {
   if (!tenant) {

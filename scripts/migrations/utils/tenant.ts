@@ -1,8 +1,5 @@
 import { getConfig } from './config'
-import {
-  AccountsService,
-  Tenant,
-} from '@/lambdas/console-api-account/services/accounts-service'
+import { AccountsService, Tenant } from '@/services/accounts'
 import { AccountsConfig } from '@/lambdas/console-api-account/app'
 
 const config = getConfig()

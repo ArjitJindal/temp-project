@@ -7,7 +7,7 @@
  */
 
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { CaseRepository } from '@/services/rules-engine/repositories/case-repository'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'

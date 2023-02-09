@@ -3,14 +3,17 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
+import { customAlphabet } from 'nanoid'
 import { AccountsConfig } from '../console-api-account/app'
-import { AccountsService } from '../console-api-account/services/accounts-service'
+import { AccountsService } from '../../services/accounts'
+import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = ['features']
 
@@ -37,6 +40,25 @@ export const tenantsHandler = lambdaApi()(
         })
       )
       return tenants
+    } else if (
+      event.resource === '/tenants' &&
+      event.httpMethod === 'POST' &&
+      event.body
+    ) {
+      assertRole({ role, verifiedEmail }, 'root')
+      const randomizedId = customAlphabet(
+        '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        10
+      )()
+
+      const bodyTenantId = (JSON.parse(event.body) as TenantCreationRequest)
+        .tenantId
+
+      const tenantRepository = new TenantService(bodyTenantId ?? randomizedId, {
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+
+      return tenantRepository.createTenant(JSON.parse(event.body))
     } else if (event.resource === '/tenants/settings') {
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
@@ -55,6 +77,8 @@ export const tenantsHandler = lambdaApi()(
 
         return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
       }
+    } else if (event.resource === '/info') {
+      return { region: process.env.AWS_REGION }
     }
     throw new BadRequest('Unhandled request')
   }

@@ -3,7 +3,7 @@ import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import _ from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { migrateTransactions } from '../utils/transaction'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   getMongoDbClient,

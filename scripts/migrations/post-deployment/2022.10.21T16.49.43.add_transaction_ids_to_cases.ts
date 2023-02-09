@@ -1,7 +1,7 @@
 import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
 import { CASES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { Case } from '@/@types/openapi-internal/Case'
 
 export async function migrateTenant(tenant: Tenant) {

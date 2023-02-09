@@ -1,7 +1,7 @@
 import { DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@cdk/constants'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { getMongoDbClient, USERS_COLLECTION } from '@/utils/mongoDBUtils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

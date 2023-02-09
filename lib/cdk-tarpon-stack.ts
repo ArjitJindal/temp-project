@@ -621,6 +621,23 @@ export class CdkTarponStack extends cdk.Stack {
       'READ'
     )
 
+    tenantsFunctionAlias.role?.attachInlinePolicy(
+      new Policy(this, getResourceNameForTarpon('TenantApiPolicy'), {
+        policyName: getResourceNameForTarpon('TenantApiPolicy'),
+        statements: [
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: ['apigateway:POST', 'apigateway:GET'],
+            resources: [
+              'arn:aws:apigateway:*::/apikeys',
+              'arn:aws:apigateway:*::/usageplans/*/keys',
+              'arn:aws:apigateway:*::/usageplans',
+            ],
+          }),
+        ],
+      })
+    )
+
     /* Business users view */
     const { alias: businessUsersViewAlias } = this.createFunction(
       {

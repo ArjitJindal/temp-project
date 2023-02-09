@@ -1500,6 +1500,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Tenant'
+    post:
+      summary: Tenant - Create
+      operationId: post-create-tenant
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantCreationResponse'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreationRequest'
+  /info:
+    get:
+      summary: Get Info
+      operationId: get-info
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Info'
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -3482,6 +3508,25 @@ components:
               type: array
               items:
                 type: string
+    TenantCreationResponse:
+      title: TenantCreationResponse
+      type: object
+      properties:
+        tenantId:
+          type: string
+        tenantName:
+          type: string
+        auth0OrganizationId:
+          type: string
+        apiKey:
+          type: string
+        usagePlanId:
+          type: string
+      required:
+        - tenantId
+        - tenantName
+        - apiKey
+        - usagePlanId
     RiskClassificationScore:
       description: ''
       title: RiskClassificationScore
@@ -4633,6 +4678,37 @@ components:
         - statistics
         - latestStatus
         - statuses
+    TenantCreationRequest:
+      title: TenantCreationRequest
+      type: object
+      x-stoplight:
+        id: 9d4bfe04d1868
+      properties:
+        tenantName:
+          type: string
+        tenantWebsite:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/Feature'
+        adminEmails:
+          type: array
+          items:
+            type: string
+        environment:
+          type: string
+        tenantId:
+          type: string
+        auth0DisplayName:
+          type: string
+      required:
+        - tenantName
+        - tenantWebsite
+        - environment
+        - auth0DisplayName
+        - adminEmails
+        - features
     SimulationPulseStatistics:
       type: object
       title: SimulationPulseStatistics
@@ -4713,6 +4789,13 @@ components:
       enum:
         - ascend
         - descend
+    Info:
+      type: object
+      properties:
+        region:
+          type: string
+      required:
+        - region
   securitySchemes:
     Authorization:
       type: http

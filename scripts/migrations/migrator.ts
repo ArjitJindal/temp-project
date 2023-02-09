@@ -10,7 +10,7 @@ import { syncKrsAndDrsScoresForAllTenants } from './always-run/sync-krs-and-drs-
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 
 async function migrateTenant(tenant: Tenant) {}
 

@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'

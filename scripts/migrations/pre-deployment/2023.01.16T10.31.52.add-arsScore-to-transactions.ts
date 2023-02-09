@@ -3,7 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import { TransactionCaseManagement } from '@/@types/openapi-internal/TransactionCaseManagement'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import {
   ARS_SCORES_COLLECTION,
   CASES_COLLECTION,

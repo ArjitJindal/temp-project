@@ -1,7 +1,7 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 import { ARS_SCORES_COLLECTION, getMongoDbClient } from '@/utils/mongoDBUtils'
 
 async function migrateTenant(tenant: Tenant) {

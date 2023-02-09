@@ -3,7 +3,7 @@ import { DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient, paginateQuery } from '@/utils/dynamodb'
-import { Tenant } from '@/lambdas/console-api-account/services/accounts-service'
+import { Tenant } from '@/services/accounts'
 
 async function moveItem(item: any, fromTable: string, toTable: string) {
   const dynamodb = await getDynamoDbClient()

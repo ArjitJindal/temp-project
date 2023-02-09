@@ -14,6 +14,7 @@ import { OauthV2AccessResponse } from '@slack/web-api'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { AlertPayload } from '@/@types/alert/alert-payload'
 import { logger } from '@/core/logger'

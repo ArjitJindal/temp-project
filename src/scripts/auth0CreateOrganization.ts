@@ -3,7 +3,7 @@ import commandLineArgs from 'command-line-args'
 import { getConfig, loadConfigEnv } from '../../scripts/migrations/utils/config'
 import { Config } from '../../lib/configs/config'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
-import { AccountsService } from '@/lambdas/console-api-account/services/accounts-service'
+import { AccountsService } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
@@ -130,7 +130,6 @@ const createAuth0Organization = async (
       },
       { email: auth0Email, role: 'admin' }
     )
-
     console.log(account)
   }
 

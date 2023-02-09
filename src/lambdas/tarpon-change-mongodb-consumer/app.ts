@@ -17,6 +17,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'

@@ -1,7 +1,8 @@
 import Ajv, { ValidateFunction } from 'ajv'
 import createHttpError from 'http-errors'
-import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { DEFAULT_CURRENCY_KEYWORD } from './transaction-rules/library'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'

@@ -18,6 +18,7 @@ import {
 import { RuleAuditLogService } from '@/services/rules-engine/rules-audit-log-service'
 import { replaceMagicKeyword } from '@/utils/objectUtils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+
 import { DEFAULT_CURRENCY_KEYWORD } from '@/services/rules-engine/transaction-rules/library'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 

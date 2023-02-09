@@ -8,3 +8,10 @@ export function escapeStringRegexp(string: string) {
   // Use a simple backslash escape when it’s always valid, and a `\xnn` escape when the simpler form would be disallowed by Unicode patterns’ stricter grammar.
   return string.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d')
 }
+
+export const isValidEmail = (email: string) => {
+  const emailRegex = new RegExp(
+    '^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:.[a-zA-Z0-9-]+)*$'
+  )
+  return emailRegex.test(email)
+}
