@@ -1,7 +1,7 @@
 import { createLogger, format, transports } from 'winston'
-import Sentry from 'winston-transport-sentry-node'
+import * as Sentry from '@sentry/serverless'
+import TransportStream from 'winston-transport'
 import { getContext } from '../utils/context'
-import { SENTRY_DSN } from '@/core/constants'
 
 const isLocal = process.env.ENV === 'local'
 const logFormat = format.combine(
@@ -9,15 +9,25 @@ const logFormat = format.combine(
   format.errors({ stack: true }),
   format.json()
 )
+
+class SentryTransport extends TransportStream {
+  public log(info: any) {
+    const { tags } = info
+    if (info['error']) {
+      Sentry.captureException(
+        Object.values(info).find((value) => value instanceof Error),
+        { tags }
+      )
+    }
+  }
+}
+
 export const winstonLogger = createLogger({
   level: process.env.NODE_ENV === 'test' ? 'error' : isLocal ? 'debug' : 'info',
   format: isLocal ? format.combine(logFormat, format.prettyPrint()) : logFormat,
   transports: [
     new transports.Console({}),
-    new Sentry({
-      sentry: {
-        dsn: SENTRY_DSN,
-      },
+    new SentryTransport({
       level: 'error',
     }),
   ],
