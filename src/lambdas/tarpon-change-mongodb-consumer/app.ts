@@ -1,7 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import * as AWS from 'aws-sdk'
-import * as Sentry from '@sentry/node'
 import { CaseCreationService } from '../console-api-case/services/case-creation-service'
 import {
   getMongoDbClient,
@@ -167,7 +166,7 @@ async function userHandler(
         process.env.NODE_ENV !== 'test' &&
         process.env.ENV !== 'local'
       ) {
-        Sentry.captureException(
+        logger.error(
           new Error(
             `KRS and DRS scores are not available for user ${user.userId} in tenant ${tenantId}`
           )

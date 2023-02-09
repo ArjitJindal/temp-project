@@ -6,7 +6,6 @@ import AWS from 'aws-sdk'
 import { syncMongoDbIndices } from './always-run/sync-mongodb-indices'
 import { syncRulesLibrary } from './always-run/sync-rules-library'
 import { loadConfigEnv } from './utils/config'
-import { syncKrsAndDrsScoresForAllTenants } from './always-run/sync-krs-and-drs-scores'
 import { getMongoDbClient } from '@/utils/mongoDBUtils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
@@ -96,9 +95,6 @@ async function main() {
   if (migrationType === 'POST_DEPLOYMENT' && !process.argv.includes('create')) {
     await syncMongoDbIndices()
     await syncRulesLibrary()
-
-    // TODO: Remove or comment this after all tenants have been migrated and retry queue works properly
-    await syncKrsAndDrsScoresForAllTenants()
   }
 }
 

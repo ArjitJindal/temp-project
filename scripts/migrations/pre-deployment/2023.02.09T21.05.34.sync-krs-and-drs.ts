@@ -11,7 +11,7 @@ import {
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { tenantHasFeature } from '@/core/middlewares/tenant-has-feature'
 
-const syncKrsAndDrsScores = async (tenant: Tenant) => {
+async function migrateTenant(tenant: Tenant) {
   if (!(await tenantHasFeature(tenant.id, 'PULSE'))) {
     return
   }
@@ -57,11 +57,9 @@ const syncKrsAndDrsScores = async (tenant: Tenant) => {
   }
 }
 
-export async function syncKrsAndDrsScoresForAllTenants() {
-  console.log('Syncing KRS and DRS scores for all tenants')
-  await migrateAllTenants(syncKrsAndDrsScores)
+export const up = async () => {
+  await migrateAllTenants(migrateTenant)
 }
-
-if (require.main === module) {
-  syncKrsAndDrsScoresForAllTenants()
+export const down = async () => {
+  // skip
 }
