@@ -75,7 +75,7 @@ export const CreateTenantModal = (props: Props) => {
       demoMode,
     } = formDetails;
 
-    if (!tenantName || !tenantWebsite || !auth0DisplayName) {
+    if (!tenantName || !tenantWebsite || !auth0DisplayName || !emailsOfAdmins?.length) {
       message.error('Please fill in all the required fields');
       return;
     }
@@ -84,7 +84,8 @@ export const CreateTenantModal = (props: Props) => {
       tenantName.includes(' ') ||
       tenantWebsite.includes(' ') ||
       auth0DisplayName.includes(' ') ||
-      tenantId?.includes(' ')
+      tenantId?.includes(' ') ||
+      emailsOfAdmins.some((email) => email.includes(' '))
     ) {
       message.error('Please remove all spaces from the fields');
       return;
@@ -128,7 +129,8 @@ export const CreateTenantModal = (props: Props) => {
         tenantId: {
           type: 'string',
           title: 'Tenant ID',
-          description: 'The ID of the tenant (Optional)',
+          description:
+            'The ID of the tenant (Optional) If not provided, will be generated automatically',
         },
         auth0DisplayName: {
           type: 'string',
@@ -142,7 +144,7 @@ export const CreateTenantModal = (props: Props) => {
           uniqueItems: true,
           items: {
             type: 'string',
-            description: 'The email of the admin',
+            description: 'The email of the admin Will assign the role of "admin" in Auth0',
           },
         },
         featureFlags: {
@@ -163,7 +165,13 @@ export const CreateTenantModal = (props: Props) => {
           },
         }),
       },
-      required: ['tenantName', 'tenantWebsite', ...(currentEnv === 'prod' ? ['region'] : [])],
+      required: [
+        'tenantName',
+        'auth0DisplayName',
+        'tenantWebsite',
+        'featureFlags',
+        'emailsOfAdmins',
+      ],
     }),
     [UPDATED_FEATURES],
   );
