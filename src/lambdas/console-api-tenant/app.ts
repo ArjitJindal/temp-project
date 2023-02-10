@@ -77,8 +77,6 @@ export const tenantsHandler = lambdaApi()(
 
         return tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
       }
-    } else if (event.resource === '/info') {
-      return { region: process.env.AWS_REGION }
     }
     throw new BadRequest('Unhandled request')
   }

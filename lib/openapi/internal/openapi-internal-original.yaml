@@ -1515,17 +1515,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TenantCreationRequest'
-  /info:
-    get:
-      summary: Get Info
-      operationId: get-info
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Info'
   /tenants/settings:
     get:
       summary: Tenant - Get Settings
@@ -4696,8 +4685,6 @@ components:
           type: array
           items:
             type: string
-        environment:
-          type: string
         tenantId:
           type: string
         auth0DisplayName:

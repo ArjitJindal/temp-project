@@ -34,12 +34,8 @@ export class TenantService {
   async createTenant(
     tenantData: TenantCreationRequest
   ): Promise<TenantCreationResponse> {
-    if (
-      !tenantData.tenantName ||
-      !tenantData.tenantWebsite ||
-      !tenantData.environment
-    ) {
-      throw new BadRequest('Tenant name, website and environment are required')
+    if (!tenantData.tenantName || !tenantData.tenantWebsite) {
+      throw new BadRequest('Tenant name, website and website are required')
     }
 
     const accountsService = new AccountsService(process.env as AccountsConfig)
@@ -180,7 +176,7 @@ export class TenantService {
       throttle: throttleSettings,
       apiStages: await this.getApiStages(),
       description: tenantData.tenantWebsite,
-      ...(!tenantData.environment.startsWith('prod') && {
+      ...(!process.env.ENV?.startsWith('prod') && {
         quota: { limit: 1000, offset: 0, period: 'MONTH' },
       }),
     })
