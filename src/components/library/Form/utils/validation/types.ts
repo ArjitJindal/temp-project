@@ -12,7 +12,7 @@ export type SimpleFieldValidator<T> = Validator<T>;
 
 export type ObjectFieldValidator<T> = {
   [Key in keyof T]?: FieldValidator<T[Key]>;
-};
+} & { nullable?: boolean };
 
 export type FieldValidator<T> = SimpleFieldValidator<T> | ObjectFieldValidator<T>;
 

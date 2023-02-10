@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {
   FieldValidator,
   FieldValidators,
@@ -8,6 +9,7 @@ import {
   ObjectFieldValidator,
   ValidationError,
 } from '@/components/library/Form/utils/validation/types';
+import { removeEmpty } from '@/utils/json';
 
 export function validateForm<FormValues>(
   formValues: FormValues,
@@ -63,6 +65,13 @@ export function validateField<T>(
     return fieldValidator(value);
   }
   const objectValidator: ObjectFieldValidator<T> = fieldValidator;
+  if (
+    (_.isNil(value) || (_.isObject(value) && _.isEmpty(removeEmpty(value)))) &&
+    objectValidator.nullable
+  ) {
+    return null;
+  }
+
   const nestedResult = {};
   for (const key of Object.keys(objectValidator)) {
     const subfieldValidator = objectValidator[key];

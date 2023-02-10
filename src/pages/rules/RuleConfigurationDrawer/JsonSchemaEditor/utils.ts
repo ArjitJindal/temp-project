@@ -49,6 +49,7 @@ export function makeValidators<T>(props: PropertyItems): ObjectFieldValidator<T>
       const nestedValidators = makeValidators(orderedProps);
       if (Object.keys(nestedValidators).length > 0) {
         propValidators = nestedValidators;
+        propValidators.nullable = !prop.isRequired;
       }
     } else if (prop.isRequired) {
       propValidators = notEmpty;

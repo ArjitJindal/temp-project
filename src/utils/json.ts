@@ -1,4 +1,5 @@
 import flatten from 'flat';
+import _ from 'lodash';
 
 export function removeNil<T>(object: T): T {
   return JSON.parse(
@@ -9,6 +10,35 @@ export function removeNil<T>(object: T): T {
       return v;
     }),
   );
+}
+
+function removeEmptyInplace(object: any) {
+  if (!_.isObject(object)) {
+    return;
+  }
+  _.keys(object).forEach(function (key) {
+    const localObj = object[key];
+    if (_.isObject(localObj)) {
+      if (_.isEmpty(localObj)) {
+        delete object[key];
+        return;
+      }
+      removeEmptyInplace(localObj);
+      if (_.isEmpty(localObj)) {
+        delete object[key];
+        return;
+      }
+    } else if (_.isNil(localObj)) {
+      delete object[key];
+      return;
+    }
+  });
+}
+
+export function removeEmpty<T>(o: T): T {
+  const object = _.cloneDeep(o);
+  removeEmptyInplace(object);
+  return object;
 }
 
 export function flattenObject(object: any): any {

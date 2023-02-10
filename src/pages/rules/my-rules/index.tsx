@@ -19,6 +19,7 @@ import { TableActionType } from '@/components/ui/Table';
 import { useApiTime, usePageViewTracker } from '@/utils/tracker';
 import RuleConfigurationDrawer, { FormValues } from '@/pages/rules/RuleConfigurationDrawer';
 import { getErrorMessage } from '@/utils/lang';
+import { removeEmpty } from '@/utils/json';
 
 const MyRule = () => {
   usePageViewTracker('My Rule Page');
@@ -276,12 +277,12 @@ const MyRule = () => {
         nature: basicDetailsStep.ruleNature,
         ...(isPulseEnabled
           ? {
-              riskLevelParameters: riskLevelParameters,
+              riskLevelParameters: removeEmpty(riskLevelParameters),
               riskLevelActions: riskLevelActions,
             }
           : {
               action: ruleAction ?? ruleInstance.action,
-              parameters: ruleParameters,
+              parameters: removeEmpty(ruleParameters),
             }),
       };
       await handleRuleInstanceUpdate(newRuleInstance);

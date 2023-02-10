@@ -15,6 +15,7 @@ import { Rule, RuleInstance } from '@/apis';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { removeEmpty } from '@/utils/json';
 
 const TableList = () => {
   usePageViewTracker('Rules Page');
@@ -56,11 +57,11 @@ const TableList = () => {
         ...(isPulseEnabled
           ? {
               riskLevelActions: riskLevelActions,
-              riskLevelParameters: riskLevelParameters,
+              riskLevelParameters: removeEmpty(riskLevelParameters),
             }
           : {
               action: ruleAction,
-              parameters: ruleParameters,
+              parameters: removeEmpty(ruleParameters),
             }),
       } as RuleInstance;
 
