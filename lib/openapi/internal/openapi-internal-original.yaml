@@ -4692,7 +4692,6 @@ components:
       required:
         - tenantName
         - tenantWebsite
-        - environment
         - auth0DisplayName
         - adminEmails
         - features
