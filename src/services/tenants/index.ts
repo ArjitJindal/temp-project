@@ -52,13 +52,16 @@ export class TenantService {
 
     if (
       tenantData?.adminEmails?.length &&
-      checkMultipleEmails(tenantData.adminEmails)
+      !checkMultipleEmails(tenantData.adminEmails)
     ) {
       throw new BadRequest('One or more admin emails are invalid')
     }
 
     if (
-      await accountsService.checkAuth0UserExistsMultiple(tenantData.adminEmails)
+      tenantData?.adminEmails?.length &&
+      (await accountsService.checkAuth0UserExistsMultiple(
+        tenantData.adminEmails
+      ))
     ) {
       throw new BadRequest('One or more admin emails already exists')
     }
