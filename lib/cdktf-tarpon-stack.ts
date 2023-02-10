@@ -42,19 +42,21 @@ export class CdktfTarponStack extends TerraformStack {
         }
       )
 
+    const auth0ClientId = Fn.lookup(
+      Fn.jsondecode(auth0SecretVersion.secretString),
+      'clientId',
+      ''
+    )
+    const auth0ClientSecret = Fn.lookup(
+      Fn.jsondecode(auth0SecretVersion.secretString),
+      'clientSecret',
+      ''
+    )
     new auth0.provider.Auth0Provider(auth0SecretVersion, 'auth0', {
       domain: config.application.AUTH0_DOMAIN,
       audience: config.application.AUTH0_MANAGEMENT_API_AUDIENCE,
-      clientId: Fn.lookup(
-        Fn.jsondecode(auth0SecretVersion.secretString),
-        'clientId',
-        ''
-      ),
-      clientSecret: Fn.lookup(
-        Fn.jsondecode(auth0SecretVersion.secretString),
-        'clientSecret',
-        ''
-      ),
+      clientId: auth0ClientId,
+      clientSecret: auth0ClientSecret,
     })
 
     const scopes = PERMISSIONS.map((p) => {
@@ -101,6 +103,11 @@ export class CdktfTarponStack extends TerraformStack {
       },
       runtime: 'node18',
       deploy: true,
+      secrets: [
+        { name: 'domain', value: config.application.AUTH0_DOMAIN },
+        { name: 'clientId', value: auth0ClientId },
+        { name: 'clientSecret', value: auth0ClientSecret },
+      ],
       dependencies: [
         {
           name: 'auth0',
