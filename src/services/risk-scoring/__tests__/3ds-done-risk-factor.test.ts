@@ -88,7 +88,7 @@ createArsRiskFactorTestCases(
   RISK_FACTOR('_3dsDone'),
   [
     {
-      testName: '_3dsDone is true',
+      testName: '3dsDone is true',
       transaction: getTestTransaction({
         originUserId: '1',
         destinationUserId: '2',
@@ -102,7 +102,7 @@ createArsRiskFactorTestCases(
           cardFingerprint: uuidv4(),
           cardIssuedCountry: 'US',
           transactionReferenceField: 'DEPOSIT',
-          _3dsDone: true,
+          '3dsDone': true,
         },
       }),
       users: [
@@ -125,7 +125,7 @@ createArsRiskFactorTestCases(
   RISK_FACTOR('_3dsDone'),
   [
     {
-      testName: '_3dsDone is false',
+      testName: '3dsDone is false',
       transaction: getTestTransaction({
         originUserId: '1',
         destinationUserId: '2',
@@ -139,7 +139,7 @@ createArsRiskFactorTestCases(
           cardFingerprint: uuidv4(),
           cardIssuedCountry: 'US',
           transactionReferenceField: 'DEPOSIT',
-          _3dsDone: false,
+          '3dsDone': false,
         },
       }),
       users: [
@@ -162,7 +162,7 @@ createArsRiskFactorTestCases(
   RISK_FACTOR('_3dsDone'),
   [
     {
-      testName: '_3dsDone is undefined',
+      testName: '3dsDone is undefined',
       transaction: {
         transactionId: uuidv4(),
         transactionState: 'SUCCESSFUL',

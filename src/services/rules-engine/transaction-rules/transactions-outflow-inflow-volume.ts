@@ -246,9 +246,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
     paymentDetails: Array<PaymentDetails | undefined>
   ) {
     return (
-      (paymentDetails.filter(
-        (p) => p && p.method === 'CARD' && (p._3dsDone || (p as any)['3dsDone'])
-      ).length /
+      (paymentDetails.filter((p) => p && p.method === 'CARD' && p['3dsDone'])
+        .length /
         paymentDetails.length) *
       100
     )

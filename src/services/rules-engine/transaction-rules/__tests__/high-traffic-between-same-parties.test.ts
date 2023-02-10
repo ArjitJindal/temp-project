@@ -19,14 +19,14 @@ const cardDetails1: CardDetails = {
   cardFingerprint: '11111111111111111111111111111111',
   cardIssuedCountry: 'US',
   transactionReferenceField: 'DEPOSIT',
-  _3dsDone: true,
+  '3dsDone': true,
 }
 const cardDetails2: CardDetails = {
   method: 'CARD',
   cardFingerprint: '22222222222222222222222222222222',
   cardIssuedCountry: 'IN',
   transactionReferenceField: 'DEPOSIT',
-  _3dsDone: true,
+  '3dsDone': true,
 }
 
 describe('R-119 description formatting', () => {

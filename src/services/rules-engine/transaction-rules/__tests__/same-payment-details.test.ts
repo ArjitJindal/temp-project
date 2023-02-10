@@ -22,7 +22,7 @@ const PAYMENT_DETAILS_1 = {
   cardFingerprint: uuidv4(),
   cardIssuedCountry: 'US',
   transactionReferenceField: 'DEPOSIT',
-  _3dsDone: true,
+  '3dsDone': true,
 } as PaymentDetails
 
 dynamoDbSetupHook()

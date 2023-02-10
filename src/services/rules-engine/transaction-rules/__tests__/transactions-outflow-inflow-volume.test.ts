@@ -317,7 +317,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:10:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
-            _3dsDone: false,
+            '3dsDone': false,
           },
         }),
         getTestTransaction({
@@ -329,7 +329,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:20:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
-            _3dsDone: true,
+            '3dsDone': true,
           },
         }),
         getTestTransaction({
@@ -341,7 +341,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
           originPaymentDetails: {
             method: 'CARD',
-            _3dsDone: true,
+            '3dsDone': true,
           },
         }),
       ],
@@ -368,7 +368,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
           destinationPaymentDetails: {
             method: 'CARD',
-            _3dsDone: false,
+            '3dsDone': false,
           },
         }),
         getTestTransaction({
@@ -388,7 +388,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:20:00.000Z').valueOf(),
           destinationPaymentDetails: {
             method: 'CARD',
-            _3dsDone: true,
+            '3dsDone': true,
           },
         }),
         getTestTransaction({
@@ -400,7 +400,7 @@ describe('Optional parameters', () => {
           timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
           destinationPaymentDetails: {
             method: 'CARD',
-            _3dsDone: true,
+            '3dsDone': true,
           },
         }),
       ],

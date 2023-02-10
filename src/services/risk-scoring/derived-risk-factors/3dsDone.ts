@@ -10,7 +10,7 @@ export const ARS_3DSDONE_RISK_HANDLERS: Array<
       const paymentDetails = transaction.originPaymentDetails
 
       return paymentDetails?.method === 'CARD'
-        ? [paymentDetails['_3dsDone']]
+        ? [paymentDetails['3dsDone']]
         : []
     },
   },

@@ -28,14 +28,14 @@ export function getTestTransaction(
       cardFingerprint: uuidv4(),
       cardIssuedCountry: 'US',
       transactionReferenceField: 'DEPOSIT',
-      _3dsDone: true,
+      '3dsDone': true,
     },
     destinationPaymentDetails: {
       method: 'CARD',
       cardFingerprint: uuidv4(),
       cardIssuedCountry: 'IN',
       transactionReferenceField: 'DEPOSIT',
-      _3dsDone: true,
+      '3dsDone': true,
     },
     ...transaction,
   }
