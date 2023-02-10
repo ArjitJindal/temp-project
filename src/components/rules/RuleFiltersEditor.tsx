@@ -1,28 +1,11 @@
 import { AjvError, IChangeEvent } from '@rjsf/core';
 import { Fragment, useCallback, useEffect } from 'react';
-import _ from 'lodash';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingOutlined } from '@ant-design/icons';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { RULE_FILTERS } from '@/utils/queries/keys';
 import { useApi } from '@/api';
-import { removeNil } from '@/utils/json';
-
-function getFixedSchema(schema: object) {
-  return _.cloneDeepWith(schema, (value) => {
-    /**
-     * antd theme doesn't allow clearing the selected enum even the field is nullable.
-     * In this case, we concat the "empty" option and it'll be removed by removeNil
-     * to be a truly nullable field
-     */
-    if (value?.enum && value?.type === 'string' && value?.nullable) {
-      return {
-        ...value,
-        enum: [''].concat(value.enum),
-      };
-    }
-  });
-}
+import { getFixedSchemaJsonForm, removeNil } from '@/utils/json';
 
 interface Props {
   filters: object;
@@ -53,7 +36,7 @@ export const RuleFiltersEditor: React.FC<Props> = ({ filters, onChange, readonly
   ) : (
     <div>
       <JsonSchemaForm
-        schema={getFixedSchema(queryResults.data?.schema ?? {})}
+        schema={getFixedSchemaJsonForm(queryResults.data?.schema ?? {})}
         formData={filters}
         onChange={handleChange}
         readonly={readonly}

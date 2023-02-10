@@ -1,6 +1,7 @@
-import { Form, message, Modal, Select } from 'antd';
+import { Divider, Form, message, Modal, Select } from 'antd';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { CreateTenantModal } from './CreateTenantModal';
 import { useApi } from '@/api';
 import Button from '@/components/ui/Button';
 import { Feature } from '@/apis';
@@ -8,7 +9,7 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useAuth } from '@/components/AppWrapper/Providers/AuthProvider';
 
-const FEATURES: Feature[] = [
+export const FEATURES: Feature[] = [
   'PULSE',
   'SLACK_ALERTS',
   'AUDIT_LOGS',
@@ -24,6 +25,7 @@ const FEATURES: Feature[] = [
 
 export default function SuperAdminPanel() {
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const { refreshAccessToken } = useAuth();
@@ -117,7 +119,15 @@ export default function SuperAdminPanel() {
             />
           </Form.Item>
         </Form>
+        <Divider />
+        <Button type="default" size="small" onClick={() => setShowCreateTenantModal(true)}>
+          Create Tenant
+        </Button>
       </Modal>
+      <CreateTenantModal
+        visible={showCreateTenantModal}
+        onClose={() => setShowCreateTenantModal(false)}
+      />
     </>
   );
 }

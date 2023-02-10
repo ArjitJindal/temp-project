@@ -14,35 +14,9 @@ import {
   useFeatureEnabled,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getFixedSchemaJsonForm, removeNil } from '@/utils/json';
 
 const RISK_LEVELS: RiskLevel[] = ['VERY_HIGH', 'HIGH', 'MEDIUM', 'LOW', 'VERY_LOW'];
-
-function getFixedSchema(schema: object) {
-  return _.cloneDeepWith(schema, (value) => {
-    /**
-     * antd theme doesn't allow clearing the selected enum even the field is nullable.
-     * In this case, we concat the "empty" option and it'll be removed by removeNil
-     * to be a truly nullable field
-     */
-    if (value?.enum && value?.type === 'string' && value?.nullable) {
-      return {
-        ...value,
-        enum: [''].concat(value.enum),
-      };
-    }
-  });
-}
-
-function removeNil(formData: object) {
-  return JSON.parse(
-    JSON.stringify(formData, (k, v) => {
-      if (v === null) {
-        return undefined;
-      }
-      return v;
-    }),
-  );
-}
 
 function riskLevelToLabel(riskLevel: RiskLevel) {
   return `${_.capitalize(riskLevel.replace('_', ' '))} risk`;
@@ -112,7 +86,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
           {RISK_LEVELS.map((riskLevel) => (
             <Tabs.TabPane tab={getRiskLevelLabel(riskLevel, settings)} key={riskLevel}>
               <JsonSchemaForm
-                schema={getFixedSchema(parametersSchema)}
+                schema={getFixedSchemaJsonForm(parametersSchema)}
                 formData={riskLevelParameters?.[riskLevel] || {}}
                 onChange={(event) => handleRiskLevelParametersChange(riskLevel, event)}
                 readonly={readonly}
@@ -127,7 +101,7 @@ export const RuleParametersEditor: React.FC<Props> = ({
         </Tabs>
       ) : (
         <JsonSchemaForm
-          schema={getFixedSchema(parametersSchema)}
+          schema={getFixedSchemaJsonForm(parametersSchema)}
           formData={parameters}
           onChange={handleParametersChange}
           readonly={readonly}
