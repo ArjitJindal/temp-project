@@ -19,6 +19,9 @@ import Drawer from '@/components/library/Drawer/story';
 import Alert from '@/components/library/Alert/story';
 import JsonSchemaEditor from '@/pages/rules/RuleConfigurationDrawer/JsonSchemaEditor/story';
 import { Component } from '@/pages/storybook/components';
+import Tooltip from '@/components/library/Tooltip/story';
+import Toggle from '@/components/library/Toggle/story';
+import Tabs from '@/components/library/Tabs/story';
 
 interface StoryProps {}
 
@@ -52,6 +55,10 @@ const config: Config = [
         component: 'StepButtons',
         story: StepButtons,
       },
+      {
+        component: 'Tabs',
+        story: Tabs,
+      },
     ],
   },
   {
@@ -61,6 +68,10 @@ const config: Config = [
       {
         component: 'Alert',
         story: Alert,
+      },
+      {
+        component: 'Tooltip',
+        story: Tooltip,
       },
     ],
   },
@@ -99,6 +110,10 @@ const config: Config = [
       {
         component: 'SelectionGroup',
         story: SelectionGroup,
+      },
+      {
+        component: 'Toggle',
+        story: Toggle,
       },
     ],
   },

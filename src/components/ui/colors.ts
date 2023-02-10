@@ -48,6 +48,11 @@ const MAIN_PALLETE: MainPallete = {
   lightRed: { base: '#E93134', tint: '#F8C1C2', shade: '#000000' }, // Graphs,Primary
 };
 
+const NEW_COLORS = {
+  gray5: '#a8a8a8',
+  gray10: '#262626',
+};
+
 const SEMANTIC_COLORS = {
   infoColor: MAIN_PALLETE.skyBlue,
   successColor: MAIN_PALLETE.green,
@@ -59,6 +64,7 @@ const SEMANTIC_COLORS = {
 const COLORS = {
   ...MAIN_PALLETE,
   ...SEMANTIC_COLORS,
+  ...NEW_COLORS,
 };
 
 /*
