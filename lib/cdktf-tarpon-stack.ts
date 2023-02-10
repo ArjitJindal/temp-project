@@ -1,3 +1,4 @@
+import * as fs from 'fs'
 import { Fn, TerraformStack } from 'cdktf'
 import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
@@ -89,5 +90,23 @@ export class CdktfTarponStack extends TerraformStack {
           })),
         })
     )
+    const postLoginCode = fs.readFileSync('lib/auth0/post-login.js', 'utf8')
+
+    new auth0.action.Action(this, 'post-login', {
+      code: postLoginCode,
+      name: 'Add user metadata to tokens',
+      supportedTriggers: {
+        id: 'post-login',
+        version: 'v3',
+      },
+      runtime: 'node18',
+      deploy: true,
+      dependencies: [
+        {
+          name: 'auth0',
+          version: '2.42.0',
+        },
+      ],
+    })
   }
 }
