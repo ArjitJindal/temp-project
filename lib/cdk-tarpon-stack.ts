@@ -632,6 +632,7 @@ export class CdkTarponStack extends cdk.Stack {
               'arn:aws:apigateway:*::/apikeys',
               'arn:aws:apigateway:*::/usageplans/*/keys',
               'arn:aws:apigateway:*::/usageplans',
+              'arn:aws:apigateway:*::/restapis',
             ],
           }),
         ],
