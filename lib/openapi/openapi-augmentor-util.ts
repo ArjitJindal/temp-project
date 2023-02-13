@@ -174,6 +174,19 @@ export function getAugmentedOpenapi(
         passthroughBehavior: 'never',
       }
 
+      // Validate x-flagright structure
+      if (methodSetting['x-flagright']) {
+        const flagrightExtension = methodSetting['x-flagright']
+
+        if (flagrightExtension['permissions']) {
+          flagrightExtension['permissions'].forEach((p: string) => {
+            if (openapi.components.schemas['Permission'].enum.indexOf(p) < 0) {
+              throw new Error(`Invalid x-flagright permission: ${p}`)
+            }
+          })
+        }
+      }
+
       // Security
       if (options?.iamAuthorizedPaths?.includes(path)) {
         methodSetting['x-amazon-apigateway-auth'] = { type: 'AWS_IAM' }

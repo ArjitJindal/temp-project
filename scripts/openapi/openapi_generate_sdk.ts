@@ -27,13 +27,14 @@ function buildApi(
   exec(
     `mkdir -p src/@types/openapi-${type}/ src/@types/openapi-${type}-custom/ 1>/dev/null 2>&1`
   )
+
   exec(
     `
     ./node_modules/.bin/openapi-generator-cli generate -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_types --additional-properties=modelPropertyNaming=original --reserved-words-mappings 3dsDone=3dsDone
     `
   )
 
-  // Custom model generation
+  // Custom code generation
   exec(
     `
     ./node_modules/.bin/openapi-generator-cli generate -t lib/openapi/templates -i lib/openapi/${type}/openapi-${type}-original.yaml -g typescript -o /tmp/flagright/${type}_openapi_custom --additional-properties=modelPropertyNaming=original,api=${type}    `
@@ -50,6 +51,9 @@ function buildApi(
   )
 
   // Move custom generated code
+  exec(
+    `mv /tmp/flagright/${type}_openapi_custom/apis/DefaultApi.ts src/@types/openapi-${type}-custom/`
+  )
   exec(
     `mv /tmp/flagright/${type}_openapi_custom/models/* src/@types/openapi-${type}-custom/`
   )

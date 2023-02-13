@@ -3819,9 +3819,9 @@ components:
         id: byu0hqffp9h2
       enum:
         - root
-        - analyst
         - admin
         - user
+        - analyst
         - approver
         - auditor
         - developer

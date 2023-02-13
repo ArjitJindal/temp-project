@@ -5,13 +5,14 @@ import {
 import { BadRequest, Forbidden } from 'http-errors'
 import { AccountsService } from '../../services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { assertRole, isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
+import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 
 export type AccountsConfig = {
   AUTH0_DOMAIN: string
@@ -43,7 +44,7 @@ export const accountsHandler = lambdaApi()(
       }
       const body: AccountInvitePayload = JSON.parse(event.body)
       const inviteRole: AccountRoleName = body.role ?? 'user'
-      if (!isValidRole(inviteRole)) {
+      if (!isValidAccountRoleName(inviteRole)) {
         throw new BadRequest(`User role is not valid`)
       }
       if (inviteRole === 'root') {
@@ -97,7 +98,7 @@ export const accountsHandler = lambdaApi()(
           throw new BadRequest(`Body should not be empty`)
         }
         const patchPayload = JSON.parse(event.body) as AccountPatchPayload
-        if (!isValidRole(patchPayload.role)) {
+        if (!isValidAccountRoleName(patchPayload.role)) {
           throw new BadRequest(`User role is not valid`)
         }
         if (patchPayload.role === 'root') {

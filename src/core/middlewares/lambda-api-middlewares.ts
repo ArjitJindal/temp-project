@@ -7,6 +7,7 @@ import { localDev } from './local-dev'
 import { initSentry } from './init-sentry'
 import { metricsMiddleware } from './metrics-middleware'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { rbacMiddleware } from '@/core/middlewares/rbac'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   const middlewares = [
@@ -14,6 +15,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     httpErrorHandler(),
     jsonSerializer(),
     contextProvider(),
+    rbacMiddleware(),
     initSentry(),
     featureProtected(options?.requiredFeatures),
     metricsMiddleware(),

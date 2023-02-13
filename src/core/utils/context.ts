@@ -16,6 +16,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { Metric } from '@/core/cloudwatch/metrics'
+import { Permission } from '@/@types/openapi-internal/Permission'
 
 type LogMetaData = {
   tenantId?: string
@@ -27,6 +28,10 @@ type Context = LogMetaData & {
   metricDimensions?: { [key: string]: string | undefined }
   metrics?: { [namespace: string]: MetricDatum[] }
   user?: Partial<Account>
+  authz?: {
+    tenantId: string
+    permissions: Map<Permission, boolean>
+  }
 }
 
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
@@ -46,13 +51,22 @@ export async function getInitialContext(
       verifiedEmail,
       userId,
       role,
+      encodedPermissions,
     } = event.requestContext?.authorizer || {}
+
     if (tenantId) {
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
       features = (await tenantRepository.getTenantSettings(['features']))
         ?.features
     }
+
+    // Create a map for O(1) lookup in permissions checks
+    const permissions = new Map<Permission, boolean>()
+    encodedPermissions
+      .split(',')
+      .forEach((p) => permissions.set(p as Permission, true))
+
     const context: Context = {
       logMetadata: {
         tenantId,
@@ -65,6 +79,10 @@ export async function getInitialContext(
         functionName: lambdaContext?.functionName,
       },
       features,
+      authz: {
+        tenantId,
+        permissions,
+      },
       user: userId
         ? {
             id: userId,

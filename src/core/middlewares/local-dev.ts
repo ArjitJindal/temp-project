@@ -7,6 +7,7 @@ import {
 import * as jwt from 'jsonwebtoken'
 import { getFullTenantId, getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
+import { Permission } from '@/@types/openapi-internal/Permission'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<AWS.STS.Credentials>
@@ -52,14 +53,18 @@ export const localDev =
         const demoMode = userInfo[`${CUSTOM_CLAIMS_NS}/demoMode`] === true
 
         const fullTenantId = getFullTenantId(tenantId as string, demoMode)
+        const permissionsArray = (userInfo[`permissions`] || []) as Permission[]
+        const encodedPermissions = permissionsArray.join(',')
 
         const jwtAuthorizerResult: JWTAuthorizerResult = {
           principalId: fullTenantId,
+          tenantId,
           tenantName:
             userInfo[`${CUSTOM_CLAIMS_NS}/tenantName`] ?? 'Unnamed tenant',
           verifiedEmail:
             userInfo[`${CUSTOM_CLAIMS_NS}/verifiedEmail`] ?? undefined,
           userId: userInfo[`${CUSTOM_CLAIMS_NS}/userId`],
+          encodedPermissions,
           role: userInfo[CUSTOM_CLAIMS_NS + '/role'],
           ...authorizer,
         }

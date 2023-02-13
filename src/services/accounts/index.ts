@@ -13,9 +13,9 @@ import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { logger } from '@/core/logger'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
-import { isValidRole } from '@/@types/jwt'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
+import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 
 // Current TS typings for auth0  (@types/auth0@2.35.0) are outdated and
 // doesn't have definitions for users management api. Hope they will fix it soon
@@ -78,7 +78,7 @@ export class AccountsService {
       throw new Conflict('User email can not be null')
     }
     const role: AccountRoleName =
-      app_metadata && isValidRole(app_metadata.role)
+      app_metadata && isValidAccountRoleName(app_metadata.role)
         ? app_metadata.role
         : 'user'
     return {

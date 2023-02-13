@@ -10,10 +10,12 @@ import * as jwt from 'jsonwebtoken'
 import jwksClient from 'jwks-rsa'
 import { StackConstants } from '@cdk/constants'
 import PolicyBuilder from '@/core/policies/policy-generator'
-import { isValidRole, JWTAuthorizerResult } from '@/@types/jwt'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaAuthorizer } from '@/core/middlewares/lambda-authorizer-middlewares'
 import { updateLogMetadata } from '@/core/utils/context'
+import { Permission } from '@/@types/openapi-internal/Permission'
 import { logger } from '@/core/logger'
+import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 
 const UNAUTHORIZED_RESPONSE = {
   principalId: 'unknown',
@@ -158,6 +160,8 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       accountId,
       requestId
     )
+    const permissionsArray: Permission[] = verifiedDecoded[`permissions`]
+    const encodedPermissions = permissionsArray.join(',')
 
     return {
       principalId: fullTenantId,
@@ -177,9 +181,11 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       context: {
         ...tenantScopeCredentials,
         userId: verifiedDecoded.sub,
-        role: isValidRole(role) ? role : 'user',
+        role: isValidAccountRoleName(role) ? role : 'user',
         verifiedEmail,
+        tenantId,
         tenantName,
+        encodedPermissions,
       } as JWTAuthorizerResult as unknown as APIGatewayAuthorizerResultContext,
     }
   }
