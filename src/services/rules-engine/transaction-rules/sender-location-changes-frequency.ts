@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
 import { TransactionRule } from './rule'
@@ -15,7 +15,7 @@ export type SenderLocationChangesFrequencyRuleParameters = {
 
 export default class SenderLocationChangesFrequencyRule extends TransactionRule<
   SenderLocationChangesFrequencyRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   public static getSchema(): JSONSchemaType<SenderLocationChangesFrequencyRuleParameters> {
     return {
@@ -62,10 +62,10 @@ export default class SenderLocationChangesFrequencyRule extends TransactionRule<
           beforeTimestamp: this.transaction.timestamp!,
         },
         {
-          transactionState: this.filters.transactionState,
-          transactionTypes: this.filters.transactionTypes,
-          originPaymentMethod: this.filters.paymentMethod,
-          originCountries: this.filters.transactionCountries,
+          transactionStates: this.filters.transactionStatesHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
         },
         ['deviceData']
       )) as Transaction[]

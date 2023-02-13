@@ -10,21 +10,37 @@ import {
   PaymentMethodRuleFilterParameter,
 } from './transaction-filters/payment-method'
 import {
+  PaymentMethodHistoricalRuleFilter,
+  PaymentMethodHistoricalRuleFilterParameter,
+} from './transaction-filters/payment-method-historical'
+import {
   TransactionAmountRuleFilter,
   TransactionAmountRuleFilterParameter,
 } from './transaction-filters/transaction-amount'
 import {
-  CountryRuleFilter,
-  CountryRuleFilterParameter,
+  TransactionCountryRuleFilter,
+  TransactionCountryRuleFilterParameter,
 } from './transaction-filters/transaction-country'
+import {
+  TransactionCountryHistoricalRuleFilter,
+  TransactionCountryHistoricalRuleFilterParameter,
+} from './transaction-filters/transaction-country-historical'
 import {
   TransactionStateRuleFilter,
   TransactionStateRuleFilterParameter,
 } from './transaction-filters/transaction-state'
 import {
+  TransactionStateHistoricalRuleFilter,
+  TransactionStateHistoricalRuleFilterParameter,
+} from './transaction-filters/transaction-state-historical'
+import {
   TransactionTypeRuleFilter,
   TransactionTypeRuleFilterParameter,
 } from './transaction-filters/transaction-type'
+import {
+  TransactionTypeHistoricalRuleFilter,
+  TransactionTypeHistoricalRuleFilterParameter,
+} from './transaction-filters/transaction-type-historical'
 import { UserRuleFilter } from './user-filters/filter'
 import {
   UserAgeRuleFilter,
@@ -58,9 +74,15 @@ import {
 export type TransactionFilters = PaymentMethodRuleFilterParameter &
   TransactionTypeRuleFilterParameter &
   TransactionStateRuleFilterParameter &
-  CountryRuleFilterParameter &
+  TransactionCountryRuleFilterParameter &
   CheckDirectionRuleFilterParameter &
   TransactionAmountRuleFilterParameter
+
+export type TransactionHistoricalFilters =
+  TransactionStateHistoricalRuleFilterParameter &
+    TransactionTypeHistoricalRuleFilterParameter &
+    PaymentMethodHistoricalRuleFilterParameter &
+    TransactionCountryHistoricalRuleFilterParameter
 
 export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCreationAgeRuleFilterParameter &
@@ -71,15 +93,20 @@ export type UserFilters = WhitelistUsersRuleFilterParameter &
   UserCountryOfRegistrationRuleFilterParameter
 
 export type TransactionFilterKeys = keyof TransactionFilters
+export type TransactionHistoricalFilterKeys = keyof TransactionHistoricalFilters
 export type UserFilterKeys = keyof UserFilters
 
 const _TRANSACTION_FILTERS = [
   PaymentMethodRuleFilter,
   TransactionTypeRuleFilter,
   TransactionStateRuleFilter,
-  CountryRuleFilter,
+  TransactionCountryRuleFilter,
   TransactionAmountRuleFilter,
   CheckDirectionRuleFilter,
+  TransactionStateHistoricalRuleFilter,
+  TransactionTypeHistoricalRuleFilter,
+  PaymentMethodHistoricalRuleFilter,
+  TransactionCountryHistoricalRuleFilter,
 ]
 
 const _USER_FILTERS = [

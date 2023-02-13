@@ -1,12 +1,13 @@
 import { TimeWindowGranularity } from './time-utils'
-import { TRANSACTION_TYPES } from '@/@types/tranasction/transaction-type'
-import { PAYMENT_METHODS } from '@/@types/tranasction/payment-type'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { COUNTRY_CODES } from '@/utils/countries'
 import {
   uiSchema,
   UiSchemaParams,
 } from '@/services/rules-engine/utils/rule-schema-utils'
+import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
+import { PAYMENT_METHODSS } from '@/@types/openapi-public-custom/PaymentMethods'
+import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 
 type SchemaOptions = {
   title?: string
@@ -159,29 +160,24 @@ export const CURRENCIES_SCHEMA = (options?: SchemaOptions) =>
     items: CURRENCY_SCHEMA(),
   } as const)
 
-export const TRANSACTION_STATE_SCHEMA = (options?: SchemaOptions) =>
+export const TRANSACTION_STATES_SCHEMA = (options?: SchemaOptions) =>
   ({
-    type: 'string',
-    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_STATE' }),
-    enum: [
-      'CREATED',
-      'PROCESSING',
-      'SENT',
-      'EXPIRED',
-      'DECLINED',
-      'SUSPENDED',
-      'REFUNDED',
-      'SUCCESSFUL',
-    ],
+    type: 'array',
+    ...uiSchema(options?.uiSchema, { subtype: 'TRANSACTION_STATES' }),
     title: options?.title || 'Target Transaction State',
     description:
       options?.description ||
       'If not specified, all transactions regardless of the state will be used for running the rule',
+    items: {
+      type: 'string',
+      enum: TRANSACTION_STATES,
+    },
+    uniqueItems: true,
   } as const)
 
-export const TRANSACTION_STATE_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
+export const TRANSACTION_STATES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>
   ({
-    ...TRANSACTION_STATE_SCHEMA(options),
+    ...TRANSACTION_STATES_SCHEMA(options),
     nullable: true,
   } as const)
 
@@ -237,7 +233,7 @@ export const PAYMENT_METHOD_SCHEMA = (options?: SchemaOptions) =>
     ...uiSchema(options?.uiSchema, { subtype: 'PAYMENT_METHOD' }),
     title: options?.title || 'Payment Method',
     description: options?.description,
-    enum: PAYMENT_METHODS,
+    enum: PAYMENT_METHODSS,
   } as const)
 
 export const PAYMENT_METHOD_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>

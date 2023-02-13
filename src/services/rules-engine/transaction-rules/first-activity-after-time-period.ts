@@ -1,6 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -11,7 +11,7 @@ export type FirstActivityAfterLongTimeRuleParameters = {
 
 export default class FirstActivityAfterLongTimeRule extends TransactionRule<
   FirstActivityAfterLongTimeRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   public static getSchema(): JSONSchemaType<FirstActivityAfterLongTimeRuleParameters> {
     return {
@@ -43,10 +43,10 @@ export default class FirstActivityAfterLongTimeRule extends TransactionRule<
           this.senderUser?.userId,
           1,
           {
-            transactionState: this.filters.transactionState,
-            transactionTypes: this.filters.transactionTypes,
-            originPaymentMethod: this.filters.paymentMethod,
-            originCountries: this.filters.transactionCountries,
+            transactionStates: this.filters.transactionStatesHistorical,
+            transactionTypes: this.filters.transactionTypesHistorical,
+            originPaymentMethod: this.filters.paymentMethodHistorical,
+            originCountries: this.filters.transactionCountriesHistorical,
           },
           ['timestamp']
         )

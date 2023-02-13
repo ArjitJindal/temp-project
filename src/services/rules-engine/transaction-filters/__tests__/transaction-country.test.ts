@@ -1,4 +1,4 @@
-import { CountryRuleFilter } from '../transaction-country'
+import { TransactionCountryRuleFilter } from '../transaction-country'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
@@ -7,7 +7,7 @@ const dynamodb = getDynamoDbClient()
 
 test('Transaction country matches the filter', async () => {
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -27,7 +27,7 @@ test('Transaction country matches the filter', async () => {
 
 test("Transaction country doesn't match the filter", async () => {
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -44,7 +44,7 @@ test("Transaction country doesn't match the filter", async () => {
     ).predicate()
   ).toBe(false)
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -60,7 +60,7 @@ test("Transaction country doesn't match the filter", async () => {
 
 test('Transaction country matches the filter', async () => {
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -80,7 +80,7 @@ test('Transaction country matches the filter', async () => {
 
 test("Transaction destination country doesn't match the filter", async () => {
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({
@@ -97,7 +97,7 @@ test("Transaction destination country doesn't match the filter", async () => {
     ).predicate()
   ).toBe(false)
   expect(
-    await new CountryRuleFilter(
+    await new TransactionCountryRuleFilter(
       getTestTenantId(),
       {
         transaction: getTestTransaction({

@@ -38,8 +38,8 @@ describe('Core logic', () => {
             rollingBasis: true,
           },
           outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
-          inflowTransactionType: 'DEPOSIT',
-          outflowTransactionType: 'WITHDRAWAL',
+          inflowTransactionTypes: ['DEPOSIT'],
+          outflowTransactionTypes: ['WITHDRAWAL'],
         } as TransactionsOutflowInflowVolumeRuleParameters,
       },
     ])
@@ -86,8 +86,8 @@ describe('Core logic', () => {
             rollingBasis: true,
           },
           outflowInflowComparator: 'LESS_THAN_OR_EQUAL_TO',
-          inflowTransactionType: 'DEPOSIT',
-          outflowTransactionType: 'WITHDRAWAL',
+          inflowTransactionTypes: ['DEPOSIT'],
+          outflowTransactionTypes: ['WITHDRAWAL'],
         } as TransactionsOutflowInflowVolumeRuleParameters,
       },
     ])
@@ -155,8 +155,8 @@ describe('Core logic', () => {
       ],
       expectedHits: [false, true, false],
       ruleParams: {
-        outflowTransactionType: 'TRANSFER',
-        inflowTransactionType: 'TRANSFER',
+        outflowTransactionTypes: ['TRANSFER'],
+        inflowTransactionTypes: ['TRANSFER'],
         outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
       },
     },
@@ -184,8 +184,8 @@ describe('Core logic', () => {
       ],
       expectedHits: [false, true, false],
       ruleParams: {
-        outflowTransactionType: 'WITHDRAWAL',
-        inflowTransactionType: 'DEPOSIT',
+        outflowTransactionTypes: ['WITHDRAWAL'],
+        inflowTransactionTypes: ['DEPOSIT'],
         outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
       },
     },
@@ -213,8 +213,8 @@ describe('Core logic', () => {
       ],
       expectedHits: [false, false, true],
       ruleParams: {
-        outflowTransactionType: 'WITHDRAWAL',
-        inflowTransactionType: 'DEPOSIT',
+        outflowTransactionTypes: ['WITHDRAWAL'],
+        inflowTransactionTypes: ['DEPOSIT'],
         outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
       },
     },
@@ -236,8 +236,8 @@ describe('Core logic', () => {
       ],
       expectedHits: [false, true],
       ruleParams: {
-        outflowTransactionType: 'WITHDRAWAL',
-        inflowTransactionType: 'DEPOSIT',
+        outflowTransactionTypes: ['WITHDRAWAL'],
+        inflowTransactionTypes: ['DEPOSIT'],
         outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
       },
     },
@@ -259,8 +259,8 @@ describe('Core logic', () => {
       ],
       expectedHits: [false, true],
       ruleParams: {
-        outflowTransactionType: 'WITHDRAWAL',
-        inflowTransactionType: 'DEPOSIT',
+        outflowTransactionTypes: ['WITHDRAWAL'],
+        inflowTransactionTypes: ['DEPOSIT'],
         outflowInflowComparator: 'LESS_THAN_OR_EQUAL_TO',
       },
     },
@@ -347,8 +347,8 @@ describe('Optional parameters', () => {
       ],
       expectedHits: [false, false, false, true],
       ruleParams: {
-        outflowTransactionType: 'TRANSFER',
-        inflowTransactionType: 'TRANSFER',
+        outflowTransactionTypes: ['TRANSFER'],
+        inflowTransactionTypes: ['TRANSFER'],
         outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
         outflow3dsDonePercentageThreshold: {
           value: 60,
@@ -406,8 +406,8 @@ describe('Optional parameters', () => {
       ],
       expectedHits: [false, false, false, true],
       ruleParams: {
-        outflowTransactionType: 'TRANSFER',
-        inflowTransactionType: 'TRANSFER',
+        outflowTransactionTypes: ['TRANSFER'],
+        inflowTransactionTypes: ['TRANSFER'],
         outflowInflowComparator: 'LESS_THAN_OR_EQUAL_TO',
         inflow3dsDonePercentageThreshold: {
           value: 60,

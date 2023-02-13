@@ -15,7 +15,7 @@ import {
   CHECK_SENDER_OPTIONAL_SCHEMA,
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
@@ -39,7 +39,11 @@ export type TransactionsPatternPercentageRuleParameters = {
 
 export default abstract class TransactionsPatternPercentageBaseRule<
   T extends TransactionsPatternPercentageRuleParameters
-> extends TransactionAggregationRule<T, TransactionFilters, AggregationData> {
+> extends TransactionAggregationRule<
+  T,
+  TransactionHistoricalFilters,
+  AggregationData
+> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): JSONSchemaType<TransactionsPatternPercentageRuleParameters> {
@@ -177,10 +181,10 @@ export default abstract class TransactionsPatternPercentageBaseRule<
         timeWindow,
         checkSender: originMatchPattern ? checkSender : 'none',
         checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
-        transactionState: this.filters.transactionState,
-        transactionTypes: this.filters.transactionTypes,
-        paymentMethod: this.filters.paymentMethod,
-        countries: this.filters.transactionCountries,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
+        countries: this.filters.transactionCountriesHistorical,
       },
       ['timestamp', ...this.getNeededTransactionFields()]
     )

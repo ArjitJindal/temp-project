@@ -133,7 +133,7 @@ async function getTransactions(
     afterTimestamp: number
     beforeTimestamp: number
     checkType: 'sending' | 'receiving' | 'all' | 'none'
-    transactionState?: TransactionState
+    transactionStates?: TransactionState[]
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
@@ -148,7 +148,7 @@ async function getTransactions(
     checkType,
     beforeTimestamp,
     afterTimestamp,
-    transactionState,
+    transactionStates,
     transactionTypes,
     paymentMethod,
     matchPaymentMethodDetails,
@@ -164,7 +164,7 @@ async function getTransactions(
             beforeTimestamp,
           },
           {
-            transactionState,
+            transactionStates,
             transactionTypes,
             originPaymentMethod: paymentMethod,
             originCountries: countries,
@@ -182,7 +182,7 @@ async function getTransactions(
             beforeTimestamp,
           },
           {
-            transactionState,
+            transactionStates,
             transactionTypes,
             destinationPaymentMethod: paymentMethod,
             destinationCountries: countries,
@@ -206,7 +206,7 @@ async function getTransactionsCount(
     afterTimestamp: number
     beforeTimestamp: number
     checkType: 'sending' | 'receiving' | 'all' | 'none'
-    transactionState?: TransactionState
+    transactionStates?: TransactionState[]
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
   }
@@ -218,7 +218,7 @@ async function getTransactionsCount(
     checkType,
     beforeTimestamp,
     afterTimestamp,
-    transactionState,
+    transactionStates,
     transactionTypes,
     paymentMethod,
   } = options
@@ -233,7 +233,7 @@ async function getTransactionsCount(
               beforeTimestamp,
             },
             {
-              transactionState,
+              transactionStates,
               transactionTypes,
               originPaymentMethod: paymentMethod,
             }
@@ -248,7 +248,7 @@ async function getTransactionsCount(
               beforeTimestamp,
             },
             {
-              transactionState,
+              transactionStates,
               transactionTypes,
               destinationPaymentMethod: paymentMethod,
             }
@@ -268,7 +268,7 @@ export async function getTransactionUserPastTransactions(
     timeWindow: TimeWindow
     checkSender: 'sending' | 'receiving' | 'all' | 'none'
     checkReceiver: 'sending' | 'receiving' | 'all' | 'none'
-    transactionState?: TransactionState
+    transactionStates?: TransactionState[]
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     matchPaymentMethodDetails?: boolean
@@ -285,7 +285,7 @@ export async function getTransactionUserPastTransactions(
     checkSender,
     checkReceiver,
     timeWindow,
-    transactionState,
+    transactionStates,
     transactionTypes,
     paymentMethod,
     matchPaymentMethodDetails,
@@ -305,7 +305,7 @@ export async function getTransactionUserPastTransactions(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkSender,
-            transactionState,
+            transactionStates,
             transactionTypes,
             paymentMethod,
             matchPaymentMethodDetails,
@@ -327,7 +327,7 @@ export async function getTransactionUserPastTransactions(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkReceiver,
-            transactionState,
+            transactionStates,
             transactionTypes,
             paymentMethod,
             matchPaymentMethodDetails,
@@ -358,7 +358,7 @@ export async function getTransactionUserPastTransactionsCount(
     timeWindow: TimeWindow
     checkSender: 'sending' | 'all' | 'none'
     checkReceiver: 'receiving' | 'all' | 'none'
-    transactionState?: TransactionState
+    transactionStates?: TransactionState[]
     transactionTypes?: TransactionType[]
     paymentMethod?: PaymentMethod
     country?: string[]
@@ -373,7 +373,7 @@ export async function getTransactionUserPastTransactionsCount(
     checkSender,
     checkReceiver,
     timeWindow,
-    transactionState,
+    transactionStates,
     transactionTypes,
     paymentMethod,
   } = options
@@ -391,7 +391,7 @@ export async function getTransactionUserPastTransactionsCount(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkSender,
-            transactionState,
+            transactionStates,
             transactionTypes,
             paymentMethod,
           }
@@ -410,7 +410,7 @@ export async function getTransactionUserPastTransactionsCount(
             afterTimestamp,
             beforeTimestamp,
             checkType: checkReceiver,
-            transactionState,
+            transactionStates,
             transactionTypes,
             paymentMethod,
           }

@@ -3,12 +3,12 @@ import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
 import { TransactionRuleFilter } from './filter'
 import { expandCountryGroup } from '@/utils/countries'
 
-export type CountryRuleFilterParameter = {
+export type TransactionCountryRuleFilterParameter = {
   transactionCountries?: string[]
 }
 
-export class CountryRuleFilter extends TransactionRuleFilter<CountryRuleFilterParameter> {
-  public static getSchema(): JSONSchemaType<CountryRuleFilterParameter> {
+export class TransactionCountryRuleFilter extends TransactionRuleFilter<TransactionCountryRuleFilterParameter> {
+  public static getSchema(): JSONSchemaType<TransactionCountryRuleFilterParameter> {
     return {
       type: 'object',
       properties: {

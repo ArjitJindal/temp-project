@@ -6,7 +6,7 @@ import {
   PAYMENT_CHANNEL_OPTIONAL_SCHEMA,
   TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -22,7 +22,7 @@ export type LowValueTransactionsRuleParameters = {
 
 export default abstract class LowValueTransactionsRule extends TransactionRule<
   LowValueTransactionsRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   public static getSchema(): JSONSchemaType<LowValueTransactionsRuleParameters> {
     return {
@@ -86,10 +86,11 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
               userId,
               lastNTransactionsToCheck,
               {
-                transactionState: this.filters.transactionState,
-                transactionTypes: this.filters.transactionTypes,
-                destinationPaymentMethod: this.filters.paymentMethod,
-                destinationCountries: this.filters.transactionCountries,
+                transactionStates: this.filters.transactionStatesHistorical,
+                transactionTypes: this.filters.transactionTypesHistorical,
+                destinationPaymentMethod: this.filters.paymentMethodHistorical,
+                destinationCountries:
+                  this.filters.transactionCountriesHistorical,
               },
               ['originAmountDetails', 'destinationAmountDetails']
             )
@@ -97,10 +98,10 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
               userId,
               lastNTransactionsToCheck,
               {
-                transactionState: this.filters.transactionState,
-                transactionTypes: this.filters.transactionTypes,
-                originPaymentMethod: this.filters.paymentMethod,
-                originCountries: this.filters.transactionCountries,
+                transactionStates: this.filters.transactionStatesHistorical,
+                transactionTypes: this.filters.transactionTypesHistorical,
+                originPaymentMethod: this.filters.paymentMethodHistorical,
+                originCountries: this.filters.transactionCountriesHistorical,
               },
               ['originAmountDetails', 'destinationAmountDetails']
             ))) as Transaction[]

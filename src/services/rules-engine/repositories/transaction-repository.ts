@@ -68,7 +68,7 @@ export type AuxiliaryIndexTransaction = Partial<Transaction> & {
 }
 export type TransactionsFilterOptions = {
   transactionTypes?: TransactionType[]
-  transactionState?: TransactionState
+  transactionStates?: TransactionState[]
   senderKeyId?: string
   receiverKeyId?: string
   originPaymentMethod?: PaymentMethod
@@ -1262,6 +1262,15 @@ export class TransactionRepository {
     filterOptions: TransactionsFilterOptions = {},
     attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
   ): Partial<AWS.DynamoDB.DocumentClient.QueryInput> {
+    const transactionStatesParams = filterOptions.transactionStates?.map(
+      (transactionState, index) => [
+        `:transactionState${index}`,
+        transactionState,
+      ]
+    )
+    const transactionStatesKeys = transactionStatesParams?.map(
+      (params) => params[0]
+    )
     const originCountriesParams = filterOptions.originCountries?.map(
       (country, index) => [`:originCountry${index}`, country]
     )
@@ -1275,13 +1284,14 @@ export class TransactionRepository {
       (params) => params[0]
     )
     const filters = [
-      filterOptions.transactionState && 'transactionState = :transactionState',
       filterOptions.receiverKeyId && 'receiverKeyId = :receiverKeyId',
       filterOptions.senderKeyId && 'senderKeyId = :senderKeyId',
       filterOptions.originPaymentMethod &&
         '#originPaymentDetails.#method = :originPaymentMethod',
       filterOptions.destinationPaymentMethod &&
         '#destinationPaymentDetails.#method = :destinationPaymentMethod',
+      transactionStatesKeys &&
+        `transactionState IN (${transactionStatesKeys.join(',')})`,
       originCountriesKeys &&
         `#originAmountDetails.#country IN (${originCountriesKeys.join(',')})`,
       destinationCountriesKeys &&
@@ -1338,11 +1348,11 @@ export class TransactionRepository {
       ExpressionAttributeValues: _.isEmpty(filters)
         ? undefined
         : {
-            ':transactionState': filterOptions.transactionState,
             ':senderKeyId': filterOptions.senderKeyId,
             ':receiverKeyId': filterOptions.receiverKeyId,
             ':originPaymentMethod': filterOptions.originPaymentMethod,
             ':destinationPaymentMethod': filterOptions.destinationPaymentMethod,
+            ...Object.fromEntries(transactionStatesParams || []),
             ...Object.fromEntries(originCountriesParams || []),
             ...Object.fromEntries(destinationCountriesParams || []),
           },

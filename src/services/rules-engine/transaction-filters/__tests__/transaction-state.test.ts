@@ -14,7 +14,7 @@ test('Transaction state missing', async () => {
           transactionState: undefined,
         }),
       },
-      { transactionState: 'DECLINED' },
+      { transactionStates: ['DECLINED'] },
       dynamodb
     ).predicate()
   ).toBe(false)
@@ -29,7 +29,7 @@ test('Transaction state matches the filter', async () => {
           transactionState: 'DECLINED',
         }),
       },
-      { transactionState: 'DECLINED' },
+      { transactionStates: ['DECLINED'] },
       dynamodb
     ).predicate()
   ).toBe(true)
@@ -44,7 +44,7 @@ test('Transaction state matches the filter', async () => {
           transactionState: 'CREATED',
         }),
       },
-      { transactionState: 'DECLINED' },
+      { transactionStates: ['DECLINED'] },
       dynamodb
     ).predicate()
   ).toBe(false)

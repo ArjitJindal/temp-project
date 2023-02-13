@@ -2,11 +2,11 @@ import { JSONSchemaType } from 'ajv'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-  TRANSACTION_STATE_SCHEMA,
+  TRANSACTION_STATES_SCHEMA,
   CHECK_SENDER_SCHEMA,
   CHECK_RECEIVER_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
@@ -14,7 +14,7 @@ import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 
 export type HighUnsuccessfullStateRateParameters = {
-  transactionState: TransactionState
+  transactionStates: TransactionState[]
   timeWindow: TimeWindow
   threshold: number
   minimumTransactions: number
@@ -24,7 +24,7 @@ export type HighUnsuccessfullStateRateParameters = {
 
 export default class HighUnsuccessfullStateRateRule extends TransactionRule<
   HighUnsuccessfullStateRateParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -32,7 +32,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
     return {
       type: 'object',
       properties: {
-        transactionState: TRANSACTION_STATE_SCHEMA(),
+        transactionStates: TRANSACTION_STATES_SCHEMA(),
         timeWindow: TIME_WINDOW_SCHEMA(),
         threshold: {
           type: 'number',
@@ -48,7 +48,7 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
         checkReceiver: CHECK_RECEIVER_SCHEMA(),
       },
       required: [
-        'transactionState',
+        'transactionStates',
         'timeWindow',
         'checkSender',
         'checkReceiver',
@@ -88,10 +88,10 @@ export default class HighUnsuccessfullStateRateRule extends TransactionRule<
         timeWindow: this.parameters.timeWindow,
         checkSender: this.parameters.checkSender,
         checkReceiver: this.parameters.checkReceiver,
-        transactionTypes: this.filters.transactionTypes,
-        transactionState: this.parameters.transactionState,
-        paymentMethod: this.filters.paymentMethod,
-        country: this.filters.transactionCountries,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        transactionStates: this.parameters.transactionStates,
+        paymentMethod: this.filters.paymentMethodHistorical,
+        country: this.filters.transactionCountriesHistorical,
       }
     )
 

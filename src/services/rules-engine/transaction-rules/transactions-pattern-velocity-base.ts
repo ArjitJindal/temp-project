@@ -12,7 +12,7 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTIONS_THRESHOLD_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -29,7 +29,7 @@ export type TransactionsPatternVelocityRuleParameters = {
 
 export default abstract class TransactionsPatternVelocityBaseRule<
   T extends TransactionsPatternVelocityRuleParameters
-> extends TransactionRule<T, TransactionFilters> {
+> extends TransactionRule<T, TransactionHistoricalFilters> {
   transactionRepository?: TransactionRepository
 
   public static getBaseSchema(): JSONSchemaType<TransactionsPatternVelocityRuleParameters> {
@@ -85,10 +85,10 @@ export default abstract class TransactionsPatternVelocityBaseRule<
         timeWindow,
         checkSender: originMatchPattern ? checkSender : 'none',
         checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
-        transactionState: this.filters.transactionState,
-        transactionTypes: this.filters.transactionTypes,
-        paymentMethod: this.filters.paymentMethod,
-        countries: this.filters.transactionCountries,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
+        countries: this.filters.transactionCountriesHistorical,
       },
       this.getNeededTransactionFields()
     )

@@ -1,7 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { TransactionRepository } from '../repositories/transaction-repository'
 import { getReceiverKeys } from '../utils'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -14,7 +14,7 @@ export type UserTransactionPairsRuleParameters = {
 
 export default class UserTransactionPairsRule extends TransactionRule<
   UserTransactionPairsRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -75,7 +75,7 @@ export default class UserTransactionPairsRule extends TransactionRule<
   protected async getSenderSendingTransactions() {
     const { timeWindowInSeconds } = this.parameters
     const possibleReceiverKeyIds = new Set(
-      (this.filters.transactionTypes || [undefined]).map(
+      (this.filters.transactionTypesHistorical || [undefined]).map(
         (transactionType) =>
           getReceiverKeys(this.tenantId, this.transaction, transactionType)
             ?.PartitionKeyID
@@ -94,10 +94,10 @@ export default class UserTransactionPairsRule extends TransactionRule<
           beforeTimestamp: this.transaction.timestamp!,
         },
         {
-          transactionTypes: this.filters.transactionTypes,
-          transactionState: this.filters.transactionState,
-          originPaymentMethod: this.filters.paymentMethod,
-          originCountries: this.filters.transactionCountries,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          transactionStates: this.filters.transactionStatesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
         },
         ['receiverKeyId']
       )

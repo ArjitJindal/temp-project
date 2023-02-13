@@ -12,7 +12,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
   TRANSACTIONS_THRESHOLD_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
@@ -32,7 +32,7 @@ export type HighTrafficVolumeBetweenSameUsersParameters = {
 
 export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
   HighTrafficVolumeBetweenSameUsersParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -179,12 +179,12 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
         afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
       },
       {
-        transactionState: this.filters.transactionState,
-        transactionTypes: this.filters.transactionTypes,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
         receiverKeyId: getReceiverKeys(this.tenantId, transaction)
           ?.PartitionKeyID,
-        originPaymentMethod: this.filters.paymentMethod,
-        originCountries: this.filters.transactionCountries,
+        originPaymentMethod: this.filters.paymentMethodHistorical,
+        originCountries: this.filters.transactionCountriesHistorical,
       },
       ['originAmountDetails']
     )

@@ -6,7 +6,7 @@ import {
   TimeWindow,
   DayWindow,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactions,
@@ -58,7 +58,7 @@ export default abstract class TransactionAverageExceededBaseRule<
   Params extends TransactionsAverageExceededParameters
 > extends TransactionAggregationRule<
   Params,
-  TransactionFilters,
+  TransactionHistoricalFilters,
   AggregationData
 > {
   transactionRepository?: TransactionRepository
@@ -387,9 +387,9 @@ export default abstract class TransactionAverageExceededBaseRule<
         timeWindow: period2,
         checkSender,
         checkReceiver,
-        transactionState: this.filters.transactionState,
-        transactionTypes: this.filters.transactionTypes,
-        paymentMethod: this.filters.paymentMethod,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
       },
       ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
     )

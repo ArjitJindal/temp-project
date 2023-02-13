@@ -14,7 +14,7 @@ import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
 import { MissingRuleParameter } from './errors'
@@ -36,7 +36,7 @@ export type TransactionsExceedPastPeriodRuleParameters = {
 
 export default class TransactionsExceedPastPeriodRule extends TransactionAggregationRule<
   TransactionsExceedPastPeriodRuleParameters,
-  TransactionFilters,
+  TransactionHistoricalFilters,
   AggregationData
 > {
   transactionRepository?: TransactionRepository
@@ -180,10 +180,10 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           timeWindow: timeWindow1,
           checkSender: checkSender || 'all',
           checkReceiver: checkReceiver || 'all',
-          transactionTypes: this.filters.transactionTypes,
-          transactionState: this.filters.transactionState,
-          paymentMethod: this.filters.paymentMethod,
-          countries: this.filters.transactionCountries,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          transactionStates: this.filters.transactionStatesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
         },
         ['timestamp']
       ),
@@ -194,10 +194,10 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
           timeWindow: timeWindow2,
           checkSender: checkSender || 'all',
           checkReceiver: checkReceiver || 'all',
-          transactionTypes: this.filters.transactionTypes,
-          transactionState: this.filters.transactionState,
-          paymentMethod: this.filters.paymentMethod,
-          countries: this.filters.transactionCountries,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          transactionStates: this.filters.transactionStatesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
         },
         ['timestamp']
       ),

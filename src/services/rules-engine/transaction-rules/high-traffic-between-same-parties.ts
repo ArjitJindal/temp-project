@@ -6,7 +6,7 @@ import {
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { subtractTime } from '../utils/time-utils'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import dayjs from '@/utils/dayjs'
 import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
@@ -20,7 +20,7 @@ export type HighTrafficBetweenSamePartiesParameters = {
 
 export default class HighTrafficBetweenSameParties extends TransactionRule<
   HighTrafficBetweenSamePartiesParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -87,10 +87,10 @@ export default class HighTrafficBetweenSameParties extends TransactionRule<
           afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
         },
         {
-          transactionState: this.filters.transactionState,
-          originPaymentMethod: this.filters.paymentMethod,
-          transactionTypes: this.filters.transactionTypes,
-          originCountries: this.filters.transactionCountries,
+          transactionStates: this.filters.transactionStatesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          transactionTypes: this.filters.transactionTypesHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
           receiverKeyId: getReceiverKeys(this.tenantId, transaction)
             ?.PartitionKeyID,
         }

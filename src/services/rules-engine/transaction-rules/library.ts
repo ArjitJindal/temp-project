@@ -827,7 +827,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: HighUnsuccessfullStateRateParameters = {
-      transactionState: 'REFUNDED',
+      transactionStates: ['REFUNDED'],
       threshold: 1,
       minimumTransactions: 3,
       timeWindow: {
@@ -844,7 +844,7 @@ const _TRANSACTION_RULES_LIBRARY: Array<
       description:
         "A user's transaction (all, sending, or receiving) has >= x% of all transactions in a specific state (e.g. Refund) in time t. Rule is activated after the user initiates y number of transactions in total (all, sending, or receiving)",
       descriptionTemplate:
-        "{{ if-sender 'Sender' 'Receiver' }} has more than {{ to-percent parameters.threshold }} of all transactions in a “{{ parameters.transactionState}}” state within {{ format-time-window parameters.timeWindow }}. The rule is activated after the user initiates {{ parameters.minimumTransactions }} number of transactions in total.",
+        "{{ if-sender 'Sender' 'Receiver' }} has more than {{ to-fixed parameters.threshold }}% of all transactions in “{{ parameters.transactionStates}}” states within {{ format-time-window parameters.timeWindow }}. The rule is activated after the user initiates {{ parameters.minimumTransactions }} number of transactions in total.",
       defaultParameters,
       defaultAction: 'FLAG',
       ruleImplementationName: 'high-unsuccessfull-state-rate',
@@ -1040,8 +1040,8 @@ const _TRANSACTION_RULES_LIBRARY: Array<
         units: 30,
         granularity: 'day',
       },
-      outflowTransactionType: 'WITHDRAWAL',
-      inflowTransactionType: 'DEPOSIT',
+      outflowTransactionTypes: ['WITHDRAWAL'],
+      inflowTransactionTypes: ['DEPOSIT'],
       outflowInflowComparator: 'GREATER_THAN_OR_EQUAL_TO',
     }
 

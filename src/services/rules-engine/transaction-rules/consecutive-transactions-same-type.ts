@@ -5,7 +5,7 @@ import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   TRANSACTION_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -20,7 +20,7 @@ export type ConsecutiveTransactionSameTypeRuleParameters = {
 
 export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
   ConsecutiveTransactionSameTypeRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -73,9 +73,9 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
         targetTransactionsThreshold,
         {
           transactionTypes: transactionTypes,
-          transactionState: this.filters.transactionState,
-          originPaymentMethod: this.filters.paymentMethod,
-          originCountries: this.filters.transactionCountries,
+          transactionStates: this.filters.transactionStatesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
         },
         ['timestamp']
       ),
@@ -84,9 +84,9 @@ export default class ConsecutiveTransactionsameTypeRule extends TransactionRule<
         1,
         {
           transactionTypes: otherTransactionTypes,
-          transactionState: this.filters.transactionState,
-          originPaymentMethod: this.filters.paymentMethod,
-          originCountries: this.filters.transactionCountries,
+          transactionStates: this.filters.transactionStatesHistorical,
+          originPaymentMethod: this.filters.paymentMethodHistorical,
+          originCountries: this.filters.transactionCountriesHistorical,
         },
         ['timestamp']
       ),

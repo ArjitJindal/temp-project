@@ -5,7 +5,7 @@ interface UiSchema<Type> {
   'ui:schema'?: {
     'ui:subtype'?: string
     'ui:order'?: (keyof Type)[]
-    'ui:group'?: 'user' | 'geography' | 'transaction'
+    'ui:group'?: 'user' | 'geography' | 'transaction' | 'transaction_historical'
   }
 }
 
@@ -14,7 +14,7 @@ export type ExtendedJSONSchemaType<Type> = JSONSchemaType<Type> & UiSchema<Type>
 export interface UiSchemaParams<Type> {
   subtype?: string
   order?: (keyof Type)[]
-  group?: 'user' | 'geography' | 'transaction'
+  group?: 'user' | 'geography' | 'transaction' | 'transaction_historical'
 }
 
 export function uiSchema<T extends object>(

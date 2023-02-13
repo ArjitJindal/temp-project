@@ -15,7 +15,7 @@ import {
   TIME_WINDOW_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -34,7 +34,7 @@ export type TransactionsVolumeRuleParameters = {
 
 export default class TransactionsVolumeRule extends TransactionRule<
   TransactionsVolumeRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -91,11 +91,11 @@ export default class TransactionsVolumeRule extends TransactionRule<
         timeWindow,
         checkSender,
         checkReceiver,
-        transactionState: this.filters.transactionState,
-        transactionTypes: this.filters.transactionTypes,
-        paymentMethod: this.filters.paymentMethod,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
         matchPaymentMethodDetails,
-        countries: this.filters.transactionCountries,
+        countries: this.filters.transactionCountriesHistorical,
       },
       [
         'originUserId',

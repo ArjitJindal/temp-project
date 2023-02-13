@@ -1,5 +1,5 @@
 import { JSONSchemaType } from 'ajv'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import {
   TransactionsFilterOptions,
   TransactionRepository,
@@ -36,7 +36,7 @@ export type TransactionsVelocityRuleParameters = {
 
 export default class TransactionsVelocityRule extends TransactionRule<
   TransactionsVelocityRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -170,16 +170,16 @@ export default class TransactionsVelocityRule extends TransactionRule<
       beforeTimestamp: this.transaction.timestamp!,
     }
     const originFilterOptions: TransactionsFilterOptions = {
-      transactionState: this.filters.transactionState,
-      transactionTypes: this.filters.transactionTypes,
-      originPaymentMethod: this.filters.paymentMethod,
-      originCountries: this.filters.transactionCountries,
+      transactionStates: this.filters.transactionStatesHistorical,
+      transactionTypes: this.filters.transactionTypesHistorical,
+      originPaymentMethod: this.filters.paymentMethodHistorical,
+      originCountries: this.filters.transactionCountriesHistorical,
     }
     const destinationFilterOptions: TransactionsFilterOptions = {
-      transactionState: this.filters.transactionState,
-      transactionTypes: this.filters.transactionTypes,
-      destinationPaymentMethod: this.filters.paymentMethod,
-      destinationCountries: this.filters.transactionCountries,
+      transactionStates: this.filters.transactionStatesHistorical,
+      transactionTypes: this.filters.transactionTypesHistorical,
+      destinationPaymentMethod: this.filters.paymentMethodHistorical,
+      destinationCountries: this.filters.transactionCountriesHistorical,
     }
     const transactionsCount = await Promise.all([
       checkType === 'sending' || checkType === 'all'

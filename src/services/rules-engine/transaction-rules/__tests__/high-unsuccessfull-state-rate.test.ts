@@ -27,7 +27,7 @@ function getDefaultParams(): HighUnsuccessfullStateRateParameters {
       rollingBasis: true,
     },
     threshold: 100,
-    transactionState: 'REFUNDED',
+    transactionStates: ['REFUNDED'],
     checkSender: 'all',
     checkReceiver: 'all',
     minimumTransactions: 1,
@@ -46,7 +46,7 @@ describe('Description formatting', () => {
         defaultParameters: {
           ...getDefaultParams(),
           minimumTransactions: 1,
-          threshold: 0.99,
+          threshold: 99,
         },
       },
     ])
@@ -69,7 +69,7 @@ describe('Description formatting', () => {
           getTransactionRuleByRuleId('R-125').descriptionTemplate,
       },
       [
-        'Sender has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total. Receiver has more than 99.00% of all transactions in a “REFUNDED” state within 1 day. The rule is activated after the user initiates 1 number of transactions in total.',
+        'Sender has more than 99.00% of all transactions in “REFUNDED” states within 1 day. The rule is activated after the user initiates 1 number of transactions in total. Receiver has more than 99.00% of all transactions in “REFUNDED” states within 1 day. The rule is activated after the user initiates 1 number of transactions in total.',
       ]
     )
   })
@@ -87,9 +87,17 @@ describe('Core login', () => {
       name: 'Basic case',
       ruleParams: {
         minimumTransactions: 3,
-        threshold: 0.32,
+        threshold: 32,
       },
       transactions: [
+        getTestTransaction({
+          originUserId: '111',
+          destinationUserId: '222',
+          originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+          destinationAmountDetails: undefined,
+          timestamp: now.subtract(3, 'hour').valueOf(),
+          transactionState: 'SUCCESSFUL',
+        }),
         getTestTransaction({
           originUserId: '111',
           destinationUserId: '222',
@@ -104,7 +112,7 @@ describe('Core login', () => {
           originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
           destinationAmountDetails: undefined,
           timestamp: now.subtract(1, 'hour').valueOf(),
-          transactionState: 'SUCCESSFUL',
+          transactionState: 'REFUNDED',
         }),
         getTestTransaction({
           originUserId: '111',
@@ -115,13 +123,13 @@ describe('Core login', () => {
           transactionState: 'REFUNDED',
         }),
       ],
-      expectedHits: [false, false, true],
+      expectedHits: [false, false, true, true],
     },
     {
       name: 'Single transaction gives 100%',
       ruleParams: {
         minimumTransactions: 1,
-        threshold: 0.99,
+        threshold: 99,
       },
       transactions: [
         getTestTransaction({
@@ -225,7 +233,7 @@ describe('Different directions', () => {
       ],
       expectedHits: [false, false, false, false, true],
       ruleParams: {
-        threshold: 0.1,
+        threshold: 10,
         checkSender: 'sending',
         checkReceiver: 'none',
         minimumTransactions: 3,
@@ -268,7 +276,7 @@ describe('Different directions', () => {
       ],
       expectedHits: [false, false, false, true, true],
       ruleParams: {
-        threshold: 0.1,
+        threshold: 10,
         checkSender: 'all',
         checkReceiver: 'none',
         minimumTransactions: 3,
@@ -311,7 +319,7 @@ describe('Different directions', () => {
       ],
       expectedHits: [false, false, false, false, true],
       ruleParams: {
-        threshold: 0.1,
+        threshold: 10,
         checkSender: 'none',
         checkReceiver: 'receiving',
         minimumTransactions: 3,
@@ -354,7 +362,7 @@ describe('Different directions', () => {
       ],
       expectedHits: [false, false, false, true, true],
       ruleParams: {
-        threshold: 0.1,
+        threshold: 10,
         checkSender: 'none',
         checkReceiver: 'all',
         minimumTransactions: 3,

@@ -4,7 +4,7 @@ import {
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import { TimeWindow, TIME_WINDOW_SCHEMA } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import dayjs from '@/utils/dayjs'
@@ -22,7 +22,7 @@ export type SenderReceiverTypes = {
 
 export default abstract class MultipleSendersWithinTimePeriodRuleBase extends TransactionRule<
   MultipleSendersWithinTimePeriodRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   public static getSchema(): JSONSchemaType<MultipleSendersWithinTimePeriodRuleParameters> {
     return {
@@ -63,10 +63,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
             beforeTimestamp: this.transaction.timestamp!,
           },
           {
-            transactionState: this.filters.transactionState,
-            transactionTypes: this.filters.transactionTypes,
-            destinationPaymentMethod: this.filters.paymentMethod,
-            destinationCountries: this.filters.transactionCountries,
+            transactionStates: this.filters.transactionStatesHistorical,
+            transactionTypes: this.filters.transactionTypesHistorical,
+            destinationPaymentMethod: this.filters.paymentMethodHistorical,
+            destinationCountries: this.filters.transactionCountriesHistorical,
           },
           ['senderKeyId', 'originUserId']
         )
@@ -82,10 +82,10 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
             beforeTimestamp: this.transaction.timestamp!,
           },
           {
-            transactionState: this.filters.transactionState,
-            transactionTypes: this.filters.transactionTypes,
-            destinationPaymentMethod: this.filters.paymentMethod,
-            destinationCountries: this.filters.transactionCountries,
+            transactionStates: this.filters.transactionStatesHistorical,
+            transactionTypes: this.filters.transactionTypesHistorical,
+            destinationPaymentMethod: this.filters.paymentMethodHistorical,
+            destinationCountries: this.filters.transactionCountriesHistorical,
           },
           ['senderKeyId', 'originUserId']
         )

@@ -8,6 +8,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   TransactionFilters,
+  TransactionHistoricalFilters,
   UserFilters,
 } from '@/services/rules-engine/filters'
 
@@ -215,7 +216,7 @@ async function deleteUnusedRuleParameterPrivate(
 
 export async function addRuleFilters(
   ruleIds: string[] | undefined,
-  filters: UserFilters & TransactionFilters
+  filters: UserFilters & TransactionFilters & TransactionHistoricalFilters
 ) {
   await migrateAllTenants((tenant) =>
     addRuleFiltersPrivate(ruleIds, filters, tenant.id)
@@ -224,7 +225,7 @@ export async function addRuleFilters(
 
 async function addRuleFiltersPrivate(
   ruleIds: string[] | undefined, //  if undefined, run for all rules
-  filters: UserFilters & TransactionFilters,
+  filters: UserFilters & TransactionFilters & TransactionHistoricalFilters,
   tenantId?: string
 ) {
   const dynamoDb = await getDynamoDbClient()
@@ -258,5 +259,81 @@ async function addRuleFiltersPrivate(
       await (ruleRepository as RuleRepository).createOrUpdateRule(rule as Rule)
     }
     console.info(`Updated ${tenantId ? 'rule instance' : 'rule'} ${rule.id}`)
+  }
+}
+
+export async function renameRuleFilter(
+  oldParameterPath: string,
+  newParameterPath: string,
+  converterCallback: (value: any) => any
+) {
+  await migrateAllTenants((tenant) =>
+    renameRuleFilterPrivate(
+      oldParameterPath,
+      newParameterPath,
+      converterCallback,
+      tenant.id
+    )
+  )
+}
+
+async function renameRuleFilterPrivate(
+  oldParameterPath: string,
+  newParameterPath: string,
+  converterCallback: (value: any) => any,
+  tenantId: string
+) {
+  const dynamoDb = await getDynamoDbClient()
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+  for (const ruleInstance of ruleInstances) {
+    let shouldSave = false
+    const targetParameter = _.get(ruleInstance.filters, oldParameterPath)
+    if (targetParameter) {
+      shouldSave = true
+      _.set(
+        ruleInstance.filters,
+        newParameterPath,
+        converterCallback(targetParameter)
+      )
+    }
+    if (shouldSave) {
+      await ruleInstanceRepository.createOrUpdateRuleInstance(ruleInstance)
+      console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+    }
+  }
+}
+
+export async function deleteUnusedRuleFilter(parameterPaths: string[]) {
+  await migrateAllTenants((tenant) =>
+    deleteUnusedFilterPrivate(parameterPaths, tenant.id)
+  )
+}
+
+async function deleteUnusedFilterPrivate(
+  parameterPaths: string[],
+  tenantId: string
+) {
+  const dynamoDb = await getDynamoDbClient()
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+  for (const ruleInstance of ruleInstances) {
+    let shouldSave = false
+    for (const parameterPath of parameterPaths) {
+      const targetParameter = _.get(ruleInstance.filters, parameterPath)
+      if (targetParameter) {
+        _.unset(ruleInstance.filters, parameterPath)
+        shouldSave = true
+      }
+    }
+
+    if (shouldSave) {
+      await ruleInstanceRepository.createOrUpdateRuleInstance(ruleInstance)
+      console.info(`Updated 'rule instance' ${ruleInstance.id}`)
+    }
   }
 }

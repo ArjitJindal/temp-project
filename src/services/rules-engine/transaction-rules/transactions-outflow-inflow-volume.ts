@@ -11,13 +11,13 @@ import {
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
-  TRANSACTION_TYPE_SCHEMA,
   COMPARATOR_SCHEMA,
   Comparator,
   ValueComparator,
   VALUE_COMPARATOR_OPTIONAL_SCHEMA,
+  TRANSACTION_TYPES_SCHEMA,
 } from '../utils/rule-parameter-schemas'
-import { TransactionFilters } from '../filters'
+import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import { compareNumber } from '../utils/rule-schema-utils'
 import { TransactionRule } from './rule'
@@ -27,8 +27,8 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export type TransactionsOutflowInflowVolumeRuleParameters = {
   timeWindow: TimeWindow
-  outflowTransactionType: TransactionType
-  inflowTransactionType: TransactionType
+  outflowTransactionTypes: TransactionType[]
+  inflowTransactionTypes: TransactionType[]
   outflowInflowComparator: Comparator
   outflow3dsDonePercentageThreshold?: ValueComparator
   inflow3dsDonePercentageThreshold?: ValueComparator
@@ -36,7 +36,7 @@ export type TransactionsOutflowInflowVolumeRuleParameters = {
 
 export default class TransactionsOutflowInflowVolumeRule extends TransactionRule<
   TransactionsOutflowInflowVolumeRuleParameters,
-  TransactionFilters
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -45,11 +45,11 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
       type: 'object',
       properties: {
         timeWindow: TIME_WINDOW_SCHEMA(),
-        outflowTransactionType: TRANSACTION_TYPE_SCHEMA({
-          title: 'Outflow Transaction Type',
+        outflowTransactionTypes: TRANSACTION_TYPES_SCHEMA({
+          title: 'Outflow Transaction Types',
         }),
-        inflowTransactionType: TRANSACTION_TYPE_SCHEMA({
-          title: 'Inflow Transaction Type',
+        inflowTransactionTypes: TRANSACTION_TYPES_SCHEMA({
+          title: 'Inflow Transaction Types',
         }),
         outflowInflowComparator: COMPARATOR_SCHEMA({
           title: 'Outflow/Inflow transaction volume comparator',
@@ -67,15 +67,19 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
       },
       required: [
         'timeWindow',
-        'outflowTransactionType',
-        'inflowTransactionType',
+        'outflowTransactionTypes',
+        'inflowTransactionTypes',
         'outflowInflowComparator',
       ],
     }
   }
 
   public async computeRule() {
-    const { timeWindow, outflowTransactionType, inflowTransactionType } =
+    if (!this.transaction.type) {
+      return
+    }
+
+    const { timeWindow, outflowTransactionTypes, inflowTransactionTypes } =
       this.parameters
     const transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
@@ -88,10 +92,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
           timeWindow,
           checkSender: 'sending',
           checkReceiver: 'sending',
-          transactionTypes: [outflowTransactionType],
-          transactionState: this.filters.transactionState,
-          paymentMethod: this.filters.paymentMethod,
-          countries: this.filters.transactionCountries,
+          transactionTypes: outflowTransactionTypes,
+          transactionStates: this.filters.transactionStatesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
         },
         [
           'originAmountDetails',
@@ -108,10 +112,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
           timeWindow,
           checkSender: 'receiving',
           checkReceiver: 'receiving',
-          transactionTypes: [inflowTransactionType],
-          transactionState: this.filters.transactionState,
-          paymentMethod: this.filters.paymentMethod,
-          countries: this.filters.transactionCountries,
+          transactionTypes: inflowTransactionTypes,
+          transactionStates: this.filters.transactionStatesHistorical,
+          paymentMethod: this.filters.paymentMethodHistorical,
+          countries: this.filters.transactionCountriesHistorical,
         },
         [
           'originAmountDetails',
@@ -124,7 +128,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
     const hitResult: RuleHitResult = []
     if (
       this.transaction.originAmountDetails &&
-      this.transaction.type === outflowTransactionType
+      outflowTransactionTypes.includes(this.transaction.type)
     ) {
       const hitInfo = await this.isHit(
         senderSendingTransactions.concat(this.transaction),
@@ -143,7 +147,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionRule
     }
     if (
       this.transaction.destinationAmountDetails &&
-      this.transaction.type === inflowTransactionType
+      inflowTransactionTypes.includes(this.transaction.type)
     ) {
       const hitInfo = await this.isHit(
         receiverSendingTransactions,

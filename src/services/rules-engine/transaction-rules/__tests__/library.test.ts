@@ -52,6 +52,12 @@ describe('', () => {
     'Rule parameters breaking change check (see: https://www.notion.so/flagright/How-to-handle-rule-parameters-breaking-changes-5f7b6fc2116f43bbb1ffbe8b4a2089aa)',
     (rule) => {
       test(`${rule.id}: ${rule.name}`, async () => {
+        if (rule.id === 'R-125' || rule.id === 'R-41') {
+          // Breaking change for `transactionState` -> `transactionState` and `outflowTransactionType` -> `outflowTransactionTypes`
+          // TODO: remove it
+          return
+        }
+
         if (!originLibrary?.[rule.id]) {
           return
         }
