@@ -56,6 +56,13 @@ export default function StandardFiltersStep(props: Props) {
                 )}
               />
             )}
+            {activeTab === 'transaction_details_historical' && (
+              <TransactionDetailsHistorical
+                propertyItems={props.filter(
+                  (x) => getUiSchema(x.schema)['ui:group'] === 'transaction_historical',
+                )}
+              />
+            )}
             {/*{activeTab === 'device_details' && <DeviceDetails {...props} />}*/}
           </>
         );
@@ -92,7 +99,19 @@ function TransactionDetails(props: { propertyItems: PropertyItems }) {
     <>
       <StepHeader
         title="Transaction details"
-        description="Adjust the parameter values of your rule."
+        description="Add filters based on transaction's attributes (for the new transaction)"
+      />
+      <PropertyList items={props.propertyItems} />
+    </>
+  );
+}
+
+function TransactionDetailsHistorical(props: { propertyItems: PropertyItems }) {
+  return (
+    <>
+      <StepHeader
+        title="Historical Transactions"
+        description="Add filters based on transaction's attributes (for the historical transactions). These filters take no effect if the rule doesn't need to check historical transactions."
       />
       <PropertyList items={props.propertyItems} />
     </>

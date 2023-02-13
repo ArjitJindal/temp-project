@@ -180,6 +180,11 @@ export default function RuleConfigurationDrawer(props: Props) {
         { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
         { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
         { key: 'transaction_details', icon: <TransactionIcon />, title: 'Transaction details' },
+        {
+          key: 'transaction_details_historical',
+          icon: <TransactionIcon />,
+          title: 'Historical Transactions',
+        },
       ],
     },
     {
