@@ -160,9 +160,15 @@ export const jwtAuthorizer = lambdaAuthorizer()(
       accountId,
       requestId
     )
-    const permissionsArray: Permission[] = verifiedDecoded[`permissions`]
-    const encodedPermissions = permissionsArray.join(',')
 
+    let permissionsArray: Permission[] = []
+    if (
+      verifiedDecoded.permissions !== undefined &&
+      Array.isArray(verifiedDecoded.permissions)
+    ) {
+      permissionsArray = verifiedDecoded[`permissions`]
+    }
+    const encodedPermissions = permissionsArray.join(',')
     return {
       principalId: fullTenantId,
       policyDocument: {
