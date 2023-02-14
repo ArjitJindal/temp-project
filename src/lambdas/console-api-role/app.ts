@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { BadRequest } from 'http-errors'
-import { RolesService } from './services/roles-service'
+import { RoleService } from '@/services/roles'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 
@@ -19,10 +19,11 @@ export const rolesHandler = lambdaApi({ requiredFeatures: ['RBAC'] })(
     >
   ) => {
     const config = process.env as AccountsConfig
-    const rolesService = new RolesService(config)
+    const rolesService = new RoleService(config)
+    const { tenantId } = event.requestContext.authorizer
 
     if (event.httpMethod === 'GET' && event.resource === '/roles') {
-      return await rolesService.getRoles()
+      return await rolesService.getTenantRoles(tenantId)
     }
     if (
       event.httpMethod === 'GET' &&

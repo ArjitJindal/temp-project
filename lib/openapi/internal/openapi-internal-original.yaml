@@ -1580,6 +1580,36 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Permission'
+  '/accounts/{accountId}/change_role':
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    post:
+      summary: Account - Change Role
+      operationId: accounts-change-role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: ChangeRolePayload
+              properties:
+                role:
+                  $ref: '#/components/schemas/AccountRoleName'
+              required:
+                - role
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DrsScore'
+        '403':
+          description: Not enough privileges
   '/accounts/{accountId}/change_tenant':
     parameters:
       - schema:
@@ -1630,6 +1660,7 @@ paths:
         '403':
           description: Not enough privileges
     patch:
+      deprecated: true
       summary: Account - Change Settings
       operationId: account-change-settings
       requestBody:
@@ -3809,7 +3840,6 @@ components:
         - approver
         - auditor
         - developer
-        - qa_analyst
     AccountRole:
       type: object
       title: AccountRole

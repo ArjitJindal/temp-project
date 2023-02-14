@@ -1,12 +1,14 @@
 import { ManagementClient, AuthenticationClient } from 'auth0'
-import { AccountsConfig } from '../app'
+import { BadRequest, Conflict } from 'http-errors'
+import { AccountsConfig } from '../../lambdas/console-api-role/app'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { Permissions } from '@/@types/openapi-internal/Permissions'
 import { getAuth0Credentials } from '@/utils/auth0-utils'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
+import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
 
-export class RolesService {
+export class RoleService {
   private authenticationClient: AuthenticationClient
   private config: AccountsConfig
 
@@ -27,7 +29,7 @@ export class RolesService {
     }
   }
 
-  async getRoles(): Promise<AccountRole[]> {
+  async getTenantRoles(_tenantId: string): Promise<AccountRole[]> {
     // Prefixed so we don't return internal roles (ROOT, TENANT_ROOT) or tenant-scopes roles (in the future).
     return this.rolesByPrefix('default')
   }
@@ -66,5 +68,47 @@ export class RolesService {
         name: roleName as AccountRoleName,
       }
     })
+  }
+  async setRole(
+    tenantId: string,
+    userId: string,
+    roleName: string
+  ): Promise<void> {
+    if (!isValidAccountRoleName(roleName)) {
+      throw new BadRequest(`"${roleName}" is an invalid role`)
+    }
+
+    // Assign the role
+    const tenantRoles = await this.getTenantRoles(tenantId)
+    const role = tenantRoles.find((r) => r.name == roleName)
+    if (role == undefined) {
+      throw new Conflict(`"${roleName}" not valid for tenant`)
+    }
+    const managementClient = new ManagementClient(await this.getAuth0Client())
+    const roles = await managementClient.getUserRoles({ id: userId })
+    if (roles.length > 0) {
+      await managementClient.removeRolesFromUser(
+        { id: userId },
+        { roles: roles.map((r) => r.id as string) }
+      )
+    }
+    await managementClient.assignRolestoUser(
+      { id: userId },
+      { roles: [role.id as string] }
+    )
+
+    // Set app metadata
+    const user = await managementClient.getUser({ id: userId })
+    await managementClient.updateUser(
+      {
+        id: userId,
+      },
+      {
+        app_metadata: {
+          ...user.app_metadata,
+          role: roleName,
+        },
+      }
+    )
   }
 }

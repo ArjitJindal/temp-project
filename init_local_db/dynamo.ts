@@ -8,6 +8,8 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { UserType } from '@/@types/user/user-type'
 import { ListRepository } from '@/lambdas/console-api-list-importer/repositories/list-repository'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 
 async function users() {
   const dynamoDb = getDynamoDbClient()
@@ -15,12 +17,16 @@ async function users() {
     dynamoDb: dynamoDb,
   })
   const listRepo = new ListRepository(TENANT, dynamoDb)
+  const tenantRepo = new TenantRepository(TENANT, { dynamoDb })
   for (const user of usersData) {
     await userRepo.saveUser(_.omit(user, '_id'), (user as any).type as UserType)
   }
   for (const list of listsData) {
     await listRepo.createList(list.listType, list.subtype, list.data)
   }
+  await tenantRepo.createOrUpdateTenantSettings({
+    features: FEATURES,
+  })
 }
 
 async function main() {

@@ -8,11 +8,13 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { assertRole, JWTAuthorizerResult } from '@/@types/jwt'
 import { Account } from '@/@types/openapi-internal/Account'
 import { ChangeTenantPayload } from '@/@types/openapi-internal/ChangeTenantPayload'
-import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import { isValidAccountRoleName } from '@/@types/openapi-internal-custom/AccountRoleName'
+import { ChangeRolePayload } from '@/@types/openapi-internal/ChangeRolePayload'
+import { RoleService } from '@/services/roles'
+import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
 
 export type AccountsConfig = {
   AUTH0_DOMAIN: string
@@ -25,10 +27,12 @@ export const accountsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, verifiedEmail, role } = event.requestContext.authorizer
+    const { userId, verifiedEmail, role, tenantId } =
+      event.requestContext.authorizer
     const config = process.env as AccountsConfig
 
     const accountsService = new AccountsService(config)
+    const rolesService = new RoleService(config)
     const organization = await accountsService.getAccountTenant(userId)
 
     if (event.httpMethod === 'GET' && event.resource === '/accounts') {
@@ -58,8 +62,24 @@ export const accountsHandler = lambdaApi()(
           role: inviteRole,
         }
       )
-
+      await rolesService.setRole(tenantId, user.id, inviteRole)
       return user
+    } else if (
+      event.httpMethod === 'POST' &&
+      event.resource === '/accounts/{accountId}/change_role'
+    ) {
+      assertRole({ role, verifiedEmail }, 'root')
+      const { pathParameters } = event
+      const idToChange = pathParameters?.accountId
+      if (!idToChange) {
+        throw new BadRequest(`accountId is not provided`)
+      }
+      if (event.body == null) {
+        throw new BadRequest(`Body should not be empty`)
+      }
+      const { role: newRole } = JSON.parse(event.body) as ChangeRolePayload
+      await rolesService.setRole(tenantId, idToChange, newRole as string)
+      return true
     } else if (
       event.httpMethod === 'POST' &&
       event.resource === '/accounts/{accountId}/change_tenant'

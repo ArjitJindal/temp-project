@@ -1,5 +1,6 @@
 import { AccountRoleName } from '@/@types/openapi-internal/AccountRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 
 export const DEFAULT_ROLES: {
   role: AccountRoleName
@@ -7,52 +8,13 @@ export const DEFAULT_ROLES: {
 }[] = [
   {
     role: 'admin',
-    permissions: [
-      'case-management:case-overview:read',
-      'case-management:case-overview:write',
-      'case-management:case-details:read',
-      'case-management:case-details:write',
-      'case-management:download:read',
-      'rules:my-rules:read',
-      'rules:my-rules:write',
-      'rules:library:read',
-      'rules:library:write',
-      'risk-scoring:risk-levels:read',
-      'risk-scoring:risk-levels:write',
-      'risk-scoring:risk-factors:read',
-      'risk-scoring:risk-factors:write',
-      'risk-scoring:risk-algorithms:read',
-      'users:user-overview:read',
-      'users:user-overview:write',
-      'users:user-details:read',
-      'dashboard:download-data:read',
-      'settings:organisation:read',
-      'settings:organisation:write',
-      'settings:billing:read',
-      'settings:billing:write',
-      'settings:nomenclature:read',
-      'settings:nomenclature:write',
-      'settings:addons:read',
-      'settings:addons:write',
-      'settings:alerts:read',
-      'settings:alerts:write',
-      'settings:developers:read',
-      'settings:developers:write',
-      'transactions:overview:read',
-      'transactions:details:read',
-      'transactions:download:read',
-      'team-management:download:read',
-      'audit-log:download:read',
-      'lists:whitelist:read',
-      'lists:whitelist:write',
-      'lists:blacklist:read',
-      'lists:blacklist:write',
-      'lists:download:read',
-      'simulation:rules:read',
-      'simulation:rules:write',
-      'simulation:risk-scoring:read',
-      'simulation:risk-scoring:write',
-    ],
+    permissions: PERMISSIONS,
+  },
+  {
+    // Legacy role. It has all permissions since the important things have a
+    // check for "root" already.
+    role: 'user',
+    permissions: PERMISSIONS,
   },
   {
     role: 'auditor',
