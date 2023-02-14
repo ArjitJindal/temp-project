@@ -5,7 +5,7 @@ import {
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactions,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import {
@@ -17,9 +17,10 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
-import { RuleHitResultItem } from '../rule'
+import { RuleHitResult } from '../rule'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { logger } from '@/core/logger'
 
 type AggregationData = {
   all?: number
@@ -65,20 +66,81 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
+    const originMatchPattern = this.matchPattern(this.transaction, 'origin')
+    const destinationMatchPattern = this.matchPattern(
+      this.transaction,
+      'destination'
+    )
+    if (!originMatchPattern && !destinationMatchPattern) {
+      return
+    }
+
+    const {
+      checkSender,
+      checkReceiver,
+      timeWindow,
+      initialTransactions,
+      patternPercentageLimit,
+    } = this.parameters
+
+    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
+      this.transaction.timestamp!,
+      timeWindow
+    )
+    const directions: Array<'origin' | 'destination'> = []
+    if (checkSender !== 'none' && originMatchPattern) {
+      directions.push('origin')
+    }
+    if (checkReceiver !== 'none' && destinationMatchPattern) {
+      directions.push('destination')
+    }
+
+    let missingAggregation = false
+    const hitResult: RuleHitResult = []
+    for (const direction of directions) {
+      const userAggregationData =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestamp,
+          beforeTimestamp
+        )
+      if (!userAggregationData) {
+        missingAggregation = true
+        break
+      }
+      const allTransactionsCount =
+        _.sumBy(userAggregationData, (data) => data.all || 0) + 1
+      const matchTransactionsCount =
+        _.sumBy(userAggregationData, (data) => data.match || 0) + 1
+      const userMatchPercentage =
+        (matchTransactionsCount / allTransactionsCount) * 100
+      if (
+        allTransactionsCount > initialTransactions &&
+        userMatchPercentage > patternPercentageLimit
+      ) {
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          vars: {
+            ...super.getTransactionVars(direction),
+          },
+        })
+      }
+    }
+
+    if (missingAggregation) {
+      return this.computeRuleExpensive(
+        originMatchPattern,
+        destinationMatchPattern
+      )
+    } else {
+      return hitResult
+    }
   }
 
   protected async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData | null> {
-    if (!filtered) {
-      return null
-    }
+    targetAggregationData: AggregationData | undefined
+  ): Promise<AggregationData> {
     return {
       all: (targetAggregationData?.all || 0) + 1,
       match:
@@ -91,97 +153,118 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     return this.parameters.timeWindow
   }
 
-  protected async computeRuleUser(
-    direction: 'origin' | 'destination'
-  ): Promise<RuleHitResultItem | undefined> {
-    if (!this.matchPattern(this.transaction, direction)) {
-      return
-    }
-    const { allTransactionsCount, matchTransactionsCount } = await this.getData(
-      direction
-    )
-    const matchPercentage =
-      (matchTransactionsCount / allTransactionsCount) * 100
-    if (
-      allTransactionsCount > this.parameters.initialTransactions &&
-      matchPercentage > this.parameters.patternPercentageLimit
-    ) {
-      return {
-        direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
-        vars: super.getTransactionVars(direction),
-      }
-    }
-  }
+  private async computeRuleExpensive(
+    originMatchPattern: boolean,
+    destinationMatchPattern: boolean
+  ) {
+    logger.info('Running expensive path...')
 
-  private async getData(direction: 'origin' | 'destination'): Promise<{
-    allTransactionsCount: number
-    matchTransactionsCount: number
-  }> {
     const {
       timeWindow,
+      patternPercentageLimit,
+      initialTransactions,
       checkSender = 'all',
       checkReceiver = 'all',
     } = this.parameters
-    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
-      timeWindow
-    )
-    const userAggregationData = await this.getRuleAggregations<AggregationData>(
-      direction,
-      afterTimestamp,
-      beforeTimestamp
-    )
-    if (userAggregationData) {
-      const allTransactionsCount =
-        _.sumBy(userAggregationData, (data) => data.all || 0) + 1
-      const matchTransactionsCount =
-        _.sumBy(userAggregationData, (data) => data.match || 0) + 1
-      return {
-        allTransactionsCount,
-        matchTransactionsCount,
-      }
-    }
-
-    // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
+    this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        transactionRepository,
-        {
-          timeWindow,
-          checkDirection: direction === 'origin' ? checkSender : checkReceiver,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-          countries: this.filters.transactionCountriesHistorical,
-        },
-        ['timestamp', ...this.getNeededTransactionFields()]
-      )
+    const {
+      senderSendingTransactions,
+      senderReceivingTransactions,
+      receiverSendingTransactions,
+      receiverReceivingTransactions,
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow,
+        checkSender: originMatchPattern ? checkSender : 'none',
+        checkReceiver: destinationMatchPattern ? checkReceiver : 'none',
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
+        countries: this.filters.transactionCountriesHistorical,
+      },
+      ['timestamp', ...this.getNeededTransactionFields()]
+    )
 
-    const allTransactions = sendingTransactions.concat(receivingTransactions)
-    const matchedTransactions = [
-      ...sendingTransactions.filter((transaction) =>
+    const senderTransactions = senderSendingTransactions.concat(
+      senderReceivingTransactions
+    )
+    const senderMatchedTransactions = [
+      ...senderSendingTransactions.filter((transaction) =>
         this.matchPattern(transaction, 'origin')
       ),
-      ...receivingTransactions.filter((transaction) =>
+      ...senderReceivingTransactions.filter((transaction) =>
         this.matchPattern(transaction, 'destination')
       ),
     ]
+    const senderMatchPercentage =
+      ((senderMatchedTransactions.length + 1) /
+        (senderTransactions.length + 1)) *
+      100
+
+    const receiverTransactions = receiverSendingTransactions.concat(
+      receiverReceivingTransactions
+    )
+    const receiverMatchedTransactions = [
+      ...receiverSendingTransactions.filter((transaction) =>
+        this.matchPattern(transaction, 'origin')
+      ),
+      ...receiverReceivingTransactions.filter((transaction) =>
+        this.matchPattern(transaction, 'destination')
+      ),
+    ]
+    const receiverMatchPercentage =
+      ((receiverMatchedTransactions.length + 1) /
+        (receiverTransactions.length + 1)) *
+      100
 
     // Update aggregations
-    await this.refreshRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(allTransactions, matchedTransactions)
-    )
+    await Promise.all([
+      this.parameters.checkSender !== 'none'
+        ? this.refreshRuleAggregations(
+            'origin',
+            await this.getTimeAggregatedResult(
+              senderTransactions,
+              senderMatchedTransactions
+            )
+          )
+        : Promise.resolve(),
+      this.parameters.checkReceiver !== 'none'
+        ? this.refreshRuleAggregations(
+            'destination',
+            await this.getTimeAggregatedResult(
+              receiverTransactions,
+              receiverMatchedTransactions
+            )
+          )
+        : Promise.resolve(),
+    ])
 
-    return {
-      allTransactionsCount: allTransactions.length + 1,
-      matchTransactionsCount: matchedTransactions.length + 1,
+    const hitResult: RuleHitResult = []
+    if (
+      senderTransactions.length + 1 > initialTransactions &&
+      senderMatchPercentage > patternPercentageLimit
+    ) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: super.getTransactionVars('origin'),
+      })
     }
+
+    if (
+      destinationMatchPattern &&
+      receiverTransactions.length + 1 > initialTransactions &&
+      receiverMatchPercentage > patternPercentageLimit
+    ) {
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: super.getTransactionVars('destination'),
+      })
+    }
+    return hitResult
   }
 
   private async getTimeAggregatedResult(
@@ -210,8 +293,4 @@ export default abstract class TransactionsPatternPercentageBaseRule<
   ): boolean
 
   protected abstract getNeededTransactionFields(): Array<keyof Transaction>
-
-  protected getRuleAggregationVersion(): number {
-    return 1
-  }
 }

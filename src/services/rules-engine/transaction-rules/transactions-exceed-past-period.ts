@@ -5,7 +5,7 @@ import {
   TransactionRepository,
 } from '../repositories/transaction-repository'
 import {
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactions,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import {
@@ -16,7 +16,8 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
-import { RuleHitResultItem } from '../rule'
+import { RuleHitResult } from '../rule'
+import { MissingRuleParameter } from './errors'
 import { TransactionAggregationRule } from './aggregation-rule'
 
 type AggregationData = {
@@ -72,52 +73,23 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
 
   protected async getUpdatedTargetAggregation(
     _direction: 'origin' | 'destination',
-    aggregation: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData | null> {
-    if (!filtered) {
-      return null
-    }
+    aggregation: AggregationData | undefined
+  ): Promise<AggregationData> {
     return {
       count: (aggregation?.count || 0) + 1,
     }
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
-  }
+    const {
+      checkSender,
+      checkReceiver,
+      timeWindow1,
+      timeWindow2,
+      minTransactionsInTimeWindow1,
+      multiplierThreshold,
+    } = this.parameters
 
-  protected async computeRuleUser(
-    direction: 'origin' | 'destination'
-  ): Promise<RuleHitResultItem | undefined> {
-    const { transactionsCountP1, transactionsCountP2 } = await this.getData(
-      direction
-    )
-    const hasMinTransactionsInTimeWindow1 =
-      !this.parameters.minTransactionsInTimeWindow1 ||
-      transactionsCountP1 >= this.parameters.minTransactionsInTimeWindow1
-    if (
-      hasMinTransactionsInTimeWindow1 &&
-      transactionsCountP1 >
-        this.parameters.multiplierThreshold * transactionsCountP2
-    ) {
-      return {
-        direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
-        vars: {
-          ...super.getTransactionVars(direction),
-        },
-      }
-    }
-  }
-
-  private async getData(
-    direction: 'origin' | 'destination'
-  ): Promise<{ transactionsCountP1: number; transactionsCountP2: number }> {
-    const { checkSender, checkReceiver, timeWindow1, timeWindow2 } =
-      this.parameters
     const {
       afterTimestamp: afterTimestamp1,
       beforeTimestamp: beforeTimestamp1,
@@ -126,45 +98,88 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       this.transaction.timestamp!,
       timeWindow2
     )
-    const userAggregationDataPeriod1 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestamp1,
-        beforeTimestamp1
-      )
-    const userAggregationDataPeriod2 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestamp2,
-        afterTimestamp1
-      )
-    if (userAggregationDataPeriod1 && userAggregationDataPeriod2) {
+    const directions: Array<'origin' | 'destination'> = []
+    if (checkSender !== 'none') {
+      directions.push('origin')
+    }
+    if (checkReceiver !== 'none') {
+      directions.push('destination')
+    }
+
+    let missingAggregation = false
+    const hitResult: RuleHitResult = []
+    for (const direction of directions) {
+      const userAggregationDataPeriod1 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestamp1,
+          beforeTimestamp1
+        )
+      const userAggregationDataPeriod2 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestamp2,
+          afterTimestamp1
+        )
+      if (!userAggregationDataPeriod1 && !userAggregationDataPeriod2) {
+        missingAggregation = true
+        break
+      }
       const transactionsCountP1 =
         _.sumBy(userAggregationDataPeriod1, (data) => data.count || 0) + 1
       const transactionsCountP2 = _.sumBy(
         userAggregationDataPeriod2,
         (data) => data.count || 0
       )
-      return {
-        transactionsCountP1,
-        transactionsCountP2,
+
+      const hasMinTransactionsInTimeWindow1 =
+        !minTransactionsInTimeWindow1 ||
+        transactionsCountP1 >= minTransactionsInTimeWindow1
+      if (
+        hasMinTransactionsInTimeWindow1 &&
+        transactionsCountP1 > multiplierThreshold * transactionsCountP2
+      ) {
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          vars: {
+            ...super.getTransactionVars(direction),
+          },
+        })
       }
     }
 
-    // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
+    if (missingAggregation) {
+      return this.computeRuleExpensive()
+    } else {
+      return hitResult
+    }
+  }
+
+  public async computeRuleExpensive() {
+    const {
+      multiplierThreshold,
+      minTransactionsInTimeWindow1,
+      timeWindow1,
+      timeWindow2,
+      checkSender,
+      checkReceiver,
+    } = this.parameters
+    if (multiplierThreshold === undefined) {
+      throw new MissingRuleParameter()
+    }
+
+    this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
 
-    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
     const [transactionsPeriod1, transactionsPeriod2] = await Promise.all([
-      getTransactionUserPastTransactionsByDirection(
+      getTransactionUserPastTransactions(
         this.transaction,
-        direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: timeWindow1,
-          checkDirection: checkDirection ?? 'all',
+          checkSender: checkSender || 'all',
+          checkReceiver: checkReceiver || 'all',
           transactionTypes: this.filters.transactionTypesHistorical,
           transactionStates: this.filters.transactionStatesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
@@ -172,13 +187,13 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
         },
         ['timestamp']
       ),
-      getTransactionUserPastTransactionsByDirection(
+      getTransactionUserPastTransactions(
         this.transaction,
-        direction,
-        transactionRepository,
+        this.transactionRepository,
         {
           timeWindow: timeWindow2,
-          checkDirection: checkDirection ?? 'all',
+          checkSender: checkSender || 'all',
+          checkReceiver: checkReceiver || 'all',
           transactionTypes: this.filters.transactionTypesHistorical,
           transactionStates: this.filters.transactionStatesHistorical,
           paymentMethod: this.filters.paymentMethodHistorical,
@@ -188,26 +203,78 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
       ),
     ])
 
-    const allTransactionsPeriod1 =
-      transactionsPeriod1.sendingTransactions.concat(
-        transactionsPeriod1.receivingTransactions
+    const senderTransactionsPeriod1 =
+      transactionsPeriod1.senderReceivingTransactions.concat(
+        transactionsPeriod1.senderSendingTransactions
       )
-    const allTransactionsPeriod2 =
-      transactionsPeriod2.sendingTransactions.concat(
-        transactionsPeriod2.receivingTransactions
+    const senderTransactionsPeriod2 =
+      transactionsPeriod2.senderReceivingTransactions.concat(
+        transactionsPeriod2.senderSendingTransactions
+      )
+    const receiverTransactionssPeriod1 =
+      transactionsPeriod1.receiverReceivingTransactions.concat(
+        transactionsPeriod1.receiverSendingTransactions
+      )
+    const receiverTransactionsPeriod2 =
+      transactionsPeriod2.receiverReceivingTransactions.concat(
+        transactionsPeriod2.receiverSendingTransactions
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(allTransactionsPeriod2)
-    )
-    const transactionsCountP1 = allTransactionsPeriod1.length + 1
-    const transactionsCountP2 = allTransactionsPeriod2.length + 1
-    return {
-      transactionsCountP1: transactionsCountP1,
-      transactionsCountP2: transactionsCountP2 - transactionsCountP1,
+    await Promise.all([
+      checkSender !== 'none'
+        ? this.refreshRuleAggregations(
+            'origin',
+            await this.getTimeAggregatedResult(senderTransactionsPeriod2)
+          )
+        : Promise.resolve(),
+      this.parameters.checkReceiver !== 'none'
+        ? this.refreshRuleAggregations(
+            'destination',
+            await this.getTimeAggregatedResult(receiverTransactionsPeriod2)
+          )
+        : Promise.resolve(),
+    ])
+
+    const senderTransactionsCount1 = senderTransactionsPeriod1.length + 1
+    const senderTransactionsCount2 = senderTransactionsPeriod2.length + 1
+    const receiverTransactionsCount1 = receiverTransactionssPeriod1.length + 1
+    const receiverTransactionsCount2 = receiverTransactionsPeriod2.length + 1
+
+    const hitResult: RuleHitResult = []
+    if (
+      checkSender !== 'none' &&
+      (!minTransactionsInTimeWindow1 ||
+        senderTransactionsCount1 >= minTransactionsInTimeWindow1) &&
+      senderTransactionsCount2 - senderTransactionsCount1 > 0 &&
+      senderTransactionsCount1 >
+        multiplierThreshold *
+          (senderTransactionsCount2 - senderTransactionsCount1)
+    ) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: {
+          ...super.getTransactionVars('origin'),
+        },
+      })
     }
+    if (
+      checkReceiver !== 'none' &&
+      (!minTransactionsInTimeWindow1 ||
+        receiverTransactionsCount1 >= minTransactionsInTimeWindow1) &&
+      receiverTransactionsCount2 - receiverTransactionsCount1 > 0 &&
+      receiverTransactionsCount1 >
+        multiplierThreshold *
+          (receiverTransactionsCount2 - receiverTransactionsCount1)
+    ) {
+      hitResult.push({
+        direction: 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars('destination'),
+        },
+      })
+    }
+    return hitResult
   }
 
   private async getTimeAggregatedResult(
@@ -223,9 +290,5 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
 
   protected getMaxTimeWindow(): TimeWindow {
     return this.parameters.timeWindow2
-  }
-
-  protected getRuleAggregationVersion(): number {
-    return 1
   }
 }

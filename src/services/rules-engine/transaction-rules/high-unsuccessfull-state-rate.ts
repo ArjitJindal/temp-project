@@ -1,5 +1,4 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
@@ -9,24 +8,10 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
-import { getTimestampRange } from '../utils/time-utils'
-import { TransactionAggregationRule } from './aggregation-rule'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '@/services/rules-engine/repositories/transaction-repository'
-import {
-  getTransactionUserPastTransactions,
-  groupTransactionsByHour,
-} from '@/services/rules-engine/utils/transaction-rule-utils'
+import { TransactionRule } from './rule'
+import { TransactionRepository } from '@/services/rules-engine/repositories/transaction-repository'
+import { getTransactionUserPastTransactionsCount } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
-
-type AggregationData = {
-  filteredSendingCount?: number
-  filteredReceivingCount?: number
-  allSendingCount?: number
-  allReceivingCount?: number
-}
 
 export type HighUnsuccessfullStateRateParameters = {
   transactionStates: TransactionState[]
@@ -37,10 +22,9 @@ export type HighUnsuccessfullStateRateParameters = {
   checkReceiver: 'receiving' | 'all' | 'none'
 }
 
-export default class HighUnsuccessfullStateRateRule extends TransactionAggregationRule<
+export default class HighUnsuccessfullStateRateRule extends TransactionRule<
   HighUnsuccessfullStateRateParameters,
-  TransactionHistoricalFilters,
-  AggregationData
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -73,69 +57,79 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
   }
 
   public async computeRule() {
-    if (
-      !this.parameters.transactionStates.includes(
-        this.transaction.transactionState!
-      )
-    ) {
-      return
-    }
+    this.transactionRepository = new TransactionRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
 
     const {
-      senderSendingFullCount,
-      senderReceivingFullCount,
-      senderReceivingFilteredCount,
-      senderSendingFilteredCount,
-      receiverReceivingFullCount,
-      receiverSendingFullCount,
-      receiverReceivingFilteredCount,
-      receiverSendingFilteredCount,
-    } = await this.getTransactionCounts()
+      senderSendingTransactionsCount: senderSendingFullCount,
+      senderReceivingTransactionsCount: senderReceivingFullCount,
+      receiverSendingTransactionsCount: receiverSendingFullCount,
+      receiverReceivingTransactionsCount: receiverReceivingFullCount,
+    } = await getTransactionUserPastTransactionsCount(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkSender: this.parameters.checkSender,
+        checkReceiver: this.parameters.checkReceiver,
+      }
+    )
+
+    const {
+      senderSendingTransactionsCount: senderSendingFilteredCount,
+      senderReceivingTransactionsCount: senderReceivingFilteredCount,
+      receiverSendingTransactionsCount: receiverSendingFilteredCount,
+      receiverReceivingTransactionsCount: receiverReceivingFilteredCount,
+    } = await getTransactionUserPastTransactionsCount(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: this.parameters.timeWindow,
+        checkSender: this.parameters.checkSender,
+        checkReceiver: this.parameters.checkReceiver,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        transactionStates: this.parameters.transactionStates,
+        paymentMethod: this.filters.paymentMethodHistorical,
+        country: this.filters.transactionCountriesHistorical,
+      }
+    )
+
+    // +1 is for current transaction
+    const senderFullCount =
+      (senderSendingFullCount ?? 0) + (senderReceivingFullCount ?? 0) + 1
+    const senderFilteredCount =
+      (senderSendingFilteredCount ?? 0) +
+      (senderReceivingFilteredCount ?? 0) +
+      1
+
+    const receiverFullCount =
+      (receiverReceivingFullCount ?? 0) + (receiverSendingFullCount ?? 0) + 1
+    const receiverFilteredCount =
+      (receiverReceivingFilteredCount ?? 0) +
+      (receiverSendingFilteredCount ?? 0) +
+      1
 
     const hitResult: RuleHitResult = []
-    if (this.parameters.checkSender !== 'none') {
-      const senderFullCount =
-        senderSendingFullCount +
-        (this.parameters.checkSender === 'sending'
-          ? 0
-          : senderReceivingFullCount) +
-        1
-      const senderFilteredCount =
-        senderSendingFilteredCount +
-        (this.parameters.checkSender === 'sending'
-          ? 0
-          : senderReceivingFilteredCount) +
-        1
+    if (
+      this.parameters.checkSender !== 'none' &&
+      senderFullCount >= this.parameters.minimumTransactions
+    ) {
       const rate = (senderFilteredCount / senderFullCount) * 100
 
-      if (
-        senderFullCount >= this.parameters.minimumTransactions &&
-        rate > this.parameters.threshold
-      ) {
+      if (rate > this.parameters.threshold) {
         hitResult.push({
           direction: 'ORIGIN',
           vars: super.getTransactionVars('origin'),
         })
       }
     }
-    if (this.parameters.checkReceiver !== 'none') {
-      const receiverFullCount =
-        receiverReceivingFullCount +
-        (this.parameters.checkReceiver === 'receiving'
-          ? 0
-          : receiverSendingFullCount) +
-        1
-      const receiverFilteredCount =
-        receiverReceivingFilteredCount +
-        (this.parameters.checkReceiver === 'receiving'
-          ? 0
-          : receiverSendingFilteredCount) +
-        1
+    if (
+      this.parameters.checkReceiver !== 'none' &&
+      receiverFullCount >= this.parameters.minimumTransactions
+    ) {
       const rate = (receiverFilteredCount / receiverFullCount) * 100
-      if (
-        receiverFullCount >= this.parameters.minimumTransactions &&
-        rate > this.parameters.threshold
-      ) {
+      if (rate > this.parameters.threshold) {
         hitResult.push({
           direction: 'DESTINATION',
           vars: super.getTransactionVars('destination'),
@@ -144,236 +138,5 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     }
 
     return hitResult
-  }
-
-  private async getTransactionCounts() {
-    let senderTransactionCounts:
-      | {
-          senderSendingFullCount: number
-          senderReceivingFullCount: number
-          senderSendingFilteredCount: number
-          senderReceivingFilteredCount: number
-        }
-      | undefined = undefined
-    let receiverTransactionCounts:
-      | {
-          receiverSendingFullCount: number
-          receiverReceivingFullCount: number
-          receiverSendingFilteredCount: number
-          receiverReceivingFilteredCount: number
-        }
-      | undefined = undefined
-    let checkSender = this.parameters.checkSender
-    let checkReceiver = this.parameters.checkReceiver
-    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
-      this.parameters.timeWindow
-    )
-    const [originAggregationData, destinationAggregationData] =
-      await Promise.all([
-        this.getRuleAggregations<AggregationData>(
-          'origin',
-          afterTimestamp,
-          beforeTimestamp
-        ),
-        this.getRuleAggregations<AggregationData>(
-          'destination',
-          afterTimestamp,
-          beforeTimestamp
-        ),
-      ])
-
-    if (originAggregationData) {
-      checkSender = 'none'
-      senderTransactionCounts = {
-        senderSendingFullCount: _.sumBy(
-          originAggregationData,
-          (data) => data.allSendingCount || 0
-        ),
-        senderReceivingFullCount: _.sumBy(
-          originAggregationData,
-          (data) => data.allReceivingCount || 0
-        ),
-        senderSendingFilteredCount: _.sumBy(
-          originAggregationData,
-          (data) => data.filteredSendingCount || 0
-        ),
-        senderReceivingFilteredCount: _.sumBy(
-          originAggregationData,
-          (data) => data.filteredReceivingCount || 0
-        ),
-      }
-    }
-    if (destinationAggregationData) {
-      checkReceiver = 'none'
-      receiverTransactionCounts = {
-        receiverSendingFullCount: _.sumBy(
-          destinationAggregationData,
-          (data) => data.allSendingCount || 0
-        ),
-        receiverReceivingFullCount: _.sumBy(
-          destinationAggregationData,
-          (data) => data.allReceivingCount || 0
-        ),
-        receiverSendingFilteredCount: _.sumBy(
-          destinationAggregationData,
-          (data) => data.filteredSendingCount || 0
-        ),
-        receiverReceivingFilteredCount: _.sumBy(
-          destinationAggregationData,
-          (data) => data.filteredReceivingCount || 0
-        ),
-      }
-    }
-
-    this.transactionRepository = new TransactionRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
-    const {
-      senderSendingTransactions,
-      senderReceivingTransactions,
-      receiverSendingTransactions,
-      receiverReceivingTransactions,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow: this.parameters.timeWindow,
-        checkSender,
-        checkReceiver,
-      },
-      ['timestamp']
-    )
-    const {
-      senderSendingTransactions: senderSendingTransactionsFiltered,
-      senderReceivingTransactions: senderReceivingTransactionsFiltered,
-      receiverSendingTransactions: receiverSendingTransactionsFiltered,
-      receiverReceivingTransactions: receiverReceivingTransactionsFiltered,
-    } = await getTransactionUserPastTransactions(
-      this.transaction,
-      this.transactionRepository,
-      {
-        timeWindow: this.parameters.timeWindow,
-        checkSender,
-        checkReceiver,
-        transactionTypes: this.filters.transactionTypesHistorical,
-        transactionStates: this.parameters.transactionStates,
-        paymentMethod: this.filters.paymentMethodHistorical,
-        countries: this.filters.transactionCountriesHistorical,
-      },
-      ['timestamp']
-    )
-
-    // Update aggregations
-    await Promise.all([
-      originAggregationData
-        ? Promise.resolve()
-        : this.refreshRuleAggregations(
-            'origin',
-            await this.getTimeAggregatedResult(
-              senderSendingTransactions,
-              senderReceivingTransactions,
-              senderSendingTransactionsFiltered,
-              senderReceivingTransactionsFiltered
-            )
-          ),
-      destinationAggregationData
-        ? Promise.resolve()
-        : this.refreshRuleAggregations(
-            'destination',
-            await this.getTimeAggregatedResult(
-              receiverSendingTransactions,
-              receiverReceivingTransactions,
-              receiverSendingTransactionsFiltered,
-              receiverReceivingTransactionsFiltered
-            )
-          ),
-    ])
-
-    return {
-      senderSendingFullCount: senderSendingTransactions.length,
-      senderReceivingFullCount: senderReceivingTransactions.length,
-      senderSendingFilteredCount: senderSendingTransactionsFiltered.length,
-      senderReceivingFilteredCount: senderReceivingTransactionsFiltered.length,
-      receiverSendingFullCount: receiverSendingTransactions.length,
-      receiverReceivingFullCount: receiverReceivingTransactions.length,
-      receiverSendingFilteredCount: receiverSendingTransactionsFiltered.length,
-      receiverReceivingFilteredCount:
-        receiverReceivingTransactionsFiltered.length,
-      ...senderTransactionCounts,
-      ...receiverTransactionCounts,
-    }
-  }
-
-  private async getTimeAggregatedResult(
-    sendingTransactions: AuxiliaryIndexTransaction[],
-    receivingTransactions: AuxiliaryIndexTransaction[],
-    sendingTransactionsFiltered: AuxiliaryIndexTransaction[],
-    receivingTransactionsFiltered: AuxiliaryIndexTransaction[]
-  ) {
-    return _.merge(
-      groupTransactionsByHour<AggregationData>(
-        sendingTransactions,
-        async (group) => ({
-          allSendingCount: group.length,
-        })
-      ),
-      groupTransactionsByHour<AggregationData>(
-        receivingTransactions,
-        async (group) => ({
-          allReceivingCount: group.length,
-        })
-      ),
-      groupTransactionsByHour<AggregationData>(
-        sendingTransactionsFiltered,
-        async (group) => ({
-          filteredSendingCount: group.length,
-        })
-      ),
-      groupTransactionsByHour<AggregationData>(
-        receivingTransactionsFiltered,
-        async (group) => ({
-          filteredReceivingCount: group.length,
-        })
-      )
-    )
-  }
-
-  protected async getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData> {
-    const data = {
-      ...targetAggregationData,
-    }
-    if (
-      filtered &&
-      this.transaction.transactionState &&
-      this.parameters.transactionStates.includes(
-        this.transaction.transactionState
-      )
-    ) {
-      if (direction === 'origin') {
-        data.filteredSendingCount = (data.filteredSendingCount ?? 0) + 1
-      } else {
-        data.filteredReceivingCount = (data.filteredReceivingCount ?? 0) + 1
-      }
-    }
-    if (direction === 'origin') {
-      data.allSendingCount = (data.allSendingCount ?? 0) + 1
-    } else {
-      data.allReceivingCount = (data.allReceivingCount ?? 0) + 1
-    }
-    return data
-  }
-
-  protected getMaxTimeWindow(): TimeWindow {
-    return this.parameters.timeWindow
-  }
-
-  protected getRuleAggregationVersion(): number {
-    return 1
   }
 }

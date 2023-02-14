@@ -1,38 +1,26 @@
 import { JSONSchemaType } from 'ajv'
-import _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   TRANSACTIONS_THRESHOLD_SCHEMA,
   TimeWindow,
   TIME_WINDOW_SCHEMA,
 } from '../utils/rule-parameter-schemas'
+import { subtractTime } from '../utils/time-utils'
 import { TransactionHistoricalFilters } from '../filters'
-import { getTimestampRange, subtractTime } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
-import {
-  groupTransactions,
-  groupTransactionsByHour,
-} from '../utils/transaction-rule-utils'
-import { TransactionAggregationRule } from './aggregation-rule'
 import dayjs from '@/utils/dayjs'
+import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
-import { getReceiverKeyId } from '@/services/rules-engine/utils'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-
-type AggregationData = { [receiverKeyId: string]: number }
+import { getReceiverKeys } from '@/services/rules-engine/utils'
 
 export type HighTrafficBetweenSamePartiesParameters = {
   timeWindow: TimeWindow
   transactionsLimit: number
 }
 
-export default class HighTrafficBetweenSameParties extends TransactionAggregationRule<
+export default class HighTrafficBetweenSameParties extends TransactionRule<
   HighTrafficBetweenSamePartiesParameters,
-  TransactionHistoricalFilters,
-  AggregationData
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -49,27 +37,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
 
   public async computeRule() {
     const { transactionsLimit } = this.parameters
-    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction)
-    if (!receiverKeyId) {
-      return
-    }
-    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
-      this.parameters.timeWindow
-    )
-    const userAggregationData = await this.getRuleAggregations<AggregationData>(
-      'origin',
-      afterTimestamp,
-      beforeTimestamp
-    )
-    let count = 0
-    if (userAggregationData) {
-      userAggregationData
-      count =
-        _.sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) + 1
-    } else {
-      count = (await this.computeRuleExpensive()).count
-    }
+    const { count } = await this.computeResults()
 
     const hitResult: RuleHitResult = []
     if (count > transactionsLimit) {
@@ -93,12 +61,13 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
     return hitResult
   }
 
-  private async computeRuleExpensive() {
+  private async computeResults() {
     const { timeWindow } = this.parameters
     if (timeWindow === undefined) {
       throw new MissingRuleParameter()
     }
-    const { originUserId, timestamp } = this.transaction
+    const { transaction } = this
+    const { originUserId, timestamp } = transaction
 
     if (timestamp == null) {
       throw new Error(`Transaction timestamp is missing`) // todo: better error
@@ -109,10 +78,10 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
       dynamoDb: this.dynamoDb,
     })
 
-    const transactions =
-      await transactionRepository.getGenericUserSendingTransactions(
+    const count =
+      await transactionRepository.getGenericUserSendingTransactionsCount(
         originUserId,
-        this.transaction.originPaymentDetails,
+        transaction.originPaymentDetails,
         {
           beforeTimestamp: timestamp,
           afterTimestamp: subtractTime(dayjs(timestamp), timeWindow),
@@ -122,65 +91,10 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
           originPaymentMethod: this.filters.paymentMethodHistorical,
           transactionTypes: this.filters.transactionTypesHistorical,
           originCountries: this.filters.transactionCountriesHistorical,
-        },
-        ['timestamp', 'destinationUserId', 'destinationPaymentDetails']
+          receiverKeyId: getReceiverKeys(this.tenantId, transaction)
+            ?.PartitionKeyID,
+        }
       )
-
-    // Update aggregations
-    await this.refreshRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(transactions)
-    )
-    return {
-      count:
-        transactions.filter(
-          (transaction) =>
-            getReceiverKeyId(this.tenantId, transaction as Transaction) ===
-            getReceiverKeyId(this.tenantId, this.transaction)
-        ).length + 1,
-    }
-  }
-
-  private async getTimeAggregatedResult(
-    sendingTransactions: AuxiliaryIndexTransaction[]
-  ) {
-    return groupTransactionsByHour<AggregationData>(
-      sendingTransactions,
-      async (group) => {
-        return groupTransactions(
-          group,
-          (transaction) =>
-            getReceiverKeyId(this.tenantId, transaction as Transaction) ||
-            'Unknown',
-          async (group) => group.length
-        )
-      }
-    )
-  }
-
-  protected async getUpdatedTargetAggregation(
-    _direction: 'origin',
-    targetAggregationData: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData | null> {
-    if (!filtered) {
-      return null
-    }
-    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction)
-    if (!receiverKeyId) {
-      return targetAggregationData ?? {}
-    }
-    return {
-      ...targetAggregationData,
-      [receiverKeyId]: (targetAggregationData?.[receiverKeyId] ?? 0) + 1,
-    }
-  }
-
-  protected getMaxTimeWindow(): TimeWindow {
-    return this.parameters.timeWindow
-  }
-
-  protected getRuleAggregationVersion(): number {
-    return 1
+    return { count: count + 1 }
   }
 }

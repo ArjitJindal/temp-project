@@ -9,7 +9,7 @@ import {
 import { TransactionHistoricalFilters } from '../filters'
 import {
   getTransactionsTotalAmount,
-  getTransactionUserPastTransactionsByDirection,
+  getTransactionUserPastTransactions,
   groupTransactionsByHour,
 } from '../utils/transaction-rule-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
@@ -20,11 +20,14 @@ import {
 } from '@/services/rules-engine/repositories/transaction-repository'
 import { getTimestampRange } from '@/services/rules-engine/utils/time-utils'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
-import { RuleHitResultItem } from '@/services/rules-engine/rule'
+import { RuleHitResult } from '@/services/rules-engine/rule'
 import { getTargetCurrencyAmount } from '@/utils/currency-utils'
 import { neverThrow } from '@/utils/lang'
 import { ExtendedJSONSchemaType } from '@/services/rules-engine/utils/rule-schema-utils'
 import { multiplierToPercents } from '@/services/rules-engine/utils/math-utils'
+import { logger } from '@/core/logger'
+
+type UserParty = 'origin' | 'destination'
 
 type AggregationData = {
   count?: number
@@ -228,97 +231,57 @@ export default abstract class TransactionAverageExceededBaseRule<
   }
 
   public async computeRule() {
-    return await Promise.all([
-      this.computeRuleUser('origin'),
-      this.computeRuleUser('destination'),
-    ])
-  }
-
-  protected async computeRuleUser(
-    direction: 'origin' | 'destination'
-  ): Promise<RuleHitResultItem | undefined> {
-    if (direction === 'origin' && this.parameters.checkSender === 'none') {
-      return
-    } else if (
-      direction === 'destination' &&
-      this.parameters.checkReceiver === 'none'
-    ) {
-      return
-    }
-
-    const data = await this.getData(direction)
-    if (!data) {
-      return
-    }
-    const multiplier = data.avgPeriod1 / data.avgPeriod2
-    const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
-    const result = multiplierToPercents(multiplier) > maxMultiplier
-    if (result) {
-      let falsePositiveDetails
-      if (
-        this.ruleInstance.falsePositiveCheckEnabled &&
-        this.ruleInstance.caseCreationType === 'TRANSACTION'
-      ) {
-        if ((multiplier - maxMultiplier) / multiplier < 0.05) {
-          falsePositiveDetails = {
-            isFalsePositive: true,
-            confidenceScore: _.random(60, 80),
-          }
-        }
-      }
-      const vars = {
-        ...super.getTransactionVars(direction),
-        period1: this.parameters.period1,
-        period2: this.parameters.period2,
-        multiplier,
-        user: direction,
-        currency,
-      }
-      return {
-        direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
-        vars,
-        falsePositiveDetails,
-      }
-    }
-  }
-
-  private async getData(direction: 'origin' | 'destination'): Promise<
-    | {
-        avgPeriod1: number
-        avgPeriod2: number
-      }
-    | undefined
-  > {
     const {
-      afterTimestamp: afterTimestampP1,
-      beforeTimestamp: beforeTimestampP1,
-    } = getTimestampRange(this.transaction.timestamp!, this.parameters.period1)
-    const userAggregationDataP1 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestampP1,
-        beforeTimestampP1
-      )
-    const {
-      afterTimestamp: afterTimestampP2,
-      beforeTimestamp: beforeTimestampP2,
-    } = this.getPeriod2TimeRange()
-    const userAggregationDataP2 =
-      await this.getRuleAggregations<AggregationData>(
-        direction,
-        afterTimestampP2,
-        beforeTimestampP2
-      )
-    if (userAggregationDataP1 && userAggregationDataP2) {
-      const { min: avgMin, max: avgMax } =
-        this.parameters.averageThreshold ?? {}
+      checkSender,
+      checkReceiver,
+      period1,
+      period2,
+      excludePeriod1,
+      averageThreshold,
+    } = this.parameters
+    const { min: avgMin, max: avgMax } = averageThreshold ?? {}
+    const directions: Array<'origin' | 'destination'> = []
+    if (checkSender !== 'none') {
+      directions.push('origin')
+    }
+    if (checkReceiver !== 'none') {
+      directions.push('destination')
+    }
+    let missingAggregation = false
+
+    const hitResult: RuleHitResult = []
+    for (const direction of directions) {
+      const {
+        afterTimestamp: afterTimestampP1,
+        beforeTimestamp: beforeTimestampP1,
+      } = getTimestampRange(this.transaction.timestamp!, period1)
+      const userAggregationDataP1 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestampP1,
+          beforeTimestampP1
+        )
+      const {
+        afterTimestamp: afterTimestampP2,
+        beforeTimestamp: beforeTimestampP2,
+      } = this.getPeriod2TimeRange()
+      const userAggregationDataP2 =
+        await this.getRuleAggregations<AggregationData>(
+          direction,
+          afterTimestampP2,
+          beforeTimestampP2
+        )
+      if (!userAggregationDataP1 && !userAggregationDataP2) {
+        missingAggregation = true
+        break
+      }
       const avgMethod = this.getAvgMethod()
       const { units1, units2 } = this.getPeriodUnits()
       const transactionsCountPeriod1 =
         _.sumBy(userAggregationDataP1, (data) => data.count!) + 1
       const transactionsCountPeriod2 =
         _.sumBy(userAggregationDataP2, (data) => data.count!) +
-        (this.parameters.excludePeriod1 ? 0 : 1)
+        (excludePeriod1 ? 0 : 1)
       let avg1 = 0
       let avg2 = 0
       let isWithinAvgThresholds = true
@@ -345,7 +308,7 @@ export default abstract class TransactionAverageExceededBaseRule<
           _.sumBy(userAggregationDataP1, (data) => data.amount!) + currentAmount
         const transactionsAmountPeriod2 =
           _.sumBy(userAggregationDataP2, (data) => data.amount!) +
-          (this.parameters.excludePeriod1 ? 0 : currentAmount)
+          (excludePeriod1 ? 0 : currentAmount)
 
         avg1 = transactionsAmountPeriod1 / units1
         avg2 = transactionsAmountPeriod2 / units2
@@ -355,84 +318,175 @@ export default abstract class TransactionAverageExceededBaseRule<
           (!avgMin || transactionsAmountAveragePeriod1 >= avgMin) &&
           (!avgMax || transactionsAmountAveragePeriod1 <= avgMax)
       }
-      if (isWithinAvgThresholds) {
-        return {
-          avgPeriod1: avg1,
-          avgPeriod2: avg2,
+
+      const multiplier = avg1 / avg2
+      const { value: maxMultiplier, currency } = this.getMultiplierThresholds()
+      const result = multiplierToPercents(multiplier) > maxMultiplier
+      if (result && isWithinAvgThresholds) {
+        let falsePositiveDetails
+        if (
+          this.ruleInstance.falsePositiveCheckEnabled &&
+          this.ruleInstance.caseCreationType === 'TRANSACTION'
+        ) {
+          if ((multiplier - maxMultiplier) / multiplier < 0.05) {
+            falsePositiveDetails = {
+              isFalsePositive: true,
+              confidenceScore: _.random(60, 80),
+            }
+          }
         }
+        const vars = {
+          ...super.getTransactionVars(direction),
+          period1,
+          period2,
+          multiplier,
+          user: direction,
+          currency,
+        }
+        hitResult.push({
+          direction: direction === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          vars,
+          falsePositiveDetails: falsePositiveDetails,
+        })
       }
-      return
     }
 
-    // Fallback
-    const transactionRepository = new TransactionRepository(this.tenantId, {
+    if (missingAggregation) {
+      return this.computeRuleExpensive()
+    } else {
+      return hitResult
+    }
+  }
+
+  public async computeRuleExpensive() {
+    logger.info('Running expensive path...')
+
+    this.transactionRepository = new TransactionRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
-    const { period2, checkSender, checkReceiver } = this.parameters
 
-    const checkDirection = direction === 'origin' ? checkSender : checkReceiver
-    const { sendingTransactions, receivingTransactions } =
-      await getTransactionUserPastTransactionsByDirection(
-        this.transaction,
-        direction,
-        transactionRepository,
-        {
-          timeWindow: period2,
-          checkDirection,
-          transactionStates: this.filters.transactionStatesHistorical,
-          transactionTypes: this.filters.transactionTypesHistorical,
-          paymentMethod: this.filters.paymentMethodHistorical,
-        },
-        ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
-      )
-    const sendingTransactionsToCheck = sendingTransactions
-    const receivingTransactionsToCheck = receivingTransactions
-    if (direction === 'origin') {
-      sendingTransactionsToCheck.push(this.transaction)
-    } else {
-      receivingTransactionsToCheck.push(this.transaction)
+    const { period1, period2, checkSender, checkReceiver } = this.parameters
+
+    const toCheck: UserParty[] = []
+    if (checkSender !== 'none') {
+      toCheck.push('origin')
     }
-    const period1AmountDetails = this.getPeriod1Transactions(
-      sendingTransactionsToCheck
+    if (checkReceiver !== 'none') {
+      toCheck.push('destination')
+    }
+
+    const {
+      senderSendingTransactions,
+      senderReceivingTransactions,
+      receiverSendingTransactions,
+      receiverReceivingTransactions,
+    } = await getTransactionUserPastTransactions(
+      this.transaction,
+      this.transactionRepository,
+      {
+        timeWindow: period2,
+        checkSender,
+        checkReceiver,
+        transactionStates: this.filters.transactionStatesHistorical,
+        transactionTypes: this.filters.transactionTypesHistorical,
+        paymentMethod: this.filters.paymentMethodHistorical,
+      },
+      ['timestamp', 'originAmountDetails', 'destinationAmountDetails']
+    )
+    const senderAmountDetailsP1 = this.getPeriod1Transactions(
+      senderSendingTransactions.concat(this.transaction)
     )
       .map((transaction) => transaction.originAmountDetails)
       .concat(
-        this.getPeriod1Transactions(receivingTransactionsToCheck).map(
+        this.getPeriod1Transactions(senderReceivingTransactions).map(
           (transaction) => transaction.destinationAmountDetails
         )
       )
-    const period2AmountDetails = this.getPeriod2Transactions(
-      sendingTransactionsToCheck
+    const receiverAmountDetailsP1 = this.getPeriod1Transactions(
+      receiverSendingTransactions
     )
       .map((transaction) => transaction.originAmountDetails)
       .concat(
-        this.getPeriod2Transactions(receivingTransactionsToCheck).map(
+        this.getPeriod1Transactions(
+          receiverReceivingTransactions.concat(this.transaction)
+        ).map((transaction) => transaction.destinationAmountDetails)
+      )
+    const senderAmountDetailsP2 = this.getPeriod2Transactions(
+      senderSendingTransactions.concat(this.transaction)
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod2Transactions(senderReceivingTransactions).map(
           (transaction) => transaction.destinationAmountDetails
         )
+      )
+    const receiverAmountDetailsP2 = this.getPeriod2Transactions(
+      receiverSendingTransactions
+    )
+      .map((transaction) => transaction.originAmountDetails)
+      .concat(
+        this.getPeriod2Transactions(
+          receiverReceivingTransactions.concat(this.transaction)
+        ).map((transaction) => transaction.destinationAmountDetails)
       )
 
     // Update aggregations
-    await this.refreshRuleAggregations(
-      direction,
-      await this.getTimeAggregatedResult(
-        sendingTransactions,
-        receivingTransactions
+    await Promise.all([
+      this.parameters.checkSender !== 'none'
+        ? this.refreshRuleAggregations(
+            'origin',
+            await this.getTimeAggregatedResult(
+              senderSendingTransactions,
+              senderReceivingTransactions
+            )
+          )
+        : Promise.resolve(),
+      this.parameters.checkReceiver !== 'none'
+        ? this.refreshRuleAggregations(
+            'destination',
+            await this.getTimeAggregatedResult(
+              receiverSendingTransactions,
+              receiverReceivingTransactions
+            )
+          )
+        : Promise.resolve(),
+    ])
+
+    const { currency, value: maxMultiplier } = this.getMultiplierThresholds()
+    const hitResult: RuleHitResult = []
+    for (const userParty of toCheck) {
+      const period1AmountDetails =
+        userParty === 'origin' ? senderAmountDetailsP1 : receiverAmountDetailsP1
+      const period2AmountDetails =
+        userParty === 'origin' ? senderAmountDetailsP2 : receiverAmountDetailsP2
+      const avgs = await this.avg(
+        period1AmountDetails,
+        period2AmountDetails,
+        currency
       )
-    )
-
-    const { currency } = this.getMultiplierThresholds()
-    const avgs = await this.avg(
-      period1AmountDetails,
-      period2AmountDetails,
-      currency
-    )
-
-    if (avgs) {
-      return {
-        avgPeriod1: avgs[0],
-        avgPeriod2: avgs[1],
+      if (avgs == null) {
+        return
+      }
+      const [avg1, avg2] = avgs
+      const multiplier = avg1 / avg2
+      const result = multiplierToPercents(multiplier) > maxMultiplier
+      if (result) {
+        const vars = {
+          ...super.getTransactionVars(userParty),
+          period1,
+          period2,
+          multiplier,
+          user: userParty,
+          currency,
+        }
+        hitResult.push({
+          direction: userParty === 'origin' ? 'ORIGIN' : 'DESTINATION',
+          vars,
+        })
       }
     }
+
+    return hitResult
   }
 
   private getPeriod1Transactions(
@@ -492,12 +546,8 @@ export default abstract class TransactionAverageExceededBaseRule<
 
   protected async getUpdatedTargetAggregation(
     direction: 'origin' | 'destination',
-    targetAggregationData: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData | null> {
-    if (!filtered) {
-      return null
-    }
+    targetAggregationData: AggregationData | undefined
+  ): Promise<AggregationData> {
     const avgMethod = this.getAvgMethod()
     const { currency } = this.getMultiplierThresholds()
     let amount = 0
@@ -561,9 +611,5 @@ export default abstract class TransactionAverageExceededBaseRule<
             : undefined,
       })
     )
-  }
-
-  protected getRuleAggregationVersion(): number {
-    return 1
   }
 }

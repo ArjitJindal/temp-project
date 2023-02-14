@@ -1,16 +1,11 @@
 import { JSONSchemaType } from 'ajv'
 import * as _ from 'lodash'
-import {
-  AuxiliaryIndexTransaction,
-  TransactionRepository,
-} from '../repositories/transaction-repository'
+import { TransactionRepository } from '../repositories/transaction-repository'
 import {
   getTransactionsTotalAmount,
-  groupTransactions,
-  groupTransactionsByHour,
   isTransactionAmountAboveThreshold,
 } from '../utils/transaction-rule-utils'
-import { getTimestampRange, subtractTime } from '../utils/time-utils'
+import { subtractTime } from '../utils/time-utils'
 import {
   TimeWindow,
   TIME_WINDOW_SCHEMA,
@@ -19,18 +14,13 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
-import { getReceiverKeyId } from '../utils'
 import HighTrafficBetweenSameParties from './high-traffic-between-same-parties'
 
-import { TransactionAggregationRule } from './aggregation-rule'
 import dayjs from '@/utils/dayjs'
+import { TransactionRule } from '@/services/rules-engine/transaction-rules/rule'
 import { MissingRuleParameter } from '@/services/rules-engine/transaction-rules/errors'
+import { getReceiverKeys } from '@/services/rules-engine/utils'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
-import { Transaction } from '@/@types/openapi-public/Transaction'
-import { getTargetCurrencyAmount } from '@/utils/currency-utils'
-
-type AggregationData = { [receiverKeyId: string]: number }
 
 export type HighTrafficVolumeBetweenSameUsersParameters = {
   timeWindow: TimeWindow
@@ -40,10 +30,9 @@ export type HighTrafficVolumeBetweenSameUsersParameters = {
   transactionsLimit?: number
 }
 
-export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggregationRule<
+export default class HighTrafficVolumeBetweenSameUsers extends TransactionRule<
   HighTrafficVolumeBetweenSameUsersParameters,
-  TransactionHistoricalFilters,
-  AggregationData
+  TransactionHistoricalFilters
 > {
   transactionRepository?: TransactionRepository
 
@@ -63,38 +52,17 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
 
   public async computeRule() {
     const { transactionVolumeThreshold, transactionsLimit } = this.parameters
-    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction)
-    if (!this.transaction.originAmountDetails || !receiverKeyId) {
-      return
-    }
+    const { transactions } = await this.computeResults()
 
-    const { afterTimestamp, beforeTimestamp } = getTimestampRange(
-      this.transaction.timestamp!,
-      this.parameters.timeWindow
+    const targetCurrency = Object.keys(
+      transactionVolumeThreshold
+    )[0] as CurrencyCode
+    const transactionAmounts = await getTransactionsTotalAmount(
+      transactions
+        .concat(this.transaction)
+        .map((transaction) => transaction.originAmountDetails),
+      targetCurrency
     )
-    const userAggregationData = await this.getRuleAggregations<AggregationData>(
-      'origin',
-      afterTimestamp,
-      beforeTimestamp
-    )
-    let transactionAmounts: TransactionAmountDetails
-    if (userAggregationData) {
-      const amount = await getTargetCurrencyAmount(
-        this.transaction.originAmountDetails!,
-        this.getTargetCurrency()
-      )
-      const amountValue =
-        _.sumBy(userAggregationData, (data) => data[receiverKeyId] || 0) +
-        amount.transactionAmount
-      transactionAmounts = {
-        transactionAmount: amountValue,
-        transactionCurrency: this.getTargetCurrency(),
-      }
-    } else {
-      transactionAmounts = await this.computeRuleExpensive()
-    }
-
-    const targetCurrency = this.getTargetCurrency()
     let volumeDelta = null
     let volumeThreshold = null
     if (
@@ -115,7 +83,23 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
 
     let countHit = true
     if (Number.isFinite(transactionsLimit)) {
-      const highTrafficCountRule = this.getDependencyRule()
+      const highTrafficCountRule = new HighTrafficBetweenSameParties(
+        this.tenantId,
+        {
+          transaction: this.transaction,
+          senderUser: this.senderUser,
+          receiverUser: this.receiverUser,
+        },
+        {
+          parameters: this
+            .parameters as HighTrafficVolumeBetweenSameUsersParameters & {
+            transactionsLimit: number
+          },
+          filters: this.filters,
+        },
+        { ruleInstance: this.ruleInstance },
+        this.dynamoDb
+      )
       const countResult = await highTrafficCountRule.computeRule()
       countHit = Boolean(countResult && countResult.length > 0)
     }
@@ -148,6 +132,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         direction: 'ORIGIN',
         vars: {
           ...super.getTransactionVars('origin'),
+          transactions,
           volumeDelta,
           volumeThreshold,
         },
@@ -157,6 +142,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
         direction: 'DESTINATION',
         vars: {
           ...super.getTransactionVars('destination'),
+          transactions,
           volumeDelta,
           volumeThreshold,
         },
@@ -166,7 +152,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
     return hitResult
   }
 
-  private async computeRuleExpensive(): Promise<TransactionAmountDetails> {
+  private async computeResults() {
     const { timeWindow } = this.parameters
     if (timeWindow === undefined) {
       throw new MissingRuleParameter()
@@ -195,124 +181,14 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       {
         transactionStates: this.filters.transactionStatesHistorical,
         transactionTypes: this.filters.transactionTypesHistorical,
+        receiverKeyId: getReceiverKeys(this.tenantId, transaction)
+          ?.PartitionKeyID,
         originPaymentMethod: this.filters.paymentMethodHistorical,
         originCountries: this.filters.transactionCountriesHistorical,
       },
-      [
-        'timestamp',
-        'originAmountDetails',
-        'destinationUserId',
-        'destinationPaymentDetails',
-      ]
+      ['originAmountDetails']
     )
 
-    // Update aggregations
-    await this.refreshRuleAggregations(
-      'origin',
-      await this.getTimeAggregatedResult(transactions)
-    )
-
-    return getTransactionsTotalAmount(
-      transactions
-        .filter(
-          (transaction) =>
-            getReceiverKeyId(this.tenantId, transaction as Transaction) ===
-            getReceiverKeyId(this.tenantId, this.transaction)
-        )
-        .concat(this.transaction)
-        .map((transaction) => transaction.originAmountDetails),
-      this.getTargetCurrency()
-    )
-  }
-
-  private async getTimeAggregatedResult(
-    sendingTransactions: AuxiliaryIndexTransaction[]
-  ) {
-    return groupTransactionsByHour<AggregationData>(
-      sendingTransactions,
-      async (group) => {
-        return groupTransactions(
-          group,
-          (transaction) =>
-            getReceiverKeyId(this.tenantId, transaction as Transaction) ||
-            'Unknown',
-          async (group) =>
-            (
-              await getTransactionsTotalAmount(
-                group.map((t) => t.originAmountDetails),
-                this.getTargetCurrency()
-              )
-            ).transactionAmount
-        )
-      }
-    )
-  }
-
-  public async updateAggregation(
-    direction: 'origin' | 'destination',
-    filtered: boolean
-  ) {
-    await super.updateAggregation(direction, filtered)
-    if (Number.isFinite(this.parameters.transactionsLimit)) {
-      await this.getDependencyRule().updateAggregation(direction, filtered)
-    }
-  }
-
-  private getDependencyRule(): HighTrafficBetweenSameParties {
-    return new HighTrafficBetweenSameParties(
-      this.tenantId,
-      {
-        transaction: this.transaction,
-        senderUser: this.senderUser,
-        receiverUser: this.receiverUser,
-      },
-      {
-        parameters: this
-          .parameters as HighTrafficVolumeBetweenSameUsersParameters & {
-          transactionsLimit: number
-        },
-        filters: this.filters,
-      },
-      { ruleInstance: { ...this.ruleInstance, id: `_${this.ruleInstance}` } },
-      this.dynamoDb
-    )
-  }
-
-  private getTargetCurrency(): CurrencyCode {
-    return Object.keys(
-      this.parameters.transactionVolumeThreshold
-    )[0] as CurrencyCode
-  }
-
-  protected async getUpdatedTargetAggregation(
-    _direction: 'origin',
-    targetAggregationData: AggregationData | undefined,
-    filtered: boolean
-  ): Promise<AggregationData | null> {
-    if (!filtered) {
-      return null
-    }
-    const receiverKeyId = getReceiverKeyId(this.tenantId, this.transaction)
-    if (!receiverKeyId) {
-      return targetAggregationData ?? {}
-    }
-    const amount = await getTargetCurrencyAmount(
-      this.transaction.originAmountDetails!,
-      this.getTargetCurrency()
-    )
-    return {
-      ...targetAggregationData,
-      [receiverKeyId]:
-        (targetAggregationData?.[receiverKeyId] ?? 0) +
-        amount.transactionAmount,
-    }
-  }
-
-  protected getMaxTimeWindow(): TimeWindow {
-    return this.parameters.timeWindow
-  }
-
-  protected getRuleAggregationVersion(): number {
-    return 1
+    return { transactions }
   }
 }

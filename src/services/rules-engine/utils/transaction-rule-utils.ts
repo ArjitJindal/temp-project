@@ -261,52 +261,6 @@ async function getTransactionsCount(
   }
 }
 
-export async function getTransactionUserPastTransactionsByDirection(
-  transaction: Transaction,
-  direction: 'origin' | 'destination',
-  transactionRepository: TransactionRepository,
-  options: {
-    timeWindow: TimeWindow
-    checkDirection: 'sending' | 'receiving' | 'all' | 'none'
-    transactionStates?: TransactionState[]
-    transactionTypes?: TransactionType[]
-    paymentMethod?: PaymentMethod
-    matchPaymentMethodDetails?: boolean
-    countries?: string[]
-  },
-  attributesToFetch: Array<keyof AuxiliaryIndexTransaction>
-): Promise<{
-  sendingTransactions: AuxiliaryIndexTransaction[]
-  receivingTransactions: AuxiliaryIndexTransaction[]
-}> {
-  const {
-    senderSendingTransactions,
-    senderReceivingTransactions,
-    receiverSendingTransactions,
-    receiverReceivingTransactions,
-  } = await getTransactionUserPastTransactions(
-    transaction,
-    transactionRepository,
-    {
-      ...options,
-      checkSender: direction === 'origin' ? options.checkDirection : 'none',
-      checkReceiver:
-        direction === 'destination' ? options.checkDirection : 'none',
-    },
-    attributesToFetch
-  )
-  return {
-    sendingTransactions:
-      direction === 'origin'
-        ? senderSendingTransactions
-        : receiverSendingTransactions,
-    receivingTransactions:
-      direction === 'origin'
-        ? senderReceivingTransactions
-        : receiverReceivingTransactions,
-  }
-}
-
 export async function getTransactionUserPastTransactions(
   transaction: Transaction,
   transactionRepository: TransactionRepository,
@@ -487,19 +441,9 @@ export async function groupTransactionsByHour<T>(
   transactions: AuxiliaryIndexTransaction[],
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
 ): Promise<{ [hourKey: string]: T }> {
-  return groupTransactions(
-    transactions,
-    (transaction) => dayjs(transaction.timestamp).format('YYYYMMDDHH'),
-    aggregator
+  const groups = _.groupBy(transactions, (transaction) =>
+    dayjs(transaction.timestamp).format('YYYYMMDDHH')
   )
-}
-
-export async function groupTransactions<T>(
-  transactions: AuxiliaryIndexTransaction[],
-  iteratee: (transactions: AuxiliaryIndexTransaction) => string,
-  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
-): Promise<{ [hourKey: string]: T }> {
-  const groups = _.groupBy(transactions, iteratee)
   const newGroups: { [key: string]: T } = {}
   for (const group in groups) {
     newGroups[group] = await aggregator(groups[group])

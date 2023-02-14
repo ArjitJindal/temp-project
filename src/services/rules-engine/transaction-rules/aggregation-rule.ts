@@ -17,22 +17,13 @@ export abstract class TransactionAggregationRule<
   private aggregationVersion: number | undefined = undefined
 
   protected abstract getUpdatedTargetAggregation(
-    direction: 'origin' | 'destination',
-    aggregation: A | undefined,
-    filtered: boolean
-  ): Promise<A | null>
+    _direction: 'origin' | 'destination',
+    _aggregation: A | undefined
+  ): Promise<A>
 
   protected abstract getMaxTimeWindow(): TimeWindow
 
-  // The hard-coded rule aggregation version is used along with the dynamic version
-  // (from getAggregationVersion()). We need to bump the version whenver we update the
-  // rule aggregation implementation if it'll make the existing aggregated data invalid.
-  protected abstract getRuleAggregationVersion(): number
-
-  public async updateAggregation(
-    direction: 'origin' | 'destination',
-    filtered: boolean
-  ) {
+  public async updateAggregation(direction: 'origin' | 'destination') {
     if (!this.shouldUseAggregation()) {
       return
     }
@@ -63,8 +54,8 @@ export abstract class TransactionAggregationRule<
     }
     const userKeyId =
       direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction, true)
-        : getReceiverKeyId(this.tenantId, this.transaction, true)
+        ? getSenderKeyId(this.tenantId, this.transaction)
+        : getReceiverKeyId(this.tenantId, this.transaction)
     if (!userKeyId) {
       return
     }
@@ -74,17 +65,13 @@ export abstract class TransactionAggregationRule<
       dayjs(this.transaction.timestamp).format(AGGREGATION_TIME_FORMAT)
     const updatedAggregation = await this.getUpdatedTargetAggregation(
       direction,
-      targetAggregations?.[0],
-      filtered
+      targetAggregations?.[0]
     )
-    if (!updatedAggregation) {
-      return
-    }
-
     const ttl = this.getUpdatedTTLAttribute()
     await aggregationRepository.refreshUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
+      direction,
       { [targetHour]: { ...updatedAggregation, ttl } },
       this.getAggregationVersion()
     )
@@ -124,6 +111,7 @@ export abstract class TransactionAggregationRule<
     await aggregationRepository.refreshUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
+      direction,
       _.mapValues(data, (v) => ({ ...v, ttl })),
       this.getAggregationVersion()
     )
@@ -145,14 +133,15 @@ export abstract class TransactionAggregationRule<
     )
     const userKeyId =
       direction === 'origin'
-        ? getSenderKeyId(this.tenantId, this.transaction, true)
-        : getReceiverKeyId(this.tenantId, this.transaction, true)
+        ? getSenderKeyId(this.tenantId, this.transaction)
+        : getReceiverKeyId(this.tenantId, this.transaction)
     if (!userKeyId) {
       return
     }
     return aggregationRepository.getUserRuleTimeAggregations<A>(
       userKeyId,
       this.ruleInstance.id as string,
+      direction,
       afterTimestamp,
       beforeTimestamp,
       AGGREGATION_TIME_FORMAT,
@@ -164,7 +153,7 @@ export abstract class TransactionAggregationRule<
     if (!this.aggregationVersion) {
       this.aggregationVersion = this.ruleInstance.updatedAt!
     }
-    return `${this.aggregationVersion}-${this.getRuleAggregationVersion()}`
+    return `${this.aggregationVersion}`
   }
 
   private getUpdatedTTLAttribute(): number {
