@@ -81,7 +81,7 @@ export function getAugmentedOpenapi(
   options?: {
     iamAuthorizedPaths?: string[]
     publicPaths?: string[]
-    allowedOrigin?: string
+    allowedOrigins?: string[]
   }
 ) {
   const openapi = yaml.load(fs.readFileSync(openapiPath, 'utf8')) as any
@@ -144,6 +144,19 @@ export function getAugmentedOpenapi(
     },
     'x-amazon-apigateway-authtype': 'Custom scheme with tenant claims',
   }
+
+  // Apache Velocity Template for handling CORS
+  // (syntax ref: https://velocity.apache.org/engine/1.7/user-guide.html)
+  const allowedOrigins = options?.allowedOrigins || ['*']
+  const corsHandlerCode = `
+    {"statusCode": 200}
+    $input.json("$")
+    #set($domains = [${allowedOrigins.map((v) => `"${v}"`).join(',')}])
+    #set($origin = $input.params("origin"))
+    #if($domains.contains($origin) || $domains.contains("*"))
+    #set($context.responseOverride.header.Access-Control-Allow-Origin="$origin")
+    #end
+`
 
   // Labmda integrations
   for (const path in openapi.paths) {
@@ -237,7 +250,7 @@ export function getAugmentedOpenapi(
       'x-amazon-apigateway-integration': {
         type: 'mock',
         requestTemplates: {
-          'application/json': '{"statusCode":200}',
+          'application/json': corsHandlerCode,
         },
         responses: {
           default: {
@@ -245,9 +258,6 @@ export function getAugmentedOpenapi(
             responseParameters: {
               'method.response.header.Access-Control-Allow-Headers': "'*'",
               'method.response.header.Access-Control-Allow-Methods': "'*'",
-              'method.response.header.Access-Control-Allow-Origin': `'${
-                options?.allowedOrigin || '*'
-              }'`,
             },
           },
         },

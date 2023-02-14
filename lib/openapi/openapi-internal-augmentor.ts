@@ -125,6 +125,25 @@ export const ConsoleApiPathToLambda: any = {
   '/simulation/{taskId}': StackConstants.CONSOLE_API_SIMULATION_FUNCTION_NAME,
 }
 
+// NOTE: For white-label customers, add their console URLs here
+const WHITE_LABEL_ORIGINS = {
+  bureau: {
+    sandbox: 'https://tm.sandbox.bureau.id',
+    prod: 'https://tm.bureau.id',
+  },
+}
+const ALLOWED_ORIGINS = {
+  dev: ['*'],
+  sandbox: [
+    'https://sandbox.console.flagright.com',
+    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.sandbox),
+  ],
+  prod: [
+    'https://console.flagright.com',
+    ...Object.values(WHITE_LABEL_ORIGINS).map((v) => v.prod),
+  ],
+}
+
 const openapi = getAugmentedOpenapi(
   './lib/openapi/internal/openapi-internal-original.yaml',
   ConsoleApiPathToLambda,
@@ -132,11 +151,11 @@ const openapi = getAugmentedOpenapi(
   {
     iamAuthorizedPaths: ['/apikey', '/iam/rules', '/iam/rule_instances'],
     publicPaths: ['/slack/oauth_redirect'],
-    allowedOrigin: ['dev', 'local'].includes(env as string)
-      ? '*'
+    allowedOrigins: ['dev', 'local'].includes(env as string)
+      ? ALLOWED_ORIGINS.dev
       : env === 'sandbox'
-      ? 'https://sandbox.console.flagright.com'
-      : 'https://console.flagright.com',
+      ? ALLOWED_ORIGINS.sandbox
+      : ALLOWED_ORIGINS.prod,
   }
 )
 
